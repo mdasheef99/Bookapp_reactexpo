@@ -17,4 +17,10 @@ export const PRIVACY_ICON_SIZE = 16;
 export const REVIEW_INPUT_HEIGHT = 100;
 export const CONTROL_DISABLED_OPACITY = 0.5;
 export const CONTROL_FOCUS_RING = { outlineWidth: 2, outlineOffset: 2, outlineStyle: 'solid' } as const;
+export const CROP_FRAME_INITIAL_WIDTH = 320;
+export const CROP_FRAME_HEIGHT = 280;
+export const CROP_OUTLINE_WIDTH = 3;
+export const CROP_HANDLE_BORDER_WIDTH = 2;
+export const CROP_HANDLE_GLYPH_SIZE = 24;
+export const CROP_OVERLAY_OPACITY = 0.06;
 

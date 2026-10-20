@@ -19,6 +19,7 @@ const STRICT_FILES = [
     'app/(tabs)/library/note.tsx',
     'app/(tabs)/library/note-compose.tsx',
     'src/components/notes/ManualNoteUi.tsx',
+    'src/components/notes/NoteCrop.tsx',
     'src/components/notes/NotePassageLink.tsx',
 ];
 

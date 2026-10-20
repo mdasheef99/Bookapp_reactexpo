@@ -6,10 +6,10 @@ import { cropPixels, CropSelection, ImageSize, validImageSize } from './captureG
 export interface CapturePhoto extends ImageSize { uri: string; sourceWidth: number; sourceHeight: number; rotation: number }
 export type CaptureErrorCode = 'PERMISSION_DENIED' | 'CAMERA_UNAVAILABLE' | 'INVALID_ASSET' | 'TRANSFORM_FAILED';
 const copy: Record<CaptureErrorCode, string> = {
-  PERMISSION_DENIED: 'Camera permission was not granted. Choose a photo or return to writing.',
-  CAMERA_UNAVAILABLE: 'The camera is unavailable here. Choose a photo or return to writing.',
-  INVALID_ASSET: 'This photo could not be opened. Choose a different image.',
-  TRANSFORM_FAILED: 'The selected photo could not be prepared. Your earlier text is still here.',
+  PERMISSION_DENIED: 'Camera access is off for BookConnect. Choose a photo instead, or write your note.',
+  CAMERA_UNAVAILABLE: "The camera isn't available here. Choose a photo instead, or write your note.",
+  INVALID_ASSET: "This photo couldn't be opened. Choose a different one.",
+  TRANSFORM_FAILED: "This photo couldn't be prepared. Your earlier text is still here.",
 };
 export class CaptureError extends Error { constructor(public readonly code: CaptureErrorCode) { super(copy[code]); } }
 export interface CaptureAdapter {
@@ -21,10 +21,10 @@ export interface CaptureAdapter {
   release(uri: string): Promise<void>;
 }
 export function onDeviceAvailability(): { available: boolean; message: string } {
-  if (Platform.OS === 'web') return { available: false, message: 'Scanning text is unavailable in this browser. You can prepare a photo or write your note instead.' };
-  if (Constants.appOwnership === 'expo' || Constants.executionEnvironment === 'storeClient') return { available: false, message: 'Scanning text is unavailable in Expo Go. Write your note, or use the Library development app.' };
+  if (Platform.OS === 'web') return { available: false, message: "Scanning text isn't available in the browser. Use the BookConnect app to scan, or write your note here." };
+  if (Constants.appOwnership === 'expo' || Constants.executionEnvironment === 'storeClient') return { available: false, message: "Scanning text isn't available in Expo Go. Use the BookConnect development app to scan, or write your note here." };
   const available = typeof NativeModules.TextRecognition?.recognize === 'function';
-  return { available, message: available ? 'Review scanning errors before saving. English printed text is supported here.' : 'Scanning text is unavailable in this app. Return to writing; choosing a different photo will not enable it.' };
+  return { available, message: available ? 'Scanning reads printed English text. Check the result before you save.' : "Scanning text isn't available in this version of the app. You can write your note instead." };
 }
 export function createCaptureAdapter(): CaptureAdapter {
   // Only URIs created by this adapter are eligible for cleanup. Picker originals are never owned.

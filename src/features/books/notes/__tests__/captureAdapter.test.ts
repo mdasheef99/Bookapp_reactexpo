@@ -60,3 +60,24 @@ it('detects browser, Expo Go and unlinked native engines truthfully', () => {
   Platform.OS = 'android'; (Constants as any).appOwnership = 'expo'; expect(onDeviceAvailability().available).toBe(false);
   (Constants as any).appOwnership = null; delete (NativeModules as any).TextRecognition; expect(onDeviceAvailability().available).toBe(false);
 });
+
+it.each([
+  ['PERMISSION_DENIED', 'Camera access is off for BookConnect. Choose a photo instead, or write your note.'],
+  ['CAMERA_UNAVAILABLE', "The camera isn't available here. Choose a photo instead, or write your note."],
+  ['INVALID_ASSET', "This photo couldn't be opened. Choose a different one."],
+  ['TRANSFORM_FAILED', "This photo couldn't be prepared. Your earlier text is still here."],
+] as const)('C1 %s explains the recovery in plain language', (code, message) => {
+  expect(new CaptureError(code)).toMatchObject({ code, message });
+});
+it('C1 availability explains English scanning and each unavailable surface', () => {
+  (NativeModules as any).TextRecognition = { recognize: jest.fn() };
+  expect(onDeviceAvailability()).toEqual({ available: true, message: 'Scanning reads printed English text. Check the result before you save.' });
+  Platform.OS = 'web';
+  expect(onDeviceAvailability()).toEqual({ available: false, message: "Scanning text isn't available in the browser. Use the BookConnect app to scan, or write your note here." });
+  Platform.OS = 'android'; (Constants as any).appOwnership = 'expo';
+  expect(onDeviceAvailability()).toEqual({ available: false, message: "Scanning text isn't available in Expo Go. Use the BookConnect development app to scan, or write your note here." });
+  (Constants as any).appOwnership = null; (Constants as any).executionEnvironment = 'storeClient';
+  expect(onDeviceAvailability().message).toBe("Scanning text isn't available in Expo Go. Use the BookConnect development app to scan, or write your note here.");
+  (Constants as any).executionEnvironment = 'bare'; delete (NativeModules as any).TextRecognition;
+  expect(onDeviceAvailability()).toEqual({ available: false, message: "Scanning text isn't available in this version of the app. You can write your note instead." });
+});

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LIBRARY_RADIUS, LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import { BookButton, BookLoading, BookScreenHeader } from '@/components/library/ui';
-import type { BookLoadingVariant } from '@/components/library/ui';
+import type { BookButtonVariant, BookLoadingVariant } from '@/components/library/ui';
 import { COLUMN_MAX_WIDTH, CONTROL_DISABLED_OPACITY, CONTROL_FOCUS_RING, DIALOG_MAX_WIDTH } from '@/components/library/bookDetails/bookDetailsTokens';
 import { NOTE_CATEGORIES, NoteCategory, NoteFields, validateNote } from '@/features/books/notes/manualNoteContract';
 import { getWordCount, NOTE_WORD_LIMIT } from '@/features/books/utils/ocrWordCap';
@@ -22,8 +22,8 @@ import { getWordCount, NOTE_WORD_LIMIT } from '@/features/books/utils/ocrWordCap
 // in src/components/library/ui; NoteButton and the NoteScreen header only delegate to them.
 // SDD-07 Flow B: NoteDialog Keep is a secondary BookButton and the confirm variant comes
 // from the spec; NoteLoading delegates to BookLoading; all type comes from LIBRARY_TEXT.
-export function NoteButton({ label, onPress, secondary = false, disabled = false }: { label: string; onPress: () => void; secondary?: boolean; disabled?: boolean }) {
-  return <BookButton label={label} variant={secondary ? 'secondary' : 'primary'} onPress={onPress} disabled={disabled} />;
+export function NoteButton({ label, onPress, secondary = false, disabled = false, variant }: { label: string; onPress: () => void; secondary?: boolean; disabled?: boolean; variant?: BookButtonVariant }) {
+  return <BookButton label={label} variant={variant ?? (secondary ? 'secondary' : 'primary')} onPress={onPress} disabled={disabled} />;
 }
 export function NoteScreen({ title, bookTitle, backLabel, backAccessibilityLabel, onBack, children, footer, scrollChrome = false }: { title?: string; bookTitle?: string; backLabel: string; backAccessibilityLabel?: string; onBack: () => void; footer?: React.ReactNode; scrollChrome?: boolean; children?: React.ReactNode | ((header: React.ReactNode, footer: React.ReactNode) => React.ReactNode) }) {
   const colors = useLibraryAppearance(); const insets = useSafeAreaInsets();

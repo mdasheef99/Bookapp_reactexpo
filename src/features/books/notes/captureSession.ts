@@ -93,7 +93,7 @@ export class NoteCaptureSession {
       if (!this.current(token)) return;
       this.update({ photo, crop: FULL_CROP, cropMode: 'automatic', autoCrop: undefined, autoDetection: undefined, cropNotice: undefined, step: 'crop', busy: 'detecting' });
       if (!this.adapter.canRecognize) {
-        this.update({ cropMode: 'manual', cropNotice: 'Automatic text cropping is unavailable here. The full photo is selected.' });
+        this.update({ cropMode: 'manual', cropNotice: 'The whole photo is selected. Adjust the crop if you only want part of it.' });
         return;
       }
       const abort = new AbortController(); this.abort = abort;
@@ -132,7 +132,7 @@ export class NoteCaptureSession {
       transformed = this.own(await this.adapter.transform(photo, crop)); this.retainWorking(transformed.uri);
       if (!this.current(token)) return undefined;
       this.update({ crop, cropMode: 'automatic', autoCrop: automatic ?? undefined, autoDetection: { photoUri: photo.uri, crop, result },
-        cropNotice: automatic ? undefined : 'Text was recognized, but its bounds were unavailable. The full image remains selected; adjust the crop if needed.', error: undefined });
+        cropNotice: automatic ? undefined : 'Text was found, but not where it sits on the page. The whole photo is selected; adjust the crop if needed.', error: undefined });
       return result;
     } finally {
       this.releaseWorking(photo.uri); if (transformed) this.releaseWorking(transformed.uri); this.collect();
@@ -187,9 +187,9 @@ export class NoteCaptureSession {
   private classify(error: unknown) {
     const code = (error as { code?: string })?.code ?? 'LOCAL_FAILED';
     const engine = ['ON_DEVICE_UNAVAILABLE', 'UNSUPPORTED_SCRIPT'].includes(code);
-    const message = engine ? 'Scanning text is unavailable in this app. Your earlier text is still here. Return to writing.'
+    const message = engine ? "Scanning text isn't available in this app. Your earlier text is still here."
       : error instanceof Error && ['PERMISSION_DENIED', 'CAMERA_UNAVAILABLE', 'INVALID_ASSET', 'TRANSFORM_FAILED'].includes(code) ? error.message
-      : 'This scan could not be processed. Your earlier text is still here.';
+      : "This page couldn't be read. Your earlier text is still here.";
     return { code, message, engine };
   }
   dispose() {

@@ -17,6 +17,17 @@ function setup(step: 'choose' | 'write' | 'review' = 'write', mode: 'create' | '
 async function scan(session: NoteCaptureSession) { session.beginScan(); await session.pick('gallery'); await session.recognize(); }
 function deferred<T>() { let resolve!: (value: T) => void; let reject!: (reason: unknown) => void; const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; }
 
+it.each([
+  ['ON_DEVICE_UNAVAILABLE', true, "Scanning text isn't available in this app. Your earlier text is still here."],
+  ['UNSUPPORTED_SCRIPT', true, "Scanning text isn't available in this app. Your earlier text is still here."],
+  ['LOCAL_FAILED', false, "This page couldn't be read. Your earlier text is still here."],
+] as const)('C1 %s keeps earlier text and describes failure plainly', async (code, engine, message) => {
+  const { session, adapter } = setup(); session.initialize({ text: 'Earlier text', category: null, page: '' });
+  adapter.recognize.mockRejectedValueOnce(Object.assign(new Error(), { code }));
+  session.beginScan(); await session.pick('gallery');
+  expect(session.snapshot()).toMatchObject({ step: 'failure', fields: { text: 'Earlier text' }, error: { code, engine, message } });
+});
+
 it('maps a known non-square letterboxed selection to independent expected source bounds', () => {
   expect(containedImage({ width: 1200, height: 800 }, { width: 300, height: 300 })).toEqual({ x: 0, y: 50, width: 300, height: 200 });
   const selected = moveCropCorner(FULL_CROP, 'start', 75, 50, { width: 300, height: 200 });
@@ -71,7 +82,7 @@ it('auto-detects text on the selected photo, crops to its padded bounds, and reu
 it('makes missing text bounds explicit and keeps the full-image crop visible as a recovery choice', async () => {
   const { session, adapter } = setup(); adapter.recognize.mockResolvedValueOnce({ ...result(), textBounds: undefined });
   session.beginScan(); await session.pick('gallery');
-  expect(session.snapshot()).toMatchObject({ step: 'crop', crop: FULL_CROP, cropMode: 'automatic', cropNotice: 'Text was recognized, but its bounds were unavailable. The full image remains selected; adjust the crop if needed.' });
+  expect(session.snapshot()).toMatchObject({ step: 'crop', crop: FULL_CROP, cropMode: 'automatic', cropNotice: 'Text was found, but not where it sits on the page. The whole photo is selected; adjust the crop if needed.' });
   expect(adapter.transform).toHaveBeenCalledWith(photo, FULL_CROP);
   await session.recognize(); expect(session.snapshot().fields.text).toBe('Candidate B'); expect(adapter.recognize).toHaveBeenCalledTimes(1);
 });
@@ -92,7 +103,7 @@ it('reads the rotated image again so rotation can improve recognition rather tha
 it('allows photo preparation on a surface without native OCR instead of automatically invoking an unavailable engine', async () => {
   const { session, adapter } = setup(); adapter.canRecognize = false; session.beginScan(); await session.pick('gallery');
   expect(session.snapshot()).toMatchObject({ step: 'crop', photo, crop: FULL_CROP, cropMode: 'manual' });
-  expect(session.snapshot().cropNotice).toContain('unavailable');
+  expect(session.snapshot().cropNotice).toBe('The whole photo is selected. Adjust the crop if you only want part of it.');
   expect(adapter.recognize).not.toHaveBeenCalled(); expect(adapter.transform).not.toHaveBeenCalled();
 });
 it('never falls back to the original image when transformation fails', async () => {

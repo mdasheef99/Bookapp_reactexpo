@@ -191,15 +191,12 @@ export default function NoteComposeScreen() {
   if (operationId && activeOperation === operationId && !operation) return <NoteScreen title="Submission unavailable" bookTitle={book.data?.title} backLabel="Back to Notes" onBack={() => returnFromNote(router, context, navigation)}><View style={ui.content}><NoteMessage message="This submission is no longer in memory. Check Notes for any saved result. Its earlier outcome may not be recoverable." /></View></NoteScreen>;
   const compare = operation?.status === 'conflict' ? operation.compared : undefined;
   const scanOriginLabel = captureState.checkpoint?.step === 'review' ? 'Back to review' : mode === 'edit' ? 'Back to edit' : captureState.checkpoint?.step === 'choose' ? 'Back to options' : 'Back to note';
-  const title = step === 'review' ? 'Review scanned text' : step === 'intake' ? 'Scan text' : step === 'crop' ? 'Prepare photo' : step === 'no-text' ? 'No text recognized' : step === 'failure' ? "Couldn't scan this page" : mode === 'edit' ? 'Edit note' : 'Add note';
-  const cropActionLabel = captureState.cropMode === 'automatic'
-    ? captureState.autoDetection ? 'Review recognized text' : 'Find text and crop'
-    : 'Recognize text';
+  const title = step === 'review' ? 'Review scanned text' : step === 'intake' ? 'Scan text' : step === 'crop' ? 'Prepare photo' : step === 'no-text' ? 'No text found' : step === 'failure' ? "Couldn't read this page" : mode === 'edit' ? 'Edit note' : 'Add note';
   const partialDialog: NoteDialogSpec | null = captureState.warningOpen ? {
-    title: 'Some text may be missing', message: 'This scan reached the review limit. Check the incomplete text before deciding whether to use it. Accepting it returns to editing; save separately.',
-    keep: 'Keep editing', confirm: 'Use incomplete text', action: () => capture.acceptPartial(),
+    title: 'Some text may be missing', message: 'This page had more text than one scan can hold, so the end may be cut off. Check the text before you use it.',
+    keep: 'Keep editing', confirm: 'Use this text', action: () => capture.acceptPartial(),
   } : null;
-  return <NoteScreen scrollChrome={scanStep} title={title} bookTitle={book.data?.title} backLabel={locked ? 'Leave' : captureState.busy === 'detecting' ? 'Cancel text detection' : captureState.busy === 'recognizing' ? 'Cancel recognition' : step === 'review' ? 'Back to photo' : step === 'crop' ? 'Back to scan' : scanStep ? scanOriginLabel : step === 'write' && mode === 'create' ? 'Back to options' : 'Back'}
+  return <NoteScreen scrollChrome={scanStep} title={title} bookTitle={book.data?.title} backLabel={locked ? 'Leave' : captureState.busy === 'detecting' ? 'Cancel reading' : captureState.busy === 'recognizing' ? 'Cancel reading' : step === 'review' ? 'Back to photo' : step === 'crop' ? 'Back to scan' : scanStep ? scanOriginLabel : step === 'write' && mode === 'create' ? 'Back to options' : 'Back'}
     onBack={() => {
       if (retainedBack()) return;
       else if (step === 'write' && mode === 'create' && !locked) setStep('choose');
@@ -211,13 +208,13 @@ export default function NoteComposeScreen() {
         <NoteButton label="Check status" secondary disabled={operation.checking} onPress={() => { void noteSaves.check(operation.submission.id); }} /></>}
       {!locked && !compare && isOffline && <NoteMessage message="Saving needs a connection. Your text stays here." caption />}
       {!locked && !compare && <NoteButton label={mode === 'edit' ? 'Save changes' : 'Save note'} disabled={!fields.text.trim() || allowExit || isOffline} onPress={() => save()} />}
-      {step === 'review' && !!captureState.checkpoint && !capture.firstScan && !locked ? <NoteButton label="Cancel scan" secondary onPress={() => cancelScan()} /> : mode === 'create' && !locked && <BookButton label="Cancel note" variant="text" onPress={exit} />}
+      {step === 'review' && !!captureState.checkpoint && !capture.firstScan && !locked ? <NoteButton label="Cancel scan" variant="text" onPress={() => cancelScan()} /> : mode === 'create' && !locked && <BookButton label="Cancel note" variant="text" onPress={exit} />}
     </> : step === 'crop' ? <>
-      {captureState.busy === 'detecting' ? <><NoteMessage message="Finding printed text and setting the crop automatically…" /><NoteButton label="Cancel text detection" onPress={() => capture.cancelRecognition()} /></>
-        : captureState.busy === 'recognizing' ? <><NoteMessage message="Reading the selected area…" /><NoteButton label="Cancel recognition" onPress={() => capture.cancelRecognition()} /></>
-        : availability.available ? <NoteButton label={cropActionLabel} disabled={!!captureState.busy} onPress={() => { void capture.recognize(); }} />
+      {captureState.busy === 'detecting' ? <><NoteMessage message="Finding the printed text…" caption /><NoteButton label="Cancel reading" onPress={() => capture.cancelRecognition()} /></>
+        : captureState.busy === 'recognizing' ? <><NoteMessage message="Reading the text…" caption /><NoteButton label="Cancel reading" onPress={() => capture.cancelRecognition()} /></>
+        : availability.available ? <NoteButton label="Read text" disabled={!!captureState.busy} onPress={() => { void capture.recognize(); }} />
         : <NoteButton label={capture.firstScan ? 'Write note instead' : scanOriginLabel} onPress={() => cancelScan(capture.firstScan)} />}
-      <NoteButton label="Cancel scan" secondary onPress={() => cancelScan()} />
+      {captureState.busy !== 'detecting' && captureState.busy !== 'recognizing' && <NoteButton label="Cancel scan" variant="text" onPress={() => cancelScan()} />}
     </> : undefined}>
     {(header, footer) => <>
     <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" style={{ flex: 1 }} contentContainerStyle={formStep || scanStep ? { flexGrow: 1 } : undefined} scrollEventThrottle={32}
@@ -237,8 +234,9 @@ export default function NoteComposeScreen() {
       </> : formStep ? <>
         <NoteForm fields={fields} onChange={setFields} locked={locked} showErrors={showErrors} saveAttempt={saveAttempt} inputRef={inputRef} pageRef={pageRef}
           onFocusField={focus => capture.setPosition({ focus })} onSelectionChange={selection => capture.setPosition({ selection })} selection={captureState.position.selection} />
-        {step === 'review' && <NoteMessage message="Review and correct any scanning errors. Nothing is saved until you choose Save." />}
-        {!!captureState.partial && <NoteMessage message={capture.partialUnaccepted ? 'Incomplete scan: some text may be missing. Save will ask you to review this warning.' : 'Incomplete scan accepted for this text. Check your note before saving.'} error />}
+        {step === 'review' && <NoteMessage message={`Check the scanned text and fix any mistakes. Nothing is saved until you choose ${mode === 'edit' ? 'Save changes' : 'Save note'}.`} />}
+        {/* DP-04: a possibly cut-off scan is a caution, not an error, so it uses secondary ink. */}
+        {!!captureState.partial && <NoteMessage message={capture.partialUnaccepted ? 'Some text may be missing from this scan. Save will ask you to check it first.' : 'You chose to use this scan. Check that nothing is missing before saving.'} />}
         {!locked && <NoteButton label={step === 'review' ? 'Scan again' : 'Scan text'} secondary onPress={startScan} />}
         {!!feedback && <NoteMessage message={feedback} error />}
         {operation?.status === 'failed' && <NoteMessage message={operation.message ?? "This note wasn't saved. Your text is still here."} error />}
@@ -253,36 +251,41 @@ export default function NoteComposeScreen() {
           <NoteButton label="Replace saved version" disabled={isOffline} onPress={() => setDialog({ title: 'Replace saved version?', message: 'Save your draft in place of the version shown here. If that version changes again, comparison will reopen.', keep: 'Keep editing', confirm: 'Replace saved version', action: () => { if (offlineRef.current) return; setDialog(null); save(compare); } })} />
         </View>}
       </> : <>
-        <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>Category: {categoryLabel(fields.category)}</Text>
-        {step === 'intake' && <>
-          <NoteMessage message="Take a clear photo of printed text, or choose one already on this device. Prepare the selected area before reading it." />
-          <NoteButton label="Capture page" disabled={!!captureState.busy} onPress={() => { void capture.pick('camera'); }} />
+        <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>Category: {categoryLabel(fields.category)}</Text>
+        {/* SDD-07 D07-19: where a photo can't be read, offer the way back instead of a photo path that ends nowhere. */}
+        {step === 'intake' && !availability.available && <>
+          <NoteMessage message={availability.message} />
+          <NoteButton label={capture.firstScan ? 'Write note instead' : scanOriginLabel} onPress={() => cancelScan(capture.firstScan)} />
+        </>}
+        {step === 'intake' && availability.available && <>
+          <NoteMessage message="Take a clear photo of a printed page, or choose one from this device." />
+          <NoteButton label="Take photo" disabled={!!captureState.busy} onPress={() => { void capture.pick('camera'); }} />
           <NoteButton label="Choose photo" secondary disabled={!!captureState.busy} onPress={() => { void capture.pick('gallery'); }} />
-          {captureState.photo && <NoteButton label="Continue preparing photo" secondary disabled={!!captureState.busy} onPress={() => capture.setStep('crop')} />}
-          {capture.firstScan && <NoteButton label="Write note instead" secondary onPress={() => cancelScan(true)} />}
+          {captureState.photo && <NoteButton label="Continue with this photo" secondary disabled={!!captureState.busy} onPress={() => capture.setStep('crop')} />}
+          {capture.firstScan && <NoteButton label="Write note instead" variant="text" disabled={!!captureState.busy} onPress={() => cancelScan(true)} />}
         </>}
         {step === 'crop' && captureState.photo && <>
           <NoteCrop photo={captureState.photo} crop={captureState.crop} disabled={!!captureState.busy} cropMode={captureState.cropMode} autoDetected={!!captureState.autoCrop}
             cropNotice={captureState.cropNotice} onChange={crop => capture.setCrop(crop)} onReset={() => capture.resetCrop()} />
-          <NoteButton label="Rotate photo clockwise" secondary disabled={!!captureState.busy} onPress={() => { void capture.rotate(); }} />
+          <NoteButton label="Rotate photo" secondary disabled={!!captureState.busy} onPress={() => { void capture.rotate(); }} />
           <NoteButton label="Choose another photo" secondary disabled={!!captureState.busy} onPress={() => { void capture.pick('gallery'); }} />
         </>}
         {step === 'no-text' && <>
-          <NoteMessage message="No text was recognized. Try a clearer, well-lit selection of printed text." />
+          <NoteMessage message="No printed text was found. Try a sharper, well-lit photo of printed English text." />
           <NoteButton label={captureState.photo ? 'Adjust photo' : 'Choose another photo'} onPress={() => captureState.photo ? capture.setStep('crop') : void capture.pick('gallery')} />
-          {capture.firstScan && <NoteButton label="Write note instead" secondary onPress={() => cancelScan(true)} />}
+          {capture.firstScan && <NoteButton label="Write note instead" variant="text" onPress={() => cancelScan(true)} />}
         </>}
         {step === 'failure' && <>
-          <NoteMessage message={captureState.error?.message ?? 'This scan could not be processed. Your earlier text is still here.'} error />
+          <NoteMessage message={captureState.error?.message ?? "This page couldn't be read. Your earlier text is still here."} error />
           {captureState.error?.engine ? <NoteButton label={capture.firstScan ? 'Write note instead' : scanOriginLabel} onPress={() => cancelScan(capture.firstScan)} /> : <>
             <NoteButton label="Choose another photo" disabled={!!captureState.busy} onPress={() => { void capture.pick('gallery'); }} />
-            {capture.firstScan && <NoteButton label="Write note instead" secondary onPress={() => cancelScan(true)} />}
+            {capture.firstScan && <NoteButton label="Write note instead" variant="text" onPress={() => cancelScan(true)} />}
           </>}
         </>}
-        {(step === 'intake' || step === 'crop') && <NoteMessage message={availability.message} />}
-        {captureState.busy === 'picking' && <NoteMessage message="Opening photo selection…" />}
-        {captureState.busy === 'rotating' && <NoteMessage message="Preparing the rotated photo…" />}
-        {captureState.busy === 'recognizing' && <NoteMessage message="Canceling prevents this result from being used. Processing on the device may finish later." />}
+        {((step === 'intake' && availability.available) || step === 'crop') && <NoteMessage message={availability.message} />}
+        {captureState.busy === 'picking' && <NoteMessage message="Opening photos…" caption />}
+        {captureState.busy === 'rotating' && <NoteMessage message="Rotating the photo…" caption />}
+        {captureState.busy === 'recognizing' && <NoteMessage message="If you cancel, this result won't be used." />}
         {step !== 'failure' && !!captureState.error && <NoteMessage message={captureState.error.message} error />}
       </>}
       </View>

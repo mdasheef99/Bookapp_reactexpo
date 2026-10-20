@@ -70,7 +70,7 @@ describe('book-section flat config', () => {
         expect(Array.isArray(STRICT_FILES)).toBe(true);
     });
 
-    it('keeps the reviewed Flow A and Flow B strict file list exact and ordered', () => {
+    it('keeps the reviewed Flow A, Flow B and C1 strict file list exact and ordered', () => {
         expect(STRICT_FILES).toEqual([
             'app/(tabs)/library/[bookId].tsx',
             'src/components/library/StatusSelector.tsx',
@@ -89,6 +89,7 @@ describe('book-section flat config', () => {
             'app/(tabs)/library/note.tsx',
             'app/(tabs)/library/note-compose.tsx',
             'src/components/notes/ManualNoteUi.tsx',
+            'src/components/notes/NoteCrop.tsx',
             'src/components/notes/NotePassageLink.tsx',
         ]);
     });

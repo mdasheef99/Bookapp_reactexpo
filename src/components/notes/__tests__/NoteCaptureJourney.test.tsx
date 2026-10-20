@@ -41,8 +41,7 @@ const click = (label: string) => fireEvent.press(screen.getAllByRole('button', {
 const recognized = (text: string, reviewOverflow = false) => ({ version: 1, provider: 'on-device', languageHint: 'en', reviewText: text, reviewOverflow, textBounds: [{ left: 120, top: 80, width: 480, height: 300 }] });
 async function pickAndRead() {
   click('Choose photo'); await flush();
-  if (screen.queryByRole('button', { name: 'Review recognized text' })) click('Review recognized text');
-  else if (screen.queryByRole('button', { name: 'Find text and crop' })) click('Find text and crop');
+  if (screen.queryByRole('button', { name: 'Read text' })) click('Read text');
   await flush();
 }
 beforeEach(() => {
@@ -55,16 +54,16 @@ beforeEach(() => {
 afterEach(() => noteSaves.setActor(null));
 it('automatically selects the printed-text area and does not save until explicit Save', async () => {
   render(<NoteComposeScreen />); fireEvent.press(screen.getByRole('radio', { name: 'No category' })); click('Scan text'); click('Choose photo'); await flush();
-  expect(screen.getByText('The printed text area was detected automatically. The outline shows what will be read.')).toBeTruthy();
+  expect(screen.getByText('The printed text was found. The outline shows what will be read.')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Adjust crop' })).toBeTruthy(); expect(screen.queryByRole('button', { name: 'Left edge inward' })).toBeNull();
-  click('Review recognized text'); await flush(); expect(screen.getByLabelText('Note text').props.value).toBe('Candidate B'); expect(screen.getByRole('radio', { name: 'No category' }).props.accessibilityState.checked).toBe(true);
+  click('Read text'); await flush(); expect(screen.getByLabelText('Note text').props.value).toBe('Candidate B'); expect(screen.getByRole('radio', { name: 'No category' }).props.accessibilityState.checked).toBe(true);
   expect(mockCaptureAdapter.recognize).toHaveBeenCalledTimes(1); expect(mockCaptureAdapter.recognize).toHaveBeenCalledWith(mockPhoto.uri, expect.any(AbortSignal));
   expect(mockCaptureAdapter.transform).toHaveBeenCalledWith(mockPhoto, { x: .08, y: .08, width: .44, height: .415 }); expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled();
   click('Save note'); await flush(); expect(manualNoteSaveAdapter.write).toHaveBeenCalledWith(expect.objectContaining({ content: 'Candidate B', tag: null, mode: 'create' })); expect(mockRouter.replace).toHaveBeenCalledTimes(1);
 });
 it('runs a fresh recognition only after the reader adjusts the automatic crop', async () => {
   render(<NoteComposeScreen />); click('Scan text'); click('Choose photo'); await flush();
-  click('Adjust crop'); click('Left edge inward'); click('Recognize text'); await flush();
+  click('Adjust crop'); click('Left edge inward'); click('Read text'); await flush();
   expect(mockCaptureAdapter.transform).toHaveBeenLastCalledWith(mockPhoto, { x: .13, y: .08, width: .39, height: .415 });
   expect(mockCaptureAdapter.recognize).toHaveBeenCalledTimes(2);
   expect(mockCaptureAdapter.recognize).toHaveBeenLastCalledWith('fixture-transformed', expect.any(AbortSignal));
@@ -89,22 +88,22 @@ it('B09 scanning and protected cancel retain saved edit identity and local chang
 it('partial acceptance returns to form, Save reopens warning after an edit, and validation remains mandatory', async () => {
   mockCaptureAdapter.recognize.mockResolvedValueOnce(recognized('Partial fixture text', true)); render(<NoteComposeScreen />); click('Scan text'); await pickAndRead();
   expect(screen.getByText('Some text may be missing')).toBeTruthy(); click('Keep editing'); click('Save note'); expect(screen.getByText('Some text may be missing')).toBeTruthy();
-  click('Use incomplete text'); expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled(); fireEvent.changeText(screen.getByLabelText('Note text'), 'Edited partial');
-  click('Save note'); click('Use incomplete text'); fireEvent.changeText(screen.getByLabelText('Page, optional'), '24abc'); click('Save note');
+  click('Use this text'); expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled(); fireEvent.changeText(screen.getByLabelText('Note text'), 'Edited partial');
+  click('Save note'); click('Use this text'); fireEvent.changeText(screen.getByLabelText('Page, optional'), '24abc'); click('Save note');
   expect(screen.getByText('Enter a positive whole page number, or leave it blank.')).toBeTruthy(); expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled();
 });
 it('no-text and engine failure have distinct recovery; replacement never opens a blank editor', async () => {
   render(<NoteComposeScreen />); click('Write note'); fireEvent.changeText(screen.getByLabelText('Note text'), 'Prior text'); click('Scan text'); click('Scan text');
-  mockCaptureAdapter.recognize.mockRejectedValueOnce(Object.assign(new Error(), { code: 'NO_TEXT' })); await pickAndRead(); expect(screen.getByText('No text recognized')).toBeTruthy();
+  mockCaptureAdapter.recognize.mockRejectedValueOnce(Object.assign(new Error(), { code: 'NO_TEXT' })); await pickAndRead(); expect(screen.getByText('No text found')).toBeTruthy();
   click('Back to note'); click('Discard scan'); expect(screen.getByLabelText('Note text').props.value).toBe('Prior text');
   click('Scan text'); click('Scan text'); mockCaptureAdapter.recognize.mockRejectedValueOnce(Object.assign(new Error(), { code: 'ON_DEVICE_UNAVAILABLE' })); await pickAndRead();
   expect(screen.queryByRole('button', { name: 'Choose another photo' })).toBeNull(); click('Back to note'); click('Discard scan'); expect(screen.getByLabelText('Note text').props.value).toBe('Prior text');
 });
 it('native Back during recognition cancels only adoption and keeps the current crop', async () => {
   render(<NoteComposeScreen />); click('Scan text'); click('Choose photo'); await flush(); click('Adjust crop'); click('Left edge inward');
-  mockCaptureAdapter.recognize.mockReturnValueOnce(new Promise(() => {})); click('Recognize text'); await flush();
+  mockCaptureAdapter.recognize.mockReturnValueOnce(new Promise(() => {})); click('Read text'); await flush();
   const callback = (usePreventRemove as jest.Mock).mock.calls.at(-1)![1]; act(() => callback({ data: { action: { type: 'GO_BACK' } } }));
-  expect(screen.getByText('Left edge: 13%')).toBeTruthy(); expect(mockCaptureAdapter.recognize.mock.calls.at(-1)![1].aborted).toBe(true); expect(screen.queryByText("Couldn't scan this page")).toBeNull();
+  expect(screen.getByText('Left edge: 13%')).toBeTruthy(); expect(mockCaptureAdapter.recognize.mock.calls.at(-1)![1].aborted).toBe(true); expect(screen.queryByText("Couldn't read this page")).toBeNull();
 });
 it('account/book changes clear capture and fields and invalidate late picker results', async () => {
   let resolve!: (photo: typeof mockPhoto) => void; mockCaptureAdapter.pick.mockReturnValueOnce(new Promise(done => { resolve = done; }));
@@ -122,8 +121,8 @@ it('native removal from restored clean B07 returns to crop and preserves edit id
   expect((usePreventRemove as jest.Mock).mock.calls.at(-1)![0]).toBe(true);
   const callback = (usePreventRemove as jest.Mock).mock.calls.at(-1)![1];
   act(() => callback({ data: { action: { type: 'GO_BACK' } } }));
-  expect(screen.getByText('The printed text area was detected automatically. The outline shows what will be read.')).toBeTruthy(); expect(mockNavigation.dispatch).not.toHaveBeenCalled();
-  click('Adjust crop'); click('Left edge inward'); mockCaptureAdapter.recognize.mockResolvedValueOnce(recognized('Candidate C')); click('Recognize text'); await flush();
+  expect(screen.getByText('The printed text was found. The outline shows what will be read.')).toBeTruthy(); expect(mockNavigation.dispatch).not.toHaveBeenCalled();
+  click('Adjust crop'); click('Left edge inward'); mockCaptureAdapter.recognize.mockResolvedValueOnce(recognized('Candidate C')); click('Read text'); await flush();
   click('Cancel scan'); click('Discard scan'); expect(screen.getByLabelText('Note text').props.value).toBe('Saved A');
   expect(screen.getByLabelText('Page, optional').props.value).toBe('7'); expect(screen.getByRole('radio', { name: 'Action' }).props.accessibilityState.checked).toBe(true);
   expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled(); click('Save changes'); await flush();
