@@ -15,6 +15,11 @@ const STRICT_FILES = [
     'src/components/library/bookDetails/NotePassages.tsx',
     'src/components/library/bookDetails/bookDetailsTokens.ts',
     'src/components/library/bookDetails/classifyBookLoadError.ts',
+    'app/(tabs)/library/notes.tsx',
+    'app/(tabs)/library/note.tsx',
+    'app/(tabs)/library/note-compose.tsx',
+    'src/components/notes/ManualNoteUi.tsx',
+    'src/components/notes/NotePassageLink.tsx',
 ];
 
 const RAW_VALUE_ALLOW_LIST = [

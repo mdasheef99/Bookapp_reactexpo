@@ -53,9 +53,9 @@ beforeEach(() => {
 });
 afterEach(() => noteSaves.setActor(null));
 
-it('allows writing without classification, preserves fields on retained Back, and exposes five categories', () => {
+it('allows writing without classification, preserves fields on retained Back, and exposes No category plus five categories', () => {
   render(<NoteComposeScreen />);
-  expect(screen.getAllByRole('radio')).toHaveLength(5);
+  expect(screen.getAllByRole('radio')).toHaveLength(6);
   expect(screen.getByRole('radio', { name: 'Question' }).props.accessibilityState.checked).toBe(false);
   fireEvent.press(screen.getByRole('button', { name: 'Write note' }));
   expect(screen.getByLabelText('Note text').props.value).toBe('');
@@ -65,7 +65,7 @@ it('allows writing without classification, preserves fields on retained Back, an
   fireEvent.press(screen.getByRole('radio', { name: 'Question' }));
   fireEvent.press(screen.getByRole('button', { name: 'Write note' }));
   expect(screen.getByLabelText('Note text').props.value).toBe('My draft');
-  expect(screen.getByText('Category: Question')).toBeTruthy();
+  expect(screen.getByRole('radio', { name: 'Question' }).props.accessibilityState.checked).toBe(true);
   expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled();
 });
 it('validates page without coercion and saves null metadata into one simulated confirmed reader', async () => {
@@ -79,14 +79,19 @@ it('validates page without coercion and saves null metadata into one simulated c
   expect(mockRouter.replace).toHaveBeenCalledTimes(1); expect(mockRouter.replace.mock.calls[0][0].pathname).toBe('/(tabs)/library/note');
   expect(mockRouter.back).not.toHaveBeenCalled();
 });
-it('closes category choices before returning to the chooser without losing the draft', () => {
+it('returns from the write step to the chooser without losing the draft text, category or page', () => {
   render(<NoteComposeScreen />); fireEvent.press(screen.getByRole('button', { name: 'Write note' }));
   fireEvent.changeText(screen.getByLabelText('Note text'), 'Retained while changing category');
-  fireEvent.press(screen.getByRole('button', { name: 'Change category' }));
-  fireEvent.press(screen.getByRole('button', { name: 'Back to editor' }));
-  expect(screen.queryByText('Change category', { exact: true })).toBeTruthy();
+  fireEvent.changeText(screen.getByLabelText('Page, optional'), '24');
+  fireEvent.press(screen.getByRole('radio', { name: 'Question' }));
+  fireEvent.press(screen.getByRole('button', { name: 'Back to options' }));
+  expect(screen.getByRole('button', { name: 'Write note' })).toBeTruthy();
+  expect(screen.queryByText('Change category', { exact: true })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Close category choices' })).toBeNull();
+  fireEvent.press(screen.getByRole('button', { name: 'Write note' }));
   expect(screen.getByLabelText('Note text').props.value).toBe('Retained while changing category');
+  expect(screen.getByLabelText('Page, optional').props.value).toBe('24');
+  expect(screen.getByRole('radio', { name: 'Question' }).props.accessibilityState.checked).toBe(true);
   expect(mockRouter.back).not.toHaveBeenCalled();
 });
 it('keeps fields and focus context on Keep editing; confirmed discard leaves without writing', async () => {
@@ -161,7 +166,7 @@ it('preserves Thought and its matching result while a Question increases the sim
   const rendered = render(<NotesScreen />); fireEvent.press(screen.getByRole('radio', { name: 'Thought' }));
   mockCollection = [...mockCollection, saved({ actorId: 'actor', bookId: 'book', noteId: 'question', content: 'Question body', tag: 'question', page_number: null } as NoteSubmission)];
   rendered.rerender(<NotesScreen />);
-  expect(screen.getByText('2 saved notes')).toBeTruthy(); expect(screen.getByText('Thought body')).toBeTruthy(); expect(screen.queryByText('Question body')).toBeNull();
+  expect(screen.getByText('2 notes')).toBeTruthy(); expect(screen.getByText('Thought body')).toBeTruthy(); expect(screen.queryByText('Question body')).toBeNull();
   expect(screen.getByRole('radio', { name: 'Thought' }).props.accessibilityState.checked).toBe(true);
   fireEvent.press(screen.getByRole('radio', { name: 'All' })); expect(screen.getByText('Question body')).toBeTruthy();
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 60)); });

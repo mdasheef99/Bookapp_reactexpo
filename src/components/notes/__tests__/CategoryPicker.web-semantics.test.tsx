@@ -75,7 +75,10 @@ it('activates a web radio once with Space and Enter through the installed respon
     try {
       const space = press(' '); expect(onChange).toHaveBeenCalledTimes(1); expect(onChange).toHaveBeenLastCalledWith('reflect'); expect(space.preventDefault).toHaveBeenCalled();
       press('Enter'); expect(onChange).toHaveBeenCalledTimes(2); expect(onChange).toHaveBeenLastCalledWith('reflect');
-      press('ArrowDown'); press('a'); press(' ', true); expect(onChange).toHaveBeenCalledTimes(2);
+      press('a'); press(' ', true); expect(onChange).toHaveBeenCalledTimes(2);
+      // Flow B: the chips are one radio group, so arrow keys move to and select the next chip.
+      const arrow = press('ArrowDown'); expect(onChange).toHaveBeenCalledTimes(3); expect(onChange).toHaveBeenLastCalledWith('distill'); expect(arrow.preventDefault).toHaveBeenCalled();
+      press('ArrowUp'); expect(onChange).toHaveBeenLastCalledWith('quote');
     } finally { responder.reset(); }
   } finally { Platform.OS = priorOS; (globalThis as any).document = priorDocument; }
 });

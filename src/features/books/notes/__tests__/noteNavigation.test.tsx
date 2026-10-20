@@ -26,7 +26,7 @@ beforeEach(() => {
 });
 it('returns Book Details → Notes → Back to the retained book without duplicating it', () => {
   const bookKey = mockState.routes[0].key; push('notes', { userBookId: 'book' });
-  render(<NotesScreen />); fireEvent.press(screen.getByRole('button', { name: 'Book details' }));
+  render(<NotesScreen />); fireEvent.press(screen.getByRole('button', { name: 'Back to Book details' }));
   expect(mockState.routes).toHaveLength(1); expect(mockState.routes[0].key).toBe(bookKey); expect(mockRouter.replace).not.toHaveBeenCalled();
 });
 it('returns a preview-origin pending edit reader past its Notes re-entry to the retained Book Details', () => {

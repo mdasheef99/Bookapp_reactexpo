@@ -90,11 +90,11 @@ it.each(['record', 'book'] as const)('retains an initialized dirty editor after 
   render(wrap(<NoteComposeScreen />)); await screen.findByLabelText('Note text');
   fireEvent.changeText(screen.getByLabelText('Note text'), 'Draft survives refresh');
   fireEvent.changeText(screen.getByLabelText('Page, optional'), '42');
-  fireEvent.press(screen.getByRole('button', { name: 'Change category' })); fireEvent.press(screen.getByRole('radio', { name: 'Question' }));
+  fireEvent.press(screen.getByRole('radio', { name: 'Question' }));
   (manualNotesGateway[resource] as jest.Mock).mockRejectedValue(new Error('Offline'));
   await act(async () => { await client.refetchQueries({ queryKey: resource === 'book' ? noteKeys.book('actor', 'book') : noteKeys.record('actor', 'book', 'note') }); });
   expect(screen.getByLabelText('Note text').props.value).toBe('Draft survives refresh');
-  expect(screen.getByLabelText('Page, optional').props.value).toBe('42'); expect(screen.getByText('Category: Question')).toBeTruthy();
+  expect(screen.getByLabelText('Page, optional').props.value).toBe('42'); expect(screen.getByRole('radio', { name: 'Question' }).props.accessibilityState.checked).toBe(true);
   expect(screen.queryByText('Note unavailable')).toBeNull(); expect(mockRouter.replace).not.toHaveBeenCalled();
   fireEvent.changeText(screen.getByLabelText('Note text'), 'Still editable'); expect(screen.getByLabelText('Note text').props.value).toBe('Still editable');
   expect(screen.getByText(/refresh.*failed/i)).toBeTruthy();
@@ -102,10 +102,10 @@ it.each(['record', 'book'] as const)('retains an initialized dirty editor after 
 it('retains all fields when Save is explicitly held through the mounted editor', async () => {
   delete mockParams.noteId; const write = jest.spyOn(manualNoteSaveAdapter, 'write');
   render(wrap(<NoteComposeScreen />)); await screen.findByRole('button', { name: 'Write note' });
-  fireEvent.press(screen.getByRole('radio', { name: 'Question' })); fireEvent.press(screen.getByRole('button', { name: 'Skip category' }));
+  fireEvent.press(screen.getByRole('radio', { name: 'Question' })); fireEvent.press(screen.getByRole('radio', { name: 'No category' }));
   fireEvent.press(screen.getByRole('button', { name: 'Write note' }));
   const tooLong = Array(501).fill('word').join(' '); fireEvent.changeText(screen.getByLabelText('Note text'), tooLong);
-  fireEvent.press(screen.getByRole('button', { name: 'Save note' })); expect(screen.getByText('Remove 1 word to save. Your text has been kept.')).toBeTruthy();
+  fireEvent.press(screen.getByRole('button', { name: 'Save note' })); expect(screen.getByRole('alert').props.children).toBe('Remove 1 word to save. Your text has been kept.');
   expect(screen.getByLabelText('Note text').props.value).toBe(tooLong); expect(write).not.toHaveBeenCalled();
   fireEvent.changeText(screen.getByLabelText('Note text'), 'Complete retained draft'); fireEvent.changeText(screen.getByLabelText('Page, optional'), '24');
   write.mockImplementation(createManualNoteSaveAdapter({ ownedBookWrites: false, stableCreateReconciliation: false, optionalFiveCategories: false, serverManagedEditVersion: false }).write);
@@ -149,11 +149,11 @@ it('keeps Delete disabled when capabilities are explicitly held, without dispatc
 it('refreshes the real collection cache after confirmed simulated reader deletion', async () => {
   authorizeSimulatedReaderDeletion();
   mockParams.userBookId = 'book'; jest.spyOn(manualNotesGateway, 'remove').mockImplementation(async () => { noteRecord = null; });
-  const alert = jest.spyOn(Alert, 'alert'); render(wrap(<><NotesScreen /><NoteReaderScreen /></>)); await screen.findByText('1 saved note');
+  const alert = jest.spyOn(Alert, 'alert'); render(wrap(<><NotesScreen /><NoteReaderScreen /></>)); await screen.findByText('1 note');
   fireEvent.press(screen.getByRole('button', { name: 'Delete note' })); expect(manualNotesGateway.remove).not.toHaveBeenCalled();
   fireEvent.press(screen.getByRole('button', { name: 'Keep note' })); expect(manualNotesGateway.remove).not.toHaveBeenCalled();
   fireEvent.press(screen.getByRole('button', { name: 'Delete note' })); fireEvent.press(screen.getAllByRole('button', { name: 'Delete note' }).slice(-1)[0]);
-  await screen.findByText('0 saved notes'); expect(manualNotesGateway.remove).toHaveBeenCalledWith('actor', 'book', 'note');
+  await screen.findByText('0 notes'); expect(manualNotesGateway.remove).toHaveBeenCalledWith('actor', 'book', 'note');
   expect(client.getQueryData(noteKeys.collection('actor', 'book'))).toEqual([]); expect(alert).not.toHaveBeenCalled();
 });
 it('keeps pending submission memory on informed Leave and suppresses late reader navigation after unmount', async () => {
@@ -188,10 +188,10 @@ it('invalidates and refetches the real collection cache while retaining Thought 
     list.mockResolvedValue([result, original]); return result;
   });
   render(wrap(<><View testID="collection"><NotesScreen /></View><View testID="composer"><NoteComposeScreen /></View></>));
-  await screen.findByText('1 saved note'); const collection = within(screen.getByTestId('collection')); const editor = within(screen.getByTestId('composer'));
+  await screen.findByText('1 note'); const collection = within(screen.getByTestId('collection')); const editor = within(screen.getByTestId('composer'));
   fireEvent.press(collection.getByRole('radio', { name: 'Thought' })); fireEvent.press(editor.getByRole('radio', { name: 'Question' }));
   fireEvent.press(editor.getByRole('button', { name: 'Write note' })); fireEvent.changeText(editor.getByLabelText('Note text'), 'New Question body'); fireEvent.press(editor.getByRole('button', { name: 'Save note' }));
-  await collection.findByText('2 saved notes'); expect(collection.getByRole('radio', { name: 'Thought' }).props.accessibilityState.checked).toBe(true);
+  await collection.findByText('2 notes'); expect(collection.getByRole('radio', { name: 'Thought' }).props.accessibilityState.checked).toBe(true);
   expect(collection.queryByText('New Question body')).toBeNull(); expect(collection.getByText(original.content)).toBeTruthy(); expect(list.mock.calls.length).toBeGreaterThan(1);
   fireEvent.press(collection.getByRole('radio', { name: 'All' })); expect(collection.getByText('New Question body')).toBeTruthy();
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 60)); });
@@ -214,7 +214,7 @@ it('reopens a preview-origin uncertain edit from Notes, confirms the same record
   fireEvent.press(screen.getByRole('button', { name: 'Save changes' })); await screen.findByRole('button', { name: 'Check status' }); const sent = noteSaves.forBook('actor', 'book')[0].submission;
   fireEvent.press(screen.getByRole('button', { name: 'Leave' })); fireEvent.press(screen.getAllByRole('button', { name: 'Leave' }).slice(-1)[0]); await settle(); mounted.unmount();
   expect(state.routes.at(-1).name).toBe('note'); mockParams = state.routes.at(-1).params;
-  mounted = render(wrap(<NoteReaderScreen />)); await screen.findByRole('button', { name: 'Book details' }); fireEvent.press(screen.getByRole('button', { name: 'Book details' })); mounted.unmount();
+  mounted = render(wrap(<NoteReaderScreen />)); await screen.findByRole('button', { name: 'Back to Book details' }); fireEvent.press(screen.getByRole('button', { name: 'Back to Book details' })); mounted.unmount();
   expect(state.routes).toHaveLength(1); dispatch(StackActions.push('notes', { userBookId: 'book' })); mockParams = state.routes.at(-1).params;
   mounted = render(wrap(<NotesScreen />)); await screen.findByRole('button', { name: 'Open pending submission' }); fireEvent.press(screen.getByRole('button', { name: 'Open pending submission' })); mounted.unmount();
   mockParams = state.routes.at(-1).params; mounted = render(wrap(<NoteComposeScreen />)); await screen.findByLabelText('Submitted note text');
@@ -223,7 +223,7 @@ it('reopens a preview-origin uncertain edit from Notes, confirms the same record
   await act(async () => confirmStatus(noteRecord!)); await waitFor(() => expect(state.routes.at(-1).name).toBe('note')); mounted.unmount();
   expect(state.routes.filter((route: any) => route.name === 'note-compose')).toHaveLength(0); expect(state.routes.at(-1).params.noteId).toBe('note');
   mockParams = state.routes.at(-1).params; render(wrap(<NoteReaderScreen />)); await screen.findByText('Retained changed body');
-  fireEvent.press(screen.getByRole('button', { name: 'Book details' })); expect(state.routes).toHaveLength(1); expect(state.routes[0].key).toBe(originalBookKey);
+  fireEvent.press(screen.getByRole('button', { name: 'Back to Book details' })); expect(state.routes).toHaveLength(1); expect(state.routes[0].key).toBe(originalBookKey);
   expect(manualNoteSaveAdapter.write).toHaveBeenCalledTimes(1);
 });
 it('retains the exact original reader after a reopened edit retries, becomes uncertain, leaves and reopens again', async () => {
@@ -249,7 +249,7 @@ it('retains the exact original reader after a reopened edit retries, becomes unc
   mockParams = state.routes.at(-1).params; mounted = render(wrap(<NoteComposeScreen />));
   await screen.findByLabelText('Note text'); fireEvent.changeText(screen.getByLabelText('Note text'), 'Retained retry draft');
   fireEvent.changeText(screen.getByLabelText('Page, optional'), '42');
-  fireEvent.press(screen.getByRole('button', { name: 'Change category' })); fireEvent.press(screen.getByRole('radio', { name: 'Question' }));
+  fireEvent.press(screen.getByRole('radio', { name: 'Question' }));
   fireEvent.press(screen.getByRole('button', { name: 'Save changes' })); await screen.findByText('Saving…');
   fireEvent.press(screen.getByRole('button', { name: 'Leave' }));
   fireEvent.press(screen.getAllByRole('button', { name: 'Leave' }).slice(-1)[0]); await settle(); mounted.unmount();
@@ -284,7 +284,7 @@ it('retains the exact original reader after a reopened edit retries, becomes unc
   mockParams = state.routes.at(-1).params; mounted = render(wrap(<NoteComposeScreen />));
   await screen.findByLabelText('Submitted note text');
   expect(screen.getByLabelText('Submitted note text').props.children).toBe('Retained retry draft');
-  expect(screen.getByText('Category: Question')).toBeTruthy(); expect(screen.getByText('42')).toBeTruthy();
+  expect(screen.getByRole('radio', { name: 'Question' }).props.accessibilityState.checked).toBe(true); expect(screen.getByText('42')).toBeTruthy();
   fireEvent.press(screen.getByRole('button', { name: 'Leave' }));
   fireEvent.press(screen.getAllByRole('button', { name: 'Leave' }).slice(-1)[0]); await settle(); mounted.unmount();
   expect(state.routes.at(-1).key).toBe(originalReaderKey);
@@ -352,13 +352,13 @@ it('clears deleted note data and controls in retained readers without replaying 
   noteSaves.start(sent); await settle();
   jest.spyOn(manualNotesGateway, 'remove').mockImplementation(async () => { noteRecord = null; });
   const mounted = render(wrap(<><View testID="collection"><NotesScreen /></View><View testID="retained-reader"><NoteReaderScreen /></View><View testID="deleting-reader"><NoteReaderScreen /></View></>));
-  await screen.findByText('1 saved note');
+  await screen.findByText('1 note');
   const deletingReader = within(screen.getByTestId('deleting-reader'));
   await deletingReader.findByText(original.content);
   fireEvent.press(deletingReader.getByRole('button', { name: 'Delete note' }));
   expect(manualNotesGateway.remove).not.toHaveBeenCalled();
   fireEvent.press(deletingReader.getAllByRole('button', { name: 'Delete note' }).slice(-1)[0]);
-  await screen.findByText('0 saved notes');
+  await screen.findByText('0 notes');
   const retained = within(screen.getByTestId('retained-reader'));
   await retained.findByText("This note is missing or couldn't be opened.");
   expect(retained.queryByText(original.content)).toBeNull();

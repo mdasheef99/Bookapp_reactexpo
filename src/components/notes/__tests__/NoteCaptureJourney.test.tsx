@@ -54,10 +54,10 @@ beforeEach(() => {
 });
 afterEach(() => noteSaves.setActor(null));
 it('automatically selects the printed-text area and does not save until explicit Save', async () => {
-  render(<NoteComposeScreen />); click('Skip category'); click('Scan text'); click('Choose photo'); await flush();
+  render(<NoteComposeScreen />); fireEvent.press(screen.getByRole('radio', { name: 'No category' })); click('Scan text'); click('Choose photo'); await flush();
   expect(screen.getByText('The printed text area was detected automatically. The outline shows what will be read.')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Adjust crop' })).toBeTruthy(); expect(screen.queryByRole('button', { name: 'Left edge inward' })).toBeNull();
-  click('Review recognized text'); await flush(); expect(screen.getByLabelText('Note text').props.value).toBe('Candidate B'); expect(screen.getByText('Category: No category')).toBeTruthy();
+  click('Review recognized text'); await flush(); expect(screen.getByLabelText('Note text').props.value).toBe('Candidate B'); expect(screen.getByRole('radio', { name: 'No category' }).props.accessibilityState.checked).toBe(true);
   expect(mockCaptureAdapter.recognize).toHaveBeenCalledTimes(1); expect(mockCaptureAdapter.recognize).toHaveBeenCalledWith(mockPhoto.uri, expect.any(AbortSignal));
   expect(mockCaptureAdapter.transform).toHaveBeenCalledWith(mockPhoto, { x: .08, y: .08, width: .44, height: .415 }); expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled();
   click('Save note'); await flush(); expect(manualNoteSaveAdapter.write).toHaveBeenCalledWith(expect.objectContaining({ content: 'Candidate B', tag: null, mode: 'create' })); expect(mockRouter.replace).toHaveBeenCalledTimes(1);
@@ -72,10 +72,10 @@ it('runs a fresh recognition only after the reader adjusts the automatic crop', 
 });
 it('manual A -> candidate B -> Scan 2 cancel restores B with category/page and shared form', async () => {
   render(<NoteComposeScreen />); click('Write note'); fireEvent.changeText(screen.getByLabelText('Note text'), 'Draft A'); fireEvent.changeText(screen.getByLabelText('Page, optional'), '24');
-  click('Change category'); fireEvent.press(screen.getByRole('radio', { name: 'Question' })); click('Scan text'); expect(screen.getByText('Replace text with a scan?')).toBeTruthy(); click('Scan text'); await pickAndRead();
-  expect(screen.getByLabelText('Page, optional').props.value).toBe('24'); expect(screen.getByText('Category: Question')).toBeTruthy();
+  fireEvent.press(screen.getByRole('radio', { name: 'Question' })); click('Scan text'); expect(screen.getByText('Replace text with a scan?')).toBeTruthy(); click('Scan text'); await pickAndRead();
+  expect(screen.getByLabelText('Page, optional').props.value).toBe('24'); expect(screen.getByRole('radio', { name: 'Question' }).props.accessibilityState.checked).toBe(true);
   click('Scan again'); click('Scan again'); click('Back to review'); expect(screen.getByLabelText('Note text').props.value).toBe('Candidate B');
-  expect(screen.getByText('Category: Question')).toBeTruthy(); expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled();
+  expect(screen.getByRole('radio', { name: 'Question' }).props.accessibilityState.checked).toBe(true); expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled();
 });
 it('B09 scanning and protected cancel retain saved edit identity and local changes', async () => {
   mockRecord = { id: 'saved', user_id: 'actor', user_book_id: 'book', content: 'Saved A', tag: 'apply', page_number: 7, version: 9, created_at: '2026-10-10', updated_at: null };
@@ -125,7 +125,7 @@ it('native removal from restored clean B07 returns to crop and preserves edit id
   expect(screen.getByText('The printed text area was detected automatically. The outline shows what will be read.')).toBeTruthy(); expect(mockNavigation.dispatch).not.toHaveBeenCalled();
   click('Adjust crop'); click('Left edge inward'); mockCaptureAdapter.recognize.mockResolvedValueOnce(recognized('Candidate C')); click('Recognize text'); await flush();
   click('Cancel scan'); click('Discard scan'); expect(screen.getByLabelText('Note text').props.value).toBe('Saved A');
-  expect(screen.getByLabelText('Page, optional').props.value).toBe('7'); expect(screen.getByText('Category: Action')).toBeTruthy();
+  expect(screen.getByLabelText('Page, optional').props.value).toBe('7'); expect(screen.getByRole('radio', { name: 'Action' }).props.accessibilityState.checked).toBe(true);
   expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled(); click('Save changes'); await flush();
   expect(manualNoteSaveAdapter.write).toHaveBeenCalledWith(expect.objectContaining({ mode: 'edit', noteId: 'saved', expectedVersion: 9, content: 'Saved A', tag: 'apply', page_number: 7 }));
 });

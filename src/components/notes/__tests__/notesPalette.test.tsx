@@ -12,10 +12,9 @@ import { StyleSheet } from 'react-native';
 import { fireEvent, render, RenderResult } from '@testing-library/react-native';
 
 import { CategoryPicker, NoteButton, NoteDialog, NoteForm } from '../ManualNoteUi';
-import { NoteCard } from '../NoteCard';
+import { NotePassageLink } from '../NotePassageLink';
 import { NoteCrop } from '../NoteCrop';
 import { getLibraryAppearance } from '@/components/library/LibraryAppearance';
-import { NOTE_TAG_CONFIG } from '@/features/books/services/notesService';
 import type { CapturePhoto } from '@/features/books/notes/captureAdapter';
 import { noteFields } from '@/features/books/notes/manualNoteContract';
 import type { ManualNote } from '@/features/books/notes/manualNoteContract';
@@ -51,7 +50,7 @@ const crop = { x: .08, y: .08, width: .44, height: .415 };
 
 /** FU-1b components and routes share the hex-free and token-name source guards. */
 const COMPONENTS = [
-  ...['ManualNoteUi.tsx', 'NoteCard.tsx', 'NoteCrop.tsx'].map(file => `src/components/notes/${file}`),
+  ...['ManualNoteUi.tsx', 'NotePassageLink.tsx', 'NoteCrop.tsx'].map(file => `src/components/notes/${file}`),
   ...['notes.tsx', 'note.tsx', 'note-compose.tsx'].map(file => `app/(tabs)/library/${file}`),
 ];
 const sourceOf = (file: string) => fs.readFileSync(path.resolve(__dirname, '../../../..', file), 'utf8');
@@ -102,7 +101,7 @@ describe('notes screens read the book-section palette', () => {
     expect(seen['secondary fill']).toBe(colors.bgCard);
     expect(seen['secondary ink']).toBe(colors.textPrimary);
 
-    const form = render(<NoteForm fields={noteFields(note)} locked showErrors={false} onCategory={jest.fn()} onChange={jest.fn()} />);
+    const form = render(<NoteForm fields={noteFields(note)} locked showErrors={false} onChange={jest.fn()} />);
     seen['input surface'] = styleOf(label(form, 'Submitted note text')).backgroundColor;
     seen['input boundary'] = styleOf(label(form, 'Submitted note text')).borderColor;
     expect(seen['input surface']).toBe(colors.bgCard);
@@ -115,9 +114,11 @@ describe('notes screens read the book-section palette', () => {
     expect(seen['dialog surface']).toBe(colors.bgRaised);
     expect(styleOf(button(dialog, 'Keep editing')).borderColor).toBe(colors.controlBorder);
 
-    const card = render(<NoteCard note={note} onRead={jest.fn()} />);
-    seen['card surface'] = styleOf(label(card, 'Read note, Quote, page 42')).backgroundColor;
-    expect(seen['card surface']).toBe(colors.bgCard);
+    const passage = render(<NotePassageLink note={note} onPress={jest.fn()} />);
+    seen['passage body ink'] = styleOf(passage.getByText(`“${note.content}”`)).color;
+    seen['passage meta ink'] = styleOf(passage.getByText(/Quote · p\. 42 ·/)).color;
+    expect(seen['passage body ink']).toBe(colors.textPrimary);
+    expect(seen['passage meta ink']).toBe(colors.textTertiary);
 
     const cropper = render(<NoteCrop photo={photo} crop={crop} disabled={false} cropMode="automatic" autoDetected onChange={jest.fn()} onReset={jest.fn()} />);
     const selection = flagged(cropper, node => styleOf(node).borderWidth === 3 && styleOf(node).position === 'absolute');
@@ -160,18 +161,17 @@ describe('notes screens read the book-section palette', () => {
     expect(differing).toEqual([...MAPPED_TOKENS]);
   });
 
-  it('leaves the quote stripe on its NOTE_TAG_CONFIG colour and only falls back to accent', () => {
-    // D07-04 (Flow B) owns the tag colours; FU-1b must not restyle them, and NoteCard's own
-    // `tagConfig?.color ?? colors.accent` fallback is still sourced from the token palette.
-    const source = sourceOf('src/components/notes/NoteCard.tsx');
-    expect(source).toContain('tagConfig?.color ?? colors.accent');
+  it('keeps tag colours out of Flow B passages: no NOTE_TAG_CONFIG use and no stripe', () => {
+    // Flow B no longer uses NOTE_TAG_CONFIG colours; the passage renders curly-quoted
+    // serif text with a token-ink meta caption and no stripe.
+    const source = sourceOf('src/components/notes/NotePassageLink.tsx');
+    expect(source).not.toContain('NOTE_TAG_CONFIG');
+    expect(source).not.toContain('tagConfig');
     for (const phase of PHASES) {
       mockPhase = phase;
-      const colors = getLibraryAppearance(phase);
-      const tree = render(<NoteCard note={note} onRead={jest.fn()} />);
-      const stripe = styleOf(label(tree, 'Read note, Quote, page 42')).borderLeftColor;
-      expect(stripe).toBe(NOTE_TAG_CONFIG.quote.color);
-      expect(stripe).not.toBe(colors.accent);
+      const tree = render(<NotePassageLink note={note} onPress={jest.fn()} />);
+      expect(tree.getByText(`“${note.content}”`)).toBeTruthy();
+      expect(styleOf(tree.getByRole('link') as unknown as Element).borderLeftColor).toBeUndefined();
     }
   });
 

@@ -5,7 +5,10 @@ import { usePreventRemove } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { CategoryPicker, NoteButton, NoteDialog, NoteDialogSpec, NoteForm, NoteLoading, NoteMessage, NoteScreen, ScrollView, ui } from '@/components/notes/ManualNoteUi';
-import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
+import { BookButton } from '@/components/library/ui';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { categoryLabel, fieldsChanged, ManualNote, noteFields, NoteFields, noteKeys, validateNote } from '@/features/books/notes/manualNoteContract';
 import { manualNotesGateway, noteSaves } from '@/features/books/notes/manualNotesGateway';
 import { noteRouteContext, readerHref, registerNoteContext, returnFromNote, returnToSavedReader } from '@/features/books/notes/noteNavigation';
@@ -43,8 +46,11 @@ export default function NoteComposeScreen() {
   const formStep = step === 'write' || step === 'review';
   const availability = onDeviceAvailability();
   useEffect(() => capture.mount(), [capture]);
-  const [showErrors, setShowErrors] = useState(false);
-  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [saveAttempt, setSaveAttempt] = useState(0);
+  const showErrors = saveAttempt > 0;
+  const { isOffline } = useNetworkStatus();
+  const offlineRef = useRef(isOffline);
+  offlineRef.current = isOffline;
   const [dialog, setDialog] = useState<NoteDialogSpec | null>(null);
   const [feedback, setFeedback] = useState('');
   const [allowExit, setAllowExit] = useState(false);
@@ -90,7 +96,7 @@ export default function NoteComposeScreen() {
     }
     if (dirty || capture.meaningfulCapture) {
       setDialog({ title: mode === 'edit' ? 'Discard changes?' : 'Discard this note?', message: (mode === 'edit' ? "Your changes haven't been saved." : "Your note hasn't been saved.") + (capture.meaningfulCapture ? ' The selected photo and crop will also be lost.' : ''),
-        keep: 'Keep editing', confirm: mode === 'edit' ? 'Discard changes' : 'Discard note', action: () => {
+        keep: 'Keep editing', confirm: mode === 'edit' ? 'Discard changes' : 'Discard note', confirmVariant: 'destructive', action: () => {
           if (activeOperation) noteSaves.forget(activeOperation); setDialog(null); finishExit(action);
         } }); return;
     }
@@ -108,7 +114,7 @@ export default function NoteComposeScreen() {
   }, [navigation]);
   const cancelScan = (writeInstead = false) => {
     const restore = () => { setDialog(null); capture.cancelScan(writeInstead); };
-    if (capture.meaningfulCapture) setDialog({ title: 'Discard this scan?', message: 'Your selected photo, crop adjustments and text from this attempt will be lost. Return to the note before this scan.', keep: 'Keep scanning', confirm: 'Discard scan', action: restore });
+    if (capture.meaningfulCapture) setDialog({ title: 'Discard this scan?', message: 'Your selected photo, crop adjustments and text from this attempt will be lost. Return to the note before this scan.', keep: 'Keep scanning', confirm: 'Discard scan', confirmVariant: 'destructive', action: restore });
     else restore();
   };
   const retainedBack = () => {
@@ -119,8 +125,7 @@ export default function NoteComposeScreen() {
     return false;
   };
   usePreventRemove(!allowExit && (dirty || locked || capture.meaningfulCapture || !!captureState.checkpoint || (step === 'write' && mode === 'create')), ({ data }) => {
-    if (categoryOpen) setCategoryOpen(false);
-    else if (dialog || captureState.warningOpen) { browserHistoryGuard.current?.keepEditing(); setDialog(null); capture.keepPartialEditing(); }
+    if (dialog || captureState.warningOpen) { browserHistoryGuard.current?.keepEditing(); setDialog(null); capture.keepPartialEditing(); }
     else if (retainedBack()) return;
     else if (step === 'write' && mode === 'create' && !locked) setStep('choose');
     else leave(() => navigation.dispatch(data.action));
@@ -128,7 +133,7 @@ export default function NoteComposeScreen() {
   const returnToReader = () => returnToSavedReader(router, navigation, returnContext, targetNoteId!);
   const exit = () => leave(() => mode === 'edit' ? returnToReader() : returnFromNote(router, context, navigation));
   const startScan = () => {
-    const begin = () => { setDialog(null); setShowErrors(false); setFeedback(''); capture.beginScan(); };
+    const begin = () => { setDialog(null); setSaveAttempt(0); setFeedback(''); capture.beginScan(); };
     if (fields.text.trim()) setDialog({ title: 'Replace text with a scan?', message: 'A new scan replaces the current text. Canceling this attempt returns to this note.', keep: 'Keep editing', confirm: step === 'review' ? 'Scan again' : 'Scan text', action: begin });
     else begin();
   };
@@ -158,8 +163,9 @@ export default function NoteComposeScreen() {
     }
   }, [allowExit, operation, mode, context.readerReturn, context.canBack, context.origin, actorId, bookId, router, navigation]);
   const save = (compared?: ManualNote) => {
+    if (offlineRef.current) return;
     if (capture.partialUnaccepted) { capture.openPartialWarning(); return; }
-    const validation = validateNote(fields); setShowErrors(true);
+    const validation = validateNote(fields); setSaveAttempt(attempt => attempt + 1);
     if (!validation.valid || locked || departing.current || returned.current || !actorId) return;
     if (activeOperation && resumeFailed) noteSaves.forget(activeOperation);
     const id = randomUUID();
@@ -193,10 +199,9 @@ export default function NoteComposeScreen() {
     title: 'Some text may be missing', message: 'This scan reached the review limit. Check the incomplete text before deciding whether to use it. Accepting it returns to editing; save separately.',
     keep: 'Keep editing', confirm: 'Use incomplete text', action: () => capture.acceptPartial(),
   } : null;
-  return <NoteScreen scrollChrome={scanStep} title={title} bookTitle={book.data?.title} backLabel={locked ? 'Leave' : categoryOpen ? 'Back to editor' : captureState.busy === 'detecting' ? 'Cancel text detection' : captureState.busy === 'recognizing' ? 'Cancel recognition' : step === 'review' ? 'Back to photo' : step === 'crop' ? 'Back to scan' : scanStep ? scanOriginLabel : step === 'write' && mode === 'create' ? 'Back to options' : 'Back'}
+  return <NoteScreen scrollChrome={scanStep} title={title} bookTitle={book.data?.title} backLabel={locked ? 'Leave' : captureState.busy === 'detecting' ? 'Cancel text detection' : captureState.busy === 'recognizing' ? 'Cancel recognition' : step === 'review' ? 'Back to photo' : step === 'crop' ? 'Back to scan' : scanStep ? scanOriginLabel : step === 'write' && mode === 'create' ? 'Back to options' : 'Back'}
     onBack={() => {
-      if (categoryOpen) { setCategoryOpen(false); inputRef.current?.focus(); }
-      else if (retainedBack()) return;
+      if (retainedBack()) return;
       else if (step === 'write' && mode === 'create' && !locked) setStep('choose');
       else exit();
     }}
@@ -204,8 +209,9 @@ export default function NoteComposeScreen() {
       {operation?.status === 'saving' && <NoteMessage message="Saving…" />}
       {operation?.status === 'unknown' && <><NoteMessage message={operation.checking ? 'Checking save status…' : 'Save not confirmed. Your submitted text is retained while this app remains open.'} />
         <NoteButton label="Check status" secondary disabled={operation.checking} onPress={() => { void noteSaves.check(operation.submission.id); }} /></>}
-      {!locked && !compare && <NoteButton label={mode === 'edit' ? 'Save changes' : 'Save note'} disabled={!fields.text.trim() || allowExit} onPress={() => save()} />}
-      {step === 'review' && !!captureState.checkpoint && !capture.firstScan && !locked ? <NoteButton label="Cancel scan" secondary onPress={() => cancelScan()} /> : mode === 'create' && !locked && <NoteButton label="Cancel note" secondary onPress={exit} />}
+      {!locked && !compare && isOffline && <NoteMessage message="Saving needs a connection. Your text stays here." caption />}
+      {!locked && !compare && <NoteButton label={mode === 'edit' ? 'Save changes' : 'Save note'} disabled={!fields.text.trim() || allowExit || isOffline} onPress={() => save()} />}
+      {step === 'review' && !!captureState.checkpoint && !capture.firstScan && !locked ? <NoteButton label="Cancel scan" secondary onPress={() => cancelScan()} /> : mode === 'create' && !locked && <BookButton label="Cancel note" variant="text" onPress={exit} />}
     </> : step === 'crop' ? <>
       {captureState.busy === 'detecting' ? <><NoteMessage message="Finding printed text and setting the crop automatically…" /><NoteButton label="Cancel text detection" onPress={() => capture.cancelRecognition()} /></>
         : captureState.busy === 'recognizing' ? <><NoteMessage message="Reading the selected area…" /><NoteButton label="Cancel recognition" onPress={() => capture.cancelRecognition()} /></>
@@ -224,29 +230,30 @@ export default function NoteComposeScreen() {
       </>}
       {step === 'choose' ? <>
         <Text style={[ui.label, { color: colors.textPrimary }]}>Category (optional)</Text>
-        <CategoryPicker selected={fields.category} onChange={category => setFields({ ...fields, category })} />
-        <NoteButton label="Skip category" secondary onPress={() => setFields({ ...fields, category: null })} />
+        <CategoryPicker selected={fields.category} includeNone onChange={category => setFields({ ...fields, category })} />
+        {/* DP-03 approved exception: Write and Scan are the two equal ways in. */}
         <NoteButton label="Write note" onPress={() => setStep('write')} />
-        <NoteButton label="Scan text" secondary onPress={startScan} />
+        <NoteButton label="Scan text" onPress={startScan} />
       </> : formStep ? <>
-        <NoteForm fields={fields} onChange={setFields} locked={locked} showErrors={showErrors} onCategory={() => setCategoryOpen(true)} inputRef={inputRef} pageRef={pageRef}
+        <NoteForm fields={fields} onChange={setFields} locked={locked} showErrors={showErrors} saveAttempt={saveAttempt} inputRef={inputRef} pageRef={pageRef}
           onFocusField={focus => capture.setPosition({ focus })} onSelectionChange={selection => capture.setPosition({ selection })} selection={captureState.position.selection} />
         {step === 'review' && <NoteMessage message="Review and correct any scanning errors. Nothing is saved until you choose Save." />}
         {!!captureState.partial && <NoteMessage message={capture.partialUnaccepted ? 'Incomplete scan: some text may be missing. Save will ask you to review this warning.' : 'Incomplete scan accepted for this text. Check your note before saving.'} error />}
         {!locked && <NoteButton label={step === 'review' ? 'Scan again' : 'Scan text'} secondary onPress={startScan} />}
         {!!feedback && <NoteMessage message={feedback} error />}
         {operation?.status === 'failed' && <NoteMessage message={operation.message ?? "This note wasn't saved. Your text is still here."} error />}
-        {!!compare && <View style={{ gap: 12 }}>
+        {!!compare && <View style={{ gap: LIBRARY_SPACING.sm }}>
           <NoteMessage message="The saved note changed. Your draft is still above." error />
           <Text accessibilityRole="header" style={[ui.label, { color: colors.textPrimary }]}>Latest saved version</Text>
-          <Text selectable style={{ color: colors.textPrimary, fontSize: 17, lineHeight: 27 }}>{compare.content}</Text>
+          <Text selectable style={[LIBRARY_TEXT.bodySerif, { color: colors.textPrimary }]}>{compare.content}</Text>
           <NoteMessage message={`Category: ${categoryLabel(compare.tag)}${compare.page_number === null ? '' : ` · Page ${compare.page_number}`}`} />
           <NoteButton label="Keep editing" secondary onPress={() => { noteSaves.forget(operation!.submission.id); setActiveOperation(undefined); inputRef.current?.focus(); }} />
           <NoteButton label="Use saved version" secondary onPress={useSavedVersion} />
-          <NoteButton label="Replace saved version" onPress={() => setDialog({ title: 'Replace saved version?', message: 'Save your draft in place of the version shown here. If that version changes again, comparison will reopen.', keep: 'Keep editing', confirm: 'Replace saved version', action: () => { setDialog(null); save(compare); } })} />
+          {isOffline && <NoteMessage message="Saving needs a connection. Your text stays here." caption />}
+          <NoteButton label="Replace saved version" disabled={isOffline} onPress={() => setDialog({ title: 'Replace saved version?', message: 'Save your draft in place of the version shown here. If that version changes again, comparison will reopen.', keep: 'Keep editing', confirm: 'Replace saved version', action: () => { if (offlineRef.current) return; setDialog(null); save(compare); } })} />
         </View>}
       </> : <>
-        <Text style={{ color: colors.textSecondary, fontSize: 16 }}>Category: {categoryLabel(fields.category)}</Text>
+        <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>Category: {categoryLabel(fields.category)}</Text>
         {step === 'intake' && <>
           <NoteMessage message="Take a clear photo of printed text, or choose one already on this device. Prepare the selected area before reading it." />
           <NoteButton label="Capture page" disabled={!!captureState.busy} onPress={() => { void capture.pick('camera'); }} />
@@ -278,14 +285,10 @@ export default function NoteComposeScreen() {
         {captureState.busy === 'recognizing' && <NoteMessage message="Canceling prevents this result from being used. Processing on the device may finish later." />}
         {step !== 'failure' && !!captureState.error && <NoteMessage message={captureState.error.message} error />}
       </>}
-      {categoryOpen && <View style={{ gap: 12 }}><Text accessibilityRole="header" style={[ui.label, { color: colors.textPrimary }]}>Change category</Text>
-        <CategoryPicker selected={fields.category} onChange={category => { setFields({ ...fields, category }); setCategoryOpen(false); inputRef.current?.focus(); }} />
-        <NoteButton label="No category" secondary onPress={() => { setFields({ ...fields, category: null }); setCategoryOpen(false); inputRef.current?.focus(); }} />
-        <NoteButton label="Close category choices" secondary onPress={() => { setCategoryOpen(false); inputRef.current?.focus(); }} /></View>}
       </View>
       {footer}
     </ScrollView>
-    <NoteDialog spec={partialDialog ?? dialog} onKeep={() => {
+    <NoteDialog spec={partialDialog ?? dialog} confirmDisabled={isOffline && dialog?.confirm === 'Replace saved version'} onKeep={() => {
       browserHistoryGuard.current?.keepEditing(); restoreEditorFocus.current = formStep; setDialog(null); capture.keepPartialEditing();
       if (Platform.OS !== 'web' && formStep) inputRef.current?.focus();
     }} onDismiss={() => {
