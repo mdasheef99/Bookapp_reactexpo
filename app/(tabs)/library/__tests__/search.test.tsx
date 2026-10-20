@@ -69,8 +69,6 @@ jest.mock('@/components/search', () => {
 
     return {
         SkeletonCard: () => null,
-        SortModal: () => null,
-        RecentSearches: () => null,
         SearchBar: ({ query, onQueryChange, onSubmit, ...rest }: any) => (mockSearchBarProps.current = { query, ...rest }, React.createElement(
             React.Fragment,
             null,
@@ -85,6 +83,15 @@ jest.mock('@/components/search', () => {
                 React.createElement(Text, null, 'Search')
             )
         )),
+    };
+});
+jest.mock('@/components/library/search', () => {
+    const React = require('react');
+    const { Text, TextInput, TouchableOpacity } = require('react-native');
+
+    return {
+        SortModal: () => null,
+        RecentSearches: () => null,
         SearchSuggestions: () => null,
         FilterModal: ({ visible, onApply, onClose }: any) => visible ? React.createElement(
             React.Fragment,

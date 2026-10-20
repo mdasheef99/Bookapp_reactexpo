@@ -5,7 +5,7 @@ import { useRef } from 'react';
 import { GoogleBook } from '@/features/books/services/booksService';
 import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { useLibraryTypography } from '@/components/library/LibraryTypography';
-import { BookCard, BookCardProps } from './BookCard';
+import { BookCard, BookCardProps } from '@/components/search/BookCard';
 import * as Haptics from 'expo-haptics';
 
 interface SwipeableBookCardProps extends Omit<BookCardProps, 'onAdd' | 'onWishlistToggle'> {

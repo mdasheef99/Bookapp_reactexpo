@@ -273,7 +273,7 @@ it.each(['DeleteBookModal', 'ManualEntryModal'] as const)('shows an error raised
   const noop = jest.fn();
   const element = name === 'DeleteBookModal'
     ? React.createElement(require('../../DeleteBookModal').DeleteBookModal, { visible: true, onClose: noop, onConfirm: noop, isDeleting: false })
-    : React.createElement(require('../../../search/ManualEntryModal').ManualEntryModal, { visible: true, title: '', author: '', submitting: false, onTitleChange: noop, onAuthorChange: noop, onCancel: noop, onSave: noop });
+    : React.createElement(require('../../search/ManualEntryModal').ManualEntryModal, { visible: true, title: '', author: '', submitting: false, onTitleChange: noop, onAuthorChange: noop, onCancel: noop, onSave: noop });
   mount(element);
   notify('error', 'Something failed');
   expect(screen.getAllByText('Something failed')).toHaveLength(1);

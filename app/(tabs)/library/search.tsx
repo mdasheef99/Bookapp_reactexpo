@@ -28,17 +28,16 @@ import { useBookFeedback } from '@/components/library/ui';
 import { sortSearchResults } from '@/features/books/utils/searchResults';
 
 // Import components
+import { SkeletonCard, SearchBar } from '@/components/search';
 import {
-    SkeletonCard,
     SortModal,
     RecentSearches,
-    SearchBar,
     SearchSuggestions,
     FilterModal,
     FilterChips,
     SwipeableBookCard,
     ManualEntryModal,
-} from '@/components/search';
+} from '@/components/library/search';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 
 // Loading footer for pagination
