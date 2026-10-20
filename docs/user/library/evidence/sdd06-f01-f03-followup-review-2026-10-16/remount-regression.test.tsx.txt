@@ -1,0 +1,88 @@
+import React from 'react';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import BookDetailScreen from '../../app/(tabs)/library/[bookId]';
+import { booksService } from '@/features/books/services/booksService';
+import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
+
+// Initialize lazy native primitives outside individual behavioral test timers.
+void [View, Text, TextInput, TouchableOpacity];
+const mockBack = jest.fn();
+const mockPush = jest.fn();
+const mockReplace = jest.fn();
+let mockBook: any;
+let client: QueryClient;
+jest.mock('expo-image', () => ({ Image: 'Image' }));
+jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
+jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
+jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ bookId: 'entry' }), useRouter: () => ({ back: mockBack, push: mockPush, replace: mockReplace, canGoBack: () => true }) }));
+jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ colors: { bgPrimary: '#fff', bgCard: '#fafafa', bgSecondary: '#eee', border: '#555', accent: '#174f35', textPrimary: '#111', textSecondary: '#333', textTertiary: '#444', error: '#a00' } }) }));
+jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'reader' } }) }));
+jest.mock('@/features/books/notes/useManualNotes', () => ({ useNoteOperations: jest.fn() }));
+jest.mock('@/features/books/notes/manualNotesGateway', () => ({ manualNotesGateway: { list: jest.fn() } }));
+jest.mock('@/features/books/services/booksService', () => ({ booksService: {
+    getBookDetails: jest.fn(), getPublicReviewsForBook: jest.fn(), addRating: jest.fn(), updateReadingStatus: jest.fn(),
+    updateOwnership: jest.fn(), updateCondition: jest.fn(), toggleLendingAvailability: jest.fn(), removeFromLibrary: jest.fn(),
+} }));
+jest.mock('@/components/library', () => {
+    const { Text, Pressable } = require('react-native');
+    const control = (name: string, value: string) => ({ onChange }: any) => <Pressable accessibilityRole="button" accessibilityLabel={name} onPress={() => onChange(value)}><Text>{name}</Text></Pressable>;
+    return { StatusSelector: control('Reading status', 'completed'), OwnershipSelector: control('Ownership', 'borrowed'),
+        ConditionPicker: control('Condition', 'good'), RatingInput: ({ onChange, disabled }: any) => <Pressable accessibilityRole="button" accessibilityLabel="Rate book" disabled={disabled} onPress={() => onChange(4)}><Text>Rating</Text></Pressable>,
+        DeleteBookModal: ({ visible, onConfirm }: any) => visible ? <Pressable accessibilityRole="button" accessibilityLabel="Confirm removal" onPress={onConfirm}><Text>Confirm</Text></Pressable> : null };
+});
+jest.mock('@/components/notes', () => { const { Text } = require('react-native'); return { NoteCard: ({ note }: any) => <Text>{note.content}</Text> }; });
+jest.mock('@/components/library/VaultPagesList', () => { const { Text } = require('react-native'); return { VaultPagesList: () => <Text>Retained saved excerpt</Text> }; });
+jest.mock('@/components/ui/AtmosphericBackground', () => ({ AtmosphericBackground: ({ children }: any) => children }));
+
+function deferred() {
+    let resolve!: () => void; let reject!: (error: Error) => void;
+    const promise = new Promise<void>((yes, no) => { resolve = yes; reject = no; });
+    return { promise, resolve, reject };
+}
+async function screen() {
+    const result = render(<QueryClientProvider client={client}><BookDetailScreen /></QueryClientProvider>);
+    await result.findByText('Fixture book');
+    return result;
+}
+async function reviewScreen() {
+    const result = await screen();
+    const entry = result.queryByRole('button', { name: 'My review' });
+    if (entry) fireEvent.press(entry);
+    await result.findByTestId('library-review-input');
+    return result;
+}
+beforeEach(() => {
+    jest.clearAllMocks();
+    client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } });
+    mockBook = { id: 'entry', book_id: 'catalogue', review: 'Confirmed review', review_is_public: true, rating: null,
+        ownership: 'owned', reading_status: 'reading', condition: 'good', available_for_lending: false,
+        book: { id: 'catalogue', title: 'Fixture book', authors: ['Author'], publisher: 'Press', page_count: 320, isbn_13: '123' } };
+    (booksService.getBookDetails as jest.Mock).mockImplementation(async () => mockBook);
+    (booksService.getPublicReviewsForBook as jest.Mock).mockResolvedValue([]);
+    (manualNotesGateway.list as jest.Mock).mockResolvedValue([{ id: 'note', content: 'Saved note preview' }]);
+    (booksService.addRating as jest.Mock).mockImplementation(async (_id, rating, review, visibility) => { mockBook = { ...mockBook, rating: rating ?? mockBook.rating, review, review_is_public: visibility }; });
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+});
+afterEach(() => { cleanup(); client.clear(); jest.restoreAllMocks(); });
+it('preserves pending private visibility when Book Details remounts before the response', async () => {
+    const first = deferred(); const second = deferred();
+    (booksService.addRating as jest.Mock).mockImplementationOnce(() => first.promise).mockImplementationOnce(() => second.promise);
+    const initial = await reviewScreen();
+    fireEvent.press(initial.getByTestId('library-review-privacy-toggle'));
+    await waitFor(() => expect(booksService.addRating).toHaveBeenCalledTimes(1));
+    expect(booksService.addRating).toHaveBeenNthCalledWith(1, 'entry', undefined, 'Confirmed review', false);
+    initial.unmount();
+    const reopened = await reviewScreen();
+    fireEvent.changeText(reopened.getByTestId('library-review-input'), 'Later text after reopening');
+    fireEvent(reopened.getByTestId('library-review-input'), 'blur');
+    await act(async () => { mockBook = { ...mockBook, review_is_public: false }; first.resolve(); });
+    await waitFor(() => expect(booksService.addRating).toHaveBeenCalledTimes(2));
+    const laterPayload = (booksService.addRating as jest.Mock).mock.calls[1];
+    await act(async () => { mockBook = { ...mockBook, review: laterPayload[2], review_is_public: laterPayload[3] }; second.resolve(); });
+    await waitFor(() => expect(client.isMutating()).toBe(0));
+    expect(laterPayload).toEqual(['entry', undefined, 'Later text after reopening', false]);
+    expect(mockBook.review_is_public).toBe(false);
+});

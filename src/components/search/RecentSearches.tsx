@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useLibraryTypography } from '@/components/library/LibraryTypography';
 
 interface RecentSearchItemProps {
     query: string;
@@ -9,28 +10,41 @@ interface RecentSearchItemProps {
 }
 
 const RecentSearchItem = ({ query, onPress, onRemove }: RecentSearchItemProps) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
     return (
-        <TouchableOpacity
-            onPress={onPress}
+        <View
             style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 backgroundColor: colors.bgCard,
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-                borderRadius: 14,
+                paddingLeft: 12,
                 marginRight: 10,
                 borderWidth: 1,
                 borderColor: colors.border,
+                borderRadius: 14,
             }}
         >
-            <Ionicons name="time-outline" size={16} color={colors.textTertiary} />
-            <Text style={{ color: colors.textSecondary, fontSize: 14, marginLeft: 8, fontWeight: '500' }}>{query}</Text>
-            <TouchableOpacity onPress={onRemove} style={{ marginLeft: 8, padding: 2 }}>
-                <Ionicons name="close" size={14} color={colors.textTertiary} />
+            <View style={{ marginLeft: 8 }}>
+                <Ionicons name="time-outline" size={16} color={colors.textTertiary} />
+            </View>
+            <TouchableOpacity
+                onPress={onPress}
+                accessibilityRole="button"
+                accessibilityLabel={`Search for ${query}`}
+                style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 }}
+            >
+                <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body }} numberOfLines={1}>{query}</Text>
             </TouchableOpacity>
-        </TouchableOpacity>
+            <TouchableOpacity
+                onPress={onRemove}
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${query} from recent searches`}
+                style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+            >
+                <Ionicons name="close" size={15} color={colors.textTertiary} />
+            </TouchableOpacity>
+        </View>
     );
 };
 
@@ -41,12 +55,13 @@ interface RecentSearchesProps {
 }
 
 export const RecentSearches = ({ searches, onSearch, onRemove }: RecentSearchesProps) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
     if (searches.length === 0) return null;
 
     return (
         <View style={{ marginBottom: 16 }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 13, fontWeight: '600', marginBottom: 10 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: fonts.label, marginBottom: 8 }}>
                 Recent Searches
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>

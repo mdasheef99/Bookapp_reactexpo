@@ -1,0 +1,67 @@
+diff --git a/.tmp/sol-keyboard-ManualNoteUi-before.txt b/src/components/notes/ManualNoteUi.tsx
+index 9906e41..7fb1e7f 100644
+--- a/.tmp/sol-keyboard-ManualNoteUi-before.txt
++++ b/src/components/notes/ManualNoteUi.tsx
+@@ -40,6 +40,13 @@ export function CategoryPicker({ selected, onChange, includeAll = false }: { sel
+   return <View style={ui.categories} accessibilityLabel={includeAll ? 'Filter notes' : 'Category, optional'}>
+     {choices.map(choice => <Pressable key={choice.value ?? 'all'} accessibilityRole="radio" accessibilityLabel={choice.label}
+       aria-checked={selected === choice.value} accessibilityState={{ selected: selected === choice.value, checked: selected === choice.value }} onPress={() => onChange(choice.value)}
++      {...(Platform.OS === 'web' ? { onKeyDown: (event: React.KeyboardEvent<HTMLElement>) => {
++        // RN Web's responder handles Enter, but only handles Space for button roles.
++        if (event.key === ' ' && event.target === event.currentTarget) {
++          event.preventDefault();
++          if (!event.repeat) onChange(choice.value);
++        }
++      } } : {})}
+       style={[ui.category, { backgroundColor: selected === choice.value ? colors.accent : colors.bgCard, borderColor: colors.border }]}>
+       <Text style={{ fontSize: 15, fontWeight: '600', color: selected === choice.value ? colors.bgPrimary : colors.textPrimary }}>{selected === choice.value ? '✓ ' : ''}{choice.label}</Text>
+     </Pressable>)}
+diff --git a/.tmp/sol-keyboard-test-before.txt b/src/components/notes/__tests__/CategoryPicker.web-semantics.test.tsx
+index dc98ee1..3dd6ee1 100644
+--- a/.tmp/sol-keyboard-test-before.txt
++++ b/src/components/notes/__tests__/CategoryPicker.web-semantics.test.tsx
+@@ -1,6 +1,6 @@
+ /** Actual shared picker output mapped by the installed RN Web DOM converter; no browser claim. */
+ import React from 'react';
+-import { Pressable, Text, View } from 'react-native';
++import { Platform, Pressable, Text, View } from 'react-native';
+ import { fireEvent, render, screen } from '@testing-library/react-native';
+ import { CategoryPicker } from '../ManualNoteUi';
+ import { NOTE_CATEGORIES } from '@/features/books/notes/manualNoteContract';
+@@ -50,3 +50,36 @@ it('treats All as the null filter without adding a sixth note category', () => {
+   fireEvent.press(screen.getByRole('radio', { name: 'All' })); expect(onChange).toHaveBeenLastCalledWith(null);
+   mounted.rerender(<CategoryPicker selected={null} includeAll onChange={onChange} />); expectSelection('All');
+ });
++
++it('activates a web radio once with Space and Enter through the installed responder, ignoring unrelated and repeated Space keys', () => {
++  const priorOS = Platform.OS; const priorDocument = (globalThis as any).document;
++  const listeners = new Map<string, (event: any) => void>();
++  const PressResponder = require('react-native-web/dist/cjs/modules/usePressEvents/PressResponder');
++  try {
++    Platform.OS = 'web';
++    (globalThis as any).document = { addEventListener: (type: string, listener: (event: any) => void) => listeners.set(type, listener), removeEventListener: (type: string) => listeners.delete(type) };
++    const onChange = jest.fn(); render(<CategoryPicker selected="quote" onChange={onChange} />);
++    const props = radios().find(radio => radio.props.accessibilityLabel === 'Thought')!.props;
++    const target = { tagName: 'DIV', getAttribute: (name: string) => name === 'role' ? props.accessibilityRole : null };
++    const responder = new PressResponder({ onPress: props.onPress });
++    const press = (key: string, repeat = false) => {
++      const event = { key, repeat, target, currentTarget: target, nativeEvent: { key, type: 'keydown' }, persist() {}, preventDefault: jest.fn(), stopPropagation() {} };
++      // Installed Pressable calls its responder before the component's supported custom onKeyDown.
++      responder.getEventHandlers().onKeyDown(event);
++      (props.onKeyDown as ((event: unknown) => void) | undefined)?.(event);
++      listeners.get('keyup')?.({ ...event, nativeEvent: { ...event.nativeEvent, type: 'keyup' } });
++      return event;
++    };
++    try {
++      const space = press(' '); expect(onChange).toHaveBeenCalledTimes(1); expect(onChange).toHaveBeenLastCalledWith('reflect'); expect(space.preventDefault).toHaveBeenCalled();
++      press('Enter'); expect(onChange).toHaveBeenCalledTimes(2); expect(onChange).toHaveBeenLastCalledWith('reflect');
++      press('ArrowDown'); press('a'); press(' ', true); expect(onChange).toHaveBeenCalledTimes(2);
++    } finally { responder.reset(); }
++  } finally { Platform.OS = priorOS; (globalThis as any).document = priorDocument; }
++});
++
++it('retains native onPress and omits the web key handler', () => {
++  const onChange = jest.fn(); render(<CategoryPicker selected={null} includeAll onChange={onChange} />);
++  expect(radios().every(radio => radio.props.onKeyDown === undefined)).toBe(true);
++  fireEvent.press(screen.getByRole('radio', { name: 'All' })); expect(onChange).toHaveBeenCalledTimes(1); expect(onChange).toHaveBeenCalledWith(null);
++});

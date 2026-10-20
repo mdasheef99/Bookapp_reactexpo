@@ -1,6 +1,6 @@
 import { View, Animated } from 'react-native';
 import { useEffect, useRef } from 'react';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 
 // Shimmer Animation Hook
 const useShimmer = () => {
@@ -29,7 +29,7 @@ const useShimmer = () => {
 };
 
 export const SkeletonCard = () => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
     const shimmer = useShimmer();
     const opacity = shimmer.interpolate({
         inputRange: [0, 1],
@@ -41,8 +41,8 @@ export const SkeletonCard = () => {
             <View
                 style={{
                     backgroundColor: colors.bgCard,
-                    borderRadius: 20,
-                    padding: 14,
+                    borderRadius: 14,
+                    padding: 12,
                     flexDirection: 'row',
                     borderWidth: 1,
                     borderColor: colors.border,
@@ -50,14 +50,14 @@ export const SkeletonCard = () => {
             >
                 <Animated.View
                     style={{
-                        width: 95,
-                        height: 145,
+                        width: 76,
+                        height: 114,
                         backgroundColor: colors.bgSecondary,
                         borderRadius: 12,
                         opacity,
                     }}
                 />
-                <View style={{ flex: 1, marginLeft: 16, justifyContent: 'space-between', paddingVertical: 4 }}>
+                <View style={{ flex: 1, marginLeft: 12, justifyContent: 'space-between', paddingVertical: 4 }}>
                     <View>
                         <Animated.View style={{ height: 22, backgroundColor: colors.bgSecondary, borderRadius: 6, width: '95%', marginBottom: 10, opacity }} />
                         <Animated.View style={{ height: 16, backgroundColor: colors.bgSecondary, borderRadius: 4, width: '65%', marginBottom: 10, opacity }} />

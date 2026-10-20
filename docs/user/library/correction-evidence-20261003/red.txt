@@ -1,0 +1,537 @@
+FAIL src/features/books/utils/__tests__/libraryShelf.test.ts (6.002 s)
+  ● Library filter count parity (review R3) › excludes wishlist reading/completed entries from the corresponding chip counts
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+      Array [
+        4,
+    -   1,
+    -   1,
+    +   2,
+    +   2,
+        2,
+      ]
+
+       9 |         const books = [entry('owned-reading', 'reading', 'owned'), entry('wanted-reading', 'reading', 'wishlist'),
+      10 |             entry('owned-completed', 'completed', 'owned'), entry('wanted-completed', 'completed', 'wishlist')];
+    > 11 |         expect(getLibraryFilterChips(books).map(({ count }) => count)).toEqual([4, 1, 1, 2]);
+         |                                                                        ^
+      12 |     });
+      13 |
+      14 |     it('keeps every count equal to its filtered set through ownership transitions', () => {
+
+      at Object.toEqual (src/features/books/utils/__tests__/libraryShelf.test.ts:11:72)
+
+  ● Library filter count parity (review R3) › keeps every count equal to its filtered set through ownership transitions
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 2
+
+      18 |             const changed = books.map((book) => book.id === 'reading' ? { ...book, ownership } : book);
+      19 |             for (const chip of getLibraryFilterChips(changed)) {
+    > 20 |                 expect(chip.count).toBe(filterLibraryBooks(changed, chip.key).length);
+         |                                    ^
+      21 |             }
+      22 |         }
+      23 |         expect(getLibraryFilterChips([]).map(({ count }) => count)).toEqual([0, 0, 0, 0]);
+
+      at toBe (src/features/books/utils/__tests__/libraryShelf.test.ts:20:36)
+      at Object._loop (src/features/books/utils/__tests__/libraryShelf.test.ts:17:60)
+
+(node:19016) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+FAIL src/components/library/__tests__/LibraryShelf.test.tsx (12.709 s)
+  ● LibraryShelf single shelf SDD-04 › keeps the label region opaque and removes competing expanded spine hit regions
+
+    expect(received).toBeUndefined()
+
+    Received: {"bottom": 0, "left": 10, "right": 10, "top": 0}
+
+      113 |         const book = { id: 'contrast', reading_status: 'reading', ownership: 'owned', book: { title: 'Ikigai', page_count: 63 } };
+      114 |         const { getByTestId, getByText } = render(<LibraryShelf books={[book]} onBookPress={jest.fn()} />);
+    > 115 |         expect(getByTestId('library-shelf-spine-contrast').props.hitSlop).toBeUndefined();
+          |                                                                           ^
+      116 |         const label = getByText('Ikigai');
+      117 |         expect(StyleSheet.flatten(label.props.style).opacity ?? 1).toBe(1);
+      118 |         expect(StyleSheet.flatten(label.parent!.props.style).backgroundColor).toBe('#bd7a42');
+
+      at Object.toBeUndefined (src/components/library/__tests__/LibraryShelf.test.tsx:115:75)
+
+  ● LibraryShelf single shelf SDD-04 › offers non-overlapping title buttons for the same filtered books without changing presentation
+
+    Unable to find an element with testID: library-book-picker-open
+
+    <View
+      testID="library-page"
+    >
+      <RCTScrollView>
+        <View>
+          <View>
+            <View>
+              <View>
+                <View>
+                  <Ionicons />
+                  <Text>
+                    CM's Book Shelf
+                  </Text>
+                </View>
+                <View
+                  accessibilityHint="Open the catalogue to find and add books"
+                  accessibilityLabel="Search books"
+                  accessibilityRole="button"
+                  accessible={true}
+                >
+                  <Ionicons />
+                </View>
+              </View>
+              <View>
+                <View>
+                  <View
+                    accessibilityLabel="Shelf view"
+                    accessibilityRole="button"
+                    accessibilityState={
+                      {
+                        "selected": true,
+                      }
+                    }
+                    accessible={true}
+                    testID="library-view-shelf"
+                  >
+                    <Ionicons />
+                    <Text>
+                      Shelf
+                    </Text>
+                  </View>
+                  <View
+                    accessibilityLabel="List view"
+                    accessibilityRole="button"
+                    accessibilityState={
+                      {
+                        "selected": false,
+                      }
+                    }
+                    accessible={true}
+                    testID="library-view-list"
+                  >
+                    <Ionicons />
+                    <Text>
+                      List
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  accessibilityHint="Open the catalogue to find a book or add one manually"
+                  accessibilityLabel="Add a new book to your library"
+                  accessibilityRole="button"
+                  accessible={true}
+                >
+                  <Text>
+                    + Add Book
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View
+              testID="library-collection-controls"
+            >
+              <View>
+                <View
+                  accessibilityLabel="All, 2 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": false,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    All
+                  </Text>
+                  <Text>
+                    2
+                  </Text>
+                </View>
+                <View
+                  accessibilityLabel="Reading, 1 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": false,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    Reading
+                  </Text>
+                  <Text>
+                    1
+                  </Text>
+                </View>
+                <View
+                  accessibilityLabel="Completed, 1 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": false,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    Completed
+                  </Text>
+                  <Text>
+                    1
+                  </Text>
+                </View>
+                <View
+                  accessibilityLabel="Wishlist, 1 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": true,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    Wishlist
+                  </Text>
+                  <Text>
+                    1
+                  </Text>
+                </View>
+              </View>
+              <View>
+                <Text>
+                  1
+                   
+                  book
+                </Text>
+                <Text>
+                  Showing 
+                  wishlist
+                </Text>
+              </View>
+            </View>
+            <View
+              style={
+                {
+                  "opacity": 0,
+                }
+              }
+              testID="library-shelf"
+            >
+              <View
+                testID="library-shelf-frame"
+              >
+                <View
+                  pointerEvents="none"
+                />
+                <View
+                  pointerEvents="none"
+                />
+                <Image
+                  accessibilityElementsHidden={true}
+                  accessible={false}
+                  importantForAccessibility="no-hide-descendants"
+                  pointerEvents="none"
+                  testID="library-shelf-wood-grain"
+                />
+                <View
+                  pointerEvents="none"
+                  testID="library-shelf-inner-ledge"
+                >
+                  <Image
+                    accessible={false}
+                  />
+                </View>
+                <View
+                  pointerEvents="none"
+                >
+                  <Image
+                    accessible={false}
+                  />
+                </View>
+                <RCTScrollView
+                  testID="library-shelf-scroll"
+                >
+                  <View>
+                    <View>
+                      <View>
+                        <View
+                          accessibilityLabel="Open Wanted title by A"
+                          accessibilityRole="button"
+                          accessible={true}
+                          testID="library-shelf-spine-wanted"
+                        >
+                          <Image
+                            accessible={false}
+                            pointerEvents="none"
+                          />
+                          <View
+                            pointerEvents="none"
+                          />
+                          <View
+                            pointerEvents="none"
+                          />
+                          <View
+                            pointerEvents="none"
+                          >
+                            <Text>
+                              Wanted title
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                      <View
+                        accessibilityElementsHidden={true}
+                        accessible={false}
+                        importantForAccessibility="no-hide-descendants"
+                        pointerEvents="none"
+                        testID="library-shelf-bookend-top"
+                      >
+                        <View />
+                      </View>
+                    </View>
+                    <View />
+                  </View>
+                </RCTScrollView>
+                <View
+                  accessibilityElementsHidden={true}
+                  accessible={false}
+                  importantForAccessibility="no-hide-descendants"
+                  pointerEvents="none"
+                  testID="library-shelf-left-support"
+                >
+                  <Image
+                    accessible={false}
+                  />
+                </View>
+                <View
+                  accessibilityElementsHidden={true}
+                  accessible={false}
+                  importantForAccessibility="no-hide-descendants"
+                  pointerEvents="none"
+                  testID="library-shelf-right-support"
+                >
+                  <Image
+                    accessible={false}
+                  />
+                </View>
+                <View
+                  pointerEvents="none"
+                />
+              </View>
+            </View>
+            <View>
+              <View
+                accessibilityLabel="No current read"
+                accessibilityState={
+                  {
+                    "disabled": true,
+                  }
+                }
+                accessible={true}
+              >
+                <View
+                  pointerEvents="none"
+                />
+                <Text>
+                  Current Read
+                </Text>
+                <Text>
+                  Your next chapter awaits
+                </Text>
+                <Text>
+                  Choose a book from your shelf to start reading.
+                </Text>
+              </View>
+              <View>
+                <Ionicons />
+                <View>
+                  <Text>
+                    2
+                  </Text>
+                  <Text>
+                    In your library
+                  </Text>
+                </View>
+              </View>
+              <View
+                accessibilityLabel="Show wishlist, 1 books"
+                accessibilityRole="button"
+                accessible={true}
+              >
+                <Ionicons />
+                <View>
+                  <Text>
+                    1
+                  </Text>
+                  <Text>
+                    Wishlist
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </RCTScrollView>
+    </View>
+
+      128 |         await waitFor(() => expect(getByTestId('library-shelf')).toBeTruthy());
+      129 |         fireEvent.press(getByLabelText('Wishlist, 1 books'));
+    > 130 |         fireEvent.press(getByTestId('library-book-picker-open'));
+          |                         ^
+      131 |         const choice = getByTestId('library-book-picker-entry-wanted');
+      132 |         expect(StyleSheet.flatten(choice.props.style).minHeight).toBeGreaterThanOrEqual(44);
+      133 |         expect(queryByTestId('library-book-picker-entry-owned')).toBeNull();
+
+      at Object.getByTestId (src/components/library/__tests__/LibraryShelf.test.tsx:130:25)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+FAIL app/(tabs)/library/__tests__/index.test.tsx
+  ● LibraryScreen › uses the bounded FlatList as the sole vertical scroll owner, including the collection controls
+
+    expect(received).toBeTruthy()
+
+    Received: undefined
+
+      203 |         await waitFor(() => expect(getByText('Single scroll owner')).toBeTruthy());
+      204 |         const list = UNSAFE_getByType(FlatList);
+    > 205 |         expect(list.props.ListHeaderComponent).toBeTruthy();
+          |                                                ^
+      206 |         expect(StyleSheet.flatten(list.props.style).flex).toBe(1);
+      207 |         let ancestor = list.parent;
+      208 |         while (ancestor) {
+
+      at Object.toBeTruthy (C:\Users\LEGION\Desktop\Bookconnect4_library\app\(tabs)../../../../library/__tests__/index.test.tsx:205:48)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+FAIL src/features/books/utils/__tests__/shelfLayout.test.ts
+  ● review R2 spine label contrast › The Power of Now has at least 4.5:1 ordinary-title contrast
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    3.6931638994099427
+
+      260 |         const background = spineColorFromTitle(title);
+      261 |         const pair = [luminance(background), luminance(spineTextColor(background))].sort((a, b) => b - a);
+    > 262 |         expect((pair[0] + 0.05) / (pair[1] + 0.05)).toBeGreaterThanOrEqual(4.5);
+          |                                                     ^
+      263 |     });
+      264 | });
+      265 |
+
+      at toBeGreaterThanOrEqual (src/features/books/utils/__tests__/shelfLayout.test.ts:262:53)
+
+  ● review R2 spine label contrast › The 5 AM Club has at least 4.5:1 ordinary-title contrast
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    3.378194199918062
+
+      260 |         const background = spineColorFromTitle(title);
+      261 |         const pair = [luminance(background), luminance(spineTextColor(background))].sort((a, b) => b - a);
+    > 262 |         expect((pair[0] + 0.05) / (pair[1] + 0.05)).toBeGreaterThanOrEqual(4.5);
+          |                                                     ^
+      263 |     });
+      264 | });
+      265 |
+
+      at toBeGreaterThanOrEqual (src/features/books/utils/__tests__/shelfLayout.test.ts:262:53)
+
+  ● review R2 spine label contrast › Zero to One has at least 4.5:1 ordinary-title contrast
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    3.3855774598798813
+
+      260 |         const background = spineColorFromTitle(title);
+      261 |         const pair = [luminance(background), luminance(spineTextColor(background))].sort((a, b) => b - a);
+    > 262 |         expect((pair[0] + 0.05) / (pair[1] + 0.05)).toBeGreaterThanOrEqual(4.5);
+          |                                                     ^
+      263 |     });
+      264 | });
+      265 |
+
+      at toBeGreaterThanOrEqual (src/features/books/utils/__tests__/shelfLayout.test.ts:262:53)
+
+  ● review R2 spine label contrast › Ikigai has at least 4.5:1 ordinary-title contrast
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 4.5
+    Received:    2.702844152979918
+
+      260 |         const background = spineColorFromTitle(title);
+      261 |         const pair = [luminance(background), luminance(spineTextColor(background))].sort((a, b) => b - a);
+    > 262 |         expect((pair[0] + 0.05) / (pair[1] + 0.05)).toBeGreaterThanOrEqual(4.5);
+          |                                                     ^
+      263 |     });
+      264 | });
+      265 |
+
+      at toBeGreaterThanOrEqual (src/features/books/utils/__tests__/shelfLayout.test.ts:262:53)
+
+  ● review R4 per-book brush bounds › matches rendered metric height and rejects backing above each bottom-aligned spine
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 6
+
+    - ObjectContaining {
+    -   "height": 146,
+    + Object {
+    +   "gapAfter": 1,
+    +   "id": "height-0",
+    +   "offsetLeft": 12,
+    +   "row": "top",
+    +   "width": 32,
+      }
+
+      273 |             const item = entries.find((entry) => entry.id === book.id)!;
+      274 |             const expectedHeight = spineMetrics(stableSeed(item.id, item.book.title), item.book.page_count).height;
+    > 275 |             expect(book).toEqual(expect.objectContaining({ height: expectedHeight }));
+          |                          ^
+      276 |             const band = rowGeometry[book.row];
+      277 |             const visibleTop = band.y + band.height - expectedHeight;
+      278 |             const point = { scrollX: 40, touchX: book.offsetLeft + book.width / 2 - 40, rowGeometry, bookLayouts };
+
+      at toEqual (src/features/books/utils/__tests__/shelfLayout.test.ts:275:26)
+      at Object._loop3 (src/features/books/utils/__tests__/shelfLayout.test.ts:272:39)
+
+  ● review R4 per-book brush bounds › does not brush a short book at the row ceiling or a gap at book height
+
+    expect(received).toBeNull()
+
+    Received: "short"
+
+      288 |             { id: 'tall', row: 'top' as const, offsetLeft: 39, width: 44, height: 156 }];
+      289 |         const point = { scrollX: 10, rowGeometry, bookLayouts };
+    > 290 |         expect(resolveSweptSpine({ ...point, touchX: 14, touchY: 33 })).toBeNull();
+          |                                                                         ^
+      291 |         expect(resolveSweptSpine({ ...point, touchX: 40, touchY: 35 })).toBeNull();
+      292 |         expect(resolveSweptSpine({ ...point, touchX: 40, touchY: 36 })).toBe('tall');
+      293 |         expect(resolveSweptSpine({ ...point, touchX: 27, touchY: 100 })).toBeNull();
+
+      at Object.toBeNull (src/features/books/utils/__tests__/shelfLayout.test.ts:290:73)
+
+Test Suites: 4 failed, 4 total
+Tests:       11 failed, 49 passed, 60 total
+Snapshots:   0 total
+Time:        24.179 s
+Ran all test suites within paths "src/features/books/utils/__tests__/shelfLayout.test.ts", "src/features/books/utils/__tests__/libraryShelf.test.ts", "src/components/library/__tests__/LibraryShelf.test.tsx", "app/(tabs)/library/__tests__/index.test.tsx".

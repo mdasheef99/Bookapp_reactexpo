@@ -1,0 +1,430 @@
+[
+  {
+    "bundle": [
+      "http://localhost:19006/_expo/static/js/web/entry-410b139a7cdc3d0697f4de2b21a40386.js"
+    ],
+    "piles": [
+      {
+        "books": [
+          {
+            "height": 46,
+            "id": "library-horizontal-book-e063191d-6a0b-4222-91c9-0a98937ee80b",
+            "text": [
+              {
+                "text": "Sand Dune Stabilization, Shelterbelts and Afforestation in Dry Zones",
+                "x": 63.79999923706055
+              }
+            ],
+            "width": 232.9499969482422,
+            "x": 40
+          },
+          {
+            "height": 46,
+            "id": "library-horizontal-book-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+            "text": [
+              {
+                "text": "The Bed of Procrustes",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Taleb",
+                "x": 215.83750915527344
+              }
+            ],
+            "width": 240.6374969482422,
+            "x": 40
+          },
+          {
+            "height": 46,
+            "id": "library-horizontal-book-ae665879-eda1-40f1-a775-7d698a861b27",
+            "text": [
+              {
+                "text": "Dune",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Herbert",
+                "x": 223.5124969482422
+              }
+            ],
+            "width": 248.3125,
+            "x": 40
+          },
+          {
+            "height": 46,
+            "id": "library-horizontal-book-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+            "text": [
+              {
+                "text": "ZZ_TEST Playwright Nomination Book",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Author",
+                "x": 231.1999969482422
+              }
+            ],
+            "width": 256,
+            "x": 40
+          }
+        ],
+        "id": "library-horizontal-pile-top-0",
+        "plankGap": 0
+      },
+      {
+        "books": [
+          {
+            "height": 46,
+            "id": "library-horizontal-book-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+            "text": [
+              {
+                "text": "The Science of Dune",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Grazier",
+                "x": 208.15000915527344
+              }
+            ],
+            "width": 232.9499969482422,
+            "x": 40
+          },
+          {
+            "height": 47,
+            "id": "library-horizontal-book-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+            "text": [
+              {
+                "text": "Fooled by Randomness",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Taleb",
+                "x": 215.83750915527344
+              }
+            ],
+            "width": 240.6374969482422,
+            "x": 40
+          },
+          {
+            "height": 44,
+            "id": "library-horizontal-book-f498f920-386c-484b-8533-18f9c44579f8",
+            "text": [
+              {
+                "text": "Oil, electricity and Taleb’s ‚Black Swan‘",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Müller",
+                "x": 223.5124969482422
+              }
+            ],
+            "width": 248.3125,
+            "x": 40
+          },
+          {
+            "height": 48,
+            "id": "library-horizontal-book-eebf0401-d243-423b-83e4-41aa5d287d70",
+            "text": [
+              {
+                "text": "The Black Swan",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Taleb",
+                "x": 231.1999969482422
+              }
+            ],
+            "width": 256,
+            "x": 40
+          }
+        ],
+        "id": "library-horizontal-pile-bottom-0",
+        "plankGap": 0
+      }
+    ],
+    "width": 390
+  },
+  {
+    "bundle": [
+      "http://localhost:19006/_expo/static/js/web/entry-410b139a7cdc3d0697f4de2b21a40386.js"
+    ],
+    "piles": [
+      {
+        "books": [
+          {
+            "height": 46,
+            "id": "library-horizontal-book-e063191d-6a0b-4222-91c9-0a98937ee80b",
+            "text": [
+              {
+                "text": "Sand Dune Stabilization, Shelterbelts and Afforestation in Dry Zones",
+                "x": 63.79999923706055
+              }
+            ],
+            "width": 218.40000915527344,
+            "x": 40
+          },
+          {
+            "height": 46,
+            "id": "library-horizontal-book-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+            "text": [
+              {
+                "text": "The Bed of Procrustes",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Taleb",
+                "x": 200.8000030517578
+              }
+            ],
+            "width": 225.6000061035156,
+            "x": 40
+          },
+          {
+            "height": 46,
+            "id": "library-horizontal-book-ae665879-eda1-40f1-a775-7d698a861b27",
+            "text": [
+              {
+                "text": "Dune",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Herbert",
+                "x": 208
+              }
+            ],
+            "width": 232.8000030517578,
+            "x": 40
+          },
+          {
+            "height": 46,
+            "id": "library-horizontal-book-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+            "text": [
+              {
+                "text": "ZZ_TEST Playwright Nomination Book",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Author",
+                "x": 215.1999969482422
+              }
+            ],
+            "width": 240,
+            "x": 40
+          }
+        ],
+        "id": "library-horizontal-pile-top-0",
+        "plankGap": 0
+      },
+      {
+        "books": [
+          {
+            "height": 46,
+            "id": "library-horizontal-book-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+            "text": [
+              {
+                "text": "The Science of Dune",
+                "x": 63.79999923706055
+              }
+            ],
+            "width": 218.40000915527344,
+            "x": 40
+          },
+          {
+            "height": 47,
+            "id": "library-horizontal-book-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+            "text": [
+              {
+                "text": "Fooled by Randomness",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Taleb",
+                "x": 200.8000030517578
+              }
+            ],
+            "width": 225.6000061035156,
+            "x": 40
+          },
+          {
+            "height": 44,
+            "id": "library-horizontal-book-f498f920-386c-484b-8533-18f9c44579f8",
+            "text": [
+              {
+                "text": "Oil, electricity and Taleb’s ‚Black Swan‘",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Müller",
+                "x": 208
+              }
+            ],
+            "width": 232.8000030517578,
+            "x": 40
+          },
+          {
+            "height": 48,
+            "id": "library-horizontal-book-eebf0401-d243-423b-83e4-41aa5d287d70",
+            "text": [
+              {
+                "text": "The Black Swan",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Taleb",
+                "x": 215.1999969482422
+              }
+            ],
+            "width": 240,
+            "x": 40
+          }
+        ],
+        "id": "library-horizontal-pile-bottom-0",
+        "plankGap": 0
+      }
+    ],
+    "width": 320
+  },
+  {
+    "bundle": [
+      "http://localhost:19006/_expo/static/js/web/entry-410b139a7cdc3d0697f4de2b21a40386.js"
+    ],
+    "piles": [
+      {
+        "books": [
+          {
+            "height": 46,
+            "id": "library-horizontal-book-e063191d-6a0b-4222-91c9-0a98937ee80b",
+            "text": [
+              {
+                "text": "Sand Dune Stabilization, Shelterbelts and Afforestation in Dry Zones",
+                "x": 63.79999923706055
+              }
+            ],
+            "width": 232.9499969482422,
+            "x": 40
+          },
+          {
+            "height": 46,
+            "id": "library-horizontal-book-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+            "text": [
+              {
+                "text": "The Bed of Procrustes",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Taleb",
+                "x": 215.83750915527344
+              }
+            ],
+            "width": 240.6374969482422,
+            "x": 40
+          },
+          {
+            "height": 46,
+            "id": "library-horizontal-book-ae665879-eda1-40f1-a775-7d698a861b27",
+            "text": [
+              {
+                "text": "Dune",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Herbert",
+                "x": 223.5124969482422
+              }
+            ],
+            "width": 248.3125,
+            "x": 40
+          },
+          {
+            "height": 46,
+            "id": "library-horizontal-book-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+            "text": [
+              {
+                "text": "ZZ_TEST Playwright Nomination Book",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Author",
+                "x": 231.1999969482422
+              }
+            ],
+            "width": 256,
+            "x": 40
+          }
+        ],
+        "id": "library-horizontal-pile-top-0",
+        "plankGap": 0
+      },
+      {
+        "books": [
+          {
+            "height": 46,
+            "id": "library-horizontal-book-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+            "text": [
+              {
+                "text": "The Science of Dune",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Grazier",
+                "x": 208.15000915527344
+              }
+            ],
+            "width": 232.9499969482422,
+            "x": 40
+          },
+          {
+            "height": 47,
+            "id": "library-horizontal-book-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+            "text": [
+              {
+                "text": "Fooled by Randomness",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Taleb",
+                "x": 215.83750915527344
+              }
+            ],
+            "width": 240.6374969482422,
+            "x": 40
+          },
+          {
+            "height": 44,
+            "id": "library-horizontal-book-f498f920-386c-484b-8533-18f9c44579f8",
+            "text": [
+              {
+                "text": "Oil, electricity and Taleb’s ‚Black Swan‘",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Müller",
+                "x": 223.5124969482422
+              }
+            ],
+            "width": 248.3125,
+            "x": 40
+          },
+          {
+            "height": 48,
+            "id": "library-horizontal-book-eebf0401-d243-423b-83e4-41aa5d287d70",
+            "text": [
+              {
+                "text": "The Black Swan",
+                "x": 63.79999923706055
+              },
+              {
+                "text": "Taleb",
+                "x": 231.1999969482422
+              }
+            ],
+            "width": 256,
+            "x": 40
+          }
+        ],
+        "id": "library-horizontal-pile-bottom-0",
+        "plankGap": 0
+      }
+    ],
+    "width": 430
+  }
+]

@@ -1,121 +1,109 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, Dimensions } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import React, { useRef } from 'react';
+import { AccessibilityInfo, findNodeHandle, Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LIBRARY_RADIUS, LIBRARY_SPACING, useLibraryAppearance } from './LibraryAppearance';
+import { LIBRARY_TEXT } from './LibraryTypography';
+import { BookButton, BookFeedbackSlot } from './ui';
+import { DIALOG_MAX_WIDTH } from './bookDetails/bookDetailsTokens';
 
-interface DeleteBookModalProps {
-    visible: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
-    isDeleting: boolean;
+const DESCRIPTION_ID = 'delete-book-modal-description';
+
+export interface DeleteBookModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  isDeleting: boolean;
+  disabled?: boolean;
+  bookTitle: string;
 }
 
-export const DeleteBookModal = ({ visible, onClose, onConfirm, isDeleting }: DeleteBookModalProps) => {
-    const { colors } = useTheme();
+export const DeleteBookModal = ({
+  visible,
+  onClose,
+  onConfirm,
+  isDeleting,
+  disabled = false,
+  bookTitle = '',
+}: DeleteBookModalProps) => {
+  const colors = useLibraryAppearance();
+  const cancelRef = useRef<View>(null);
+  const title = `Remove “${bookTitle}” from your library?`;
+  const description =
+    "Your notes, review and saved pages for this book will be deleted too. You can't undo this.";
 
-    return (
-        <Modal
-            visible={visible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={onClose}
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      accessible
+      role="dialog"
+      aria-modal
+      onRequestClose={() => { if (!isDeleting) onClose(); }}
+      onShow={() => {
+        if (Platform.OS === 'web') {
+          cancelRef.current?.focus();
+        } else {
+          const node = findNodeHandle(cancelRef.current);
+          if (node) AccessibilityInfo.setAccessibilityFocus(node);
+        }
+      }}
+    >
+      <View style={[styles.scrim, { backgroundColor: colors.overlay }]}>
+        <View
+          accessibilityViewIsModal
+          accessibilityLabel={Platform.OS === 'web' ? title : `${title} ${description}`}
+          aria-describedby={DESCRIPTION_ID}
+          style={[styles.dialog, { backgroundColor: colors.bgRaised }]}
         >
-            <View style={styles.overlay}>
-                <BlurView intensity={20} style={StyleSheet.absoluteFill} />
-                <View style={[styles.modal, { backgroundColor: colors.bgCard }]}>
-                    <View style={styles.iconContainer}>
-                        <Ionicons name="trash-outline" size={40} color="#ef4444" />
-                    </View>
-                    <Text style={[styles.title, { color: colors.textPrimary }]}>Remove from Library?</Text>
-                    <Text style={[styles.message, { color: colors.textSecondary }]}>
-                        This book will be removed from your collection. This action cannot be undone.
-                    </Text>
-
-                    <View style={styles.buttons}>
-                        <TouchableOpacity
-                            style={[styles.button, styles.cancelButton, { backgroundColor: colors.bgSecondary }]}
-                            onPress={onClose}
-                            disabled={isDeleting}
-                        >
-                            <Text style={[styles.buttonText, { color: colors.textPrimary }]}>Cancel</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.button, styles.deleteButton]}
-                            onPress={onConfirm}
-                            disabled={isDeleting}
-                        >
-                            <Text style={[styles.buttonText, { color: '#FFFFFF' }]}>
-                                {isDeleting ? 'Removing...' : 'Remove'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.dialogContent}>
+            <BookFeedbackSlot />
+            <Text accessibilityRole="header" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>
+              {title}
+            </Text>
+            <Text nativeID={DESCRIPTION_ID} style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
+              {description}
+            </Text>
+            <View style={styles.buttons}>
+              <BookButton
+                ref={cancelRef}
+                label="Cancel"
+                variant="secondary"
+                disabled={isDeleting}
+                onPress={onClose}
+              />
+              <BookButton
+                label={isDeleting ? 'Removing…' : 'Remove book'}
+                variant="destructive"
+                disabled={isDeleting || disabled}
+                onPress={onConfirm}
+              />
             </View>
-        </Modal>
-    );
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
 };
 
 const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    modal: {
-        width: '100%',
-        maxWidth: 340,
-        borderRadius: 24,
-        padding: 24,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.25,
-        shadowRadius: 20,
-        elevation: 10,
-    },
-    iconContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: '700',
-        marginBottom: 8,
-    },
-    message: {
-        fontSize: 15,
-        textAlign: 'center',
-        marginBottom: 24,
-        lineHeight: 22,
-    },
-    buttons: {
-        flexDirection: 'row',
-        gap: 12,
-        width: '100%',
-    },
-    button: {
-        flex: 1,
-        paddingVertical: 14,
-        borderRadius: 16,
-        alignItems: 'center',
-    },
-    cancelButton: {
-        // backgroundColor set in component
-    },
-    deleteButton: {
-        backgroundColor: '#ef4444',
-    },
-    buttonText: {
-        fontSize: 16,
-        fontWeight: '600',
-    },
+  scrim: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: LIBRARY_SPACING.md,
+  },
+  dialog: {
+    width: '100%',
+    maxHeight: '90%',
+    alignSelf: 'center',
+    maxWidth: DIALOG_MAX_WIDTH,
+    borderRadius: LIBRARY_RADIUS.dialog,
+    padding: LIBRARY_SPACING.lg,
+  },
+  dialogContent: {
+    gap: LIBRARY_SPACING.md,
+  },
+  buttons: {
+    gap: LIBRARY_SPACING.xs,
+  },
 });

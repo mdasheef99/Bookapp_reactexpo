@@ -1,0 +1,112 @@
+(node:5088) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+FAIL src/components/library/__tests__/LibraryBookPicker.test.tsx (10.415 s)
+  review R5 accessible book chooser
+    × announces selection instead of opening a book while arranging (1709 ms)
+    ○ skipped uses separate 44px controls and full-width book rows for both pointer and keyboard activation
+    ○ skipped keeps the active book caption complete while preserving the title chooser action
+    ○ skipped closes without navigation through the close button and native Back/Escape request
+    ○ skipped closes a stale chooser after a filter/data change and omits it on an empty shelf
+
+  ● review R5 accessible book chooser › announces selection instead of opening a book while arranging
+
+    Unable to find an element with accessibility label: Select Duplicate title by First Author
+
+    [
+      <View
+        accessibilityHint="Opens a list of book titles with larger buttons"
+        accessibilityLabel="Choose a book by title"
+        accessibilityRole="button"
+        accessibilityState={
+          {
+            "expanded": true,
+          }
+        }
+        accessible={true}
+        testID="library-book-picker-open"
+      >
+        <Ionicons
+          accessible={false}
+        />
+        <Text>
+          Choose a book
+        </Text>
+      </View>,
+      <Modal
+        accessibilityLabel="Choose a book"
+      >
+        <View>
+          <View
+            accessibilityViewIsModal={true}
+            testID="library-book-picker-panel"
+          >
+            <View>
+              <Text
+                accessibilityRole="header"
+              >
+                Choose a book
+              </Text>
+              <View
+                accessibilityLabel="Close book chooser"
+                accessibilityRole="button"
+                accessible={true}
+                testID="library-book-picker-close"
+              >
+                <Ionicons
+                  accessible={false}
+                />
+              </View>
+            </View>
+            <RCTScrollView
+              testID="library-book-picker-list"
+            >
+              <View>
+                <View>
+                  <View
+                    accessibilityLabel="Open Duplicate title by First Author"
+                    accessibilityRole="button"
+                    accessible={true}
+                    testID="library-book-picker-entry-first"
+                  >
+                    <Text>
+                      Duplicate title
+                    </Text>
+                    <Text>
+                      First Author
+                    </Text>
+                  </View>
+                </View>
+                <View>
+                  <View
+                    accessibilityLabel="Open Duplicate title"
+                    accessibilityRole="button"
+                    accessible={true}
+                    testID="library-book-picker-entry-second"
+                  >
+                    <Text>
+                      Duplicate title
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </RCTScrollView>
+          </View>
+        </View>
+      </Modal>,
+    ]
+
+      15 |         const { getByTestId, getByLabelText, queryByTestId } = render(<LibraryBookPicker books={books} onBookPress={onSelect} selecting />);
+      16 |         fireEvent.press(getByTestId('library-book-picker-open'));
+    > 17 |         fireEvent.press(getByLabelText('Select Duplicate title by First Author'));
+         |                         ^
+      18 |         expect(onSelect).toHaveBeenCalledWith(books[0]);
+      19 |         expect(queryByTestId('library-book-picker-panel')).toBeNull();
+      20 |     });
+
+      at Object.getByLabelText (src/components/library/__tests__/LibraryBookPicker.test.tsx:17:25)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 4 skipped, 5 total
+Snapshots:   0 total
+Time:        11.353 s
+Ran all test suites within paths "src/components/library/__tests__/LibraryBookPicker.test.tsx".

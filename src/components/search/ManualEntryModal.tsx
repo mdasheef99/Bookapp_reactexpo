@@ -1,5 +1,7 @@
 import { KeyboardAvoidingView, Modal, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useLibraryTypography } from '@/components/library/LibraryTypography';
+import { BookFeedbackSlot } from '@/components/library/ui';
 
 type ManualEntryModalProps = {
     visible: boolean;
@@ -22,7 +24,8 @@ export function ManualEntryModal({
     onCancel,
     onSave,
 }: ManualEntryModalProps) {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
 
     return (
         <Modal
@@ -37,31 +40,33 @@ export function ManualEntryModal({
                     flex: 1,
                     justifyContent: 'center',
                     padding: 24,
-                    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+                        backgroundColor: 'rgba(32, 26, 19, 0.42)',
                 }}
             >
                 <View
                     style={{
                         backgroundColor: colors.bgCard,
-                        borderRadius: 24,
+                        borderRadius: 18,
                         padding: 20,
                         borderWidth: 1,
                         borderColor: colors.border,
                     }}
                 >
-                    <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '700' }}>
+                    <BookFeedbackSlot />
+                    <Text accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 23, fontFamily: fonts.heading }}>
                         Add book manually
                     </Text>
-                    <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginTop: 8 }}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginTop: 8, fontFamily: fonts.body }}>
                         Add a basic library entry when search doesn't return the title you need.
                     </Text>
 
                     <View style={{ marginTop: 18 }}>
-                        <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>
+                        <Text style={{ color: colors.textPrimary, fontSize: 13, fontFamily: fonts.label, marginBottom: 8 }}>
                             Title
                         </Text>
                         <TextInput
                             testID="library-manual-entry-title"
+                            accessibilityLabel="Book title"
                             value={title}
                             onChangeText={onTitleChange}
                             placeholder="Enter the book title"
@@ -75,16 +80,18 @@ export function ManualEntryModal({
                                 fontSize: 15,
                                 color: colors.textPrimary,
                                 backgroundColor: colors.bgPrimary,
+                                fontFamily: fonts.body,
                             }}
                         />
                     </View>
 
                     <View style={{ marginTop: 14 }}>
-                        <Text style={{ color: colors.textPrimary, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>
+                        <Text style={{ color: colors.textPrimary, fontSize: 13, fontFamily: fonts.label, marginBottom: 8 }}>
                             Author (optional)
                         </Text>
                         <TextInput
                             testID="library-manual-entry-author"
+                            accessibilityLabel="Book author, optional"
                             value={author}
                             onChangeText={onAuthorChange}
                             placeholder="Enter the author name"
@@ -98,6 +105,7 @@ export function ManualEntryModal({
                                 fontSize: 15,
                                 color: colors.textPrimary,
                                 backgroundColor: colors.bgPrimary,
+                                fontFamily: fonts.body,
                             }}
                         />
                     </View>
@@ -106,17 +114,20 @@ export function ManualEntryModal({
                         <TouchableOpacity
                             testID="library-manual-entry-cancel"
                             onPress={onCancel}
+                            accessibilityRole="button"
+                            accessibilityLabel="Cancel manual book entry"
                             style={{
                                 flex: 1,
                                 borderWidth: 1,
                                 borderColor: colors.border,
                                 borderRadius: 14,
-                                paddingVertical: 12,
+                            minHeight: 44,
                                 alignItems: 'center',
+                                justifyContent: 'center',
                                 backgroundColor: colors.bgPrimary,
                             }}
                         >
-                            <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '600' }}>
+                            <Text style={{ color: colors.textPrimary, fontSize: 14, fontFamily: fonts.label }}>
                                 Cancel
                             </Text>
                         </TouchableOpacity>
@@ -124,15 +135,19 @@ export function ManualEntryModal({
                             testID="library-manual-entry-save"
                             onPress={onSave}
                             disabled={submitting}
+                            accessibilityRole="button"
+                            accessibilityLabel={submitting ? 'Saving book to library' : 'Save book to library'}
+                            accessibilityState={{ disabled: submitting }}
                             style={{
                                 flex: 1,
                                 borderRadius: 14,
-                                paddingVertical: 12,
+                            minHeight: 44,
                                 alignItems: 'center',
+                            justifyContent: 'center',
                                 backgroundColor: submitting ? colors.textTertiary : colors.accent,
                             }}
                         >
-                            <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>
+                            <Text style={{ color: colors.onAccent, fontSize: 14, fontFamily: fonts.label }}>
                                 {submitting ? 'Saving...' : 'Save to library'}
                             </Text>
                         </TouchableOpacity>

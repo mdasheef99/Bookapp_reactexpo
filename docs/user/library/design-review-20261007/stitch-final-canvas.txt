@@ -1,0 +1,164 @@
+- main:
+  - iframe [active] [id="I0_1791356632714"] [name="I0_1791356632714"]:
+    - main:
+      - button:
+      - button "BookConnect Passage Capture Prototype"
+      - button:
+      - button:
+      - button:
+      - button:
+      - button "Account Menu":
+        - img "Profile image for MD ASHEEF NAGARALLI"
+      - button:
+      - button:
+      - button:
+      - button:
+      - button "Choose File"
+      - button:
+      - button:
+      - button:
+      - button "7%" [active]:
+        - generic: 7%
+      - button "Helpful Links":
+      - button "Choose File"
+      - application:
+        - generic: palette
+        - generic: Quiet Reader
+        - generic: Primary
+        - generic "Click to copy": "#394B3B"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #0e1f12 — Click to copy"'
+        - 'generic "T20 #233426 — Click to copy"'
+        - 'generic "T30 #394b3b — Click to copy"'
+        - 'generic "T40 #506352 — Click to copy"'
+        - 'generic "T50 #697c6a — Click to copy"'
+        - 'generic "T60 #829683 — Click to copy"'
+        - 'generic "T70 #9cb09c — Click to copy"'
+        - 'generic "T80 #b7ccb7 — Click to copy"'
+        - 'generic "T90 #d3e8d2 — Click to copy"'
+        - 'generic "T95 #e1f6e0 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Secondary
+        - generic "Click to copy": "#A37E3E"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #281900 — Click to copy"'
+        - 'generic "T20 #422c00 — Click to copy"'
+        - 'generic "T30 #5f4104 — Click to copy"'
+        - 'generic "T40 #79591c — Click to copy"'
+        - 'generic "T50 #957132 — Click to copy"'
+        - 'generic "T60 #b18a49 — Click to copy"'
+        - 'generic "T70 #cea561 — Click to copy"'
+        - 'generic "T80 #ebc079 — Click to copy"'
+        - 'generic "T90 #ffdeab — Click to copy"'
+        - 'generic "T95 #ffeed9 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Tertiary
+        - generic "Click to copy": "#A34836"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #3e0400 — Click to copy"'
+        - 'generic "T20 #5f1608 — Click to copy"'
+        - 'generic "T30 #7d2c1c — Click to copy"'
+        - 'generic "T40 #9c4331 — Click to copy"'
+        - 'generic "T50 #bb5a47 — Click to copy"'
+        - 'generic "T60 #db735e — Click to copy"'
+        - 'generic "T70 #fb8c76 — Click to copy"'
+        - 'generic "T80 #ffb4a5 — Click to copy"'
+        - 'generic "T90 #ffdad3 — Click to copy"'
+        - 'generic "T95 #ffede9 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Neutral
+        - generic "Click to copy": "#302820"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #211a13 — Click to copy"'
+        - 'generic "T20 #372f27 — Click to copy"'
+        - 'generic "T30 #4f453c — Click to copy"'
+        - 'generic "T40 #675d53 — Click to copy"'
+        - 'generic "T50 #80756b — Click to copy"'
+        - 'generic "T60 #9b8f84 — Click to copy"'
+        - 'generic "T70 #b6a99e — Click to copy"'
+        - 'generic "T80 #d2c4b8 — Click to copy"'
+        - 'generic "T90 #efe0d4 — Click to copy"'
+        - 'generic "T95 #fdeee1 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Headline
+        - generic: EB Garamond
+        - generic: Aa
+        - button "Primary"
+        - button "Secondary"
+        - button "Inverted"
+        - button "Outlined"
+        - generic: search
+        - generic: Search
+        - generic: Body
+        - generic: Manrope
+        - generic: Aa
+        - generic: home
+        - generic: search
+        - generic: person
+        - generic: Label
+        - generic: Manrope
+        - generic: Aa
+        - generic: edit
+        - generic: edit
+        - text: Label
+        - generic: auto_fix_high
+        - generic: category
+        - generic: sell
+        - generic: delete
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - textbox:
+          - paragraph: What would you like to change or create?
+        - button "Choose File"
+        - button:
+        - button:
+        - button:
+        - button:
+        - button "Balanced":
+          - generic: Balanced
+        - button:
+        - button [disabled]:
+        - button [expanded]:
+          - status:
+            - generic: Agent log
+        - menu "Agent log":
+          - 'menuitem "Clean actual State gallery DOM: REMOVE Local buffe..."':
+            - generic: "Clean actual State gallery DOM: REMOVE Local buffe..."
+          - menuitem "Correct State gallery Save not confirmed panel ONL...":
+            - generic: Correct State gallery Save not confirmed panel ONL...
+          - 'menuitem "Final correction based on actual canvas: old sourc..."':
+            - generic: "Final correction based on actual canvas: old sourc..."
+          - menuitem "Correct ALL six existing screens before adding var...":
+            - generic: Correct ALL six existing screens before adding var...
+          - menuitem "Create a NEW native-mobile design project named \"B...":
+            - generic: Create a NEW native-mobile design project named "B...
+        - button "Expand panel":
+        - generic "Exit Zen Mode"

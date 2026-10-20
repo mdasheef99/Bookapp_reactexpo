@@ -1,0 +1,115 @@
+**This is a substantial improvement: it turns the discussion into testable behavior and handles many of the earlier risks well. I would approve it as a planning baseline, but request a focused revision before approving implementation.**
+
+The biggest concern is **scope, not visual design**. This is now primarily a **notes-first capture experience**, with new standalone passages deferred. That is a meaningful change from the earlier Notes & passages direction. It may be the right simplification, but the document should identify the owner decision that authorized it—or present it explicitly for approval.
+
+I reviewed the attached SDD itself. I have not verified its new source claims, documentation-check results, navigation-contract references, or Stitch project.
+
+**What is particularly strong**
+
+- Sixteen design states are correctly separated from actual routes.
+- The manual create → read → edit journey comes before OCR integration.
+- OCR preserves the reader’s category instead of automatically changing it to Quote.
+- Crop failure cannot silently fall back to recognizing the original image.
+- Replacement scans preserve previous work until recognition succeeds.
+- Definite save failure is distinguished from uncertain persistence.
+- Question, No category, and numbering are honestly gated.
+- Authenticated identity, late OCR results, query scoping, and stale content receive explicit attention.
+- The document avoids treating web previews, mocked tests, or documentation checks as native acceptance.
+
+Those are useful implementation contracts, not merely screen descriptions. I would retain them.
+
+**The changes I would require before coding**
+
+| Priority | Issue | Recommended correction |
+|---|---|---|
+| **1** | **The product scope has changed.** Earlier work centered on both notes and passages; this SDD makes Add note the primary creation path and defers new passages. | Add a short decision record naming what is approved, what is proposed, and which earlier proposal it supersedes. If approved, describe this as the notes-first phase rather than completion of the broader Library experience. |
+| **1** | **The new U0–U6 sequence collides with the existing OCR roadmap.** In the earlier roadmap, U3 means durable recovery; here U3 means the manual note journey. | Rename these implementation units, for example `SDD06-01` through `SDD06-07`. Explicitly preserve the original OCR U2–U6 statuses, especially pending U3 recovery. |
+| **1** | **Legacy passage access remains unresolved while B01 is already specified.** Keeping records intact does not preserve reader access. | Define the minimum preserved entry and reading behavior before replacing Book Details. Separate “no new passage work” from “existing passages remain accessible.” |
+| **1** | **Cloud exclusion conflicts with preserving legacy editor behavior.** The old editor reportedly contains a cloud action. | State that preserving legacy behavior does not preserve a reachable cloud retry. Every reachable OCR entry must respect cloud deferral. |
+| **1** | **Uncertain saving can trap the reader indefinitely.** The document blocks dismissal until reconciliation, but admits reconciliation support is unverified. | Specify a bounded pending state, a way to recheck, and an explicit leave policy that explains uncertainty. Do not allow blind retry or imply that leaving cancels a possibly committed write. Treat the missing persistence capability as a release gate. |
+| **1** | **Dirty-state detection omits capture work.** A selected photo, adjusted crop, or rotation may represent meaningful work even while text/category/page remain unchanged. | Separate “unsaved note changes” from “capture work that would be discarded.” Decide which exits need protection and test both. |
+| **2** | **Known length validation is described too much as a service rejection.** The 500-word note limit is already supplied. | Validate the known limit before dispatch. No persistent counter is compatible with contextual feedback such as “Remove 37 words to save.” Keep server validation as the final check. |
+| **2** | **Management preservation is under-specified.** B01 collapses management broadly, while the regression matrix omits some previously important review/privacy behavior. | Enumerate rating, review text, privacy, community reviews, metadata, and removal responsibilities. Distinguish preserving access from knowingly carrying forward existing reliability defects. |
+| **2** | **Read/edit navigation does not fully specify stack behavior.** Saving an edit could create another reader instance instead of returning to the original one. | Define create-save and edit-save separately: creation replaces the composer with a reader; editing returns to or replaces the correct existing reader without accumulating duplicate routes. |
+
+The roadmap-name collision is especially worth fixing now. It is inexpensive to correct and could otherwise cause false completion claims later.
+
+**The largest interaction gap: replacement is not one scenario**
+
+The SDD handles replacement of an OCR review reasonably well, but it needs to distinguish:
+
+1. Rescanning a recognized passage.
+2. Scanning after the reader has typed a manual note.
+3. Scanning while editing an existing saved note.
+4. Adding another scan when the reader wants to **append**, not replace.
+
+B04 allows a reader with typed text to switch to scanning. Yet B06/B13/B16 describe replacement recovery primarily as returning to a previous **B07**. That does not fully account for a manual **B05** origin.
+
+Use an explicit return context covering the originating editor, its values, and the pending replacement decision. A canceled scan should restore the appropriate editor—not force a manually written note into an OCR-review screen.
+
+Also decide whether scanning into nonempty text supports **replace only**, **append**, or both. You do not need to add append now, but readers should understand the chosen behavior before their text changes.
+
+**Some screens still carry avoidable complexity**
+
+**Category selection is repeated heavily.** B04 offers five categories and Skip; B05/B07 show the options again. If selection before input is owner-approved, preserve it, but consider a compact selected-category control in the editor rather than repeatedly presenting the whole choice set.
+
+“No category” is an absence of categorization, not a sixth category. The document’s phrase “six category options” is implementable, but risks leaking that model into filters and reader labels. Specify how uncategorized notes appear and whether they can be filtered.
+
+**B13 has too many overlapping recovery actions.** “Try again,” “Back to crop,” another photo, manual writing, and note options are not equally important. If Try again repeats recognition on the same unchanged image, its benefit may be weak. Prefer one primary recovery action, a clear alternative input, and ordinary Back navigation.
+
+**B16’s fallback wording needs qualification.** When the native OCR engine is unavailable, another photo generally does not resolve the problem. Offer manual writing as the usable fallback; show another-image actions only when the failure is plausibly image-specific.
+
+**Crop correctness should be tested independently of recognition accuracy.** “Produces only selected text” is useful end-to-end evidence, but OCR can hallucinate or omit text. Also verify that the actual transformed image contains the expected selected pixels across rotation and orientation cases. That isolates crop bugs from recognition errors.
+
+**The incomplete-text contract is mostly right, but needs a clearer loop**
+
+B14 preserves the important rules: explicit acceptance, no automatic save, and acceptance invalidated after text changes.
+
+The remaining question is what happens when a reader chooses **Keep editing**, edits the text, and then presses Save. The SDD should explicitly state how the warning is reopened or acknowledged from review. Otherwise, readers may encounter a disabled Save with no obvious resolution.
+
+Also carry the **20,000-Unicode-code-point boundary** into this document directly. “Existing safety rules” is too indirect for a contract intended to resolve implementation ambiguity. Keep it clearly separate from the 500-word note limit.
+
+**I would simplify the architecture commitments slightly**
+
+The proposed single transient-session owner is sensible. The document does not need to freeze every component name or insist on a particular decomposition before implementation inspection.
+
+Treat the component list as illustrative. The important boundaries are:
+
+- One owner for draft/session state.
+- One validated save lifecycle.
+- Reusable note fields.
+- Separate capture/crop/recognition responsibilities.
+- Explicit reading and recovery states.
+
+Some listed session fields—such as origin, reader origin, current step, replacement snapshot, and dirty baseline—can conflict unless invariants are defined. A transition table showing permitted origins, return destinations, and preserved values would help more than adding further fields.
+
+**Numbering should stay out of this implementation**
+
+The SDD correctly gates it, but “recommended stable saved identifier with atomic allocation” gets ahead of the reader problem.
+
+First establish why readers need Q1/TH1/TK1 identifiers. Are they referencing notes elsewhere, distinguishing similar notes, or navigating a sequence? Existing record IDs already provide technical identity. A user-facing sequence adds allocation and reassignment rules only if it serves an actual reader task.
+
+Keep the decision package, but avoid making numbering infrastructure part of the baseline architecture.
+
+**My approval position**
+
+I would support:
+
+- The notes-first scope **if the owner explicitly chooses it**.
+- Read-first saved notes.
+- Explicit save destinations.
+- Category preservation through OCR.
+- Crop-specific recognition.
+- A shared form and session lifecycle.
+- Building and verifying the manual journey before OCR.
+
+I would hold implementation approval until these are resolved:
+
+1. Scope change and legacy passage access.
+2. Roadmap naming and preservation of pending U3.
+3. Dirty-exit policy, including capture work.
+4. Question and No category persistence.
+5. Uncertain-save behavior and the capabilities it requires.
+6. Manual-text replacement and return-context handling.
+
+**The next step should be a narrow SDD revision, not another broad design review:** record the scope decision, fix those contradictions, and add a compact transition/exit table. After that, authorize one manual create → read → edit slice with verified persistence. This document is close to being useful for implementation; the remaining work is chiefly about making its promises mutually consistent.

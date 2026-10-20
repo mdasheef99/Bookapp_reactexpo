@@ -1,0 +1,178 @@
+diff --git a/.tmp/sol-correction-before/src/features/books/notes/captureSession.ts.txt b/src/features/books/notes/captureSession.ts
+index 3477319..fa7e388 100644
+--- a/.tmp/sol-correction-before/src/features/books/notes/captureSession.ts.txt
++++ b/src/features/books/notes/captureSession.ts
+@@ -23,7 +23,7 @@ export class NoteCaptureSession {
+   private state: CaptureState;
+   private listeners = new Set<() => void>();
+   private generation = 0; private abort?: AbortController; private disposed = false; private revision = 0;
+-  private owned = new Set<string>(); private working = new Set<string>();
++  private owned = new Set<string>(); private working = new Map<string, number>();
+   private mounts = 0;
+   constructor(readonly identity: { actorId: string; bookId: string; mode: 'create' | 'edit'; noteId?: string }, private adapter: CaptureAdapter, step: ComposeStep) {
+     this.state = { fields: noteFields(), step, crop: FULL_CROP, position: position(), warningOpen: false, restorePosition: 0 };
+@@ -67,8 +67,14 @@ export class NoteCaptureSession {
+   private invalidate() { this.generation++; this.abort?.abort(); this.abort = undefined; }
+   private current(token: number) { return !this.disposed && token === this.generation; }
+   private own(photo: CapturePhoto) { this.owned.add(photo.uri); return photo; }
++  private retainWorking(uri: string) { this.working.set(uri, (this.working.get(uri) ?? 0) + 1); }
++  private releaseWorking(uri: string) {
++    const remaining = (this.working.get(uri) ?? 1) - 1;
++    if (remaining) this.working.set(uri, remaining); else this.working.delete(uri);
++  }
+   private collect() {
+-    const retained = new Set([this.state.photo?.uri, this.state.checkpoint?.photo?.uri, ...this.working]);
++    // Cancellation allows a new operation before the old native transform settles.
++    const retained = new Set([this.state.photo?.uri, this.state.checkpoint?.photo?.uri, ...this.working.keys()]);
+     for (const uri of this.owned) if (!retained.has(uri)) { this.owned.delete(uri); void this.adapter.release(uri); }
+   }
+   async pick(source: 'camera' | 'gallery') {
+@@ -86,20 +92,20 @@ export class NoteCaptureSession {
+   resetCrop() { this.setCrop(FULL_CROP); }
+   async rotate() {
+     const photo = this.state.photo; if (!photo || this.state.busy) return;
+-    const token = ++this.generation; const crop = this.state.crop; this.working.add(photo.uri); this.update({ busy: 'rotating', error: undefined });
++    const token = ++this.generation; const crop = this.state.crop; this.retainWorking(photo.uri); this.update({ busy: 'rotating', error: undefined });
+     try {
+       const rotated = this.own(await this.adapter.rotate(photo));
+       if (this.current(token)) this.update({ photo: rotated, crop: rotateCropClockwise(crop) });
+     } catch (error) { if (this.current(token)) this.update({ error: this.classify(error) }); }
+-    finally { this.working.delete(photo.uri); if (this.current(token)) this.update({ busy: undefined }); this.collect(); }
++    finally { this.releaseWorking(photo.uri); if (this.current(token)) this.update({ busy: undefined }); this.collect(); }
+   }
+   async recognize() {
+     const photo = this.state.photo; if (!photo || this.state.busy || !this.state.checkpoint) return;
+     const token = ++this.generation; const abort = new AbortController(); this.abort = abort;
+-    this.working.add(photo.uri); this.update({ busy: 'recognizing', error: undefined });
++    this.retainWorking(photo.uri); this.update({ busy: 'recognizing', error: undefined });
+     let transformed: CapturePhoto | undefined;
+     try {
+-      transformed = this.own(await this.adapter.transform(photo, this.state.crop)); this.working.add(transformed.uri);
++      transformed = this.own(await this.adapter.transform(photo, this.state.crop)); this.retainWorking(transformed.uri);
+       if (!this.current(token)) return;
+       const result = await this.adapter.recognize(transformed.uri, abort.signal);
+       if (!this.current(token)) return;
+@@ -114,7 +120,7 @@ export class NoteCaptureSession {
+       else if (classified.code === 'TRANSFORM_FAILED') this.update({ step: 'crop', error: classified });
+       else this.update({ step: 'failure', error: classified });
+     } finally {
+-      this.working.delete(photo.uri); if (transformed) this.working.delete(transformed.uri);
++      this.releaseWorking(photo.uri); if (transformed) this.releaseWorking(transformed.uri);
+       if (this.current(token)) { this.abort = undefined; this.update({ busy: undefined }); } this.collect();
+     }
+   }
+diff --git a/.tmp/sol-correction-before/app/(tabs)/library/note-compose.tsx.txt b/app/(tabs)/library/note-compose.tsx
+index d91814b..7dab12d 100644
+--- a/.tmp/sol-correction-before/app/(tabs)/library/note-compose.tsx.txt
++++ b/app/(tabs)/library/note-compose.tsx
+@@ -117,7 +117,7 @@ export default function NoteComposeScreen() {
+     if (scanStep) { cancelScan(); return true; }
+     return false;
+   };
+-  usePreventRemove(!allowExit && (dirty || locked || !!captureState.checkpoint || (step === 'write' && mode === 'create')), ({ data }) => {
++  usePreventRemove(!allowExit && (dirty || locked || capture.meaningfulCapture || !!captureState.checkpoint || (step === 'write' && mode === 'create')), ({ data }) => {
+     if (categoryOpen) setCategoryOpen(false);
+     else if (dialog || captureState.warningOpen) { browserHistoryGuard.current?.keepEditing(); setDialog(null); capture.keepPartialEditing(); }
+     else if (retainedBack()) return;
+diff --git a/.tmp/sol-correction-before/src/features/books/notes/__tests__/captureSession.test.ts.txt b/src/features/books/notes/__tests__/captureSession.test.ts
+index 8f6c25f..77f4f23 100644
+--- a/.tmp/sol-correction-before/src/features/books/notes/__tests__/captureSession.test.ts.txt
++++ b/src/features/books/notes/__tests__/captureSession.test.ts
+@@ -105,3 +105,47 @@ it('protects blank capture work, preserves checkpoint images, and releases super
+   adapter.pick.mockResolvedValueOnce({ ...photo, uri: 'new-photo' }); await session.pick('gallery'); session.cancelScan();
+   expect(session.snapshot().photo?.uri).toBe('owned-photo'); expect(adapter.release).toHaveBeenCalledWith('new-photo'); session.dispose(); expect(adapter.release).toHaveBeenCalledWith('owned-photo');
+ });
++
++it.each([
++  ['first', 'cancel'], ['second', 'cancel'], ['first', 'dispose'], ['second', 'dispose'],
++] as const)('retains overlapping transforms until their last use settles (%s first, %s)', async (settlesFirst, boundary) => {
++  const { session, adapter } = setup(); session.initialize({ text: 'A', category: 'question', page: '24' });
++  session.beginScan(); await session.pick('gallery');
++  const first = deferred<CapturePhoto>(); const second = deferred<CapturePhoto>();
++  adapter.transform.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
++  const firstWork = session.recognize(); session.cancelRecognition(); const secondWork = session.recognize();
++  if (boundary === 'cancel') session.cancelScan(); else session.dispose();
++  const work = { first: firstWork, second: secondWork }; const pending = { first, second };
++  const settlesLast = settlesFirst === 'first' ? 'second' : 'first';
++  pending[settlesFirst].resolve({ ...photo, uri: `${settlesFirst}-selection` }); await work[settlesFirst];
++  expect(adapter.release).not.toHaveBeenCalledWith(photo.uri);
++  pending[settlesLast].resolve({ ...photo, uri: `${settlesLast}-selection` }); await work[settlesLast];
++  expect(adapter.release.mock.calls.filter(([uri]) => uri === photo.uri)).toHaveLength(1);
++  expect(adapter.release.mock.calls.filter(([uri]) => uri === 'first-selection')).toHaveLength(1);
++  expect(adapter.release.mock.calls.filter(([uri]) => uri === 'second-selection')).toHaveLength(1);
++  expect(adapter.recognize).not.toHaveBeenCalled();
++  expect(session.snapshot().fields.text).toBe(boundary === 'cancel' ? 'A' : '');
++  if (boundary === 'dispose') {
++    const next = new NoteCaptureSession({ actorId: 'other', bookId: 'other-book', mode: 'create' }, adapter, 'choose');
++    expect(next.snapshot().fields).toEqual(noteFields()); expect(next.snapshot().photo).toBeUndefined();
++  }
++});
++
++it.each(['first', 'second'] as const)('retains overlapping rotations through disposal and out-of-order settlement (%s first)', async settlesFirst => {
++  const { session, adapter } = setup(); await scan(session);
++  // Adopted review retains the source. Canceling this new attempt restores that same photo.
++  session.beginScan(); session.cancelScan(); session.returnToCrop();
++  const first = deferred<CapturePhoto>(); const second = deferred<CapturePhoto>();
++  adapter.rotate.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
++  const firstWork = session.rotate(); session.cancelScan(); session.returnToCrop(); const secondWork = session.rotate();
++  session.dispose();
++  const work = { first: firstWork, second: secondWork }; const pending = { first, second };
++  const settlesLast = settlesFirst === 'first' ? 'second' : 'first';
++  pending[settlesFirst].resolve({ ...photo, uri: `${settlesFirst}-rotation`, width: 800, height: 1200 }); await work[settlesFirst];
++  expect(adapter.release).not.toHaveBeenCalledWith(photo.uri);
++  pending[settlesLast].resolve({ ...photo, uri: `${settlesLast}-rotation`, width: 800, height: 1200 }); await work[settlesLast];
++  expect(adapter.release.mock.calls.filter(([uri]) => uri === photo.uri)).toHaveLength(1);
++  expect(adapter.release.mock.calls.filter(([uri]) => uri === 'first-rotation')).toHaveLength(1);
++  expect(adapter.release.mock.calls.filter(([uri]) => uri === 'second-rotation')).toHaveLength(1);
++  expect(session.snapshot()).toMatchObject({ fields: noteFields(), step: 'choose' }); expect(session.snapshot().photo).toBeUndefined();
++});
+diff --git a/.tmp/sol-correction-before/src/components/notes/__tests__/NoteCaptureJourney.test.tsx.txt b/src/components/notes/__tests__/NoteCaptureJourney.test.tsx
+index 0db9105..c11aa3b 100644
+--- a/.tmp/sol-correction-before/src/components/notes/__tests__/NoteCaptureJourney.test.tsx.txt
++++ b/src/components/notes/__tests__/NoteCaptureJourney.test.tsx
+@@ -1,5 +1,6 @@
+ /** Mounted production composer; capture/native results and saves are isolated adapters only. */
+ import React from 'react';
++import { Image, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+ import { act, fireEvent, render, screen } from '@testing-library/react-native';
+ import NoteComposeScreen from '../../../../app/(tabs)/library/note-compose';
+ import { manualNoteSaveAdapter, noteSaves } from '@/features/books/notes/manualNotesGateway';
+@@ -7,6 +8,9 @@ import { registerNoteContext } from '@/features/books/notes/noteNavigation';
+ import type { ManualNote } from '@/features/books/notes/manualNoteContract';
+ import { usePreventRemove } from '@react-navigation/native';
+ 
++// Initialize lazy RN primitives before behavioral test timing, retaining default timeouts.
++void [Image, KeyboardAvoidingView, Modal, Pressable, ScrollView, Text, TextInput, View];
++
+ let mockParams: Record<string, string>; let mockRecord: ManualNote | undefined; let mockActor = 'actor'; let mockId = 0;
+ const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn(), dismiss: jest.fn(), canGoBack: () => true };
+ const mockNavigation = { dispatch: jest.fn(), isFocused: () => true, getState: () => ({ index: 2, routes: [{ name: '[bookId]', params: { bookId: 'book' } }, { name: 'note', params: { bookId: 'book', noteId: 'saved' } }, { name: 'note-compose', params: mockParams }] }) };
+@@ -90,3 +94,28 @@ it('account/book changes clear capture and fields and invalidate late picker res
+   mockActor = 'other'; mockParams = { bookId: 'other-book' }; mounted.rerender(<NoteComposeScreen />); await flush(); await act(async () => resolve(mockPhoto)); await flush();
+   click('Write note'); expect(screen.getByLabelText('Note text').props.value).toBe(''); expect(mockCaptureAdapter.recognize).not.toHaveBeenCalled(); expect(mockCaptureAdapter.release).toHaveBeenCalledWith(mockPhoto.uri);
+ });
++
++it('native removal from restored clean B07 returns to crop and preserves edit identity on another recognition/cancel', async () => {
++  mockRecord = { id: 'saved', user_id: 'actor', user_book_id: 'book', content: 'Saved A', tag: 'apply', page_number: 7, version: 9, created_at: '2026-10-10', updated_at: null };
++  mockParams.noteId = 'saved'; mockCaptureAdapter.recognize.mockResolvedValueOnce(recognized('Saved A'));
++  render(<NoteComposeScreen />); click('Scan text'); click('Scan text'); await pickAndRead();
++  click('Scan again'); click('Scan again'); click('Back to review');
++  expect(screen.getByLabelText('Note text').props.value).toBe('Saved A');
++  expect((usePreventRemove as jest.Mock).mock.calls.at(-1)![0]).toBe(true);
++  const callback = (usePreventRemove as jest.Mock).mock.calls.at(-1)![1];
++  act(() => callback({ data: { action: { type: 'GO_BACK' } } }));
++  expect(screen.getByText('Left edge: 0%')).toBeTruthy(); expect(mockNavigation.dispatch).not.toHaveBeenCalled();
++  mockCaptureAdapter.recognize.mockResolvedValueOnce(recognized('Candidate C')); click('Recognize text'); await flush();
++  click('Cancel scan'); click('Discard scan'); expect(screen.getByLabelText('Note text').props.value).toBe('Saved A');
++  expect(screen.getByLabelText('Page, optional').props.value).toBe('7'); expect(screen.getByText('Category: Action')).toBeTruthy();
++  expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled(); click('Save changes'); await flush();
++  expect(manualNoteSaveAdapter.write).toHaveBeenCalledWith(expect.objectContaining({ mode: 'edit', noteId: 'saved', expectedVersion: 9, content: 'Saved A', tag: 'apply', page_number: 7 }));
++});
++
++it('unchanged saved edit without a photo leaves native removal unguarded', () => {
++  mockRecord = { id: 'saved', user_id: 'actor', user_book_id: 'book', content: 'Saved A', tag: null, page_number: null, version: 9, created_at: '2026-10-10', updated_at: null };
++  mockParams.noteId = 'saved'; render(<NoteComposeScreen />);
++  expect(screen.getByLabelText('Note text').props.value).toBe('Saved A');
++  expect((usePreventRemove as jest.Mock).mock.calls.at(-1)![0]).toBe(false);
++  expect(manualNoteSaveAdapter.write).not.toHaveBeenCalled();
++});

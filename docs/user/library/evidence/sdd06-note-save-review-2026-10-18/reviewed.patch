@@ -1,0 +1,191 @@
+diff --git a/src/components/notes/__tests__/ManualNoteJourney.test.tsx b/src/components/notes/__tests__/ManualNoteJourney.test.tsx
+index dde64d2..0c60edf 100644
+--- a/src/components/notes/__tests__/ManualNoteJourney.test.tsx
++++ b/src/components/notes/__tests__/ManualNoteJourney.test.tsx
+@@ -9,7 +9,7 @@ import NoteReaderScreen from '../../../../app/(tabs)/library/note';
+ import NotesScreen from '../../../../app/(tabs)/library/notes';
+ import BookDetailScreen from '../../../../app/(tabs)/library/[bookId]';
+ import { VaultPagesList } from '@/components/library/VaultPagesList';
+-import { createManualNoteDeleteAdapter, manualNoteDeleteAdapter, MANUAL_NOTE_WRITE_GATES, manualNotesGateway, manualNoteSaveAdapter, noteSaves } from '@/features/books/notes/manualNotesGateway';
++import { createManualNoteSaveAdapter, createManualNoteDeleteAdapter, manualNoteDeleteAdapter, MANUAL_NOTE_WRITE_GATES, manualNotesGateway, manualNoteSaveAdapter, noteSaves } from '@/features/books/notes/manualNotesGateway';
+ import * as noteGatewayModule from '@/features/books/notes/manualNotesGateway';
+ import { ManualNote, NoteSubmission, NoteWriteError, noteKeys } from '@/features/books/notes/manualNoteContract';
+ import { registerNoteContext } from '@/features/books/notes/noteNavigation';
+@@ -65,7 +65,7 @@ let client: QueryClient;
+ let noteRecord: ManualNote | null;
+ const wrap = (element: React.ReactElement) => <QueryClientProvider client={client}>{element}</QueryClientProvider>;
+ async function settle() { await act(async () => { for (let n = 0; n < 8; n++) await Promise.resolve(); }); }
+-/** Authorize only this test's simulated delete path; production save/delete gates remain false. */
++/** Route simulated deletion through the production adapter with mocked transport. */
+ function authorizeSimulatedReaderDeletion() {
+   const adapter = createManualNoteDeleteAdapter({ ...MANUAL_NOTE_WRITE_GATES, ownedBookWrites: true });
+   jest.spyOn(noteGatewayModule, 'isManualNoteDeleteAuthorized').mockReturnValue(true);
+@@ -96,7 +96,7 @@ it.each(['record', 'book'] as const)('retains an initialized dirty editor after
+   fireEvent.changeText(screen.getByLabelText('Note text'), 'Still editable'); expect(screen.getByLabelText('Note text').props.value).toBe('Still editable');
+   expect(screen.getByText(/refresh.*failed/i)).toBeTruthy();
+ });
+-it('rejects production Save before dispatch through the mounted editor and retains all fields', async () => {
++it('retains all fields when Save is explicitly held through the mounted editor', async () => {
+   delete mockParams.noteId; const write = jest.spyOn(manualNoteSaveAdapter, 'write');
+   render(wrap(<NoteComposeScreen />)); await screen.findByRole('button', { name: 'Write note' });
+   fireEvent.press(screen.getByRole('radio', { name: 'Question' })); fireEvent.press(screen.getByRole('button', { name: 'Skip category' }));
+@@ -105,6 +105,7 @@ it('rejects production Save before dispatch through the mounted editor and retai
+   fireEvent.press(screen.getByRole('button', { name: 'Save note' })); expect(screen.getByText('Remove 1 word to save. Your text has been kept.')).toBeTruthy();
+   expect(screen.getByLabelText('Note text').props.value).toBe(tooLong); expect(write).not.toHaveBeenCalled();
+   fireEvent.changeText(screen.getByLabelText('Note text'), 'Complete retained draft'); fireEvent.changeText(screen.getByLabelText('Page, optional'), '24');
++  write.mockImplementation(createManualNoteSaveAdapter({ ownedBookWrites: false, stableCreateReconciliation: false, optionalFiveCategories: false, serverManagedEditVersion: false }).write);
+   fireEvent.press(screen.getByRole('button', { name: 'Save note' })); await screen.findByText("Saving isn't available yet. Your text is still here.");
+   expect(screen.getByLabelText('Note text').props.value).toBe('Complete retained draft'); expect(screen.getByLabelText('Page, optional').props.value).toBe('24');
+   expect(write).toHaveBeenCalledWith(expect.objectContaining({ tag: null, page_number: 24 })); expect(supabase.from).not.toHaveBeenCalled(); expect(mockRouter.replace).not.toHaveBeenCalled();
+@@ -131,7 +132,8 @@ it.each(['missing', 'failed'] as const)('renders the reader %s state without sho
+   render(wrap(<NoteReaderScreen />)); await screen.findByText("This note is missing or couldn't be opened.");
+   expect(screen.queryByText(original.content)).toBeNull(); expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
+ });
+-it('keeps production Delete disabled without opening a dialog or dispatching', async () => {
++it('keeps Delete disabled when capabilities are explicitly held, without dispatching', async () => {
++  jest.spyOn(noteGatewayModule, 'isManualNoteDeleteAuthorized').mockReturnValue(false);
+   const remove = jest.spyOn(manualNoteDeleteAdapter, 'remove');
+   render(wrap(<NoteReaderScreen />)); await screen.findByText(original.content);
+   const button = screen.getByRole('button', { name: 'Delete note' });
+@@ -139,7 +141,7 @@ it('keeps production Delete disabled without opening a dialog or dispatching', a
+   fireEvent.press(button);
+   expect(screen.queryByText('Delete this note?')).toBeNull();
+   expect(remove).not.toHaveBeenCalled(); expect(supabase.from).not.toHaveBeenCalled();
+-  expect(Object.values(MANUAL_NOTE_WRITE_GATES)).toEqual([false, false, false, false]);
++  expect(Object.values(MANUAL_NOTE_WRITE_GATES)).toEqual([true, true, true, true]);
+ });
+ it('refreshes the real collection cache after confirmed simulated reader deletion', async () => {
+   authorizeSimulatedReaderDeletion();
+diff --git a/src/features/books/notes/__tests__/manualNoteDeleteGate.test.ts b/src/features/books/notes/__tests__/manualNoteDeleteGate.test.ts
+index 3d73fb4..e8a9757 100644
+--- a/src/features/books/notes/__tests__/manualNoteDeleteGate.test.ts
++++ b/src/features/books/notes/__tests__/manualNoteDeleteGate.test.ts
+@@ -15,6 +15,7 @@ function response(data: unknown) {
+   return builder;
+ }
+ const ownedBook = () => response({ id: 'book', user_id: 'actor', book: { title: 'Book' } });
++const closedGates = { ownedBookWrites: false, stableCreateReconciliation: false, optionalFiveCategories: false, serverManagedEditVersion: false };
+ const authorizedAdapter = () => createManualNoteDeleteAdapter({ ...MANUAL_NOTE_WRITE_GATES, ownedBookWrites: true });
+ 
+ beforeEach(() => {
+@@ -24,19 +25,17 @@ beforeEach(() => {
+ afterEach(() => useAuthStore.setState({ session: null, status: 'unauthenticated' }));
+ 
+ it('gates delete before any dispatch while ownedBookWrites is false', async () => {
+-  const adapter = createManualNoteDeleteAdapter(MANUAL_NOTE_WRITE_GATES);
++  const adapter = createManualNoteDeleteAdapter(closedGates);
+   await expect(adapter.remove('actor', 'book', 'note')).rejects.toMatchObject({ kind: 'definite' });
+   expect(supabase.from).not.toHaveBeenCalled();
+-  expect(MANUAL_NOTE_WRITE_GATES.ownedBookWrites).toBe(false);
++  expect(isManualNoteDeleteAuthorized(closedGates)).toBe(false);
+ });
+ 
+-it('gates the default delete adapter without dispatching', async () => {
+-  await expect(manualNoteDeleteAdapter.remove('actor', 'book', 'note')).rejects.toMatchObject({
+-    kind: 'definite',
+-    message: "Deleting isn't available yet.",
+-  });
+-  expect(supabase.from).not.toHaveBeenCalled();
+-  expect(isManualNoteDeleteAuthorized()).toBe(false);
++it('enables the default delete adapter and still checks owned-book identity', async () => {
++  (supabase.from as jest.Mock).mockReturnValueOnce(ownedBook()).mockReturnValueOnce(response([{ id: 'note' }]));
++  await expect(manualNoteDeleteAdapter.remove('actor', 'book', 'note')).resolves.toBeUndefined();
++  expect((supabase.from as jest.Mock).mock.calls).toEqual([['user_books'], ['reading_notes']]);
++  expect(isManualNoteDeleteAuthorized()).toBe(true);
+ });
+ 
+ it('dispatches one owned deletion through the real adapter with isolated authorization', async () => {
+@@ -47,8 +46,8 @@ it('dispatches one owned deletion through the real adapter with isolated authori
+   expect(deletion.delete).toHaveBeenCalledTimes(1);
+   expect(deletion.eq.mock.calls).toEqual([['id', 'note'], ['user_id', 'actor'], ['user_book_id', 'book']]);
+   expect(deletion.select).toHaveBeenCalledWith('id');
+-  expect(Object.values(MANUAL_NOTE_WRITE_GATES)).toEqual([false, false, false, false]);
+-  expect(isManualNoteDeleteAuthorized()).toBe(false);
++  expect(Object.values(MANUAL_NOTE_WRITE_GATES)).toEqual([true, true, true, true]);
++  expect(isManualNoteDeleteAuthorized()).toBe(true);
+ });
+ 
+ it.each([{ rows: [] }, { rows: [{ id: 'note' }, { id: 'other' }] }])('does not confirm a deletion with an unexpected returned row count: $rows', async ({ rows }) => {
+diff --git a/src/features/books/notes/__tests__/manualNotesGateway.test.ts b/src/features/books/notes/__tests__/manualNotesGateway.test.ts
+index f1ce163..0bacef3 100644
+--- a/src/features/books/notes/__tests__/manualNotesGateway.test.ts
++++ b/src/features/books/notes/__tests__/manualNotesGateway.test.ts
+@@ -1,7 +1,10 @@
+ jest.mock('@/lib/supabase', () => ({ supabase: { from: jest.fn() } }));
+ import { supabase } from '@/lib/supabase';
+ import { useAuthStore } from '@/features/auth/store/authStore';
+-import { manualNoteSaveAdapter, manualNotesGateway, MANUAL_NOTE_WRITE_GATES } from '../manualNotesGateway';
++import { createManualNoteSaveAdapter, manualNoteSaveAdapter, manualNotesGateway, MANUAL_NOTE_WRITE_GATES } from '../manualNotesGateway';
++
++const closedGates = { ownedBookWrites: false, stableCreateReconciliation: false, optionalFiveCategories: false, serverManagedEditVersion: false };
++const heldAdapter = createManualNoteSaveAdapter(closedGates);
+ 
+ function chain(response: unknown) {
+   const builder: any = {};
+@@ -14,13 +17,17 @@ beforeEach(() => {
+   useAuthStore.setState({ session: { user: { id: 'actor' } } as any, status: 'authenticated' });
+ });
+ afterEach(() => useAuthStore.setState({ session: null, status: 'unauthenticated' }));
++it('enables the reviewed manual-note capabilities for the application', () => {
++  expect(Object.isFrozen(MANUAL_NOTE_WRITE_GATES)).toBe(true);
++  expect(MANUAL_NOTE_WRITE_GATES).toEqual({ ownedBookWrites: true, stableCreateReconciliation: true, optionalFiveCategories: true, serverManagedEditVersion: true });
++});
+ it.each([null, 'question', 'reflect'])('gates unverified writes before any dispatch, category %s', async tag => {
+-  await expect(manualNoteSaveAdapter.write({ id: 'op', actorId: 'actor', bookId: 'book', noteId: 'note', sessionId: 'session', mode: 'create', origin: 'book', content: 'Body', tag: tag as any, page_number: null })).rejects.toMatchObject({ kind: 'definite' });
++  await expect(heldAdapter.write({ id: 'op', actorId: 'actor', bookId: 'book', noteId: 'note', sessionId: 'session', mode: 'create', origin: 'book', content: 'Body', tag: tag as any, page_number: null })).rejects.toMatchObject({ kind: 'definite' });
+   expect(supabase.from).not.toHaveBeenCalled();
+-  expect(MANUAL_NOTE_WRITE_GATES.ownedBookWrites).toBe(false);
++  expect(closedGates.ownedBookWrites).toBe(false);
+ });
+ it('gates editing rather than falling back to an unconditional update', async () => {
+-  await expect(manualNoteSaveAdapter.write({ id: 'op', actorId: 'actor', bookId: 'book', noteId: 'note', sessionId: 'session', mode: 'edit', expectedVersion: 1, origin: 'book', content: 'Body', tag: 'reflect', page_number: null })).rejects.toMatchObject({ kind: 'definite' });
++  await expect(heldAdapter.write({ id: 'op', actorId: 'actor', bookId: 'book', noteId: 'note', sessionId: 'session', mode: 'edit', expectedVersion: 1, origin: 'book', content: 'Body', tag: 'reflect', page_number: null })).rejects.toMatchObject({ kind: 'definite' });
+   expect(supabase.from).not.toHaveBeenCalled();
+ });
+ it('validates the book owner before loading notes', async () => {
+diff --git a/src/features/books/notes/manualNotesGateway.ts b/src/features/books/notes/manualNotesGateway.ts
+index d6144cb..2dda1b2 100644
+--- a/src/features/books/notes/manualNotesGateway.ts
++++ b/src/features/books/notes/manualNotesGateway.ts
+@@ -3,13 +3,13 @@ import { useAuthStore } from '@/features/auth/store/authStore';
+ import { ManualNote, NoteSubmission, NoteWriteError, NOTE_CATEGORIES } from './manualNoteContract';
+ import { matchesSubmission, NoteSaveAdapter, NoteSaveCoordinator } from './noteSaveCoordinator';
+ 
+-/** Enable only after the separately authorized schema/ownership/round-trip proofs.
+- * These are release gates, not remotely trusted authorization checks. */
++/** Enabled after reviewed schema correction and connected acceptance on 2026-10-18.
++ * These are application capability gates; database policies enforce authorization. */
+ export const MANUAL_NOTE_WRITE_GATES = Object.freeze({
+-  ownedBookWrites: false,
+-  stableCreateReconciliation: false,
+-  optionalFiveCategories: false,
+-  serverManagedEditVersion: false,
++  ownedBookWrites: true,
++  stableCreateReconciliation: true,
++  optionalFiveCategories: true,
++  serverManagedEditVersion: true,
+ });
+ 
+ function currentActor(actorId: string) {
+@@ -77,10 +77,10 @@ export interface ManualNoteWriteGates {
+   optionalFiveCategories: boolean;
+   serverManagedEditVersion: boolean;
+ }
+-/** Explicit gates allow isolated transport tests without opening production saving. */
++/** Explicit capabilities let tests exercise held/enabled paths independently. */
+ export function createManualNoteSaveAdapter(gates: Readonly<ManualNoteWriteGates>): NoteSaveAdapter { return {
+   async write(submission) {
+-    // Fail before dispatch while live capability/denial proofs remain unauthorized.
++    // Closed capabilities fail before dispatch, including isolated hold-path tests.
+     if (!gates.ownedBookWrites ||
+       (submission.mode === 'create' && !gates.stableCreateReconciliation) ||
+       ((submission.tag === null || submission.tag === 'question') && !gates.optionalFiveCategories) ||
+@@ -99,7 +99,7 @@ export function createManualNoteSaveAdapter(gates: Readonly<ManualNoteWriteGates
+       return data;
+     }
+     if (!Number.isInteger(submission.expectedVersion) || submission.expectedVersion! < 1 || submission.expectedVersion! >= 2147483647) throw new NoteWriteError('definite', 'This saved note is not ready for editing. Your changes are still here.');
+-    // Future verified version/operation-marker contract; no ID-only fallback.
++    // Compare the version in the actual update; no ID-only fallback.
+     const { data, error } = await supabase.from('reading_notes').update({ ...values, last_operation_id: submission.id })
+       .eq('id', submission.noteId).eq('user_id', submission.actorId).eq('user_book_id', submission.bookId)
+       .eq('version', submission.expectedVersion!).select('*').maybeSingle();

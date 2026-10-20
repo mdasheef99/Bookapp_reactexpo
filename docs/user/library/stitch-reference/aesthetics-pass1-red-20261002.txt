@@ -1,0 +1,537 @@
+FAIL src/components/library/__tests__/LibraryAppearance.test.ts
+  ● Test suite failed to run
+
+    Cannot find module '../LibraryAppearance' from 'src/components/library/__tests__/LibraryAppearance.test.ts'
+
+    > 1 | import { getLibraryAppearance } from '../LibraryAppearance';
+        | ^
+      2 |
+      3 | const luminance = (hex: string) => {
+      4 |     const rgb = [1, 3, 5].map((offset) => parseInt(hex.slice(offset, offset + 2), 16) / 255)
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (src/components/library/__tests__/LibraryAppearance.test.ts:1:1)
+
+(node:23368) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+FAIL src/components/library/__tests__/LibraryShelf.test.tsx (6.541 s)
+  ● LibraryShelf single shelf SDD-04 › toggles shelf/list and persists viewMode to AsyncStorage default list
+
+    Unable to find an element with testID: library-view-shelf
+
+    <View>
+      <RCTScrollView>
+        <View>
+          <View>
+            <View>
+              <View>
+                <View>
+                  <Ionicons />
+                  <Text>
+                    CM's Book Shelf
+                  </Text>
+                </View>
+                <View>
+                  <View
+                    accessibilityHint="Switch to shelf view"
+                    accessibilityLabel="Toggle view"
+                    accessibilityRole="button"
+                    accessible={true}
+                    testID="library-view-toggle"
+                  >
+                    <Ionicons />
+                  </View>
+                  <View
+                    accessibilityHint="Open search to add or discover books"
+                    accessibilityLabel="Search books"
+                    accessibilityRole="button"
+                    accessible={true}
+                  >
+                    <Ionicons />
+                  </View>
+                </View>
+              </View>
+              <View>
+                <View
+                  accessible={true}
+                >
+                  <Text>
+                    + Add Book
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View>
+              <Text>
+                My Personal Library
+              </Text>
+            </View>
+            <View>
+              <View>
+                <Text>
+                  Current shelf
+                </Text>
+                <Text>
+                  1
+                   
+                  book
+                </Text>
+              </View>
+              <View>
+                <Text>
+                  Showing 
+                  all
+                </Text>
+              </View>
+            </View>
+            <RCTScrollView>
+              <View>
+                <View
+                  accessibilityLabel="All, 1 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": true,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    All
+                  </Text>
+                  <View>
+                    <Text>
+                      1
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  accessibilityLabel="Reading, 1 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": false,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    Reading
+                  </Text>
+                  <View>
+                    <Text>
+                      1
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  accessibilityLabel="Completed, 0 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": false,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    Completed
+                  </Text>
+                  <View>
+                    <Text>
+                      0
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  accessibilityLabel="Wishlist, 0 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": false,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    Wishlist
+                  </Text>
+                  <View>
+                    <Text>
+                      0
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </RCTScrollView>
+            <RCTScrollView>
+              <RCTRefreshControl />
+              <View>
+                <View>
+                  <View
+                    accessible={true}
+                  >
+                    <View>
+                      <Image />
+                      <View>
+                        <Text>
+                          Vault Book
+                        </Text>
+                        <Text>
+                          A
+                        </Text>
+                        <View>
+                          <View>
+                            <Text>
+                              reading
+                            </Text>
+                          </View>
+                          <View>
+                            <Text>
+                              owned
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </RCTScrollView>
+          </View>
+        </View>
+      </RCTScrollView>
+    </View>
+
+      123 |
+      124 |         // Explicit labeled choices keep the current presentation visible.
+    > 125 |         const shelfChoice = getByTestId('library-view-shelf');
+          |                             ^
+      126 |         const listChoice = getByTestId('library-view-list');
+      127 |         expect(listChoice).toHaveAccessibilityState({ selected: true });
+      128 |         fireEvent.press(shelfChoice);
+
+      at Object.getByTestId (src/components/library/__tests__/LibraryShelf.test.tsx:125:29)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● LibraryShelf single shelf SDD-04 › keeps filters and the actual filtered count before the collection in both modes
+
+    Unable to find an element with testID: library-collection-controls
+
+    <View>
+      <RCTScrollView>
+        <View>
+          <View>
+            <View>
+              <View>
+                <View>
+                  <Ionicons />
+                  <Text>
+                    CM's Book Shelf
+                  </Text>
+                </View>
+                <View>
+                  <View
+                    accessibilityHint="Switch to list view"
+                    accessibilityLabel="Toggle view"
+                    accessibilityRole="button"
+                    accessible={true}
+                    testID="library-view-toggle"
+                  >
+                    <Ionicons />
+                  </View>
+                  <View
+                    accessibilityHint="Open search to add or discover books"
+                    accessibilityLabel="Search books"
+                    accessibilityRole="button"
+                    accessible={true}
+                  >
+                    <Ionicons />
+                  </View>
+                </View>
+              </View>
+            </View>
+            <View>
+              <Text>
+                My Personal Library
+              </Text>
+            </View>
+            <View
+              style={
+                {
+                  "opacity": 0,
+                }
+              }
+              testID="library-shelf"
+            >
+              <View>
+                <View
+                  pointerEvents="none"
+                />
+                <View
+                  pointerEvents="none"
+                />
+                <View
+                  pointerEvents="none"
+                  testID="library-shelf-inner-ledge"
+                />
+                <View
+                  pointerEvents="none"
+                />
+                <RCTScrollView
+                  testID="library-shelf-scroll"
+                >
+                  <View>
+                    <View>
+                      <View>
+                        <View
+                          accessibilityLabel="Open Control Book by A"
+                          accessibilityRole="button"
+                          accessible={true}
+                          testID="library-shelf-spine-ub-1"
+                        >
+                          <Image
+                            accessible={false}
+                            pointerEvents="none"
+                          />
+                          <View
+                            pointerEvents="none"
+                          />
+                          <View
+                            pointerEvents="none"
+                          />
+                          <View
+                            pointerEvents="none"
+                          >
+                            <Text>
+                              Control Book
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                      <View
+                        accessibilityElementsHidden={true}
+                        accessible={false}
+                        importantForAccessibility="no-hide-descendants"
+                        pointerEvents="none"
+                        testID="library-shelf-bookend-top"
+                      >
+                        <View />
+                      </View>
+                    </View>
+                    <View />
+                  </View>
+                </RCTScrollView>
+              </View>
+            </View>
+            <RCTScrollView>
+              <View>
+                <View
+                  accessibilityLabel="All, 1 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": true,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    All
+                  </Text>
+                  <View>
+                    <Text>
+                      1
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  accessibilityLabel="Reading, 0 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": false,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    Reading
+                  </Text>
+                  <View>
+                    <Text>
+                      0
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  accessibilityLabel="Completed, 1 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": false,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    Completed
+                  </Text>
+                  <View>
+                    <Text>
+                      1
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  accessibilityLabel="Wishlist, 0 books"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "selected": false,
+                    }
+                  }
+                  accessible={true}
+                >
+                  <Text>
+                    Wishlist
+                  </Text>
+                  <View>
+                    <Text>
+                      0
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </RCTScrollView>
+            <View>
+              <View
+                accessibilityLabel="No current read"
+                accessibilityState={
+                  {
+                    "disabled": true,
+                  }
+                }
+                accessible={true}
+              >
+                <View
+                  pointerEvents="none"
+                />
+                <Text>
+                  Current Read
+                </Text>
+                <Text>
+                  Your next chapter awaits
+                </Text>
+                <Text>
+                  Choose a book from your shelf to start reading.
+                </Text>
+              </View>
+              <View>
+                <Ionicons />
+                <View>
+                  <Text>
+                    1
+                  </Text>
+                  <Text>
+                    In your library
+                  </Text>
+                </View>
+              </View>
+              <View
+                accessibilityLabel="Show wishlist, 0 books"
+                accessibilityRole="button"
+                accessible={true}
+              >
+                <Ionicons />
+                <View>
+                  <Text>
+                    0
+                  </Text>
+                  <Text>
+                    Wishlist
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </RCTScrollView>
+    </View>
+
+      152 |         const { getByTestId, getByLabelText, getByText, toJSON, queryClient, unmount } = renderLibraryScreen();
+      153 |         await waitFor(() => expect(getByTestId('library-shelf')).toBeTruthy());
+    > 154 |         const controls = getByTestId('library-collection-controls');
+          |                          ^
+      155 |         expect(controls.findByProps({ accessibilityLabel: 'Wishlist, 0 books' })).toBeTruthy();
+      156 |         expect(getByText('1 book')).toBeTruthy();
+      157 |         const order: string[] = [];
+
+      at Object.getByTestId (src/components/library/__tests__/LibraryShelf.test.tsx:154:26)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● LibraryShelf single shelf SDD-04 › adds local decorative wood grain while retaining the 440px frame and 12px ledge
+
+    Unable to find an element with testID: library-shelf-wood-grain
+
+    <View
+      style={
+        {
+          "opacity": 0,
+        }
+      }
+      testID="library-shelf"
+    >
+      <View>
+        <View
+          pointerEvents="none"
+        />
+        <View
+          pointerEvents="none"
+        />
+        <View
+          pointerEvents="none"
+          testID="library-shelf-inner-ledge"
+        />
+        <View
+          pointerEvents="none"
+        />
+        <RCTScrollView
+          testID="library-shelf-scroll"
+        >
+          <View>
+            <View />
+            <View />
+          </View>
+        </RCTScrollView>
+        <View
+          pointerEvents="none"
+        >
+          <Ionicons />
+          <Text>
+            No books on this shelf
+          </Text>
+          <Text>
+            Try another filter or add a book.
+          </Text>
+        </View>
+      </View>
+    </View>
+
+      175 |     it('adds local decorative wood grain while retaining the 440px frame and 12px ledge', () => {
+      176 |         const { getByTestId } = render(<LibraryShelf books={[]} onBookPress={jest.fn()} />);
+    > 177 |         const grain = getByTestId('library-shelf-wood-grain', { includeHiddenElements: true });
+          |                       ^
+      178 |         expect(grain.props.source.uri).toMatch(/^data:image\/svg\+xml/);
+      179 |         expect(grain.props.accessible).toBe(false);
+      180 |         expect(grain.props.pointerEvents).toBe('none');
+
+      at Object.getByTestId (src/components/library/__tests__/LibraryShelf.test.tsx:177:23)
+
+Test Suites: 2 failed, 2 total
+Tests:       3 failed, 11 passed, 14 total
+Snapshots:   0 total
+Time:        10.64 s, estimated 16 s
+Ran all test suites within paths "src/components/library/__tests__/LibraryShelf.test.tsx", "src/components/library/__tests__/LibraryAppearance.test.ts".

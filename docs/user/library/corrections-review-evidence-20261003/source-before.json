@@ -1,0 +1,46 @@
+[
+  {
+    "Path": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\app\\(tabs)\\library\\index.tsx",
+    "Hash": "CA4305A9BFCEDE3805D20CAD82EBE7546ABFC48B22AAACE7C193E900B182FB1D"
+  },
+  {
+    "Path": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\app\\(tabs)\\library\\__tests__\\index.test.tsx",
+    "Hash": "8926E5CD2D89A56F95937324E85C8E9A7DFBCACD6FE06293727C466AD3CF8367"
+  },
+  {
+    "Path": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\components\\library\\LibraryHeader.tsx",
+    "Hash": "B6FA25D602CB8F29D3ED6A790CBE297DDD11951338C2019C8DB8EC2D0427AE66"
+  },
+  {
+    "Path": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\components\\library\\LibraryBookList.tsx",
+    "Hash": "02D2079FAC08543C1617BFF7E41AAAC917CE1EBD8801375A47BC41A8DC52A376"
+  },
+  {
+    "Path": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\components\\library\\LibraryBookPicker.tsx",
+    "Hash": "52EDCE98C3E700350D2CC018B3B19C84D1566F4992E21E72ED4BEAD53DD22A69"
+  },
+  {
+    "Path": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\components\\library\\BookSpine.tsx",
+    "Hash": "BACF7106ACF896AB078E28035180D85B79F3E6827175C01BC8A0D4AD728A5136"
+  },
+  {
+    "Path": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\components\\library\\LibraryShelf.tsx",
+    "Hash": "94DB6A0BDABB311DBBB5220DF9C47C8D417FD2F375886C61E4F242A4EBAB5E67"
+  },
+  {
+    "Path": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\features\\books\\utils\\libraryShelf.ts",
+    "Hash": "9800F3CBECC4AC50B4A97EB62664A42F170A2BDE3FBDB4CDCDE73495BA9BD6AF"
+  },
+  {
+    "Path": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\features\\books\\utils\\shelfLayout.ts",
+    "Hash": "73A66F196D68C1C831115E0C0C2E668ED76B063B6F98C070B0D128C30FF75366"
+  },
+  {
+    "Path": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\package.json",
+    "Hash": "312CB41C0BB95EAD1E9114B0199134EFD45D4451098D58B040FDB18228D15E77"
+  },
+  {
+    "Path": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\package-lock.json",
+    "Hash": "1CED59B10BC6C874A785ACB9B6C0FF30722FAD3D99085B7C5EE508870FE3C535"
+  }
+]

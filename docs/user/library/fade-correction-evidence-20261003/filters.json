@@ -1,0 +1,66 @@
+[
+  {
+    "mode": "List",
+    "filter": "Reading",
+    "bookendCount": 0,
+    "chooserAvailable": false,
+    "entryCount": 0,
+    "selected": "Reading, 0 books"
+  },
+  {
+    "mode": "List",
+    "filter": "Completed",
+    "bookendCount": 0,
+    "chooserAvailable": false,
+    "entryCount": 1,
+    "selected": "Completed, 1 books"
+  },
+  {
+    "mode": "List",
+    "filter": "Wishlist",
+    "bookendCount": 0,
+    "chooserAvailable": false,
+    "entryCount": 1,
+    "selected": "Wishlist, 1 books"
+  },
+  {
+    "mode": "List",
+    "filter": "All",
+    "bookendCount": 0,
+    "chooserAvailable": false,
+    "entryCount": 8,
+    "selected": "All, 8 books"
+  },
+  {
+    "mode": "Shelf",
+    "filter": "Reading",
+    "bookendCount": 0,
+    "chooserAvailable": false,
+    "entryCount": 0,
+    "selected": "Reading, 0 books"
+  },
+  {
+    "mode": "Shelf",
+    "filter": "Completed",
+    "bookendCount": 1,
+    "chooserAvailable": true,
+    "entryCount": 1,
+    "selected": "Completed, 1 books"
+  },
+  {
+    "mode": "Shelf",
+    "filter": "Wishlist",
+    "bookendCount": 1,
+    "chooserAvailable": true,
+    "entryCount": 1,
+    "selected": "Wishlist, 1 books"
+  },
+  {
+    "mode": "Shelf",
+    "filter": "All",
+    "bookendCount": 2,
+    "chooserAvailable": true,
+    "entryCount": 8,
+    "selected": "All, 8 books"
+  }
+]

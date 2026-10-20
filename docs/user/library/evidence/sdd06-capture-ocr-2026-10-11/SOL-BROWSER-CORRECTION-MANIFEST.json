@@ -1,0 +1,24 @@
+{
+  "scope": "Same-session bounded LUNA-WEB-01/02 correction verification; no new audit",
+  "branch": "codex/library-cover-shelf",
+  "head": "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+  "files": [
+    {
+      "path": "src/components/notes/ManualNoteUi.tsx",
+      "before": "A0ED5A5C2186D753367C7A81B651E2FA4AB9ACFE4C7760F1202252AD9B8BD801",
+      "after": "367475F06BBF5BD15B7254D25A97CBAC3679C703CDC0940C86CF04120877A917"
+    },
+    {
+      "path": "src/components/notes/__tests__/CategoryPicker.web-semantics.test.tsx",
+      "before": null,
+      "after": "37FCBD0F1A742389F1B9DC0880AE24033FF22B003287FCF08E1CEF2FA2D34E3D"
+    }
+  ],
+  "existingBundleManifestDifferences": [
+    {
+      "path": "src/components/notes/ManualNoteUi.tsx",
+      "before": "A0ED5A5C2186D753367C7A81B651E2FA4AB9ACFE4C7760F1202252AD9B8BD801",
+      "after": "367475F06BBF5BD15B7254D25A97CBAC3679C703CDC0940C86CF04120877A917"
+    }
+  ]
+}

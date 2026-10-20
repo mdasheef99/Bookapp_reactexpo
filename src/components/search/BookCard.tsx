@@ -1,16 +1,16 @@
-import { View, Text, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useRef, useEffect } from 'react';
 import { GoogleBook } from '@/features/books/services/booksService';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useLibraryTypography } from '@/components/library/LibraryTypography';
 import { RatingStars } from './RatingStars';
 import { PriceBadge } from './PriceBadge';
 import { GenreTag } from './GenreTag';
 import { InLibraryBadge } from './InLibraryBadge';
 import { WishlistButton } from './WishlistButton';
 
-// Props interface
 export interface BookCardProps {
     book: GoogleBook;
     index: number;
@@ -24,34 +24,16 @@ export interface BookCardProps {
     onWishlistToggle: (book: GoogleBook) => void;
 }
 
-// Animated wrapper for stagger effect
-const AnimatedWrapper = ({ index, children }: { index: number; children: React.ReactNode }) => {
-    const fadeAnim = useRef(new Animated.Value(0)).current;
-    const translateY = useRef(new Animated.Value(30)).current;
-
-    useEffect(() => {
-        Animated.parallel([
-            Animated.timing(fadeAnim, { toValue: 1, duration: 400, delay: (index % 20) * 60, useNativeDriver: true }),
-            Animated.timing(translateY, { toValue: 0, duration: 400, delay: (index % 20) * 60, useNativeDriver: true }),
-        ]).start();
-    }, []);
-
-    return (
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY }] }}>
-            {children}
-        </Animated.View>
-    );
-};
-
-// Helper to get high-res image
-const getHighResImage = (imageLinks?: { thumbnail?: string }) => {
-    if (!imageLinks?.thumbnail) return 'https://via.placeholder.com/150x220?text=No+Cover';
-    return imageLinks.thumbnail.replace('http:', 'https:').replace('zoom=1', 'zoom=2');
+const languageLabel = (value: string) => {
+    const labels: Record<string, string> = {
+        en: 'English', eng: 'English', hi: 'Hindi', hin: 'Hindi', es: 'Spanish', spa: 'Spanish',
+        fr: 'French', fre: 'French', de: 'German', ger: 'German', it: 'Italian', ita: 'Italian',
+    };
+    return labels[value.toLowerCase()] ?? value.toUpperCase();
 };
 
 export const BookCard = ({
     book,
-    index,
     isInLibrary,
     isAdding,
     isInWishlist,
@@ -61,211 +43,202 @@ export const BookCard = ({
     onShare,
     onWishlistToggle,
 }: BookCardProps) => {
-    const { colors } = useTheme();
-    const imageUrl = getHighResImage(book.volumeInfo.imageLinks);
-    const categories = book.volumeInfo.categories?.slice(0, 2) || [];
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
+    const [showRecordDetails, setShowRecordDetails] = useState(false);
+    const { volumeInfo } = book;
+    const categories = volumeInfo.categories?.slice(0, 2) || [];
+    const identifiers = volumeInfo.industryIdentifiers ?? [];
+    const isbn13 = identifiers.find((entry) => entry.type === 'ISBN_13')?.identifier;
+    const isbn10 = identifiers.find((entry) => entry.type === 'ISBN_10')?.identifier;
+    const recordDetails = [
+        volumeInfo.publisher ? { label: 'Publisher', value: volumeInfo.publisher } : null,
+        volumeInfo.publishedDate ? { label: 'Published', value: volumeInfo.publishedDate } : null,
+        volumeInfo.pageCount ? { label: 'Length', value: `${volumeInfo.pageCount} pages` } : null,
+        volumeInfo.language ? { label: 'Language', value: languageLabel(volumeInfo.language) } : null,
+        isbn13 ? { label: 'ISBN-13', value: isbn13 } : null,
+        isbn10 ? { label: 'ISBN-10', value: isbn10 } : null,
+    ].filter((item): item is { label: string; value: string } => !!item);
+    const imageUrl = volumeInfo.imageLinks?.thumbnail
+        ?.replace(/^http:/i, 'https:')
+        .replace('zoom=1', 'zoom=2');
 
     return (
-        <AnimatedWrapper index={index}>
-            <View
-                style={{
-                    marginBottom: 16,
-                    marginHorizontal: 4,
-                }}
-            >
+        <View>
+            <View style={{ marginBottom: 12, width: '100%', maxWidth: 920, alignSelf: 'center' }}>
                 <View
                     style={{
                         backgroundColor: colors.bgCard,
-                        borderRadius: 20,
-                        padding: 14,
+                        borderRadius: 14,
+                        padding: 12,
                         flexDirection: 'row',
+                        alignItems: 'flex-start',
                         borderWidth: 1,
                         borderColor: isInLibrary ? colors.accent : colors.border,
                         shadowColor: colors.shadow,
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.15,
-                        shadowRadius: 12,
-                        elevation: 5,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.07,
+                        shadowRadius: 6,
+                        elevation: 2,
                     }}
                 >
-                    {/* Cover Image */}
-                    <View style={{ borderRadius: 12, overflow: 'hidden' }}>
-                        <Image
-                            source={{ uri: imageUrl }}
-                            style={{ width: 95, height: 145, borderRadius: 12 }}
-                            contentFit="cover"
-                            transition={300}
-                        />
-                        {book.volumeInfo.previewLink && (
-                            <View style={{
-                                position: 'absolute',
-                                bottom: 6,
-                                right: 6,
-                                backgroundColor: 'rgba(0,0,0,0.7)',
-                                borderRadius: 12,
-                                padding: 4,
-                            }}>
-                                <Ionicons name="eye" size={14} color="#fff" />
+                    <View style={{ width: 76, height: 114, borderRadius: 8, overflow: 'hidden', backgroundColor: colors.bgSecondary, alignItems: 'center', justifyContent: 'center' }}>
+                        {imageUrl ? (
+                            <Image source={{ uri: imageUrl }} style={{ width: 76, height: 114 }} contentFit="cover" transition={200} />
+                        ) : (
+                            <Ionicons name="book-outline" size={28} color={colors.textTertiary} />
+                        )}
+                        {volumeInfo.previewLink && (
+                            <View style={{ position: 'absolute', bottom: 4, right: 4, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(32,26,19,0.78)', alignItems: 'center', justifyContent: 'center' }}>
+                                <Ionicons name="eye" size={13} color="#fff" />
                             </View>
                         )}
                     </View>
 
-                    {/* Book Details */}
-                    <View style={{ flex: 1, marginLeft: 16, justifyContent: 'space-between', paddingVertical: 2 }}>
-                        <View>
-                            {isInLibrary && <InLibraryBadge />}
-                            <Text
-                                style={{
-                                    fontSize: 17,
-                                    fontWeight: '700',
-                                    color: colors.textPrimary,
-                                    lineHeight: 22,
-                                    marginBottom: 4,
-                                    marginTop: isInLibrary ? 6 : 0,
-                                }}
-                                numberOfLines={2}
-                            >
-                                {book.volumeInfo.title}
+                    <View style={{ flex: 1, minWidth: 0, marginLeft: 12 }}>
+                        {isInLibrary && <View style={{ marginBottom: 5 }}><InLibraryBadge /></View>}
+                        <Text
+                            style={{ color: colors.textPrimary, fontFamily: fonts.heading, fontSize: 20, lineHeight: 23 }}
+                            numberOfLines={2}
+                        >
+                            {volumeInfo.title}
+                        </Text>
+                        {volumeInfo.subtitle ? (
+                            <Text style={{ color: colors.textSecondary, fontFamily: fonts.body, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
+                                {volumeInfo.subtitle}
                             </Text>
-                            <Text style={{ fontSize: 14, color: colors.textSecondary, fontWeight: '500' }} numberOfLines={1}>
-                                by {book.volumeInfo.authors?.[0] || 'Unknown Author'}
+                        ) : null}
+                        <Text style={{ color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body, marginTop: 3 }} numberOfLines={1}>
+                            {volumeInfo.authors?.join(', ') || 'Author not listed'}
+                        </Text>
+
+                        {categories.length > 0 && (
+                            <View style={{ flexDirection: 'row', marginTop: 6, flexWrap: 'wrap' }}>
+                                {categories.map((category, categoryIndex) => (
+                                    <GenreTag key={`${category}-${categoryIndex}`} genre={category.split('/')[0].trim()} />
+                                ))}
+                            </View>
+                        )}
+
+                        {volumeInfo.description ? (
+                            <Text style={{ color: colors.textTertiary, fontSize: 12, lineHeight: 17, marginTop: 4 }} numberOfLines={2}>
+                                {volumeInfo.description}
                             </Text>
+                        ) : null}
 
-                            {/* Genre Tags */}
-                            {categories.length > 0 && (
-                                <View style={{ flexDirection: 'row', marginTop: 6, flexWrap: 'wrap' }}>
-                                    {categories.map((cat, i) => (
-                                        <GenreTag key={i} genre={cat.split('/')[0].trim()} />
-                                    ))}
-                                </View>
-                            )}
-
-                            {/* Description */}
-                            {book.volumeInfo.description && (
-                                <Text style={{ fontSize: 12, color: colors.textTertiary, marginTop: 6, lineHeight: 18 }} numberOfLines={2}>
-                                    {book.volumeInfo.description}
-                                </Text>
-                            )}
-
-                            {/* Metadata Row */}
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-                                {book.volumeInfo.publishedDate && (
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 12 }}>
+                        {(volumeInfo.publishedDate || volumeInfo.pageCount) ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 6, gap: 12 }}>
+                                {volumeInfo.publishedDate ? (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                         <Ionicons name="calendar-outline" size={13} color={colors.textTertiary} />
-                                        <Text style={{ fontSize: 12, color: colors.textTertiary, marginLeft: 4 }}>
-                                            {book.volumeInfo.publishedDate.split('-')[0]}
-                                        </Text>
+                                        <Text style={{ fontSize: 11, color: colors.textTertiary, marginLeft: 4, fontFamily: fonts.body }}>{volumeInfo.publishedDate.split('-')[0]}</Text>
                                     </View>
-                                )}
-                                {book.volumeInfo.pageCount && (
+                                ) : null}
+                                {volumeInfo.pageCount ? (
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                         <Ionicons name="document-text-outline" size={13} color={colors.textTertiary} />
-                                        <Text style={{ fontSize: 12, color: colors.textTertiary, marginLeft: 4 }}>
-                                            {book.volumeInfo.pageCount} pages
-                                        </Text>
+                                        <Text style={{ fontSize: 11, color: colors.textTertiary, marginLeft: 4, fontFamily: fonts.body }}>{volumeInfo.pageCount} pages</Text>
                                     </View>
-                                )}
+                                ) : null}
                             </View>
+                        ) : null}
 
-                            {/* Rating & Price */}
-                            <RatingStars rating={book.volumeInfo.averageRating} count={book.volumeInfo.ratingsCount} />
-                            <PriceBadge
-                                price={book.saleInfo?.retailPrice?.amount}
-                                currency={book.saleInfo?.retailPrice?.currencyCode}
-                                saleability={book.saleInfo?.saleability}
-                            />
-                        </View>
+                        <RatingStars rating={volumeInfo.averageRating} count={volumeInfo.ratingsCount} />
+                        <PriceBadge
+                            price={book.saleInfo?.retailPrice?.amount}
+                            currency={book.saleInfo?.retailPrice?.currencyCode}
+                            saleability={book.saleInfo?.saleability}
+                        />
 
-                        {/* Action Buttons */}
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginTop: 9, gap: 7 }}>
                             {!isInLibrary ? (
                                 <TouchableOpacity
                                     onPress={() => onAdd(book)}
                                     disabled={isAdding}
-                                    style={{
-                                        backgroundColor: colors.accent,
-                                        flexDirection: 'row',
-                                        paddingHorizontal: 14,
-                                        paddingVertical: 10,
-                                        borderRadius: 14,
-                                        alignItems: 'center',
-                                        opacity: isAdding ? 0.7 : 1,
-                                        marginRight: 8,
-                                    }}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Add ${volumeInfo.title} to library`}
+                                    accessibilityState={{ disabled: isAdding }}
+                                    style={{ backgroundColor: colors.accent, minHeight: 44, paddingHorizontal: 12, borderRadius: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', opacity: isAdding ? 0.7 : 1 }}
                                 >
-                                    {isAdding ? (
-                                        <ActivityIndicator size="small" color="#fff" />
-                                    ) : (
-                                        <>
-                                            <Ionicons name="add" size={18} color="#fff" />
-                                            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700', marginLeft: 4 }}>Add</Text>
-                                        </>
-                                    )}
+                                    {isAdding ? <ActivityIndicator size="small" color={colors.onAccent} /> : <>
+                                        <Ionicons name="add" size={18} color={colors.onAccent} />
+                                        <Text style={{ color: colors.onAccent, fontSize: 13, fontFamily: fonts.label, marginLeft: 4 }}>Add to library</Text>
+                                    </>}
                                 </TouchableOpacity>
                             ) : (
-                                <View style={{
-                                    backgroundColor: colors.bgSecondary,
-                                    paddingHorizontal: 14,
-                                    paddingVertical: 10,
-                                    borderRadius: 14,
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    marginRight: 8,
-                                }}>
-                                    <Ionicons name="checkmark" size={18} color={colors.accent} />
-                                    <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', marginLeft: 4 }}>Added</Text>
+                                <View style={{ backgroundColor: colors.tagBackground, minHeight: 40, paddingHorizontal: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.border }}>
+                                    <Ionicons name="checkmark" size={17} color={colors.tagText} />
+                                    <Text style={{ color: colors.tagText, fontSize: 12, fontFamily: fonts.label, marginLeft: 3 }}>Added</Text>
                                 </View>
                             )}
 
-                            {/* Wishlist Button */}
-                            <View style={{
-                                backgroundColor: colors.bgSecondary,
-                                borderRadius: 14,
-                                borderWidth: 1,
-                                borderColor: colors.border,
-                                marginRight: 8,
-                            }}>
+                            <View style={{ backgroundColor: colors.bgSecondary, borderRadius: 10, borderWidth: 1, borderColor: colors.border, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
                                 <WishlistButton
                                     isWishlisted={isInWishlist}
                                     isLoading={isTogglingWishlist}
                                     onToggle={() => onWishlistToggle(book)}
+                                    accessibilityLabel={`${isInWishlist ? 'Remove' : 'Add'} ${volumeInfo.title} ${isInWishlist ? 'from' : 'to'} wishlist`}
                                     size={18}
-                                    color={colors.accent}
+                                    color={isInWishlist ? colors.error : colors.accent}
                                 />
                             </View>
 
-                            {book.volumeInfo.previewLink && (
+                            {volumeInfo.previewLink ? (
                                 <TouchableOpacity
-                                    onPress={() => onPreview(book.volumeInfo.previewLink)}
-                                    style={{
-                                        backgroundColor: colors.bgSecondary,
-                                        padding: 10,
-                                        borderRadius: 14,
-                                        borderWidth: 1,
-                                        borderColor: colors.border,
-                                        marginRight: 8,
-                                    }}
+                                    onPress={() => onPreview(volumeInfo.previewLink)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Preview ${volumeInfo.title}`}
+                                    accessibilityHint="Opens the catalogue preview"
+                                    style={{ backgroundColor: colors.bgSecondary, width: 44, height: 44, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
                                 >
                                     <Ionicons name="eye-outline" size={18} color={colors.textSecondary} />
                                 </TouchableOpacity>
-                            )}
+                            ) : null}
 
                             <TouchableOpacity
                                 onPress={() => onShare(book)}
-                                style={{
-                                    backgroundColor: colors.bgSecondary,
-                                    padding: 10,
-                                    borderRadius: 14,
-                                    borderWidth: 1,
-                                    borderColor: colors.border,
-                                }}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Share ${volumeInfo.title}`}
+                                accessibilityHint="Opens the system share options"
+                                style={{ backgroundColor: colors.bgSecondary, width: 44, height: 44, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
                             >
                                 <Ionicons name="share-outline" size={18} color={colors.textSecondary} />
                             </TouchableOpacity>
                         </View>
+
+                        {recordDetails.length > 0 && (
+                            <>
+                                <TouchableOpacity
+                                    onPress={() => setShowRecordDetails((visible) => !visible)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`${showRecordDetails ? 'Hide' : 'Show'} record details for ${volumeInfo.title}`}
+                                    accessibilityState={{ expanded: showRecordDetails }}
+                                    style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingRight: 8 }}
+                                >
+                                    <Ionicons name="information-circle-outline" size={16} color={colors.accent} />
+                                    <Text style={{ color: colors.accent, fontSize: 12, fontFamily: fonts.label, marginLeft: 5 }}>
+                                        {showRecordDetails ? 'Hide record details' : 'Record details'}
+                                    </Text>
+                                    <Ionicons name={showRecordDetails ? 'chevron-up' : 'chevron-down'} size={15} color={colors.accent} style={{ marginLeft: 3 }} />
+                                </TouchableOpacity>
+                                {showRecordDetails && (
+                                    <View style={{ backgroundColor: colors.bgPrimary, borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, marginBottom: 3 }}>
+                                        {recordDetails.map((detail) => (
+                                            <View key={detail.label} style={{ flexDirection: 'row', flexWrap: 'wrap', paddingVertical: 3 }}>
+                                                <Text style={{ color: colors.textTertiary, fontSize: 11, fontFamily: fonts.label }}>{detail.label}: </Text>
+                                                <Text selectable style={{ color: colors.textSecondary, fontSize: 11, fontFamily: fonts.body }}>{detail.value}</Text>
+                                            </View>
+                                        ))}
+                                        <Text style={{ color: colors.textTertiary, fontSize: 10, fontFamily: fonts.body, marginTop: 4 }}>
+                                            Details available for this catalogue record; other editions may appear as separate results.
+                                        </Text>
+                                    </View>
+                                )}
+                            </>
+                        )}
                     </View>
                 </View>
             </View>
-        </AnimatedWrapper>
+        </View>
     );
 };

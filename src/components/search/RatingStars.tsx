@@ -1,5 +1,7 @@
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useLibraryTypography } from '@/components/library/LibraryTypography';
 
 interface RatingStarsProps {
     rating?: number;
@@ -7,6 +9,8 @@ interface RatingStarsProps {
 }
 
 export const RatingStars = ({ rating, count }: RatingStarsProps) => {
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
     if (!rating) return null;
 
     const fullStars = Math.floor(rating);
@@ -32,7 +36,7 @@ export const RatingStars = ({ rating, count }: RatingStarsProps) => {
                     );
                 })}
             </View>
-            <Text style={{ fontSize: 13, color: '#6B7280', marginLeft: 8, fontWeight: '500' }}>
+            <Text style={{ fontSize: 12, color: colors.textTertiary, marginLeft: 8, fontFamily: fonts.body }}>
                 {rating.toFixed(1)} ({count?.toLocaleString() || 0})
             </Text>
         </View>

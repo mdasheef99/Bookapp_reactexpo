@@ -1,0 +1,35 @@
+{
+  "fixture": "Luna isolated web fixture; no production code changed",
+  "url": "http://127.0.0.1:8085/login",
+  "parentServer": "http://127.0.0.1:8084",
+  "pid": 20956,
+  "checkout": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library",
+  "branch": "codex/library-cover-shelf",
+  "head": "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+  "servedIndexTitle": "booktalks-mobile",
+  "servedEntryPath": "/_expo/static/js/web/entry-737716bc7a3490106854ce8e88dc0f66.js",
+  "servedEntryBytes": 12600195,
+  "servedEntrySha256": "16E21C51F7EBA46EB51F14D372431C1271A564463F7B538E36F805BBDC466BCD",
+  "sourceManifestSha256": "415BF0DB470369BA3CF03DD5AA801D535A2D0EAD4D342AD13CBA791B21FC634D",
+  "authBypass": false,
+  "temporaryNativeProofRouteRemoved": true,
+  "gates": [
+    {
+      "name": "ownedBookWrites",
+      "value": false
+    },
+    {
+      "name": "stableCreateReconciliation",
+      "value": false
+    },
+    {
+      "name": "optionalFiveCategories",
+      "value": false
+    },
+    {
+      "name": "serverManagedEditVersion",
+      "value": false
+    }
+  ],
+  "verification": "Independent GET of parent build.json, served HTML and complete served entry bundle; bytes and SHA-256 match immutable build manifest."
+}

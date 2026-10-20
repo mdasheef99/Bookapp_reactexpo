@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true, "allowImportingTsExtensions": true },
+  "include": [
+    "app/_layout.tsx",
+    "app/(tabs)/library/[bookId].tsx",
+    "app/(tabs)/library/__tests__/book-details-corrections.test.tsx",
+    "app/(tabs)/library/_layout.tsx",
+    "app/(tabs)/library/notes.tsx",
+    "app/(tabs)/library/note.tsx",
+    "app/(tabs)/library/note-compose.tsx",
+    "src/features/books/notes/**/*",
+    "src/features/books/services/ocrService.ts",
+    "src/features/books/services/__tests__/ocrService.test.ts",
+    "src/features/books/utils/ocrWordCap.ts",
+    "src/types/nativewind-env.d.ts",
+    "src/components/notes/**/*"
+  ],
+  "exclude": ["node_modules", "e2e", "supabase/functions"]
+}

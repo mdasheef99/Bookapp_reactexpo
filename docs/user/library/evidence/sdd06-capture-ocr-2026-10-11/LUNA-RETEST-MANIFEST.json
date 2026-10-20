@@ -1,0 +1,47 @@
+{
+  "runDate": "2026-10-11",
+  "epoch": "LUNA-WEB-03 keyboard-red build; historical evidence",
+  "preservedBuildManifest": "LUNA-KEYBOARD-RED-BUILD-MANIFEST.json",
+  "preservedBundleSourceManifest": "LUNA-KEYBOARD-RED-BUNDLE-SOURCE-MANIFEST.json",
+  "checkout": "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library",
+  "branch": "codex/library-cover-shelf",
+  "head": "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+  "baseUrl": "http://127.0.0.1:8084",
+  "browser": "Microsoft Edge through Playwright Chromium project",
+  "build": {
+    "entry": "entry-0949ad8c17996d503b5a50e25d917e97.js",
+    "entryBytes": 12600266,
+    "entrySha256": "CA65B1DC34CFEA7D8ED092CB82B5E7965CF4D4F2FC7531723CA994D763C40870",
+    "authBypass": false,
+    "bundleSourceManifestSha256": "35196F8FD3DDDE88D6EBD20087C79823D0A20A72B0EA1871B1170ABE159040AB"
+  },
+  "harness": {
+    "spec": ".tmp/sdd06-capture-browser-qa-luna-20261011/library-manual-note-browser-history.luna.spec.ts",
+    "specSha256": "B80899D4DAB8938F1E224CD06926D4D4F30BC66D9AA4A98582A18336EA0FDCFC",
+    "config": ".tmp/sdd06-capture-browser-qa-luna-20261011/playwright.retest.config.ts",
+    "configSha256": "149CB5C74EC51C9BD75729DD952F86B9511DBD70001EF8CE597A4DDCD3AC4075",
+    "testMode": "fresh isolated Edge context; fixture routes registered before login or production entry"
+  },
+  "syntheticFixtures": {
+    "actorId": "11111111-1111-4111-8111-111111111111",
+    "userBookId": "375d1a2e-e9da-485b-89ac-b23c40791535",
+    "noteId": "ffe33fb0-0ab9-4d35-a322-9662320ecb45",
+    "noteContent": "Persisted fixture body stays unchanged",
+    "realAccountOrRecords": false
+  },
+  "transportBoundary": {
+    "http": "only same-origin 127.0.0.1:8084 GET/HEAD continued; all other HTTP aborted before dispatch",
+    "https": "Supabase auth/read responses synthetically fulfilled; app data reads synthetically fulfilled; all external hosts and app data mutations aborted",
+    "requestHeadersOrBodiesLogged": false,
+    "afterEachAssertedNoWrites": true
+  },
+  "results": {
+    "firstBatch": "8 passed; one harness setup failure because the test expected Quote selected on a fresh no-category form",
+    "focusedCategoryRetest": "FAILED as expected by acceptance: pointer Quote set aria-checked true; real focused Space key did not activate Thought and its aria-checked remained false",
+    "confirmedFinding": "LUNA-WEB-03",
+    "uiTestingPaused": true,
+    "playwrightErrorContext": "browser/retest-2026-10-11/error-context.md",
+    "playwrightErrorContextSha256": "D9FFA633D3E7DAE8607569AF6282B239A7A8FCCD16684F120850F82E4E4CAD7A",
+    "screenshotExport": "No screenshot export from CUA; Playwright failure context retained separately"
+  }
+}

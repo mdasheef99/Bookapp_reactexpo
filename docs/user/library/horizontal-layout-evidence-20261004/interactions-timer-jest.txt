@@ -1,0 +1,50 @@
+(node:26756) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/components/library/__tests__/LibraryShelf.test.tsx (12.323 s)
+  horizontal browsing and quick look
+    √ waits the full 450ms through the press responder before opening quick look (426 ms)
+    √ opens loaded facts after a hold, suppresses release navigation and routes the details action (69 ms)
+    √ cancels hold and tap after pointer movement and track scrolling (50 ms)
+    √ provides a visible chooser alternative, omits missing facts and dismisses with back (52 ms)
+    √ exposes independent overflow controls and updates their boundaries (256 ms)
+  horizontal Shelf layout checkpoint
+    √ switches only Shelf style, retains the shared draft, and cancels moves in either style (674 ms)
+    √ restores Horizontal preference, routes real IDs, filters the same data, and keeps the selector out of List (149 ms)
+    √ falls back to Vertical for unknown style preference (67 ms)
+    √ falls back to Vertical for read-error style preference (68 ms)
+    √ does not let a late saved style overwrite an explicit selection (108 ms)
+    √ renders separate overflow tracks with fixed planks outside them and no duplicate IDs (153 ms)
+  LibraryShelf single shelf SDD-04
+    √ renders classic upright text spines and opens the selected entry (17 ms)
+    √ shows the full book title and available author while pressed, then preserves book routing (28 ms)
+    √ omits the author caption when the saved entry has no authors (18 ms)
+    √ keeps the label region opaque and removes competing expanded spine hit regions (11 ms)
+    √ offers non-overlapping title buttons for the same filtered books without changing presentation (95 ms)
+    √ toggles shelf/list and persists viewMode to AsyncStorage default list (117 ms)
+    √ arranges the whole collection by entry ID, with one-step Undo, Cancel and explicit Save (502 ms)
+    √ keeps filters and the actual filtered count before the collection in both modes (82 ms)
+    √ retains the 440px cabinet with a slimmer middle board and both book rows grounded on their boards (11 ms)
+    √ renders every spine during the shelf entrance (17 ms)
+    √ keeps the shelf fully opaque at entrance progress 0 (19 ms)
+    √ keeps the shelf fully opaque at entrance progress 0.5 (12 ms)
+    √ keeps the shelf fully opaque at entrance progress 0.75 (12 ms)
+    √ keeps the shelf fully opaque at entrance progress 1 (11 ms)
+    √ starts fully opaque and stationary with reduced motion (8 ms)
+    √ plays tak 80ms wood and Haptics Light on spine press with debounce 100ms (29 ms)
+    √ uses actual Home counts and keeps Current Read routed to its entry after Wishlist filtering (94 ms)
+    F2 pull-out press contract (SDD-05 §3)
+      √ pressIn drives scale 1.15, translateY −18, rotateY 6° over 220ms (21 ms)
+      √ routes only on release — pressIn alone never calls onBookPress (19 ms)
+      √ reduced motion: pressIn applies no transform targets but release still routes (20 ms)
+    F2 [bookId] route transition (SDD-05 §3)
+      √ uses fade for [bookId]; siblings keep slide_from_right default (14 ms)
+    SDD-05 §3.1 continuation
+      √ C1: renders two boards with inner ledge and all spines across rows (42 ms)
+      √ C1: single book still renders inner ledge with empty bottom row (18 ms)
+      √ C2: classic text spines — spine cover pipeline is never invoked (11 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       35 passed, 35 total
+Snapshots:   0 total
+Time:        12.786 s, estimated 13 s
+Ran all test suites within paths "src/components/library/__tests__/LibraryShelf.test.tsx".

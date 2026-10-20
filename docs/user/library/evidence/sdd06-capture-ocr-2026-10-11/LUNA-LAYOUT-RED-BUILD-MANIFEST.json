@@ -1,0 +1,23 @@
+﻿{
+    "checkout":  "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library",
+    "branch":  "codex/library-cover-shelf",
+    "head":  "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+    "recordedUtc":  "2026-10-11T11:41:55.1490466Z",
+    "kind":  "separate local web export after same-session Sol browser corrections",
+    "sourceManifestPath":  "docs/user/library/evidence/sdd06-capture-ocr-2026-10-11/BUNDLE-SOURCE-MANIFEST.json",
+    "sourceManifestSha256":  "37632535E29E5183EB76E127239D0F3F61339B18AB178734DC4E2CA0E7F35593",
+    "authBypass":  false,
+    "temporaryNativeProofRouteRemoved":  true,
+    "bundles":  [
+                    {
+                        "path":  ".tmp/sdd06-capture-web/_expo/static/js/web/entry-e65b362a90e90576f36b96d64df2b68b.js",
+                        "sha256":  "78798A466DB04B3FCC7DC865DCFEF4344DE7B0E9D5AAF050E33352969EE4C6BC",
+                        "bytes":  12600608
+                    },
+                    {
+                        "path":  ".tmp/sdd06-capture-web/_expo/static/js/web/index-0cf377f181adef5c290566867bd5e6e1.js",
+                        "sha256":  "6C883C67F2636099942CA586EC24F32EF020220A1D0C880B041E8EB7F6507F34",
+                        "bytes":  37826
+                    }
+                ]
+}

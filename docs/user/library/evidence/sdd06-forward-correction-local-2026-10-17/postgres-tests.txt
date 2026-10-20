@@ -1,0 +1,167 @@
+TAP version 13
+# LOCAL_POSTGRES_VERSION=17 LOCAL_HOST=127.0.0.1 MIGRATION=20261010172118 TEST_DATA=synthetic
+# Subtest: upgrades the verified notes projection without changing legacy content or Saved Pages
+ok 1 - upgrades the verified notes projection without changing legacy content or Saved Pages
+  ---
+  duration_ms: 5461.0837
+  ...
+# RED_PRE_CORRECTION_EVIDENCE=created_at_mutable exact_applied_variant=20261010221843 synthetic_row_only=true
+# Subtest: reproduces mutable created_at on the exact applied 20261010221843 variant before correction
+ok 2 - reproduces mutable created_at on the exact applied 20261010221843 variant before correction
+  ---
+  duration_ms: 761.5127
+  ...
+# Subtest: round trips all five category identifiers and no category
+ok 3 - round trips all five category identifiers and no category
+  ---
+  duration_ms: 409.1654
+  ...
+# Subtest: rejects invalid category, empty text, excess words and invalid page without altering the original
+ok 4 - rejects invalid category, empty text, excess words and invalid page without altering the original
+  ---
+  duration_ms: 491.2237
+  ...
+# Subtest: denies anonymous CRUD and table-wide privileges
+ok 5 - denies anonymous CRUD and table-wide privileges
+  ---
+  duration_ms: 401.9423
+  ...
+# Subtest: foreign accounts cannot read, modify or delete a saved note
+ok 6 - foreign accounts cannot read, modify or delete a saved note
+  ---
+  duration_ms: 70.191
+  ...
+# Subtest: rejects foreign-book and foreign-actor insertions
+ok 7 - rejects foreign-book and foreign-actor insertions
+  ---
+  duration_ms: 173.1232
+  ...
+# Subtest: denies client metadata/identity spoofing while keeping legacy updated_at compatible
+ok 8 - denies client metadata/identity spoofing while keeping legacy updated_at compatible
+  ---
+  duration_ms: 506.4293
+  ...
+# Subtest: trusted metadata is server managed and identity changes also fail for privileged writers
+ok 9 - trusted metadata is server managed and identity changes also fail for privileged writers
+  ---
+  duration_ms: 109.8037
+  ...
+# Subtest: clears a stale operation marker on every unmarked legacy update, including no-op
+ok 10 - clears a stale operation marker on every unmarked legacy update, including no-op
+  ---
+  duration_ms: 67.6948
+  ...
+# Subtest: the stable create UUID rejects duplicate INSERT without replacing content
+ok 11 - the stable create UUID rejects duplicate INSERT without replacing content
+  ---
+  duration_ms: 152.6709
+  ...
+# Subtest: parent owner changes cannot strand notes; parent and account deletion still cascade
+ok 12 - parent owner changes cannot strand notes; parent and account deletion still cascade
+  ---
+  duration_ms: 65.162
+  ...
+# Subtest: rejects ownership inconsistencies before DDL and rolls back atomically
+ok 13 - rejects ownership inconsistencies before DDL and rolls back atomically
+  ---
+  duration_ms: 706.9901
+  ...
+# Subtest: two competing real connections admit one edit and reject a stale explicit replacement
+ok 14 - two competing real connections admit one edit and reject a stale explicit replacement
+  ---
+  duration_ms: 187.6549
+  ...
+# Subtest: refuses a changed same-name constraint instead of silently replacing it
+ok 15 - refuses a changed same-name constraint instead of silently replacing it
+  ---
+  duration_ms: 685.455
+  ...
+# Subtest: refuses word-limit helper body, execution attributes or writer-privilege drift without changing the baseline
+ok 16 - refuses word-limit helper body, execution attributes or writer-privilege drift without changing the baseline
+  ---
+  duration_ms: 4142.5928
+  ...
+# Subtest: refuses same-name policy predicate, role, command or check drift before replacing policies
+ok 17 - refuses same-name policy predicate, role, command or check drift before replacing policies
+  ---
+  duration_ms: 2686.8969
+  ...
+# Subtest: forward correction closes the metadata permission and creation-time defect
+ok 18 - forward correction closes the metadata permission and creation-time defect
+  ---
+  duration_ms: 694.9668
+  ...
+# Subtest: forward correction preserves every existing row, index and Saved Page
+ok 19 - forward correction preserves every existing row, index and Saved Page
+  ---
+  duration_ms: 752.7992
+  ...
+# Subtest: forward correction matches JavaScript whitespace and rejects blank/501-word notes
+ok 20 - forward correction matches JavaScript whitespace and rejects blank/501-word notes
+  ---
+  duration_ms: 1617.5083
+  ...
+# Subtest: forward correction supports owned CRUD, all categories/null and legacy updated_at
+ok 21 - forward correction supports owned CRUD, all categories/null and legacy updated_at
+  ---
+  duration_ms: 1554.525
+  ...
+# Subtest: forward correction denies anonymous, foreign, spoofed metadata and dangerous writes
+ok 22 - forward correction denies anonymous, foreign, spoofed metadata and dangerous writes
+  ---
+  duration_ms: 1589.835
+  ...
+# Subtest: forward correction retains trusted-role trigger enforcement without direct EXECUTE
+ok 23 - forward correction retains trusted-role trigger enforcement without direct EXECUTE
+  ---
+  duration_ms: 1245.5388
+  ...
+# Subtest: forward correction rejects forged INSERT metadata, invalid tags and pages
+ok 24 - forward correction rejects forged INSERT metadata, invalid tags and pages
+  ---
+  duration_ms: 1838.939
+  ...
+# Subtest: forward correction rejects a real concurrent stale edit and stale compared replacement
+ok 25 - forward correction rejects a real concurrent stale edit and stale compared replacement
+  ---
+  duration_ms: 1202.5018
+  ...
+# Subtest: forward correction preserves stable UUID/marker semantics and rejects overflow
+ok 26 - forward correction preserves stable UUID/marker semantics and rejects overflow
+  ---
+  duration_ms: 1283.1352
+  ...
+# Subtest: forward correction rejects baseline drift and restores the complete original variant
+ok 27 - forward correction rejects baseline drift and restores the complete original variant
+  ---
+  duration_ms: 8244.2265
+  ...
+# Subtest: forward correction refuses hidden column grants and grant options without normalization
+ok 28 - forward correction refuses hidden column grants and grant options without normalization
+  ---
+  duration_ms: 6350.5522
+  ...
+# Subtest: forward correction rejects incompatible stored text without repairing it
+ok 29 - forward correction rejects incompatible stored text without repairing it
+  ---
+  duration_ms: 2171.5176
+  ...
+# Subtest: forward correction rolls back after a failure following its actual mutations
+ok 30 - forward correction rolls back after a failure following its actual mutations
+  ---
+  duration_ms: 1148.3374
+  ...
+# Subtest: forward correction lock timeout rolls back without weakening the baseline
+ok 31 - forward correction lock timeout rolls back without weakening the baseline
+  ---
+  duration_ms: 6327.5006
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 62881.6466

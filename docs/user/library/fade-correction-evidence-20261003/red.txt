@@ -1,0 +1,102 @@
+(node:2696) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+FAIL src/components/library/__tests__/LibraryShelf.test.tsx (19.12 s)
+  LibraryShelf single shelf SDD-04
+    × keeps the shelf fully opaque at entrance progress 0 (115 ms)
+    × keeps the shelf fully opaque at entrance progress 0.5 (14 ms)
+    × keeps the shelf fully opaque at entrance progress 0.75 (17 ms)
+    √ keeps the shelf fully opaque at entrance progress 1 (18 ms)
+    × starts fully opaque and stationary with reduced motion (12 ms)
+    ○ skipped renders classic upright text spines and opens the selected entry
+    ○ skipped keeps the label region opaque and removes competing expanded spine hit regions
+    ○ skipped offers non-overlapping title buttons for the same filtered books without changing presentation
+    ○ skipped toggles shelf/list and persists viewMode to AsyncStorage default list
+    ○ skipped keeps filters and the actual filtered count before the collection in both modes
+    ○ skipped adds local decorative wood grain while retaining the 440px frame and 12px ledge
+    ○ skipped renders every spine during the shelf entrance
+    ○ skipped plays tak 80ms wood and Haptics Light on spine press with debounce 100ms
+    ○ skipped uses actual Home counts and keeps Current Read routed to its entry after Wishlist filtering
+    F2 pull-out press contract (SDD-05 §3)
+      ○ skipped pressIn drives scale 1.15, translateY −18, rotateY 6° over 220ms
+      ○ skipped routes only on release — pressIn alone never calls onBookPress
+      ○ skipped reduced motion: pressIn applies no transform targets but release still routes
+    F2 [bookId] route transition (SDD-05 §3)
+      ○ skipped uses fade for [bookId]; siblings keep slide_from_right default
+    SDD-05 §3.1 continuation
+      ○ skipped C1: renders two boards with inner ledge and all spines across rows
+      ○ skipped C1: single book still renders inner ledge with empty bottom row
+      ○ skipped C2: classic text spines — spine cover pipeline is never invoked
+
+  ● LibraryShelf single shelf SDD-04 › keeps the shelf fully opaque at entrance progress 0
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+      240 |             // Read the captured style after effects update the paused shared values.
+      241 |             const entranceStyle = reanimated.useAnimatedStyle.mock.calls[0][0]();
+    > 242 |             expect(entranceStyle.opacity ?? 1).toBe(1);
+          |                                                ^
+      243 |             expect(entranceStyle.transform).toEqual([{ translateY: 20 * (1 - progress) }]);
+      244 |             expect(StyleSheet.flatten(getByTestId('library-shelf-label-dune').props.style).opacity ?? 1).toBe(1);
+      245 |         } finally {
+
+      at toBe (src/components/library/__tests__/LibraryShelf.test.tsx:242:48)
+
+  ● LibraryShelf single shelf SDD-04 › keeps the shelf fully opaque at entrance progress 0.5
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0.5
+
+      240 |             // Read the captured style after effects update the paused shared values.
+      241 |             const entranceStyle = reanimated.useAnimatedStyle.mock.calls[0][0]();
+    > 242 |             expect(entranceStyle.opacity ?? 1).toBe(1);
+          |                                                ^
+      243 |             expect(entranceStyle.transform).toEqual([{ translateY: 20 * (1 - progress) }]);
+      244 |             expect(StyleSheet.flatten(getByTestId('library-shelf-label-dune').props.style).opacity ?? 1).toBe(1);
+      245 |         } finally {
+
+      at toBe (src/components/library/__tests__/LibraryShelf.test.tsx:242:48)
+
+  ● LibraryShelf single shelf SDD-04 › keeps the shelf fully opaque at entrance progress 0.75
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0.75
+
+      240 |             // Read the captured style after effects update the paused shared values.
+      241 |             const entranceStyle = reanimated.useAnimatedStyle.mock.calls[0][0]();
+    > 242 |             expect(entranceStyle.opacity ?? 1).toBe(1);
+          |                                                ^
+      243 |             expect(entranceStyle.transform).toEqual([{ translateY: 20 * (1 - progress) }]);
+      244 |             expect(StyleSheet.flatten(getByTestId('library-shelf-label-dune').props.style).opacity ?? 1).toBe(1);
+      245 |         } finally {
+
+      at toBe (src/components/library/__tests__/LibraryShelf.test.tsx:242:48)
+
+  ● LibraryShelf single shelf SDD-04 › starts fully opaque and stationary with reduced motion
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+      253 |         const { getByTestId } = render(<LibraryShelf books={[]} onBookPress={jest.fn()} />);
+      254 |         const firstFrameStyle = StyleSheet.flatten(getByTestId('library-shelf').props.style);
+    > 255 |         expect(firstFrameStyle.opacity ?? 1).toBe(1);
+          |                                              ^
+      256 |         expect(firstFrameStyle.transform).toEqual([{ translateY: 0 }]);
+      257 |         expect(reanimated.withTiming).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ duration: 800 }));
+      258 |     });
+
+      at Object.toBe (src/components/library/__tests__/LibraryShelf.test.tsx:255:46)
+
+Test Suites: 1 failed, 1 total
+Tests:       4 failed, 16 skipped, 1 passed, 21 total
+Snapshots:   0 total
+Time:        20.552 s, estimated 46 s
+Ran all test suites within paths "src/components/library/__tests__/LibraryShelf.test.tsx".

@@ -1,0 +1,312 @@
+{
+  "date": "2026-10-10",
+  "project_ref": "ahntbtktjjmvfosgkmgn",
+  "project_name": "Bookconnect_reactexpo",
+  "project_status": "ACTIVE_HEALTHY",
+  "server_version": "17.6.1.063",
+  "region": "ap-southeast-2",
+  "latest_live_migration": "20261010110835 marketplace_phase9_edition_picker_selection_eligibility",
+  "live_migration_count": 176,
+  "catalog": {
+    "tables": [
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "name": "reading_notes",
+        "force_rls": false
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "name": "user_books",
+        "force_rls": false
+      }
+    ],
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "reading_notes",
+        "default": "gen_random_uuid()",
+        "not_null": true
+      },
+      {
+        "name": "user_id",
+        "type": "uuid",
+        "table": "reading_notes",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "user_book_id",
+        "type": "uuid",
+        "table": "reading_notes",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "content",
+        "type": "text",
+        "table": "reading_notes",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "tag",
+        "type": "text",
+        "table": "reading_notes",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "page_number",
+        "type": "integer",
+        "table": "reading_notes",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "reading_notes",
+        "default": "now()",
+        "not_null": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "reading_notes",
+        "default": "now()",
+        "not_null": false
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "user_books",
+        "default": "gen_random_uuid()",
+        "not_null": true
+      },
+      {
+        "name": "user_id",
+        "type": "uuid",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "book_id",
+        "type": "uuid",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "reading_status",
+        "type": "text",
+        "table": "user_books",
+        "default": "'want_to_read'::text",
+        "not_null": false
+      },
+      {
+        "name": "ownership",
+        "type": "text",
+        "table": "user_books",
+        "default": "'owned'::text",
+        "not_null": false
+      },
+      {
+        "name": "condition",
+        "type": "text",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "rating",
+        "type": "integer",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "review",
+        "type": "text",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "review_is_public",
+        "type": "boolean",
+        "table": "user_books",
+        "default": "true",
+        "not_null": false
+      },
+      {
+        "name": "available_for_lending",
+        "type": "boolean",
+        "table": "user_books",
+        "default": "false",
+        "not_null": false
+      },
+      {
+        "name": "completed_at",
+        "type": "timestamp with time zone",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "user_books",
+        "default": "now()",
+        "not_null": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "user_books",
+        "default": "now()",
+        "not_null": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "reading_notes_pkey",
+        "definition": "CREATE UNIQUE INDEX reading_notes_pkey ON public.reading_notes USING btree (id)"
+      },
+      {
+        "name": "idx_reading_notes_user_book",
+        "definition": "CREATE INDEX idx_reading_notes_user_book ON public.reading_notes USING btree (user_book_id)"
+      },
+      {
+        "name": "idx_reading_notes_user",
+        "definition": "CREATE INDEX idx_reading_notes_user ON public.reading_notes USING btree (user_id)"
+      },
+      {
+        "name": "idx_reading_notes_tag",
+        "definition": "CREATE INDEX idx_reading_notes_tag ON public.reading_notes USING btree (tag)"
+      },
+      {
+        "name": "idx_reading_notes_created",
+        "definition": "CREATE INDEX idx_reading_notes_created ON public.reading_notes USING btree (created_at DESC)"
+      },
+      {
+        "name": "user_books_pkey",
+        "definition": "CREATE UNIQUE INDEX user_books_pkey ON public.user_books USING btree (id)"
+      },
+      {
+        "name": "user_books_user_id_book_id_key",
+        "definition": "CREATE UNIQUE INDEX user_books_user_id_book_id_key ON public.user_books USING btree (user_id, book_id)"
+      }
+    ],
+    "constraints": [
+      {
+        "name": "user_books_book_id_fkey",
+        "type": "f",
+        "table": "user_books",
+        "validated": true,
+        "definition": "FOREIGN KEY (book_id) REFERENCES books(id)"
+      },
+      {
+        "name": "user_books_condition_check",
+        "type": "c",
+        "table": "user_books",
+        "validated": true,
+        "definition": "CHECK ((condition = ANY (ARRAY['new'::text, 'like_new'::text, 'good'::text, 'acceptable'::text, 'poor'::text])))"
+      },
+      {
+        "name": "user_books_ownership_check",
+        "type": "c",
+        "table": "user_books",
+        "validated": true,
+        "definition": "CHECK ((ownership = ANY (ARRAY['owned'::text, 'wishlist'::text, 'borrowed'::text, 'lent_out'::text])))"
+      },
+      {
+        "name": "user_books_pkey",
+        "type": "p",
+        "table": "user_books",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "user_books_rating_check",
+        "type": "c",
+        "table": "user_books",
+        "validated": true,
+        "definition": "CHECK (((rating >= 1) AND (rating <= 5)))"
+      },
+      {
+        "name": "user_books_reading_status_check",
+        "type": "c",
+        "table": "user_books",
+        "validated": true,
+        "definition": "CHECK ((reading_status = ANY (ARRAY['want_to_read'::text, 'reading'::text, 'completed'::text])))"
+      },
+      {
+        "name": "user_books_user_id_book_id_key",
+        "type": "u",
+        "table": "user_books",
+        "validated": true,
+        "definition": "UNIQUE (user_id, book_id)"
+      },
+      {
+        "name": "user_books_user_id_fkey",
+        "type": "f",
+        "table": "user_books",
+        "validated": true,
+        "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      },
+      {
+        "name": "reading_notes_500w_check",
+        "type": "c",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "CHECK (check_note_word_limit(content))"
+      },
+      {
+        "name": "reading_notes_content_not_empty",
+        "type": "c",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "CHECK ((btrim(content) <> ''::text))"
+      },
+      {
+        "name": "reading_notes_page_number_positive",
+        "type": "c",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "CHECK (((page_number IS NULL) OR (page_number > 0)))"
+      },
+      {
+        "name": "reading_notes_pkey",
+        "type": "p",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "reading_notes_tag_check",
+        "type": "c",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "CHECK ((tag = ANY (ARRAY['quote'::text, 'reflect'::text, 'distill'::text, 'apply'::text])))"
+      },
+      {
+        "name": "reading_notes_user_book_id_fkey",
+        "type": "f",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "FOREIGN KEY (user_book_id) REFERENCES user_books(id) ON DELETE CASCADE"
+      },
+      {
+        "name": "reading_notes_user_id_fkey",
+        "type": "f",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      }
+    ]
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "source": {
+    "width": 1600,
+    "height": 2200
+  },
+  "operations": {
+    "recognitions": [
+      {
+        "input": "source",
+        "elapsedMs": 7635,
+        "result": {
+          "version": 1,
+          "provider": "on-device",
+          "languageHint": "en",
+          "reviewText": "OUTSIDE TOP SENTINEL\nA PAGE FOR CAREFUL READING\nA reader walks into a quiet library and chooses a book.\nThe morning light falls across the open page.\nEach paragraph gives the reader time to pause.\nClear words can carry a useful idea without haste.\nBefore making a note, the reader checks the source.\nA question may matter as much as an answer.\nA short reflection can connect a page to daily life.\nThe chosen passage stays inside the outlined area.\nReading is a patient practice of attention.\nThis synthetic page contains no private information.\nIts text was written only to verify local recognition.\nOUTSIDE BOTTOM SENTINEL",
+          "reviewOverflow": false,
+          "textBounds": [
+            {
+              "left": 202,
+              "top": 178,
+              "width": 569,
+              "height": 37
+            },
+            {
+              "left": 234,
+              "top": 504,
+              "width": 739,
+              "height": 46
+            },
+            {
+              "left": 200,
+              "top": 632,
+              "width": 919,
+              "height": 217
+            },
+            {
+              "left": 200,
+              "top": 940,
+              "width": 881,
+              "height": 96
+            },
+            {
+              "left": 200,
+              "top": 1066,
+              "width": 862,
+              "height": 95
+            },
+            {
+              "left": 201,
+              "top": 1252,
+              "width": 862,
+              "height": 159
+            },
+            {
+              "left": 202,
+              "top": 1868,
+              "width": 676,
+              "height": 37
+            }
+          ]
+        }
+      }
+    ],
+    "transforms": [
+      {
+        "crop": {
+          "x": 0.105,
+          "y": 0.060909090909090906,
+          "width": 0.614375,
+          "height": 0.825
+        },
+        "width": 983,
+        "height": 1815
+      }
+    ]
+  },
+  "state": {
+    "step": "crop",
+    "crop": {
+      "x": 0.105,
+      "y": 0.060909090909090906,
+      "width": 0.614375,
+      "height": 0.825
+    },
+    "cropMode": "automatic",
+    "autoCrop": {
+      "x": 0.105,
+      "y": 0.060909090909090906,
+      "width": 0.614375,
+      "height": 0.825
+    },
+    "text": ""
+  }
+}

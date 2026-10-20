@@ -1,469 +1,352 @@
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { Button } from '@/components/ui/Button';
-import { useTheme } from '@/hooks/useTheme';
-import { LibraryBookEntry, LibraryFilter, LibraryFilterChip } from '@/features/books/utils/libraryShelf';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, useReducedMotion, Easing } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { GestureDetector } from 'react-native-gesture-handler';
+import { ShelfArrangement } from '@/features/books/hooks/useShelfArrangement';
+import { LibraryBookEntry } from '@/features/books/utils/libraryShelf';
+import { getShelfTrackLayout, splitShelfRows, resolveSweptSpine, computeShelfPosture, SHELF_SIDE_WIDTH, SHELF_BOOKEND_WIDTH } from '@/features/books/utils/shelfLayout';
+import { BookSpine } from './BookSpine';
+import { LibraryBookPicker } from './LibraryBookPicker';
+import { useLibraryTypography } from './LibraryTypography';
+import { LIBRARY_SPACING } from './LibraryAppearance';
+import { CABINET_WOOD_TEXTURE_URI } from './cabinetWoodTexture';
+import { useVerticalShelfDrag } from './useVerticalShelfDrag';
+import { LibraryArrangeSelection } from './LibraryArrangeControls';
 
-type LibraryHeaderProps = {
-    showAddButton?: boolean;
-    onSearch: () => void;
-    onAdd?: () => void;
-};
-
-export function LibraryHeader({ showAddButton = true, onSearch, onAdd = onSearch }: LibraryHeaderProps) {
-    const { colors } = useTheme();
-
-    return (
-        <View style={styles.header}>
-            <Text style={styles.title}>My Library</Text>
-            <View style={styles.headerActions}>
-                <TouchableOpacity
-                    onPress={onSearch}
-                    style={[styles.iconButton, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
-                    accessibilityLabel="Search books"
-                    accessibilityHint="Open search to add or discover books"
-                >
-                    <Ionicons name="search-outline" size={18} color={colors.textPrimary} />
-                </TouchableOpacity>
-                {showAddButton && (
-                    <View style={styles.addButton}>
-                        <Button
-                            title="+ Add Book"
-                            onPress={onAdd}
-                            variant="primary"
-                            size="sm"
-                            accessibilityLabel="Add a new book to your library"
-                        />
-                    </View>
-                )}
-            </View>
-        </View>
-    );
-}
-
-type LibrarySummaryProps = {
-    count: number;
-    activeFilterLabel: string;
-};
-
-export function LibrarySummary({ count, activeFilterLabel }: LibrarySummaryProps) {
-    const { colors } = useTheme();
-
-    return (
-        <View style={[styles.summaryCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            <View>
-                <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Current shelf</Text>
-                <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>
-                    {count} {count === 1 ? 'book' : 'books'}
-                </Text>
-            </View>
-            <View style={styles.summaryMeta}>
-                <Text style={[styles.summaryMetaText, { color: colors.textSecondary }]}>
-                    Showing {activeFilterLabel.toLowerCase()}
-                </Text>
-            </View>
-        </View>
-    );
-}
-
-type LibraryFilterBarProps = {
-    chips: LibraryFilterChip[];
-    activeFilter: LibraryFilter;
-    onChange: (filter: LibraryFilter) => void;
-};
-
-export function LibraryFilterBar({ chips, activeFilter, onChange }: LibraryFilterBarProps) {
-    const { colors } = useTheme();
-
-    return (
-        <View style={styles.filterRow}>
-            {chips.map((chip) => {
-                const isActive = chip.key === activeFilter;
-
-                return (
-                    <TouchableOpacity
-                        key={chip.key}
-                        onPress={() => onChange(chip.key)}
-                        style={[
-                            styles.filterChip,
-                            {
-                                backgroundColor: isActive ? colors.accent : colors.bgCard,
-                                borderColor: isActive ? colors.accent : colors.border,
-                            },
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.filterChipText,
-                                { color: isActive ? '#FFFFFF' : colors.textSecondary },
-                            ]}
-                        >
-                            {chip.label}
-                        </Text>
-                        <View
-                            style={[
-                                styles.filterChipCount,
-                                { backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : colors.bgSecondary },
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.filterChipCountText,
-                                    { color: isActive ? '#FFFFFF' : colors.textPrimary },
-                                ]}
-                            >
-                                {chip.count}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                );
-            })}
-        </View>
-    );
-}
-
-type LibraryBookRowProps = {
-    item: LibraryBookEntry;
-    onPress: (item: LibraryBookEntry) => void;
-};
-
-export function LibraryBookRow({ item, onPress }: LibraryBookRowProps) {
-    return (
-        <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => onPress(item)}
-        >
-            <GlassCard style={{ marginBottom: 16 }} padding={16} borderRadius={20}>
-                <View style={{ flexDirection: 'row' }}>
-                    <Image
-                        source={{ uri: item.book.cover_url || 'https://via.placeholder.com/100x150' }}
-                        style={styles.bookCover}
-                        contentFit="cover"
-                    />
-                    <View style={styles.bookInfo}>
-                        <Text style={styles.bookTitle} numberOfLines={2}>
-                            {item.book.title}
-                        </Text>
-                        <Text style={styles.bookAuthor} numberOfLines={1}>
-                            {item.book.authors?.join(', ')}
-                        </Text>
-                        <View style={styles.tagContainer}>
-                            <View style={styles.tag}>
-                                <Text style={styles.tagText}>
-                                    {item.reading_status?.replace(/_/g, ' ')}
-                                </Text>
-                            </View>
-                            <View style={styles.tag}>
-                                <Text style={styles.tagText}>
-                                    {item.ownership}
-                                </Text>
-                            </View>
-                            {item.available_for_lending && (
-                                <View style={[styles.tag, styles.lendingTag]}>
-                                    <Text style={[styles.tagText, styles.lendingTagText]}>
-                                        lendable
-                                    </Text>
-                                </View>
-                            )}
-                        </View>
-                    </View>
-                </View>
-            </GlassCard>
-        </TouchableOpacity>
-    );
-}
-
-type LibraryEmptyStateProps = {
-    activeFilter: LibraryFilter;
-    activeFilterLabel: string;
-};
-
-export function LibraryEmptyState({ activeFilter, activeFilterLabel }: LibraryEmptyStateProps) {
-    const { colors } = useTheme();
-
-    return (
-        <View style={styles.emptyContainer}>
-            <Ionicons name="library" size={64} color={colors.textTertiary} style={{ marginBottom: 16 }} accessibilityLabel="Empty library" />
-            <Text style={styles.emptySubtitle}>
-                {activeFilter === 'all' ? 'Your library is empty' : `No ${activeFilterLabel.toLowerCase()} books yet`}
-            </Text>
-            <Text style={styles.emptyText}>
-                {activeFilter === 'all'
-                    ? 'Tap the "+ Add Book" button to start building your collection.'
-                    : 'Switch shelves or add more books to round out this part of your library.'}
-            </Text>
-        </View>
-    );
-}
-
-type LibraryErrorStateProps = {
-    message: string;
-    onRetry: () => void;
-};
-
-export function LibraryErrorState({ message, onRetry }: LibraryErrorStateProps) {
-    const { colors } = useTheme();
-
-    return (
-        <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle-outline" size={56} color="#EF4444" style={{ marginBottom: 16 }} />
-            <Text style={styles.errorTitle}>Could not load your library</Text>
-            <Text style={styles.errorText}>{message}</Text>
-            <TouchableOpacity
-                onPress={onRetry}
-                style={[styles.retryButton, { backgroundColor: colors.accent }]}
-                accessibilityLabel="Retry loading library"
-                accessibilityHint="Attempts to load your library again"
-            >
-                <Ionicons name="refresh" size={18} color="#FFFFFF" />
-                <Text style={styles.retryButtonText}>Try Again</Text>
-            </TouchableOpacity>
-        </View>
-    );
-}
-
-export function LibraryLoadingState() {
-    const { colors } = useTheme();
-
-    return (
-        <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.accent} />
-        </View>
-    );
-}
-
-type LibraryBookListProps = {
+type LibraryShelfProps = {
     books: LibraryBookEntry[];
-    activeFilter: LibraryFilter;
-    activeFilterLabel: string;
-    isRefetching: boolean;
-    onRefresh: () => void;
     onBookPress: (item: LibraryBookEntry) => void;
+    arrangement?: ShelfArrangement;
+    onDraggingChange?: (active: boolean) => void;
 };
 
-export function LibraryBookList({
-    books,
-    activeFilter,
-    activeFilterLabel,
-    isRefetching,
-    onRefresh,
-    onBookPress,
-}: LibraryBookListProps) {
-    const { colors } = useTheme();
+const TOP_Y = 28;
+const ROW_H = 192;
+const LEDGE_H = 10;
+const TIER_GAP = 8;
+const BOTTOM_Y = TOP_Y + ROW_H + LEDGE_H + TIER_GAP;
+const SHELF_H = BOTTOM_Y + ROW_H + LEDGE_H;
+const ROW_GEOMETRY = {
+    top: { y: TOP_Y, height: ROW_H },
+    bottom: { y: BOTTOM_Y, height: ROW_H },
+};
+
+const ignoreMove = () => {};
+
+export function LibraryShelf({ books, onBookPress, arrangement, onDraggingChange }: LibraryShelfProps) {
+    const fonts = useLibraryTypography();
+    const isReduceMotion = !!useReducedMotion();
+    const shelfTranslateY = useSharedValue(isReduceMotion ? 0 : 20);
+    const audioPlayerRef = React.useRef<any>(null);
+    const scrollRef = React.useRef<ScrollView>(null);
+    const frameRef = React.useRef<View>(null);
+    const touchOriginRef = React.useRef<{ x: number; y: number } | null>(null);
+    const lastTakRef = React.useRef(0);
+    const scrollXRef = React.useRef(0);
+    const lastSweepTickRef = React.useRef(0);
+    const [sweptId, setSweptId] = React.useState<string | null>(null);
+    const [viewportWidth, setViewportWidth] = React.useState(0);
+    const [activeSpineIds, setActiveSpineIds] = React.useState<string[]>([]);
+    const [selectedId, setSelectedId] = React.useState<string | null>(null);
+    const arranging = !!arrangement?.active;
+
+    const handleSpineInteraction = React.useCallback((item: LibraryBookEntry, active: boolean) => {
+        setActiveSpineIds((current) => {
+            const currentIndex = current.indexOf(item.id);
+            if (active) {
+                if (currentIndex !== -1 && currentIndex === current.length - 1) return current;
+                return [...current.filter((id) => id !== item.id), item.id];
+            }
+            return currentIndex === -1 ? current : current.filter((id) => id !== item.id);
+        });
+    }, []);
+
+    const activeCaptionBook = React.useMemo(() => {
+        for (let index = activeSpineIds.length - 1; index >= 0; index -= 1) {
+            const activeBook = books.find((book) => book.id === activeSpineIds[index]);
+            if (activeBook) return activeBook;
+        }
+        return null;
+    }, [activeSpineIds, books]);
+
+    React.useEffect(() => {
+        shelfTranslateY.value = isReduceMotion ? 0 : withTiming(0, { duration: 800, easing: Easing.bezier(0.16, 1, 0.3, 1) });
+    }, [isReduceMotion]);
+
+    React.useEffect(() => {
+        let mounted = true;
+        void (async () => {
+            try {
+                const { createAudioPlayer, setAudioModeAsync } = await import('expo-audio');
+                await setAudioModeAsync({ playsInSilentMode: false });
+                if (!mounted) return;
+                const player = createAudioPlayer(require('../../../assets/sounds/tak.mp3'));
+                player.volume = 0.3;
+                audioPlayerRef.current = player;
+            } catch {}
+        })();
+        return () => {
+            mounted = false;
+            audioPlayerRef.current?.remove?.();
+            audioPlayerRef.current = null;
+        };
+    }, []);
+
+    const playTak = React.useCallback(() => {
+        if (isReduceMotion) return;
+        const now = Date.now();
+        if (now - lastTakRef.current < 100) return;
+        lastTakRef.current = now;
+        const player = audioPlayerRef.current;
+        if (!player) return;
+        try {
+            const seek = player.seekTo(0);
+            void Promise.resolve(seek).then(() => player.play()).catch(() => {});
+        } catch {}
+    }, [isReduceMotion]);
+
+    const shelfAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ translateY: shelfTranslateY.value }],
+    }));
+    const { top, bottom } = React.useMemo(() => splitShelfRows(books), [books]);
+    const { contentWidth, bookLayouts } = React.useMemo(
+        () => getShelfTrackLayout(top, bottom, viewportWidth), [top, bottom, viewportWidth],
+    );
+    const layoutByBookId = React.useMemo(
+        () => new Map(bookLayouts.map((book) => [book.id, book] as const)), [bookLayouts],
+    );
+    const visibleMembership = JSON.stringify(books.map((book) => book.id).sort());
+    // A filter change starts at the first books, with no stale brush state.
+    React.useEffect(() => {
+        scrollRef.current?.scrollTo({ x: 0, animated: false });
+        scrollXRef.current = 0;
+        setSweptId(null);
+    }, [visibleMembership]);
+    React.useEffect(() => {
+        const visibleIds = new Set(books.map((book) => book.id));
+        setActiveSpineIds((current) => {
+            const remaining = current.filter((id) => visibleIds.has(id));
+            return remaining.length === current.length ? current : remaining;
+        });
+    }, [books]);
+    React.useEffect(() => {
+        if (!arranging || !books.some((book) => book.id === selectedId)) setSelectedId(null);
+        if (arranging) setSweptId(null);
+    }, [arranging, books, selectedId]);
+
+    const { drag, gesture } = useVerticalShelfDrag({
+        enabled: arranging && !arrangement?.saving, selectedId, books, layouts: bookLayouts, rows: ROW_GEOMETRY,
+        viewportWidth, contentWidth, frameRef, scrollRef, scrollXRef, onMove: arrangement?.move ?? ignoreMove, onDraggingChange,
+    });
+    const selectBook = (item: LibraryBookEntry) => {
+        setSelectedId(item.id);
+        const layout = layoutByBookId.get(item.id);
+        if (layout && (layout.offsetLeft < scrollXRef.current + SHELF_SIDE_WIDTH
+            || layout.offsetLeft + layout.width > scrollXRef.current + viewportWidth - SHELF_SIDE_WIDTH)) {
+            const x = Math.max(0, Math.min(contentWidth - viewportWidth, layout.offsetLeft - 48));
+            scrollXRef.current = x;
+            scrollRef.current?.scrollTo({ x, animated: !isReduceMotion });
+        }
+    };
+    const selectedBook = books.find((book) => book.id === selectedId);
+    const selectedIndex = books.findIndex((book) => book.id === selectedId);
+    const draggedBook = drag ? books.find((book) => book.id === drag.id) : undefined;
+
+    const handleSweepMove = React.useCallback((event: any) => {
+        if (arranging || isReduceMotion || !touchOriginRef.current) return;
+        const { pageX, pageY } = event.nativeEvent;
+        if (typeof pageX !== 'number' || typeof pageY !== 'number') return;
+        const id = resolveSweptSpine({
+            scrollX: scrollXRef.current,
+            touchX: pageX - touchOriginRef.current.x,
+            touchY: pageY - touchOriginRef.current.y,
+            rowGeometry: ROW_GEOMETRY,
+            bookLayouts,
+        });
+        if (id !== sweptId && id && Date.now() - lastSweepTickRef.current >= 80) {
+            lastSweepTickRef.current = Date.now();
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        }
+        setSweptId(id);
+    }, [bookLayouts, isReduceMotion, sweptId, arranging]);
+
+    const renderRow = (entries: LibraryBookEntry[], indexOffset: number, y: number, row: 'top' | 'bottom') => {
+        const postureById = computeShelfPosture(entries);
+        return (
+            <View testID={`library-shelf-row-${row}`} style={[styles.bookRow, { top: y }]}>
+                {entries.map((item, index) => {
+                    const selected = arranging && selectedId === item.id;
+                    const spine = <View key={item.id} collapsable={false} style={{ flexShrink: 0, opacity: drag?.id === item.id ? 0 : 1 }}>
+                        <LinearGradient colors={['rgba(17,10,5,0.52)', 'rgba(17,10,5,0.28)', 'transparent']}
+                            locations={[0, 0.3, 1]} pointerEvents="none" accessible={false}
+                            accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+                            style={[styles.bookContactShadow, { width: layoutByBookId.get(item.id)?.width,
+                                opacity: !arranging && (activeSpineIds.includes(item.id) || sweptId === item.id) ? 0.25 : 0.85 }]} />
+                        <BookSpine item={item} index={indexOffset + index}
+                            onPress={() => arranging ? selectBook(item) : onBookPress(item)} isReduceMotion={isReduceMotion}
+                            onInteractionChange={handleSpineInteraction}
+                            arranging={arranging} selected={selected} tiltDeg={postureById[item.id]?.tiltDeg ?? 0}
+                            playTak={playTak} swept={sweptId === item.id}
+                            gapAfter={layoutByBookId.get(item.id)?.gapAfter ?? 0} />
+                        {selected ? <View pointerEvents="none" style={styles.selectedOutline} /> : null}
+                    </View>;
+                    return selected ? <GestureDetector key={item.id} gesture={gesture} touchAction="none">{spine}</GestureDetector> : spine;
+                })}
+                {entries.length > 0 ? (
+                    <View style={styles.bookend} testID={`library-shelf-bookend-${row}`} pointerEvents="none"
+                        accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+                        <LinearGradient colors={['#ddc28d', '#a4864f', '#66512e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                            style={styles.bookendUpright} />
+                        <View style={styles.bookendFoot} />
+                    </View>
+                ) : null}
+            </View>
+        );
+    };
+    const renderFace = (y: number, testID?: string, faceHeight = LEDGE_H) => (
+        <View testID={testID} style={[styles.shelfFace, { top: y, height: faceHeight }]} pointerEvents="none">
+            <LinearGradient colors={['#ad8559', '#8b623c', '#614025']} locations={[0, 0.4, 1]}
+                style={StyleSheet.absoluteFill} />
+            <Image source={{ uri: CABINET_WOOD_TEXTURE_URI }} style={[StyleSheet.absoluteFill, styles.faceGrain]} contentFit="fill" accessible={false} />
+            <LinearGradient colors={['#d8bb92', '#b58e63', '#8b623e']} locations={[0, 0.4, 1]}
+                style={styles.boardTop} />
+            <View style={styles.boardFrontHighlight} />
+            <View style={[styles.boardJoint, styles.boardJointLeft]} />
+            <View style={[styles.boardJoint, styles.boardJointRight]} />
+            <LinearGradient colors={['transparent', 'rgba(24,14,7,0.64)']} style={styles.boardUnderside} />
+        </View>
+    );
+    const renderWall = (y: number) => (
+        <View style={[styles.shelfWall, { top: y }]} pointerEvents="none">
+            <LinearGradient colors={['#483222', '#6c4b32', '#493323']} locations={[0, 0.4, 1]} style={StyleSheet.absoluteFill} />
+            <LinearGradient colors={['rgba(15,9,5,0.38)', 'rgba(15,9,5,0.12)', 'transparent']}
+                locations={[0, 0.4, 1]} style={styles.ceilingShadow} />
+            <LinearGradient colors={['transparent', 'rgba(0,0,0,0.24)']} style={styles.contactShadow} />
+        </View>
+    );
+    const renderSide = (side: 'left' | 'right') => (
+        <View style={[styles.cabinetSide, { [side]: 0 }]} pointerEvents="none" testID={`library-shelf-${side}-support`}
+            accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <LinearGradient colors={side === 'left' ? ['#b29067', '#886241', '#48301f'] : ['#48301f', '#886241', '#a3815b']}
+                locations={[0, 0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+            <Image source={{ uri: CABINET_WOOD_TEXTURE_URI }} contentFit="fill" style={styles.sideGrain} accessible={false} />
+            <View style={[styles.sideInsideEdge, side === 'left' ? { right: 0 } : { left: 0 }]} />
+        </View>
+    );
 
     return (
-        <FlatList
-            data={books}
-            keyExtractor={(item) => item.id}
-            refreshControl={
-                <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} tintColor={colors.accent} />
-            }
-            renderItem={({ item }) => (
-                <LibraryBookRow item={item} onPress={onBookPress} />
-            )}
-            ListEmptyComponent={
-                <LibraryEmptyState activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} />
-            }
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-        />
+        <View>
+        <Animated.View style={[styles.shelfContainer, shelfAnimatedStyle]} testID="library-shelf">
+            <View ref={frameRef} style={styles.shelfFrame} testID="library-shelf-frame" onLayout={(event) => setViewportWidth(event.nativeEvent.layout.width)}>
+                <LinearGradient colors={['#ae8b62', '#97704a', '#7b5638']}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+                {renderWall(TOP_Y)}
+                {renderWall(BOTTOM_Y)}
+                {renderFace(0, 'library-shelf-top-cap', TOP_Y)}
+                <Image source={{ uri: CABINET_WOOD_TEXTURE_URI }} style={[StyleSheet.absoluteFill, styles.wallGrain]} contentFit="fill"
+                    testID="library-shelf-wood-grain" pointerEvents="none" accessible={false}
+                    accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
+                <LinearGradient colors={['rgba(0,0,0,0.18)', 'transparent', 'transparent', 'rgba(0,0,0,0.16)']}
+                    locations={[0, 0.06, 0.94, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                    style={StyleSheet.absoluteFill} pointerEvents="none" />
+                {renderFace(TOP_Y + ROW_H, 'library-shelf-inner-ledge', LEDGE_H + TIER_GAP)}
+                {renderFace(BOTTOM_Y + ROW_H, 'library-shelf-bottom-ledge')}
+                <ScrollView ref={scrollRef} horizontal showsHorizontalScrollIndicator={contentWidth > viewportWidth}
+                    scrollEnabled={!drag && !arrangement?.saving}
+                    style={styles.scrollViewport} contentContainerStyle={{ width: contentWidth, height: SHELF_H }}
+                    testID="library-shelf-scroll" scrollEventThrottle={16} directionalLockEnabled
+                    onScroll={(event) => { scrollXRef.current = event.nativeEvent.contentOffset.x; }}
+                    onTouchStart={() => {
+                        touchOriginRef.current = null;
+                        frameRef.current?.measureInWindow((x, y) => { touchOriginRef.current = { x, y }; });
+                    }}
+                    onTouchMove={handleSweepMove} onTouchEnd={() => setSweptId(null)} onTouchCancel={() => setSweptId(null)}
+                >
+                    {renderRow(top, 0, TOP_Y, 'top')}
+                    {renderRow(bottom, top.length, BOTTOM_Y, 'bottom')}
+                </ScrollView>
+                {renderSide('left')}
+                {renderSide('right')}
+                <View style={styles.topBevel} pointerEvents="none" />
+                {drag?.target ? <View testID={`library-arrange-drop-${drag.target.beforeId ?? 'end'}`} pointerEvents="none"
+                    style={[styles.dropMarker, { left: drag.target.x - scrollXRef.current,
+                        top: ROW_GEOMETRY[drag.target.row].y + 24 }]} /> : null}
+                {draggedBook && drag ? <View testID="library-arrange-drag-overlay" pointerEvents="none" accessible={false}
+                    accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+                    style={[styles.dragOverlay, { left: drag.left, top: drag.top }, !isReduceMotion && { transform: [{ scale: 1.04 }] }]}>
+                    <BookSpine item={draggedBook} index={0} onPress={() => {}} isReduceMotion playTak={() => {}}
+                        arranging testID="library-arrange-drag-preview" />
+                </View> : null}
+                {books.length === 0 ? (
+                    <View style={styles.emptyState} pointerEvents="none">
+                        <Ionicons name="library-outline" size={36} color="#f0e0d1" />
+                        <Text style={[styles.emptyTitle, { fontFamily: fonts.heading }]}>No books on this shelf</Text>
+                        <Text style={[styles.emptyHint, { fontFamily: fonts.body }]}>Try another filter or add a book.</Text>
+                    </View>
+                ) : null}
+            </View>
+        </Animated.View>
+        {arranging ? <LibraryArrangeSelection title={selectedBook?.book.title}
+            canEarlier={selectedIndex > 0} canLater={selectedIndex >= 0 && selectedIndex < books.length - 1}
+            disabled={!!arrangement?.saving || !!drag}
+            onEarlier={() => { if (selectedId && selectedIndex > 0) arrangement?.move(selectedId, books[selectedIndex - 1].id); }}
+            onLater={() => { if (selectedId && selectedIndex >= 0) arrangement?.move(selectedId, books[selectedIndex + 2]?.id ?? null); }} /> : null}
+        <LibraryBookPicker books={books} onBookPress={arranging ? selectBook : onBookPress} activeBook={arranging ? selectedBook : activeCaptionBook} selecting={arranging} />
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+    selectedOutline: { position: 'absolute', top: -3, bottom: -2, left: -3, right: 0, borderWidth: 2, borderColor: '#e9c279', borderRadius: 6 },
+    dropMarker: { position: 'absolute', height: ROW_H - 24, width: 3, backgroundColor: '#fff1bd', borderWidth: 0.5, borderColor: '#654329', zIndex: 20 },
+    dragOverlay: { position: 'absolute', zIndex: 30, elevation: 12 },
+    shelfContainer: {
+        marginBottom: LIBRARY_SPACING.large, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(176,143,99,0.52)',
+        shadowColor: '#20160e', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.14,
+        shadowRadius: 14, elevation: 5, backgroundColor: '#896341',
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
+    shelfFrame: { height: SHELF_H, borderRadius: 9, overflow: 'hidden', backgroundColor: '#896341' },
+    shelfWall: {
+        position: 'absolute', left: 0, right: 0, height: ROW_H,
     },
-    headerActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
+    shelfFace: {
+        position: 'absolute', left: 0, right: 0, height: LEDGE_H,
+        shadowColor: '#160e08', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 2,
     },
-    iconButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
+    wallGrain: { opacity: 0.68 },
+    faceGrain: { opacity: 0.5 },
+    boardTop: { position: 'absolute', left: 0, right: 0, top: 0, height: 4 },
+    boardFrontHighlight: { position: 'absolute', left: 0, right: 0, top: 4, height: 1, backgroundColor: 'rgba(243,213,167,0.42)' },
+    boardJoint: { position: 'absolute', top: 1, bottom: 1, width: 2, backgroundColor: 'rgba(35,22,12,0.28)', borderLeftWidth: 1, borderLeftColor: 'rgba(249,219,178,0.24)' },
+    boardJointLeft: { left: SHELF_SIDE_WIDTH + 1 },
+    boardJointRight: { right: SHELF_SIDE_WIDTH + 1 },
+    boardUnderside: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 4 },
+    // Static footprint: book transforms lift above this shadow; it never enters the drag overlay.
+    bookContactShadow: { position: 'absolute', left: 0, bottom: -3, height: 3, borderRadius: 2 },
+    scrollViewport: { ...StyleSheet.absoluteFillObject },
+    bookRow: {
+        position: 'absolute', left: SHELF_SIDE_WIDTH, right: 0, height: ROW_H, flexDirection: 'row',
+        alignItems: 'flex-end', justifyContent: 'flex-start',
     },
-    addButton: {
-        width: 116,
+    cabinetSide: { position: 'absolute', top: 0, bottom: 0, width: SHELF_SIDE_WIDTH, zIndex: 2 },
+    sideInsideEdge: { position: 'absolute', top: 0, bottom: 0, width: 2, backgroundColor: 'rgba(25,15,9,0.30)' },
+    sideGrain: { position: 'absolute', width: SHELF_H, height: SHELF_SIDE_WIDTH,
+        left: (SHELF_SIDE_WIDTH - SHELF_H) / 2, top: (SHELF_H - SHELF_SIDE_WIDTH) / 2, transform: [{ rotate: '90deg' }] },
+    ceilingShadow: { position: 'absolute', top: 0, left: 0, right: 0, height: 18 },
+    contactShadow: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 4 },
+    topBevel: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, backgroundColor: 'rgba(255,226,176,0.32)', zIndex: 2 },
+    bookend: {
+        width: SHELF_BOOKEND_WIDTH, height: 76, flexShrink: 0,
+        shadowColor: '#170e07', shadowOffset: { width: 2, height: 1 }, shadowOpacity: 0.4, shadowRadius: 1.5,
     },
-    title: {
-        fontSize: 32,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        letterSpacing: -0.5,
-    },
-    summaryCard: {
-        borderRadius: 20,
-        borderWidth: 1,
-        padding: 16,
-        marginBottom: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    summaryLabel: {
-        fontSize: 13,
-        fontWeight: '600',
-        marginBottom: 4,
-    },
-    summaryValue: {
-        fontSize: 24,
-        fontWeight: '800',
-    },
-    summaryMeta: {
-        alignItems: 'flex-end',
-    },
-    summaryMetaText: {
-        fontSize: 13,
-        fontWeight: '500',
-    },
-    filterRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 10,
-        marginBottom: 18,
-    },
-    filterChip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderRadius: 14,
-        borderWidth: 1,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-    },
-    filterChipText: {
-        fontSize: 13,
-        fontWeight: '700',
-    },
-    filterChipCount: {
-        minWidth: 22,
-        height: 22,
-        borderRadius: 11,
-        marginLeft: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 6,
-    },
-    filterChipCountText: {
-        fontSize: 12,
-        fontWeight: '700',
-    },
-    listContent: {
-        paddingBottom: 100,
-    },
-    bookCover: {
-        width: 80,
-        height: 120,
-        borderRadius: 12,
-        backgroundColor: '#E8E8E8',
-    },
-    bookInfo: {
-        flex: 1,
-        marginLeft: 16,
-        justifyContent: 'center',
-    },
-    bookTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        marginBottom: 6,
-        letterSpacing: -0.3,
-    },
-    bookAuthor: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#666666',
-        marginBottom: 12,
-    },
-    tagContainer: {
-        flexDirection: 'row',
-        gap: 8,
-    },
-    tag: {
-        backgroundColor: 'rgba(145, 197, 94, 0.2)',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: 'rgba(145, 197, 94, 0.3)',
-    },
-    tagText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#84cc16',
-        textTransform: 'capitalize',
-    },
-    lendingTag: {
-        backgroundColor: 'rgba(59, 130, 246, 0.12)',
-        borderColor: 'rgba(59, 130, 246, 0.2)',
-    },
-    lendingTagText: {
-        color: '#2563EB',
-    },
-    emptyContainer: {
-        alignItems: 'center',
-        marginTop: 100,
-        paddingHorizontal: 40,
-    },
-    emptySubtitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        marginBottom: 12,
-    },
-    emptyText: {
-        fontSize: 15,
-        fontWeight: '500',
-        color: '#666666',
-        textAlign: 'center',
-        lineHeight: 22,
-    },
-    errorContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 96,
-        paddingHorizontal: 36,
-    },
-    errorTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        marginBottom: 10,
-        textAlign: 'center',
-    },
-    errorText: {
-        fontSize: 15,
-        fontWeight: '500',
-        color: '#666666',
-        textAlign: 'center',
-        lineHeight: 22,
-    },
-    retryButton: {
-        marginTop: 22,
-        borderRadius: 14,
-        paddingHorizontal: 18,
-        paddingVertical: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    retryButtonText: {
-        color: '#FFFFFF',
-        fontSize: 14,
-        fontWeight: '700',
-        marginLeft: 8,
-    },
+    bookendUpright: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, borderTopLeftRadius: 2, borderTopRightRadius: 2 },
+    bookendFoot: { position: 'absolute', left: 0, right: 1, bottom: 0, height: 4, backgroundColor: '#a4864f', borderRadius: 1,
+        borderTopWidth: 1, borderTopColor: '#ddc28d' },
+    emptyState: { position: 'absolute', left: 16, right: 16, top: TOP_Y, height: ROW_H, alignItems: 'center', justifyContent: 'center', gap: 8 },
+    emptyTitle: { fontSize: 24, color: '#f0e0d1' },
+    emptyHint: { fontSize: 13, color: '#f0e0d1' },
 });

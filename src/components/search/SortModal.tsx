@@ -1,7 +1,8 @@
 import { View, Text, TouchableOpacity, Pressable, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useLibraryTypography } from '@/components/library/LibraryTypography';
 import { SORT_OPTIONS, SortOption } from '@/lib/constants';
 
 interface SortModalProps {
@@ -12,7 +13,8 @@ interface SortModalProps {
 }
 
 export const SortModal = ({ visible, onClose, currentSort, onSelect }: SortModalProps) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
     return (
     <Modal
         visible={visible}
@@ -26,16 +28,18 @@ export const SortModal = ({ visible, onClose, currentSort, onSelect }: SortModal
         >
             <View style={{
                 backgroundColor: colors.bgCard,
-                borderTopLeftRadius: 24,
-                borderTopRightRadius: 24,
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+                borderWidth: 1,
+                borderColor: colors.border,
                 padding: 20,
                 paddingBottom: 40,
             }}>
                 <View style={{ alignItems: 'center', marginBottom: 16 }}>
                     <View style={{ width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2 }} />
                 </View>
-                <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 16 }}>
-                    Sort Results
+                <Text accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 22, fontFamily: fonts.heading, marginBottom: 16 }}>
+                    Sort results
                 </Text>
                 {SORT_OPTIONS.map((option) => (
                     <TouchableOpacity
@@ -45,10 +49,14 @@ export const SortModal = ({ visible, onClose, currentSort, onSelect }: SortModal
                             onSelect(option.value);
                             onClose();
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Sort by ${option.label}`}
+                        accessibilityState={{ selected: currentSort === option.value }}
                         style={{
                             flexDirection: 'row',
                             alignItems: 'center',
-                            paddingVertical: 14,
+                            paddingVertical: 10,
+                            minHeight: 48,
                             paddingHorizontal: 12,
                             borderRadius: 12,
                             backgroundColor: currentSort === option.value ? colors.accent + '20' : 'transparent',
@@ -62,7 +70,7 @@ export const SortModal = ({ visible, onClose, currentSort, onSelect }: SortModal
                         <Text style={{
                             color: currentSort === option.value ? colors.accent : colors.textPrimary,
                             fontSize: 16,
-                            fontWeight: currentSort === option.value ? '600' : '500',
+                            fontFamily: currentSort === option.value ? fonts.label : fonts.body,
                             marginLeft: 12,
                             flex: 1,
                         }}>

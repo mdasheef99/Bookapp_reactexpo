@@ -1,0 +1,48 @@
+{
+  "recordedUtc": "2026-10-11T09:10:31.1230248Z",
+  "kind": "Android emulator; synthetic image fixtures; real manipulator and ML Kit; fixture picker only",
+  "emulator": "emulator-5556",
+  "avd": "BookConnect_Pixel5_API36",
+  "package": "com.bookconnect.library.dev",
+  "api": 36,
+  "abi": "x86_64",
+  "server": "session-owned Metro 8083 in this checkout",
+  "diagnosticSha256": "890307B86BEC21C79FD10D8DBCC0EB6C2C16FE243D25072E8BF18EE652FC80FA",
+  "source": [
+    {
+      "path": "src/features/books/notes/captureGeometry.ts",
+      "sha256": "65E327A1864AA713A714E2BABE180D452899E7403C84227DA0E3ACBA3DF49EF0"
+    },
+    {
+      "path": "src/features/books/notes/captureAdapter.ts",
+      "sha256": "437F248F88EC04068BDC07FBC3E90D28217E5D5E713A6783109B7A7BBD99DDCD"
+    },
+    {
+      "path": "src/features/books/notes/captureSession.ts",
+      "sha256": "269686A0DD783F47035ADC5C8DC50C6DC8944A3F70AD2EA0AB4EF7D9D494F092"
+    },
+    {
+      "path": "src/features/books/services/ocrService.ts",
+      "sha256": "B94E0647030DDBC9336111996781DB59C3EB10CB61247DBD0716FE510BA74DAB"
+    },
+    {
+      "path": "app/_layout.tsx",
+      "sha256": "6A7B0462814593003AF38973A33F975F70D41B3F9018040AB593A47499751A8B"
+    },
+    {
+      "path": "src/features/books/notes/composerBrowserHistory.ts",
+      "sha256": "18750CC31F4949115F489D4F8F5DB7FA37F7430AA874728B43D9BD8FC19ABADD"
+    }
+  ],
+  "resultSha256": "446B23E114762891A9130E014565E568E5E3A504A1D929C642271EBED855D6EA",
+  "pixelSha256": "C50393B32CA1D9B1F7E08AB429679BC3C17948F40186139831EF772341B43C40",
+  "cancellation": "Cancellation after actual native-adapter dispatch invalidated adoption and retained crop; no claim that native computation stops",
+  "mutations": "App-private synthetic cache/document files and owned emulator settings only; no shared database/Storage/account/provider writes",
+  "limitations": [
+    "No system camera/picker UI",
+    "No native keyboard/TalkBack/large text/hardware Back acceptance",
+    "No physical device/iOS/multilingual acceptance",
+    "No save/persistence proof"
+  ],
+  "temporaryRouteRemoved": true
+}

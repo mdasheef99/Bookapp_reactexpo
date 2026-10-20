@@ -1,0 +1,92 @@
+[
+  {
+    "id": "085fb7c64e814f9180062adf6012fccf",
+    "style": "z-index: 0; transform: translate(2270px, 7178px); pointer-events: all; visibility: visible; width: 390px; height: 973.9px;",
+    "text": " arrow_back Literary Parlor Add note Workspace Cancel menu_book Active Reading A Quiet Practice by Mira Vale psychology Category · Thought edit_note Reflection Page number (optional) Pins your thought to a specific leaf bookmark info Notes are saved to your collection only when you tap Save note . bookmark_added Save note ",
+    "title": "devices\nB05 — Manual Add note editor"
+  },
+  {
+    "id": "0a4214cc911a4ac884c07469645605ba",
+    "style": "z-index: 1; transform: translate(908px, 8653px); pointer-events: all; visibility: visible; width: 390px; height: 884px;",
+    "text": " arrow_back Add note Cancel auto_stories A Quiet Practice Mira Vale error_outline We couldn’t save your note. Your text is still here. Try again or keep editing. sync Retry Keep editing Category psychology Thought Your reflection edit_note I want to pause before starting the next task. Page number (optional) p. Add a page number if useful. ",
+    "title": "devices\nB11 — Definite note-save failure"
+  },
+  {
+    "id": "1b9dc93a6471459e9f0a7b8d60b0d948",
+    "style": "z-index: 5; transform: translate(7682px, 7178px); pointer-events: all; visibility: visible; width: 390px; height: 887.6px;",
+    "text": " arrow_back Edit note Cancel menu_book Book Reference A Quiet Practice Mira Vale (sample) Category (optional) Selected: Thought label_off None format_quote Quote lightbulb Thought bookmark Takeaway check_circle Action help_outline Question edit_note Note Marginalia reflection I want to pause before starting the next task. auto_stories Reflective entry Page number (optional) numbers Add a page number if useful for future citations. p. check Save changes ",
+    "title": "devices\nB09 — Edit note"
+  },
+  {
+    "id": "25e53a73729d4076a30641186ee6a63e",
+    "style": "z-index: 6; transform: translate(2724px, 7178px); pointer-events: all; visibility: visible; width: 390px; height: 1349px;",
+    "text": " arrow_back Literary Parlor Add note Active Marginalia A Quiet Practice by Mira Vale 1 Step 1: Choose category (optional) Choose a category to organize your note, or proceed uncategorized. format_quote Quote Words worth keeping check psychology_alt Thought Your reaction check lightbulb Takeaway A key idea check flag Action Something to try check help_outline Question Something to explore check Skip category arrow_forward § 2 Step 2: Choose input method Select how you wish to enter your note. edit_note Write note arrow_forward Type your reflection directly into the note editor. draw Manual journal entry document_scanner Scan text arrow_forward Scan printed text from the page using text recognition. photo_camera Optical viewfinder recognition info Nothing is saved until you tap Save note. ",
+    "title": "devices\nB04 — Choose category and input"
+  },
+  {
+    "id": "2fc52a1432ff451da1c32f96c04eecaf",
+    "style": "z-index: 7; transform: translate(0px, 7178px); pointer-events: all; visibility: visible; width: 390px; height: 1219.35px;",
+    "text": " arrow_back Book details bookmark verified Sample book A Quiet Practice Mira Vale Reading Owned Good condition add Add note edit_note Notes 1 note chevron_right Your notes for this book Thought Page 24 “I want to pause before starting the next task.” tune Book details &amp; management expand_more Reading status Reading Ownership Personal copy Condition Good Available for lending Friends can request this title Personal review Optional star_rate star_rate star_rate star_rate star_rate Tap to record an enduring assessment when you finish reading. Bibliographic Record Format Hardcover Language English Pages 248 pages ISBN Not provided delete_outline Remove from Library ",
+    "title": "devices\nB01 — Book Details"
+  },
+  {
+    "id": "3985b81b98ae4f73bac8137d147797d0",
+    "style": "z-index: 11; transform: translate(1816px, 7178px); pointer-events: all; visibility: visible; width: 390px; height: 652px;",
+    "text": " arrow_back Notes Current Volume A Quiet Practice by Mira Vale • Chapter IV edit_note No notes yet Capture quotes, thoughts, or key takeaways as you read. Notes are organized right here with your book. add Add note ",
+    "title": "devices\nB03 — Empty Notes"
+  },
+  {
+    "id": "3ce3336dd3b64188bac9ae56b66d0427",
+    "style": "z-index: 12; transform: translate(4086px, 7178px); pointer-events: all; visibility: visible; width: 390px; height: 690px;",
+    "text": " arrow_back Scan text lightbulb Category · Thought A Quiet Practice by Mira Vale document_scanner search_off No text recognized We couldn’t recognize printed text in this image. Photo quality, focus, or lighting can affect recognition. refresh Try again photo_library Choose another photo edit_note Write note instead keyboard_backspace Back to note options ",
+    "title": "devices\nB13 — No text recognized"
+  },
+  {
+    "id": "47ac102d74ff4c64b51178c3e735ab13",
+    "style": "z-index: 17; transform: translate(0px, 8653px); pointer-events: all; visibility: visible; width: 390px; height: 884px;",
+    "text": " arrow_back Notes Reading Room Edition A Quiet Practice Mira Vale (sample) cloud_off sync_problem Couldn’t load your notes There was a problem loading this list. Check your connection and try again. refresh Retry arrow_back Back to Book details wifi_off auto_stories ",
+    "title": "devices\nB10 — Notes load error"
+  },
+  {
+    "id": "4d08612fdc7a45ab9d7b45aa552197a7",
+    "style": "z-index: 19; transform: translate(454px, 8653px); pointer-events: all; visibility: visible; width: 390px; height: 884px;",
+    "text": " arrow_back Unsaved exit DECISION PENDING Cancel Add note Save menu_book A Quiet Practice Mira Vale (sample) lightbulb Thought bookmark p. 24 I want to pause before starting the next task. stylus_note Personal margin notes Ch. 3 drafts Discard changes? Your unsaved changes will be lost. Keep editing Discard note ",
+    "title": "devices\nB12 — Unsaved exit — DECISION PENDING"
+  },
+  {
+    "id": "5235e0d51b1d4385b6ae52c5621e2462",
+    "style": "z-index: 22; transform: translate(3178px, 7178px); pointer-events: all; visibility: visible; width: 390px; height: 1044px;",
+    "text": " arrow_back Scan a page Category · Thought A Quiet Practice • Mira Vale Align printed text · Hold steady highlight Keep lines level photo_library Choose photo center_focus_strong Capture page info If the camera isn't available Camera unavailable You can choose a page photo from your library or write your note directly. image Choose photo edit_note Write note instead ",
+    "title": "devices\nB06 — Scan a page"
+  },
+  {
+    "id": "7f614be3758e47e3b50da731603c8cac",
+    "style": "z-index: 30; transform: translate(3632px, 7178px); pointer-events: all; visibility: visible; width: 390px; height: 944.9px;",
+    "text": " arrow_back Review recognized text menu_book A Quiet Practice • Mira Vale Cancel Scanned text Category · Thought Review and correct scanning errors before saving. Captured Excerpt Scanned text Stillness is not the absence of thought, but the quiet space between thoughts where understanding takes root. Tap into the passage above to adjust typos or punctuate freely. Page number (optional) bookmark verified Notes are saved to your collection only when you tap Save note. bookmark_add Save note document_scanner Scan again history_edu Rescan this page? A new scan replaces your edits. Are you sure you want to scan again? camera_alt Scan again Keep editing ",
+    "title": "devices\nB07 — Review recognized text"
+  },
+  {
+    "id": "97d8835d63224eb09f67c60841a35b49",
+    "style": "z-index: 35; transform: translate(4994px, 7178px); pointer-events: all; visibility: visible; width: 1280px; height: 1676.3px;",
+    "text": " B Notes-first v3 — Current flow and screen index B Notes-first v3 — Current flow and screen index Clean canvas: 14 targets + this index, no historical variants. Static artboards; routes unlinked. Review candidate — approval pending Static artboards · routes unlinked Design System: Literary Parlor End-to-End Notes Flow Scope: After book entry · Standalone passage creation excluded Phase 1 · Entry Book Details → Notes B01 Book Details: Add note opens B04 directly. Notes opens B02 (populated), B03 (empty), or B10 (load error). B02/B03 Add note opens B04. Phase 2 · Category &amp; Fork 01 Choose category &amp; input Optional chips: Quote, Thought, Takeaway, Action, Question, or Skip. Fork to Write note or Scan text . Phase 3 · Composition Parallel Composition Paths Path A: Blank editor with carried category badge &amp; optional page. Path B: Viewfinder → editable OCR review. Phase 4 · Convergent Gate Explicit \"Save note\" Tap Deliberate reader commitment required on both paths. Zero background mutations or unconfirmed autosaves. Phase 5 · Lifecycle Read note &amp; Return Committed note view with metadata. Action branches: return to indexed Notes collection or tap Edit note . Branch A · Manual Composition Direct Editor Manual Add note editor: Displays carried category badge (or unobtrusive \"No category\"), clean multiline writing area, optional page number input (e.g. p. 24), and primary Save note action. No numeric word/character limits. Branch B · Scan Text (OCR; processing platform unverified) Camera Intake Scan a page → Review recognized text: Capture page shutter or Choose photo. Prefilled editable text area allows fixing scanning errors before saving. Secondary \"Scan again\" includes confirmation modal if text was edited. Edge Conditions &amp; Recovery States Resilient, non-blocking reader recovery paths Camera Unavailable Camera unavailable Non-blocking fallback offering Choose photo from library or Write note instead directly without assuming permission is the specific reason. OCR State 04 No Text Recognized Concise diagnostic explanation. Action stack: Try again , Choose another photo , Write note instead , and Back to note options (preserves category). OCR State 05 Confirm Incomplete Text Dialog over editable text. Offers Keep editing or Use incomplete text . Both return to editor; accepting partial text never autosaves. Rescan Safety Edited Text Rescan Modal Triggered when tapping Scan again after modifying OCR text. Warns that new scan overwrites edits; offers Keep editing vs Scan again . Fixture State Collection Load Error Preserves reading context with accessible, non-destructive Retry action. Storage State Note Save Failure Retains entered note text in memory with Retry and Keep editing . Avoids claiming zero data loss. Pending Product Decision Unsaved-Exit Confirmation Pending product decision, not approved. Discard draft vs Keep editing dialog; must not claim durable draft recovery. Navigation Return Back &amp; Cancel Semantics Back or Cancel returns to the exact caller (Book Details or Notes), preserving selected book and collection context. 14 Current Screen Targets 9 Core + 5 Input Supplement This canvas contains exactly the 14 B01–B14 target frames plus this index. Use the visible B IDs and titles; no historical variants remain. B01 — Book Details B02 — Notes collection B03 — Empty Notes B04 — Choose category and input B05 — Manual Add note editor B06 — Scan a page B07 — Review recognized text B08 — Read note B09 — Edit note B10 — Notes load error B11 — Definite note-save failure B12 — Unsaved exit — DECISION PENDING B13 — No text recognized B14 — Confirm incomplete text Technical Governance &amp; Constraints Category Mutation Scope (B04 &amp; B09): Category is chosen prior to composition in B04 and can only be modified through B09 (Edit note) post-save. No inline category editing during composition. B07 (Review recognized text) Candidate State: Confirmed in candidate state with a non-interactive “Category · Thought” badge, neutral “Scanned text” label, editable text result, optional page number, explicit “Save note” gate, and conditional rescan confirmation modal triggered only after text modification; no engine/platform, cloud upload, or photo-retention claims. Technical Boundary &amp; Privacy Claims: On-device recognition is intended but processing platform capabilities remain unverified; cloud OCR is deferred, and photo handling/retention is unspecified. No reader-facing privacy or hardware claims. Page Number Optional: Page reference input is strictly optional across all entry states. Show no numeric word or character count limits in this pass. Deliberate Commit Only: Zero unconfirmed background draft commits or automatic timers. Saving occurs exclusively when the reader taps “Save note”. Standalone Passage Creation Deferred: Dedicated passage-saving flows remain out of scope for the current notes-first candidate. Save Outcome &amp; Exit Decision: An uncertain save outcome requires reconciliation/idempotency before offering retry. B12 is a pending product decision. Governance &amp; Implementation Notice Implementation is for a later separately authorized session; unresolved behavior and storage support must be checked there. Do not claim the app matches these designs. Review candidate — approval pending; static artboards; routes unlinked. Palette: Warm paper (#FFF8F4) · Forest green (#394B3B) · Literary Parlor styling. ",
+    "title": "devices\nB Notes-first v3 — Current flow and screen index"
+  },
+  {
+    "id": "d58dfe2af7e645408c6086cc2444cbf1",
+    "style": "z-index: 49; transform: translate(4540px, 7178px); pointer-events: all; visibility: visible; width: 390px; height: 606px;",
+    "text": " arrow_back Review recognized text Category · Thought A Quiet Practice Mira Vale auto_stories Scanned text document_scanner “Stillness is not the absence of thought, but the quiet space between thoughts where understanding takes root.” bookmark Page number (optional) 24 document_scanner Scan again bookmark_add Save note find_in_page Some text may be missing The scan may have missed part of the page. You can review and edit the recognized text in the editor before saving. Captured Text format_quote “Stillness is not the absence of thought, but the quiet space between thoughts where understanding takes root.” info Accepting incomplete text returns to the editor. Nothing saves automatically until you tap Save note. Use incomplete text arrow_forward edit Keep editing ",
+    "title": "devices\nB14 — Confirm incomplete text"
+  },
+  {
+    "id": "d78ac2f45d3d4ca5bf4aeccd80bfd3a1",
+    "style": "z-index: 50; transform: translate(454px, 7178px); pointer-events: all; visibility: visible; width: 390px; height: 884px;",
+    "text": " arrow_back Notes A Quiet Practice Mira Vale (Sample) All 1 Thought 1 Quote 0 Takeaway 0 Action 0 Question 0 Thought · Page 24 I want to pause before starting the next task. Tap to read full note arrow_forward add Add note tune ",
+    "title": "devices\nB02 — Notes collection"
+  },
+  {
+    "id": "d8a0171a6278455f9638791f2cbe0943",
+    "style": "z-index: 51; transform: translate(8136px, 7178px); pointer-events: all; visibility: visible; width: 390px; height: 884px;",
+    "text": " arrow_back Read note bookmark_border Thought Page 24 A Quiet Practice by Mira Vale (sample) I want to pause before starting the next task. edit Edit note content_copy Copy note text arrow_back Back to Notes check_circle Note copied to clipboard ",
+    "title": "devices\nB08 — Read note"
+  }
+]

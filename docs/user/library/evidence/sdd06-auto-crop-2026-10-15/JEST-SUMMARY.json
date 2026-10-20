@@ -1,0 +1,188 @@
+{
+  "suites": {
+    "passed": 296,
+    "failed": 33,
+    "pending": 1,
+    "total": 330
+  },
+  "tests": {
+    "passed": 2523,
+    "failed": 3,
+    "pending": 4,
+    "total": 2530
+  },
+  "failures": [
+    {
+      "name": ".tmp\\sdd06-capture-browser-qa-luna-20261011\\library-manual-note-web04-retest.luna.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\sdd06-capture-browser-qa-luna-20261011\\library-manual-note-browser-final.luna.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": "src\\components\\library\\__tests__\\LibraryShelf.test.tsx",
+      "failedAssertions": [
+        "LibraryShelf single shelf SDD-04 F2 [bookId] route transition (SDD-05 §3) uses fade for [bookId]; siblings keep slide_from_right default"
+      ],
+      "category": "assertion"
+    },
+    {
+      "name": ".tmp\\sdd06-capture-browser-qa-luna-20261011\\library-manual-note-browser-history.luna.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\history.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": "app\\(tabs)\\library\\__tests__\\[bookId].test.tsx",
+      "failedAssertions": [
+        "BookDetailScreen review persistence uses local review state for privacy toggles and review saves without forcing rating 0"
+      ],
+      "category": "assertion"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\long-title-dynamic-zoom.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\long-title-dynamic-empty.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\short-title-dynamic-zoom.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\long-title-capture.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\long-title-dynamic-empty-click.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\web05-matrix.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\web05-geom\\web05-matrix.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\web04-crop-zoom2.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\web05-geom\\web04-crop-zoom2.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\web07-contrast.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\web05-geom\\web07-contrast.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\web04-crop.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\web05-geom\\web04-crop.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\web07-a11y.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\web05-geom\\web07-a11y.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\web05-reviewzoom.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": "supabase\\functions\\__tests__\\support\\phase9MetadataComposition.ts",
+      "failedAssertions": [],
+      "category": "empty fixture/support collector"
+    },
+    {
+      "name": ".tmp\\web05-geom\\web05-reviewzoom.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": "supabase\\functions\\__tests__\\fixtures\\phase9\\searchVariantFixtures.ts",
+      "failedAssertions": [],
+      "category": "empty fixture/support collector"
+    },
+    {
+      "name": ".tmp\\current-browser-qa\\web05-theme.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": ".tmp\\web05-geom\\web05-theme.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": "supabase\\functions\\__tests__\\fixtures\\phase9\\visionFixtures.ts",
+      "failedAssertions": [],
+      "category": "empty fixture/support collector"
+    },
+    {
+      "name": ".tmp\\web05-geom\\web05-shots.spec.ts",
+      "failedAssertions": [],
+      "category": "Playwright collected by Jest"
+    },
+    {
+      "name": "supabase\\functions\\__tests__\\fixtures\\phase9\\googleBooksResponses.ts",
+      "failedAssertions": [],
+      "category": "empty fixture/support collector"
+    },
+    {
+      "name": "supabase\\functions\\__tests__\\fixtures\\phase9\\metadataFixtures.ts",
+      "failedAssertions": [],
+      "category": "empty fixture/support collector"
+    },
+    {
+      "name": "supabase\\migrations\\__tests__\\marketplacePhase9Unit7cPrivateSaveRevisionCorrection.test.ts",
+      "failedAssertions": [
+        "Phase 9 Unit 7C M46 private-save revision correction is one forward-only replacement of the existing Save function"
+      ],
+      "category": "assertion"
+    },
+    {
+      "name": "supabase\\functions\\__tests__\\fixtures\\phase9\\aliasFixtures.ts",
+      "failedAssertions": [],
+      "category": "empty fixture/support collector"
+    }
+  ],
+  "openHandlesWarning": true
+}

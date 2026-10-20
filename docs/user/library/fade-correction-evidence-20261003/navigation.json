@@ -1,0 +1,44 @@
+{
+  "listSurvivedReload": true,
+  "listScroll": {
+    "clientHeight": 795,
+    "scrollHeight": 1630,
+    "scrollTop": 0
+  },
+  "chooserBounds": [
+    {
+      "clientHeight": 556,
+      "height": 557.2000122070312,
+      "id": "library-book-picker-panel",
+      "overflowY": "hidden",
+      "scrollHeight": 556,
+      "width": 342.3999938964844
+    },
+    {
+      "clientHeight": 44,
+      "height": 44,
+      "id": "library-book-picker-close",
+      "overflowY": "visible",
+      "scrollHeight": 44,
+      "width": 44
+    },
+    {
+      "clientHeight": 488,
+      "height": 487.6000061035156,
+      "id": "library-book-picker-list",
+      "overflowY": "auto",
+      "scrollHeight": 678,
+      "width": 340.8000183105469
+    }
+  ],
+  "detail": {
+    "url": "http://localhost:19006/library/ae665879-eda1-40f1-a775-7d698a861b27",
+    "communityReviewsVisible": true
+  },
+  "restored": {
+    "dialogs": 0,
+    "filter": "All, 8 books",
+    "mode": "true",
+    "url": "http://localhost:19006/library"
+  }
+}

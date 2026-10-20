@@ -1,0 +1,212 @@
+[
+  {
+    "books": [
+      {
+        "height": 46,
+        "id": "library-horizontal-book-e063191d-6a0b-4222-91c9-0a98937ee80b",
+        "width": 196.8000030517578
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+        "width": 211.1999969482422
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-ae665879-eda1-40f1-a775-7d698a861b27",
+        "width": 225.6000061035156
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+        "width": 240
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+        "width": 196.8000030517578
+      },
+      {
+        "height": 47,
+        "id": "library-horizontal-book-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+        "width": 211.1999969482422
+      },
+      {
+        "height": 44,
+        "id": "library-horizontal-book-f498f920-386c-484b-8533-18f9c44579f8",
+        "width": 225.6000061035156
+      },
+      {
+        "height": 48,
+        "id": "library-horizontal-book-eebf0401-d243-423b-83e4-41aa5d287d70",
+        "width": 240
+      }
+    ],
+    "contacts": [
+      0,
+      0
+    ],
+    "height": 844,
+    "shelf": {
+      "bottom": 799.2000122070312,
+      "height": 528,
+      "left": 24,
+      "right": 296,
+      "top": 271.20001220703125,
+      "width": 272,
+      "x": 24,
+      "y": 271.20001220703125
+    },
+    "styleControl": {
+      "bottom": 203.200008392334,
+      "height": 51.60000228881836,
+      "left": 24,
+      "right": 296,
+      "top": 151.60000610351562,
+      "width": 272,
+      "x": 24,
+      "y": 151.60000610351562
+    },
+    "width": 320
+  },
+  {
+    "books": [
+      {
+        "height": 46,
+        "id": "library-horizontal-book-e063191d-6a0b-4222-91c9-0a98937ee80b",
+        "width": 209.9125061035156
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+        "width": 225.27500915527344
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-ae665879-eda1-40f1-a775-7d698a861b27",
+        "width": 240.6374969482422
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+        "width": 256
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+        "width": 209.9125061035156
+      },
+      {
+        "height": 47,
+        "id": "library-horizontal-book-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+        "width": 225.27500915527344
+      },
+      {
+        "height": 44,
+        "id": "library-horizontal-book-f498f920-386c-484b-8533-18f9c44579f8",
+        "width": 240.6374969482422
+      },
+      {
+        "height": 48,
+        "id": "library-horizontal-book-eebf0401-d243-423b-83e4-41aa5d287d70",
+        "width": 256
+      }
+    ],
+    "contacts": [
+      0,
+      0
+    ],
+    "height": 844,
+    "shelf": {
+      "bottom": 749.1999969482422,
+      "height": 528,
+      "left": 24,
+      "right": 406.3999938964844,
+      "top": 221.1999969482422,
+      "width": 382.3999938964844,
+      "x": 24,
+      "y": 221.1999969482422
+    },
+    "styleControl": {
+      "bottom": 153.20000076293945,
+      "height": 51.60000228881836,
+      "left": 24,
+      "right": 406.3999938964844,
+      "top": 101.5999984741211,
+      "width": 382.3999938964844,
+      "x": 24,
+      "y": 101.5999984741211
+    },
+    "width": 430
+  },
+  {
+    "books": [
+      {
+        "height": 46,
+        "id": "library-horizontal-book-e063191d-6a0b-4222-91c9-0a98937ee80b",
+        "width": 209.9125061035156
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+        "width": 225.27500915527344
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-ae665879-eda1-40f1-a775-7d698a861b27",
+        "width": 240.6374969482422
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+        "width": 256
+      },
+      {
+        "height": 46,
+        "id": "library-horizontal-book-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+        "width": 209.9125061035156
+      },
+      {
+        "height": 47,
+        "id": "library-horizontal-book-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+        "width": 225.27500915527344
+      },
+      {
+        "height": 44,
+        "id": "library-horizontal-book-f498f920-386c-484b-8533-18f9c44579f8",
+        "width": 240.6374969482422
+      },
+      {
+        "height": 48,
+        "id": "library-horizontal-book-eebf0401-d243-423b-83e4-41aa5d287d70",
+        "width": 256
+      }
+    ],
+    "contacts": [
+      0,
+      0
+    ],
+    "height": 900,
+    "shelf": {
+      "bottom": 749.1999969482422,
+      "height": 528,
+      "left": 364,
+      "right": 916,
+      "top": 221.1999969482422,
+      "width": 552,
+      "x": 364,
+      "y": 221.1999969482422
+    },
+    "styleControl": {
+      "bottom": 153.20000076293945,
+      "height": 51.60000228881836,
+      "left": 364,
+      "right": 916,
+      "top": 101.5999984741211,
+      "width": 552,
+      "x": 364,
+      "y": 101.5999984741211
+    },
+    "width": 1280
+  }
+]

@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useLibraryTypography } from '@/components/library/LibraryTypography';
 
 interface SearchSuggestionsProps {
     suggestions: string[];
@@ -15,7 +16,8 @@ export const SearchSuggestions = ({
     onSelect,
     visible,
 }: SearchSuggestionsProps) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
     if (!visible) return null;
 
     const hasContent = suggestions.length > 0 || recentSearches.length > 0;
@@ -30,7 +32,7 @@ export const SearchSuggestions = ({
                 right: 0,
                 zIndex: 100,
                 backgroundColor: colors.bgCard,
-                borderRadius: 16,
+                borderRadius: 14,
                 borderWidth: 1,
                 borderColor: colors.border,
                 shadowColor: colors.shadow,
@@ -48,7 +50,7 @@ export const SearchSuggestions = ({
                         <Text style={{
                             color: colors.textTertiary,
                             fontSize: 11,
-                            fontWeight: '600',
+                            fontFamily: fonts.label,
                             paddingHorizontal: 16,
                             paddingBottom: 4,
                             textTransform: 'uppercase',
@@ -60,10 +62,13 @@ export const SearchSuggestions = ({
                             <TouchableOpacity
                                 key={`recent-${i}`}
                                 onPress={() => onSelect(search)}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Search for ${search}`}
                                 style={{
                                     flexDirection: 'row',
                                     alignItems: 'center',
-                                    paddingVertical: 10,
+                                    minHeight: 44,
+                                    paddingVertical: 8,
                                     paddingHorizontal: 16,
                                 }}
                             >
@@ -72,6 +77,7 @@ export const SearchSuggestions = ({
                                     style={{
                                         color: colors.textPrimary,
                                         fontSize: 15,
+                                        fontFamily: fonts.body,
                                         marginLeft: 12,
                                         flex: 1,
                                     }}
@@ -93,7 +99,7 @@ export const SearchSuggestions = ({
                         <Text style={{
                             color: colors.textTertiary,
                             fontSize: 11,
-                            fontWeight: '600',
+                            fontFamily: fonts.label,
                             paddingHorizontal: 16,
                             paddingBottom: 4,
                             textTransform: 'uppercase',
@@ -105,10 +111,13 @@ export const SearchSuggestions = ({
                             <TouchableOpacity
                                 key={`sug-${i}`}
                                 onPress={() => onSelect(suggestion)}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Search for ${suggestion}`}
                                 style={{
                                     flexDirection: 'row',
                                     alignItems: 'center',
-                                    paddingVertical: 12,
+                                    minHeight: 44,
+                                    paddingVertical: 8,
                                     paddingHorizontal: 16,
                                 }}
                             >
@@ -117,6 +126,7 @@ export const SearchSuggestions = ({
                                     style={{
                                         color: colors.textPrimary,
                                         fontSize: 15,
+                                        fontFamily: fonts.body,
                                         marginLeft: 12,
                                         flex: 1,
                                     }}

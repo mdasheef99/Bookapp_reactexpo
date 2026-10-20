@@ -1,0 +1,450 @@
+You said:
+Please act as an independent product/interaction-design critic for BookConnect's Library and passage-capture redesign. Give a complete written critique here before any screen generation or implementation. Do not edit code, use external project tools, or assume related Clubs discussions are the Library specification.
+
+PRODUCT AND CURRENT APP
+BookConnect is an Expo SDK54 / React Native reading app with Library, Exchange, Marketplace, Clubs and Profile. This review is Library only. Reader goals: browse owned/wishlist books, manage reading status, capture an exact passage, add their own interpretation, and retrieve/revisit saved material. Mobile Android is the immediate target; web and iOS require distinct capability/accessibility handling.
+Library currently has Home List/Shelf, catalogue Search, Book Details, and per-book Notes. Saved Pages is an embedded Book Details section; Note Editor is a modal. No dedicated capture, image preparation, passage review, saved-passage-detail, global notes or capture-search route exists yet. Catalogue search must remain distinct from searching personal saved captures.
+Shelf has substantial visual/interaction work: warm reading-room direction, book spines and horizontal stacks, cloth/wood/brass materials, deterministic sizing, filtering, owned-book navigation, loaded-data Quick Look, device-local Arrange/Undo/Save/Cancel, reduced-motion behavior. Preserve this investment but critique whether its visual language should extend unchanged to text-heavy screens. Native gesture/assistive acceptance remains incomplete. Search has functional corrections; whole Library UI is not uniformly redesigned. Prior Stitch drafts are references, not implementation truth; some contain invented counts/metadata or missing handlers.
+Current OCR entry: Book Details -> Add a note -> Note Editor -> Scan Page; per-book Notes -> add/edit -> same editor -> Scan Page. No direct Home/Book Details capture CTA. Saved pages can currently be browsed/deleted; full passage-detail/edit/overwrite UX is pending.
+
+OCR REAL STATUS / CONSTRAINTS
+U0 integration preflight complete. U1 partial: corrected ML Kit1.5.2 service executes English offline on an Android API36 emulator. Only a public sign sample was tested (not representative printed-page accuracy); first/warm timing ~2664/1052/1044ms. New warning/save fixes have66 automated tests and successful web build but have not yet received fresh Android interaction verification. That verification is authorized before Stitch design.
+Review bound20,000 Unicode code points; overflow warning tells users some text is missing. Both note/vault saving block until explicit partial-text acceptance; editing resets acceptance. No silent first500-word extraction cut. Local recognition currently English Latin only; do not promise multilingual local OCR. Cloud stays disabled/deferred by user's direction; no provisioning/deployment/provider calls now. Future cloud retry is per-image explicit consent; preserve previous valid text on refusal/failure. No automatic AI rewriting or summaries.
+Save NOTE: <=500 whitespace-delimited words; page optional; categories Quote/Reflect/Distill/Apply. Save PASSAGE/vault: <=800 words AND4,000 characters; positive page required under existing backend. Distinct explicit operations; don't imply photo archival. Saved text only, original photos temporary; no persisted images/base64. Never guess citation/page/metadata. Unknown author/page clearly omitted. Existing same-book/page overwrite needs clear old/new confirmation; no silent replacement or duplicate saves. No new database/schema choices in this design review.
+
+PROPOSED DESIGN TO CHALLENGE (NOT FINAL DECISIONS)
+Primary Capture passage CTA on Book Details beside Add note. Secondary capture action on per-book Notes/Saved passages including empty states. Note Editor retains Scan/Choose photo/Paste as secondary entry. Home quick-capture is optional later because book selection adds a step; no new app-level tab. Proposed journey: chosen book -> Camera / Choose photo / Paste -> crop/rotate photo with reset -> extract -> bounded full-text review -> select/edit passage -> source/page/category and exact save preview -> explicit save -> saved passage detail. Full-screen image prep/review; small sheets for source/save decisions. Minimize forced steps and critique this division.
+Coordinate Notes and Saved passages under a comprehensible book-level structure, but existing records and limits remain distinct. Do not hide the capture CTA in an editor. Need a coherent shared design system for Library Home/List, Book Details, Notes/editor, capture/review/saving, saved passage detail and catalogue Search while preserving Shelf work.
+
+PLAN / SCOPE
+U2 next planned: camera/gallery/paste, crop/rotation, passage selection, save/overwrite previews and full passage detail. U3 device-only draft recovery (text/context only, no photos, account isolation/expiry) was approved in the earlier plan, but user now questions necessity; deferring it is a recommendation, not an accepted spec change. A discard-unsaved-work warning is a possible minimum, also not implemented. U4 personal capture search and attributed plain-text/Markdown export later. U5 quiet resurfacing later, no notifications/streaks/generated text. U6 actual devices/accuracy/resources/accessibility acceptance. Do not expand into flashcards/AI summaries/semantic search/social sharing.
+User wants first a books-informed critique, then Android verification and a completed connected Stitch design. Implementation later follows approved journey; design should not wait for every deferred OCR capability.
+
+PLEASE DELIVER
+1. Prioritized critique: what is strong, what is wrong, what is ambiguous; challenge my proposed primary/secondary placement.
+2. Recommend concrete Library/book-level information architecture and labels. Assess Notes vs Saved passages vs unified collection without claiming schema changes. Compare minimal alternatives and choose one.
+3. Shortest useful capture/save flow: screen vs sheet decisions, selection interaction on mobile, keyboard/large-text/assistive handling. State whether two save destinations confuse readers and how to address it honestly.
+4. State matrix: camera/gallery denied/canceled, unsupported platform/script, extracting/cancel, no text, rotated/difficult image,20k overflow, save bounds, missing page, overwrite, network failure, save-in-progress/duplicate taps, unsaved exit. Cloud-disabled state must not present a working upload promise.
+5. Separate Must design now / later / unnecessary. Critique U3 draft recovery priority explicitly.
+6. Visual system guidance compatible with Shelf but optimized for legible reading. No invented engagement metrics or prototype counts presented as real.
+7. Assess books: The Design of Everyday Things (Don Norman), Don't Make Me Think, Revisited (Steve Krug), About Face (Alan Cooper et al.), Designing Interfaces (Jenifer Tidwell et al.), Refactoring UI (Adam Wathan/Steve Schoger). Pick3-5 most useful; apply named concepts carefully, no fabricated quotes/page references. Books inform judgment, not substitute for reader testing.
+8. Exact ordered Stitch brief/screen inventory and acceptance checklist, including errors/empty/loading states. Give relative work sizes/dependencies, no unjustified precise timeline or completion percentage.
+9. End with top5 changes before design and remaining questions. Distinguish verified facts above from your proposals and uncertainties. Critique freely; no flattery or merely repeating the plan.
+…
+Show more
+Worked for 27s
+ChatGPT said:
+
+My recommendation is to proceed with the Library direction, but revise the capture model before generating screens. The largest problem is not OCR placement: it is the relationship between an exact passage, a reader’s own note, and two save operations with different constraints. A polished capture wizard will still confuse readers if that relationship remains unresolved.
+
+I treat the implementation and verification details you supplied as the factual baseline, not as independently verified findings. Everything recommended below is a proposal. Clubs is not a specification for this review.
+
+1. Prioritized critique
+
+Priority	Assessment	Consequence
+Critical	Passage text and personal interpretation need distinct identities.	Do not let a reader unknowingly edit their interpretation into something later displayed as a quotation.
+Critical	Save constraints currently threaten to appear too late.	A reader should know before capturing that a saved passage requires a page and has both word and character limits.
+Critical	“Bounded full-text review” is misleading during overflow.	The review contains the available extracted text, which may be incomplete. Explicit acceptance does not restore omitted text.
+High	Mandatory preparation, selection, metadata and preview stages create unnecessary ceremony.	Make preparation optional and combine passage editing, page entry and exact save preview.
+High	Two equally prominent Book Details creation buttons would overstate creation relative to browsing and reading-status management.	Make capture the primary creation action, not automatically the dominant action on the entire page.
+High	Passage replacement is a first-class journey, not a generic confirmation.	Show what will be replaced, preserve the proposed text on cancellation/failure, and prevent duplicate submissions.
+Medium	The Shelf’s material language is unsuitable as an unchanged template for editors.	Preserve its warmth through typography, color and spacing; reduce texture and ornament where readers work with text.
+
+The strongest elements are book-first capture, explicit saving, no automatic rewriting, temporary photos, and retaining a route for writing a note without scanning anything. These create a credible product boundary.
+
+The weak point in the proposed flow is “source/page/category.” The book is already selected, page is mandatory only for passages, and categories belong to notes under the supplied constraints. Combining these into one generic metadata step obscures the distinction instead of simplifying it.
+
+Challenge to CTA placement: On Book Details, place a visible Capture passage button in a “Notes & passages” section near the reading controls, rather than below a long metadata block. Put Add note beside it as a lower-emphasis, clearly labeled action. On the Notes view, reverse that emphasis: Add note is primary and Capture passage secondary. On the Passages view, capture is primary.
+
+This is context-sensitive hierarchy, not an inconsistent design system. A reader arriving to write their thoughts should not have to visually negotiate around the scanner.
+
+Defer Home quick capture. Book-first entry removes source ambiguity and avoids adding book selection to the immediate capture task. Revisit it only if reader testing shows that returning to Book Details is a substantial obstacle.
+
+2. Information architecture: one place to find material, two explicit record types
+
+Minimal alternatives:
+
+Alternative	Benefit	Cost	Recommendation
+Separate Notes and Saved passages destinations	Closest to current implementation	Readers must remember where something was saved; empty states and actions fragment	Acceptable fallback, weaker long-term model
+One book-level destination with Notes and Passages views	Shared retrieval location with honest distinctions	Requires clear navigation and record labels	Choose this
+One mixed chronological collection by default	Everything appears together	Mixed constraints, actions and overlapping Quote notes/passages become harder to understand	Defer until retrieval behavior justifies it
+
+Recommended structure:
+
+Library: Owned / Wishlist, with List / Shelf as presentation choices. Preserve existing filtering, status management and Shelf behavior.
+Catalogue search: A distinct destination labeled Search catalogue. Do not label it simply “Search” in a context where it could plausibly search saved writing.
+Book Details: Reading status and book information, creation actions, then a “Notes & passages” preview.
+Notes & passages: One book-level destination with two accessible views: Notes and Passages.
+Passage detail: Saved text, known attribution, page, and explicit available actions.
+Note editor: Personal writing with the existing category model and optional page.
+
+This is a presentation and navigation proposal, not a request to merge records or change schemas.
+
+Use Passages, not “Saved pages” or “Vault.” “Saved pages” suggests a retained page image or complete page, neither of which is promised. Explain once near image capture: “Only the text you save is kept. Photos are temporary.”
+
+The distinction cannot honestly be “notes are always your thoughts” because Quote is an existing note category. Explain it operationally:
+
+Passage: Text from the book, saved against a required page.
+Note: A quote or your own writing, with an optional page and a note category.
+
+That overlap is real. Labels cannot eliminate it. Existing Quote notes should remain notes; do not silently reclassify or duplicate them.
+
+Keep Quote / Reflect / Distill / Apply available in the note editor with brief explanations. In particular, Distill should clearly mean the reader writes their own concise takeaway, not that the app generates one.
+
+3. The shortest useful capture/save flow
+
+For a new passage:
+
+Book Details → source choice → review/edit and page → Save passage → passage detail.
+
+Photo preparation is an optional branch within that journey.
+
+Surface	Recommended content and behavior
+Source sheet	Take photo, Choose photo, Paste text. Show relevant capability limitations and a short “Page required · up to 800 words and 4,000 characters” explanation.
+Image preview/preparation screen	Full-screen image, Use photo, Crop, Rotate, Reset, and retake/choose another. A good image should require no crop gesture.
+Extraction state	Remain in the capture context, show indeterminate progress and Cancel. Do not invent percentage progress or promise completion based on the sign-test timings.
+Review screen	Available extracted text, passage editing, live limits, required page, known book attribution, and Save passage. This edited text is the exact save preview.
+Replacement confirmation	Only when an existing passage occupies the same book/page. Show existing and proposed content clearly.
+Passage detail	The actual saved result and clear return navigation. Offer Add note as a separate next action.
+
+Paste bypasses image preparation and OCR. It must not display an extraction animation merely to make the paths appear consistent.
+
+Avoid a compulsory separate “preview” screen when the review editor already shows exactly what will be stored. Before submission, its persistent summary should identify the operation, book and page. Saving should not trim or transform the text behind that preview.
+
+For adding personal interpretation after capture, offer Add note from passage detail, carrying the known book and page into a separate note operation. Do not imply that the note is structurally attached to that passage unless existing behavior supports such a relationship.
+
+Mobile selection
+
+Do not build the entire interaction around dragging two handles across a long OCR result.
+
+For a short result within limits, start with all available text in the editable passage field.
+For a long result, make Use selected text explicit. Never silently choose the first words.
+Allow native text selection, but also support ordinary editing/deletion and an accessible way to select a contiguous range, such as choosing a start and end paragraph.
+Let readers refine the resulting text at character level.
+Avoid discontiguous selection in U2. Joining separated fragments introduces quotation-integrity questions that this release does not need.
+Keep the original photo available temporarily for comparison while the capture session exists. Otherwise “check the exact passage” becomes a memory task.
+
+If OCR output does not preserve useful paragraphs, the alternative-selection design needs testing against real output before approval. A visual prototype cannot prove that it works.
+
+Keyboard, large text and assistive use
+
+The review is a full screen because text editing, selection and error correction need space. A keyboard-obscured bottom sheet is a poor primary workspace.
+
+Use a keyboard-aware layout; let the editor and page field scroll into view. At large text sizes, stack the save summary and actions rather than compressing them. Ensure TalkBack can read the text, operate alternatives to selection gestures, discover limit errors and reach Save in a predictable order. Do not announce changing counters on every keystroke.
+
+Source choices fit in a sheet. A long old/new replacement comparison should expand to a full-screen surface rather than become two tiny scrolling panes.
+
+Do two save destinations confuse readers? Yes, if presented as a late “Where should this go?” question.
+
+Determine the operation from entry:
+
+Capture passage starts a passage operation.
+Add note starts a note operation.
+Scan page inside the note editor supplies text to that note; it must not unexpectedly save a passage.
+
+Where changing type is needed, use an explicit Use text in a note instead action. Show the changed limits, preserve the text, and save nothing during the switch. Never offer “Save both” as an implicit convenience.
+
+For scanning into a nonempty note, confirm whether recognized text will be inserted at the cursor or replace existing text. Cancellation must preserve the note.
+
+4. Required state matrix
+
+These are proposed behaviors, not claims about current implementation.
+
+State	Required presentation and recovery
+Camera permission denied	Explain that camera access is unavailable; retain Choose photo and Paste. Offer settings only when appropriate to the actual permission state.
+Gallery access denied or restricted	Respect the platform picker’s capability. Explain the observed restriction without demanding broader access unnecessarily; retain other sources.
+Camera/gallery canceled	Return to the prior capture/editor state without an error or lost text.
+Unsupported platform	Expose only working image-extraction capabilities. Keep text entry/paste where supported. Web and iOS need their own capability and accessibility treatment.
+Unsupported script	Explain that current local image recognition supports English Latin text. Do not imply multilingual support or confuse this limitation with a ban on manually entered text in other scripts.
+Extracting	Indeterminate progress, cancel, no fabricated estimate. Prevent overlapping extraction requests.
+Extraction canceled	Return to the image/text state; disregard late completion. Do not erase previous valid text.
+No text found	Say no text was found in this image; offer rotate/crop, another photo or paste. Do not open a blank “successful” result.
+Rotated or difficult image	Make rotation, crop and retake discoverable. Preserve useful existing text until a new result is deliberately adopted. Do not invent OCR confidence scores.
+Review exceeds 20,000 Unicode code points	Persistent message that some extracted text is missing. Require explicit acceptance before either note or passage saving. Editing resets acceptance, as specified. Retake a smaller section remains available.
+Note over 500 whitespace-delimited words	Show the count and corrective guidance; block note save without truncation.
+Passage over 800 words or 4,000 characters	Show both counters; identify either exceeded limit. Both must pass. Confirm the backend’s character-count definition before implementing the counter.
+Passage page missing or invalid	Visible required field; inline error and focus on attempted save. Require a positive page; never infer it from the image.
+Existing same-book/page passage	“A passage is already saved for this page.” Show old/new text and book/page; Replace passage or Keep existing. Canceling preserves proposed text for further work.
+Network failure during save	Keep text and metadata; explain that save is unconfirmed/failed according to what is actually known. Retry must not create duplicates.
+Ambiguous save timeout	Do not treat it as proof that nothing saved. Reconcile the existing result where supported before resubmitting; define this behavior before claiming duplicate safety.
+Save in progress / duplicate taps	One active submission, labeled progress, guarded duplicate activation. Keep entered work available until the outcome is known.
+Unsaved exit	For meaningful unsaved changes: Keep editing / Discard changes. Cover Android Back, navigation and dismissal where controllable. This does not protect against process death.
+Cloud disabled	No enabled “Upload,” “Improve with cloud,” or misleading retry promise. Recovery choices remain local correction, another image and paste.
+Passage detail loading/failure	Show loading, then either the saved record or a recoverable error. Never display the unsaved candidate as proof of persistence.
+Passage deletion	Clearly identify the record and consequence. Remove it from the list only according to confirmed behavior; provide recovery if deletion fails.
+
+Future cloud retry should remain a separate, per-image consent action that preserves prior valid text on refusal or failure. Design does not need to expose that deferred service now.
+
+5. Must design now, later, and unnecessary
+
+Scope	Recommendation
+Must design now	Book-level IA; contextual creation actions; photo/paste entry; optional preparation; extraction states; accessible review/selection; distinct note/passage rules; overflow acceptance; page validation; overwrite comparison; save failure/duplicate handling; passage detail/edit/delete; unsaved-exit behavior.
+Must specify now, verify before release	Android Back and keyboard behavior; assistive alternatives; platform capability differences; text-count parity; cancellation and retry behavior; temporary-photo cleanup; real-device OCR/resource acceptance.
+Later	U4 personal capture search and attributed plain-text/Markdown export; U5 quiet resurfacing; optional Home capture; multilingual/cloud capabilities if separately authorized.
+Not needed for this release	Mandatory crop, mandatory category for passages, a preview screen duplicating the editor, a new app-level tab, mixed-feed complexity, OCR confidence decoration, engagement counts or gamification.
+
+U3 draft recovery is useful but not the next design priority. OCR correction can represent substantial effort, and interruption is plausible on mobile. However, recovery introduces account isolation, expiry, restoration choices and incomplete-session semantics. Those are real product obligations.
+
+My recommendation is to defer U3 provisionally, implement a discard warning as the minimum, and test interruption loss before prioritizing full recovery. This is a proposed change to the previously approved plan—not an accepted scope change.
+
+A discard warning only covers deliberate exits. It does not prevent loss when Android terminates the app. If that loss is frequent during real capture sessions, U3 should move ahead of personal search and export.
+
+If recovery proceeds, restored text-only work must explicitly say that the original photo is no longer available. Do not show a misleading image placeholder or a nonfunctional “compare photo” action.
+
+6. A visual system that belongs to Shelf without imitating it
+
+Shelf can remain the expressive browsing surface. Text work should inherit its palette and restraint, not its literal materials.
+
+Use warm, quiet surfaces with strong text contrast. Keep wood, cloth and brass treatment primarily in Shelf and limited framing.
+Use typography to distinguish book text, reader writing and interface labels. A restrained serif can suit passages, but must remain legible at small sizes and enlarged settings.
+Avoid textures behind editable or selectable text, faux paper edges around errors, and ornamental controls that resemble decoration.
+Give passages comfortable line spacing and paragraph separation. Preserve meaningful source formatting rather than automatically “cleaning up” prose.
+Make controls recognizable through labels and boundaries, not brass color alone.
+Retain a straightforward List alternative and explicit controls wherever Shelf gestures or arrangement interactions are involved.
+Use motion sparingly; retain reduced-motion behavior across capture transitions as well as Shelf.
+
+Prototype records should be clearly identified as sample content. Do not fabricate OCR accuracy, saved counts, timestamps, reading activity or unknown attribution to make a screen look complete.
+
+7. Which books are most useful here
+
+I would use four as the main review lenses, with Designing Interfaces as a supporting pattern reference. These are applications of the books’ ideas, not claims that the authors prescribe this particular product design.
+
+Book	Useful concept	Application and limitation
+The Design of Everyday Things — Don Norman	Conceptual models, signifiers, feedback and constraints	Readers should understand whether they are saving book text or a note, what Save will do, and what incomplete extraction means. A warning must explain the consequence, not merely signal trouble.
+Don’t Make Me Think, Revisited — Steve Krug	Scanning, clear hierarchy, familiar conventions	Use direct labels and predictable navigation. Make required page entry and save limits easy to discover. Applying scanning principles to controls must not reduce the passage itself to a cramped preview.
+About Face — Alan Cooper et al.	Goal-Directed Design; distinguishing reader goals from implementation mechanics	Organize around “keep this passage” and “write my response,” rather than exposing a pipeline of OCR stages and storage destinations. Necessary backend constraints still need honest representation.
+Refactoring UI — Adam Wathan and Steve Schoger	Visual hierarchy and restrained emphasis	Separate primary actions, text and secondary metadata without making everything a card or giving every button equal weight. Visual polish cannot resolve ambiguous save semantics.
+Designing Interfaces — Jenifer Tidwell et al.	Reusable interaction patterns	Useful for checking form, navigation and progressive-disclosure choices once the model is settled. Less decisive than the first three for deciding what Notes and Passages mean.
+
+Norman’s revised book is an appropriate foundation for understandable interaction; Krug’s published contents explicitly address scanning and navigation. 
+NN/G
++1
+ Wiley identifies Goal-Directed Design as central to About Face, and the official Refactoring UI material explicitly distinguishes visual from document hierarchy. 
+Wiley
++1
+
+Reader testing must still answer whether people understand the two record types, can capture a precise excerpt with one hand, and can later find it.
+
+8. Ordered Stitch brief and acceptance checklist
+
+After this critique, conduct the already-authorized Android verification of warning/save behavior before Stitch, as planned. That check should inform the design; it is not authorization here to run tools. Printed-page accuracy and actual-device acceptance remain outstanding beyond the sign sample.
+
+Use this ordered design inventory:
+
+Order	Deliverable	Required connected variants	Relative work / dependency
+1	Shared Library foundations and navigation map	Typography, actions, text fields, errors, focus, large text; exact labels and route relationships	Medium; settles shared decisions
+2	Library Home/List and Shelf integration	Owned/Wishlist, loading, empty, filtered empty, error; preserve Arrange/Undo/Save/Cancel and Quick Look behavior	Medium; preserve existing Shelf investment
+3	Catalogue Search	Initial, loading, results, no results, failure; unambiguous catalogue scope	Small–medium; no personal-capture search
+4	Book Details	Real metadata variants, reading status, unknown author omitted, capture/add-note actions, empty/populated Notes & passages preview	Medium; depends on IA
+5	Notes & passages destination	Notes and Passages views; populated, empty, loading and error; return to the correct book	Medium
+6	Note editor	Add/edit, categories, optional page, scan/photo/paste entry, nonempty insertion handling, word limit, save failure and unsaved exit	Medium–large; preserves existing note behavior
+7	Capture source and image preparation	Camera/gallery/paste, denied/canceled/unsupported states, preview, crop, rotate, reset, retake	Large; depends on capability decisions
+8	Extraction and passage review	Extracting/cancel, no text, difficult image, temporary image comparison, selection alternatives, keyboard/large text, overflow, both save bounds and page errors	Largest; main interaction risk
+9	Save and replacement	Ready/saving/failure, ambiguous outcome, explicit old/new replacement, cancellation with work preserved	Medium–large; depends on save semantics
+10	Passage detail and edit/delete	Confirmed saved result, omitted unknown attribution, long text, loading/error, edit/replacement, delete failure, separate Add note action	Medium; closes the journey
+11	Connected prototype and state audit	End-to-end note, photo and paste paths; Back, cancellation, retry, errors, return destinations	Medium; all preceding surfaces
+
+Relative sizes describe design effort and uncertainty, not delivery estimates. Final visual polish should follow a connected behavioral prototype, particularly for items 7–10.
+
+Visual/interaction approval checklist
+
+Every visible action has a destination or specified behavior; no decorative working-looking controls.
+Capture and note creation remain distinguishable through save and retrieval.
+Camera and gallery share preparation; paste bypasses image operations.
+A good image can proceed without mandatory cropping.
+Selection is operable without relying exclusively on drag handles.
+Review shows exactly the text to be saved and the correct destination-specific constraints.
+Overflow acceptance is visibly separate from OCR correctness; no claim that accepted text is complete.
+Book/page replacement shows both old and proposed material.
+Unknown attribution is omitted; sample records are labeled as such.
+No screen promises saved images, cloud upload, automatic rewriting or deferred search.
+Large-text, keyboard and assistive layouts are designed, not left as annotations saying “accessible.”
+Existing Shelf capabilities remain represented and reachable.
+
+Implementation/device acceptance checks—specified in the design, proven later
+
+Fresh Android verification of the warning and save fixes.
+Actual-device printed-page accuracy, cancellation, resource use and interaction behavior.
+Matching UI/backend limits, including character-count semantics.
+No duplicate save from repeated activation or ambiguous retry.
+Correct account/context behavior and temporary-photo lifecycle.
+TalkBack focus, selection alternatives, keyboard behavior and native Back handling.
+Distinct web/iOS capability and accessibility checks.
+
+The 66 automated tests and successful web build are useful evidence for their tested scope. They do not establish printed-page accuracy, native interaction quality or accessibility.
+
+9. Top five changes before design
+
+Approve the record model and labels: one “Notes & passages” destination, separate views, explicit operations, and honest handling of existing Quote notes.
+Shorten the journey: optional image preparation; one review/edit/page/save surface; no mandatory duplicate preview or passage category.
+Set contextual CTA hierarchy: capture leads among creation actions on Book Details and Passages; Add note leads in Notes.
+Specify fidelity and failure behavior: accessible selection, temporary image comparison, incomplete extraction, both limits, required page, replacement and uncertain save outcomes.
+Decide U3 scope explicitly, then run the authorized Android verification: deferral is my recommendation, not an assumed approval; device findings should feed the Stitch brief.
+
+Remaining questions
+
+Does the existing same-book/page rule effectively allow only one saved passage per page? If so, that limitation must be explained before readers try capturing a second excerpt.
+Does “positive page” mean a positive integer only, and how should unnumbered pages, Roman numerals or ebooks be handled under the current backend?
+What does the backend count as a character for the 4,000-character limit?
+Does an existing note support a passage relationship, or only shared book/page context? The design must not imply a relationship that is absent.
+What currently happens when scanning into a nonempty note?
+Is U3 deferral accepted, with the understood risk of losing work after process termination?
+
+These questions affect behavior and can be resolved without new schema decisions. They should be settled in the design brief rather than answered accidentally by generated screens.
+
+You said:
+Please deepen your review into a practical books-to-design specification, then critique the exact structure below. Do not repeat the prior overview. Use named concepts/chapters only where you can verify them from author/publisher contents; no invented quotes, page numbers or claims of having read inaccessible books. Identify your own applications as proposals.
+Map these lenses to concrete screens and rejection criteria:
+A) Don Norman, The Design of Everyday Things revised: Discoverability/signifiers, conceptual models, mapping, feedback, constraints; human error and recovery. Apply to Capture placement, temporary photo vs saved text,20k incomplete review, note vs passage, cancel/overwrite/uncertain save. Ask what users think happened versus actual persistence.
+B) Steve Krug, Don't Make Me Think Revisited: Don't make me think; scanning; billboard design; navigation; usability testing; mobile. Apply to labels, predictable book context/back navigation, action hierarchy, empty states, avoiding forced tutorial/wizard and a small reader-test script.
+C) About Face4 Cooper/Reimann/Cronin/Noessel: Goal-Directed Design, personas/scenarios, interaction framework/posture, excise, designing for intermediates. Distinguish unvalidated proto-personas from actual research. Apply to 'keep this passage' vs 'write a thought', minimal steps, context-specific creation and operation chosen before save.
+D) Designing Interfaces3 Tidwell/Brewer/Valencia: navigation, organizing page content, actions/commands, getting input, mobile patterns and progressive disclosure. Use exact pattern names only if verified. Compare full-screen editor vs sheet, crop tools, selection alternatives, keyboard/large-text and old/new comparison.
+E) Refactoring UI Wathan/Schoger: starting with features; hierarchy is everything; layout/spacing; typography; color/depth/details where verified. Give a restrained mobile token proposal and distinguish visual recommendations from measured contrast/accessibility. Maintain Shelf warmth without texture behind work text.
+
+STRUCTURE FOR REVIEW (prototype proposal, approval pending): Library Home with existing All/Reading/Completed/Wishlist filters and List/Shelf, catalogue search separate. Book Details -> Notes & passages book-level hub with Notes/Passages segmented views (separate existing records; no schema merge). Contextual Capture passage and Add note. Capture entry determines save operation, no late equal Save note/Save vault choice. Source chooser -> photo preview with optional crop/rotate/reset -> extracting -> review combined with exact passage edit/page/save preview -> only if conflict old/new replacement -> confirmed passage detail. Paste goes directly to review and bypasses OCR; scan within note supplies text to a note, deliberate switch to note preserves text without autosaving. Preserve Quote/Reflect/Distill/Apply, <=500word note/page optional; passage <=800words AND4000chars/page required. Prototype one saved passage per book/page based on existing upsert contract; disclose replace vs new. Android integer page entry cannot silently support Roman numerals/ebooks. Character semantics need later live verification; do not claim new schema.
+Choose a practical two-pane/toggle arrangement for available extracted text and selected passage on narrow mobile without requiring reliable paragraphs; editable passage/native selection plus accessible edit/paste fallback, no discontiguous excerpt wizard. Photo comparison temporary only. No cloud-enabled promise (deferred), no images archived, no AI rewriting, no Home scan/new tab, no fake metrics. Draft recovery status undecided: design deliberate discard warning, flag process-death limitation, do not claim recovery implemented.
+Prototype budget first:6 core full screens (Book Details, Notes hub, Passages hub, image preparation, passage review, passage detail) + source sheet, note editor, replacement and failure/overflow/empty/permission/unsaved-exit variants. Keep Home/List and catalogue as integration reference, not a prerequisite full redesign. Base viewport390x844; verify320/large text versions conceptually. Use original sample words clearly marked Sample; no copyrighted long passage or invented bibliography.
+Please output (1)book/verified-section -> problem -> concrete decision -> anti-pattern -> test table; (2)ranked critique and final compact IA/flow; (3)screen-by-screen required content/action/back behavior; (4)prioritized variants; (5)exact concise Stitch prompt with visual and interaction rules; (6)5 reader test tasks and pass/fail criteria; (7)remaining choices requiring user approval. Focus on decisions, not an essay; around1500-2000words. No code/external project writes.
+…
+Show more
+Worked for 36s
+ChatGPT said:
+
+Approve the structure for prototyping with three revisions: treat Notes/Passages as two states of one hub; use a toggle rather than simultaneous mobile text panes; and make persistence outcomes—not just successful saving—part of the connected prototype.
+
+1. Books → decisions → rejection criteria
+
+I verified the section names below against author/publisher contents. This verifies attribution, not access to the complete books. All BookConnect decisions and tests are my proposals.
+
+Book / verified section or concept	Problem	Concrete decision	Reject this anti-pattern	Test
+Norman: Signifiers, Mapping, Conceptual Models	Capture is hidden; readers may expect a saved photograph	Visible Capture passage; distinguish temporary photo, available extracted text and saved passage. Associate Rotate/Reset with the image they affect.	Camera icon without a label; “Saved page” implying image archival	Ask what each action changes and what remains after leaving.
+Norman: Feedback; constraints; human-error coverage	Overflow, cancellation and uncertain saves can produce false confidence	Show incomplete extraction persistently; explicit acceptance; distinct saving/confirmed/unconfirmed states; old/new replacement	Success toast before persistence confirmation; cancel that silently saves	Ask “What do you think has been saved?” Compare answer with actual state.
+Krug: Chapters 1–3; navigation in chapter 6	Labels and competing actions require interpretation	Direct verbs, persistent book context, contextual primary action, clear Back destination	“Vault,” generic “Done,” equally emphasized creation buttons everywhere	Reader identifies current book, next action and return destination without explanation.
+Krug: Chapters 9–10, covering testing and mobile	A desktop-style wizard may look orderly but interrupt reading	Test on narrow mobile; no tutorial prerequisite; actionable empty states	Teaching the flow before allowing capture; forcing crop	Reader completes task without moderator coaching.
+About Face 4: Goal-Directed Design; personas/scenarios; framework; posture; intermediates; excise	Implementation stages dominate reader goals	Model “keep this passage” and “write a thought”; entry selects operation; optional preparation; repeatable controls	Late destination chooser; mandatory metadata stages unrelated to operation	Returning reader repeats capture without instructional detours.
+Designing Interfaces 3: navigation, layout, mobile, actions and input chapters; Progressive Disclosure; Cancelability	Sheets and hidden tools can obstruct sustained editing	Full-screen review; sheet for source choices; optional crop tools; expandable replacement comparison	Tiny nested scrolling panes; gesture-only correction	Complete correction, comparison and cancellation at large text.
+Refactoring UI: Hierarchy is Everything; Layout and Spacing; Designing Text	Shelf decoration competes with working text	Prioritize passage, errors and save action; restrained spacing/type system	Texture behind text; decorative brass mistaken for an action	Readers distinguish content, controls and warnings without relying on color.
+
+Norman’s author-hosted contents verify the interaction concepts and error coverage. 
+Don Norman's JND.org
+ Krug’s author-hosted contents verify the chapter coverage used here. 
+sensible.com
+ Wiley verifies the About Face topics; O’Reilly and the publisher contents verify the Designing Interfaces sections and named patterns. 
+About Face
++2
+ The Refactoring UI authors publish its contents, including feature-first design, hierarchy, typography, color, depth and finishing details. 
+refactoringui.com
+
+“Occasional passage keeper” and “frequent annotator” would be unvalidated proto-personas, not research findings. Use them to generate scenarios, then investigate actual habits and accessibility needs.
+
+2. Ranked critique and compact IA/flow
+
+Persistence ambiguity is the highest-risk gap. Distinguish extraction completed, text edited, save requested and save confirmed. Cancellation during extraction must not imply cancellation of an already-submitted save.
+One passage per book/page needs early disclosure. Explain near page entry: “Saving to a page with an existing passage replaces it after confirmation.” Do not reveal this only after extensive editing.
+Six screens is a sensible budget, not six independent layouts. Notes hub and Passages hub should share one shell. Replacement can become a full-screen variant without becoming a new product destination.
+Reject simultaneous narrow panes. At 390px—and especially 320px—two text regions plus keyboard, page and controls leave insufficient working space.
+Preserve the existing Home model. Keep All/Reading/Completed/Wishlist and List/Shelf. Do not introduce Owned/Wishlist restructuring through this capture project.
+
+IA: Existing Library → Book Details → Notes & passages, with Notes/Passages views. Catalogue search remains separate.
+
+Passage flow: Contextual Capture passage → source sheet → optional photo preparation → extraction → review → replacement only if necessary → confirmed detail. Paste bypasses photo/OCR.
+
+Note flow: Add note → note editor → optional scan/photo/paste supplying note text → Save note. Switching passage text to a note preserves it, changes validation, and performs no save.
+
+Chosen review arrangement: two toggle views, Passage to save and Available text.
+
+Passage to save opens first, seeded with all available bounded text; oversized content remains visibly over limit.
+Available text is an unchanged reference with native selection and Use selection. Replacing an edited passage requires confirmation.
+Ordinary editing, deletion and paste remain the accessible fallback; no paragraph detection or drag-handle dependency.
+Switching views preserves text, selection where feasible, and scroll position.
+Compare photo opens a temporary image overlay; unavailable for paste and after the capture session.
+No discontiguous excerpt builder or silent shortening.
+
+3. Screen-by-screen contract
+
+Surface	Required content/actions	Back behavior
+1. Book Details	Existing status controls; known metadata; Notes & passages preview; Capture passage primary among creation actions, Add note secondary	Return to originating Library/search context with filters and position preserved
+2. Hub—Notes	Book context; segmented navigation; note excerpts/category/known page; Add note primary, Capture secondary; loading/empty/error	Book Details; switching segments does not accumulate Back history
+3. Hub—Passages	Same shell; passage excerpts and pages; Capture primary, Add note secondary; one-per-page explanation	Book Details; preserve each view’s position
+4. Image preparation	Image; Use photo; Crop, Rotate, Reset; choose another; local-English recognition notice	Within crop: cancel unapplied crop. From preview: source chooser; protect existing meaningful work
+5. Passage review	Two text views; editable exact save content; word/character counters; required positive-integer page; known book; Save passage; Compare photo; explicit switch to note	Return to preparation when a photo exists, preserving text; paste returns toward source choice. Leaving the capture session prompts discard
+6. Passage detail	Confirmed text, book/page, known author only; edit, delete, Add note; no archived-photo control	After creation, return to originating book/hub—not the spent capture sequence
+Source sheet	Take photo / Choose photo / Paste text; temporary-photo explanation; concise passage limits	Dismiss to caller, no mutation
+Note editor	Quote/Reflect/Distill/Apply; ≤500 words; optional page; Save note; secondary input sources	Dismiss to caller; warn for meaningful unsaved changes
+Replacement variant	Existing and proposed text in vertically stacked, labeled sections; book/page; Replace passage / Keep existing	Keep existing returns to review with proposed text intact
+
+For a nonempty note, scanning needs explicit insertion/replacement behavior. It must never silently destroy existing writing.
+
+The numeric keyboard is an input aid, not validation. Explain unsupported Roman-numeral/location references; offer a note with page omitted rather than inventing a numeric page.
+
+4. Prioritized variants
+
+Priority	Design variants
+P0: persistence and loss	Confirmed save; definite failure; uncertain outcome; duplicate taps; same-page replacement; cancel replacement; deliberate discard; deletion failure
+P0: constraints	20,000-code-point incomplete review and acceptance reset after editing; >500-word note; >800-word passage; >4,000-character passage; absent/invalid page
+P1: capture recovery	Permission denied/restricted; picker canceled; unsupported platform/script; extracting/cancel; no text; rotated/difficult image; failed re-extraction preserving prior text
+P1: normal completeness	Hub empty/loading/error; detail loading/error; note input into existing text; paste; source switching
+P1: layout/access	320px; large text; keyboard open; long book title; TalkBack focus/order and edit/paste fallback
+
+Overflow acceptance means accepting missing source text, not certifying OCR accuracy. The warning survives toggling views; edits reset acceptance.
+
+For an uncertain save, say “Save not confirmed”, preserve the candidate and specify reconciliation before resubmission. Do not prototype blind Retry as duplicate-safe.
+
+Draft recovery remains undecided. Design Keep editing / Discard changes; annotate that this cannot protect against process death.
+
+5. Concise Stitch prompt
+
+Create a connected, approval-pending Android Library capture prototype for BookConnect. Design six core full-screen frames: Book Details, Notes hub, Passages hub, Image preparation, Passage review, Passage detail. Notes/Passages share one hub shell. Add source sheet, expanded note-editor modal, replacement and state variants. Home/List/Shelf and catalogue search are integration references only; preserve All/Reading/Completed/Wishlist and existing Shelf behavior.
+
+Use 390×844 baseline; show 320px, large-text and keyboard-open review variants. Proposed tokens: spacing 4/8/12/16/24/32; horizontal inset 16; body 17 with approximately 1.5 line height; controls 16; supporting text 14; headings 22/28; minimum touch area 48×48 logical units. Use warm ivory #F7F3EA, dark ink #292722, muted olive #435647, restrained brass #8A7044. These are candidate tokens, not measured accessibility claims. Scale text, wrap labels, stack actions when needed. No texture behind working text; depth only for overlays.
+
+Capture entry chooses passage saving; Add note chooses note saving. Source sheet: camera/photo/paste. Photo preparation has optional crop/rotate/reset and Use photo. Paste bypasses preparation/OCR. Review uses Passage to save / Available text toggle, editable passage, native selection plus edit/paste fallback, temporary photo comparison, required positive-integer page and exact save preview. Preserve edits across toggles; no automatic shortening.
+
+Notes: Quote/Reflect/Distill/Apply, ≤500 words, page optional. Passages: ≤800 words AND 4,000 characters, page required. Annotate character counting for live verification. One passage per book/page: disclose replacement and show old/new confirmation. Never save both implicitly.
+
+Include incomplete 20k review, explicit partial acceptance/reset on edit, all limit/page errors, permission/cancel/no-text states, saving/uncertain/failure/duplicate protection, discard warning, loading/empty/detail failure. Confirm persistence before showing success. No cloud promise, archived photos, AI rewriting, Home scan, new tab or implemented draft recovery.
+
+Use original text labeled Sample: “I noticed the room grow quieter as I turned the page.” Identify the book context as “Sample book”; omit author/bibliography. No fabricated metrics. Annotate every action and Back destination.
+
+Contrast, focus visibility, screen-reader behavior and touch operation require measurement/native verification; token choices and screenshots cannot establish compliance.
+
+6. Five reader-test tasks
+
+Give tasks without naming the intended controls. Ask participants to think aloud; include a repeat user and participants using large text or assistive technology.
+
+Task	Pass	Fail
+1. “Keep this sentence from this book.”	Finds capture, saves exact text/page, understands only text persists	Searches inside note editor; believes photo was archived
+2. “Write your own response without a page number.”	Chooses note, saves without invented page, understands separation	Tries passage save or fabricates page to proceed
+3. “Keep the last sentence from this long, imperfect extraction.”	Uses selection or editing fallback, corrects text, understands overflow if present	Assumes omitted text exists; cannot operate selection alternative
+4. “Save another excerpt from the same page, but keep the original.”	Recognizes conflict, cancels replacement, retains candidate work	Overwrites unintentionally or believes both passages were saved
+5. “The save stalls; leave and return to find your passage.”	Recognizes uncertainty, avoids duplicate submission, understands discard choice and confirmed retrieval	Treats spinner/candidate as saved evidence or submits repeatedly
+
+Any unintended replacement, false persistence belief or inaccessible essential action is a rejection. Other hesitation informs revision; do not invent a statistical success rate from a small formative test.
+
+7. Choices requiring approval
+
+Toggle-based review with the complete available text initially seeded into the editable passage.
+Explicit replacement disclosure and the note alternative for unsupported page references.
+Scan-into-existing-note insertion versus replacement behavior.
+U3 deferral versus inclusion; neither choice is assumed here.
+Proposed visual tokens, subject to measured accessibility checks.
+
+Character-count semantics, save reconciliation and native selection behavior require live verification, not preference approval. Keep them explicitly unresolved until verified.
+
+ChatGPT can make mistakes. Check important info.
+Latest response
+
+
+
+
+GPT-6 Astra
+Light
+None
+Minimal
+Light
+Medium
+High
+Extra High
+Max
+Ultra
+Persistent

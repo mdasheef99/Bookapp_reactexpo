@@ -1,0 +1,11 @@
+{
+  "base_head": "8bce62e610406fc7a56bff29c65c74d3d16b4c4f",
+  "branch": "codex/library-cover-shelf",
+  "patch_sha256": "b315a9cd157c237da81f5b1e01b3b1139702262248aa96cf93c45f1f4b1a773b",
+  "files": {
+    "src/features/books/notes/manualNotesGateway.ts": "1c14067ab7698577e52e9b9b1a2bc4555cfdf2fc3fa1936181fe4a3dd300062c",
+    "src/features/books/notes/__tests__/manualNotesGateway.test.ts": "13b5c15fe21aa93b9269eb09e7eb7cede4cb7dfcebb6dda6035ace9ba1d8b37b",
+    "src/features/books/notes/__tests__/manualNoteDeleteGate.test.ts": "7b25b9b239b8f398df471073013ed5ebeebab4dff632fa4d24d14ebd6ab0cab0",
+    "src/components/notes/__tests__/ManualNoteJourney.test.tsx": "0646b5045ec0d6c51214b0e173fd8dedef5aa74cc08f146c09116763e7427d86"
+  }
+}

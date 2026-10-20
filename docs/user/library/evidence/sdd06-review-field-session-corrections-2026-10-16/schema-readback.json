@@ -1,0 +1,20 @@
+{
+  "method": "Supabase MCP get_project followed by SELECT-only catalog metadata",
+  "project": { "id": "ahntbtktjjmvfosgkmgn", "name": "Bookconnect_reactexpo", "status": "ACTIVE_HEALTHY", "region": "ap-southeast-2", "postgresVersion": "17.6.1.063" },
+  "table": "public.user_books",
+  "rls": true,
+  "columns": [
+    { "column": "id", "type": "uuid", "nullable": false },
+    { "column": "user_id", "type": "uuid", "nullable": true },
+    { "column": "rating", "type": "integer", "nullable": true },
+    { "column": "review", "type": "text", "nullable": true },
+    { "column": "review_is_public", "type": "boolean", "nullable": true }
+  ],
+  "policies": [
+    { "name": "Users can view their own books", "command": "SELECT", "roles": ["public"], "using": "(auth.uid() = user_id)", "check": null },
+    { "name": "Users can update their books", "command": "UPDATE", "roles": ["public"], "using": "(auth.uid() = user_id)", "check": "(auth.uid() = user_id)" }
+  ],
+  "businessRowsRead": false,
+  "writesPerformed": false,
+  "effectiveRoleApiAcceptance": false
+}

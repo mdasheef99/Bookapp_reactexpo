@@ -1,0 +1,86 @@
+{
+  "type": "native-emulator-synthetic-fixtures",
+  "records": [
+    {
+      "availability": {
+        "available": true,
+        "message": "Review scanning errors before saving. English printed text is supported here."
+      }
+    },
+    {
+      "name": "regions-crop.png",
+      "width": 60,
+      "height": 40
+    },
+    {
+      "name": "regions-rotated.png",
+      "width": 80,
+      "height": 120
+    },
+    {
+      "name": "regions-rotated-crop.png",
+      "width": 40,
+      "height": 60
+    },
+    {
+      "name": "exif-decoded.png",
+      "width": 80,
+      "height": 120
+    },
+    {
+      "name": "exif-rotated.png",
+      "width": 120,
+      "height": 80
+    },
+    {
+      "name": "english-selection.png",
+      "width": 1280,
+      "height": 1100
+    },
+    {
+      "fixture": "synthetic-english-page-selection",
+      "run": 1,
+      "elapsedMs": 7299,
+      "version": 1,
+      "provider": "on-device",
+      "languageHint": "en",
+      "reviewText": "A PAGE FOR CAREFUL READING\nA reader walks into a quiet library and chooses a book.\nThe morning light falls across the open page.\nEach paragraph gives the reader time to pause.\nClear words can carry a useful idea without haste.\nBefore making a note, the reader checks the source.\nA question may matter as much as an answer.\nA short reflection can connect a page to daily life.\nThe chosen passage stays inside the outlined area.\nReading is a patient practice of attention.\nThis synthetic page contains no private information.\nIts text was written only to verify local recognition.",
+      "reviewOverflow": false
+    },
+    {
+      "fixture": "synthetic-english-page-selection",
+      "run": 2,
+      "elapsedMs": 5066,
+      "version": 1,
+      "provider": "on-device",
+      "languageHint": "en",
+      "reviewText": "A PAGE FOR CAREFUL READING\nA reader walks into a quiet library and chooses a book.\nThe morning light falls across the open page.\nEach paragraph gives the reader time to pause.\nClear words can carry a useful idea without haste.\nBefore making a note, the reader checks the source.\nA question may matter as much as an answer.\nA short reflection can connect a page to daily life.\nThe chosen passage stays inside the outlined area.\nReading is a patient practice of attention.\nThis synthetic page contains no private information.\nIts text was written only to verify local recognition.",
+      "reviewOverflow": false
+    },
+    {
+      "fixture": "clockwise-page-selection",
+      "elapsedMs": 4863,
+      "version": 1,
+      "provider": "on-device",
+      "languageHint": "en",
+      "reviewText": "Its text was written only to verify local\nrecognition.\nThis synthetic page contains no private information.\nReading is a patient practice of attention.\nThe chosen passage stays inside the outlined area.\nA short reflection can connect a page to daily life.\nA question may matter as much as an answer.\nBefore making a note, the reader checks the source.\nClear Words can carry\na useful idea without haste.\nEach paragraph gives the reader time to pause.\nThe morning light falls across the open page.\nA reader walks into a quiet library and chooses a book.\nA PAGE FOR CAREFUL READING",
+      "reviewOverflow": false
+    },
+    {
+      "canceled": true,
+      "cancellationPoint": "after-native-adapter-dispatch"
+    },
+    {
+      "candidate": {
+        "category": "question",
+        "page": "24",
+        "mode": "edit",
+        "noteId": "synthetic-saved-note",
+        "step": "review"
+      }
+    },
+    {
+      "restored": true
+    }
+  ]
+}

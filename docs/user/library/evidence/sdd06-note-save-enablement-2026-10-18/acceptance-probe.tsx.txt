@@ -1,0 +1,133 @@
+/** Temporary development acceptance probe. Archive and remove before handoff. */
+import React, { useState } from 'react';
+import { Button, ScrollView, Text } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { randomUUID } from 'expo-crypto';
+import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
+import { authRuntimeConfiguration } from '@/features/auth/config/authRuntimeConfig';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { createManualNoteSaveAdapter, createManualNoteDeleteAdapter, manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
+import { NoteCategory, NoteSubmission, NoteWriteError, NOTE_CATEGORIES } from '@/features/books/notes/manualNoteContract';
+import { NoteSaveCoordinator } from '@/features/books/notes/noteSaveCoordinator';
+
+const probeGates = { ownedBookWrites: true, stableCreateReconciliation: true, optionalFiveCategories: true, serverManagedEditVersion: true };
+function assert(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
+export default function NoteSaveAcceptance() {
+  const { bookId = '' } = useLocalSearchParams<{ bookId: string }>();
+  const [lines, setLines] = useState<string[]>(['Development-only, synthetic-note acceptance.']);
+  const [busy, setBusy] = useState(false);
+  if (!__DEV__) return <Text>Unavailable</Text>;
+  const run = async () => {
+    if (busy) return;
+    setBusy(true); setLines([]);
+    const log = (line: string) => setLines(previous => [...previous, line]);
+    const actorId = useAuthStore.getState().session?.user.id;
+    const ids: string[] = [];
+    const adapter = createManualNoteSaveAdapter(probeGates);
+    const remover = createManualNoteDeleteAdapter(probeGates);
+    const runId = randomUUID();
+    let baselineIds: string[] = [];
+    let failed = false;
+    const submission = (tag: NoteCategory | null, text?: string): NoteSubmission => {
+      const noteId = randomUUID(); ids.push(noteId);
+      return { id: randomUUID(), actorId: actorId!, bookId, noteId, sessionId: randomUUID(), mode: 'create', origin: 'book',
+        content: text ?? `ZZ_TEST NOTE_SAVE_20261018 ${runId} ${tag ?? 'none'}`, tag, page_number: tag === null ? null : 18 };
+    };
+    const expectDenied = async (query: PromiseLike<any>, label: string) => {
+      const result = await query;
+      assert(result.error || (Array.isArray(result.data) && result.data.length === 0), label);
+    };
+    try {
+      assert(actorId && bookId, 'A signed-in actor and owned book are required');
+      assert(authRuntimeConfiguration.supabaseUrl === 'https://ahntbtktjjmvfosgkmgn.supabase.co', 'Unexpected project');
+      await manualNotesGateway.book(actorId, bookId);
+      baselineIds = (await manualNotesGateway.list(actorId, bookId)).map(note => note.id).sort();
+      log(`BASELINE saved notes: ${baselineIds.length}; run ${runId}`);
+      const submitted: NoteSubmission[] = [];
+      for (const tag of [...NOTE_CATEGORIES.map(category => category.value), null]) {
+        const sent = submission(tag); submitted.push(sent);
+        const saved = await adapter.write(sent);
+        const read = await manualNotesGateway.record(actorId, bookId, sent.noteId);
+        assert(saved.version === 1 && saved.last_operation_id === null && read?.content === sent.content && read.tag === tag && read.page_number === sent.page_number,
+          `Category round trip failed: ${tag}`);
+        log(`PASS create/read ${tag ?? 'no category'}; server version 1`);
+      }
+      const base = submitted[0];
+      const initial = await manualNotesGateway.record(actorId, bookId, base.noteId);
+      assert(initial, 'Missing initial row');
+      const editA = { ...base, id: randomUUID(), mode: 'edit' as const, expectedVersion: 1, content: base.content + ' writer A' };
+      const editB = { ...editA, id: randomUUID(), content: base.content + ' writer B' };
+      const competing = await Promise.allSettled([adapter.write(editA), adapter.write(editB)]);
+      assert(competing.filter(result => result.status === 'fulfilled').length === 1, 'Concurrent edits must have exactly one winner');
+      assert(competing.some(result => result.status === 'rejected' && result.reason instanceof NoteWriteError && result.reason.kind === 'conflict'), 'Losing edit must surface a conflict');
+      const latest = await manualNotesGateway.record(actorId, bookId, base.noteId);
+      assert(latest?.version === 2 && latest.created_at === initial.created_at, 'Server version/time contract failed');
+      log('PASS concurrent real PostgREST edits: one winner, one conflict, creation date retained');
+      await expectDenied(supabase.from('reading_notes').update({ content: base.content + ' stale replacement', last_operation_id: randomUUID() }).eq('id', base.noteId).eq('version', 1).select('id'), 'Stale replacement accepted');
+      const replacement = await adapter.write({ ...editA, id: randomUUID(), expectedVersion: 2, content: base.content + ' compared replacement' });
+      assert(replacement.version === 3, 'Compared replacement must advance once');
+      log('PASS stale replacement rejected; current compared version accepted');
+      const legacy = await supabase.from('reading_notes').update({ content: base.content + ' legacy', updated_at: '2000-01-01T00:00:00Z' }).eq('id', base.noteId).select('*').single();
+      assert(!legacy.error && legacy.data.version === 4 && legacy.data.last_operation_id === null && legacy.data.created_at === initial.created_at && !legacy.data.updated_at.startsWith('2000'), 'Legacy metadata control failed');
+      assert(await adapter.reconcile({ ...editA, expectedVersion: 2 }, new AbortController().signal) === null, 'Intervening legacy write falsely confirmed');
+      log('PASS legacy update advances version, clears marker and ignores supplied timestamp');
+      for (const patch of [{ created_at: '2000-01-01T00:00:00Z' }, { version: 99 }, { user_id: actorId }]) {
+        const denied = await supabase.from('reading_notes').update(patch).eq('id', base.noteId).select('id');
+        assert(denied.error, 'Protected-column update unexpectedly accepted');
+      }
+      for (const patch of [{ tag: 'invalid' }, { page_number: 0 }, { content: ' \t\n\uFEFF ' }, { content: Array(501).fill('word').join('\uFEFF') }]) {
+        const denied = await supabase.from('reading_notes').update(patch).eq('id', base.noteId).select('id');
+        assert(denied.error, 'Invalid content/category/page unexpectedly accepted');
+      }
+      log('PASS protected columns and invalid category/page/empty/501-word values denied');
+      const forgedId = randomUUID(); ids.push(forgedId);
+      await expectDenied(supabase.from('reading_notes').insert({ id: forgedId, user_id: randomUUID(), user_book_id: bookId, content: 'ZZ_TEST forged owner', tag: null }).select('id'), 'Forged owner accepted');
+      const foreignId = randomUUID(); ids.push(foreignId);
+      await expectDenied(supabase.from('reading_notes').insert({ id: foreignId, user_id: actorId, user_book_id: randomUUID(), content: 'ZZ_TEST unowned book', tag: null }).select('id'), 'Unowned book accepted');
+      const anonymous = createClient(authRuntimeConfiguration.supabaseUrl!, authRuntimeConfiguration.supabaseAnonKey!, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+      await expectDenied(anonymous.from('reading_notes').select('id').eq('id', base.noteId), 'Anonymous read accepted');
+      await expectDenied(anonymous.from('reading_notes').update({ content: 'ZZ_TEST anonymous edit' }).eq('id', base.noteId).select('id'), 'Anonymous edit accepted');
+      await expectDenied(anonymous.from('reading_notes').delete().eq('id', base.noteId).select('id'), 'Anonymous delete accepted');
+      log('PASS forged owner/unowned parent rejected; anonymous read/edit/delete denied');
+      const duplicate = submitted[1];
+      try { await adapter.write(duplicate); throw new Error('Duplicate unexpectedly inserted'); }
+      catch (error) { assert(error instanceof NoteWriteError && error.kind === 'unknown', 'Duplicate result must be reconciled'); }
+      assert((await adapter.reconcile(duplicate, new AbortController().signal))?.id === duplicate.noteId, 'Stable create did not reconcile');
+      const count = await supabase.from('reading_notes').select('id', { count: 'exact' }).eq('id', duplicate.noteId);
+      assert(!count.error && count.count === 1, 'Stable create produced duplicate rows');
+      log('PASS repeated stable create: one row and positive read reconciliation');
+      const loss = submission('question'); let writes = 0;
+      const coordinator = new NoteSaveCoordinator({ write: async sent => { writes++; await adapter.write(sent); throw new Error('Injected lost committed response'); }, reconcile: adapter.reconcile });
+      coordinator.setActor(actorId);
+      const lossOperation = coordinator.start(loss);
+      for (let i = 0; i < 200 && coordinator.get(lossOperation)?.status !== 'confirmed'; i++) await new Promise(resolve => setTimeout(resolve, 50));
+      assert(coordinator.get(lossOperation)?.status === 'confirmed' && writes === 1, 'Committed response loss did not reconcile without replay');
+      coordinator.setActor(null);
+      log('PASS real committed write + injected adapter response loss: confirmed by GET, exactly one write');
+      assert(await adapter.reconcile({ ...loss, content: loss.content + ' mismatch' }, new AbortController().signal) === null, 'Mismatched result falsely confirmed');
+      const absent = submission(null);
+      assert(await adapter.reconcile(absent, new AbortController().signal) === null, 'Missing uncommitted result falsely confirmed');
+      await remover.remove(actorId, bookId, loss.noteId);
+      assert(await adapter.reconcile(loss, new AbortController().signal) === null, 'Deleted note falsely confirmed');
+      log('PASS absent/mismatched/deleted outcomes stay unconfirmed; owned deletion succeeds');
+    } catch (error) {
+      failed = true;
+      log(`FAIL ${error instanceof Error ? error.message : 'Unknown failure'}`);
+    } finally {
+      if (actorId && ids.length) {
+        const cleanup = await supabase.from('reading_notes').delete().in('id', ids).eq('user_id', actorId).select('id');
+        if (cleanup.error) { failed = true; log('FAIL synthetic-note cleanup'); }
+        else {
+          const remaining = await supabase.from('reading_notes').select('id').in('id', ids);
+          const afterIds = (await manualNotesGateway.list(actorId, bookId)).map(note => note.id).sort();
+          if (remaining.error || remaining.data?.length || JSON.stringify(afterIds) !== JSON.stringify(baselineIds)) { failed = true; log('FAIL cleanup/readback baseline'); }
+          else log(`PASS cleanup: zero run notes; original ${baselineIds.length} note identities preserved`);
+        }
+      }
+      log(failed ? 'RESULT FAIL — keep default gates closed' : 'RESULT PASS — connected adapter checks complete');
+      setBusy(false);
+    }
+  };
+  return <ScrollView contentContainerStyle={{ padding: 24, gap: 12 }}><Text accessibilityRole="header">Note saving acceptance</Text><Button title="Run synthetic note acceptance" disabled={busy} onPress={() => void run()} />{lines.map((line, i) => <Text key={i} selectable>{line}</Text>)}</ScrollView>;
+}

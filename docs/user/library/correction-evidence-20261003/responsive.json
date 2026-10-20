@@ -1,0 +1,86 @@
+[
+  {
+    "controlHeight": 140,
+    "focus": "library-view-list",
+    "listContent": 1668,
+    "listHeight": 795,
+    "mode": "list",
+    "pageClient": 320,
+    "pageContent": 320,
+    "width": 320
+  },
+  {
+    "dialogName": "Choose a book",
+    "minRowHeight": 74.80000305175781,
+    "minRowWidth": 255.1999969482422,
+    "mode": "chooser",
+    "nonOverlapping": true,
+    "panelHeight": 557.2000122070312,
+    "panelWidth": 272,
+    "rowCount": 7,
+    "width": 320
+  },
+  {
+    "controlHeight": 90,
+    "focus": "library-view-list",
+    "listContent": 1461,
+    "listHeight": 795,
+    "mode": "list",
+    "pageClient": 390,
+    "pageContent": 390,
+    "width": 390
+  },
+  {
+    "dialogName": "Choose a book",
+    "minRowHeight": 74.80000305175781,
+    "minRowWidth": 325.6000061035156,
+    "mode": "chooser",
+    "nonOverlapping": true,
+    "panelHeight": 557.2000122070312,
+    "panelWidth": 342.3999938964844,
+    "rowCount": 7,
+    "width": 390
+  },
+  {
+    "controlHeight": 90,
+    "focus": "library-view-list",
+    "listContent": 1461,
+    "listHeight": 795,
+    "mode": "list",
+    "pageClient": 430,
+    "pageContent": 430,
+    "width": 430
+  },
+  {
+    "dialogName": "Choose a book",
+    "minRowHeight": 74.80000305175781,
+    "minRowWidth": 365.6000061035156,
+    "mode": "chooser",
+    "nonOverlapping": true,
+    "panelHeight": 557.2000122070312,
+    "panelWidth": 382.3999938964844,
+    "rowCount": 7,
+    "width": 430
+  },
+  {
+    "controlHeight": 90,
+    "focus": "library-view-list",
+    "listContent": 1461,
+    "listHeight": 671,
+    "mode": "list",
+    "pageClient": 1280,
+    "pageContent": 1280,
+    "width": 1280
+  },
+  {
+    "dialogName": "Choose a book",
+    "minRowHeight": 74.80000305175781,
+    "minRowWidth": 535.2000122070312,
+    "mode": "chooser",
+    "nonOverlapping": true,
+    "panelHeight": 470.3999938964844,
+    "panelWidth": 552,
+    "rowCount": 7,
+    "width": 1280
+  }
+]

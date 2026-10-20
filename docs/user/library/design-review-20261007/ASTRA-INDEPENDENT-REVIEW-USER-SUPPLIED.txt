@@ -1,0 +1,205 @@
+**Recommendation: approve the visual direction provisionally, but not the complete Library experience or swipe interaction.** The strongest elements are the prominent passage text, persistent book context, and clear primary capture actions. The main weaknesses are ambiguous content ownership, too many concepts during OCR review, and an unproven review-session model.
+
+Before approval, make five decisions:
+
+1. **Separate book text from personal writing.** Saved passages hold excerpts; personal notes hold the reader’s response. Avoid a competing “Quote” note type unless its distinct purpose is demonstrated.
+2. **Make capture one predictable task:** select input, prepare a photo only when useful, correct text, confirm page, save, inspect the saved result.
+3. **Approve recovery behavior alongside the happy path.** Partial extraction, replacement, unsaved exit, and uncertain saving are essential parts of this task.
+4. **Keep optional card reading; defer horizontal swiping.** First test whether session sorting provides value beyond Next/Previous.
+5. **Strengthen readability and standardize labels.** The warm palette can remain, but faint metadata, ambiguous icons, and inconsistent terminology need attention.
+
+I directly inspected all five attachments, including enlarged views. Their native sizes are only **168×373, 248×542, 185×372, 172×368, and 215×368 pixels**, respectively. Major content and controls are legible; some small text and icon details are not reliable enough for definitive judgments. Enlargement cannot restore missing detail. This review uses no other conversation or hidden project evidence.
+
+**1. Recommended structure and content model**
+
+My preferred proposal is:
+
+**Library shelf → Book details → Capture passage → Take photo / Choose photo / Paste text → optional photo preparation → Review and edit → Save passage → Saved passage.**
+
+- Put **Capture passage** directly on book details, near the reader’s saved material. Do not require opening a separate hub before capturing.
+- Offer the same action from the per-book saved-material collection.
+- Paste text should go directly to text review, with no photo controls.
+- Preserve the selected book throughout. Keep page entry on review, where the reader can verify it against the source.
+- After saving, show the actual saved record. Back navigation should lead to a useful collection or book context, not invite accidental resubmission.
+- Offer an optional personal note after save. Do not require reflection while the reader is merely trying to preserve a passage.
+
+I provisionally support **Notes & passages as a per-book collection**, not necessarily as another mandatory navigation level. A mixed list with explicit record labels and optional type filters could make both kinds discoverable together. Whether this needs a dedicated hub depends on collection size and retrieval testing; the attached back label does not prove that hub exists.
+
+A credible alternative is **a saved-material section directly within book details**, opening into a full collection only when needed. This removes a navigation step and suits small collections, but could overload book details as material grows. Test this against the dedicated hub using both sparse and substantial collections.
+
+For later retrieval, test both “I remember the book/page” and “I remember a phrase.” Per-book browsing addresses the first; Library-wide text search across saved material is a worthwhile proposal if the second is common. It is not evidenced in these images.
+
+Proposed category boundaries:
+
+| Item | Recommended meaning |
+|---|---|
+| Passage | The book’s words, with book and required page attribution |
+| Thought | A personal reaction or reflection |
+| Takeaway | A learning expressed in the reader’s own words |
+| Action | Something the reader intends to try; no implied task tracking |
+| Question | Something the reader wants to explore; no implied answer tracking |
+| Quote note | Remove from new-note choices initially; use Passage plus an optional linked note |
+
+**Make note categories optional and changeable later.** Thought and Takeaway overlap naturally; forcing a distinction during capture adds effort without established retrieval value. Keep both only if readers use them meaningfully.
+
+A note may contain quoted text, including OCR inserted from the note editor, but that must remain **one note record** unless the reader explicitly creates a passage. Identify quoted material within the note rather than silently changing record type.
+
+Linking notes to a specific passage would improve provenance, but it is a **product/data-model proposal**, not an established capability. If only book/page association exists, “Add note on this page” is honest; “Add note about this passage” would overpromise. Passage linking also needs rules for replacement and deletion—moderate implementation effort, potentially more with migration.
+
+**2. Prioritized evidence-based findings**
+
+Effort estimates are relative: **S** = copy/component adjustment; **M** = screen or interaction changes; **L** = storage, navigation, or substantial platform work. Confidence refers to the finding, not proof of implementation behavior.
+
+| Priority / screen | Evidence and reader consequence | Recommendation | Confidence / effort |
+|---|---|---|---|
+| **P0 · Image 3: passage limits** | **Visible, resolution-limited:** the character denominator appears to read **4,400**, conflicting with the supplied 4,000-character limit. Readers could edit toward the wrong allowance. | Verify the original label and use 800 words **and** 4,000 characters consistently. Both must pass. | Medium on exact digits; high on required consistency / S–M |
+| **P0 · Image 3: editing affordance** | **Visible:** “Available extracted text,” “Your passage (Preview),” and a quotation-like panel introduce multiple representations. A clear Edit action is not apparent. Readers may mistake review for passive preview. | Make the editable passage obvious. Keep extracted source text as an optional aid only if selecting from it demonstrably helps. | High on ambiguity; behavior needs testing / M |
+| **P0 · Images 1–2 versus 5: authorship** | **Visible:** the Thought “I want to pause…” uses quotation marks and a vertical quote rule, resembling the passage treatment. This weakens the distinction between author and reader. | Reserve excerpt styling for book text; label personal writing clearly. The note’s page is a reference, not proof that its words appear there. | High / S–M |
+| **P0 · Capture/save flow** | **Inferred from constraints:** same-page replacement can destroy existing text; partial OCR can lose material; draft recovery is unconfirmed. None of the relevant states is shown. | Require explicit conflict and partial-result decisions, truthful save feedback, and unsaved-exit handling before approval. | High / M–L |
+| **P1 · Image 4: photo preparation** | **Visible:** “Framing,” “Passage focus,” rotation, reset, and a marked image coexist. The dark focus label overlaps the page heading. It is unclear whether the markings mean crop bounds, recognized regions, or selected text. | Establish one meaning for the overlay. Use task language such as Crop if it actually crops. Keep labels away from source text; make preparation skippable when unnecessary. | High on ambiguity / M |
+| **P1 · Image 4: recognition timing** | **Needs prototype/testing:** the static image cannot establish whether readable text is merely photographed or is an OCR overlay. Readers may interpret it as already verified recognition. | Distinguish preparing an image from recognizing and correcting text. Do not imply accuracy through presentation alone. | High on evidence limit / M |
+| **P1 · Image 3: competing route** | **Visible:** “Use text in a note instead” competes with completing a passage. It introduces a record-type decision midway through capture. | Remove from the default path unless demand is demonstrated. If retained, explain the destination and preserve edits during the switch. | Medium / S–M |
+| **P1 · Images 1–2: review semantics** | **Visible:** “Review again,” “Set aside,” and “Reviewed” describe different temporal ideas. Repeated instructions explain that actions do not affect saved notes. The meaning is not self-evident. | Use one vocabulary throughout; test a button-led session before gesture shortcuts. | High / M |
+| **P1 · Images 1–2: navigation and attention** | **Visible:** Back and Exit review coexist; book context repeats; several header icons and faded neighboring cards compete with the active note. | Clarify one exit behavior. Keep useful source context, but remove redundant chrome and decorative previews that reduce reading space. | High / S–M |
+| **P1 · Image 2 versus 1: Undo** | **Visible:** variant 2 includes an apparent central Undo icon absent from variant 1. Its faint appearance and lack of text make availability uncertain. | Prefer variant 2 as a starting point only; label Undo and specify enabled/disabled behavior. | Medium on icon identity; high on discoverability / S–M |
+| **P1 · Image 5: action hierarchy** | **Visible:** Add note is dominant; Edit, Copy text, and Delete receive similar-sized controls. Destruction is unusually prominent during reading. | Keep Add note optional and secondary to reading. Keep Edit/Copy accessible; move Delete to a clearly labeled secondary menu with confirmation. | High / S |
+| **P1 · Images 4–5: privacy claims** | **Visible:** text says photos are discarded “after review”; image 5 uses “Privacy & Storage Guarantee.” Actual cleanup timing is not supplied. | State the intended text-only retention plainly; verify cancellation, errors, and restart behavior before making a timing guarantee. | High / S copy; M verification |
+| **P2 · All images: consistency** | **Visible:** warm surfaces and dark-green primary buttons are consistent, but page labels vary—Page, PAGE, Pg—and secondary text is often faint. | Standardize source formatting, control naming, typography, and status treatment. Preserve different densities for capture and reading. | High / S–M |
+
+The example passage appears similar across images 3 and 5, while their displayed counts differ. Treat this as a **mockup consistency check**, not evidence of a counting bug.
+
+**3. Should swipe review stay?**
+
+**Not as an approved interaction yet.** Retain optional focused reading, and test whether sorting notes into session outcomes adds meaningful value.
+
+| Option | Benefit | Cost / risk |
+|---|---|---|
+| Next/Previous reading | Lowest conceptual burden; supports rereading | No explicit second-pass collection |
+| Button-led cards | Makes session decisions visible and accessible | Adds a decision to every note |
+| Explicit review queue | Readers deliberately choose what deserves another pass | More queue-management interface |
+| Horizontal swipes | Potentially quicker for repeated decisions | Hidden mapping, accidental actions, conflict with selection and scrolling |
+
+If a second pass proves useful, test **“Read again this session”** and **“Reviewed this session”** consistently in controls, instructions, and completion feedback. “Set aside” sounds like postponement; “Review again” can suggest an immediate repeat or a future reminder. Combining them does not resolve that ambiguity.
+
+Additional behavior to specify:
+
+- Reviewed means only that the reader chose to move on in this session. It does not complete an Action, answer a Question, or demonstrate recall.
+- The set-aside pass starts explicitly; do not cycle notes indefinitely.
+- Show position separately from outcome: “Note 2 of 5” is not “2 reviewed.”
+- At completion, explain what remains and offer the separate pass or exit. Avoid reward language that encourages rapid dismissal.
+- Undo restores the prior card **and** its session decision.
+- Opening a long note and returning must preserve card position, scroll context, and session state.
+- Vertical scrolling and text selection take precedence over horizontal gestures. Do not commit a swipe while selecting text or using a selection handle.
+- Exiting leaves saved notes intact. Make session-progress loss understandable without implying durable recovery.
+
+A short note surrounded by extensive review machinery, as in images 1–2, does not yet demonstrate a reflective benefit. Success should include useful rereading or writing—not just throughput.
+
+**4. Essential recovery and trust states**
+
+These are recommendations for missing behavior, not assertions that it is absent from the implementation.
+
+| State | Required behavior and truthful copy direction |
+|---|---|
+| Permission denied | Explain which input is unavailable; offer other available inputs. Show settings guidance only when appropriate. Do not repeatedly request permission. |
+| No recognized text | “No text was found in this photo.” Offer another image, adjustment, or Paste text. Do not present an empty result as successful capture. |
+| Incomplete extraction at the 20,000-character boundary | State that text may be missing. Require an explicit **Continue with partial text** decision; offer retry with a smaller region. Acceptance does not waive passage-length limits. |
+| Empty or oversized passage | Show the specific problem beside the editable text. Explain both limits and how much must be removed. Never silently truncate. |
+| Missing/invalid page | State “Enter a page number” or the specific invalid value. A disabled Save button alone is insufficient. |
+| Same book/page conflict | Show enough existing and incoming text to compare. Offer **Replace passage** and **Keep original**. Explain that replacement has no version history; keep the unsaved incoming text available for correction until the reader leaves. |
+| Unsaved exit | Distinguish **Keep editing** from **Discard changes**. Do not promise drafts will survive closing or restarting. |
+| Uncertain save | Do not say either “Saved” or definitively “Not saved” without confirmation. Retain the current text while available, check record state, and make retry safe from duplication. |
+| Delete | Confirm the specific passage and explain actual consequences for associated notes. Do not imply restore/Undo unless supported. |
+| Empty collection / no results | Distinguish “nothing saved yet” from “no matches.” Offer capture/add-note for the former and clear filters for the latter. |
+| No notes to review | Explain the scope—such as this book or current filter—and return to saved material. Do not show an inert card stack. |
+
+Two supplied constraints deserve explicit product scrutiny:
+
+- **One passage per page** makes a second useful excerpt compete with the first. Retain explicit replacement now; supporting multiple passages per page would require record-identity, retrieval, and association changes—**M–L effort**.
+- **Required numeric pages** exclude some ebooks, unpaginated material, and nonnumeric page labels. Do not invent a page. Broader source-location support is a separate product and validation decision—**M effort or more**, depending on storage assumptions.
+
+**5. Visual, accessibility, and motion principles**
+
+The shared cream surfaces, dark green actions, and literary typography form a plausible Library direction. Image 5 most clearly centers the saved material. However, “calm” currently risks becoming faint, especially in source metadata, helper text, inactive cards, and the apparent Undo control.
+
+From these images, I can assess **relative hierarchy, repetition, visible labeling, crowding, and apparent legibility**. I cannot establish contrast ratios, native font sizes, touch-target dimensions, reading order, accessibility labels, or compliance.
+
+For the next iteration:
+
+- Measure actual text/background tokens. WCAG’s contrast guidance uses at least 4.5:1 for ordinary text and 3:1 for qualifying large text; screenshot appearance alone is insufficient. [W3C](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html?utm_source=chatgpt.com)
+- Use a practical Android touch-target goal of approximately 48 dp, including invisible hit areas where appropriate; verify spacing against accidental activation.
+- Test narrow layouts, long book titles, the keyboard, and enlarged system text. Image 5’s long back label beside its title is an obvious stress case.
+- Allow content to grow and scroll. Do not force long notes into a fixed card or shrink type to preserve the composition.
+- Give icons explicit screen-reader names. Announce validation errors, saving outcomes, current card position, and Undo availability.
+- Exclude decorative card previews from focus order. After advancing, move focus predictably to the new note, not to an unrelated header control.
+- Keep button equivalents for all gestures and an accessible way to use a full photo without precise crop dragging.
+
+Motion should communicate specific state changes:
+
+| Transition | Purpose and stable context |
+|---|---|
+| Photo preparation → text review | Explain that recognition produced editable text; retain book identity and access to the temporary source while valid |
+| Review → saved passage | Confirm persistence, not merely navigation; keep passage and page recognizable |
+| Card decision → next card | Show the decision taking effect; keep source and action locations stable |
+| Open full note → return | Preserve identity, position, and reading location |
+| Undo | Restore the previous card and decision visibly and semantically |
+
+An interrupted swipe should return without changing state until the commit threshold is crossed. A committed action must occur once even if tapped repeatedly. Use an operation-in-progress state for Save and recognition rather than accumulating requests.
+
+Reduced motion should replace card travel, rotation, and stack movement with immediate updates or restrained fades while retaining equivalent feedback. Never delay usable content to finish decorative animation.
+
+Test a working Expo/React Native build on a representative mid-range Android device with long notes, maximum-length input, OCR running, large text, TalkBack, background/foreground transitions, rapid taps, canceled gestures, and reduced motion. Measure response latency and frame consistency; the images cannot establish smoothness.
+
+**6. Compact book-principle audit and ranked shortlist**
+
+I selected four references. I checked author/publisher descriptions and available contents; the applications below are **my interpretation**, not claims that the authors reviewed BookConnect. No quotations or unverified chapter/page citations are used.
+
+| Rank / reference | Principle and assessment | Decision it informs |
+|---|---|---|
+| **1. Don Norman — *The Design of Everyday Things*** | Conceptual models, signifiers, feedback, and recovery. **Partly follows:** explicit Save and book/page context help. **Contradicts clarity:** review synonyms and quote-like Thought styling obscure what actions and records mean. | Resolve record boundaries and session semantics before visual refinement; make destructive outcomes and recovery explicit. These topics are confirmed in the author’s contents. [Don Norman's JND.org](https://jnd.org/books/the-design-of-everyday-things-revised-and-expanded-edition/?utm_source=chatgpt.com) |
+| **2. Steve Krug — *Don’t Make Me Think, Revisited*** | Self-evident navigation and information design. **Partly follows:** Take/Choose/Paste is direct. **Adds avoidable interpretation:** duplicate exits, two text representations, and a mid-capture note route. | Test a shorter, more obvious path and plain action labels. Publisher material supports the navigation/information-design focus; the BookConnect diagnosis is mine. [InformIT](https://www.informit.com/store/dont-make-me-think-revisited-a-common-sense-approach-9780321965516?utm_source=chatgpt.com) |
+| **3. Adam Wathan and Steve Schoger — *Refactoring UI*** | Hierarchy, typography, spacing, contrast, and state design. **Partly follows:** strong primary buttons and differentiated content surfaces. **Conflicts:** faint useful text and equally weighted Edit/Copy/Delete. | Build consistent type, color, spacing, and action hierarchy rules. The official contents explicitly cover these topics. [refactoringui.com](https://www.refactoringui.com/?utm_source=chatgpt.com) |
+| **4. Val Head — *Designing Interface Animation*** | Motion should serve purpose and continuity. **Insufficient evidence:** static stacks suggest animation but prove no benefit or behavior. | Prototype transitions only after their purpose is agreed; require reduced-motion equivalents and interruption handling. The publisher describes balancing animation’s purpose and style. [Rosenfeld Media](https://rosenfeldmedia.com/books/designing-interface-animation/?utm_source=chatgpt.com) |
+
+The key tradeoffs are practical: fewer steps must not remove necessary review; stronger hierarchy must not make secondary information unreadable; progressive disclosure must not hide loss risks; smoother transitions must not delay control.
+
+No additional book is necessary for this iteration. Use measured accessibility checks and reader testing alongside this shortlist; another general reference would not resolve the missing behavioral evidence.
+
+**7. Approval readiness**
+
+| Status | Scope |
+|---|---|
+| **Approve directionally** | Text-centered saved-passage presentation; book/page attribution; dark primary actions; editable OCR review before save; optional post-save reflection |
+| **Needs redesign** | OCR review’s competing representations; note-versus-passage styling; review terminology; Delete hierarchy; unsupported privacy guarantees |
+| **Needs missing-screen evidence** | Shelf/book-details capture placement; input chooser and paste path; collection/hub; note editor and category selection; linked-note behavior; all recovery states |
+| **Needs working prototype** | OCR correction and comparison; navigation/back preservation; long-note reading; session Undo and separate pass; gesture conflicts; save deduplication; accessibility and Android responsiveness |
+
+No complete flow is ready for unconditional approval from these five concepts. Image 5 is the strongest basis for refinement; variant 2 is the better review starting point because it at least exposes an apparent Undo control.
+
+**8. Five uncoached usability tasks**
+
+Do not teach button names or explain swipe meanings before these tasks.
+
+| Task prompt | Observable success | Failure signals |
+|---|---|---|
+| **Capture:** “You want to keep this paragraph from page 24 of this book. Start from your Library.” | Finds the book and capture entry, chooses an appropriate input, maintains source context | Hunts in unrelated areas; opens note creation accidentally; assumes photo preparation is mandatory |
+| **Correct and save:** “The captured text contains this incorrect word. Keep the corrected paragraph so you can find it later.” | Finds editing, corrects text, confirms page, saves, verifies the saved result | Treats preview as uneditable; misses validation; double-submits; cannot tell whether saving succeeded |
+| **Add a note:** “Keep your own reaction alongside this passage without changing the author’s words.” | Creates distinct personal writing and can explain its relationship to the source | Edits the passage instead; creates an accidental duplicate excerpt; gets stuck choosing a category |
+| **Retrieve:** “Find the passage about pausing that you saved earlier, and tell me where it came from.” | Locates it from Library and identifies book/page and record type | Depends on recent-screen history; confuses Thought with source text; cannot find attribution |
+| **Revisit:** “Read these notes. Leave one to return to during this visit, undo one decision, and open the longest note.” | Understands session scope, finds the deferred note, reverses a decision, returns without losing context | Expects a reminder or completed task; accidentally advances while reading; loses position; cannot start the separate pass |
+
+Run the correction task with controlled variants for partial extraction and same-page conflict. Observe whether readers understand what will be kept and what will be lost without moderator explanation.
+
+**9. Essential changes, later improvements, and next iteration**
+
+**Essential before approval:** clear record boundaries; visibly editable OCR text; correct limits; required-page validation; explicit partial-result and replacement decisions; honest saving/exit behavior; readable metadata; coherent navigation; accessible action alternatives.
+
+**Worthwhile later:** Library-wide saved-text search if retrieval testing supports it; optional category filters; specific passage-note linking; a useful second-pass queue; horizontal swipe shortcuts; restrained transition polish. Durable drafts and multiple passages per page may provide substantial value, but need explicit implementation scope.
+
+Recommended order:
+
+1. Agree on record meanings, category policy, source association, and review-session vocabulary.
+2. Simplify capture/review labels and correct the visible limit inconsistency.
+3. Provide missing book-details, retrieval, note-editor, and recovery-state evidence.
+4. Prototype the complete capture-to-retrieval journey, including long content and failure cases.
+5. Test the five tasks; compare Next/Previous with button-led review before considering swipes.
+6. Measure accessibility and Android behavior, then approve individual interactions with documented evidence.

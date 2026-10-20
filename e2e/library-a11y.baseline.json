@@ -1,0 +1,33 @@
+{
+  "axeCoreVersion": "4.13.0",
+  "recordedOn": "2026-10-19",
+  "states": {
+    "daylight home-list": {
+      "image-alt": {
+        "count": 1,
+        "impact": "critical",
+        "sample": [
+          "img"
+        ]
+      }
+    },
+    "golden home-list": {
+      "image-alt": {
+        "count": 1,
+        "impact": "critical",
+        "sample": [
+          "img"
+        ]
+      }
+    },
+    "midnight home-list": {
+      "image-alt": {
+        "count": 1,
+        "impact": "critical",
+        "sample": [
+          "img"
+        ]
+      }
+    }
+  }
+}

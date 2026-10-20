@@ -2,7 +2,7 @@ import { TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRef, useEffect } from 'react';
 import * as Haptics from 'expo-haptics';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
 
 interface WishlistButtonProps {
     isWishlisted: boolean;
@@ -10,6 +10,7 @@ interface WishlistButtonProps {
     onToggle: () => void;
     size?: number;
     color?: string;
+    accessibilityLabel?: string;
 }
 
 export const WishlistButton = ({
@@ -18,8 +19,9 @@ export const WishlistButton = ({
     onToggle,
     size = 20,
     color,
+    accessibilityLabel,
 }: WishlistButtonProps) => {
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
     const heartColor = color ?? colors.error;
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -50,8 +52,15 @@ export const WishlistButton = ({
         <TouchableOpacity
             onPress={handlePress}
             disabled={isLoading}
+            accessibilityRole="button"
+            accessibilityLabel={accessibilityLabel ?? (isWishlisted ? 'Remove from wishlist' : 'Add to wishlist')}
+            accessibilityState={{ disabled: isLoading, selected: isWishlisted }}
+            accessibilityHint={isWishlisted ? 'Removes this book from your wishlist' : 'Adds this book to your wishlist'}
             style={{
-                padding: 8,
+                width: 44,
+                height: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
                 opacity: isLoading ? 0.5 : 1,
             }}
         >

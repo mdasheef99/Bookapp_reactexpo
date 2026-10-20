@@ -3,7 +3,8 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useRef } from 'react';
 import { GoogleBook } from '@/features/books/services/booksService';
-import { useTheme } from '@/hooks/useTheme';
+import { useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useLibraryTypography } from '@/components/library/LibraryTypography';
 import { BookCard, BookCardProps } from './BookCard';
 import * as Haptics from 'expo-haptics';
 
@@ -19,6 +20,8 @@ export const SwipeableBookCard = ({
     ...bookCardProps
 }: SwipeableBookCardProps) => {
     const swipeableRef = useRef<Swipeable>(null);
+    const colors = useLibraryAppearance();
+    const fonts = useLibraryTypography();
 
     // Render right swipe action (Add to Library)
     const renderRightActions = (
@@ -39,7 +42,7 @@ export const SwipeableBookCard = ({
                     styles.rightAction,
                     {
                         transform: [{ translateX: trans }],
-                        backgroundColor: canAdd ? '#10B981' : '#9CA3AF',
+                        backgroundColor: canAdd ? colors.accent : colors.tagBackground,
                     },
                 ]}
             >
@@ -47,9 +50,9 @@ export const SwipeableBookCard = ({
                     <Ionicons
                         name={canAdd ? "book" : "checkmark-circle"}
                         size={28}
-                        color="#fff"
+                        color={canAdd ? colors.onAccent : colors.tagText}
                     />
-                    <Text style={styles.actionText}>
+                    <Text style={[styles.actionText, { color: canAdd ? colors.onAccent : colors.tagText, fontFamily: fonts.label }]}>
                         {canAdd ? "Add to\nLibrary" : "In\nLibrary"}
                     </Text>
                 </View>
@@ -76,7 +79,7 @@ export const SwipeableBookCard = ({
                     styles.leftAction,
                     {
                         transform: [{ translateX: trans }],
-                        backgroundColor: inWishlist ? '#EF4444' : '#F472B6',
+                        backgroundColor: inWishlist ? colors.error : colors.accent,
                     },
                 ]}
             >
@@ -84,9 +87,9 @@ export const SwipeableBookCard = ({
                     <Ionicons
                         name={inWishlist ? "heart-dislike" : "heart"}
                         size={28}
-                        color="#fff"
+                        color={colors.onAccent}
                     />
-                    <Text style={styles.actionText}>
+                    <Text style={[styles.actionText, { color: colors.onAccent, fontFamily: fonts.label }]}>
                         {inWishlist ? "Remove\nWishlist" : "Add to\nWishlist"}
                     </Text>
                 </View>
@@ -147,7 +150,7 @@ const styles = StyleSheet.create({
         paddingLeft: 20,
         marginBottom: 16,
         marginHorizontal: 4,
-        borderRadius: 20,
+        borderRadius: 14,
         minWidth: 120,
     },
     leftAction: {
@@ -156,7 +159,7 @@ const styles = StyleSheet.create({
         paddingRight: 20,
         marginBottom: 16,
         marginHorizontal: 4,
-        borderRadius: 20,
+        borderRadius: 14,
         minWidth: 120,
     },
     actionContent: {
