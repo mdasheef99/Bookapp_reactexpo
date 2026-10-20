@@ -373,7 +373,7 @@ The save coordinator/operations, notes feature hooks, route parameters/navigatio
 
 Build/fix reports record component/journey tests, scoped TypeScript and actual revert checks; final lead verification totals are reserved in [TRACKER](./TRACKER.md). Accessibility evidence is native component testing plus actual installed RN-web components in jsdom. **Browser tests were skipped by owner decision; no device/browser screen-reader run.** This is not native or screen-reader acceptance.
 
-**Deferred residual:** the reader's `unavailable` predicate, inherited unchanged from base `c92a88e`, treats a background book/note refetch error as unavailable even with cached data, hiding the cached note content. Deferred, outside Flow B scope.
+**Resolved residual (fix 3, owner request 2026-10-20):** the reader's `unavailable` predicate, inherited from base `c92a88e`, treated a background book/note refetch error as unavailable even with cached data, hiding the cached note. It now counts a query as failed only when it errored with no data; cached content stays readable with Edit/Copy/Delete gating unchanged, and the quiet "Couldn't refresh." caption (same as the notes list) shows. Three tests (failed note refresh, failed book refresh, error without data) fail on revert.
 
 **Database/storage mutations:** none. No migration, install, network/Supabase operation, staging, commit, push or deployment in this documentation unit. The three Library documents remain cohesive in their existing roles (specification, plan and dated handoff log); length is advisory, not an acceptance gate.
 
