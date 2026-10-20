@@ -40,8 +40,7 @@ Store Owner gate, onboarding and console basics.
   route mounts them; they are reachable only from their own tests. Do not extend
   them; inventory work belongs in Image inventory and Store View.
 - **Still live despite living here:** `components/InventoryFilterPanel.tsx` is
-  imported by the Phase 9 Inventory hub (`OwnerInventoryReadScreen`), so change
-  it carefully.
+  imported by the legacy `StoreInventoryScreen` only, so change it carefully.
 
 ### Image inventory (Phase 9) — `src/features/imageInventory/`
 
@@ -51,16 +50,16 @@ let the server read spines and look up metadata, review each detected book
 
 | Folder | Contents |
 | --- | --- |
-| `api/` | Backend calls. Through the `phase9-owner-ingestion` Edge Function: `captureService`, `ownerUxService`/`ownerUxTransport`, `ownerBatchReviewService`, `ownerEditionPickerService`/`Commands`, `publicationService`. Direct SQL RPCs instead: `ownerInventoryReadService` and `ownerCorrectionService` (see 03) |
+| `api/` | Backend calls. Through the `phase9-owner-ingestion` Edge Function: `captureService`, `ownerUxService`/`ownerUxTransport`, `ownerBatchReviewService`, `ownerEditionPickerService`/`Commands`, `publicationService`. Direct SQL RPCs instead: `ownerCorrectionService` (see 03); `ownerInventoryReadService` now holds only the owner-inventory cache contract version and filter types |
 | `contracts/` | Client-side Zod contracts mirroring the server contracts |
 | `capture/` | Capture workflow context, upload transport, cancellation, duplicate-image confirmation, input removal |
 | `review/` | Review form and compact drafts, edition-selection drafts, conflicts, missed-book form, leave guard |
 | `commit/` | Add to Inventory coordination. Batch behaviour (how many commits run at once) is in `inventoryCommitBatchExecution.ts`; `inventoryCommitCoordinator.ts` / `useInventoryCommitCoordinator.ts` drive it; the UI is `components/BatchInventoryCommitControls.tsx` |
-| `queries/` | Query keys, reads and cache rules per area (owner UX, batch review, edition picker, inventory read, publication) |
+| `queries/` | Query keys, reads and cache rules per area (owner UX, batch review, edition picker, inventory read cache keys, publication) |
 | `identity/` | Owner identity fencing so stale responses from a previous user are dropped |
 | `close/` | Auto-close of completed scan sessions |
 | `offline/`, `telemetry/`, `navigation/`, `scanSetup/` | Offline gate, telemetry, route helpers, scan defaults form |
-| `screens/` | `InventoryFoundationScreens` (route entry points incl. `InventoryHubFoundationScreen`), `CaptureScreens`, `CaptureProgressScreens`, `CandidateListScreen`, `CandidateReviewRouteScreen`/`CandidateReviewScreens`, `MissedBookScreen`, `ReadinessSummaryScreen`, `OwnerInventoryReadScreen`, `InventoryAccessBoundary` |
+| `screens/` | `InventoryFoundationScreens` (route entry points incl. `InventoryHubFoundationScreen`), `CaptureScreens`, `CaptureProgressScreens`, `CandidateListScreen`, `CandidateReviewRouteScreen`/`CandidateReviewScreens`, `MissedBookScreen`, `ReadinessSummaryScreen`, `InventoryAccessBoundary` |
 | `components/` | Review cards and fields, edition picker (`CandidateEditionPicker`, `EditionOptionList`, `CandidateMetadataSheet`), confirmation dialogs, post-scan summary |
 | `testing/` | Shared test fixtures |
 

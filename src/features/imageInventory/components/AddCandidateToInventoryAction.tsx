@@ -48,7 +48,6 @@ function CoordinatedAddCandidateAction({
     onAdd,
 }: CoordinatedAddProps) {
     const { colors } = useTheme();
-    const router = useRouter();
     const canShow = card.allowedActions.includes('add_to_inventory')
         || card.allowedActions.includes('save_review');
     if (!canShow) return null;
@@ -58,10 +57,6 @@ function CoordinatedAddCandidateAction({
                 <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.accent, fontWeight: '800' }}>
                     Added to Inventory
                 </Text>
-                <Button
-                    title="View in Store View"
-                    onPress={() => router.push(storeViewRoutes.detail(outcome.result!.inventoryId))}
-                />
             </View>
         );
     }

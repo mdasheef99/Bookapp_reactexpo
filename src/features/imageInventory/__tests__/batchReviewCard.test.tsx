@@ -752,6 +752,39 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(screen.getByText('Needs attention')).toBeTruthy();
         expect(screen.queryByText('Ready')).toBeNull();
     });
+
+    it('added card shows Added to Inventory without Store View navigation', () => {
+        const outcome: CandidateCommitOutcome = {
+            candidateId: card().candidateId,
+            status: 'succeeded',
+            stage: 'complete',
+            result: {
+                sessionId: card().sessionId,
+                candidateId: card().candidateId,
+                candidateVersion: 3,
+                inventoryId: testUuid(97),
+                inventoryVersion: 1,
+                outcome: 'committed_private',
+            },
+        };
+        const screen = render(
+            <BatchReviewCard
+                identity={{ userId: testUuid(90), storeId: testUuid(91) }}
+                card={card()} defaults={defaults} isOffline={false} canMutate
+                onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove} onAdd={onAdd}
+                removePending={false} addPending={false} onDraftChange={onDraftChange}
+                addOutcome={outcome}
+            />,
+        );
+
+        const success = screen.getByTestId(`add-to-inventory-success-${card().candidateId}`);
+        expect(within(success).getByText('Added to Inventory')).toBeTruthy();
+        expect(within(success).getByText('Added to Inventory').props.accessibilityLiveRegion)
+            .toBe('polite');
+        expect(within(success).queryByText('View in Store View')).toBeNull();
+        expect(within(success).queryAllByRole('button')).toHaveLength(0);
+        expect(screen.queryByText('View in Store View')).toBeNull();
+    });
 });
 
 function mountEdition(snapshotPatch: Partial<NonNullable<ReturnType<typeof selectedChoices>['selection']>['snapshot']> = {}) {

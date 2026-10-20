@@ -703,3 +703,62 @@ Mutations: one inventory commit through the app (Book 3, approved in the browser
 Tracker/source-doc updates: this section; the ACTIVE, DOC-13, SESSION-START and TRACKER handoffs.
 
 Active work unit: `post_scan_rework_slice2_declutter`, until the slice-2 PR merges. Exact next authorized action: the Owner reviews slice 2; on the Owner's request, commit (code, tests and docs; not `.claude/` or `.env.local`), push and open the slice-2 PR. Then slice 3 ("Remove the after-Add buttons and the Inventory tab's duplicate list"). No migration.
+
+## 20. Slice 3 built: remove the after-Add buttons and the Inventory tab's list, 2026-10-20
+
+```text
+Date/session: 2026-10-20; same session, right after slice 2's PR #25.
+Authorized work unit and scope: post_scan_rework_slice3_inventory_tab; slice 3
+  (SDD-1 §5, AC3-1 to AC3-4) on branch claude/phase9-psr-slice3-inventory-tab
+  from 68a6cfc (slice 2's tip). Light process (deletion slice, S/low): no
+  review loop; pre-merge full review kept.
+Completed:
+  - After Add: the card shows only "Added to Inventory"; "View in Store View"
+    removed.
+  - Inventory tab: the scan card alone (Start scan / Resume scan) and the line
+    "Added books are in Store View" as an expo-router Link to /store-view
+    (44 px target); "Review books (N)", the list, search and load more removed.
+  - Deleted: OwnerInventoryReadScreen, InventoryRecoveryCard,
+    OwnerInventoryPresentation, useOwnerInventoryRead,
+    accumulateOwnerInventoryPages, the unused parts of
+    ownerInventoryReadService, and InventoryFilterPanel's ownerRead mode.
+    Kept: ownerInventoryReadKeys, OWNER_INVENTORY_CONTRACT_VERSION, the RPC.
+  - Tests deleted: OwnerInventoryReadScreen, OwnerInventoryPublication.
+    Rewritten: ownerInventoryReadQueries/Service/Architecture, the inventory
+    route test, the WU5 e2e spec (list assertions and test 2 removed). New:
+    inventoryHubCard.
+  - CODEBASE_MAP 03/04 and the validator's WU2 file list updated.
+Process and evidence:
+  1. Codex hit its usage limit before writing anything; by the Owner's rule
+     OpenCode DeepSeek v4.1 Flash (max) coded it in two runs with no shell
+     access (it hangs here): phase 1 tests only, phase 2 code only; the
+     orchestrator ran every command and deleted the files DeepSeek marked.
+     RED: 4 failed for their own reasons (no module errors).
+  2. GREEN: tsc clean; image-inventory + store-owner routes: 81 suites passed /
+     1 skipped, 820 passed / 4 skipped, 0 failed.
+  3. The repo has no ESLint config, so lint could not run; tsc
+     --noUnusedLocals on the touched files found only four helper components
+     in InventoryFoundationScreens that were already unused before slice 3.
+  4. Pre-merge full review: DeepSeek froze at OpenCode startup three times, so
+     Codex (gpt-6.1-sol xhigh, read-only; limit reset) reviewed the whole
+     slice vs 68a6cfc: K1 the ownerRead filter mode left dead; K2 the Store
+     View text link had no href, so Enter did nothing on web. Codex fixed both
+     red-first, plus K3 (an unused mock and a 60 s timeout in the new test):
+     RED 1 failed, GREEN 2/2, tsc clean.
+  5. Final run: tsc clean; image-inventory, stores, storeView and store-owner
+     routes: 103 suites passed, 996 passed, 6 timeouts at 5 s while Metro was
+     compiling; the two files re-run alone passed 47/47.
+  6. Haiku browser check (port 8081; dev server restarted with --clear after a
+     stale bundle crashed /inventory): Inventory shows "Scan book spines",
+     "Resume scan", the link "Added books are in Store View" (href
+     /store-view); no Review books, list, search or Load more. The link opens
+     Store View. Book 6 (Charles Peirce) Add: the card left the list (Added 7);
+     no "View in Store View" anywhere.
+Files/components/migrations: no migration and no server change.
+```
+
+Mutations: one inventory commit through the app (Book 6 in session 7a81bdb6, in the approved check). No migrations, no SQL writes, no Storage, Edge, Render or deployment changes.
+
+Deferred: the needs-review queue route (`/inventory/reviews`) no longer has an entry on the Inventory tab (SDD §5 removes the button); its removal or reuse belongs to a later slice.
+
+Active work unit: `post_scan_rework_slice3_inventory_tab`, until the slice-3 PR merges. Exact next authorized action: the Owner merges PR #25 (slice 2), then the slice-3 PR; then slice 4 ("Remove full correction; simplify Add a book", SDD-1 §6) with Codex and the full process. No migration.

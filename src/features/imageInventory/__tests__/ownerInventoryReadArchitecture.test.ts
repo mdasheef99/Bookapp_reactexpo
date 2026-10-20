@@ -42,13 +42,13 @@ function collectRouteGraph(entry: string): Map<string, string> {
     return graph;
 }
 
-describe('/inventory read-only architecture boundary', () => {
-    it('reaches the WU1 RPC service but no direct store_inventory table or legacy write orchestration', () => {
+describe('/inventory architecture boundary', () => {
+    it('keeps the Inventory hub free of the legacy list and direct store_inventory access', () => {
         const graph = collectRouteGraph(routeEntry);
         const files = [...graph.keys()].map((file) => path.relative(projectRoot, file).replace(/\\/gu, '/'));
 
-        expect(files).toContain('src/features/imageInventory/api/ownerInventoryReadService.ts');
-        expect(files).toContain('src/features/imageInventory/queries/ownerInventoryReadQueries.ts');
+        expect(files).toContain('src/features/imageInventory/components/inventory-hub-recovery-card.tsx');
+        expect(files).not.toContain('src/features/imageInventory/screens/OwnerInventoryReadScreen.tsx');
         expect(files).not.toContain('src/features/stores/services/storeInventoryService.ts');
         expect(files).not.toContain('src/features/stores/hooks/useStoreInventory.ts');
 

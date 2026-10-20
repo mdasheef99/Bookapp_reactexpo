@@ -11,9 +11,9 @@ describe('Store Owner inventory route', () => {
         jest.clearAllMocks();
     });
 
-    it('renders the guarded nested Inventory hub', () => {
+    it('renders the guarded Inventory hub route', () => {
         render(<StoreOwnerInventoryRoute />);
 
-        expect(InventoryHubFoundationScreen).toHaveBeenCalled();
+        expect(InventoryHubFoundationScreen).toHaveBeenCalledTimes(1);
     });
 });
