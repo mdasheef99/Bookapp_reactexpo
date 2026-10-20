@@ -47,7 +47,7 @@ export default function NoteReaderScreen() {
     setDialog(null); setDeleting(true); setFeedback(''); setFeedbackError(false);
     void manualNoteDeleteAdapter.remove(actorId, bookId, noteId).then(async () => { await removeFromCache(noteId); back(); AccessibilityInfo.announceForAccessibility('Note deleted.'); }).catch((error: unknown) => { setFeedback(error instanceof NoteWriteError ? error.message : 'Deletion was not confirmed. Refresh Notes before trying again.'); setFeedbackError(true); }).finally(() => setDeleting(false));
   } });
-  const unavailable = !actorId || !bookId || !noteId || book.isError || query.isError || (!query.isPending && !query.data);
+  const unavailable = !actorId || !bookId || !noteId || (book.isError && !book.data) || (query.isError && !query.data) || (!query.isPending && !query.data);
   const meta = query.data ? [
     query.data.tag ? categoryLabel(query.data.tag) : null,
     query.data.page_number == null ? null : `Page ${query.data.page_number}`,
@@ -63,6 +63,7 @@ export default function NoteReaderScreen() {
       : book.isPending || query.isPending ? <NoteLoading /> : <ScrollView ref={scroll} contentContainerStyle={ui.content} onScroll={event => { readingPosition.current = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={100}
         onContentSizeChange={() => scroll.current?.scrollTo({ y: readingPosition.current, animated: false })}>
         {isOffline && <BookOffline message="Offline · Showing saved content." />}
+        {((query.isError && !!query.data) || (book.isError && !!book.data)) && <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>Couldn&apos;t refresh.</Text>}
         {!!book.data?.title && <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{book.data.title}</Text>}
         {!!meta && <Text style={[LIBRARY_TEXT.caption, { color: colors.textTertiary }]}>{meta}</Text>}
         <Text selectable style={[LIBRARY_TEXT.bodySerif, { color: colors.textPrimary }]}>{query.data?.tag === 'quote' ? `“${query.data?.content}”` : query.data?.content}</Text>

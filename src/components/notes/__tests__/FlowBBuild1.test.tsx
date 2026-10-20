@@ -19,6 +19,7 @@ let mockParams: Record<string, string>;
 let mockOffline = false;
 let mockDeleteAuthorized = true;
 let mockBookError = false;
+let mockBookData: { id: string; title: string } | undefined;
 let mockCollection: ManualNote[] | undefined;
 let mockCollectionPending = false;
 let mockCollectionError = false;
@@ -60,7 +61,7 @@ jest.mock('@tanstack/react-query', () => ({
 jest.mock('@/features/books/notes/useManualNotes', () => ({
   useNoteContext: () => ({
     actorId: 'actor',
-    book: { data: mockBookError ? undefined : { id: 'book', title: 'Selected book' }, isPending: false, isError: mockBookError, refetch: jest.fn() },
+    book: { data: mockBookData, isPending: false, isError: mockBookError, refetch: jest.fn() },
   }),
   useNoteOperations: () => mockOperations,
   useNoteRemovalRefresh: () => mockRemoveFromCache,
@@ -81,6 +82,7 @@ beforeEach(() => {
   jest.useFakeTimers().setSystemTime(new Date('2026-10-20T12:00:00Z'));
   jest.clearAllMocks();
   mockOffline = false; mockDeleteAuthorized = true; mockBookError = false;
+  mockBookData = { id: 'book', title: 'Selected book' };
   mockCollection = []; mockCollectionPending = false; mockCollectionError = false;
   mockRecord = undefined; mockRecordPending = false; mockRecordError = false;
   mockOperations = [];
@@ -196,7 +198,7 @@ describe('notes list states', () => {
   });
 
   it('offers only Try again when the book is unavailable', () => {
-    mockBookError = true;
+    mockBookError = true; mockBookData = undefined;
     render(<NotesScreen />);
     expect(screen.getByText("This book couldn't be opened.")).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
@@ -247,6 +249,53 @@ describe('note reader layout', () => {
     expect(screen.queryByText(/No category/)).toBeNull();
     expect(screen.queryByText(/Page \d/)).toBeNull();
     expect(screen.queryByText(/· Page/)).toBeNull();
+  });
+
+  it('keeps the cached note and actions when the note refresh fails', async () => {
+    mockRecordError = true;
+    render(<NoteReaderScreen />);
+    expect(screen.getByText(/A saved body of text worth reading/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy text' }).props.accessibilityState.disabled).toBe(false);
+    expect(screen.getByRole('button', { name: 'Edit note' }).props.accessibilityState.disabled).toBe(false);
+    expect(screen.getByRole('button', { name: 'Delete note' }).props.accessibilityState.disabled).toBe(false);
+    const refreshFailure = screen.getByText("Couldn't refresh.");
+    expect(refreshFailure.props.accessibilityLiveRegion).toBe('polite');
+    expect(StyleSheet.flatten(refreshFailure.props.style).fontSize).toBe(LIBRARY_TEXT.body.fontSize);
+    expect(screen.queryByText("This note is missing or couldn't be opened.")).toBeNull();
+    expectSinglePrimary(screen);
+    await flush();
+  });
+
+  it('keeps the cached note and actions when the book refresh fails', async () => {
+    mockBookError = true; mockOffline = true;
+    render(<NoteReaderScreen />);
+    expect(screen.getByText('Selected book')).toBeTruthy();
+    expect(screen.getByText(/A saved body of text worth reading/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy text' }).props.accessibilityState.disabled).toBe(false);
+    expect(screen.getByRole('button', { name: 'Edit note' }).props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByRole('button', { name: 'Delete note' }).props.accessibilityState.disabled).toBe(true);
+    expect(screen.getByText('Offline · Showing saved content.')).toBeTruthy();
+    expect(screen.getByText("Couldn't refresh.")).toBeTruthy();
+    expect(screen.queryByText("This note is missing or couldn't be opened.")).toBeNull();
+    expectSinglePrimary(screen);
+    await flush();
+  });
+
+  it('shows unavailable when a failed note query loses its cached data', async () => {
+    mockRecordError = true;
+    render(<NoteReaderScreen />);
+    expect(screen.getByText(/A saved body of text worth reading/)).toBeTruthy();
+    mockRecord = undefined;
+    screen.rerender(<NoteReaderScreen />);
+    expect(screen.getByText("This note is missing or couldn't be opened.")).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
+    expect(screen.queryByText(/A saved body of text worth reading/)).toBeNull();
+    expect(screen.queryByText("Couldn't refresh.")).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Copy text' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit note' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Delete note' })).toBeNull();
+    expectSinglePrimary(screen);
+    await flush();
   });
 
   it('disables Edit and Delete offline but leaves Copy enabled', async () => {
