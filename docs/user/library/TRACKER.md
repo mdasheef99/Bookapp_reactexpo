@@ -1,5 +1,29 @@
 # Library Tracker
 
+**SDD-07 Flow A final PR review and fix round 2 on `sdd07/flow-a` — 2026-10-20:** `library_sdd07_flow_a_fix2_verified`. Follows the Flow A entry below (commit `99a3f3d`). Owner: no PR review happens elsewhere, so this is the full review. Browser re-check skipped on the owner's instruction (code checks only).
+- **Review** (independent, full PR `f568288..99a3f3d`, read-only, in parallel; brief `.spec/FLOWA-FINAL-REVIEW.md`; fingerprint unchanged):
+  - Codex `gpt-6.1-sol` xhigh: "FAIL", 12 findings (4 major).
+  - DeepSeek v4.1 flash produced no findings: it stopped when opencode blocked a temp-file write outside the worktree.
+- **Triage** (DeepSeek, because Codex hit its usage limit; spot-checked by the lead): 11 confirmed, F12 deferred (home-shelf debounce test, Flow D). The lead rejected F7: "To Be" → "B" is correct, and the R8 example "TB" was wrong.
+- **Confirmed and fixed (10):**
+  - T1: a late status save wrote the next book's cache. The mutation now carries its own user and book ids, and late errors are ignored.
+  - T2: collapsing could not retry a failed review save. It now asks the mutation cache whether a text save is pending.
+  - T3: native screen-reader focus on Cancel and on return (`AccessibilityInfo.setAccessibilityFocus`).
+  - T4: the Remove dialog is bounded and scrolls with long titles and large text.
+  - T5: the dialog's native name and description sit on the rendered dialog view.
+  - T6: with book and notes refresh both failing, "Couldn't refresh." moves below Add note (DP-01).
+  - T8–T11: test-strength fixes (Vault refresh/disabled, Saved pages hidden, community-review dates, no spinner while notes load).
+- **Built by:** Codex `gpt-6.1-sol` xhigh, which wrote all ten fixes before its usage limit (now until 2026-10-25) and left no report. DeepSeek v4.1 flash (opencode build agent, watched by a file monitor) checked them, did revert checks, restored its temporary reverts and regenerated the palette fixture. The lead typed two untyped test callbacks (tsc 38 → 36).
+- **Verification (lead):**
+  - Jest library set + `src/test-utils` + `eslint-rules` (ratchet included): 65 suites / 1220 tests pass.
+  - Scoped `tsc` 0; whole-repo `tsc` 36.
+  - `lint:library` 328 (1 pre-existing `LibraryHeader` error). The Flow A entry's 329 included one warning in the deleted prototype.
+  - Mutation checks: T1 cache-key and T2 pending-check mutants killed; control mutant survived.
+  - axe and the browser were not re-run.
+  - Independent review of the fix diff: space-bunny (MiniMax 3.1) failed with an opencode server error (its third), so Muse Spark 1.3 xhigh ran it read-only and returned **PASS** with no findings; fingerprint unchanged.
+- **Mutations:** none to database or storage.
+- **Cleanup since the Flow A entry:** the real `.env` was deleted from `Bookconnect4_flowa` and the 8083 dev server stopped (owner approved). The browser tab stays open.
+
 **SDD-07 Flow A (real Book Details build) BUILT, REVIEWED, FIXED and ACCEPTED on `sdd07/flow-a` — 2026-10-20:** `library_sdd07_flow_a_accepted_uncommitted`. Worktree `Bookconnect4_flowa`, off `sdd07/wave3` (`f568288`, pushed). **Nothing staged, committed or pushed**; `.spec/` (briefs, reports, triage, cascade evidence) is untracked and is never committed. Full record: SDD-07 §10.8, decisions D07-16 and D07-17.
 - **What the owner would notice:**
   - Book Details is the finalized FA-P1 design on real data: a Back-only header, cover and title, a three-option status control, "Your notes" passages, one Add note, plain inline-expanding rows, and a quiet Remove.
@@ -26,7 +50,7 @@
   - tab bar labels truncated at 320 px (TB-1);
   - no native device or screen-reader run for Flow A;
   - `toggleLendingAvailability` has no caller;
-  - the real `.env` is still in `Bookconnect4_flowa` and the dev server on 8083 is still running (kept open on the owner's request; delete and stop after acceptance).
+  - ~~the real `.env` is still in `Bookconnect4_flowa` and the dev server on 8083 is still running~~ (cleaned up; see the entry above).
 - **Next exact action:** the owner approves (or not) the Flow A commit on `sdd07/flow-a`, including deleting `src/prototypes/flowA/**` and `dev-flow-a.tsx`, plus the matching docs commit in `Bookconnect4_library`. Push only on separate approval.
 
 **SDD-07 whole-foundation review, Android emulator check and fix round on `sdd07/wave3` — 2026-10-19:** `library_sdd07_foundation_reviewed_fixes_committed_not_pushed`. Fixes committed as `f568288` on `sdd07/wave3` (owner approved). Nothing pushed.

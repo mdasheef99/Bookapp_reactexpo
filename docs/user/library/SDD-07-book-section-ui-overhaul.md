@@ -321,8 +321,11 @@ Gemini 4 Argon, read-only: "Ready to finalize: YES", findings none ([`reviews/fi
   SKIPPED: quick look (no long-press in the browser tools; Jest covers it). Not driven on real data: rating, condition, offline (Jest covers them). Golden phase looked close to daylight in screenshots (expected from the tokens, `#fbf2e4` vs `#faf6ee`). The 320 px ellipsis it flagged led to D07-17; the recheck at 320 px and 200% text shows the full "Owned · New" with no horizontal scroll.
 - Database/storage: no migrations. The only writes were those owner-allowed test edits on *Animal Farm* (status, ownership, review, privacy), all restored to the original values and re-read afterwards.
 
+**Final PR review and fix round 2 (2026-10-20):** Codex full-PR review found 12; 10 fixed (T1–T6, T8–T11), F7 rejected, F12 deferred to Flow D. Jest 65 / 1220, `tsc` 36, `lint:library` 328 (329 above included the deleted prototype). Not re-checked in a browser (owner's instruction). Details in the TRACKER entry.
+
 **Residual risk:**
 - Exchange-listing delete shows the raw error (D07-14).
+- Weak debounce assertion in the home-shelf audio/haptics test (F12, Flow D).
 - Axe `image-alt` ×1 on the home list (outside Flow A, still in the baseline).
 - Tab bar truncated labels at 320 px (TB-1, D07-01).
 - Native TalkBack/VoiceOver and Android/iOS devices not tested for the Flow A build.
