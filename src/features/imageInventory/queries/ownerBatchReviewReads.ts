@@ -114,7 +114,8 @@ export function useOwnerBatchReview(
         ),
         enabled: Boolean(identity && sessionId),
         refetchInterval: (query) => (
-            visible && batchReviewProcessing(query.state.data as never) ? 3_000 : false
+            visible && (batchReviewProcessing(query.state.data as never)
+                || query.state.data?.items.some((card) => card.metadataState === 'pending')) ? 3_000 : false
         ),
         refetchIntervalInBackground: false,
         queryFn: ({ signal }) => executeFencedRead<OwnerBatchReview>(

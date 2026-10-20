@@ -33,6 +33,8 @@ import { coalesceOwnerUxRefresh } from '../offline/ownerUxOfflineGate';
 import { createScanCandidateRemoval } from '../review/scanCandidateRemoval';
 import { useCompletedScanAutoClose } from '../close/useCompletedScanAutoClose';
 import { useDuplicateInputConfirmation } from '../capture/useDuplicateInputConfirmation';
+import { useUnsavedEditsLeaveGuard } from '../review/useUnsavedEditsLeaveGuard';
+import { OwnerConfirmationDialog } from '../components/OwnerConfirmationDialog';
 import { useInputRemoval } from '../capture/useInputRemoval';
 function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIdentity; sessionId: string }) {
     const router = useRouter();
@@ -79,6 +81,23 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const [authorityChangedCandidates, setAuthorityChangedCandidates] = useState<Set<string>>(
         new Set(),
     );
+    const [dirtyCandidates, setDirtyCandidates] = useState<Set<string>>(new Set());
+    const handleUnsavedEditsChange = useCallback((id: string, dirty: boolean) => {
+        setDirtyCandidates(current => {
+            if (current.has(id) === dirty) return current;
+            const next = new Set(current); if (dirty) next.add(id); else next.delete(id); return next;
+        });
+    }, []);
+    const cards = batchReview.data?.items ?? [];
+    // SDD-1 §4: only active review cards contribute unsaved edits.
+    const dirty = cards.some((card) => card.candidateState !== 'committed'
+        && inventoryCommit.outcomes.get(card.candidateId)?.status !== 'succeeded'
+        && (candidateDrafts.has(card.candidateId) || dirtyCandidates.has(card.candidateId)));
+    const leaveGuard = useUnsavedEditsLeaveGuard(dirty, inventoryCommit.inFlight.size > 0 || editionPending.size > 0, {
+        title: 'Leave without saving?', description: 'Your card edits are not saved and will be discarded.',
+        discardLabel: 'Leave and discard', busyTitle: 'Add in progress',
+        busyDescription: 'Wait for Add to finish before leaving.',
+    });
     const unavailable = session.data?.status === 'expired' || [session.error, inputs.error].some(
         (error) => error && 'code' in error
             && ['P9_OWNER_NOT_AUTHORIZED', 'P9_NOT_FOUND'].includes(String(error.code)),
@@ -161,7 +180,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
         : null;
     const handleCandidateRemove = createScanCandidateRemoval({ sessionId, isOffline,
         removeCandidate, inventoryCommit, setCandidateMessage });
-    const cards = batchReview.data?.items ?? [];
     const setupDefaults = {
         languageHint: batchReview.data?.defaults.languageHint ?? 'en',
         condition: batchReview.data?.defaults.condition ?? null,
@@ -282,6 +300,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         onEditionSelection={() => { void batchReview.refetch(); }}
                         onAuthorityStateChange={handleAuthorityStateChange}
                         onPendingIdentityChange={handlePendingIdentityChange}
+                        onUnsavedEditsChange={handleUnsavedEditsChange}
                         onOpenFullCorrection={() => router.push(inventoryRoutes.candidate(
                             sessionId,
                             item.candidateId,
@@ -350,6 +369,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                 onCancelUpload={duplicateConfirmation.cancel}
                 onProceed={duplicateConfirmation.proceed}
             />
+            <OwnerConfirmationDialog {...leaveGuard} />
             </View>
         </ScreenBackground>
     );

@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, type QueryObserverOptions } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { PropsWithChildren } from 'react';
 import { ownerBatchReviewService } from '../api/ownerBatchReviewService';
@@ -107,6 +107,40 @@ describe('Phase 9 NEW 6G-C read-query request fencing', () => {
         expect(client.getQueryCache().findAll({
             queryKey: imageInventoryKeys.identity(identity),
         })).toHaveLength(0);
+    });
+
+    it('polls while a card edition match is pending even when nothing is processing', async () => {
+        readBatchReview.mockResolvedValue({
+            sessionId, status: 'active', sessionVersion: 4, presentationRevision: 1,
+            defaults: {
+                languageHint: 'en', condition: null, location: 'Shelf', priceMinor: null,
+                quantity: 1, publication: 'private', script: null,
+            },
+            batchLabel: null,
+            counts: {
+                detected: 1, processing: 0, needsAttention: 1, reviewReadySaved: 0,
+                committed: 0, ownerRemoved: 0, falseDetections: 0,
+            },
+            items: [{
+                sessionId, candidateId: testUuid(11), candidateVersion: 1,
+                metadataState: 'pending', metadataRevision: 1,
+            }],
+            updatedAt: '2026-07-31T00:00:00.000Z',
+        });
+        renderHook(() => useOwnerBatchReview(identity, sessionId, true), { wrapper });
+        await waitFor(() => expect(readBatchReview).toHaveBeenCalledTimes(1));
+        const query = client.getQueryCache().find({
+            queryKey: ownerBatchReviewKeys.batchReview(identity, sessionId),
+            exact: true,
+        });
+        const interval = (query?.options as QueryObserverOptions).refetchInterval as unknown as
+            (input: { state: { data: unknown } }) => number | false;
+        expect(interval({
+            state: { data: { counts: { processing: 0 }, items: [{ metadataState: 'pending' }] } },
+        })).toBe(3_000);
+        expect(interval({
+            state: { data: { counts: { processing: 0 }, items: [{ metadataState: 'manual' }] } },
+        })).toBe(false);
     });
 
     it('keeps reads fenced per operation generation across route remounts', async () => {

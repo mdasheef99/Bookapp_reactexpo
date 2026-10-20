@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
 import { createEditionLookupCommand } from '../api/ownerEditionPickerCommands';
-import { ownerUxService } from '../api/ownerUxService';
+import { ownerUxService, type UpdateCandidateReviewRequest } from '../api/ownerUxService';
 import { createCaptureAttempt } from '../capture/captureIds';
 import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
 import type { OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
@@ -14,6 +14,8 @@ import { acceptEditionChoices, acceptEditionLookupReceipt } from './ownerEdition
 import { ownerEditionPickerKeys } from './ownerEditionPickerKeys';
 import { assertOwnerCardCurrent, authorityChanged, candidateAuthorityIsCurrent } from './ownerCandidateAuthority';
 import { synchronizeCandidateReviewSuccess } from './ownerUxReviewQueries';
+import { ownerBatchReviewKeys } from './ownerBatchReviewKeys';
+import { editionSelectionRecovery } from '../review/editionSelectionRecovery';
 
 export { ownerEditionPickerKeys } from './ownerEditionPickerKeys';
 
@@ -65,6 +67,10 @@ export function useOwnerEditionPicker(
   callbackRef.current = callbacks;
   const lastSelection = useRef<SelectEditionRequest | null>(null);
   const lastLookup = useRef<RequestEditionOptionsRequest | null>(null);
+  const lastIdentity = useRef<{
+    fingerprint: string; save: UpdateCandidateReviewRequest;
+    detail?: OwnerCandidateDetail; lookup?: RequestEditionOptionsRequest;
+  } | null>(null);
   const pendingLookup = useRef<{
     scope: string; generation: number; promise: Promise<EditionLookupReceipt>;
   } | null>(null);
@@ -123,29 +129,56 @@ export function useOwnerEditionPicker(
     mutationFn: (request: IdentitySearchRequest): Promise<IdentitySearchResult> => {
       assertRequest(scope);
       return lifecycle.run(async (signal, assertCurrent) => {
-        const save = createCaptureAttempt('identity-review');
-        const saved = await ownerUxService.updateCandidateReview({ ...scope,
-          expectedCandidateVersion: request.expectedCandidateVersion,
-          expectedMetadataRevision: request.expectedMetadataRevision,
-          review: request.review, idempotencyKey: save.key, commandId: save.commandId }, signal);
-        assertCurrent();
-        // Same rule as the card's review save: a regressive save response is never replaced by the cache.
-        if (saved.sessionId !== sessionId || saved.candidateId !== candidateId
-          || !candidateAuthorityIsCurrent(client, identity, saved)) throw authorityChanged();
-        const detail = saved;
-        await synchronizeCandidateReviewSuccess(client, identity, sessionId, candidateId, detail);
-        assertCurrent();
-        callbackRef.current.onIdentitySaved?.(detail);
+        // SDD-1 §4 / D2-2: retain both wire requests, including versions, keys and command IDs.
+        const fingerprint = JSON.stringify(request);
+        if (!lastIdentity.current || lastIdentity.current.fingerprint !== fingerprint) {
+          const attempt = createCaptureAttempt('identity-review');
+          lastIdentity.current = { fingerprint, save: JSON.parse(JSON.stringify({ ...scope,
+            ...request, idempotencyKey: attempt.key, commandId: attempt.commandId })) };
+        }
+        const command = lastIdentity.current;
+        let detail: OwnerCandidateDetail;
         try {
-          const current = await reread(signal, assertCurrent);
-          const receipt = await ownerEditionPickerService.requestEditionOptions(createEditionLookupCommand(current), signal);
+          detail = command.detail ?? await ownerUxService.updateCandidateReview(command.save, signal);
+          assertCurrent();
+          // A regressive save response is never replaced by the cache.
+          if (detail.sessionId !== sessionId || detail.candidateId !== candidateId
+            || !candidateAuthorityIsCurrent(client, identity, detail)) throw authorityChanged();
+          command.detail = detail;
+          await synchronizeCandidateReviewSuccess(client, identity, sessionId, candidateId, detail);
+          assertCurrent();
+          callbackRef.current.onIdentitySaved?.(detail);
+        } catch (error) {
+          assertCurrent();
+          // SDD-1 §4 / D2-2: completed saves and uncertain failures retain the command.
+          if (editionSelectionRecovery(error).kind !== 'retry') {
+            if (!command.detail) lastIdentity.current = null;
+            await reconcile(signal, assertCurrent);
+            assertCurrent();
+            await Promise.all([
+              client.invalidateQueries({ queryKey: imageInventoryKeys.candidate(identity, sessionId, candidateId) }),
+              client.invalidateQueries({ queryKey: ownerBatchReviewKeys.batchReview(identity, sessionId) }),
+              client.invalidateQueries({ queryKey: ownerBatchReviewKeys.sessionV3(identity, sessionId) }),
+              client.invalidateQueries({ queryKey: ownerBatchReviewKeys.readinessV3(identity, sessionId) }),
+            ]);
+            assertCurrent();
+          }
+          throw error;
+        }
+        try {
+          if (!command.lookup) command.lookup = createEditionLookupCommand(await reread(signal, assertCurrent));
+          const receipt = await ownerEditionPickerService.requestEditionOptions(command.lookup, signal);
           assertCurrent();
           acceptEditionLookupReceipt(client, identity, scope, receipt);
           await reconcile(signal, assertCurrent);
           return { detail, searched: true };
-        } catch {
+        } catch (error) {
           assertCurrent();
+          const refused = editionSelectionRecovery(error).kind !== 'retry';
+          if (refused) delete command.lookup;
           await reconcile(signal, assertCurrent);
+          assertCurrent();
+          if (refused) throw error;
           return { detail, searched: false };
         }
       }, undefined, 'identity-search');
@@ -174,6 +207,7 @@ export function useOwnerEditionPicker(
           return accepted;
         } catch (error) {
           assertCurrent();
+          if (editionSelectionRecovery(error).kind !== 'retry') lastLookup.current = null;
           await reconcile(signal, assertCurrent);
           throw error;
         }
@@ -187,6 +221,7 @@ export function useOwnerEditionPicker(
   useEffect(() => {
     lastSelection.current = null;
     lastLookup.current = null;
+    lastIdentity.current = null;
     pendingLookup.current = null;
     selectMutation.reset();
     lookupMutation.reset();
@@ -197,6 +232,12 @@ export function useOwnerEditionPicker(
     saveIdentityAndSearch: identityMutation, identityPending: identityMutation.isPending,
     selectionPending: selectMutation.isPending, lookupPending: lookupMutation.isPending,
     isCommandActive: () => slot.isCommandActive(candidateId),
+    retryIdentitySearch: () => {
+      assertRequest(scope);
+      if (!lastIdentity.current) return Promise.reject(authorityChanged());
+      const { review, expectedCandidateVersion, expectedMetadataRevision } = lastIdentity.current.save;
+      return identityMutation.mutateAsync({ review, expectedCandidateVersion, expectedMetadataRevision });
+    },
     retrySelection: () => {
       assertRequest(scope);
       if (!lastSelection.current) return Promise.reject(authorityChanged());

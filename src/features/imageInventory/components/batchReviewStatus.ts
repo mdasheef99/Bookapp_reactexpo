@@ -2,16 +2,6 @@ import type { CandidateCommitOutcome } from '../commit/inventoryCommitCoordinato
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import type { CompactReviewValidationIssue } from '../review/compactReviewDraft';
 
-export function metadataStatusLabel(state: OwnerBatchReviewCard['metadataState']): string {
-    if (state === 'selected') return 'Provider matched';
-    if (state === 'manual') return 'Manual details';
-    if (state === 'no_match') return 'No provider match';
-    if (state === 'pending') return 'Finding metadata';
-    if (state === 'ambiguous') return 'Metadata needs review';
-    if (state === 'temporarily_unavailable') return 'Metadata unavailable';
-    return 'Metadata failed';
-}
-
 // One readiness rule for the card badge, the session header's Ready count and
 // Add all ready books: the card can be added now and nothing on it needs attention.
 export function cardReadyNow(
@@ -61,6 +51,10 @@ export function cardAttentionItems({
     // draft-resolvable server blockers such as review_missing (SDD §13.1).
     draftSubmittable?: boolean;
 }) {
+    // SDD-1 §4: while pending the only attention item is "Finding the edition…".
+    const pending = validationIssues.find((item) => item.field === 'metadataChoice'
+        && item.safeMessage === 'Finding the edition…');
+    if (pending) return [pending];
     const canExplainMissingReview = !hasEdits
         && card.candidateState === 'needs_review'
         && card.review === null

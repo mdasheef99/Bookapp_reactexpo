@@ -93,7 +93,7 @@ it('matched-details control preserves the held edition in the actual Save payloa
   });
 });
 it.each([{ authors: ['Chosen author'] }, { authors: ['Chosen author', 'Second chosen author'] }])(
-  'detected-details fallback requires confirmation of the replacement identity (%j)', async ({ authors }) => {
+  'full-correction edits require confirmation after the detected-details control is removed (%j)', async ({ authors }) => {
     const saved = selectedChoices({ reviewVersion: 2, selection: { ...selectedChoices().selection!,
       snapshot: { ...selectedChoices().selection!.snapshot, authors } } });
     const review = { ...pickerReview, authors, originalFieldConfirmation: { title: true, authors: authors.map(() => true) } };
@@ -104,8 +104,14 @@ it.each([{ authors: ['Chosen author'] }, { authors: ['Chosen author', 'Second ch
       sessionId={saved.sessionId} candidateId={saved.candidateId} /></QueryClientProvider>);
     await waitFor(() => expect(view.queryByTestId('review-original-title')).toBeTruthy());
     fireEvent.press(view.getByText('Find or change edition'));
-    await waitFor(() => expect(view.queryByText('Use detected details')).toBeTruthy());
-    fireEvent.press(view.getByText('Use detected details'));
+    await waitFor(() => expect(view.queryByText('Close metadata')).toBeTruthy());
+    expect(view.queryByText('Use detected details')).toBeNull();
+    expect(view.queryByText('Edit manually')).toBeNull();
+    fireEvent.press(view.getByText('Close metadata'));
+    fireEvent.press(view.getByText(/Use manual details$/));
+    fireEvent.changeText(view.getByTestId('review-original-title'), 'Different detected title');
+    fireEvent.changeText(view.getByTestId('review-author-0'), 'Detected author');
+    if (authors.length > 1) fireEvent.press(view.getByText('Remove author 2'));
     expect(view.getByTestId('confirm-title').props.accessibilityState.checked).toBe(false);
     expect(view.getByTestId('confirm-author-0').props.accessibilityState.checked).toBe(false);
     fireEvent.press(view.getByTestId('confirm-title'));
@@ -117,16 +123,18 @@ it.each([{ authors: ['Chosen author'] }, { authors: ['Chosen author', 'Second ch
       authors: ['Detected author'], metadataChoice: { mode: 'manual', selectionId: null },
       originalFieldConfirmation: { title: true, authors: [true] }, priceMinor: 0, quantity: 3 });
   });
-it('Edit manually preserves confirmations when it replaces no identity fields', async () => {
-  const saved = selectedChoices({ reviewVersion: 2 });
+it('Edit title/author preserves confirmations when it replaces no identity fields', async () => {
+  const saved = selectedChoices({ reviewVersion: 2, rows: [],
+    selection: { ...selectedChoices().selection!, confirmedByOwner: false } });
   detail = pickerDetail(saved, pickerReview);
   (ownerEditionPickerService.readEditionChoices as jest.Mock).mockResolvedValue(saved);
   const view = render(<QueryClientProvider client={client}><CandidateReview identity={pickerIdentity}
     sessionId={saved.sessionId} candidateId={saved.candidateId} /></QueryClientProvider>);
   await waitFor(() => expect(view.queryByTestId('review-original-title')).toBeTruthy());
   fireEvent.press(view.getByText('Find or change edition'));
-  await waitFor(() => expect(view.queryByText('Edit manually')).toBeTruthy());
-  fireEvent.press(view.getByText('Edit manually'));
+  await waitFor(() => expect(view.queryByText('Edit title/author')).toBeTruthy());
+  expect(view.queryByText('Edit manually')).toBeNull();
+  fireEvent.press(view.getByText('Edit title/author'));
   expect(view.getByTestId('confirm-title').props.accessibilityState.checked).toBe(true);
   expect(view.getByTestId('confirm-author-0').props.accessibilityState.checked).toBe(true);
 });
@@ -146,7 +154,9 @@ it('keeps Close and hardware back locked through selection reconciliation', asyn
   const attemptDismiss = () => {
     fireEvent.press(view.getByText('Close metadata'));
     expect(view.queryByText('Close metadata')).toBeTruthy();
-    fireEvent(view.UNSAFE_getByType(Modal), 'requestClose');
+    const visibleModals = view.UNSAFE_getAllByType(Modal).filter(modal => modal.props.visible);
+    expect(visibleModals).toHaveLength(1);
+    fireEvent(visibleModals[0], 'requestClose');
     expect(view.queryByText('Close metadata')).toBeTruthy();
     expect(signal.aborted).toBe(false);
 

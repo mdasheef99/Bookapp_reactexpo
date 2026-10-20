@@ -1,7 +1,14 @@
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, renderHook, waitFor } from '@testing-library/react-native';
 import { AppState } from 'react-native';
 import { InventorySessionProgressScreen } from '../screens/CaptureProgressScreens';
+import { BatchReviewCard } from '../components/BatchReviewCard';
+import { useUnsavedEditsLeaveGuard } from '../review/useUnsavedEditsLeaveGuard';
+import { selectedChoices } from '../testing/editionPickerClientFixtures';
+import type { CandidateCommitOutcome } from '../commit/inventoryCommitTypes';
 
+const mockNavigation = { addListener: jest.fn((_name: string, _listener: (event: any) => void) => jest.fn()), dispatch: jest.fn() };
+let mockInFlight = new Set<string>();
+const mockOutcomes = new Map<string, CandidateCommitOutcome>();
 const mockRouter = { push: jest.fn(), replace: jest.fn() };
 const mockRefetch = jest.fn(() => Promise.resolve({ isError: false, error: null }));
 const mockRemoveMutate = jest.fn();
@@ -104,7 +111,7 @@ const mockBatchReview: Record<string, unknown> = {
     refetch: mockRefetch,
 };
 
-jest.mock('expo-router', () => ({ useRouter: () => mockRouter }));
+jest.mock('expo-router', () => ({ useRouter: () => mockRouter, useNavigation: () => mockNavigation }));
 jest.mock('@react-navigation/native', () => ({ useIsFocused: () => mockFocused }));
 jest.mock('@/hooks/useTheme', () => ({
     useTheme: () => ({ colors: {
@@ -159,8 +166,8 @@ jest.mock('../commit/useInventoryCommitCoordinator', () => ({
         addCandidate: jest.fn(),
         addAll: jest.fn(),
         retryAddAll: jest.fn(),
-        inFlight: new Set(),
-        outcomes: new Map(),
+        inFlight: mockInFlight,
+        outcomes: mockOutcomes,
         bulkResult: mockBulkResult,
         bulkPending: false,
         claimSlot: mockClaimSlot,
@@ -277,7 +284,8 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
 
         expect(screen.getByText('Image processing: 1 ready, 0 need attention, 0 processing.')).toBeTruthy();
         expect(screen.getByText(/Book review is counted separately below/iu)).toBeTruthy();
-        expect(screen.getByText(/Need review counts individual books/iu)).toBeTruthy();
+        expect(screen.queryByText(/Need review counts individual books/iu)).toBeNull();
+        expect(screen.getByText('Need review')).toBeTruthy();
 
         mockInputs.data.items = [originalInput];
         (mockBatchReview.data as Record<string, any>).counts = originalCounts;
@@ -529,4 +537,153 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
             (node) => node.props.accessibilityLiveRegion === 'polite',
         )).toHaveLength(0);
     });
+});
+
+it('guards unsaved card edits on leave', () => {
+    jest.clearAllMocks();
+    const batch = mockBatchReview.data as any;
+    const original = batch.items[0];
+    batch.items[0] = { ...original, allowedActions: ['save_review'] };
+    const view = render(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
+    const leave = () => {
+        const event = { preventDefault: jest.fn(), data: { action: { type: 'GO_BACK' } } };
+        const listener = mockNavigation.addListener.mock.calls.at(-1)?.[1];
+        act(() => listener?.(event)); return event;
+    };
+    expect(leave().preventDefault).not.toHaveBeenCalled();
+    fireEvent.press(view.getByLabelText('Edit title for Book 1: Original book'));
+    fireEvent.changeText(view.getByTestId('card-title-input'), 'Unsaved title');
+    expect(leave().preventDefault).toHaveBeenCalled();
+    expect(view.getByText('Leave without saving?')).toBeTruthy();
+    expect(view.getByText('Your card edits are not saved and will be discarded.')).toBeTruthy();
+    fireEvent.press(view.getByRole('button', { name: 'Stay' }));
+    expect(mockNavigation.dispatch).not.toHaveBeenCalled();
+    expect(view.queryByText('Leave without saving?')).toBeNull();
+    leave();
+    fireEvent.press(view.getByText('Leave and discard'));
+    expect(mockNavigation.dispatch).toHaveBeenCalledWith({ type: 'GO_BACK' });
+    batch.items[0] = original;
+});
+
+it('does not guard edits after the card Add outcome succeeds', () => {
+    jest.clearAllMocks();
+    const batch = mockBatchReview.data as any;
+    const candidateId = batch.items[0].candidateId;
+    const view = render(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
+    try {
+        const card = view.UNSAFE_getByType(BatchReviewCard);
+        act(() => {
+            card.props.onDraftChange(candidateId, { priceMinor: 2500 });
+            card.props.onUnsavedEditsChange(candidateId, true);
+        });
+        mockOutcomes.set(candidateId, { candidateId, status: 'succeeded', stage: 'complete' });
+        view.rerender(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
+        expect(view.UNSAFE_getByType(BatchReviewCard).props.card.candidateId).toBe(candidateId);
+
+        const event = { preventDefault: jest.fn(), data: { action: { type: 'GO_BACK' } } };
+        act(() => mockNavigation.addListener.mock.calls.at(-1)?.[1](event));
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(view.queryByText('Leave without saving?')).toBeNull();
+    } finally {
+        view.unmount();
+        mockOutcomes.clear();
+    }
+});
+
+it('does not guard edits after the card is removed from the batch', () => {
+    jest.clearAllMocks();
+    const batch = mockBatchReview.data as any;
+    const originalItems = batch.items;
+    const candidateId = originalItems[0].candidateId;
+    const view = render(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
+    try {
+        const card = view.UNSAFE_getByType(BatchReviewCard);
+        act(() => {
+            card.props.onDraftChange(candidateId, { priceMinor: 2500 });
+            card.props.onUnsavedEditsChange(candidateId, true);
+        });
+        batch.items = [];
+        view.rerender(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
+        expect(view.UNSAFE_queryAllByType(BatchReviewCard)).toHaveLength(0);
+
+        const event = { preventDefault: jest.fn(), data: { action: { type: 'GO_BACK' } } };
+        act(() => mockNavigation.addListener.mock.calls.at(-1)?.[1](event));
+        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(view.queryByText('Leave without saving?')).toBeNull();
+    } finally {
+        view.unmount();
+        batch.items = originalItems;
+    }
+});
+
+it.each(['Add', 'edition'] as const)('blocks leave with a Stay-only dialog while %s is in flight', kind => {
+    jest.clearAllMocks();
+    mockInFlight = new Set();
+    const batch = mockBatchReview.data as any;
+    const view = render(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
+    if (kind === 'Add') {
+        mockInFlight = new Set([batch.items[0].candidateId]);
+        view.rerender(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
+    } else {
+        act(() => view.UNSAFE_getByType(BatchReviewCard).props.onEditionPendingChange(batch.items[0].candidateId, true));
+    }
+    const event = { preventDefault: jest.fn(), data: { action: { type: 'GO_BACK' } } };
+    act(() => mockNavigation.addListener.mock.calls.at(-1)?.[1](event));
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(view.getByText('Add in progress')).toBeTruthy();
+    expect(view.getByText('Wait for Add to finish before leaving.')).toBeTruthy();
+    expect(view.queryByText('Leave and discard')).toBeNull();
+    fireEvent.press(view.getByRole('button', { name: 'Stay' }));
+    expect(mockNavigation.dispatch).not.toHaveBeenCalled();
+    mockInFlight = new Set();
+});
+
+it('guards a still-mounted screen again after discard and a clean state', () => {
+    const copy = { title: 'Leave?', description: 'Unsaved', discardLabel: 'Discard',
+        busyTitle: 'Busy', busyDescription: 'Wait' };
+    const hook = renderHook(({ dirty }: { dirty: boolean }) => useUnsavedEditsLeaveGuard(dirty, false, copy),
+        { initialProps: { dirty: true } });
+    const leave = () => {
+        const event = { preventDefault: jest.fn(), data: { action: { type: 'GO_BACK' } } };
+        act(() => mockNavigation.addListener.mock.calls.at(-1)?.[1](event));
+        return event;
+    };
+    leave();
+    expect(hook.result.current).toEqual(expect.objectContaining({ visible: true }));
+    act(() => hook.result.current.onConfirm?.());
+    hook.rerender({ dirty: false });
+    hook.rerender({ dirty: true });
+    expect(leave().preventDefault).toHaveBeenCalled();
+});
+
+it('switches an open discard dialog to Stay-only while an edition command starts', () => {
+    jest.clearAllMocks();
+    const batch = mockBatchReview.data as any;
+    const view = render(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
+    const card = view.UNSAFE_getByType(BatchReviewCard);
+    act(() => card.props.onUnsavedEditsChange(batch.items[0].candidateId, true));
+    const event = { preventDefault: jest.fn(), data: { action: { type: 'GO_BACK' } } };
+    act(() => mockNavigation.addListener.mock.calls.at(-1)?.[1](event));
+    expect(view.getByText('Leave and discard')).toBeTruthy();
+    act(() => card.props.onEditionPendingChange(batch.items[0].candidateId, true));
+    expect(view.getByText('Add in progress')).toBeTruthy();
+    expect(view.queryByText('Leave and discard')).toBeNull();
+    fireEvent.press(view.getByText('Stay'));
+    expect(mockNavigation.dispatch).not.toHaveBeenCalled();
+});
+
+it.each(['ready', 'failed'] as const)('does not refetch the batch review when edition choices become %s', status => {
+    jest.clearAllMocks();
+    mockFocused = true;
+    const batch = mockBatchReview.data as any;
+    const original = batch.items[0];
+    batch.items[0] = { ...original, metadataState: 'pending' };
+    const view = render(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
+    mockRefetch.mockClear();
+    const choices = selectedChoices({ sessionId: batch.sessionId, candidateId: original.candidateId, lookupStatus: 'pending' });
+    act(() => view.UNSAFE_getByType(BatchReviewCard).props.onEditionChoices(choices));
+    expect(mockRefetch).not.toHaveBeenCalled();
+    act(() => view.UNSAFE_getByType(BatchReviewCard).props.onEditionChoices({ ...choices, lookupStatus: status }));
+    expect(mockRefetch).not.toHaveBeenCalled();
+    batch.items[0] = original;
 });

@@ -141,7 +141,7 @@ function issueMessage(field: CompactReviewValidationIssue['field']): string {
     if (field === 'originalTitle') return 'Add a title.';
     if (field === 'authors') return 'Check the author names.';
     if (field === 'originalLanguage') return 'Choose a valid language.';
-    if (field === 'metadataChoice') return 'Confirm the detected details or edit them manually.';
+    if (field === 'metadataChoice') return "Choose an edition or keep the card's details.";
     if (field === 'quantity') return 'Set a quantity from 1 to 10,000.';
     if (field === 'priceMinor') return 'Set a whole-rupee selling price.';
     if (field === 'baseCondition') return 'Choose a condition.';
@@ -151,12 +151,42 @@ function issueMessage(field: CompactReviewValidationIssue['field']): string {
     return 'Check the highlighted review details.';
 }
 
+// SDD-1 §4 / D47: the same requirements gate compact drafts and all commit entry points.
+export function cardAddRequirementIssues(review: {
+    priceMinor?: number | null; baseCondition?: OwnerCandidateReview['baseCondition'] | null;
+    quantity?: number; authors?: readonly string[];
+}): CompactReviewValidationIssue[] {
+    const issues: CompactReviewValidationIssue[] = [];
+    if (review.priceMinor == null) issues.push({ field: 'priceMinor', safeMessage: 'Set a whole-rupee selling price.' });
+    else if (review.priceMinor === 0) issues.push({ field: 'priceMinor', safeMessage: 'Enter a price above ₹0.' });
+    if (!review.baseCondition) issues.push({ field: 'baseCondition', safeMessage: 'Choose a condition.' });
+    if (review.quantity == null || review.quantity < 1) issues.push({ field: 'quantity', safeMessage: 'Set a quantity from 1 to 10,000.' });
+    if (!review.authors?.length) issues.push({ field: 'authors', safeMessage: 'Add an author.' });
+    return issues;
+}
+
+export function compactReviewScript(card: OwnerBatchReviewCard, edits: CompactReviewEdits, choices?: EditionChoices) {
+    return edits.script !== undefined ? edits.script : card.review ? card.review.script
+        : choices?.selection ? choices.selection.snapshot.script : card.observed.script;
+}
+
+export function compactIdentityMatches(
+    identity: { title: string; authors: readonly string[]; language: string; script: string | null },
+    snapshot: { title: string | null; authors: readonly string[] | null; language: string | null; script?: string | null },
+): boolean {
+    return identity.title === snapshot.title && JSON.stringify(identity.authors) === JSON.stringify(snapshot.authors)
+        && identity.language === snapshot.language && (snapshot.script === undefined || identity.script === snapshot.script);
+}
+
 export function validateCompactReview(
     card: OwnerBatchReviewCard,
     defaults: ScanSetupFormState,
     edits: CompactReviewEdits,
     choices?: EditionChoices,
 ): CompactReviewValidation {
+    if (choices?.lookupStatus === 'pending' || card.metadataState === 'pending') {
+        return { review: null, issues: [{ field: 'metadataChoice', safeMessage: 'Finding the edition…' }] };
+    }
     const display = compactReviewDisplay(card, defaults, edits);
     const resumedChoice = choices?.sessionId === card.sessionId && choices.candidateId === card.candidateId
         && choices.candidateVersion === card.candidateVersion && choices.metadataRevision === card.metadataRevision
@@ -166,15 +196,31 @@ export function validateCompactReview(
         && card.metadataSummary?.selectionId
         ? { mode: resumedChoice ? 'edition_option' as const : 'selected' as const, selectionId: card.metadataSummary.selectionId }
         : undefined;
-    const metadataChoice = edits.metadataChoice ?? card.review?.metadataChoice
-        ?? selectedMetadataChoice;
+    // C8: the selection snapshot is trusted only when the choices belong to
+    // this card and name the choice that would otherwise be sent.
+    const baseChoice = edits.metadataChoice ?? card.review?.metadataChoice ?? selectedMetadataChoice;
+    const trustedChoices = choices?.sessionId === card.sessionId && choices.candidateId === card.candidateId
+        && choices.selection?.selectionId === baseChoice?.selectionId ? choices : undefined;
+    const script = compactReviewScript(card, edits, trustedChoices);
+    let metadataChoice: OwnerCandidateReview['metadataChoice'];
+    if (!baseChoice || baseChoice.mode === 'manual' || !baseChoice.selectionId) {
+        metadataChoice = { mode: 'manual' as const, selectionId: null };
+    } else if (!choices) {
+        const chosen = card.metadataSummary
+            ? { ...card.metadataSummary, script: card.review ? card.review.script : card.observed.script } : null;
+        metadataChoice = chosen && !compactIdentityMatches({ ...display, script }, chosen)
+            ? { mode: 'manual' as const, selectionId: null } : baseChoice;
+    } else if (trustedChoices?.selection) {
+        metadataChoice = compactIdentityMatches({ ...display, script }, trustedChoices.selection.snapshot)
+            ? baseChoice : { mode: 'manual' as const, selectionId: null };
+    } else {
+        metadataChoice = { mode: 'manual' as const, selectionId: null };
+    }
     const candidate = {
         originalTitle: display.title,
         authors: display.authors,
         originalLanguage: display.language,
-        script: edits.script !== undefined ? edits.script
-            : card.review ? card.review.script
-                : resumedChoice ? choices!.selection!.snapshot.script : card.observed.script,
+        script,
         metadataChoice,
         quantity: display.quantity,
         priceMinor: display.priceMinor,
@@ -193,15 +239,15 @@ export function validateCompactReview(
         candidateDisposition: 'reviewed',
     };
     const parsed = ownerCandidateReviewSchema.safeParse(candidate);
-    if (parsed.success) return { review: parsed.data, issues: [] };
-    const fields = new Set<CompactReviewValidationIssue['field']>();
-    const issues = parsed.error.issues.flatMap((issue) => {
+    const issues = cardAddRequirementIssues(candidate);
+    const fields = new Set(issues.map(issue => issue.field));
+    if (!parsed.success) parsed.error.issues.forEach(issue => {
         const field = issueField(issue.path, issue.message);
-        if (fields.has(field)) return [];
+        if (fields.has(field)) return;
         fields.add(field);
-        return [{ field, safeMessage: issueMessage(field) }];
+        issues.push({ field, safeMessage: issueMessage(field) });
     });
-    return { review: null, issues };
+    return { review: parsed.success && issues.length === 0 ? parsed.data : null, issues };
 }
 
 export function buildCompactReview(
@@ -211,35 +257,6 @@ export function buildCompactReview(
     choices?: EditionChoices,
 ): OwnerCandidateReview | null {
     return validateCompactReview(card, defaults, edits, choices).review;
-}
-
-// Edition-sheet identity fix: the review Add would save, with the Owner's corrected
-// title/author confirmed and the metadata choice returned to manual.
-export function identityFixReview(
-    card: OwnerBatchReviewCard,
-    defaults: ScanSetupFormState,
-    edits: CompactReviewEdits,
-    title: string,
-    authors: string[],
-    choices?: EditionChoices,
-): CompactReviewValidation {
-    return validateCompactReview(card, defaults, {
-        ...edits, originalTitle: title, authors, metadataChoice: { mode: 'manual', selectionId: null },
-    }, choices);
-}
-
-export function detectedIdentityEdits(card: OwnerBatchReviewCard): CompactReviewEdits {
-    return {
-        originalTitle: card.observed.title,
-        authors: [...card.observed.authors],
-        originalLanguage: card.observed.language,
-        script: card.observed.script,
-        metadataChoice: { mode: 'manual', selectionId: null },
-    };
-}
-
-export function manualIdentityEdits(): CompactReviewEdits {
-    return { metadataChoice: { mode: 'manual', selectionId: null } };
 }
 
 export function applyCompactEdits(

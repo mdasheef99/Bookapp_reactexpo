@@ -60,10 +60,10 @@ it.each([null, 'Latn'])('full fresh resume uses confirmed suggestion and coheren
 });
 it.each([null, 'Latn'])('compact fresh resume uses confirmed suggestion after expiry, script %s', script => {
   const choices = suggestion(true, script);
-  const edits = { quantity: 8, priceMinor: 0, shelfLocation: 'A2',
+  const edits = { quantity: 8, priceMinor: 100, shelfLocation: 'A2',
     notes: { publicNote: '', internalNote: 'latest note' } };
   const review = buildCompactReview(pickerCard(choices), pickerDefaults, edits, choices);
-  expect(review).toMatchObject({ script, quantity: 8, priceMinor: 0, shelfLocation: 'A2',
+  expect(review).toMatchObject({ script, quantity: 8, priceMinor: 100, shelfLocation: 'A2',
     notes: { ...edits.notes, publicNote: null }, metadataChoice: { mode: 'edition_option', selectionId: choices.selection.selectionId } });
 });
 it('does not adopt confirmation from a different card or stale metadata revision', () => {
@@ -77,7 +77,7 @@ it('does not adopt confirmation from a different card or stale metadata revision
   }
 });
 it('keeps an empty shelf edit invalid instead of substituting a default during resume', () => {
-  const choices = suggestion(true), card = pickerCard(choices), edits = { shelfLocation: '', priceMinor: 0 };
+  const choices = suggestion(true), card = pickerCard(choices), edits = { shelfLocation: '', priceMinor: 100 };
   expect(compactReviewDisplay(card, pickerDefaults, edits).location).toBe('');
   expect(buildCompactReview(card, pickerDefaults, edits, choices)).toBeNull();
 });

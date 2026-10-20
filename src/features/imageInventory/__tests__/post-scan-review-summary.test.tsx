@@ -2,7 +2,7 @@ import { render } from '@testing-library/react-native';
 import { PostScanReviewSummary } from '../components/post-scan-review-summary';
 
 describe('Phase 9 post-scan review summary', () => {
-    it('separates lifetime detection from the active cards shown below', () => {
+    it('header shows stage and counts only', () => {
         const screen = render(
             <PostScanReviewSummary
                 sessionStatus="active"
@@ -31,8 +31,10 @@ describe('Phase 9 post-scan review summary', () => {
         expect(screen.getByText('Need review')).toBeTruthy();
         expect(screen.getByText('1')).toBeTruthy();
         expect(screen.getByText('Added')).toBeTruthy();
-        expect(screen.getByText(/Detected is the session total/u)).toBeTruthy();
-        expect(screen.getByText('One image · Up to 15 books')).toBeTruthy();
+        expect(screen.queryByText(/Detected is the session total/u)).toBeNull();
+        expect(screen.queryByText(/Confirm each book, correct anything/u)).toBeNull();
+        expect(screen.getByText('Ready')).toBeTruthy();
+        expect(screen.queryByText('One image · Up to 15 books')).toBeNull();
         expect(screen.getByText('Front table')).toBeTruthy();
     });
 

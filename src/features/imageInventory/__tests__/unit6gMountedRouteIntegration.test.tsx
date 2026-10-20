@@ -13,9 +13,11 @@ import SessionRoute from '../../../../app/(store-owner)/inventory/scan/[sessionI
 // boundary, and screen layers all run as production code.
 
 const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn() };
+const mockNavigation = { addListener: jest.fn(() => jest.fn()), dispatch: jest.fn() };
 
 jest.mock('expo-router', () => ({
     useRouter: () => mockRouter,
+    useNavigation: () => mockNavigation,
     useLocalSearchParams: () => ({
         sessionId: '00000000-0000-4000-8000-000000000010',
     }),

@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useInventoryCommitCoordinator } from '../commit/useInventoryCommitCoordinator';
 import { CandidateReviewEditionSheet } from '../components/CandidateReviewEditionSheet';
 import { applyEditionSelection } from '../review/editionSelectionDraft';
-import { useCandidateLeaveGuard } from '../review/useCandidateLeaveGuard';
+import { useUnsavedEditsLeaveGuard } from '../review/useUnsavedEditsLeaveGuard';
+import { OwnerConfirmationDialog } from '../components/OwnerConfirmationDialog';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
@@ -146,7 +147,15 @@ export function CandidateReview({
         hasAuthoritativeData: Boolean(candidateQuery.data && sessionQuery.data && !candidateQuery.error && !sessionQuery.error),
         currentAuthorityVerified: candidateQuery.isFetchedAfterMount && sessionQuery.isFetchedAfterMount,
     });
-    useCandidateLeaveGuard(dirty, mutation.isPending || selectionPending);
+    const leaveGuard = useUnsavedEditsLeaveGuard(dirty, mutation.isPending || selectionPending, {
+        title: 'Leave without saving?', description: 'Your unsaved review edits exist only on this screen.',
+        discardLabel: 'Leave unsaved', busyTitle: 'Save in progress',
+        busyDescription: 'Wait for the review save to finish before leaving.',
+    });
+    const withLeaveDialog = (screen: ReactNode) => <>
+        {screen}
+        <OwnerConfirmationDialog {...leaveGuard} />
+    </>;
 
     const applyCanonical = (canonical: OwnerCandidateDetail) => {
         if (!sessionQuery.data) return;
@@ -237,11 +246,11 @@ export function CandidateReview({
     const queryError = candidateQuery.error ?? sessionQuery.error;
     const unavailable = queryError instanceof OwnerUxClientError
         && inaccessibleCodes.has(queryError.code);
-    if (loading) return <CandidateReviewState title="Book review" body="Loading private candidate…" loading />;
-    if (unavailable) return <CandidateReviewState title="Book unavailable" body="This private candidate is unavailable." />;
-    if (queryError) return <CandidateReviewState title="Book review" body="Candidate details could not be loaded." retry={() => { void candidateQuery.refetch(); void sessionQuery.refetch(); }} />;
-    if (!detail) return <CandidateReviewState title="Book unavailable" body="This private candidate is unavailable." />;
-    if (!draft || !sessionQuery.data || !build) return <CandidateReviewState title="Book review" body="Preparing the review form…" loading />;
+    if (loading) return withLeaveDialog(<CandidateReviewState title="Book review" body="Loading private candidate…" loading />);
+    if (unavailable) return withLeaveDialog(<CandidateReviewState title="Book unavailable" body="This private candidate is unavailable." />);
+    if (queryError) return withLeaveDialog(<CandidateReviewState title="Book review" body="Candidate details could not be loaded." retry={() => { void candidateQuery.refetch(); void sessionQuery.refetch(); }} />);
+    if (!detail) return withLeaveDialog(<CandidateReviewState title="Book unavailable" body="This private candidate is unavailable." />);
+    if (!draft || !sessionQuery.data || !build) return withLeaveDialog(<CandidateReviewState title="Book review" body="Preparing the review form…" loading />);
     const reviewable = detail.allowedActions.includes('save_review')
         && ['ready', 'needs_review', 'possible_duplicate'].includes(detail.candidateState);
     const disabled = selectionPending || detail.metadata.revision < editionFence || mutation.isPending
@@ -260,7 +269,7 @@ export function CandidateReview({
             createReviewDraft(currentConflict.latest, sessionQuery.data.defaults, editionChoices.data),
         ));
     };
-    return (
+    return withLeaveDialog(
         <ScreenBackground>
             <ScrollView
                 contentInsetAdjustmentBehavior="automatic"

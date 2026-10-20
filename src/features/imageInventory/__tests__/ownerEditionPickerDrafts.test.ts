@@ -66,8 +66,8 @@ it('rebases compact selection onto latest edits without losing zero false empty 
 });
 it('compact builder preserves supplied null script and unsaved notes', () => {
   const card = pickerCard(selectedChoices({ reviewVersion: 1 }), pickerReview);
-  expect(buildCompactReview(card, pickerDefaults, { script: null, notes: { publicNote: '', internalNote: 'unsaved' } }))
-    .toMatchObject({ script: null, notes: { publicNote: null, internalNote: 'unsaved' }, priceMinor: 0 });
+  expect(buildCompactReview(card, pickerDefaults, { script: null, priceMinor: 100, notes: { publicNote: '', internalNote: 'unsaved' } }))
+    .toMatchObject({ script: null, notes: { publicNote: null, internalNote: 'unsaved' }, priceMinor: 100 });
 });
 it('initial full draft may resume an unambiguous option before any selling review exists', () => {
   const choices = selectedChoices();
@@ -81,7 +81,7 @@ it('legacy strong selected and manual payloads remain compatible', () => {
 });
 it('initial compact review can resume an unambiguous saved option before the first review', () => {
   const choices = selectedChoices();
-  const result = buildCompactReview(pickerCard(choices), pickerDefaults, {}, choices);
+  const result = buildCompactReview(pickerCard(choices), { ...pickerDefaults, priceMinor: 100 }, {}, choices);
   expect(result).toMatchObject({ metadataChoice: { mode: 'edition_option', selectionId: testUuid(30) } });
   expect(choices.reviewVersion).toBeNull();
 });
@@ -97,7 +97,7 @@ it.each([null, 'Latn'])('compact resume takes selected script %s rather than obs
   choices.selection!.snapshot = { ...choices.selection!.snapshot, script };
   const card = pickerCard(choices);
   card.observed = { ...card.observed, script: 'Deva' };
-  const review = buildCompactReview(card, pickerDefaults, {}, choices);
+  const review = buildCompactReview(card, { ...pickerDefaults, priceMinor: 100 }, {}, choices);
   expect(review).toMatchObject({ script, metadataChoice: { mode: 'edition_option' } });
 });
 it('full resume retains a saved null script instead of borrowing observed script', () => {
