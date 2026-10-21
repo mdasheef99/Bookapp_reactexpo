@@ -586,3 +586,5 @@ A follow-up also sweeps attempt folders dated more than 10 minutes in the future
 **Not verified:** a real Safari print; Android retention on a device (Jest only).
 
 **Database/storage mutations:** none.
+
+**Merge readiness (2026-10-22):** the fixes are committed as `5ed368b`. `origin/main` is still at the branch base `4a1daea`, so no sync was needed. **Full suite:** 432 suites / 5,519 tests pass; 1 suite and 4 tests are skipped, none added by this branch. `tsc --noEmit` 0; `lint:library` 0 errors. **Next exact action:** the owner decides on merging `sdd08/export` into `main`, and on any push.
