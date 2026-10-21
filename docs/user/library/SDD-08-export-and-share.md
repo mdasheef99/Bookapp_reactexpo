@@ -349,3 +349,84 @@ Shared components are untouched.
 **Not verified:** a real browser's print dialog and Save as PDF (print was stubbed); Firefox and Safari download behaviour; native (Unit 3); axe.
 **Database/storage mutations:** none. The only database contact was the read-only metadata check in §12.2.
 **Next exact action:** the owner approves the Unit 2 commit. Then Unit 3 (native delivery) starts, with `npx expo install expo-sharing expo-print react-native-view-shot` (approved under D08-04) and an Android dev-build check.
+
+### 12.4 Unit 3: native delivery (2026-10-21)
+
+**Status:** BUILT, REVIEWED, FIXED and VERIFIED, including an Android emulator check. **Uncommitted** on `sdd08/export`. Unit 2 is committed as `c4b7614`.
+
+**Installs** (approved under D08-04, run by the lead): `expo-print ~15.0.8` and `expo-sharing ~14.0.8`. `react-native-view-shot` waits for Unit 4.
+
+**Files.** Edited:
+- `src/features/books/export/deliver.ts`, which goes from the native stub to real delivery;
+- `deliver.web.ts`, additions only: `pdfNeedsPrintStep()` returns true, and a `deliverPdfFile` stub throws;
+- `useExportActions.ts`, for the native one-step PDF and the native feedback;
+- `fileName.ts`, for the byte cap;
+- `notesPrintHtml.ts`, for the `@page` margin;
+- `package.json` and `package-lock.json`.
+
+Tests: a new `deliver.native.test.ts`, plus added cases in `deliver.web.test.ts`, `useExportActions.test.tsx`, `fileName.test.ts` and `notesPrintHtml.test.ts`.
+
+**Design as built:**
+- **Delivery:** each delivery writes into its own `cacheDirectory/exports/<attemptId>/` and opens the system share sheet through `expo-sharing`, with the mime type, UTI and a dialog title. The file and its directory are deleted in `finally`, and a delete failure never masks the result.
+- **Availability:** `Sharing.isAvailableAsync()` false, or a null `cacheDirectory`, raises `ExportUnavailableError`. The user sees "Sharing isn't available on this device."
+- **Native PDF is one step:** `printToFileAsync`, then a move to the named file, then the share. It has no ready state or Print step. The render is capped at 60 s (`PDF_RENDER_TIMEOUT_MS`). A timeout shows "Couldn't export. Try again." and releases the single-flight lock, and a render that finishes late has its file deleted.
+- **Captions:** after a native share there is none. A dismissed share sheet is not an error. Web feedback is unchanged.
+- **File names:** the slug keeps the 60-code-point cap and is now also capped at 200 UTF-8 bytes on base+mark group boundaries, so a full name is at most 233 bytes. Existing ASCII, Latin, Devanagari and Kannada outputs are unchanged.
+- **Print HTML:** gains `@page { margin: 18mm; }`. It applies to native PDFs and to web print.
+
+**Built by:** Codex `gpt-6.1-sol` xhigh, in three runs: the build; fix round 1 (Luna F1 and F2); and fix round 2 (emulator findings G1 and G2). The lead changed fix round 1's byte budget from the briefed 150 to 200. At 150, existing Devanagari outputs would have changed, and 200 is still safe. The lead also replaced one old test that expected a 273-byte name (the defect itself) and rewrote the group-boundary test to use a mixed CJK+Devanagari title, so the byte cap really binds.
+
+**Review:** Codex `gpt-6-luna` max, read-only; only its own output file changed and all source hashes held. Verdict: PASS WITH FINDINGS.
+- Accepted F1 (MED): a fixed daily path could be overwritten or deleted while a share was still running, after an abort or unmount released the lock. Fixed with the per-attempt directory.
+- Accepted F2 (MED): 60 four-byte characters exceeded the 255-byte native file-name limit. Fixed with the 200-byte cap.
+- Rejected F3 (LOW): the manifest changes are the lead's approved installs, not builder scope.
+
+**Verification (lead):**
+- 78 suites / 1,542 tests PASS (`src/features/books`, `app/(tabs)/library`, `src/components/library`, `src/components/notes`, `eslint-rules`);
+- `tsc --noEmit` 0;
+- `lint:library` 0 errors, 118 warnings (unchanged).
+
+**Mutation checks** (each restored, hash-verified), with the number of tests each made fail:
+- no `isAvailableAsync` check: 3;
+- text temp not deleted: 8;
+- delete failure masks result: 7;
+- PDF not moved: 2;
+- no UTI: 3;
+- native uses print step: 1;
+- attempt directory not deleted: 10;
+- non-unique attempt: 20;
+- shared directory: 20;
+- no byte cap: 4;
+- group bytes undercount: 1;
+- no timeout reject: 4;
+- late file kept: 2;
+- timer not cleared on success: 1;
+- no page margin: 1.
+
+**Android emulator check** ([evidence](./evidence/sdd08-u3-native-2026-10-21/README.md)): run by a Sonnet subagent and re-checked by the lead. Setup:
+- a fresh API 36 x86_64 AVD and debug dev client `com.bookconnect.library.dev`;
+- built with `:app:assembleDebug --offline`; APK SHA-256 `8d4ca6d8…8de1d`;
+- local Metro on 8084, the dev-auth bypass, a placeholder `.env` (deleted), and Wi-Fi and data off;
+- a temporary diagnostic route (removed) that called the real builders and `deliverTextFile`/`deliverPdfFile` with fixture data.
+
+Results:
+- **Hermes:** file names for English, Latin-accented, Hindi, Kannada and 61 × `𠮷` titles, and the `Asia/Kolkata` date, are identical to a Node reference. The date is `2026-10-04` and the CJK slug is 50 characters. Hermes `Intl` `timeZone` and `\p{…}` regexes work.
+- **CSV:** the share sheet opened (Quick Share, Drive, Gmail). A copy taken while the sheet was open has the BOM `EF BB BF` and 3 CRLF with no bare LF; the lead re-checked the bytes. The formula title is prefixed with `'`, and Hindi and Kannada are intact. It resolved `shared`, and the attempt directory was gone afterwards.
+- **Markdown:** UTF-8, with Hindi and Kannada intact and the Quote prefixed with `>`. It resolved `shared` and the directory was gone.
+- **PDF:** the share sheet offered Quick Share, Print, Drive, Messages and Bluetooth. The lead viewed page 1: Devanagari and Kannada render as real script in Noto fonts, not tofu. The system Print target, which needs no sign-in, displayed the shared PDF.
+- **Defect found (G1):** the first, cold PDF attempt hung. Logcat shows a WebView renderer crash, and `printToFileAsync` never settled. Fixed with the 60 s timeout above; the timeout was verified in Jest with fake timers, not on the device.
+- **Defect found (G2):** the margins were very tight. Fixed with `@page`; not re-rendered on the device.
+- **Two direct concurrent `deliverTextFile` calls:** the second share was rejected by Android ("Another share request is being processed now") and its directory was cleaned. That call bypassed the hook. In the app, the single-flight lock stops a second export, which is covered in Jest, so this is not a defect.
+
+**Not verified:**
+- the 60 s timeout and the `@page` margin on the device (JavaScript-only changes after the emulator run);
+- a completed share to a real target, and whether a slow-reading target can still read the file after cleanup (every target except Print needs sign-in, a network or a peer);
+- the real notes and library screens on native (the check used the route; entry rendering is covered by Jest);
+- iOS;
+- TalkBack.
+
+**Residual risk:** a render that never settles leaves its unknown `cache/Print` file to OS cache eviction. The emulator run left one empty attempt directory and one `cache/Print` file from the hung attempt, before the fix; that AVD's data was wiped.
+
+**Database/storage mutations:** none.
+
+**Next exact action:** the owner approves the Unit 3 commit on `sdd08/export` (no merge, no push). Then Unit 4, the passage card, with `react-native-view-shot` (D08-04), hidden on web (D08-11).

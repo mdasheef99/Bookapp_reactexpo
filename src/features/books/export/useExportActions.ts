@@ -5,12 +5,14 @@ import { buildLibraryCsv } from './libraryCsv';
 import { buildNotesMarkdown } from './notesMarkdown';
 import { buildNotesPrintHtml } from './notesPrintHtml';
 import { loadAllNotesForExport, loadBookNotesForExport, loadLibraryForExport } from './loaders';
-import { disposePreparedPdf, preparePdf, printPreparedPdf, deliverTextFile, exportDeliveryAvailable } from './deliver';
+import { disposePreparedPdf, preparePdf, printPreparedPdf, deliverTextFile, deliverPdfFile,
+  exportDeliveryAvailable, pdfNeedsPrintStep } from './deliver';
 import type { PreparedPdf } from './deliver';
 
 export type ExportFeedback = null | { kind: 'saved' | 'empty' | 'error'; message: string };
 export interface NotesExportChoice { format: 'markdown' | 'pdf'; scope: 'book' | 'all' }
 const SAVED: ExportFeedback = { kind: 'saved', message: 'Saved to your downloads.' };
+const fileFeedback = (result: 'saved' | 'shared'): ExportFeedback => result === 'saved' ? SAVED : null;
 
 // Shared across mounted entry points; there can be only one export in flight.
 let active: AbortController | null = null;
@@ -55,7 +57,8 @@ function useExportAction(actorId: string | null | undefined, context: string) {
     } catch (error) {
       if (!controller.signal.aborted && currentContext.current === context &&
         !(error instanceof Error && error.name === 'AbortError')) {
-        setFeedback({ kind: 'error', message: "Couldn't export. Try again." });
+        setFeedback({ kind: 'error', message: !pdfNeedsPrintStep() && error instanceof Error && error.name === 'ExportUnavailableError'
+          ? "Sharing isn't available on this device." : "Couldn't export. Try again." });
       }
     } finally {
       if (active === controller) setActive(null);
@@ -74,7 +77,7 @@ export function useLibraryCsvExport(actorId: string | null | undefined) {
     if (csv.rowCount === 0) return { kind: 'empty', message: 'Your library is empty.' };
     const result = await deliverTextFile({ fileName: buildFileName('library-csv', { kind: 'all' }, new Date()),
       mimeType: 'text/csv;charset=utf-8', text: csv.text });
-    return result === 'saved' ? SAVED : null;
+    return fileFeedback(result);
   });
   return { ...action, run };
 }
@@ -108,7 +111,12 @@ export function useNotesExport(actorId: string | null | undefined, userBookId: s
       if (!books.some(book => book.notes.length > 0)) return { kind: 'empty', message: 'No notes to export yet.' };
       const scope = choice.scope === 'all' ? { kind: 'all' } as const : { kind: 'book', title: books[0]?.title ?? null } as const;
       if (choice.format === 'pdf') {
-        const pdf = preparePdf({ fileName: buildFileName('notes-pdf', scope, new Date()), html: buildNotesPrintHtml(books) });
+        const file = { fileName: buildFileName('notes-pdf', scope, new Date()), html: buildNotesPrintHtml(books) };
+        if (!pdfNeedsPrintStep()) {
+          await deliverPdfFile(file);
+          return null;
+        }
+        const pdf = preparePdf(file);
         prepared.current = { pdf, printed: false };
         signal.addEventListener('abort', disposePdf, { once: true });
         setReady(true);
@@ -117,7 +125,7 @@ export function useNotesExport(actorId: string | null | undefined, userBookId: s
       }
       const result = await deliverTextFile({ fileName: buildFileName('notes-md', scope, new Date()),
         mimeType: 'text/markdown;charset=utf-8', text: buildNotesMarkdown(books) });
-      return result === 'saved' ? SAVED : null;
+      return fileFeedback(result);
     });
     return pdfReady && prepared.current !== null;
   };

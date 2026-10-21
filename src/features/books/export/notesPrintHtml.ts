@@ -25,6 +25,7 @@ export function buildNotesPrintHtml(books: ExportNotesBook[], options: ExportOpt
 <html lang="en">
 <head><meta charset="utf-8"><title>BookConnect notes</title>
 <style>
+@page { margin: 18mm; }
 body { color: #000; background: #fff; font-family: Georgia, "Times New Roman", serif; font-size: 12pt; line-height: 1.5; }
 h1 { font-size: 20pt; }
 h2 { font-size: 14pt; }

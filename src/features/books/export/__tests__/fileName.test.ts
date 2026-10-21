@@ -55,14 +55,34 @@ describe('buildFileName', () => {
     );
   });
 
-  it('counts supplementary CJK letters as one code point at the cap', () => {
+  it('caps supplementary CJK letters by UTF-8 bytes before the code-point cap', () => {
     expect(buildFileName('notes-md', { kind: 'book', title: '𠮷'.repeat(61) }, date, options)).toBe(
-      'bookconnect-notes-' + '𠮷'.repeat(60) + '-2026-10-03.md',
+      'bookconnect-notes-' + '𠮷'.repeat(50) + '-2026-10-03.md',
     );
   });
 
   it('uses the date in the injected zone without changing the input Date', () => {
     expect(buildFileName('library-csv', { kind: 'all' }, date, { timeZone: 'Asia/Kolkata' })).toBe('bookconnect-library-2026-10-04.csv');
     expect(date.toISOString()).toBe('2026-10-03T20:00:00.000Z');
+  });
+
+  it.each(['notes-md', 'notes-pdf'] as const)('caps a supplementary CJK slug at 200 UTF-8 bytes for %s', kind => {
+    const fileName = buildFileName(kind, { kind: 'book', title: '\u{20000}'.repeat(60) }, date, options);
+    const extension = kind === 'notes-md' ? 'md' : 'pdf';
+    const slug = fileName.slice('bookconnect-notes-'.length, -`-2026-10-03.${extension}`.length);
+    expect(slug).toBe('\u{20000}'.repeat(50));
+    expect(Buffer.byteLength(slug, 'utf8')).toBeLessThanOrEqual(200);
+    expect(Buffer.byteLength(fileName, 'utf8')).toBeLessThanOrEqual(255);
+    expect(Array.from(slug).length).toBeLessThanOrEqual(60);
+  });
+
+  it('keeps a Devanagari base with all its marks at the UTF-8 byte cap', () => {
+    // 196 bytes, then a 9-byte syllable: a split group would still fit its 3-byte base.
+    const prefix = '\u{20BB7}'.repeat(49);
+    const fileName = buildFileName('notes-md', {
+      kind: 'book', title: prefix + '\u0915\u093f\u0902'.repeat(5),
+    }, date, options);
+    expect(fileName).toBe('bookconnect-notes-' + prefix + '-2026-10-03.md');
+    expect(Buffer.byteLength(prefix, 'utf8')).toBe(196);
   });
 });

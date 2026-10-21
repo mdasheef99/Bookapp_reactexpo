@@ -6,6 +6,11 @@ const PRINT_CLEANUP_TIMEOUT_MS = 60_000;
 
 export function exportDeliveryAvailable(): boolean { return true; }
 
+export function pdfNeedsPrintStep(): boolean { return true; }
+export async function deliverPdfFile(_file: PdfDelivery): Promise<'shared'> {
+  throw new Error('Export is unavailable on this platform.');
+}
+
 export async function deliverTextFile({ fileName, mimeType, text }: TextFileDelivery): Promise<'saved'> {
   const url = URL.createObjectURL(new Blob([text], { type: mimeType }));
   let anchor: HTMLAnchorElement | undefined;

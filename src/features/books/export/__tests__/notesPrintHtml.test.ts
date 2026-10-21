@@ -21,6 +21,7 @@ describe('buildNotesPrintHtml', () => {
     const html = buildNotesPrintHtml([{ title: 'Book', authors: null, notes: [note] }], options);
     expect(html).toMatch(/^<!doctype html>/);
     expect(html).toContain('<meta charset="utf-8">');
+    expect(html).toContain('@page { margin: 18mm; }');
     expect(html).toMatch(/<style>[\s\S]*font-family:[^;]*serif;/);
     expect(html).toContain('font-size: 12pt');
     expect(html).toContain('color: #000');

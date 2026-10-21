@@ -1,7 +1,15 @@
-import { preparePdf, printPreparedPdf, disposePreparedPdf, deliverTextFile, exportDeliveryAvailable } from '../deliver.web';
+// Import web explicitly: Jest's default ../deliver resolves the native file.
+import { preparePdf, printPreparedPdf, disposePreparedPdf, deliverTextFile, exportDeliveryAvailable,
+  pdfNeedsPrintStep, deliverPdfFile } from '../deliver.web';
 import { preparePdf as nativePrepare, printPreparedPdf as nativePrint, disposePreparedPdf as nativeDispose,
   deliverTextFile as nativeText, ExportUnavailableError,
   exportDeliveryAvailable as nativeAvailable } from '../deliver';
+
+jest.mock('expo-file-system/legacy', () => ({ cacheDirectory: 'file:///cache/', EncodingType: { UTF8: 'utf8' },
+  makeDirectoryAsync: jest.fn().mockResolvedValue(undefined), writeAsStringAsync: jest.fn().mockResolvedValue(undefined),
+  deleteAsync: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn().mockResolvedValue(true), shareAsync: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('expo-print', () => ({ printToFileAsync: jest.fn() }));
 
 const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
 const originalBlob = Object.getOwnPropertyDescriptor(globalThis, 'Blob');
@@ -132,11 +140,17 @@ it.each(['window', 'document', 'print'])('cleans up a failed print (%s)', missin
   expect(jest.getTimerCount()).toBe(0);
 });
 
-it('keeps native exports unavailable until Unit 3', async () => {
-  expect(nativeAvailable()).toBe(false);
-  await expect(nativeText({ fileName: 'x', mimeType: 'text/plain', text: 'x' })).rejects.toBeInstanceOf(ExportUnavailableError);
+it('offers native file sharing while keeping the prepared-print API web-only', async () => {
+  expect(nativeAvailable()).toBe(true);
+  await expect(nativeText({ fileName: 'x.md', mimeType: 'text/markdown;charset=utf-8', text: 'x' })).resolves.toBe('shared');
   expect(() => nativePrepare({ fileName: 'x', html: 'x' })).toThrow(ExportUnavailableError);
   const prepared = { print: jest.fn(), dispose: jest.fn() };
   expect(() => nativePrint(prepared)).toThrow(ExportUnavailableError);
   expect(() => nativeDispose(prepared)).toThrow(ExportUnavailableError);
+});
+
+it('requires the existing web Print step and rejects the native one-step PDF API', async () => {
+  expect(pdfNeedsPrintStep()).toBe(true);
+  await expect(deliverPdfFile({ fileName: 'x.pdf', html: 'x' })).rejects.toThrow();
+  expect(documentMock.createElement).not.toHaveBeenCalled();
 });
