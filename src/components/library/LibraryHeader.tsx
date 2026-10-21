@@ -4,9 +4,13 @@ import { LIBRARY_TEXT } from './LibraryTypography';
 import { LIBRARY_RADIUS, LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } from './LibraryAppearance';
 import { CONTROL_DISABLED_OPACITY, CONTROL_FOCUS_RING } from './bookDetails/bookDetailsTokens';
 import { BookButton } from './ui';
+import { ExportButton } from './export';
 
 type LibraryHeaderProps = {
     onAdd?: () => void;
+    onExport?: () => void;
+    exportDisabled?: boolean;
+    exportBusy?: boolean;
     viewMode?: 'shelf' | 'list';
     onViewModeChange?: (mode: 'shelf' | 'list') => void;
     focusSelectedView?: boolean;
@@ -16,7 +20,7 @@ type LibraryHeaderProps = {
 
 const VIEW_MODES = ['shelf', 'list'] as const;
 
-export function LibraryHeader({ onAdd, viewMode = 'list', onViewModeChange, focusSelectedView = false, disabled = false, viewDisabled = disabled }: LibraryHeaderProps) {
+export function LibraryHeader({ onAdd, onExport, exportDisabled = false, exportBusy = false, viewMode = 'list', onViewModeChange, focusSelectedView = false, disabled = false, viewDisabled = disabled }: LibraryHeaderProps) {
     const colors = useLibraryAppearance();
     const refs = React.useRef<(View | null)[]>([]);
     const [focused, setFocused] = React.useState<number | null>(null);
@@ -59,6 +63,9 @@ export function LibraryHeader({ onAdd, viewMode = 'list', onViewModeChange, focu
                 })}
             </View>}
             {onAdd && <BookButton label="Add a book" variant="primary" onPress={onAdd} disabled={disabled} />}
+            {onExport && <ExportButton label={exportBusy ? 'Exporting…' : 'Export library'} accessibilityLabel="Export library as CSV"
+                variant="text" busy={exportBusy} disabled={exportDisabled || exportBusy}
+                onPress={() => { if (!exportDisabled && !exportBusy) onExport(); }} />}
         </View>
     </View>;
 }

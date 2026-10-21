@@ -158,3 +158,32 @@ describe('Library radio controls', () => {
         expect(onChange).not.toHaveBeenCalled(); expect(onAdd).not.toHaveBeenCalled();
     });
 });
+
+describe('Library CSV entry', () => {
+    it('is optional, names the export target and keeps the action row wrapping', () => {
+        const onExport = jest.fn();
+        const ui = render(<LibraryHeader onAdd={jest.fn()} />);
+        expect(ui.queryByRole('button', { name: 'Export library as CSV' })).toBeNull();
+        ui.rerender(<LibraryHeader onAdd={jest.fn()} onExport={onExport} />);
+        const button = ui.getByRole('button', { name: 'Export library as CSV' });
+        expect(ui.getByText('Export library')).toBeOnTheScreen();
+        expect(StyleSheet.flatten(button.props.style)).toMatchObject({ minHeight: MIN_TARGET, minWidth: MIN_TARGET, maxWidth: '100%' });
+        const row = ui.UNSAFE_getAllByType(View).find(node => StyleSheet.flatten(node.props.style)?.justifyContent === 'space-between')!;
+        expect(StyleSheet.flatten(row.props.style).flexWrap).toBe('wrap');
+        fireEvent.press(button); expect(onExport).toHaveBeenCalledTimes(1);
+        expect(ui.getByRole('button', { name: 'Add a book' })).toBeOnTheScreen();
+    });
+
+    it('disables export offline and exposes a busy state during export', () => {
+        const onExport = jest.fn();
+        const ui = render(<LibraryHeader onExport={onExport} exportDisabled />);
+        fireEvent.press(ui.getByRole('button', { name: 'Export library as CSV' }));
+        expect(onExport).not.toHaveBeenCalled();
+        expect(ui.getByRole('button', { name: 'Export library as CSV' })).toBeDisabled();
+        ui.rerender(<LibraryHeader onExport={onExport} exportBusy />);
+        const button = ui.getByRole('button', { name: 'Export library as CSV' });
+        expect(button).toBeDisabled(); expect(button.props.accessibilityState.busy).toBe(true);
+        expect(ui.getByText('Exporting…')).toBeOnTheScreen();
+        fireEvent.press(button); expect(onExport).not.toHaveBeenCalled();
+    });
+});

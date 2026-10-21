@@ -34,6 +34,7 @@ const STRICT_FILES = [
     'src/components/library/ConditionPicker.tsx',
     'src/components/library/RatingInput.tsx',
     'src/components/library/DeleteBookModal.tsx',
+    'src/components/library/export/ExportNotesDialog.tsx',
     'src/components/library/VaultPagesList.tsx',
     'src/components/library/bookDetails/BookCover.tsx',
     'src/components/library/bookDetails/ChoiceRadioGroup.tsx',

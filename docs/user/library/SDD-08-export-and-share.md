@@ -271,3 +271,81 @@ The confirmation review returned PASS with no new findings, and file hashes were
 **Not verified:** Hermes runtime behaviour of `Intl` `timeZone` and `\p{...}` regexes. These run under Jest (Node) only, and are checked on device in Unit 3.
 **Database/storage mutations:** none.
 **Next exact action:** the owner approves the Unit 1 commit. Then Unit 2 (web delivery, loaders, notes and CSV entry points) starts with a read-only live check of the D08-03 `reading_notes` RLS and columns.
+
+### 12.2 Unit 2 pre-build live check (2026-10-21, read-only, Supabase MCP)
+
+The project was verified as `https://ahntbtktjjmvfosgkmgn.supabase.co`. Only metadata was read: no row data or note contents.
+- `reading_notes`:
+  - RLS on;
+  - the authenticated SELECT policy is `library_note_select_owned_book`, requiring `user_id = auth.uid()` AND the `user_book_id` to belong to the caller;
+  - `authenticated` has SELECT; `anon` has none;
+  - columns as in §3 plus `version` (NOT NULL) and `last_operation_id`;
+  - `created_at` and `updated_at` are nullable.
+- `user_books`: SELECT `auth.uid() = user_id`. `books`: publicly readable.
+- **Deviation from D08-03's draft query shape:** `reading_notes` has two foreign keys to `user_books` (`reading_notes_user_book_id_fkey` and the composite `reading_notes_book_owner_fkey`), so the embed `user_books(book:books(...))` is ambiguous. Unit 2 instead pages `reading_notes` by `user_id` and joins titles and authors on the client from a paged `user_books` read. There is still no migration, and RLS is unchanged.
+- The PostgREST max-rows value is not exposed to SQL, so the loaders always page (§4.1).
+
+### 12.3 Unit 2: loaders, web delivery and entry points (2026-10-21)
+
+**Status:** BUILT, REVIEWED, FIXED and VERIFIED. **Uncommitted** on `sdd08/export`.
+
+**Files.** New:
+- `src/features/books/export/`: `loaders.ts`, `deliver.ts` (native stub), `deliver.web.ts`, `useExportActions.ts`, and their tests;
+- `src/components/library/export/`: `ExportNotesDialog.tsx`, `index.ts`, and a test.
+
+Edited:
+- `app/(tabs)/library/notes.tsx` (the "Export" entry);
+- `app/(tabs)/library/index.tsx` and `src/components/library/LibraryHeader.tsx` (the "Export library" entry);
+- `eslint-rules/book-section/config.js` and its config test (the dialog joins `STRICT_FILES`);
+- added cases in the existing `index`, `LibraryHomeControls` and `FlowBBuild1` tests (additions only; one import line was extended).
+
+Shared components are untouched.
+
+**Design as built:**
+- **Loaders:** every read is paged at 500 rows, with a stable order and a client re-filter. The all-notes export joins titles on the client (§12.2), and the per-book export pages `reading_notes` itself rather than reusing the unpaged gateway list.
+- **Web Markdown/CSV:** downloaded through a `Blob` and an `<a download>`; the URL is revoked after 30 s.
+- **Web PDF is two-step:** Export loads the data and prepares a hidden iframe. The dialog then shows "Your PDF is ready. Choose Print, then Save as PDF." with a single primary "Print", which calls `print()` synchronously from that press (§4.4). Busy covers only loading. The iframe is removed on `afterprint`, on a 60 s fallback after Print, and on Cancel, close or unmount.
+- **Native:** the entries are hidden on native until Unit 3 (`exportDeliveryAvailable()` is false).
+
+**Built by:** Codex `gpt-6.1-sol` xhigh, in three runs:
+1. the initial build;
+2. a fix for 7 new tests that failed under the lead's Jest run (a second hidden Modal from the feedback provider, native busy reported as `accessibilityState.busy`, and a missing provider in one test);
+3. the review fixes. This run ended with a model-capacity error before writing its report, so the lead verified each fix in the code.
+
+**Review:** Codex `gpt-6-luna` max, read-only (each review left the file hashes unchanged).
+- **Round 1, PASS WITH FINDINGS.** Accepted and fixed: F1 (URL revoked too early), F2/F3 (print outside the click; busy held until `afterprint`), F4 (per-book export unpaged), F5 (dialog name not on the dialog role). Rejected: F6 (the docs edit is the lead's §12.2 record) and F7 (an import-only change to a test).
+- **Confirmation round:** F1–F5 FIXED. One new LOW finding: Print was blocked by another screen's export. The lead fixed it by dropping that busy check, since a prepared PDF means this hook's load has finished.
+
+**Verification (lead):**
+- 77 suites / 1,490 tests PASS (`src/features/books`, `app/(tabs)/library`, `src/components/library`, `src/components/notes`, `eslint-rules`);
+- `tsc --noEmit` 0;
+- `lint:library` 0 errors, 118 warnings (unchanged).
+
+**Mutation checks** (each restored, hash-verified), with the number of tests each made fail:
+- one page only: 4;
+- no client re-filter: 2;
+- orphan notes kept: 1;
+- no URL revoke: 4;
+- offline allowed: 1;
+- concurrent exports: 1;
+- empty library exported: 2;
+- revoke synchronous: 3;
+- cancel keeps the iframe: 1;
+- per-book not filtered by book: 3;
+- no `afterprint` cleanup: 1;
+- print deferred: 1;
+- no ready state: 11.
+
+**Web check** (Haiku, Expo web on port 8086, placeholder `.env` deleted afterwards, every Supabase request answered by fixtures; [evidence](./evidence/sdd08-u2-export-2026-10-21/README.md)):
+- **CSV:** downloaded as `bookconnect-library-2026-10-21.csv`. Lead re-checked: it begins with the BOM `EF BB BF`, has CRLF and the header row, the formula title is written as `"'=Formula, ""Quoted"" Title"`, and the Devanagari title is intact. "Saved to your downloads." is shown.
+- **Markdown:** downloaded; Quote lines are prefixed `> `.
+- **PDF:** the ready state and Print appear; one stubbed `print()` call; the dialog closes; Cancel leaves no iframe.
+- **Dialog:** role and name, keyboard order and Escape all pass.
+- **Offline:** disabled with the caption, verified on `app.localhost`. `useNetworkStatus` deliberately exempts plain `localhost` previews, which is a harness note, not a defect.
+- **Layout:** 320 px and zoom 2 at 390 px give no horizontal scroll on the library home or the notes list.
+- **Network:** no writes to `reading_notes` or `user_books`. The only other host is the harness's cover fixture, answered locally.
+- **Placement note:** at 390 px "Export library" wraps onto its own row under "Add a book" as a quiet text button, rather than sitting beside it (the lead viewed `shot-01-library-home-390.png`). It is accepted, because the row is designed to wrap, but recorded against §4.6's "beside" wording.
+
+**Not verified:** a real browser's print dialog and Save as PDF (print was stubbed); Firefox and Safari download behaviour; native (Unit 3); axe.
+**Database/storage mutations:** none. The only database contact was the read-only metadata check in §12.2.
+**Next exact action:** the owner approves the Unit 2 commit. Then Unit 3 (native delivery) starts, with `npx expo install expo-sharing expo-print react-native-view-shot` (approved under D08-04) and an Android dev-build check.
