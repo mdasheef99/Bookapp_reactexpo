@@ -40,7 +40,7 @@
     "test:clubs:l4:f04": "node supabase/tests/clubs/clubsL4Runner.mjs f04",
     "test:clubs:l4:wave2": "node supabase/tests/clubs/clubsL4Runner.mjs wave2",
     "test:clubs:l4:rls": "node supabase/tests/clubs/clubsL4Runner.mjs rls",
-    "lint:library": "eslint \"app/(tabs)/library\" src/components/library src/components/notes src/features/books/notes",
+    "lint:library": "eslint \"app/(tabs)/library\" src/components/library src/components/notes src/features/books/notes src/features/books/export",
     "e2e:library-a11y": "playwright test -c playwright.library-a11y.config.ts"
   },
   "dependencies": {

@@ -1291,3 +1291,7 @@ Worktree `Bookconnect4_tabbar`, branch `sdd07/tab-bar-main` off `main` `4a1daea`
 - The SDD-07 web "Scan text" residual was already closed by D07-20 (Flow D). It was listed as open by mistake in conversation; no change needed.
 - Database/storage mutations: none. Nothing staged, committed or pushed.
 - **Next exact action:** the owner (1) approves the TB-2 commit and merge, and (2) answers SDD-08 decisions D08-01 to D08-11.
+
+## 2026-10-21 — SDD-08 approved; Unit 1 builders built and verified
+
+The owner accepted every D08-01 to D08-11 recommendation and authorized implementation ("yes"). Branch `sdd08/export` (worktree `Bookconnect4_sdd08`, from `main` `4a1daea`, with the SDD-08 doc commit cherry-picked). Unit 1, the pure CSV/Markdown/print-HTML/file-name builders, is built by Codex Sol and reviewed by Luna (FAIL with 6 findings, all fixed, then PASS). The lead verified: 136 export tests, 725 books and lint-rule tests, `tsc` 0, lint 0 errors, and 8/8 mutants killed. Record: [SDD-08 §12.1](./SDD-08-export-and-share.md#121-unit-1-pure-builders-2026-10-21). Database/storage mutations: none. Uncommitted. **Next exact action:** the owner approves the Unit 1 commit, then Unit 2.

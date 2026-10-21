@@ -1,6 +1,6 @@
 # SDD-08 — Library export and share
 
-**Status:** DRAFT, reviewed (Sonnet, §11) and corrected, awaiting owner decisions D08-01 to D08-11, 2026-10-21. Planning only. It authorizes no implementation, dependency install, migration or commit.
+**Status:** APPROVED 2026-10-21. The owner accepted every recommendation for D08-01 to D08-11 (§5) and authorized implementation in the D08-09 unit order. The owner's words, answering "answer them, or take all my recommendations … start from `main`": "yes". The D08-04 installs are therefore approved, to be done in Unit 3. Each commit still needs the owner's OK, and a merge or push to `main` needs its own explicit OK. Reviewed: Sonnet, §11. Built on branch `sdd08/export` in worktree `Bookconnect4_sdd08`, which starts from `main` `4a1daea`.
 **Parent:** [Library roadmap](./LIBRARY-ROADMAP.md) §1 (SDD-08 track) and [SDD-07](./SDD-07-book-section-ui-overhaul.md) §7 (reserved slots).
 **Owner scope decision (2026-10-21):** CSV is for **books only** (the library list). Notes are exported as **Markdown** (and in the PDF), not as CSV. This narrows the roadmap line "CSV export of the library … and of notes".
 **Supabase project:** `ahntbtktjjmvfosgkmgn`. This SDD needs **no migration** and no new table, function or policy. All exports read rows the signed-in user can already read.
@@ -146,7 +146,7 @@ Book Details gets **no** new overflow menu in SDD-08 (keeps DP-01: controls only
 - Privacy: exports contain private reviews and private notes, and leave the app only through an action the user starts. Nothing is uploaded or stored server-side. There are no analytics events. Native temporary files in the cache directory are deleted after the share or print promise settles.
 - Accessibility: 48dp targets, accessible names ("Export notes for {title}", "Share quote as image"), live-region feedback, keyboard operable on web.
 
-## 5. Decisions for the owner (recommendation first)
+## 5. Decisions (recommendation first; all recommendations ACCEPTED by the owner, 2026-10-21)
 
 | Id | Question | Recommendation | Alternative |
 |---|---|---|---|
@@ -235,3 +235,39 @@ No shared components (`src/components/search`, `src/components/ui`) change (libr
 - All-notes view and note search (SDD-10).
 - Reading history/stats in exports (SDD-09; columns can be added later).
 - Any server-side export, email or scheduled backup.
+
+## 12. Build record
+
+### 12.1 Unit 1: pure builders (2026-10-21)
+
+**Status:** BUILT, REVIEWED, FIXED and VERIFIED. **Uncommitted** on `sdd08/export` (`Bookconnect4_sdd08`).
+**Files:** new `src/features/books/export/`, containing `types.ts`, `dates.ts`, `libraryCsv.ts`, `notesMarkdown.ts`, `notesPrintHtml.ts`, `fileName.ts`, `index.ts` and 5 test files. Also `eslint.config.js` and the `package.json` `lint:library` script, which add the export folder to the book-section lint (§6). No loaders, delivery, UI or dependencies; those come in Units 2–4.
+**Built by:** Codex `gpt-6.1-sol` xhigh from `.spec/BRIEF-U1.md`. Its sandbox blocked Jest (`spawn EPERM`), so the lead ran all tests.
+**Review:** Codex `gpt-6-luna` max, read-only. Round 1 returned FAIL with 6 findings, all confirmed by the lead and fixed in one Sol round (`.spec/BRIEF-U1-FIX1.md`):
+1. the guard now covers the rendered Status/Ownership/Condition labels (an unknown raw value could start with `=`);
+2. the slug keeps non-Latin combining marks (Devanagari vowel signs, nukta) and strips accents only after ASCII letters, with a cap that keeps mark groups whole;
+3. a device-zone default test;
+4. New York DST cases;
+5. exact Markdown asserts;
+6. a shared `bookHeading` helper.
+
+The confirmation review returned PASS with no new findings, and file hashes were unchanged by the review.
+**Verification (lead):**
+- export tests: 5 suites / 136 tests PASS;
+- `src/features/books` plus the lint-rule/ratchet suites: 35 suites / 725 tests PASS;
+- `tsc --noEmit` 0 errors;
+- `lint:library` 0 errors, 118 warnings, with 0 warnings in the export folder.
+
+**Mutation checks** (each restored, hash-verified), with the number of tests each made fail:
+- `-` removed from the guard: 1;
+- BOM dropped: 22;
+- CRLF changed to LF: 34;
+- Quote blank line not `>`: 1;
+- Status label unguarded: 10;
+- Ownership label unguarded: 10;
+- slug drops marks: 6;
+- Latin accents kept: 2.
+
+**Not verified:** Hermes runtime behaviour of `Intl` `timeZone` and `\p{...}` regexes. These run under Jest (Node) only, and are checked on device in Unit 3.
+**Database/storage mutations:** none.
+**Next exact action:** the owner approves the Unit 1 commit. Then Unit 2 (web delivery, loaders, notes and CSV entry points) starts with a read-only live check of the D08-03 `reading_notes` RLS and columns.
