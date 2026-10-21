@@ -2,15 +2,15 @@
 
 **Status:** scope agreed by the owner on 2026-10-18; this file records it. Planning only — nothing here authorizes implementation, migration creation or migration application.
 **Date:** 2026-10-18
-**Worktree:** `Bookconnect4_library`, branch `codex/library-cover-shelf` (library feature only; clubs live in `Bookconnect4_expo`)
+**Worktree:** library work now lands on `main` via short branches from `main` (Flow D used worktree `Bookconnect4_flowd`); the `Bookconnect4_library` / `codex/library-cover-shelf` worktree is historical (library feature only; clubs live in `Bookconnect4_expo`)
 **Supabase project:** `ahntbtktjjmvfosgkmgn` (shared with clubs and marketplace — check every tracker before any migration)
-**Starting point:** SDD-01 to SDD-06 are done or superseded. Note saving was enabled and committed on 2026-10-18 (`1e4924a`, `52cac60`, not pushed). Native acceptance, the web `Alert` gap (W01) and the tab-bar contrast issue (RA-W01) are still open (see [TRACKER](./TRACKER.md)).
+**Starting point:** SDD-01 to SDD-06 are done or superseded. Library work, including note saving, has been on `main` since 2026-10-20 (`library_main_integrated`). Still open after SDD-07: native screen readers, devices, 200% text and iOS are not tested, and the tab-bar contrast issue (RA-W01) stays open under the tab-bar item (see [TRACKER](./TRACKER.md)).
 
 ## 1. Tracks
 
 | SDD | Track | Kind | Needs migration? | Status |
 |---|---|---|---|---|
-| [SDD-07](./SDD-07-book-section-ui-overhaul.md) | Book section UI/UX overhaul | Main track | No (UI only) | APPROVED 2026-10-18; [foundation plan](./SDD-07-FOUNDATION-PLAN.md) approved 2026-10-18; Flow A direction chosen (D07-09, A1 + A2 passages), DP-01 amended (D07-10); [FA-P1 prototype](./SDD-07-FLOW-A-PROTOTYPE.md) built; Flow A design FINALIZED 2026-10-18 (SDD-07 §10); foundation Wave 1 committed on `sdd07/fu1a-fu3` (not pushed); tab-bar unit [TB-1](./SDD-07-TAB-BAR-UNIT.md) (D07-01) built, reviewed and parked 2026-10-19 (uncommitted; "Marketplace" label decision and commit approval pending); next: Wave 2 (FU-1b, FU-1c) when the owner says go |
+| [SDD-07](./SDD-07-book-section-ui-overhaul.md) | Book section UI/UX overhaul | Main track | No (UI only) | Flows A (Book Details), B (notes), C (capture) and D (home/search) plus follow-ups built, reviewed, verified and merged to `main` (Flow D 2026-10-21 as `e252513`; follow-ups 2026-10-21 as `29fd8b8`; records: SDD-07 §10, §11, §12, §13 and §13.7); next: the owner decides on a fresh tab-bar unit from `main` (icons, theme colours, contrast, 200% zoom; [TB-1](./SDD-07-TAB-BAR-UNIT.md) is superseded on `main`) — see [SDD-07](./SDD-07-book-section-ui-overhaul.md) and [TRACKER](./TRACKER.md) |
 | SDD-08 | Export & share | Feature | No | Not started |
 | SDD-09 | Reading history | Feature | Yes (event storage early; goal storage later — shape decided in SDD-09) | Not started |
 | SDD-10 | Notes retrieval & organising | Feature | Yes (collections, shelves/tags) | Not started |
@@ -18,6 +18,8 @@
 ### SDD-07 — Book section UI/UX overhaul (main track)
 
 Redesign the six Library screens (home/shelf, search, Book Details, notes list, note reader, note composer with capture/crop/OCR) against one approved design approach, rules DP-01 to DP-07, a merged token set and shared state components. Delivered flow by flow (A Book Details → B notes → C capture → D home/search), each designed, approved, built and accepted. The designs reserve space for SDD-08/09/10 so those features land on the new screens without another redesign.
+
+Flows A→D are delivered and merged to `main` (see SDD-07 §10–§13.7).
 
 ### SDD-08 — Export & share
 
@@ -82,8 +84,8 @@ Engagement mechanics stay out (no streaks, badges or reminders) — see SDD-07 D
 | Roadmap scope | Owner | Recorded here 2026-10-18 |
 | SDD-07 draft | Owner | **Approved 2026-10-18** — foundation unit planning |
 | SDD-07 foundation plan | Owner | **Approved 2026-10-18** (with the 3 dev tools) — building foundation units, one at a time |
-| SDD-07 tab-bar unit TB-1 (D07-01) | Owner | **Approved 2026-10-18; built and reviewed, PARKED 2026-10-19** — waits for the "Marketplace" label decision and commit approval |
-| Each SDD-07 flow design | Owner | Building that flow (Flow A: direction chosen 2026-10-18; the FA-P1 prototype is reviewed before the real build) |
+| SDD-07 tab-bar unit TB-1 (D07-01) | Owner | **Approved 2026-10-18; built and parked 2026-10-19 on the old 9-tab layout.** Checked 2026-10-21: `main` already shows exactly five tabs (My Library, Exchange, Marketplace, Clubs, Profile), so its tab-count and label goal is met on `main` and the "Marketplace" label question is settled by `main`. Still open: tab icons, theme colours and label contrast (RA-W01), and a 200%-zoom check. The parked branch is not to be revived; a fresh small unit from `main` (app-wide, clubs heads-up) is the option (see [TB-1](./SDD-07-TAB-BAR-UNIT.md)) |
+| Each SDD-07 flow design | Owner | All four flow designs (A–D) finalized and built; Flows A–D merged to `main` |
 | Each flow build | Owner acceptance | The next flow's build; that flow's feature slots |
 | SDD-08 / 09 / 10 drafts | Owner | Their implementation |
 | Each migration file | Owner | Creating the file only |

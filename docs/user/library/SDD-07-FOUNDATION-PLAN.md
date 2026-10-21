@@ -7,7 +7,7 @@
 
 No migrations anywhere in this plan.
 **Parent:** [SDD-07](./SDD-07-book-section-ui-overhaul.md) §5 (foundation) and §9 (decisions D07-01–08).
-**Worktree:** `Bookconnect4_library`, branch `codex/library-cover-shelf`. Library paths only; never stage clubs or marketplace files.
+**Worktree:** `Bookconnect4_library`, branch `codex/library-cover-shelf` (historical; library work now lands on `main` via short branches — see the TRACKER). Library paths only; never stage clubs or marketplace files.
 
 ## 1. How units are run
 

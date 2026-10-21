@@ -1,6 +1,6 @@
 # SDD-07 Flow A — unit FA-P1: Book Details prototype
 
-**Status:** **FINALIZED 2026-10-18.** Built as the FA-P1 prototype in worktree `Bookconnect4_fu1a` (branch `sdd07/fu1a-fu3`, uncommitted), then reviewed and changed over rounds 2–4. The design was finalized under the owner's delegation (SDD-07 D07-11–D07-15).
+**Status:** **FINALIZED 2026-10-18.** Built as the FA-P1 prototype in worktree `Bookconnect4_fu1a` (branch `sdd07/fu1a-fu3`, uncommitted), then reviewed and changed over rounds 2–4. The design was finalized under the owner's delegation (SDD-07 D07-11–D07-15). The prototype code (`src/prototypes/flowA/**`, `app/(tabs)/library/dev-flow-a.tsx`) was deleted when the real Flow A build was committed; the real build is now on `main`. The design record is SDD-07 §10.
 
 **Changes from this spec** (§10 of SDD-07 is authoritative where the two differ):
 - the Remove copy (D07-14);

@@ -2,10 +2,9 @@
 
 **Router for consumer Library -> Exchange -> Clubs -> Profile**
 
-Worktrees: clubs lives on `feat/clubs-ui-overhaul` in `Bookconnect4_expo`, library on `feat/library-shelf-motion` in sibling worktree `Bookconnect4_library` — each session edits only its own tree.
+Worktrees: clubs lives on `feat/clubs-ui-overhaul` in `Bookconnect4_expo`, library now lands on `main` via short branches from `main`, and the `Bookconnect4_library` worktree is historical — each session edits only its own tree.
 
-- `library/` - `SDD-01-hardening` live 20260820, `SDD-02-notes` docs, `SDD-03-ocr-vault` live vault `user_book_pages` 800/4000 `20260820064258`+`20260821100001` OCR hybrid `en` deferred native, `TRACKER.md` SOT `ahntbtktjjmvfosgkmgn`
-- Next: `library/SDD-04-shelf` `getHighResCoverUrl` color + `viewMode` + `useTheme`
+- `library/` - [Library tracker](./library/TRACKER.md) owns current Library status and next action; SDD-01–06 are done or superseded; SDD-07 ([link](./library/SDD-07-book-section-ui-overhaul.md)) Flows A–D are merged to `main`
 - `clubs/` - `SDD-01-ui-overhaul` audit complete docs-only on `feat/clubs-ui-overhaul`, baseline Jest 18 suites/190 tests, P1-P5 phases pending approval, `TRACKER.md` SOT
 
 `CODEBASE_MAP/` is orientation only; update it as its README describes. `docs/multi-tenant-bookstore-marketplace` is marketplace SOT, not user.
