@@ -1,6 +1,6 @@
 // Import web explicitly: Jest's default ../deliver resolves the native file.
 import { preparePdf, printPreparedPdf, disposePreparedPdf, deliverTextFile, exportDeliveryAvailable,
-  pdfNeedsPrintStep, deliverPdfFile } from '../deliver.web';
+  pdfNeedsPrintStep, deliverPdfFile, deliverImageFile, ExportUnavailableError as WebExportUnavailableError } from '../deliver.web';
 import { preparePdf as nativePrepare, printPreparedPdf as nativePrint, disposePreparedPdf as nativeDispose,
   deliverTextFile as nativeText, ExportUnavailableError,
   exportDeliveryAvailable as nativeAvailable } from '../deliver';
@@ -12,6 +12,10 @@ jest.mock('expo-sharing', () => ({ isAvailableAsync: jest.fn().mockResolvedValue
 jest.mock('expo-print', () => ({ printToFileAsync: jest.fn() }));
 
 const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+
+it('rejects image delivery on web with ExportUnavailableError', async () => {
+  await expect(deliverImageFile({ fileName: 'quote.png', sourceUri: 'file:///capture.png' })).rejects.toBeInstanceOf(WebExportUnavailableError);
+});
 const originalBlob = Object.getOwnPropertyDescriptor(globalThis, 'Blob');
 const originalCreate = Object.getOwnPropertyDescriptor(URL, 'createObjectURL');
 const originalRevoke = Object.getOwnPropertyDescriptor(URL, 'revokeObjectURL');

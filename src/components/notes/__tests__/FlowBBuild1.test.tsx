@@ -1,6 +1,6 @@
 /** Flow B build B1: passage link, notes list states, note reader layout, NoteDialog spec. */
 import React from 'react';
-import { AccessibilityInfo, Clipboard, FlatList, ScrollView, StyleSheet } from 'react-native';
+import { AccessibilityInfo, Clipboard, FlatList, Platform, ScrollView, StyleSheet } from 'react-native';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import NotesScreen from '../../../../app/(tabs)/library/notes';
 import NoteReaderScreen from '../../../../app/(tabs)/library/note';
@@ -15,6 +15,9 @@ import type { ManualNote } from '@/features/books/notes/manualNoteContract';
 import type { NoteOperation } from '@/features/books/notes/noteSaveCoordinator';
 import { registerNoteContext } from '@/features/books/notes/noteNavigation';
 import type { ExportFeedback } from '@/features/books/export/useExportActions';
+import { PassageCardPreview } from '@/components/library/export/PassageCardPreview';
+
+jest.mock('@/features/books/export/captureCard', () => ({ captureCardPng: jest.fn(), releaseCardCapture: jest.fn() }));
 
 let mockParams: Record<string, string>;
 let mockOffline = false;
@@ -33,7 +36,7 @@ jest.mock('@/features/books/export/useExportActions', () => ({ useNotesExport: (
 }) }));
 let mockDeleteAuthorized = true;
 let mockBookError = false;
-let mockBookData: { id: string; title: string } | undefined;
+let mockBookData: { id: string; title: string; authors: string[] } | undefined;
 let mockCollection: ManualNote[] | undefined;
 let mockCollectionPending = false;
 let mockCollectionError = false;
@@ -96,7 +99,7 @@ beforeEach(() => {
   jest.useFakeTimers().setSystemTime(new Date('2026-10-20T12:00:00Z'));
   jest.clearAllMocks();
   mockOffline = false; mockDeleteAuthorized = true; mockBookError = false;
-  mockBookData = { id: 'book', title: 'Selected book' };
+  mockBookData = { id: 'book', title: 'Selected book', authors: [] };
   mockCollection = []; mockCollectionPending = false; mockCollectionError = false;
   mockRecord = undefined; mockRecordPending = false; mockRecordError = false;
   mockOperations = [];
@@ -238,6 +241,52 @@ describe('note reader layout', () => {
   beforeEach(() => {
     mockRecord = note();
     mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'collection', canBack: true }) };
+  });
+
+  it('shows the native quote entry offline and opens a preview using the saved content and first author', async () => {
+    mockOffline = true;
+    mockBookData = { id: 'book', title: 'Walden', authors: ['Thoreau', 'Second author'] };
+    render(<NoteReaderScreen />);
+    const entry = screen.getByRole('button', { name: 'Share quote as image' });
+    expect(screen.getByText('Share as image')).toBeOnTheScreen();
+    expect(entry).toBeEnabled();
+    fireEvent.press(entry);
+    expect(screen.getByRole('dialog', { name: 'Share quote as image' })).toBeOnTheScreen();
+    expect(screen.UNSAFE_getByType(PassageCardPreview).props).toMatchObject({
+      visible: true, quote: mockRecord!.content, title: 'Walden', author: 'Thoreau', page: 42,
+    });
+    fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog', { name: 'Share quote as image' })).toBeNull();
+    await flush();
+  });
+
+  it.each([null, 'reflect', 'distill', 'apply', 'question'] as const)('omits image sharing for category %s', async tag => {
+    mockRecord = note({ tag }); render(<NoteReaderScreen />);
+    expect(screen.queryByRole('button', { name: 'Share quote as image' })).toBeNull();
+    expect(screen.queryByText('Share as image')).toBeNull(); await flush();
+  });
+
+  it('hides the quote entry on web', async () => {
+    const original = Platform.OS; Platform.OS = 'web';
+    try {
+      render(<NoteReaderScreen />);
+      expect(screen.queryByRole('button', { name: 'Share quote as image' })).toBeNull();
+      expect(screen.queryByText('Share as image')).toBeNull(); await flush();
+    } finally { Platform.OS = original; }
+  });
+
+  it('omits absent author and page when opening the quote preview', async () => {
+    mockRecord = note({ page_number: null }); render(<NoteReaderScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'Share quote as image' }));
+    expect(screen.UNSAFE_getByType(PassageCardPreview).props).toMatchObject({ author: null, page: null });
+    await flush();
+  });
+
+  it('disables the image entry while deleting', async () => {
+    mockDelete.mockReturnValueOnce(new Promise(() => {})); render(<NoteReaderScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'Delete note' }));
+    fireEvent.press(screen.getAllByRole('button', { name: 'Delete note' }).slice(-1)[0]);
+    expect(screen.getByRole('button', { name: 'Share quote as image' })).toBeDisabled(); await flush();
   });
 
   it('has no Read title, shows caption book and meta, and keeps Delete as the trailing text button', async () => {

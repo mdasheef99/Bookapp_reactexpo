@@ -85,4 +85,11 @@ describe('buildFileName', () => {
     expect(fileName).toBe('bookconnect-notes-' + prefix + '-2026-10-03.md');
     expect(Buffer.byteLength(prefix, 'utf8')).toBe(196);
   });
+
+  it.each([
+    ['Crème Brûlée', 'creme-brulee'], ['क़िताब', 'क़िताब'], ['!!!', 'book'],
+    ['A'.repeat(80), 'a'.repeat(60)], ['𠮷'.repeat(61), '𠮷'.repeat(50)],
+  ])('names a quote PNG with the existing slug rules for %s', (title, slug) => {
+    expect(buildFileName('quote-png', { kind: 'book', title }, date, options)).toBe(`bookconnect-quote-${slug}-2026-10-03.png`);
+  });
 });

@@ -1,0 +1,3 @@
+cache/exports
+cache/exports/mvieh5uc-o02u0doa
+cache/exports/mvieh5uc-o02u0doa/bookconnect-quote-many-lines-2026-10-21.png

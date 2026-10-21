@@ -2,7 +2,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as Print from 'expo-print';
 // Explicit native implementation; web delivery is tested via ../deliver.web.
-import { deliverTextFile, deliverPdfFile, exportDeliveryAvailable, pdfNeedsPrintStep,
+import { deliverTextFile, deliverPdfFile, deliverImageFile, exportDeliveryAvailable, pdfNeedsPrintStep,
   ExportUnavailableError, preparePdf, printPreparedPdf, disposePreparedPdf, PDF_RENDER_TIMEOUT_MS } from '../deliver';
 
 let mockCacheDirectory: string | null = 'file:///cache/';
@@ -36,6 +36,48 @@ afterEach(() => { jest.restoreAllMocks(); });
 function expectCleanup(...uris: string[]) {
   expect(fs.deleteAsync.mock.calls).toEqual(uris.map(uri => [uri, { idempotent: true }]));
 }
+
+describe('image delivery', () => {
+  const image = { fileName: 'quote-walden.png', sourceUri: 'file:///cache/captured.png' };
+  const uri = `${attemptDirectory}${image.fileName}`;
+  it('moves the capture into an attempt directory, shares PNG, then cleans all three paths', async () => {
+    await expect(deliverImageFile(image)).resolves.toBe('shared');
+    expect(sharing.isAvailableAsync).toHaveBeenCalledTimes(1);
+    expect(fs.makeDirectoryAsync).toHaveBeenCalledWith(attemptDirectory, { intermediates: true });
+    expect(fs.moveAsync).toHaveBeenCalledWith({ from: image.sourceUri, to: uri });
+    expect(sharing.shareAsync).toHaveBeenCalledWith(uri, { mimeType: 'image/png', dialogTitle: image.fileName, UTI: 'public.png' });
+    expect(fs.moveAsync.mock.invocationCallOrder[0]).toBeLessThan(sharing.shareAsync.mock.invocationCallOrder[0]);
+    expect(sharing.shareAsync.mock.invocationCallOrder[0]).toBeLessThan(fs.deleteAsync.mock.invocationCallOrder[0]);
+    expectCleanup(uri, image.sourceUri, attemptDirectory);
+  });
+  it.each([false, true])('cleans all paths and preserves a share error (cleanup fails=%s)', async deleteFails => {
+    const error = new Error('share failed');
+    sharing.shareAsync.mockRejectedValueOnce(error);
+    if (deleteFails) fs.deleteAsync.mockRejectedValue(new Error('cleanup failed'));
+    await expect(deliverImageFile(image)).rejects.toBe(error);
+    expectCleanup(uri, image.sourceUri, attemptDirectory);
+  });
+  it.each([uri, image.sourceUri, attemptDirectory])('preserves success and attempts every deletion when %s fails', async failedUri => {
+    fs.deleteAsync.mockImplementation(async path => { if (path === failedUri) throw new Error('cleanup failed'); });
+    await expect(deliverImageFile(image)).resolves.toBe('shared');
+    expectCleanup(uri, image.sourceUri, attemptDirectory);
+  });
+  it.each(['unavailable', 'no cache', 'check throws'] as const)('cleans the captured file when sharing is %s', async reason => {
+    if (reason === 'unavailable') sharing.isAvailableAsync.mockResolvedValue(false);
+    if (reason === 'no cache') mockCacheDirectory = null;
+    const error = new Error('availability failed');
+    if (reason === 'check throws') sharing.isAvailableAsync.mockRejectedValue(error);
+    await expect(deliverImageFile(image)).rejects.toBeInstanceOf(reason === 'check throws' ? Error : ExportUnavailableError);
+    expect(fs.moveAsync).not.toHaveBeenCalled(); expect(sharing.shareAsync).not.toHaveBeenCalled();
+    expectCleanup(image.sourceUri);
+  });
+  it('cleans up a failed move without sharing', async () => {
+    const error = new Error('move failed'); fs.moveAsync.mockRejectedValueOnce(error);
+    await expect(deliverImageFile(image)).rejects.toBe(error);
+    expect(sharing.shareAsync).not.toHaveBeenCalled();
+    expectCleanup(uri, image.sourceUri, attemptDirectory);
+  });
+});
 
 it('offers native exports without a separate Print step', () => {
   expect(exportDeliveryAvailable()).toBe(true);

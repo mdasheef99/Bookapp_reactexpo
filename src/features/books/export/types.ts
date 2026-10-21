@@ -38,5 +38,5 @@ export interface ExportNotesBook {
   notes: ExportNote[];
 }
 
-export type ExportFileKind = 'library-csv' | 'notes-md' | 'notes-pdf';
+export type ExportFileKind = 'library-csv' | 'notes-md' | 'notes-pdf' | 'quote-png';
 export type ExportScope = { kind: 'all' } | { kind: 'book'; title: string | null };

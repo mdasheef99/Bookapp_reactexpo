@@ -84,3 +84,19 @@ export async function deliverPdfFile({ fileName, html }: PdfDelivery): Promise<'
 export function preparePdf(_file: PdfDelivery): PreparedPdf { throw new ExportUnavailableError(); }
 export function printPreparedPdf(_prepared: PreparedPdf): void { throw new ExportUnavailableError(); }
 export function disposePreparedPdf(_prepared: PreparedPdf): void { throw new ExportUnavailableError(); }
+
+export async function deliverImageFile({ fileName, sourceUri }: { fileName: string; sourceUri: string }): Promise<'shared'> {
+  let directory: string | undefined;
+  let uri: string | undefined;
+  try {
+    directory = await createExportDirectory();
+    uri = `${directory}${fileName}`;
+    await FileSystem.moveAsync({ from: sourceUri, to: uri });
+    await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: fileName, UTI: 'public.png' });
+    return 'shared';
+  } finally {
+    if (uri) await deleteFile(uri);
+    await deleteFile(sourceUri);
+    if (directory) await deleteFile(directory);
+  }
+}

@@ -430,3 +430,122 @@ Results:
 **Database/storage mutations:** none.
 
 **Next exact action:** the owner approves the Unit 3 commit on `sdd08/export` (no merge, no push). Then Unit 4, the passage card, with `react-native-view-shot` (D08-04), hidden on web (D08-11).
+
+### 12.5 Unit 4: passage card (2026-10-21)
+
+**Status:** BUILT, REVIEWED, FIXED and VERIFIED, including an Android emulator check. **Uncommitted** on `sdd08/export`. Unit 3 is committed as `86be322`.
+
+**Install** (approved under D08-04, run by the lead): `react-native-view-shot 4.0.3`, the SDK 54 pin.
+
+**Files.** New:
+- `src/features/books/export/`: `passageCard.ts` (the layout guess and `truncateToVisible`), `captureCard.ts`, and `captureCard.web.ts`, a stub with no view-shot import;
+- `src/components/library/export/`: `PassageCard.tsx` and `PassageCardPreview.tsx`;
+- tests for each.
+
+Edited:
+- `deliver.ts` and `deliver.web.ts`: `deliverImageFile`;
+- `fileName.ts` and `types.ts`: the `quote-png` kind;
+- `manualNotesGateway.ts`: `book()` now also returns `authors`;
+- `app/(tabs)/library/note.tsx`: the entry;
+- the book-section lint config and its test (both components join `STRICT_FILES`);
+- `package.json` and `package-lock.json`;
+- the reader tests: the `authors: []` fixtures and the capture mock.
+
+**Design as built:**
+- **Entry:** "Share as image" (accessible name "Share quote as image") in the note reader, on native Quote notes only. It is hidden on web (D08-11) and enabled offline.
+- **Preview dialog:** "Share quote as image", with **Share image** as the primary and **Cancel**.
+- **Fit:**
+  - The card measures its own rendered lines (`onTextLayout`) on a hidden capture card.
+  - It steps the size down 26/36 → 22/31 → 18/26.
+  - At the floor it cuts at a word, adds "…", and measures again (at most 12 iterations).
+  - If no layout event arrives, it settles on the guess after 2 s.
+  - The caption "Shortened to fit the card." follows the fitted result.
+- **Capture:** the hidden card is `1080 / PixelRatio` dp wide, so the PNG is exactly 1080×1350 with no upscaling. The visible card shows the same fit.
+- **Share gating:** Share waits for the library fonts and the fit.
+- **Lifecycle:** Cancel, unmount, or a change of quote, author or page cancels an in-flight capture and releases it.
+- **Delivery:** through the Unit 3 per-attempt cache directory, as `image/png`. Every temp file, including the capture, is deleted on every path.
+- **Errors:** "Sharing isn't available on this device." / "Couldn't share. Try again." (new copy).
+- **Card content:**
+  - fixed daylight palette;
+  - the quote in EB Garamond;
+  - the title;
+  - `author · p. N`;
+  - a small "BookConnect" wordmark (D08-07);
+  - no user name.
+
+**Built by:** Codex `gpt-6.1-sol` xhigh, in three runs: the build, fix round 1 and fix round 2. The lead added two tests and one fix: refit on a meta change, and the `fitKey` effect that cancels an in-flight capture when the card inputs change.
+
+**Reviews:**
+- **Codex `gpt-6-luna` max, round 1: FAIL.** Accepted F1 (HIGH: the character-count fit clipped silently), F2 (MED: blurry upscaled capture) and F3 (MED: view-shot reachable from the web bundle). Rejected F4 (the lead's install).
+- **Luna confirmation: F1–F3 FIXED.** One new MED, a stale capture after the card inputs change, was fixed by the lead.
+- **From here on, reviews use opencode (owner, 2026-10-21).**
+  - The free models ran read-only in parallel, with the source hashes unchanged. GLM 5.3 flash and MiniMax 3.1 returned PASS WITH FINDINGS. DeepSeek v4.1 flash timed out without a verdict. Beam (trial) raised one false MED.
+  - Accepted and fixed in round 2:
+    - H1 (MED): no fallback if `onTextLayout` never fires;
+    - H2 (LOW): "……" at the cut;
+    - H3 (LOW): an old error kept after an input change;
+    - H4 (LOW): busy stuck after a successful share on a dialog that stays mounted.
+  - Not acted on: inflated Android line text (the retry corrects it), author de-duplication (only the first author is shown), an ellipsis when nothing was cut (unreachable in the loop), and an end-to-end preview test (covered by the card tests and the device check).
+- **GLM confirmation of round 2: PASS.**
+
+**Verification (lead):**
+- 83 suites / 1,663 tests PASS (`src/features/books`, `app/(tabs)/library`, `src/components/library`, `src/components/notes`, `eslint-rules`);
+- `tsc --noEmit` 0;
+- `lint:library` 0 errors, 118 warnings (unchanged).
+
+**Mutation checks** (each restored, hash-verified), with the number of tests each made fail:
+- **Build:**
+  - newline weight 1: 1;
+  - split groups: 3;
+  - no word-boundary cut: 2;
+  - step boundary moved: 2;
+  - source kept when unavailable: 10;
+  - late result shared after Cancel: 1;
+  - midnight palette: 1;
+  - button enabled before fonts: 1;
+  - shown on web: 1;
+  - disabled offline: 1.
+  - A redundant inner font guard behind the disabled button survived and is accepted as defence in depth.
+- **Fix round 1:**
+  - no step-down: 1;
+  - no iteration bound: 1;
+  - truncated not flagged: 4;
+  - fit not keyed: 1 (after a lead-added test);
+  - Share before the fit: 4;
+  - capture width fixed: 2;
+  - captures the visible card: 9;
+  - caption from the guess: 1;
+  - no input-change cancel: 1.
+- **Fix round 2:**
+  - no fit fallback: 4;
+  - double ellipsis: 1;
+  - stale error kept: 1;
+  - busy stuck after share: 1.
+
+**Android emulator check** ([evidence](./evidence/sdd08-u4-card-2026-10-21/README.md)): run by a Sonnet subagent and spot-checked by the lead.
+- **Setup:**
+  - a fresh API 36 x86_64 debug build (`--offline`; APK SHA-256 `6f9e7573…da97c`);
+  - manifests restored byte-identical after prebuild;
+  - local Metro, the dev-auth bypass, a placeholder `.env` (deleted), and Wi-Fi and data off;
+  - a temporary route inside the library stack (removed) that opened the real preview with six fixtures: short English, long English, Hindi, long Kannada, long CJK without spaces, and 20 short lines.
+- **Results:**
+  - Share became enabled for all six, so `onTextLayout` fires on the off-screen card.
+  - Every PNG is 1080×1350 and correctly named, including the Hindi, Kannada and CJK slugs.
+  - The text is sharp and nothing is clipped. The lead viewed the long Kannada card: real script, cut with `…”`, the title and footer clear.
+  - The "Shortened" caption appears exactly for the four PNGs that end in `…` (long English, Kannada, CJK, many lines). It is absent for short English and Hindi.
+  - The preview and PNG line breaks match.
+  - The attempt directory and the capture temp file are gone afterwards.
+  - Cancel during a capture closes cleanly, with no share sheet or error.
+- **Fonts:** Latin text uses EB Garamond. Devanagari, Kannada and CJK use the system script fonts, because EB Garamond has no glyphs for them.
+
+**Not verified:**
+- the 2 s fallback and the round-2 fixes on a device (JavaScript-only, after the emulator run);
+- an immediate reopen tap during the dismiss animation (a later reopen worked);
+- iOS;
+- TalkBack. A reviewer note says native `Modal` does not forward `role`/`accessibilityLabel`, which affects this dialog and the Unit 2 export dialog alike.
+
+**Residual (LOW, GLM):** Cancel during an in-flight delivery leaves `busy` set on a dialog that stays mounted. It is unreachable in the app, because the reader unmounts the preview on close.
+
+**Database/storage mutations:** none.
+
+**Next exact action:** the owner approves the Unit 4 commit on `sdd08/export` (no merge, no push). After that, SDD-08 has no build work left. Open done-criteria evidence: the library CSV opened in Google Sheets and Excel (owner action), and a real-browser web print. Then a decision on merging `sdd08/export` and `sdd07/tab-bar-main` to `main`.

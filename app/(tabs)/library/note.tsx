@@ -4,6 +4,7 @@ import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { NoteButton, NoteDialog, NoteDialogSpec, NoteLoading, NoteMessage, NoteScreen, ScrollView, ui } from '@/components/notes/ManualNoteUi';
 import { BookButton, BookOffline } from '@/components/library/ui';
+import { ExportButton, PassageCardPreview } from '@/components/library/export';
 import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import { bookNoteDate } from '@/components/library/bookDetails/NotePassages';
@@ -26,6 +27,7 @@ export default function NoteReaderScreen() {
   const deleteAuthorized = isManualNoteDeleteAuthorized();
   const [feedback, setFeedback] = useState(''); const [feedbackError, setFeedbackError] = useState(false);
   const [dialog, setDialog] = useState<NoteDialogSpec | null>(null); const [deleting, setDeleting] = useState(false);
+  const [passagePreview, setPassagePreview] = useState(false);
   const scroll = useRef<ScrollView>(null); const readingPosition = useRef(0);
   const back = () => returnFromNote(router, context, navigation);
   const editorContext = () => registerNoteContext({ ...context, canBack: true, readerReturn: true, readerKey: retainedReaderKey(navigation, bookId, noteId) });
@@ -58,6 +60,8 @@ export default function NoteReaderScreen() {
       {pending ? <><NoteMessage message="A previous save for this note is not confirmed. Check it before editing again." /><NoteButton label="Open pending submission" secondary onPress={() => router.push(composeHref(bookId, editorContext(), noteId, pending.submission.id))} /></>
         : <><NoteButton label="Edit note" disabled={isOffline || deleting} onPress={() => router.push(composeHref(bookId, editorContext(), noteId))} /></>}
       <BookButton label="Copy text" variant="text" disabled={deleting} onPress={() => { void copy(); }} />
+      {Platform.OS !== 'web' && query.data.tag === 'quote' && <ExportButton label="Share as image" variant="text"
+        accessibilityLabel="Share quote as image" disabled={deleting} onPress={() => setPassagePreview(true)} />}
     </> : undefined}>
     {unavailable ? <View style={ui.content}><NoteMessage message="This note is missing or couldn't be opened." error /><NoteButton label="Try again" onPress={() => { void book.refetch(); void query.refetch(); }} /></View>
       : book.isPending || query.isPending ? <NoteLoading /> : <ScrollView ref={scroll} contentContainerStyle={ui.content} onScroll={event => { readingPosition.current = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={100}
@@ -74,6 +78,8 @@ export default function NoteReaderScreen() {
         </View>
       </ScrollView>}
     <NoteDialog spec={dialog} confirmDisabled={isOffline} onKeep={() => setDialog(null)} />
+    {passagePreview && Platform.OS !== 'web' && query.data?.tag === 'quote' && book.data && <PassageCardPreview visible onClose={() => setPassagePreview(false)}
+      quote={query.data.content} title={book.data.title} author={book.data.authors[0] ?? null} page={query.data.page_number ?? null} />}
   </NoteScreen>;
 }
 

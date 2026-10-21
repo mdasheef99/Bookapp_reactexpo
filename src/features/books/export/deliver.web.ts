@@ -77,3 +77,14 @@ export function preparePdf({ fileName, html }: PdfDelivery): PreparedPdf {
 
 export function printPreparedPdf(prepared: PreparedPdf): void { prepared.print(); }
 export function disposePreparedPdf(prepared: PreparedPdf): void { prepared.dispose(); }
+
+export class ExportUnavailableError extends Error {
+  constructor() {
+    super('Export is unavailable on this platform.');
+    this.name = 'ExportUnavailableError';
+  }
+}
+
+export async function deliverImageFile(_file: { fileName: string; sourceUri: string }): Promise<'shared'> {
+  throw new ExportUnavailableError();
+}
