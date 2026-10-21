@@ -1,0 +1,1253 @@
+{
+  "requests": [
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/login",
+      "resourceType": "document",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable",
+      "resourceType": "script",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/otp",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/verify",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_500Medium.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_600SemiBold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_400Regular.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_700Bold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://covers.fixture.test/cover-1.jpg",
+      "resourceType": "image",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=reading_status%2Cownership%2Ccondition%2Crating%2Creview%2Creview_is_public%2Ccreated_at%2Ccompleted_at%2Cuser_id%2Cbook%3Abooks%28title%2Cauthors%2Cisbn_13%2Cisbn_10%2Cpublisher%2Cpublished_date%2Cpage_count%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc%2Cid.asc&offset=0&limit=500",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/login",
+      "resourceType": "document",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable",
+      "resourceType": "script",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/otp",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/verify",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_500Medium.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_600SemiBold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_400Regular.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_700Bold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://covers.fixture.test/cover-1.jpg",
+      "resourceType": "image",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_book_pages?select=*&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=page_number.asc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/rest/v1/rpc/get_public_book_reviews",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%2Cauthors%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=id%2Cuser_id%2Cuser_book_id%2Ccontent%2Ctag%2Cpage_number%2Ccreated_at%2Cupdated_at&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.asc%2Cid.asc&offset=0&limit=500",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/login",
+      "resourceType": "document",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable",
+      "resourceType": "script",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/otp",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/verify",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_500Medium.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_600SemiBold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_400Regular.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_700Bold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://covers.fixture.test/cover-1.jpg",
+      "resourceType": "image",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_book_pages?select=*&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=page_number.asc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/rest/v1/rpc/get_public_book_reviews",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%2Cauthors%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=id%2Cuser_id%2Cuser_book_id%2Ccontent%2Ctag%2Cpage_number%2Ccreated_at%2Cupdated_at&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.asc%2Cid.asc&offset=0&limit=500",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/login",
+      "resourceType": "document",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable",
+      "resourceType": "script",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/otp",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/verify",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_500Medium.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_600SemiBold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_400Regular.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_700Bold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://covers.fixture.test/cover-1.jpg",
+      "resourceType": "image",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_book_pages?select=*&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=page_number.asc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/rest/v1/rpc/get_public_book_reviews",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%2Cauthors%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=id%2Cuser_id%2Cuser_book_id%2Ccontent%2Ctag%2Cpage_number%2Ccreated_at%2Cupdated_at&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.asc%2Cid.asc&offset=0&limit=500",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/login",
+      "resourceType": "document",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable",
+      "resourceType": "script",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/otp",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/verify",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_500Medium.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_600SemiBold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_400Regular.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_700Bold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://covers.fixture.test/cover-1.jpg",
+      "resourceType": "image",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/login",
+      "resourceType": "document",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable",
+      "resourceType": "script",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/otp",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/verify",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_500Medium.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_600SemiBold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_400Regular.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_700Bold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://covers.fixture.test/cover-1.jpg",
+      "resourceType": "image",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_book_pages?select=*&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=page_number.asc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/rest/v1/rpc/get_public_book_reviews",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://app.localhost:8086/login",
+      "resourceType": "document",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://app.localhost:8086/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable",
+      "resourceType": "script",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://app.localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/otp",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/verify",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://app.localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_500Medium.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://app.localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_600SemiBold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://app.localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_400Regular.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://app.localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_700Bold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://covers.fixture.test/cover-1.jpg",
+      "resourceType": "image",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_book_pages?select=*&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=page_number.asc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/rest/v1/rpc/get_public_book_reviews",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://app.localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/login",
+      "resourceType": "document",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable",
+      "resourceType": "script",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/otp",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/verify",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_500Medium.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_600SemiBold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_400Regular.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_700Bold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://covers.fixture.test/cover-1.jpg",
+      "resourceType": "image",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_book_pages?select=*&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=page_number.asc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/rest/v1/rpc/get_public_book_reviews",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/library",
+      "resourceType": "document",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable",
+      "resourceType": "script",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_500Medium.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_600SemiBold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_400Regular.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_700Bold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://covers.fixture.test/cover-1.jpg",
+      "resourceType": "image",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/login",
+      "resourceType": "document",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable",
+      "resourceType": "script",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/otp",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/verify",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_500Medium.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_600SemiBold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_400Regular.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_700Bold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://covers.fixture.test/cover-1.jpg",
+      "resourceType": "image",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_book_pages?select=*&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=page_number.asc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/rest/v1/rpc/get_public_book_reviews",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/login",
+      "resourceType": "document",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/node_modules/expo-router/entry.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&unstable_transformProfile=hermes-stable",
+      "resourceType": "script",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/otp",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/auth/v1/verify",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_500Medium.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/EBGaramond_600SemiBold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_400Regular.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fassets%2Ffonts%2Flibrary/Manrope_700Bold.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_profiles?select=id&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&user_id=eq.11111111-1111-4111-8111-111111111111&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://covers.fixture.test/cover-1.jpg",
+      "resourceType": "image",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_book_pages?select=*&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=page_number.asc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=*%2Cbook%3Abooks%28*%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/reading_notes?select=*&user_id=eq.11111111-1111-4111-8111-111111111111&user_book_id=eq.aaaaaaaa-0000-4000-8000-000000000001&order=created_at.desc",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "POST",
+      "url": "https://placeholder.supabase.co/rest/v1/rpc/get_public_book_reviews",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "http://localhost:8086/assets/?unstable_path=.%2Fnode_modules%2F%40expo%2Fvector-icons%2Fbuild%2Fvendor%2Freact-native-vector-icons%2FFonts/Ionicons.ttf",
+      "resourceType": "font",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    },
+    {
+      "method": "GET",
+      "url": "https://placeholder.supabase.co/rest/v1/user_books?select=id%2Cuser_id%2Cbook%3Abooks%28title%29&id=eq.aaaaaaaa-0000-4000-8000-000000000001&user_id=eq.11111111-1111-4111-8111-111111111111",
+      "resourceType": "fetch",
+      "range": null
+    }
+  ],
+  "nonGetWrittenToFixture": []
+}

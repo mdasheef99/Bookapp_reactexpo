@@ -8,6 +8,7 @@ const BOOK_SECTION = [
     'src/components/library/**/*.{ts,tsx}',
     'src/components/notes/**/*.{ts,tsx}',
     'src/features/books/notes/**/*.{ts,tsx}',
+    'src/features/books/export/**/*.{ts,tsx}',
     'src/features/books/utils/searchErrorCopy.ts',
     'src/features/books/utils/searchPresentation.ts',
     'src/features/books/hooks/useSearchBookActions.ts',

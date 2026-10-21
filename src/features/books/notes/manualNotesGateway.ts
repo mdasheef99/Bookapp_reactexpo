@@ -36,15 +36,18 @@ function confirmsEdit(note: unknown, submission: Readonly<NoteSubmission>): note
     note.version === submission.expectedVersion! + 1 && note.last_operation_id === submission.id;
 }
 export const manualNotesGateway = {
-  async book(actorId: string, bookId: string, signal?: AbortSignal): Promise<{ id: string; title: string }> {
+  async book(actorId: string, bookId: string, signal?: AbortSignal): Promise<{ id: string; title: string; authors: string[] }> {
     currentActor(actorId);
-    let query = supabase.from('user_books').select('id,user_id,book:books(title)').eq('id', bookId).eq('user_id', actorId);
+    let query = supabase.from('user_books').select('id,user_id,book:books(title,authors)').eq('id', bookId).eq('user_id', actorId);
     if (signal) query = query.abortSignal(signal);
     const { data, error } = await query.maybeSingle(); currentActor(actorId);
     if (error) throwDatabaseError(error);
     if (!data || data.user_id !== actorId || data.id !== bookId) throw new Error('This book is unavailable.');
-    const related = data.book as unknown as { title: string } | { title: string }[] | null;
-    return { id: data.id, title: (Array.isArray(related) ? related[0]?.title : related?.title) ?? 'Selected book' };
+    const related = data.book as unknown as { title: string; authors?: unknown } | { title: string; authors?: unknown }[] | null;
+    const book = Array.isArray(related) ? related[0] : related;
+    const authors = Array.isArray(book?.authors)
+      ? book.authors.filter((author): author is string => typeof author === 'string').map(author => author.trim()).filter(Boolean) : [];
+    return { id: data.id, title: book?.title ?? 'Selected book', authors };
   },
   async list(actorId: string, bookId: string, signal?: AbortSignal): Promise<ManualNote[]> {
     await this.book(actorId, bookId, signal);

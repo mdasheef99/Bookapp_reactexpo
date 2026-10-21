@@ -31,6 +31,8 @@ import { BookButton } from '@/components/library/ui';
 import { COLUMN_MAX_WIDTH } from '@/components/library/bookDetails/bookDetailsTokens';
 import { classifyBookLoadError } from '@/components/library/bookDetails/classifyBookLoadError';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { exportDeliveryAvailable } from '@/features/books/export/deliver';
+import { useLibraryCsvExport } from '@/features/books/export/useExportActions';
 
 const LIBRARY_VIEW_MODE_KEY = 'library_viewMode';
 export type LibraryViewMode = 'shelf' | 'list';
@@ -49,6 +51,7 @@ function LibraryHome() {
     const { session } = useAuth();
     const colors = useLibraryAppearance();
     const { isOffline } = useNetworkStatus();
+    const csvExport = useLibraryCsvExport(session?.user?.id);
     const [activeFilter, setActiveFilter] = useState<LibraryFilter>('all');
     const [viewMode, setViewMode] = useState<LibraryViewMode>('list');
     const [shelfStyle, setShelfStyle] = useState<LibraryShelfStyle>('vertical');
@@ -100,16 +103,31 @@ function LibraryHome() {
     const wishlistCount = filterChips.find((chip) => chip.key === 'wishlist')?.count ?? 0;
     const openSearch = () => router.push('/(tabs)/library/search');
     const openBook = (item: LibraryBookEntry) => router.push(`/(tabs)/library/${item.id}`);
+    const exportProps = exportDeliveryAvailable() ? {
+        onExport: () => { void csvExport.run(); }, exportDisabled: isOffline || arrangement.active, exportBusy: csvExport.busy,
+    } : {};
+    const exportCaption = <>
+        {exportDeliveryAvailable() && isOffline && <Text accessibilityLiveRegion="polite" aria-live="polite"
+            style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>Export needs a connection.</Text>}
+        {csvExport.feedback && <View style={styles.refreshNotice}>
+            <Text accessibilityLiveRegion="polite" aria-live="polite"
+                style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{csvExport.feedback.message}</Text>
+            {csvExport.feedback.kind === 'error' && <BookButton label="Try again" variant="text" disabled={isOffline || csvExport.busy}
+                onPress={() => { void csvExport.run(); }} />}
+        </View>}
+    </>;
 
     if (isLoading) return <LibraryPageBackground><View style={styles.content}>
-        <LibraryHeader onAdd={openSearch} viewMode={viewMode} onViewModeChange={handleViewModeChange} viewDisabled />
+        <LibraryHeader onAdd={openSearch} viewMode={viewMode} onViewModeChange={handleViewModeChange} viewDisabled {...exportProps} />
+        {exportCaption}
         <LibraryLoadingState />
     </View></LibraryPageBackground>;
     if (isError && data === undefined) {
         return (
             <LibraryPageBackground>
                 <View style={styles.content}>
-                    <LibraryHeader viewMode={viewMode} onViewModeChange={handleViewModeChange} />
+                    <LibraryHeader viewMode={viewMode} onViewModeChange={handleViewModeChange} {...exportProps} />
+                    {exportCaption}
                     <LibraryErrorState kind={classifyBookLoadError(error, isOffline)} onRetry={refetch} />
                 </View>
             </LibraryPageBackground>
@@ -118,7 +136,8 @@ function LibraryHome() {
 
     const collectionHeader = (
         <View>
-            <LibraryHeader onAdd={openSearch} viewMode={viewMode} onViewModeChange={handleViewModeChange} focusSelectedView={focusSelectedView} disabled={arrangement.active} />
+            <LibraryHeader onAdd={openSearch} viewMode={viewMode} onViewModeChange={handleViewModeChange} focusSelectedView={focusSelectedView} disabled={arrangement.active} {...exportProps} />
+            {exportCaption}
             <View testID="library-collection-controls">
                 <LibraryFilterBar chips={filterChips} activeFilter={activeFilter} onChange={setActiveFilter} disabled={arrangement.active} />
                 <LibrarySummary count={filteredBooks.length} />

@@ -1,0 +1,162 @@
+{
+  "verdicts": [
+    {
+      "id": "E1-button",
+      "check": "Export library as CSV button visible beside Add a book",
+      "pass": false,
+      "measured": "add={\"x\":247.671875,\"y\":65,\"width\":118.328125,\"height\":48} export={\"x\":24,\"y\":126,\"width\":133.03125,\"height\":48}"
+    },
+    {
+      "id": "E1-filename",
+      "check": "Suggested filename matches bookconnect-library-YYYY-MM-DD.csv",
+      "pass": true,
+      "measured": "bookconnect-library-2026-10-21.csv"
+    },
+    {
+      "id": "E1-csv",
+      "check": "CSV: BOM, CRLF only, header, formula cell quoted with leading apostrophe, Devanagari intact",
+      "pass": true,
+      "measured": "bom=true; crlfOnly=true; header=Title,Authors,ISBN-13,ISBN-10,Publisher,Published date,Pages,Status,Ownership,Co; formulaCell=true; devanagari=true; first3=[\"Title,Authors,ISBN-13,ISBN-10,Publisher,Published date,Pages,Status,Ownership,Condition,Rating,Review,Review visibility,Date added,Date finished\",\"\\\"'=Formula, \\\"\\\"Quoted\\\"\\\" Title\\\",Ada Cover,,,Fixture Pub,2020,320,Reading,Owned,Good,4,,,2026-10-01,\",\"किताब की दुनिया,Ravi Fixture,,,Fixture Pub,2021,210,Want to read,Wishlist,,,,,2026-09-30,\"]"
+    },
+    {
+      "id": "E1-caption",
+      "check": "Caption \"Saved to your downloads.\" visible after download",
+      "pass": true,
+      "measured": "visible"
+    },
+    {
+      "id": "E2-open",
+      "check": "Notes list opened for the first book; Export button visible",
+      "pass": true,
+      "measured": "Export"
+    },
+    {
+      "id": "E2-dialog-shape",
+      "check": "Dialog role=dialog named Export notes; radiogroups Format and Scope; privacy line; Export and Cancel",
+      "pass": true,
+      "measured": "radiogroups=[\"Format\",\"Scope\"]; privacyLine=1; export=1; cancel=1"
+    },
+    {
+      "id": "E2-choose",
+      "check": "Choose Markdown file and This book",
+      "pass": true,
+      "measured": "checked=[\"Markdown file\",\"This book\"]"
+    },
+    {
+      "id": "E2-filename",
+      "check": "Suggested filename matches bookconnect-notes-…-YYYY-MM-DD.md",
+      "pass": true,
+      "measured": "bookconnect-notes-formula-quoted-title-2026-10-21.md"
+    },
+    {
+      "id": "E2-quote",
+      "check": "Quote lines start with \"> \"",
+      "pass": true,
+      "measured": "[\"> First line of the quote\",\"> Second line of the quote\"]"
+    },
+    {
+      "id": "E2-caption",
+      "check": "Caption \"Saved to your downloads.\" appears",
+      "pass": true,
+      "measured": "visible"
+    },
+    {
+      "id": "E3-ready",
+      "check": "Ready text and primary Print button shown",
+      "pass": true,
+      "measured": "printVisible=true; iframesBeforePrint=1"
+    },
+    {
+      "id": "E3-print",
+      "check": "One print call, dialog closed, no error caption",
+      "pass": true,
+      "measured": "printCalls=1; dialogClosed=true; errorCaptions=0; iframesBeforePrint=1; iframesAfterPrint=0; afterprint: no iframe present -> iframes=0"
+    },
+    {
+      "id": "E4-ready",
+      "check": "PDF ready state reached (iframe present before cancel, informational)",
+      "pass": true,
+      "measured": "iframesBeforeCancel=1"
+    },
+    {
+      "id": "E4-cancel",
+      "check": "Cancel removes all iframes from the DOM",
+      "pass": true,
+      "measured": "iframesAfterCancel=0; dialogClosed=true"
+    },
+    {
+      "id": "E5-notes-localhost",
+      "check": "Offline (http://localhost:8086): notes Export button disabled and \"Export needs a connection.\" visible",
+      "pass": false,
+      "measured": "notesButton={\"disabled\":false,\"ariaDisabled\":null}; captions=0; navigatorOnLine=false"
+    },
+    {
+      "id": "E5-library-localhost",
+      "check": "Offline (http://localhost:8086): library CSV button disabled and \"Export needs a connection.\" visible",
+      "pass": false,
+      "measured": "libraryButton={\"disabled\":false,\"ariaDisabled\":null}; captions=0; path=/library"
+    },
+    {
+      "id": "E5-notes-app-localhost",
+      "check": "Offline (http://app.localhost:8086): notes Export button disabled and \"Export needs a connection.\" visible",
+      "pass": true,
+      "measured": "notesButton={\"disabled\":true,\"ariaDisabled\":\"true\"}; captions=2; navigatorOnLine=false"
+    },
+    {
+      "id": "E5-library-app-localhost",
+      "check": "Offline (http://app.localhost:8086): library CSV button disabled and \"Export needs a connection.\" visible",
+      "pass": true,
+      "measured": "libraryButton={\"disabled\":true,\"ariaDisabled\":\"true\"}; captions=1; path=/library"
+    },
+    {
+      "id": "E6-library-320",
+      "check": "Library home at 320: scrollWidth equals viewport, header controls within viewport",
+      "pass": true,
+      "measured": "scrollWidth=320; innerWidth=320; overflowing=[]"
+    },
+    {
+      "id": "E6-notes-320",
+      "check": "Notes list at 320: scrollWidth equals viewport, header controls within viewport",
+      "pass": true,
+      "measured": "scrollWidth=320; innerWidth=320; overflowing=[]"
+    },
+    {
+      "id": "E6-notes-zoom2",
+      "check": "Notes list at zoom 2 on 390: scrollWidth equals 390, controls within viewport",
+      "pass": true,
+      "measured": "scrollWidth=390; overflowing=[]"
+    },
+    {
+      "id": "E6-library-zoom2",
+      "check": "Library home at zoom 2 on 390: scrollWidth equals 390, controls within viewport",
+      "pass": true,
+      "measured": "scrollWidth=390; overflowing=[]"
+    },
+    {
+      "id": "E7-tab",
+      "check": "Tab/Shift+Tab reach the radios, Export and Cancel",
+      "pass": true,
+      "measured": "initial=button:Cancel; forward=radio:Markdown file[checked=true] > radio:This book[checked=true] > button:Export > button:Cancel > radio:Markdown file[checked=true] > radio:This book[checked=true]; backward=radio:Markdown file[checked=true] > button:Cancel > button:Export > radio:This book[checked=true] > radio:Markdown file[checked=true] > button:Cancel"
+    },
+    {
+      "id": "E7-escape",
+      "check": "Escape closes the dialog when not busy",
+      "pass": true,
+      "measured": "dialogClosedAfterEscape=true"
+    },
+    {
+      "id": "E8-hosts",
+      "check": "Every request goes to the placeholder host or localhost (fixture-only hosts listed)",
+      "pass": false,
+      "measured": "hosts=[\"localhost\",\"placeholder.supabase.co\",\"covers.fixture.test\",\"app.localhost\"]; outsideAllowed=[\"covers.fixture.test\"]; note: covers.fixture.test is fulfilled by the harness and never leaves the browser"
+    },
+    {
+      "id": "E8-writes",
+      "check": "No non-GET request to reading_notes or user_books",
+      "pass": true,
+      "measured": "nonGetToNotesOrBooks=0; all non-GET intercepted=[]"
+    }
+  ],
+  "extra": {},
+  "consoleErrors": []
+}

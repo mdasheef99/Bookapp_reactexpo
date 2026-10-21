@@ -17,6 +17,22 @@ beforeEach(() => {
   useAuthStore.setState({ session: { user: { id: 'actor' } } as any, status: 'authenticated' });
 });
 afterEach(() => useAuthStore.setState({ session: null, status: 'unauthenticated' }));
+
+it.each([
+  [{ title: 'Book', authors: [' Author One ', 'Author Two'] }, 'Book', ['Author One', 'Author Two']],
+  [{ title: 'Book', authors: null }, 'Book', []],
+  [{ title: 'Book' }, 'Book', []],
+  [{ title: 'Book', authors: 'Author' }, 'Book', []],
+  [{ title: 'Book', authors: ['', '   ', null, 3, ' Author '] }, 'Book', ['Author']],
+  [[{ title: 'Joined', authors: [' First ', 'Second'] }], 'Joined', ['First', 'Second']],
+  [null, 'Selected book', []], [[], 'Selected book', []],
+])('maps joined book authors from %j', async (related, title, authors) => {
+  const owner = chain({ data: { id: 'book', user_id: 'actor', book: related }, error: null });
+  (supabase.from as jest.Mock).mockReturnValueOnce(owner);
+  await expect(manualNotesGateway.book('actor', 'book')).resolves.toEqual({ id: 'book', title, authors });
+  expect(owner.select).toHaveBeenCalledWith('id,user_id,book:books(title,authors)');
+  expect(owner.eq.mock.calls).toEqual([['id', 'book'], ['user_id', 'actor']]);
+});
 it('enables the reviewed manual-note capabilities for the application', () => {
   expect(Object.isFrozen(MANUAL_NOTE_WRITE_GATES)).toBe(true);
   expect(MANUAL_NOTE_WRITE_GATES).toEqual({ ownedBookWrites: true, stableCreateReconciliation: true, optionalFiveCategories: true, serverManagedEditVersion: true });

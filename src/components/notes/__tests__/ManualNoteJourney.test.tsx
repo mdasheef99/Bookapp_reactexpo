@@ -20,6 +20,8 @@ import { booksService } from '@/features/books/services/booksService';
 import { bookReviewService } from '@/features/books/services/bookReviewService';
 import { supabase } from '@/lib/supabase';
 
+jest.mock('@/features/books/export/captureCard', () => ({ captureCardPng: jest.fn(), releaseCardCapture: jest.fn() }));
+
 // RN exports are lazy getters. Load the family's primitives during suite initialization,
 // so cold Babel/native-module compilation does not consume the first interaction's timeout.
 void [ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Pressable, RefreshControl, ScrollView, TextInput, View];
@@ -78,7 +80,7 @@ beforeEach(() => {
   jest.clearAllMocks(); client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } });
   useAuthStore.setState({ session: { user: { id: 'actor' } } as any, status: 'authenticated' }); noteRecord = { ...original };
   mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'book', canBack: true, readerReturn: true }) };
-  jest.spyOn(manualNotesGateway, 'book').mockResolvedValue({ id: 'book', title: 'Selected book' });
+  jest.spyOn(manualNotesGateway, 'book').mockResolvedValue({ id: 'book', title: 'Selected book', authors: [] });
   jest.spyOn(manualNotesGateway, 'record').mockImplementation(async () => noteRecord);
   jest.spyOn(manualNotesGateway, 'list').mockImplementation(async () => noteRecord ? [noteRecord] : []);
   (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValue([]);

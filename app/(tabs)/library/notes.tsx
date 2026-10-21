@@ -12,11 +12,23 @@ import { categoryLabel, NoteCategory, ManualNote, noteKeys } from '@/features/bo
 import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
 import { composeHref, openNoteComposer, openNoteReader, registerNoteContext, returnToBook } from '@/features/books/notes/noteNavigation';
 import { useNoteContext, useNoteOperations } from '@/features/books/notes/useManualNotes';
+import { ExportButton, ExportNotesDialog } from '@/components/library/export';
+import { exportDeliveryAvailable } from '@/features/books/export/deliver';
+import { NotesExportChoice, useNotesExport } from '@/features/books/export/useExportActions';
 
 export default function NotesScreen() {
   const { userBookId = '' } = useLocalSearchParams<{ userBookId: string }>();
   const router = useRouter(); const navigation = useNavigation(); const colors = useLibraryAppearance(); const { actorId, book } = useNoteContext(userBookId);
   const { isOffline } = useNetworkStatus();
+  const exports = useNotesExport(actorId, userBookId);
+  const [exportOpen, setExportOpen] = useState(false);
+  const lastExport = useRef<NotesExportChoice>({ format: 'markdown', scope: 'book' });
+  const exportNotes = async (choice: NotesExportChoice) => {
+    lastExport.current = choice;
+    const pdfReady = await exports.run(choice);
+    setExportOpen(pdfReady);
+  };
+  const closeExport = () => { exports.cancel(); setExportOpen(false); };
   const [filter, setFilter] = useState<NoteCategory | null>(null);
   const anchor = useRef(0); const list = useRef<FlatList<ManualNote>>(null);
   const operations = useNoteOperations(actorId, userBookId);
@@ -26,6 +38,17 @@ export default function NotesScreen() {
   const header = <View style={{ gap: LIBRARY_SPACING.sm, paddingBottom: LIBRARY_SPACING.lg }}>
     {isOffline && <BookOffline message="Offline · Showing saved content." />}
     {query.data && <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{`${notes.length} ${notes.length === 1 ? 'note' : 'notes'}`}</Text>}
+    {exportDeliveryAvailable() && query.data && <View style={{ gap: LIBRARY_SPACING.xxs }}>
+      <ExportButton label={exports.busy ? 'Exporting…' : 'Export'} accessibilityLabel={`Export notes for ${book.data?.title ?? 'Selected book'}`} variant="text"
+        busy={exports.busy} disabled={isOffline || exports.busy} onPress={() => setExportOpen(true)} />
+      {isOffline && <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>Export needs a connection.</Text>}
+    </View>}
+    {exports.feedback && <View style={styles.refreshRow}>
+      <Text accessibilityLiveRegion="polite" aria-live="polite"
+        style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{exports.feedback.message}</Text>
+      {exports.feedback.kind === 'error' && <BookButton label="Try again" variant="text" disabled={isOffline || exports.busy}
+        onPress={() => { void exportNotes(lastExport.current); }} />}
+    </View>}
     <CategoryPicker selected={filter} includeAll onChange={value => { setFilter(value); anchor.current = 0; list.current?.scrollToOffset({ offset: 0, animated: false }); }} />
     {filter && <NoteMessage caption message={`Showing ${categoryLabel(filter)} notes.`} />}
     {operations.map(operation => <View key={operation.submission.id} style={[styles.pendingRow, { borderColor: colors.divider }]}>
@@ -58,6 +81,9 @@ export default function NotesScreen() {
         onScroll={event => { anchor.current = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={100}
         maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => { void query.refetch(); }} tintColor={colors.accent} />} />}
+    {exportOpen && <ExportNotesDialog visible busy={exports.busy} disabled={isOffline} ready={exports.ready} onClose={closeExport}
+      onPrint={() => { exports.print(); setExportOpen(false); }} onDispose={exports.dispose}
+      onExport={choice => { void exportNotes(choice); }} />}
   </NoteScreen>;
 }
 
