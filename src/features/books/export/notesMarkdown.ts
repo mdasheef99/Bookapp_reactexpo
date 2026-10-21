@@ -48,7 +48,9 @@ function escapeHeading(text: string): string {
 }
 
 function markdownBody(note: ExportNote): string {
-  const escaped = normalizeNoteContent(note.content).replace(/^( *)([#>*+-]|\d+[.)]|`{3})/gm, '$1\\$2');
+  const escaped = normalizeNoteContent(note.content)
+    .replace(/^( *)([#>*+-]|`{3})/gm, '$1\\$2')
+    .replace(/^( *\d+)([.)])(?=\s|$)/gm, '$1\\$2');
   if (note.tag !== 'quote') return escaped;
   return escaped.split('\n').map(line => line ? '> ' + line : '>').join('\n');
 }

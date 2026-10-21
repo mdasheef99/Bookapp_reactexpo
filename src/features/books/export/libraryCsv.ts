@@ -17,8 +17,8 @@ function csvField(value: string | number | null): string {
 }
 
 function isbn(value: string | null): string {
-  const text = value ?? '';
-  return text.replace(/\D/g, '') + (text.endsWith('X') ? 'X' : '');
+  const text = (value ?? '').trim();
+  return text.replace(/\D/g, '') + (/[Xx]$/.test(text) ? 'X' : '');
 }
 
 export function buildLibraryCsv(
@@ -39,7 +39,7 @@ export function buildLibraryCsv(
       isbn(book.isbn_13),
       isbn(book.isbn_10),
       guardText(book.publisher ?? ''),
-      book.published_date,
+      guardText(book.published_date ?? ''),
       book.page_count,
       guardText(row.reading_status === null ? '' : readingStatusLabel(row.reading_status)),
       guardText(row.ownership === null ? '' : ownershipLabel(row.ownership)),

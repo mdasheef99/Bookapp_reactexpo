@@ -36,6 +36,7 @@ export function preparePdf({ fileName, html }: PdfDelivery): PreparedPdf {
   let printWindow: Window | null = null;
   let timeout: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
+  let printStarted = false;
   const cleanup = () => {
     if (disposed) return;
     disposed = true;
@@ -54,7 +55,7 @@ export function preparePdf({ fileName, html }: PdfDelivery): PreparedPdf {
     printDocument.title = fileName;
     printWindow.addEventListener('afterprint', cleanup);
     return {
-      dispose: cleanup,
+      dispose: () => { if (!printStarted) cleanup(); },
       print: () => {
         if (disposed) throw new Error('Print is unavailable.');
         try {
@@ -62,6 +63,7 @@ export function preparePdf({ fileName, html }: PdfDelivery): PreparedPdf {
           timeout = setTimeout(cleanup, PRINT_CLEANUP_TIMEOUT_MS);
           // Synchronous: callers invoke this from the final Print press.
           // Browsers cannot reliably distinguish printing from dismissal.
+          printStarted = true;
           printWindow!.print();
         } catch (error) {
           cleanup();

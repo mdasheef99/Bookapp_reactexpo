@@ -1307,3 +1307,16 @@ Unit 2 is committed as `c4b7614`. The lead installed `expo-print` and `expo-shar
 ## 2026-10-21 — SDD-08 Unit 4 passage card built and verified
 
 Unit 3 is committed as `86be322`. The lead installed `react-native-view-shot` 4.0.3 (D08-04). Unit 4 adds "Share as image" on native Quote notes (hidden on web, D08-11). It opens a preview whose card measures its rendered lines, steps the size down, cuts with "…" and shows "Shortened to fit the card.", then captures a 1080×1350 PNG from a hidden card at output resolution and shares it through the Unit 3 cache path. It was built by Codex Sol in 3 runs. Reviews: Luna (FAIL, 3 accepted and fixed; then a confirmation, with 1 MED fixed by the lead), then opencode at the owner's request (GLM and MiniMax: 4 accepted and fixed; GLM confirmation PASS). The lead verified 1,663 tests, `tsc` 0, lint 0 errors, and mutants all killed apart from one accepted redundant guard. The Android emulator check passed for 6 fixtures: sharp 1080×1350 PNGs, real Devanagari, Kannada and CJK, and caption and ellipsis agreeing. Record: [SDD-08 §12.5](./SDD-08-export-and-share.md#125-unit-4-passage-card-2026-10-21). Database/storage mutations: none. Uncommitted. **Next exact action:** the owner approves the Unit 4 commit. SDD-08 then has no build work left; the CSV checks in Sheets and Excel and the merge decisions remain.
+
+## 2026-10-22 — SDD-08 full-branch review and fixes
+
+Unit 4 is committed as `2dcf97d`. A PR-style review of the whole branch since `4a1daea` was run by four free opencode models: MiniMax and GLM gave verdicts, DeepSeek left notes only, and Beam produced no output. Fixed by Codex Sol and verified by the lead:
+- the CSV `Published date` formula guard;
+- **D08-12** (owner): shared native export files are kept, and the next export deletes export folders 10 minutes old or more;
+- the Safari print iframe kept until `afterprint`;
+- lowercase ISBN-10 `x`;
+- the Markdown `1\.` escape;
+- Back and Escape cancel a busy export;
+- the dead barrel deleted.
+
+MiniMax confirmation: PASS. The lead verified 1,698 tests, `tsc` 0 and lint 0 errors, and all mutants were killed. Record: [SDD-08 §12.6](./SDD-08-export-and-share.md#126-full-branch-review-and-fixes-2026-10-22). Database/storage mutations: none. Uncommitted. **Next exact action:** the owner approves the fix commit. Then sync with the latest `main`, run the full suite, and get the owner's merge decision.

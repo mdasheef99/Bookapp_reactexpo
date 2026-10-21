@@ -132,6 +132,30 @@ it('disposes a prepared document before Print and safely ignores repeated cleanu
   expect(jest.getTimerCount()).toBe(0);
 });
 
+it.each(['afterprint', 'timeout'])('keeps a printed frame after dispose until %s, with cleanup exactly once', event => {
+  const prepared = preparePdf({ fileName: 'x.pdf', html: '<p>x</p>' });
+  printPreparedPdf(prepared);
+  disposePreparedPdf(prepared);
+  disposePreparedPdf(prepared);
+  expect(frame.remove).not.toHaveBeenCalled();
+  expect(printWindow.removeEventListener).not.toHaveBeenCalled();
+  expect(jest.getTimerCount()).toBe(1);
+  if (event === 'afterprint') afterPrint();
+  else {
+    jest.advanceTimersByTime(59_999);
+    expect(frame.remove).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1);
+  }
+  expect(frame.remove).toHaveBeenCalledTimes(1);
+  expect(printWindow.removeEventListener).toHaveBeenCalledTimes(1);
+  expect(jest.getTimerCount()).toBe(0);
+  afterPrint();
+  disposePreparedPdf(prepared);
+  jest.advanceTimersByTime(60_000);
+  expect(frame.remove).toHaveBeenCalledTimes(1);
+  expect(printWindow.removeEventListener).toHaveBeenCalledTimes(1);
+});
+
 it.each(['window', 'document', 'print'])('cleans up a failed print (%s)', missing => {
   if (missing === 'window') frame.contentWindow = null;
   if (missing === 'document') frame.contentDocument = null;

@@ -93,11 +93,22 @@ describe('buildNotesMarkdown', () => {
 
   it.each([
     ['# heading', '\\# heading'], ['> quote', '\\> quote'], ['- item', '\\- item'],
-    ['* item', '\\* item'], ['+ item', '\\+ item'], ['1. item', '\\1. item'],
-    ['23) item', '\\23) item'], ['```ts', '\\```ts'],
-    ['  # heading', '  \\# heading'], ['   12. item', '   \\12. item'],
+    ['* item', '\\* item'], ['+ item', '\\+ item'], ['1. item', '1\\. item'],
+    ['23) item', '23\\) item'], ['```ts', '\\```ts'],
+    ['1. First step', '1\\. First step'], ['12) x', '12\\) x'], ['2) x', '2\\) x'],
+    ['  # heading', '  \\# heading'], ['   12. item', '   12\\. item'],
     ['  ```', '  \\```'],
   ])('escapes leading Markdown structure in %j', (content, expected) => {
+    expect(buildNotesMarkdown([{ ...book, notes: [{ ...note, content }] }], options)).toBe(
+      '# Notes — Book\n\n## Note\n' + expected + '\n',
+    );
+  });
+
+  it.each([
+    ['3.14 is pi', '3.14 is pi'],
+    ['1. First step', '1\\. First step'],
+    ['12)', '12\\)'],
+  ])('escapes only ordered-list markers in %j', (content, expected) => {
     expect(buildNotesMarkdown([{ ...book, notes: [{ ...note, content }] }], options)).toBe(
       '# Notes — Book\n\n## Note\n' + expected + '\n',
     );

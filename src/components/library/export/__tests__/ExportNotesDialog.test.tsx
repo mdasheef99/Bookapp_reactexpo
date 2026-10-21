@@ -116,8 +116,41 @@ describe('PDF preparation and final press with real web delivery', () => {
     expect(ui.queryByRole('dialog', { name: 'Export notes' })).toBeNull();
     expect(ui.queryByText('Saved to your downloads.')).toBeNull();
     expect(ui.queryByText("Couldn't export. Try again.")).toBeNull();
+    expect(frame.remove).not.toHaveBeenCalled();
+    printWindow.addEventListener.mock.calls.find((call: any[]) => call[0] === 'afterprint')[1]();
     expect(frame.remove).toHaveBeenCalledTimes(1);
     await pending;
+  });
+  it.each(['Back', 'Escape', 'Cancel'])('%s while busy aborts and closes, ignoring a late PDF load', async reason => {
+    let resolveLoad!: (books: Awaited<ReturnType<typeof loadBookNotesForExport>>) => void;
+    let signal: AbortSignal | undefined;
+    (loadBookNotesForExport as jest.Mock).mockImplementationOnce((_actor, _book, loadSignal: AbortSignal) => {
+      signal = loadSignal;
+      return new Promise(resolve => { resolveLoad = resolve; });
+    });
+    const ui = render(<Harness />);
+    fireEvent.press(ui.getByRole('radio', { name: 'PDF' }));
+    fireEvent.press(ui.getByRole('button', { name: 'Export' }));
+    expect(ui.getByTestId('export-busy', { includeHiddenElements: true }).props.children).toBe('true');
+    expect(signal?.aborted).toBe(false);
+    if (reason === 'Cancel') fireEvent.press(ui.getByRole('button', { name: 'Cancel' }));
+    else fireEvent(within(ui.UNSAFE_getByType(ExportNotesDialog)).UNSAFE_getByType(Modal), 'requestClose');
+    expect(signal?.aborted).toBe(true);
+    expect(ui.queryByRole('dialog', { name: 'Export notes' })).toBeNull();
+    expect(ui.getByTestId('export-busy').props.children).toBe('false');
+    await act(async () => {
+      resolveLoad([{ title: 'Walden', authors: ['Thoreau'], notes: [{
+        content: 'Late note', tag: null, page_number: null, created_at: null, updated_at: null,
+      }] }]);
+    });
+    expect(ui.queryByRole('dialog', { name: 'Export notes' })).toBeNull();
+    expect(ui.queryByRole('button', { name: 'Print' })).toBeNull();
+    expect(ui.queryByText('Your PDF is ready. Choose Print, then Save as PDF.')).toBeNull();
+    expect(ui.queryByText('Saved to your downloads.')).toBeNull();
+    expect(ui.queryByText("Couldn't export. Try again.")).toBeNull();
+    expect(document.createElement).not.toHaveBeenCalled();
+    expect(document.body.appendChild).not.toHaveBeenCalled();
+    expect(printWindow.print).not.toHaveBeenCalled();
   });
   it.each(['Cancel', 'unmount', 'close'] as const)('removes the iframe on %s before printing', async reason => {
     const ui = await readyPdf();
@@ -143,7 +176,7 @@ it('exports the selected format/scope, and resets choices when reopened', () => 
   expect(ui.getByRole('radio', { name: 'This book' }).props.accessibilityState.checked).toBe(true);
 });
 
-it('disables all controls and blocks Escape/Back while exporting, then enables Cancel', () => {
+it('disables export choices while exporting and keeps Cancel and Escape/Back available', () => {
   const ui = setup({ busy: true });
   const button = ui.getByRole('button', { name: 'Export' });
   expect(button).toBeDisabled();
@@ -154,16 +187,16 @@ it('disables all controls and blocks Escape/Back while exporting, then enables C
   while (webControl && webControl.props['aria-busy'] === undefined) webControl = webControl.parent;
   expect(webControl?.props['aria-busy']).toBe(true);
   expect(ui.getByText('Exporting…')).toBeOnTheScreen();
-  expect(ui.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+  expect(ui.getByRole('button', { name: 'Cancel' })).toBeEnabled();
   for (const radio of ui.getAllByRole('radio')) expect(radio).toBeDisabled();
   fireEvent.press(button); fireEvent.press(ui.getByRole('button', { name: 'Cancel' }));
   fireEvent(ui.modal(), 'requestClose');
-  expect(ui.onExport).not.toHaveBeenCalled(); expect(ui.onClose).not.toHaveBeenCalled();
+  expect(ui.onExport).not.toHaveBeenCalled(); expect(ui.onClose).toHaveBeenCalledTimes(2);
   ui.rerender(ui.element({ busy: false }));
   fireEvent(ui.modal(), 'requestClose');
-  expect(ui.onClose).toHaveBeenCalledTimes(1);
+  expect(ui.onClose).toHaveBeenCalledTimes(3);
   fireEvent.press(ui.getByRole('button', { name: 'Cancel' }));
-  expect(ui.onClose).toHaveBeenCalledTimes(2);
+  expect(ui.onClose).toHaveBeenCalledTimes(4);
 });
 
 it('disables Export after losing connection and leaves Cancel available', () => {

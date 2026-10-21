@@ -130,7 +130,7 @@ A reader can take their own library and notes out of BookConnect in plain, porta
 | Export library (CSV) | **D08-08**. Recommended: the Library home header (`src/components/library/LibraryHeader.tsx`, whose action row holds the "Add a book" primary at :61), as a quiet secondary text button "Export library". SDD-07 reserved no slot here, so this needs a Flow D layout check at 320/390 px and 200% text. Alternative: Profile → "Your data" | Downloads/shares the CSV |
 | Passage card | Note reader, secondary text action "Share as image", Quote notes only | Opens the preview |
 
-**Export choice dialog** (notes): a "Format" radio group (Markdown file / PDF), a "Scope" radio group (This book / All books, per D08-02), the line "Includes private notes. Notes still saving are not included.", one primary "Export" and a secondary "Cancel" (one primary per state). Escape or Back dismisses it.
+**Export choice dialog** (notes): a "Format" radio group (Markdown file / PDF), a "Scope" radio group (This book / All books, per D08-02), the line "Includes private notes. Notes still saving are not included.", one primary "Export" and a secondary "Cancel" (one primary per state). Escape or Back dismisses it. While an export is loading, Escape, Back and Cancel cancel the export and close the dialog (branch review, 2026-10-22).
 
 Book Details gets **no** new overflow menu in SDD-08 (keeps DP-01: controls only down to the primary). Its reserved slot is left unused.
 
@@ -143,7 +143,7 @@ Book Details gets **no** new overflow menu in SDD-08 (keeps DP-01: controls only
   - native share completed: no caption, because the system sheet is the feedback;
   - share or print dismissed: no message, not an error;
   - failed: "Couldn't export. Try again." with a Try again action. Raw errors are never shown.
-- Privacy: exports contain private reviews and private notes, and leave the app only through an action the user starts. Nothing is uploaded or stored server-side. There are no analytics events. Native temporary files in the cache directory are deleted after the share or print promise settles.
+- Privacy: exports contain private reviews and private notes, and leave the app only through an action the user starts. Nothing is uploaded or stored server-side. There are no analytics events. Native export files live only in the app-private cache. A successfully shared file is kept briefly, because Android apps may read it after the share sheet returns. The next export deletes export folders 10 minutes old or more (owner deviation D08-12, 2026-10-22). Failed or unavailable shares, and internal temp files, are deleted at once.
 - Accessibility: 48dp targets, accessible names ("Export notes for {title}", "Share quote as image"), live-region feedback, keyboard operable on web.
 
 ## 5. Decisions (recommendation first; all recommendations ACCEPTED by the owner, 2026-10-21)
@@ -160,6 +160,7 @@ Book Details gets **no** new overflow menu in SDD-08 (keeps DP-01: controls only
 | D08-08 | Where the library CSV entry goes | **Library home header**, quiet text button. | Profile → "Your data". |
 | D08-10 | ISBNs in Excel | **Accept the limitation**: plain digits, documented. Google Sheets and re-import keep them. | Wrap as `="…"` (Excel-safe, but other tools see a formula). |
 | D08-11 | Passage card on web | **Hide "Share as image" on web for the first release**. Ship native first, and add web later after a capture spike (e.g. `html-to-image`, a new dependency). | Build web now with a canvas re-implementation of the card. |
+| D08-12 | Native temp-file retention (owner, 2026-10-22, after the branch review) | **Keep a successfully shared file; the next export deletes export folders 10 minutes old or more.** Reason: Android `shareAsync` resolves when a target is picked, and Gmail or Drive may read the file afterwards. Deviation from the original §4.7 "deleted after the share settles". | Delete at once (risk of empty attachments). |
 | D08-09 | Build order | **(1) builders + tests, (2) web delivery + notes/CSV entries, (3) native delivery after D08-04, (4) passage card.** Each a separate unit with its own review. | One unit. |
 
 ## 6. Files (expected; confirmed per unit)
@@ -549,3 +550,39 @@ Edited:
 **Database/storage mutations:** none.
 
 **Next exact action:** the owner approves the Unit 4 commit on `sdd08/export` (no merge, no push). After that, SDD-08 has no build work left. Open done-criteria evidence: the library CSV opened in Google Sheets and Excel (owner action), and a real-browser web print. Then a decision on merging `sdd08/export` and `sdd07/tab-bar-main` to `main`.
+
+### 12.6 Full-branch review and fixes (2026-10-22)
+
+**Review:** PR-style, of the whole branch since `4a1daea` (about 4,100 lines: 1,188 production, 2,822 tests, 92 manifest and config). Run read-only by four free opencode models in parallel; the tree fingerprint was unchanged.
+- **MiniMax 3.1:** MERGE AFTER FIXES. 6 findings, 5 accepted.
+- **GLM 5.3:** MERGE. 1 accepted.
+- **DeepSeek v4.1:** no final report. 2 accepted from its notes; 1 MED rejected, because the device check showed the preview and the PNG break lines identically.
+- **Beam:** no output; it stalled on a rejected scratch-file write.
+- Rejected: shared busy across screens (the intended single flight).
+
+**Fixed** (Codex Sol; the lead verified):
+1. the CSV `Published date` is now formula-guarded (it is free text from Google Books or manual entry);
+2. **D08-12 native retention** (see §5 and §4.7);
+3. web print: after `print()`, dispose leaves the iframe to `afterprint` or the 60 s fallback (Safari's `print()` does not block);
+4. ISBN-10 with a lowercase `x` keeps its check digit;
+5. the Markdown ordered-list escape is now `1\.`, applied only before whitespace (`3.14` is unchanged);
+6. Escape, Back and Cancel cancel a busy export (§4.6);
+7. the unused `src/features/books/export/index.ts` is deleted.
+
+A follow-up also sweeps attempt folders dated more than 10 minutes in the future (clock moved back).
+
+**Confirmation:** MiniMax, PASS on fixes 1 and 3–7. Its LOW note that a cancel followed by a reopen within milliseconds could close the new dialog is recorded as a residual.
+
+**Mutation checks** (each restored, hash-verified), with the number of tests each made fail:
+- date unguarded: 8;
+- lowercase x dropped: 1;
+- frame removed after print: 3;
+- Back blocked while busy: 3;
+- text deleted after success: 16;
+- old folders kept: 8;
+- no sweep: 10.
+- The Markdown escape is asserted directly (`1\. item`, `12\) x`).
+
+**Not verified:** a real Safari print; Android retention on a device (Jest only).
+
+**Database/storage mutations:** none.

@@ -52,7 +52,7 @@ export function ExportNotesDialog({ visible, busy, disabled = false, ready = fal
   }, [visible, onDispose]);
   return <Modal visible={visible} transparent animationType="fade" accessible role="dialog" aria-modal
     accessibilityLabel="Export notes" aria-describedby={DESCRIPTION_ID}
-    onRequestClose={() => { if (!busy) onClose(); }}
+    onRequestClose={onClose}
     onShow={() => {
       if (Platform.OS === 'web') cancelRef.current?.focus();
       else {
@@ -76,7 +76,7 @@ export function ExportNotesDialog({ visible, busy, disabled = false, ready = fal
             {ready ? <ExportButton label="Print" variant="primary" onPress={() => { onPrint?.(); }} />
               : <ExportButton label={busy ? 'Exporting…' : 'Export'} accessibilityLabel="Export" variant="primary" busy={busy}
                 disabled={busy || disabled} onPress={() => { if (!busy && !disabled) onExport({ format, scope }); }} />}
-            <BookButton ref={cancelRef} label="Cancel" variant="secondary" disabled={busy} onPress={() => { if (!busy) onClose(); }} />
+            <BookButton ref={cancelRef} label="Cancel" variant="secondary" onPress={onClose} />
           </View>
         </ScrollView>
       </View>
