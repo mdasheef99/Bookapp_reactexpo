@@ -1,0 +1,11 @@
+{
+  "kind": "Parent HTTP manifest check; not browser QA",
+  "status": "PASS",
+  "sourceManifestSha256": "35196F8FD3DDDE88D6EBD20087C79823D0A20A72B0EA1871B1170ABE159040AB",
+  "entry": {
+    "path": ".tmp/sdd06-capture-web/_expo/static/js/web/entry-0949ad8c17996d503b5a50e25d917e97.js",
+    "sha256": "CA65B1DC34CFEA7D8ED092CB82B5E7965CF4D4F2FC7531723CA994D763C40870",
+    "bytes": 12600266
+  },
+  "metadataParseNote": "Invoke-RestMethod returned a string for the UTF-8 BOM JSON; explicit BOM stripping and JSON parsing confirmed the fresh manifest, without server changes"
+}

@@ -1,0 +1,14 @@
+PASS src/features/books/utils/__tests__/ocrWordCap.test.ts (15.157 s)
+PASS src/components/notes/__tests__/NoteEditor.ocr.test.tsx (19.741 s)
+(node:6368) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS supabase/functions/ocr-fallback/__tests__/handler.test.ts (13.125 s)
+PASS src/features/books/services/__tests__/ocrService.test.ts (31.056 s)
+PASS src/features/books/services/__tests__/userBookPagesService.test.ts (19.993 s)
+PASS supabase/migrations/__tests__/libraryUserBookPagesVault.test.ts (17.244 s)
+
+Test Suites: 6 passed, 6 total
+Tests:       59 passed, 59 total
+Snapshots:   0 total
+Time:        121.03 s
+Ran all test suites within paths "src/components/notes/__tests__/NoteEditor.ocr.test.tsx", "src/features/books/services/__tests__/ocrService.test.ts", "supabase/functions/ocr-fallback/__tests__/handler.test.ts", "src/features/books/utils/__tests__/ocrWordCap.test.ts", "src/features/books/services/__tests__/userBookPagesService.test.ts", "supabase/migrations/__tests__/libraryUserBookPagesVault.test.ts".

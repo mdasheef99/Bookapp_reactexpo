@@ -1,0 +1,156 @@
+{
+  "w320-fold": {
+    "preset": "populated",
+    "phase": "daylight",
+    "width": 320,
+    "zoom": 1,
+    "innerWidth": 320,
+    "docScrollWidth": 320,
+    "scrollOk": true,
+    "radioCount": 3,
+    "radioRowTops": [
+      212,
+      260,
+      308
+    ],
+    "statusLayout": "stacked (3 rows)",
+    "radioText": [
+      "Want to read",
+      "Reading",
+      "Finished"
+    ],
+    "h1Text": "Walden",
+    "h1Rect": {
+      "x": 112,
+      "y": 72,
+      "w": 192,
+      "h": 32,
+      "right": 304,
+      "bottom": 104
+    },
+    "coverRect": {
+      "x": 16,
+      "y": 72,
+      "w": 80,
+      "h": 120,
+      "right": 96,
+      "bottom": 192
+    },
+    "titlePlacement": "beside"
+  },
+  "w360-fold": {
+    "preset": "populated",
+    "phase": "daylight",
+    "width": 360,
+    "zoom": 1,
+    "innerWidth": 360,
+    "docScrollWidth": 360,
+    "scrollOk": true,
+    "radioCount": 3,
+    "radioRowTops": [
+      212,
+      260,
+      308
+    ],
+    "statusLayout": "stacked (3 rows)",
+    "radioText": [
+      "Want to read",
+      "Reading",
+      "Finished"
+    ],
+    "h1Text": "Walden",
+    "h1Rect": {
+      "x": 112,
+      "y": 72,
+      "w": 232,
+      "h": 32,
+      "right": 344,
+      "bottom": 104
+    },
+    "coverRect": {
+      "x": 16,
+      "y": 72,
+      "w": 80,
+      "h": 120,
+      "right": 96,
+      "bottom": 192
+    },
+    "titlePlacement": "beside"
+  },
+  "w390-fold": {
+    "preset": "populated",
+    "phase": "daylight",
+    "width": 390,
+    "zoom": 1,
+    "innerWidth": 390,
+    "docScrollWidth": 390,
+    "scrollOk": true,
+    "radioCount": 3,
+    "radioRowTops": [
+      260,
+      308,
+      356
+    ],
+    "statusLayout": "stacked (3 rows)",
+    "radioText": [
+      "Want to read",
+      "Reading",
+      "Finished"
+    ],
+    "h1Text": "Walden",
+    "h1Rect": {
+      "x": 144,
+      "y": 72,
+      "w": 230,
+      "h": 32,
+      "right": 374,
+      "bottom": 104
+    },
+    "coverRect": {
+      "x": 16,
+      "y": 72,
+      "w": 112,
+      "h": 168,
+      "right": 128,
+      "bottom": 240
+    },
+    "titlePlacement": "beside"
+  },
+  "w430-fold": {
+    "preset": "populated",
+    "phase": "daylight",
+    "width": 430,
+    "zoom": 1,
+    "innerWidth": 430,
+    "docScrollWidth": 430,
+    "scrollOk": true,
+    "radioCount": 3,
+    "radioRowTops": [
+      260
+    ],
+    "statusLayout": "horizontal row",
+    "radioText": [
+      "Want to read",
+      "Reading",
+      "Finished"
+    ],
+    "h1Text": "Walden",
+    "h1Rect": {
+      "x": 144,
+      "y": 72,
+      "w": 270,
+      "h": 32,
+      "right": 414,
+      "bottom": 104
+    },
+    "coverRect": {
+      "x": 16,
+      "y": 72,
+      "w": 112,
+      "h": 168,
+      "right": 128,
+      "bottom": 240
+    },
+    "titlePlacement": "beside"
+  }
+}

@@ -1,0 +1,1 @@
+Fixture built. Actual layout/gestures/shared device order; mocked theme/fonts/images/icons/router. No account/network or native performance certification. Synthetic fixture-key storage only on port 19010.

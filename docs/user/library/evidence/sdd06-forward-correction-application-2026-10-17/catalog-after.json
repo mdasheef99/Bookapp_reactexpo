@@ -1,0 +1,1308 @@
+{
+  "roles": [
+    {
+      "name": "authenticated",
+      "super": false,
+      "bypass": false,
+      "create_db": false,
+      "create_role": false,
+      "memberships": 0,
+      "replication": false
+    },
+    {
+      "name": "anon",
+      "super": false,
+      "bypass": false,
+      "create_db": false,
+      "create_role": false,
+      "memberships": 0,
+      "replication": false
+    }
+  ],
+  "ledger": [
+    {
+      "md5": "d187c32b7b0846e735d6696adff6a7ed",
+      "name": "library_manual_note_persistence",
+      "version": "20261010221843"
+    },
+    {
+      "md5": "ec5e6bfb4e89e845c26ab0cd00c36fb6",
+      "name": "library_manual_note_privilege_revision_correction",
+      "version": "20261017083830"
+    }
+  ],
+  "tables": [
+    {
+      "rls": true,
+      "owner": "postgres",
+      "table": "user_books",
+      "force_rls": false
+    },
+    {
+      "rls": true,
+      "owner": "postgres",
+      "table": "reading_notes",
+      "force_rls": false
+    }
+  ],
+  "columns": [
+    {
+      "acl": "{authenticated=a/postgres}",
+      "name": "id"
+    },
+    {
+      "acl": "{authenticated=a/postgres}",
+      "name": "user_id"
+    },
+    {
+      "acl": "{authenticated=a/postgres}",
+      "name": "user_book_id"
+    },
+    {
+      "acl": "{authenticated=aw/postgres}",
+      "name": "content"
+    },
+    {
+      "acl": "{authenticated=aw/postgres}",
+      "name": "tag"
+    },
+    {
+      "acl": "{authenticated=aw/postgres}",
+      "name": "page_number"
+    },
+    {
+      "acl": null,
+      "name": "created_at"
+    },
+    {
+      "acl": "{authenticated=w/postgres}",
+      "name": "updated_at"
+    },
+    {
+      "acl": null,
+      "name": "version"
+    },
+    {
+      "acl": "{authenticated=w/postgres}",
+      "name": "last_operation_id"
+    }
+  ],
+  "policies": [
+    {
+      "name": "library_note_delete_owned_book",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "using": "((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_books b\n  WHERE ((b.id = reading_notes.user_book_id) AND (b.user_id = ( SELECT auth.uid() AS uid))))))",
+      "command": "d"
+    },
+    {
+      "name": "library_note_insert_owned_book",
+      "check": "((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_books b\n  WHERE ((b.id = reading_notes.user_book_id) AND (b.user_id = ( SELECT auth.uid() AS uid))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "using": null,
+      "command": "a"
+    },
+    {
+      "name": "library_note_select_owned_book",
+      "check": null,
+      "roles": [
+        "authenticated"
+      ],
+      "using": "((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_books b\n  WHERE ((b.id = reading_notes.user_book_id) AND (b.user_id = ( SELECT auth.uid() AS uid))))))",
+      "command": "r"
+    },
+    {
+      "name": "library_note_update_owned_book",
+      "check": "((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_books b\n  WHERE ((b.id = reading_notes.user_book_id) AND (b.user_id = ( SELECT auth.uid() AS uid))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "using": "((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM user_books b\n  WHERE ((b.id = reading_notes.user_book_id) AND (b.user_id = ( SELECT auth.uid() AS uid))))))",
+      "command": "w"
+    }
+  ],
+  "functions": [
+    {
+      "body": "\n  SELECT pg_catalog.cardinality(pg_catalog.regexp_split_to_array(\n    pg_catalog.btrim(COALESCE(p_content,''),\n      U&'\\0009\\000A\\000B\\000C\\000D\\0020\\00A0\\1680\\2000\\2001\\2002\\2003\\2004\\2005\\2006\\2007\\2008\\2009\\200A\\2028\\2029\\202F\\205F\\3000\\FEFF'),\n    U&'[\\0009\\000A\\000B\\000C\\000D\\0020\\00A0\\1680\\2000\\2001\\2002\\2003\\2004\\2005\\2006\\2007\\2008\\2009\\200A\\2028\\2029\\202F\\205F\\3000\\FEFF]+')) <= 500\n",
+      "name": "check_note_word_limit",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "definer": false,
+      "returns": "boolean",
+      "arguments": 1,
+      "volatility": "i"
+    },
+    {
+      "body": "\nBEGIN\n  IF TG_OP = 'INSERT' THEN\n    NEW.version := 1;\n    NEW.last_operation_id := NULL;\n    NEW.created_at := pg_catalog.statement_timestamp();\n  ELSE\n    IF NEW.id IS DISTINCT FROM OLD.id OR NEW.user_id IS DISTINCT FROM OLD.user_id\n      OR NEW.user_book_id IS DISTINCT FROM OLD.user_book_id THEN\n      RAISE EXCEPTION 'LIBRARY_NOTE_IDENTITY_IMMUTABLE' USING ERRCODE='23514';\n    END IF;\n    NEW.version := OLD.version + 1;\n    NEW.created_at := OLD.created_at;\n    IF NEW.last_operation_id IS NOT DISTINCT FROM OLD.last_operation_id THEN\n      NEW.last_operation_id := NULL;\n    END IF;\n  END IF;\n  NEW.updated_at := pg_catalog.statement_timestamp();\n  RETURN NEW;\nEND\n",
+      "name": "library_manage_note_revision",
+      "owner": "postgres",
+      "config": [
+        "search_path=\"\""
+      ],
+      "definer": false,
+      "returns": "trigger",
+      "arguments": 0,
+      "volatility": "v"
+    }
+  ],
+  "table_acl": [
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "INSERT"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "SELECT"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "UPDATE"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "DELETE"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "TRUNCATE"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "REFERENCES"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "TRIGGER"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "MAINTAIN"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "MAINTAIN"
+    },
+    {
+      "grantee": "authenticated",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "DELETE"
+    }
+  ],
+  "parent_key": "UNIQUE (id, user_id)",
+  "constraints": [
+    {
+      "name": "reading_notes_500w_check",
+      "valid": true,
+      "definition": "CHECK (check_note_word_limit(content))"
+    },
+    {
+      "name": "reading_notes_book_owner_fkey",
+      "valid": true,
+      "definition": "FOREIGN KEY (user_book_id, user_id) REFERENCES user_books(id, user_id) ON UPDATE RESTRICT ON DELETE CASCADE"
+    },
+    {
+      "name": "reading_notes_content_not_empty",
+      "valid": true,
+      "definition": "CHECK ((btrim(content, '\t\n\u000b\f\r                '::text) <> ''::text))"
+    },
+    {
+      "name": "reading_notes_page_number_positive",
+      "valid": true,
+      "definition": "CHECK (((page_number IS NULL) OR (page_number > 0)))"
+    },
+    {
+      "name": "reading_notes_pkey",
+      "valid": true,
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "reading_notes_tag_check",
+      "valid": true,
+      "definition": "CHECK (((tag IS NULL) OR (tag = ANY (ARRAY['quote'::text, 'reflect'::text, 'distill'::text, 'apply'::text, 'question'::text]))))"
+    },
+    {
+      "name": "reading_notes_user_book_id_fkey",
+      "valid": true,
+      "definition": "FOREIGN KEY (user_book_id) REFERENCES user_books(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "reading_notes_user_id_fkey",
+      "valid": true,
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "reading_notes_version_positive",
+      "valid": true,
+      "definition": "CHECK ((version > 0))"
+    }
+  ],
+  "ri_triggers": [
+    {
+      "event": 9,
+      "table": "user_books",
+      "enabled": "O",
+      "function": "\"RI_FKey_cascade_del\"()",
+      "internal": true,
+      "constraint": "reading_notes_book_owner_fkey"
+    },
+    {
+      "event": 17,
+      "table": "user_books",
+      "enabled": "O",
+      "function": "\"RI_FKey_restrict_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_book_owner_fkey"
+    },
+    {
+      "event": 5,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_ins\"()",
+      "internal": true,
+      "constraint": "reading_notes_book_owner_fkey"
+    },
+    {
+      "event": 17,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_book_owner_fkey"
+    },
+    {
+      "event": 9,
+      "table": "user_books",
+      "enabled": "O",
+      "function": "\"RI_FKey_cascade_del\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_book_id_fkey"
+    },
+    {
+      "event": 17,
+      "table": "user_books",
+      "enabled": "O",
+      "function": "\"RI_FKey_noaction_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_book_id_fkey"
+    },
+    {
+      "event": 5,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_ins\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_book_id_fkey"
+    },
+    {
+      "event": 17,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_book_id_fkey"
+    },
+    {
+      "event": 9,
+      "table": "auth.users",
+      "enabled": "O",
+      "function": "\"RI_FKey_cascade_del\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_id_fkey"
+    },
+    {
+      "event": 17,
+      "table": "auth.users",
+      "enabled": "O",
+      "function": "\"RI_FKey_noaction_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_id_fkey"
+    },
+    {
+      "event": 5,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_ins\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_id_fkey"
+    },
+    {
+      "event": 17,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_id_fkey"
+    }
+  ],
+  "word_digest": "d8f06f00135cd81949b793506429fa43",
+  "word_probes": {
+    "words_500": true,
+    "words_501_feff": false
+  },
+  "function_acl": [
+    {
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "owner": "postgres",
+      "function": "check_note_word_limit"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "owner": "postgres",
+      "function": "library_manage_note_revision"
+    }
+  ],
+  "columns_digest": "28011b590302f769ffe126b65a05f3da",
+  "policies_digest": "9cd14930aa1c5a48973c88d923c75903",
+  "revision_digest": "8a373f6334d482e588d0b173c27c4888",
+  "triggers_digest": "755349a853fc51f8e11effd53cd3df20",
+  "table_privileges": [
+    [
+      "anon",
+      "SELECT",
+      false
+    ],
+    [
+      "anon",
+      "INSERT",
+      false
+    ],
+    [
+      "anon",
+      "UPDATE",
+      false
+    ],
+    [
+      "anon",
+      "DELETE",
+      false
+    ],
+    [
+      "anon",
+      "TRUNCATE",
+      false
+    ],
+    [
+      "anon",
+      "REFERENCES",
+      false
+    ],
+    [
+      "anon",
+      "TRIGGER",
+      false
+    ],
+    [
+      "anon",
+      "MAINTAIN",
+      false
+    ],
+    [
+      "authenticated",
+      "SELECT",
+      true
+    ],
+    [
+      "authenticated",
+      "INSERT",
+      false
+    ],
+    [
+      "authenticated",
+      "UPDATE",
+      false
+    ],
+    [
+      "authenticated",
+      "DELETE",
+      true
+    ],
+    [
+      "authenticated",
+      "TRUNCATE",
+      false
+    ],
+    [
+      "authenticated",
+      "REFERENCES",
+      false
+    ],
+    [
+      "authenticated",
+      "TRIGGER",
+      false
+    ],
+    [
+      "authenticated",
+      "MAINTAIN",
+      false
+    ],
+    [
+      "service_role",
+      "SELECT",
+      true
+    ],
+    [
+      "service_role",
+      "INSERT",
+      true
+    ],
+    [
+      "service_role",
+      "UPDATE",
+      true
+    ],
+    [
+      "service_role",
+      "DELETE",
+      true
+    ],
+    [
+      "service_role",
+      "TRUNCATE",
+      true
+    ],
+    [
+      "service_role",
+      "REFERENCES",
+      true
+    ],
+    [
+      "service_role",
+      "TRIGGER",
+      true
+    ],
+    [
+      "service_role",
+      "MAINTAIN",
+      true
+    ]
+  ],
+  "column_privileges": [
+    [
+      "anon",
+      "id",
+      "SELECT",
+      false
+    ],
+    [
+      "anon",
+      "user_id",
+      "SELECT",
+      false
+    ],
+    [
+      "anon",
+      "user_book_id",
+      "SELECT",
+      false
+    ],
+    [
+      "anon",
+      "content",
+      "SELECT",
+      false
+    ],
+    [
+      "anon",
+      "tag",
+      "SELECT",
+      false
+    ],
+    [
+      "anon",
+      "page_number",
+      "SELECT",
+      false
+    ],
+    [
+      "anon",
+      "created_at",
+      "SELECT",
+      false
+    ],
+    [
+      "anon",
+      "updated_at",
+      "SELECT",
+      false
+    ],
+    [
+      "anon",
+      "version",
+      "SELECT",
+      false
+    ],
+    [
+      "anon",
+      "last_operation_id",
+      "SELECT",
+      false
+    ],
+    [
+      "authenticated",
+      "id",
+      "SELECT",
+      true
+    ],
+    [
+      "authenticated",
+      "user_id",
+      "SELECT",
+      true
+    ],
+    [
+      "authenticated",
+      "user_book_id",
+      "SELECT",
+      true
+    ],
+    [
+      "authenticated",
+      "content",
+      "SELECT",
+      true
+    ],
+    [
+      "authenticated",
+      "tag",
+      "SELECT",
+      true
+    ],
+    [
+      "authenticated",
+      "page_number",
+      "SELECT",
+      true
+    ],
+    [
+      "authenticated",
+      "created_at",
+      "SELECT",
+      true
+    ],
+    [
+      "authenticated",
+      "updated_at",
+      "SELECT",
+      true
+    ],
+    [
+      "authenticated",
+      "version",
+      "SELECT",
+      true
+    ],
+    [
+      "authenticated",
+      "last_operation_id",
+      "SELECT",
+      true
+    ],
+    [
+      "service_role",
+      "id",
+      "SELECT",
+      true
+    ],
+    [
+      "service_role",
+      "user_id",
+      "SELECT",
+      true
+    ],
+    [
+      "service_role",
+      "user_book_id",
+      "SELECT",
+      true
+    ],
+    [
+      "service_role",
+      "content",
+      "SELECT",
+      true
+    ],
+    [
+      "service_role",
+      "tag",
+      "SELECT",
+      true
+    ],
+    [
+      "service_role",
+      "page_number",
+      "SELECT",
+      true
+    ],
+    [
+      "service_role",
+      "created_at",
+      "SELECT",
+      true
+    ],
+    [
+      "service_role",
+      "updated_at",
+      "SELECT",
+      true
+    ],
+    [
+      "service_role",
+      "version",
+      "SELECT",
+      true
+    ],
+    [
+      "service_role",
+      "last_operation_id",
+      "SELECT",
+      true
+    ],
+    [
+      "anon",
+      "id",
+      "INSERT",
+      false
+    ],
+    [
+      "anon",
+      "user_id",
+      "INSERT",
+      false
+    ],
+    [
+      "anon",
+      "user_book_id",
+      "INSERT",
+      false
+    ],
+    [
+      "anon",
+      "content",
+      "INSERT",
+      false
+    ],
+    [
+      "anon",
+      "tag",
+      "INSERT",
+      false
+    ],
+    [
+      "anon",
+      "page_number",
+      "INSERT",
+      false
+    ],
+    [
+      "anon",
+      "created_at",
+      "INSERT",
+      false
+    ],
+    [
+      "anon",
+      "updated_at",
+      "INSERT",
+      false
+    ],
+    [
+      "anon",
+      "version",
+      "INSERT",
+      false
+    ],
+    [
+      "anon",
+      "last_operation_id",
+      "INSERT",
+      false
+    ],
+    [
+      "authenticated",
+      "id",
+      "INSERT",
+      true
+    ],
+    [
+      "authenticated",
+      "user_id",
+      "INSERT",
+      true
+    ],
+    [
+      "authenticated",
+      "user_book_id",
+      "INSERT",
+      true
+    ],
+    [
+      "authenticated",
+      "content",
+      "INSERT",
+      true
+    ],
+    [
+      "authenticated",
+      "tag",
+      "INSERT",
+      true
+    ],
+    [
+      "authenticated",
+      "page_number",
+      "INSERT",
+      true
+    ],
+    [
+      "authenticated",
+      "created_at",
+      "INSERT",
+      false
+    ],
+    [
+      "authenticated",
+      "updated_at",
+      "INSERT",
+      false
+    ],
+    [
+      "authenticated",
+      "version",
+      "INSERT",
+      false
+    ],
+    [
+      "authenticated",
+      "last_operation_id",
+      "INSERT",
+      false
+    ],
+    [
+      "service_role",
+      "id",
+      "INSERT",
+      true
+    ],
+    [
+      "service_role",
+      "user_id",
+      "INSERT",
+      true
+    ],
+    [
+      "service_role",
+      "user_book_id",
+      "INSERT",
+      true
+    ],
+    [
+      "service_role",
+      "content",
+      "INSERT",
+      true
+    ],
+    [
+      "service_role",
+      "tag",
+      "INSERT",
+      true
+    ],
+    [
+      "service_role",
+      "page_number",
+      "INSERT",
+      true
+    ],
+    [
+      "service_role",
+      "created_at",
+      "INSERT",
+      true
+    ],
+    [
+      "service_role",
+      "updated_at",
+      "INSERT",
+      true
+    ],
+    [
+      "service_role",
+      "version",
+      "INSERT",
+      true
+    ],
+    [
+      "service_role",
+      "last_operation_id",
+      "INSERT",
+      true
+    ],
+    [
+      "anon",
+      "id",
+      "UPDATE",
+      false
+    ],
+    [
+      "anon",
+      "user_id",
+      "UPDATE",
+      false
+    ],
+    [
+      "anon",
+      "user_book_id",
+      "UPDATE",
+      false
+    ],
+    [
+      "anon",
+      "content",
+      "UPDATE",
+      false
+    ],
+    [
+      "anon",
+      "tag",
+      "UPDATE",
+      false
+    ],
+    [
+      "anon",
+      "page_number",
+      "UPDATE",
+      false
+    ],
+    [
+      "anon",
+      "created_at",
+      "UPDATE",
+      false
+    ],
+    [
+      "anon",
+      "updated_at",
+      "UPDATE",
+      false
+    ],
+    [
+      "anon",
+      "version",
+      "UPDATE",
+      false
+    ],
+    [
+      "anon",
+      "last_operation_id",
+      "UPDATE",
+      false
+    ],
+    [
+      "authenticated",
+      "id",
+      "UPDATE",
+      false
+    ],
+    [
+      "authenticated",
+      "user_id",
+      "UPDATE",
+      false
+    ],
+    [
+      "authenticated",
+      "user_book_id",
+      "UPDATE",
+      false
+    ],
+    [
+      "authenticated",
+      "content",
+      "UPDATE",
+      true
+    ],
+    [
+      "authenticated",
+      "tag",
+      "UPDATE",
+      true
+    ],
+    [
+      "authenticated",
+      "page_number",
+      "UPDATE",
+      true
+    ],
+    [
+      "authenticated",
+      "created_at",
+      "UPDATE",
+      false
+    ],
+    [
+      "authenticated",
+      "updated_at",
+      "UPDATE",
+      true
+    ],
+    [
+      "authenticated",
+      "version",
+      "UPDATE",
+      false
+    ],
+    [
+      "authenticated",
+      "last_operation_id",
+      "UPDATE",
+      true
+    ],
+    [
+      "service_role",
+      "id",
+      "UPDATE",
+      true
+    ],
+    [
+      "service_role",
+      "user_id",
+      "UPDATE",
+      true
+    ],
+    [
+      "service_role",
+      "user_book_id",
+      "UPDATE",
+      true
+    ],
+    [
+      "service_role",
+      "content",
+      "UPDATE",
+      true
+    ],
+    [
+      "service_role",
+      "tag",
+      "UPDATE",
+      true
+    ],
+    [
+      "service_role",
+      "page_number",
+      "UPDATE",
+      true
+    ],
+    [
+      "service_role",
+      "created_at",
+      "UPDATE",
+      true
+    ],
+    [
+      "service_role",
+      "updated_at",
+      "UPDATE",
+      true
+    ],
+    [
+      "service_role",
+      "version",
+      "UPDATE",
+      true
+    ],
+    [
+      "service_role",
+      "last_operation_id",
+      "UPDATE",
+      true
+    ],
+    [
+      "anon",
+      "id",
+      "REFERENCES",
+      false
+    ],
+    [
+      "anon",
+      "user_id",
+      "REFERENCES",
+      false
+    ],
+    [
+      "anon",
+      "user_book_id",
+      "REFERENCES",
+      false
+    ],
+    [
+      "anon",
+      "content",
+      "REFERENCES",
+      false
+    ],
+    [
+      "anon",
+      "tag",
+      "REFERENCES",
+      false
+    ],
+    [
+      "anon",
+      "page_number",
+      "REFERENCES",
+      false
+    ],
+    [
+      "anon",
+      "created_at",
+      "REFERENCES",
+      false
+    ],
+    [
+      "anon",
+      "updated_at",
+      "REFERENCES",
+      false
+    ],
+    [
+      "anon",
+      "version",
+      "REFERENCES",
+      false
+    ],
+    [
+      "anon",
+      "last_operation_id",
+      "REFERENCES",
+      false
+    ],
+    [
+      "authenticated",
+      "id",
+      "REFERENCES",
+      false
+    ],
+    [
+      "authenticated",
+      "user_id",
+      "REFERENCES",
+      false
+    ],
+    [
+      "authenticated",
+      "user_book_id",
+      "REFERENCES",
+      false
+    ],
+    [
+      "authenticated",
+      "content",
+      "REFERENCES",
+      false
+    ],
+    [
+      "authenticated",
+      "tag",
+      "REFERENCES",
+      false
+    ],
+    [
+      "authenticated",
+      "page_number",
+      "REFERENCES",
+      false
+    ],
+    [
+      "authenticated",
+      "created_at",
+      "REFERENCES",
+      false
+    ],
+    [
+      "authenticated",
+      "updated_at",
+      "REFERENCES",
+      false
+    ],
+    [
+      "authenticated",
+      "version",
+      "REFERENCES",
+      false
+    ],
+    [
+      "authenticated",
+      "last_operation_id",
+      "REFERENCES",
+      false
+    ],
+    [
+      "service_role",
+      "id",
+      "REFERENCES",
+      true
+    ],
+    [
+      "service_role",
+      "user_id",
+      "REFERENCES",
+      true
+    ],
+    [
+      "service_role",
+      "user_book_id",
+      "REFERENCES",
+      true
+    ],
+    [
+      "service_role",
+      "content",
+      "REFERENCES",
+      true
+    ],
+    [
+      "service_role",
+      "tag",
+      "REFERENCES",
+      true
+    ],
+    [
+      "service_role",
+      "page_number",
+      "REFERENCES",
+      true
+    ],
+    [
+      "service_role",
+      "created_at",
+      "REFERENCES",
+      true
+    ],
+    [
+      "service_role",
+      "updated_at",
+      "REFERENCES",
+      true
+    ],
+    [
+      "service_role",
+      "version",
+      "REFERENCES",
+      true
+    ],
+    [
+      "service_role",
+      "last_operation_id",
+      "REFERENCES",
+      true
+    ]
+  ],
+  "constraints_digest": "e8f06234ef1bfc5291d5cb4f3adebc4f",
+  "function_privileges": [
+    [
+      "anon",
+      "check_note_word_limit",
+      true
+    ],
+    [
+      "anon",
+      "library_manage_note_revision",
+      false
+    ],
+    [
+      "authenticated",
+      "check_note_word_limit",
+      true
+    ],
+    [
+      "authenticated",
+      "library_manage_note_revision",
+      false
+    ],
+    [
+      "service_role",
+      "check_note_word_limit",
+      true
+    ],
+    [
+      "service_role",
+      "library_manage_note_revision",
+      false
+    ]
+  ]
+}

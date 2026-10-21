@@ -1,0 +1,67 @@
+[
+  {
+    "bundle": [
+      "http://localhost:19006/_expo/static/js/web/entry-75ea8aa53da898ce1c9907d450477b5f.js"
+    ],
+    "cabinet": 528,
+    "height": 844,
+    "order": [
+      "library-horizontal-book-e063191d-6a0b-4222-91c9-0a98937ee80b",
+      "library-horizontal-book-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+      "library-horizontal-book-ae665879-eda1-40f1-a775-7d698a861b27",
+      "library-horizontal-book-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+      "library-horizontal-book-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+      "library-horizontal-book-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+      "library-horizontal-book-f498f920-386c-484b-8533-18f9c44579f8",
+      "library-horizontal-book-eebf0401-d243-423b-83e4-41aa5d287d70"
+    ],
+    "stage": "final-load",
+    "width": 390
+  },
+  {
+    "ids": [
+      "library-horizontal-book-eebf0401-d243-423b-83e4-41aa5d287d70"
+    ],
+    "stage": "wishlist"
+  },
+  {
+    "order": [
+      "library-horizontal-book-e063191d-6a0b-4222-91c9-0a98937ee80b",
+      "library-horizontal-book-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+      "library-horizontal-book-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+      "library-horizontal-book-ae665879-eda1-40f1-a775-7d698a861b27",
+      "library-horizontal-book-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+      "library-horizontal-book-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+      "library-horizontal-book-f498f920-386c-484b-8533-18f9c44579f8",
+      "library-horizontal-book-eebf0401-d243-423b-83e4-41aa5d287d70"
+    ],
+    "stage": "draft-later"
+  },
+  {
+    "saveVisible": true,
+    "stage": "vertical-draft",
+    "titles": [
+      "Select Sand Dune Stabilization, Shelterbelts and Afforestation in Dry Zones",
+      "Select The Bed of Procrustes by Nassim Nicholas Taleb",
+      "Select ZZ_TEST Playwright Nomination Book by Playwright Author",
+      "Select Dune by Frank Herbert",
+      "Select The Science of Dune by Kevin R. Grazier",
+      "Select Fooled by Randomness by Nassim Nicholas Taleb",
+      "Select Oil, electricity and Taleb’s ‚Black Swan‘ by Ullrich Müller",
+      "Select The Black Swan by Nassim Nicholas Taleb"
+    ]
+  },
+  {
+    "order": [
+      "library-horizontal-book-e063191d-6a0b-4222-91c9-0a98937ee80b",
+      "library-horizontal-book-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+      "library-horizontal-book-ae665879-eda1-40f1-a775-7d698a861b27",
+      "library-horizontal-book-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+      "library-horizontal-book-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+      "library-horizontal-book-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+      "library-horizontal-book-f498f920-386c-484b-8533-18f9c44579f8",
+      "library-horizontal-book-eebf0401-d243-423b-83e4-41aa5d287d70"
+    ],
+    "stage": "cancel-restored"
+  }
+]

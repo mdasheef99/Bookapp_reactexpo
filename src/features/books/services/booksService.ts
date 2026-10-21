@@ -49,8 +49,11 @@ export interface PaginatedResult {
     items: GoogleBook[];
     totalItems: number;
     hasMore: boolean;
+    nextStartIndex?: number;
     providerUsed?: 'google' | 'openLibrary';
     fallbackUsed?: boolean;
+    totalItemsExact?: boolean;
+    unsupportedFilters?: Array<keyof SearchFilters>;
 }
 
 export interface ManualBookInput {
@@ -100,16 +103,43 @@ type OpenLibrarySearchDoc = {
     edition_key?: string[];
     subject?: string[];
     language?: string[];
+    editions?: {
+        docs?: OpenLibraryEditionDoc[];
+    };
+};
+
+type OpenLibraryEditionDoc = {
+    key?: string;
+    title?: string;
+    subtitle?: string;
+    language?: string[];
+    isbn_10?: string[];
+    isbn_13?: string[];
+    isbn?: string[];
+    cover_i?: number;
+    publish_date?: string[];
+    publisher?: string[];
+    number_of_pages?: number;
 };
 
 type OpenLibrarySearchResponse = {
     start?: number;
     numFound?: number;
     num_found?: number;
+    numFoundExact?: boolean;
+    num_found_exact?: boolean;
     docs?: OpenLibrarySearchDoc[];
 };
 
-const getHighResCoverUrl = (url?: string): string | null => {
+const OPEN_LIBRARY_LANGUAGE_CODES: Record<string, string> = {
+    en: 'eng',
+    hi: 'hin',
+    es: 'spa',
+    fr: 'fre',
+    de: 'ger',
+};
+
+export const getHighResCoverUrl = (url?: string): string | null => {
     if (!url) return null;
     let secureUrl = url.replace(/^http:\/\//i, 'https://');
     secureUrl = secureUrl.replace('&zoom=1', '&zoom=0');
@@ -140,14 +170,18 @@ const getIsbnIdentifiers = (isbns?: string[]) => {
     ].filter(Boolean) as { type: string; identifier: string }[];
 };
 
-const getOpenLibraryCoverUrl = (doc: OpenLibrarySearchDoc): string | undefined => {
-    if (doc.cover_i) return `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
+const getOpenLibraryCoverUrl = (doc: OpenLibrarySearchDoc, edition?: OpenLibraryEditionDoc): string | undefined => {
+    const coverId = edition ? edition.cover_i : doc.cover_i;
+    if (coverId) return `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
 
-    const cleanIsbns = (doc.isbn || [])
+    const cleanIsbns = edition
+        ? [...(edition.isbn_13 ?? []), ...(edition.isbn_10 ?? []), ...(edition.isbn ?? [])]
+        : (doc.isbn ?? []);
+    const cleanCandidates = cleanIsbns
         .map((isbn) => isbn.replace(/[-\s]/g, ''))
         .filter(Boolean);
-    const isbn = cleanIsbns.find((value) => value.length === 13)
-        || cleanIsbns.find((value) => value.length === 10);
+    const isbn = cleanCandidates.find((value) => value.length === 13)
+        || cleanCandidates.find((value) => value.length === 10);
 
     return isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg` : undefined;
 };
@@ -157,25 +191,56 @@ const getOpenLibraryInfoLink = (key?: string): string | undefined => {
     return `https://openlibrary.org${key.startsWith('/') ? key : `/${key}`}`;
 };
 
-const mapOpenLibraryDocToGoogleBook = (doc: OpenLibrarySearchDoc): GoogleBook | null => {
+const mapOpenLibraryDocToGoogleBook = (doc: OpenLibrarySearchDoc, requiredLanguage?: string): GoogleBook | null => {
     if (!doc.title) return null;
 
-    const providerId = doc.edition_key?.[0] || doc.key || doc.title;
-    const coverUrl = getOpenLibraryCoverUrl(doc);
-    const industryIdentifiers = getIsbnIdentifiers(doc.isbn);
+    const editions = doc.editions?.docs ?? [];
+    const selectedEdition = requiredLanguage
+        ? editions.find((edition) => edition.language?.includes(requiredLanguage))
+        : editions[0];
+    const workMatchesRequiredLanguage = Boolean(
+        requiredLanguage && doc.language?.includes(requiredLanguage),
+    );
+    // If the provider omits nested editions, retain a work only when its own
+    // language confirms the filter. Never borrow an arbitrary edition key or
+    // work-aggregated ISBN/cover/date as if it described the requested edition.
+    if (requiredLanguage && !selectedEdition && !workMatchesRequiredLanguage) return null;
+    const workLevelLanguageFallback = Boolean(requiredLanguage && !selectedEdition);
+
+    const providerId = selectedEdition?.key
+        || (!requiredLanguage ? doc.edition_key?.[0] : undefined)
+        || doc.key
+        || doc.title;
+    const coverUrl = workLevelLanguageFallback ? undefined : getOpenLibraryCoverUrl(doc, selectedEdition);
+    const industryIdentifiers = getIsbnIdentifiers([
+        ...(selectedEdition?.isbn_13 ?? []),
+        ...(selectedEdition?.isbn_10 ?? []),
+        ...(selectedEdition?.isbn ?? []),
+        ...(!selectedEdition && !requiredLanguage ? (doc.isbn ?? []) : []),
+    ]);
+    const publishedDate = selectedEdition
+        ? selectedEdition.publish_date?.[0]
+        : (!requiredLanguage && doc.first_publish_year ? String(doc.first_publish_year) : undefined);
+    const displayedLanguage = selectedEdition?.language?.find((language) => language === requiredLanguage)
+        || selectedEdition?.language?.[0]
+        || doc.language?.find((language) => language === requiredLanguage)
+        || doc.language?.[0];
 
     return {
-        id: `open-library:${providerId.replace(/^\//, '')}`,
+        id: `open-library:${providerId.replace(/^\/(?:books|works)\//, '').replace(/^\//, '')}`,
         volumeInfo: {
-            title: doc.title,
+            title: selectedEdition?.title || doc.title,
+            subtitle: selectedEdition?.subtitle,
             authors: doc.author_name,
             imageLinks: coverUrl ? { thumbnail: coverUrl, smallThumbnail: coverUrl } : undefined,
             categories: doc.subject?.slice(0, 3),
-            publishedDate: doc.first_publish_year ? String(doc.first_publish_year) : undefined,
+            publishedDate,
+            publisher: selectedEdition?.publisher?.[0],
+            pageCount: selectedEdition?.number_of_pages,
             industryIdentifiers: industryIdentifiers.length > 0 ? industryIdentifiers : undefined,
-            language: doc.language?.[0],
-            previewLink: getOpenLibraryInfoLink(doc.key),
-            infoLink: getOpenLibraryInfoLink(doc.key),
+            language: displayedLanguage,
+            previewLink: getOpenLibraryInfoLink(selectedEdition?.key || doc.key),
+            infoLink: getOpenLibraryInfoLink(selectedEdition?.key || doc.key),
         },
         saleInfo: {
             saleability: 'NOT_FOR_SALE',
@@ -186,10 +251,29 @@ const mapOpenLibraryDocToGoogleBook = (doc: OpenLibrarySearchDoc): GoogleBook | 
 const searchOpenLibraryBooks = async (
     query: string,
     startIndex: number,
-    maxResults: number
+    maxResults: number,
+    filters?: SearchFilters,
 ): Promise<PaginatedResult> => {
+    const searchTerms = [query.trim()];
+    if (filters?.genre && filters.genre !== 'all') {
+        const genre = filters.genre.trim().replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        searchTerms.push(`subject:"${genre}"`);
+    }
+
+    const language = filters?.language && filters.language !== 'all'
+        ? OPEN_LIBRARY_LANGUAGE_CODES[filters.language]
+        : undefined;
+    const unsupportedFilters: Array<keyof SearchFilters> = [];
+    if (filters?.language && filters.language !== 'all' && !language) {
+        unsupportedFilters.push('language');
+    }
+    if (filters?.priceType && filters.priceType !== 'all') {
+        unsupportedFilters.push('priceType');
+    }
+    if (language) searchTerms.push(`language:${language}`);
+
     const params = new URLSearchParams({
-        q: query.trim(),
+        q: searchTerms.join(' '),
         offset: String(startIndex),
         limit: String(maxResults),
         fields: [
@@ -202,6 +286,18 @@ const searchOpenLibraryBooks = async (
             'edition_key',
             'subject',
             'language',
+            'editions',
+            'editions.key',
+            'editions.title',
+            'editions.subtitle',
+            'editions.language',
+            'editions.isbn_10',
+            'editions.isbn_13',
+            'editions.isbn',
+            'editions.cover_i',
+            'editions.publish_date',
+            'editions.publisher',
+            'editions.number_of_pages',
         ].join(','),
     });
     const response = await fetch(`${OPEN_LIBRARY_SEARCH_API_URL}?${params.toString()}`);
@@ -211,16 +307,22 @@ const searchOpenLibraryBooks = async (
     }
 
     const data: OpenLibrarySearchResponse = await response.json();
-    const items = (data.docs || [])
-        .map(mapOpenLibraryDocToGoogleBook)
+    const providerDocs = data.docs || [];
+    const items = providerDocs
+        .map((doc) => mapOpenLibraryDocToGoogleBook(doc, language))
         .filter(Boolean) as GoogleBook[];
     const totalItems = data.numFound ?? data.num_found ?? items.length;
+    const exactCount = data.numFoundExact ?? data.num_found_exact ?? false;
+    const nextStartIndex = startIndex + providerDocs.length;
 
     return {
         items,
         totalItems,
-        hasMore: startIndex + items.length < totalItems,
+        hasMore: providerDocs.length > 0 && nextStartIndex < totalItems,
+        nextStartIndex,
         providerUsed: 'openLibrary',
+        totalItemsExact: exactCount,
+        unsupportedFilters,
     };
 };
 
@@ -356,24 +458,34 @@ const getUserBookByBookId = async (userId: string, bookId: string) => {
  * On a fresh cache hit, results are returned immediately without a network call.
  * On a 429 rate-limit error, stale cached results (< 5 min) are returned as a
  * fallback with `fromCache: true` so the UI can show a "cached results" banner.
+ * Pass the first page's provider for continuation pages to keep its cursor;
+ * only an unpinned first-page request may choose the Open Library fallback.
  */
 export async function searchGoogleBooksCached(
     query: string,
     startIndex: number = 0,
     maxResults: number = 20,
-    filters?: SearchFilters
+    filters?: SearchFilters,
+    provider?: 'google' | 'openLibrary',
 ): Promise<PaginatedResult & { fromCache: boolean }> {
     const trimmed = query.trim();
 
-    // Check cache first
-    const cached = getCachedSearchResults(trimmed);
+    // Continuations keep the first page's provider and its offset semantics.
+    if (provider === 'openLibrary') {
+        return {
+            ...await searchOpenLibraryBooks(trimmed, startIndex, maxResults, filters),
+            fromCache: false,
+            fallbackUsed: true,
+        };
+    }
+
+    // Check cache first - key includes filters + pagination to avoid wrong results
+    const cached = getCachedSearchResults(trimmed, filters as Record<string, unknown>, startIndex, maxResults);
     if (cached && !cached.isStale) {
         return {
-            items: cached.items,
-            totalItems: cached.items.length,
-            hasMore: false,
+            ...cached.page,
             fromCache: true,
-            providerUsed: 'google',
+            providerUsed: cached.page.providerUsed ?? 'google',
             fallbackUsed: false,
         };
     }
@@ -405,14 +517,24 @@ export async function searchGoogleBooksCached(
         const data = await response.json();
         const items = data.items || [];
         const totalItems = data.totalItems || 0;
+        const hasMore = startIndex + items.length < totalItems;
+        const nextStartIndex = startIndex + items.length;
 
-        // Cache successful Google results.
-        setCachedSearchResults(trimmed, items);
+        // Cache successful Google results - keyed by filters + pagination
+        setCachedSearchResults(trimmed, {
+            items,
+            totalItems,
+            hasMore,
+            nextStartIndex,
+            totalItemsExact: true,
+            providerUsed: 'google',
+        }, filters as Record<string, unknown>, startIndex, maxResults);
 
         return {
             items,
             totalItems,
-            hasMore: startIndex + items.length < totalItems,
+            hasMore,
+            nextStartIndex,
             fromCache: false,
             providerUsed: 'google',
             fallbackUsed: false,
@@ -423,9 +545,7 @@ export async function searchGoogleBooksCached(
             const e = error as any;
             if (e?.status === 429 || String(e?.message).includes('429')) {
                 return {
-                    items: cached.items,
-                    totalItems: cached.items.length,
-                    hasMore: false,
+                    ...cached.page,
                     fromCache: true,
                     providerUsed: 'google',
                     fallbackUsed: false,
@@ -433,8 +553,10 @@ export async function searchGoogleBooksCached(
             }
         }
 
+        if (provider === 'google') throw error;
+
         try {
-            const openLibraryResult = await searchOpenLibraryBooks(trimmed, startIndex, maxResults);
+            const openLibraryResult = await searchOpenLibraryBooks(trimmed, startIndex, maxResults, filters);
             return {
                 ...openLibraryResult,
                 fromCache: false,
@@ -475,11 +597,13 @@ export const booksService = {
 
             const items = data.items || [];
             const totalItems = data.totalItems || 0;
+            const nextStartIndex = startIndex + items.length;
 
             return {
                 items,
                 totalItems,
                 hasMore: startIndex + items.length < totalItems,
+                nextStartIndex,
             };
         } catch (error) {
             console.error('Error searching Google Books:', error);
@@ -690,24 +814,6 @@ export const booksService = {
         const { error } = await supabase
             .from('user_books')
             .update({ condition })
-            .eq('id', userBookId);
-
-        if (error) throw error;
-    },
-
-    async addRating(userBookId: string, rating?: number, review?: string, isPublic: boolean = true) {
-        const updates: Record<string, unknown> = {
-            review,
-            review_is_public: isPublic
-        };
-
-        if (typeof rating === 'number') {
-            updates.rating = rating;
-        }
-
-        const { error } = await supabase
-            .from('user_books')
-            .update(updates)
             .eq('id', userBookId);
 
         if (error) throw error;

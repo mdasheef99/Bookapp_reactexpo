@@ -1,0 +1,29 @@
+{
+  "scope": "Same-session LUNA-WEB-03 bounded keyboard correction verification",
+  "branch": "codex/library-cover-shelf",
+  "head": "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+  "files": [
+    {
+      "path": "src/components/notes/ManualNoteUi.tsx",
+      "before": "367475F06BBF5BD15B7254D25A97CBAC3679C703CDC0940C86CF04120877A917",
+      "after": "0CCB6D804CB24C633DBFBCBF32F7CFC5CC43700D94C51D543B39ED61F323FE7F"
+    },
+    {
+      "path": "src/components/notes/__tests__/CategoryPicker.web-semantics.test.tsx",
+      "before": "37FCBD0F1A742389F1B9DC0880AE24033FF22B003287FCF08E1CEF2FA2D34E3D",
+      "after": "B7E031DF86585EE4C13744F41877531190D4D02AA150C45AE17EA793BE28559B"
+    }
+  ],
+  "bundleManifestDifferences": [
+    {
+      "path": "src/components/notes/ManualNoteUi.tsx",
+      "before": "367475F06BBF5BD15B7254D25A97CBAC3679C703CDC0940C86CF04120877A917",
+      "after": "0CCB6D804CB24C633DBFBCBF32F7CFC5CC43700D94C51D543B39ED61F323FE7F"
+    },
+    {
+      "path": "src/components/notes/__tests__/CategoryPicker.web-semantics.test.tsx",
+      "before": "37FCBD0F1A742389F1B9DC0880AE24033FF22B003287FCF08E1CEF2FA2D34E3D",
+      "after": "B7E031DF86585EE4C13744F41877531190D4D02AA150C45AE17EA793BE28559B"
+    }
+  ]
+}

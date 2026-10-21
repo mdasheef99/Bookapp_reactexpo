@@ -1,0 +1,16 @@
+{
+  "totalWrites": 0,
+  "writes": [],
+  "perTest": [
+    {
+      "test": "FU2 home heading probe (daylight, hour 12)",
+      "writes": [],
+      "rpcReads": [],
+      "authCalls": [
+        "POST otp",
+        "POST /auth/v1/verify"
+      ],
+      "externalReads": []
+    }
+  ]
+}

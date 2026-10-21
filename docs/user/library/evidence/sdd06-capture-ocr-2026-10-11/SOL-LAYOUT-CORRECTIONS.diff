@@ -1,0 +1,71 @@
+diff --git a/.tmp/sol-layout-ManualNoteUi-before.txt b/src/components/notes/ManualNoteUi.tsx
+index 7fb1e7f..04b825f 100644
+--- a/.tmp/sol-layout-ManualNoteUi-before.txt
++++ b/src/components/notes/ManualNoteUi.tsx
+@@ -18,16 +18,18 @@ export function NoteButton({ label, onPress, secondary = false, disabled = false
+     <Text style={[ui.buttonText, { color: secondary ? colors.textPrimary : colors.bgPrimary }]}>{label}</Text>
+   </Pressable>;
+ }
+-export function NoteScreen({ title, bookTitle, backLabel, onBack, children, footer }: React.PropsWithChildren<{ title: string; bookTitle?: string; backLabel: string; onBack: () => void; footer?: React.ReactNode }>) {
++export function NoteScreen({ title, bookTitle, backLabel, onBack, children, footer, scrollChrome = false }: { title: string; bookTitle?: string; backLabel: string; onBack: () => void; footer?: React.ReactNode; scrollChrome?: boolean; children?: React.ReactNode | ((header: React.ReactNode, footer: React.ReactNode) => React.ReactNode) }) {
+   const colors = useNoteColors(); const insets = useSafeAreaInsets();
+-  return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bgPrimary }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+-    <View style={[ui.header, { paddingTop: insets.top + 8, borderColor: colors.border }]}>
++  const header = <View style={[ui.header, { paddingTop: insets.top + 8, borderColor: colors.border }]}>
+       <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel={backLabel} style={ui.back}><Text style={[ui.link, { color: colors.accent }]}>‹ {backLabel}</Text></Pressable>
+       <Text accessibilityRole="header" style={[ui.title, { color: colors.textPrimary }]}>{title}</Text>
+       {!!bookTitle && <Text style={[ui.book, { color: colors.textSecondary }]}>{bookTitle}</Text>}
+-    </View>
+-    <View style={{ flex: 1 }}>{children}</View>
+-    {!!footer && <View style={[ui.footer, { backgroundColor: colors.bgPrimary, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 12) }]}>{footer}</View>}
++    </View>;
++  const actions = footer ? <View style={[ui.footer, { backgroundColor: colors.bgPrimary, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 12) }]}>{footer}</View> : null;
++  return <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bgPrimary }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
++    {!scrollChrome && header}
++    <View style={{ flex: 1 }}>{typeof children === 'function' ? children(scrollChrome ? header : null, scrollChrome ? actions : null) : children}</View>
++    {!scrollChrome && actions}
+   </KeyboardAvoidingView>;
+ }
+ export function NoteMessage({ message, error = false }: { message: string; error?: boolean }) {
+diff --git a/.tmp/sol-layout-composer-before.txt b/app/(tabs)/library/note-compose.tsx
+index 7dab12d..b8e0dbd 100644
+--- a/.tmp/sol-layout-composer-before.txt
++++ b/app/(tabs)/library/note-compose.tsx
+@@ -189,7 +189,7 @@ export default function NoteComposeScreen() {
+     title: 'Some text may be missing', message: 'This scan reached the review limit. Check the incomplete text before deciding whether to use it. Accepting it returns to editing; save separately.',
+     keep: 'Keep editing', confirm: 'Use incomplete text', action: () => capture.acceptPartial(),
+   } : null;
+-  return <NoteScreen title={title} bookTitle={book.data?.title} backLabel={locked ? 'Leave' : categoryOpen ? 'Back to editor' : captureState.busy === 'recognizing' ? 'Cancel recognition' : step === 'review' ? 'Back to photo' : step === 'crop' ? 'Back to scan' : scanStep ? scanOriginLabel : step === 'write' && mode === 'create' ? 'Back to options' : 'Back'}
++  return <NoteScreen scrollChrome={scanStep} title={title} bookTitle={book.data?.title} backLabel={locked ? 'Leave' : categoryOpen ? 'Back to editor' : captureState.busy === 'recognizing' ? 'Cancel recognition' : step === 'review' ? 'Back to photo' : step === 'crop' ? 'Back to scan' : scanStep ? scanOriginLabel : step === 'write' && mode === 'create' ? 'Back to options' : 'Back'}
+     onBack={() => {
+       if (categoryOpen) { setCategoryOpen(false); inputRef.current?.focus(); }
+       else if (retainedBack()) return;
+@@ -208,8 +208,11 @@ export default function NoteComposeScreen() {
+         : <NoteButton label={capture.firstScan ? 'Write note instead' : scanOriginLabel} onPress={() => cancelScan(capture.firstScan)} />}
+       <NoteButton label="Cancel scan" secondary onPress={() => cancelScan()} />
+     </> : undefined}>
+-    <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={ui.content} scrollEventThrottle={32}
++    {(header, footer) => <>
++    <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={scanStep ? { flexGrow: 1 } : undefined} scrollEventThrottle={32}
+       onScroll={event => { if (formStep) capture.setPosition({ scroll: event.nativeEvent.contentOffset.y }); }}>
++      {header}
++      <View style={[ui.content, scanStep && { flexGrow: 1 }]}>
+       {editorReady && (book.isError || (mode === 'edit' && loaded.isError)) && <>
+         <NoteMessage message="Refresh failed. Your current text is still here." error />
+         <NoteButton label="Retry refresh" secondary onPress={() => { void book.refetch(); if (mode === 'edit') void loaded.refetch(); }} />
+@@ -274,6 +277,8 @@ export default function NoteComposeScreen() {
+         <CategoryPicker selected={fields.category} onChange={category => { setFields({ ...fields, category }); setCategoryOpen(false); inputRef.current?.focus(); }} />
+         <NoteButton label="No category" secondary onPress={() => { setFields({ ...fields, category: null }); setCategoryOpen(false); inputRef.current?.focus(); }} />
+         <NoteButton label="Close category choices" secondary onPress={() => { setCategoryOpen(false); inputRef.current?.focus(); }} /></View>}
++      </View>
++      {footer}
+     </ScrollView>
+     <NoteDialog spec={partialDialog ?? dialog} onKeep={() => {
+       browserHistoryGuard.current?.keepEditing(); restoreEditorFocus.current = formStep; setDialog(null); capture.keepPartialEditing();
+@@ -282,5 +287,6 @@ export default function NoteComposeScreen() {
+       // Web Modal restores prior focus while unmounting its focus trap.
+       if (restoreEditorFocus.current) { restoreEditorFocus.current = false; inputRef.current?.focus(); }
+     }} />
++    </>}
+   </NoteScreen>;
+ }

@@ -1,0 +1,13 @@
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/INTERACTION-MAP.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/MANUAL-NOTE-FORWARD-CORRECTION-PLAN.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/MANUAL-NOTE-PERSISTENCE-PLAN.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/NOTE-CATEGORY-ROLLOUT.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/SDD-06-after-book-entry-ui.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/UI-UX-INVENTORY.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'opencode.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/notes/__tests__/ManualNoteJourney.test.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/features/books/notes/__tests__/manualNoteDeleteGate.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/features/books/notes/__tests__/manualNotesGateway.test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/features/books/notes/manualNotesGateway.ts', LF will be replaced by CRLF the next time Git touches it

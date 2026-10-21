@@ -1,0 +1,97 @@
+TAP version 13
+# LOCAL_POSTGRES_VERSION=17 LOCAL_HOST=127.0.0.1 MIGRATION=20261010172118 TEST_DATA=synthetic
+# Subtest: upgrades the verified notes projection without changing legacy content or Saved Pages
+ok 1 - upgrades the verified notes projection without changing legacy content or Saved Pages
+  ---
+  duration_ms: 7272.3061
+  ...
+# RED_PRE_CORRECTION_EVIDENCE=created_at_mutable exact_applied_variant=20261010221843 synthetic_row_only=true
+# Subtest: reproduces mutable created_at on the exact applied 20261010221843 variant before correction
+ok 2 - reproduces mutable created_at on the exact applied 20261010221843 variant before correction
+  ---
+  duration_ms: 853.8666
+  ...
+# Subtest: round trips all five category identifiers and no category
+ok 3 - round trips all five category identifiers and no category
+  ---
+  duration_ms: 411.9815
+  ...
+# Subtest: rejects invalid category, empty text, excess words and invalid page without altering the original
+ok 4 - rejects invalid category, empty text, excess words and invalid page without altering the original
+  ---
+  duration_ms: 518.5148
+  ...
+# Subtest: denies anonymous CRUD and table-wide privileges
+ok 5 - denies anonymous CRUD and table-wide privileges
+  ---
+  duration_ms: 425.6246
+  ...
+# Subtest: foreign accounts cannot read, modify or delete a saved note
+ok 6 - foreign accounts cannot read, modify or delete a saved note
+  ---
+  duration_ms: 57.3249
+  ...
+# Subtest: rejects foreign-book and foreign-actor insertions
+ok 7 - rejects foreign-book and foreign-actor insertions
+  ---
+  duration_ms: 176.0831
+  ...
+# Subtest: denies client metadata/identity spoofing while keeping legacy updated_at compatible
+ok 8 - denies client metadata/identity spoofing while keeping legacy updated_at compatible
+  ---
+  duration_ms: 587.6627
+  ...
+# Subtest: trusted metadata is server managed and identity changes also fail for privileged writers
+ok 9 - trusted metadata is server managed and identity changes also fail for privileged writers
+  ---
+  duration_ms: 220.4824
+  ...
+# Subtest: clears a stale operation marker on every unmarked legacy update, including no-op
+ok 10 - clears a stale operation marker on every unmarked legacy update, including no-op
+  ---
+  duration_ms: 61.5932
+  ...
+# Subtest: the stable create UUID rejects duplicate INSERT without replacing content
+ok 11 - the stable create UUID rejects duplicate INSERT without replacing content
+  ---
+  duration_ms: 62.3268
+  ...
+# Subtest: parent owner changes cannot strand notes; parent and account deletion still cascade
+ok 12 - parent owner changes cannot strand notes; parent and account deletion still cascade
+  ---
+  duration_ms: 164.8386
+  ...
+# Subtest: rejects ownership inconsistencies before DDL and rolls back atomically
+ok 13 - rejects ownership inconsistencies before DDL and rolls back atomically
+  ---
+  duration_ms: 682.7124
+  ...
+# Subtest: two competing real connections admit one edit and reject a stale explicit replacement
+ok 14 - two competing real connections admit one edit and reject a stale explicit replacement
+  ---
+  duration_ms: 140.8567
+  ...
+# Subtest: refuses a changed same-name constraint instead of silently replacing it
+ok 15 - refuses a changed same-name constraint instead of silently replacing it
+  ---
+  duration_ms: 816.9163
+  ...
+# Subtest: refuses word-limit helper body, execution attributes or writer-privilege drift without changing the baseline
+ok 16 - refuses word-limit helper body, execution attributes or writer-privilege drift without changing the baseline
+  ---
+  duration_ms: 4152.9184
+  ...
+# Subtest: refuses same-name policy predicate, role, command or check drift before replacing policies
+ok 17 - refuses same-name policy predicate, role, command or check drift before replacing policies
+  ---
+  duration_ms: 2945.8326
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 30376.2888

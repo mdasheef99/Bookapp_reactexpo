@@ -1,0 +1,60 @@
+**This is a good revision. I would accept v0.2 as the planning baseline and move to the connected manual prototype.** It resolves most of the contradictions we identified. I would not request another broad rewrite.
+
+It still does **not** establish that the screens look consistent or work well together—the agent correctly says the app and Stitch designs are unchanged.
+
+**What the agent has resolved well**
+
+The attached revision—not just its summary—now includes:
+
+- Clear separation between settled owner decisions and reviewer recommendations.
+- Distinct SDD implementation identifiers, preserving the original OCR roadmap and pending U3.
+- Visible preservation of existing Saved Pages access, without pretending excerpt browsing is full passage reading.
+- Compact category controls, neutral note-body styling, and a full-image default for recognition.
+- Correct replacement return paths for manual writing, OCR review, and editing an existing note.
+- Capture-work protection, a bounded uncertain-save state, and an explicit incomplete-text acceptance loop.
+- Separate create-save and edit-save navigation, avoiding duplicate reader pages.
+- A connected-prototype acceptance plan that distinguishes simulated behavior from verified persistence.
+
+Those are substantive improvements. The document is now specific enough to guide design without requiring sixteen independently invented layouts.
+
+**The agent’s correction about prior decisions is fair.** My earlier advice to reopen optional categories and standalone-passage deferral was unnecessary if those were already explicitly authorized in your earlier instructions. The revision records that provenance; they should remain settled rather than cycling through approval again.
+
+**A few details still need attention—but they should not delay visual prototyping**
+
+| Detail | My assessment |
+|---|---|
+| **Replacement checkpoints across repeated scans** | The document limits history to one checkpoint, which is sensible. But it also says the previous checkpoint remains until adoption/save. Specify what happens when a reader scans again before saving the first replacement: which previous text can Cancel restore? One concrete example will resolve this. |
+| **Post-create navigation** | New notes return to the collection, while existing notes opened from Book Details return there. This is a reasonable proposal, but test it: the same reader’s Back destination changes with entry history. Make the destination understandable. |
+| **15-second saving / 10-second checking thresholds** | Treat these as prototype parameters, as the document says—not approved performance targets. Immediate feedback and a truthful outcome matter more than these particular numbers. |
+| **Long OCR results versus the note limit** | A partial extraction may still require substantial reduction to fit 500 words. Test whether editing and over-limit guidance make this manageable. Explicit acceptance alone does not solve the editing burden. |
+| **Database/security findings** | The revision reports fresh evidence, but I have not inspected the underlying receipt. Treat the category restrictions as reported verified findings and the privilege/ownership concerns as technical investigation gates—not proof of an exploitable vulnerability or proof of security acceptance. |
+
+The database work and visual work should now proceed as separate, coordinated tracks. Technical gaps need resolution before functional release; they do not need to hold up a clearly labeled prototype.
+
+**Does this now support our philosophy?**
+
+**Yes, substantially better at the specification level.** It now translates “calm” into useful space for text, fewer repeated controls, stable feedback, and contextual recovery. It translates “reader control” into explicit saving, preserved work, and understandable cancellation.
+
+The remaining danger is faithfully displaying every documented rule as interface text. This is a detailed implementation document; the product should expose only what the reader needs at that moment. The prototype must demonstrate that progressive disclosure actually keeps the experience understandable.
+
+Aesthetic consistency remains **a hypothesis to validate**, not an achievement to claim.
+
+**What I would authorize next**
+
+A bounded **manual-journey design pass**, using the existing mapped targets:
+
+**Book Details → Add note → Write → simulated Save → Read → Edit → Read → Collection.**
+
+Include:
+
+- No category and no page.
+- Long title and long note.
+- Keyboard-open and enlarged-text layouts.
+- Over-limit validation.
+- Definite save failure and uncertain saving.
+- Dirty exit.
+- Collection error and filtered return.
+
+Require one small evidence table: **screen/state, exact link, what changed, and what remains unproved**. Then review the connected journey at readable size—not a board thumbnail.
+
+**My recommendation is to proceed now.** Accept the document as the baseline, settle the remaining exit/replacement policies, and authorize the manual prototype. The next review should evaluate the actual experience rather than produce another layer of planning.

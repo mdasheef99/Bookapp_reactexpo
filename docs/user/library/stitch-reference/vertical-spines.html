@@ -1,0 +1,326 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>CM's Book Shelf</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700;800&amp;family=Manrope:wght@400;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#2b1700",
+                        "on-secondary-container": "#79572d",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#2b231a",
+                        "secondary-fixed": "#ffddb9",
+                        "surface-container": "#feebd8",
+                        "on-primary": "#ffffff",
+                        "on-surface": "#231a0f",
+                        "on-tertiary-fixed": "#321200",
+                        "surface-container-high": "#f8e5d2",
+                        "surface": "#fff8f4",
+                        "inverse-surface": "#392f22",
+                        "tertiary-fixed-dim": "#ffb68c",
+                        "outline-variant": "#d0c4bb",
+                        "primary-fixed-dim": "#d4c4b6",
+                        "primary-fixed": "#f0e0d1",
+                        "surface-bright": "#fff8f4",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#fff1e5",
+                        "secondary-fixed-dim": "#ecbe8c",
+                        "on-background": "#231a0f",
+                        "secondary-container": "#fecf9b",
+                        "inverse-on-surface": "#ffeede",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#612a00",
+                        "surface-dim": "#e9d7c5",
+                        "on-primary-fixed": "#221a11",
+                        "on-primary-container": "#b0a194",
+                        "surface-tint": "#685c51",
+                        "tertiary": "#401900",
+                        "secondary": "#7a582e",
+                        "on-secondary-fixed-variant": "#5f4019",
+                        "on-tertiary-fixed-variant": "#753401",
+                        "background": "#fff8f4",
+                        "outline": "#7e756e",
+                        "on-primary-fixed-variant": "#50453a",
+                        "on-surface-variant": "#4d453f",
+                        "surface-variant": "#f2dfcd",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "inverse-primary": "#d4c4b6",
+                        "tertiary-fixed": "#ffdbc9",
+                        "primary-container": "#42382e",
+                        "surface-container-highest": "#f2dfcd",
+                        "on-tertiary-container": "#e78e56",
+                        "on-error": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "edge-margin": "24px",
+                        "shelf-height": "180px",
+                        "gutter": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Manrope"],
+                        "headline-lg-mobile": ["EB Garamond"],
+                        "label-sm": ["Manrope"],
+                        "headline-lg": ["EB Garamond"],
+                        "headline-md": ["EB Garamond"],
+                        "body-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-lg": ["34px", {"lineHeight": "42px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        
+        .paper-texture {
+            background-image: url("https://www.transparenttextures.com/patterns/pinstriped-suit.png");
+            opacity: 0.03;
+            pointer-events: none;
+        }
+
+        /* Bookshelf 3D CSS */
+        .book-spine {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            box-shadow: 
+                inset 3px 0 5px rgba(255,255,255,0.15), 
+                inset -5px 0 8px rgba(0,0,0,0.4),
+                3px 0 6px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .book-spine::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 15%, transparent 85%, rgba(0,0,0,0.2) 100%);
+            pointer-events: none;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+        }
+        .book-spine::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("https://www.transparenttextures.com/patterns/woven-light.png");
+            opacity: 0.2;
+            pointer-events: none;
+        }
+        .shelf {
+            border-bottom: 12px solid #5c3a21;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            background: #4a2e1b;
+            box-shadow: 0 15px 25px -5px rgba(0,0,0,0.6);
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            padding: 0 16px;
+            gap: 2px;
+            z-index: 10;
+        }
+        .shelf::before {
+            content: '';
+            position: absolute;
+            bottom: -12px; left: 0; right: 0; height: 12px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.5) 100%);
+            pointer-events: none;
+        }
+        .shelf-bg {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 80%, rgba(0,0,0,0.2) 100%), #d4b89e;
+        }
+    </style>
+<style data-stitch-css-vh="
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  ">
+    body {
+      min-height: max(884px, 884px);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md overflow-x-hidden">
+<div class="fixed inset-0 paper-texture z-50"></div>
+<!-- Top AppBar -->
+<header class="flex justify-between items-center px-edge-margin py-4 w-full bg-surface dark:bg-surface-dim z-40">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" style="font-size: 28px;">menu_book</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary dark:text-primary-fixed">CM's Book Shelf</h1>
+</div>
+<button class="hover:opacity-80 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</button>
+</header>
+<main class="min-h-[884px] pb-32" data-stitch-vh="min-h-[884px]===min-h-screen">
+<!-- Subheader -->
+<div class="px-edge-margin mt-2 mb-8 text-center">
+<p class="text-on-surface-variant opacity-70 italic font-body-lg">My Personal Library</p>
+</div>
+<!-- Hyper-Realistic Shelf Area -->
+<section class="relative w-full px-edge-margin mb-12" style="opacity: 1; transform: translateY(0px); transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1);">
+<div class="w-full relative rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/20 shelf-bg flex flex-col pt-8">
+<!-- Shelf 1 -->
+<div class="shelf pb-0 w-full justify-center">
+<div class="book-spine bg-[#445a70] text-white" style="width: 32px; height: 140px;">
+<span class="font-headline-md opacity-90 truncate w-full text-center tracking-normal" style="font-size: 14px; line-height: 1.1;">The Alchemist</span>
+<div class="w-full h-2 bg-black/20 mt-auto"></div>
+</div>
+<div class="book-spine bg-[#853939] text-[#f0e0d1]" style="width: 40px; height: 155px;">
+<span class="font-headline-md opacity-90 truncate w-full text-center tracking-wider" style="font-size: 16.5px; line-height: 1.1;">Sapiens</span>
+<div class="w-full h-1 bg-white/20 mt-auto mb-2"></div>
+</div>
+<div class="book-spine bg-[#d6d0c4] text-[#2b231a]" style="width: 36px; height: 145px;">
+<span class="font-headline-md font-semibold opacity-90 truncate w-full text-center tracking-tight" style="font-size: 15.5px; line-height: 1.1;">Atomic Habits</span>
+<div class="w-full h-3 bg-black/10 mt-auto"></div>
+</div>
+<div class="book-spine bg-[#627a4d] text-white" style="width: 34px; height: 135px;">
+<span class="font-headline-md opacity-90 truncate w-full text-center tracking-normal" style="font-size: 14px; line-height: 1.1;">Power of Now</span>
+</div>
+<div class="book-spine bg-[#23354a] text-[#f0e0d1]" style="width: 44px; height: 160px;">
+<span class="font-headline-md font-semibold opacity-90 truncate w-full text-center tracking-wider" style="font-size: 16.5px; line-height: 1.1;">Deep Work</span>
+<div class="w-[80%] h-[1px] bg-white/30 my-1 mx-auto"></div>
+</div>
+<div class="book-spine bg-[#b8622c] text-white" style="width: 34px; height: 140px;">
+<span class="font-headline-md opacity-90 truncate w-full text-center tracking-normal" style="font-size: 14px; line-height: 1.1;">The 5 AM Club</span>
+</div>
+<div class="book-spine bg-[#454d52] text-white" style="width: 38px; height: 150px;">
+<span class="font-headline-md opacity-90 truncate w-full text-center tracking-normal" style="font-size: 14.5px; line-height: 1.1;">Thinking Fast</span>
+</div>
+</div>
+<!-- Shelf 2 -->
+<div class="shelf pb-0 w-full mt-16 justify-center">
+<div class="book-spine bg-[#363a40] text-white" style="width: 36px; height: 145px;">
+<span class="font-headline-md opacity-90 truncate w-full text-center tracking-normal" style="font-size: 14px; line-height: 1.1;">Midnight Lib.</span>
+</div>
+<div class="book-spine bg-[#c99a38] text-[#2b231a]" style="width: 34px; height: 150px;">
+<span class="font-headline-md font-semibold opacity-90 truncate w-full text-center tracking-wider" style="font-size: 15px; line-height: 1.1;">Rich Dad</span>
+</div>
+<div class="book-spine bg-[#ded6cc] text-[#2b231a]" style="width: 32px; height: 135px;">
+<span class="font-headline-md font-semibold opacity-90 truncate w-full text-center tracking-tight" style="font-size: 14px; line-height: 1.1;">Psychology</span>
+</div>
+<div class="book-spine bg-[#727a80] text-white" style="width: 40px; height: 140px;">
+<span class="font-headline-md opacity-90 truncate w-full text-center tracking-normal" style="font-size: 14.5px; line-height: 1.1;">Zero to One</span>
+<div class="w-full h-2 bg-black/20 mt-auto mb-1"></div>
+</div>
+<div class="book-spine bg-[#8a9164] text-[#2b231a]" style="width: 36px; height: 130px;">
+<span class="font-headline-md opacity-90 truncate w-full text-center tracking-normal" style="font-size: 14px; line-height: 1.1;">Make Time</span>
+</div>
+<div class="book-spine bg-[#bd7a42] text-white" style="width: 32px; height: 125px;">
+<span class="font-headline-md opacity-90 truncate w-full text-center tracking-wider" style="font-size: 14px; line-height: 1.1;">Ikigai</span>
+</div>
+<div class="book-spine bg-[#2e3438] text-[#f0e0d1]" style="width: 42px; height: 155px;">
+<span class="font-headline-md opacity-90 truncate w-full text-center tracking-wider" style="font-size: 16px; line-height: 1.1;">Daily Stoic</span>
+<div class="w-[60%] h-[2px] bg-[#f0e0d1]/30 mt-auto mb-2 mx-auto"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Featured Section (Bento Style) -->
+<section class="px-edge-margin mt-12 grid grid-cols-2 gap-4" style="opacity: 1; transform: translateY(0px); transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1);">
+<div class="col-span-2 bg-surface-container rounded-xl p-6 shadow-md border border-white/20 relative overflow-hidden group">
+<div class="relative z-10">
+<span class="text-label-sm font-label-sm text-on-secondary-container bg-secondary-container px-3 py-1 rounded-full">Current Read</span>
+<h3 class="font-headline-md text-headline-md mt-4 text-on-surface">Atomic Habits</h3>
+<p class="text-on-surface-variant text-body-md mt-1">James Clear</p>
+<div class="mt-6 flex items-center gap-3">
+<div class="flex-1 bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[65%]" style="box-shadow: 0 0 10px rgba(43, 35, 26, 0.3)"></div>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant">65%</span>
+</div>
+</div>
+<!-- Glassmorphism card decoration -->
+<div class="absolute -right-12 -top-12 w-48 h-48 bg-white/10 blur-3xl rounded-full"></div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-4 border border-outline-variant/30 flex flex-col justify-between shadow-sm">
+<span class="material-symbols-outlined text-tertiary">edit_note</span>
+<div>
+<div class="font-headline-md text-headline-md text-on-surface">12</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant">New Notes</div>
+</div>
+</div>
+<div class="bg-tertiary text-on-tertiary rounded-xl p-4 border border-tertiary-container/30 flex flex-col justify-between shadow-sm">
+<span class="material-symbols-outlined">bookmark_heart</span>
+<div>
+<div class="font-headline-md text-headline-md">148</div>
+<div class="text-label-sm font-label-sm">Wishlist</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-6 left-0 right-0 mx-auto flex justify-around items-center h-16 max-w-md z-50 px-4 bg-primary-container dark:bg-primary-container shadow-2xl fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] rounded-full ring-1 ring-white/10">
+<!-- Shelf Active -->
+<a class="flex flex-row items-center gap-2 bg-surface-container-highest/20 text-on-tertiary-container rounded-full px-4 py-2 ring-1 ring-tertiary-fixed-dim/30 transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shelves</span>
+<span class="font-label-sm text-label-sm">Shelf</span>
+</a>
+<!-- Search -->
+<a class="flex flex-row items-center gap-2 text-on-primary-container/70 px-3 py-2 hover:text-on-primary-container transition-colors active:scale-95" href="#">
+<span class="material-symbols-outlined">search</span>
+</a>
+<!-- Notes -->
+<a class="flex flex-row items-center gap-2 text-on-primary-container/70 px-3 py-2 hover:text-on-primary-container transition-colors active:scale-95" href="#">
+<span class="material-symbols-outlined">edit_note</span>
+</a>
+<!-- Wishlist -->
+<a class="flex flex-row items-center gap-2 text-on-primary-container/70 px-3 py-2 hover:text-on-primary-container transition-colors active:scale-95" href="#">
+<span class="material-symbols-outlined">bookmark_heart</span>
+</a>
+<!-- Profile -->
+<a class="flex flex-row items-center gap-2 text-on-primary-container/70 px-3 py-2 hover:text-on-primary-container transition-colors active:scale-95" href="#">
+<span class="material-symbols-outlined">person</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction: Gentle page entry animation
+        document.addEventListener('DOMContentLoaded', () => {
+            const shelves = document.querySelectorAll('section');
+            shelves.forEach((shelf, index) => {
+                shelf.style.opacity = '0';
+                shelf.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    shelf.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+                    shelf.style.opacity = '1';
+                    shelf.style.transform = 'translateY(0)';
+                }, 100 * (index + 1));
+            });
+        });
+    </script>
+
+
+
+
+</body></html>

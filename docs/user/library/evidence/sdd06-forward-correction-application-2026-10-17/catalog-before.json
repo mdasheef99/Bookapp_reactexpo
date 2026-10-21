@@ -1,0 +1,324 @@
+{
+  "roles": [
+    {
+      "name": "authenticated",
+      "super": false,
+      "bypass": false,
+      "create_db": false,
+      "create_role": false,
+      "memberships": 0,
+      "replication": false
+    },
+    {
+      "name": "anon",
+      "super": false,
+      "bypass": false,
+      "create_db": false,
+      "create_role": false,
+      "memberships": 0,
+      "replication": false
+    }
+  ],
+  "ledger": [
+    {
+      "md5": "d187c32b7b0846e735d6696adff6a7ed",
+      "name": "library_manual_note_persistence",
+      "version": "20261010221843"
+    }
+  ],
+  "tables": [
+    {
+      "rls": true,
+      "owner": "postgres",
+      "table": "user_books",
+      "force_rls": false
+    },
+    {
+      "rls": true,
+      "owner": "postgres",
+      "table": "reading_notes",
+      "force_rls": false
+    }
+  ],
+  "columns": [
+    {
+      "acl": null,
+      "name": "id"
+    },
+    {
+      "acl": null,
+      "name": "user_id"
+    },
+    {
+      "acl": null,
+      "name": "user_book_id"
+    },
+    {
+      "acl": null,
+      "name": "content"
+    },
+    {
+      "acl": null,
+      "name": "tag"
+    },
+    {
+      "acl": null,
+      "name": "page_number"
+    },
+    {
+      "acl": null,
+      "name": "created_at"
+    },
+    {
+      "acl": null,
+      "name": "updated_at"
+    },
+    {
+      "acl": null,
+      "name": "version"
+    },
+    {
+      "acl": null,
+      "name": "last_operation_id"
+    }
+  ],
+  "table_acl": [
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "INSERT"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "SELECT"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "UPDATE"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "DELETE"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "TRUNCATE"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "REFERENCES"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "TRIGGER"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "MAINTAIN"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "MAINTAIN"
+    },
+    {
+      "grantee": "authenticated",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "INSERT"
+    },
+    {
+      "grantee": "authenticated",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "SELECT"
+    },
+    {
+      "grantee": "authenticated",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "UPDATE"
+    },
+    {
+      "grantee": "authenticated",
+      "grantor": "postgres",
+      "grantable": false,
+      "privilege": "DELETE"
+    }
+  ],
+  "parent_key": "UNIQUE (id, user_id)",
+  "ri_triggers": [
+    {
+      "event": 9,
+      "table": "user_books",
+      "enabled": "O",
+      "function": "\"RI_FKey_cascade_del\"()",
+      "internal": true,
+      "constraint": "reading_notes_book_owner_fkey"
+    },
+    {
+      "event": 17,
+      "table": "user_books",
+      "enabled": "O",
+      "function": "\"RI_FKey_restrict_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_book_owner_fkey"
+    },
+    {
+      "event": 5,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_ins\"()",
+      "internal": true,
+      "constraint": "reading_notes_book_owner_fkey"
+    },
+    {
+      "event": 17,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_book_owner_fkey"
+    },
+    {
+      "event": 9,
+      "table": "user_books",
+      "enabled": "O",
+      "function": "\"RI_FKey_cascade_del\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_book_id_fkey"
+    },
+    {
+      "event": 17,
+      "table": "user_books",
+      "enabled": "O",
+      "function": "\"RI_FKey_noaction_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_book_id_fkey"
+    },
+    {
+      "event": 5,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_ins\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_book_id_fkey"
+    },
+    {
+      "event": 17,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_book_id_fkey"
+    },
+    {
+      "event": 9,
+      "table": "auth.users",
+      "enabled": "O",
+      "function": "\"RI_FKey_cascade_del\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_id_fkey"
+    },
+    {
+      "event": 17,
+      "table": "auth.users",
+      "enabled": "O",
+      "function": "\"RI_FKey_noaction_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_id_fkey"
+    },
+    {
+      "event": 5,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_ins\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_id_fkey"
+    },
+    {
+      "event": 17,
+      "table": "reading_notes",
+      "enabled": "O",
+      "function": "\"RI_FKey_check_upd\"()",
+      "internal": true,
+      "constraint": "reading_notes_user_id_fkey"
+    }
+  ],
+  "word_digest": "0bc5472498574f6489357d11f3f6528d",
+  "function_acl": [
+    {
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "owner": "postgres",
+      "function": "check_note_word_limit"
+    },
+    {
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "owner": "postgres",
+      "function": "library_manage_note_revision"
+    }
+  ],
+  "columns_digest": "28011b590302f769ffe126b65a05f3da",
+  "policies_digest": "bc963d4c19d6cddf1d94327b8aa13398",
+  "revision_digest": "c39ee612b276c6497cd05d509c0ed317",
+  "triggers_digest": "755349a853fc51f8e11effd53cd3df20",
+  "constraints_digest": "177b24b7982e3c01f175ddf5b63517c0"
+}

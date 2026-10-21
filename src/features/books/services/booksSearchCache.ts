@@ -1,7 +1,17 @@
 import type { GoogleBook } from './booksService';
 
-interface CacheEntry {
+export interface CachedSearchPage {
     items: GoogleBook[];
+    totalItems: number;
+    hasMore: boolean;
+    nextStartIndex?: number;
+    totalItemsExact?: boolean;
+    unsupportedFilters?: Array<'genre' | 'language' | 'priceType'>;
+    providerUsed?: 'google' | 'openLibrary';
+}
+
+interface CacheEntry {
+    page: CachedSearchPage;
     timestamp: number;
 }
 
@@ -11,29 +21,31 @@ const STALE_TTL_MS = 300_000; // 5 minutes (for 429 fallback)
 
 const cache = new Map<string, CacheEntry>();
 
-function getCacheKey(query: string): string {
-    return query.trim().toLowerCase().replace(/\s+/g, ' ');
+function getCacheKey(query: string, filters?: Record<string, unknown>, startIndex?: number, maxResults?: number): string {
+    const base = query.trim().toLowerCase().replace(/\s+/g, ' ');
+    const filterKey = filters ? JSON.stringify(filters) : '';
+    return `${base}|${filterKey}|${startIndex ?? 0}|${maxResults ?? 20}`;
 }
 
-export function getCachedSearchResults(query: string): { items: GoogleBook[]; isStale: boolean } | null {
-    const key = getCacheKey(query);
+export function getCachedSearchResults(query: string, filters?: Record<string, unknown>, startIndex?: number, maxResults?: number): { page: CachedSearchPage; isStale: boolean } | null {
+    const key = getCacheKey(query, filters, startIndex, maxResults);
     const entry = cache.get(key);
     if (!entry) return null;
 
     const age = Date.now() - entry.timestamp;
     if (age <= TTL_MS) {
-        return { items: entry.items, isStale: false };
+        return { page: entry.page, isStale: false };
     }
     if (age <= STALE_TTL_MS) {
-        return { items: entry.items, isStale: true };
+        return { page: entry.page, isStale: true };
     }
     cache.delete(key);
     return null;
 }
 
-export function setCachedSearchResults(query: string, items: GoogleBook[]): void {
-    const key = getCacheKey(query);
-    cache.set(key, { items, timestamp: Date.now() });
+export function setCachedSearchResults(query: string, page: CachedSearchPage, filters?: Record<string, unknown>, startIndex?: number, maxResults?: number): void {
+    const key = getCacheKey(query, filters, startIndex, maxResults);
+    cache.set(key, { page, timestamp: Date.now() });
 
     // LRU eviction
     while (cache.size > MAX_ENTRIES) {

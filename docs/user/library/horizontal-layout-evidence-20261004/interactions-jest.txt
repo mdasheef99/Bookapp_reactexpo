@@ -1,0 +1,16 @@
+(node:27112) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/components/library/__tests__/LibraryShelf.test.tsx (12.404 s)
+PASS src/components/library/__tests__/LibraryBookPicker.test.tsx
+PASS src/features/books/hooks/__tests__/useShelfArrangement.test.ts
+PASS src/features/books/utils/__tests__/horizontalShelfArrange.test.ts
+PASS src/components/library/__tests__/useHorizontalShelfDrag.test.ts
+PASS src/components/library/__tests__/useVerticalShelfDrag.test.ts
+PASS src/features/books/utils/__tests__/shelfOrder.test.ts
+PASS src/features/books/utils/__tests__/horizontalShelfLayout.test.ts
+
+Test Suites: 8 passed, 8 total
+Tests:       93 passed, 93 total
+Snapshots:   0 total
+Time:        18.496 s, estimated 23 s
+Ran all test suites within paths "src/features/books/utils/__tests__/horizontalShelfArrange.test.ts", "src/components/library/__tests__/useHorizontalShelfDrag.test.ts", "src/components/library/__tests__/LibraryShelf.test.tsx", "src/features/books/utils/__tests__/horizontalShelfLayout.test.ts", "src/features/books/utils/__tests__/shelfOrder.test.ts", "src/features/books/hooks/__tests__/useShelfArrangement.test.ts", "src/components/library/__tests__/useVerticalShelfDrag.test.ts", "src/components/library/__tests__/LibraryBookPicker.test.tsx".

@@ -1,0 +1,149 @@
+[
+  {
+    "books": [
+      {
+        "height": 144,
+        "id": "library-shelf-spine-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+        "labelBackground": "rgb(46, 52, 56)",
+        "textColor": "rgb(255, 253, 248)",
+        "textOpacity": "1",
+        "width": 32
+      },
+      {
+        "height": 148,
+        "id": "library-shelf-spine-ae665879-eda1-40f1-a775-7d698a861b27",
+        "labelBackground": "rgb(35, 53, 74)",
+        "textColor": "rgb(255, 253, 248)",
+        "textOpacity": "1",
+        "width": 32
+      },
+      {
+        "height": 154,
+        "id": "library-shelf-spine-e063191d-6a0b-4222-91c9-0a98937ee80b",
+        "labelBackground": "rgb(133, 57, 57)",
+        "textColor": "rgb(255, 253, 248)",
+        "textOpacity": "1",
+        "width": 30
+      },
+      {
+        "height": 154,
+        "id": "library-shelf-spine-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+        "labelBackground": "rgb(189, 122, 66)",
+        "textColor": "rgb(8, 6, 4)",
+        "textOpacity": "1",
+        "width": 30
+      },
+      {
+        "height": 152,
+        "id": "library-shelf-spine-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+        "labelBackground": "rgb(214, 208, 196)",
+        "textColor": "rgb(8, 6, 4)",
+        "textOpacity": "1",
+        "width": 33
+      },
+      {
+        "height": 150,
+        "id": "library-shelf-spine-f498f920-386c-484b-8533-18f9c44579f8",
+        "labelBackground": "rgb(214, 208, 196)",
+        "textColor": "rgb(8, 6, 4)",
+        "textOpacity": "1",
+        "width": 24
+      },
+      {
+        "height": 144,
+        "id": "library-shelf-spine-eebf0401-d243-423b-83e4-41aa5d287d70",
+        "labelBackground": "rgb(54, 58, 64)",
+        "textColor": "rgb(255, 253, 248)",
+        "textOpacity": "1",
+        "width": 37
+      }
+    ],
+    "frameHeight": 440,
+    "kind": "phone-shelf",
+    "viewport": 390
+  },
+  {
+    "buttons": [
+      {
+        "height": 44,
+        "id": "library-book-picker-close",
+        "visibleTopEdgeHit": "library-book-picker-close",
+        "width": 44,
+        "x": 309.6000061035156,
+        "y": 156.1999969482422
+      },
+      {
+        "height": 100.8000030517578,
+        "id": "library-book-picker-entry-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+        "visibleTopEdgeHit": "library-book-picker-entry-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+        "width": 325.6000061035156,
+        "x": 24.80000114440918,
+        "y": 212.1999969482422
+      },
+      {
+        "height": 74.80000305175781,
+        "id": "library-book-picker-entry-ae665879-eda1-40f1-a775-7d698a861b27",
+        "visibleTopEdgeHit": "library-book-picker-entry-ae665879-eda1-40f1-a775-7d698a861b27",
+        "width": 325.6000061035156,
+        "x": 24.80000114440918,
+        "y": 313
+      },
+      {
+        "height": 102.8000030517578,
+        "id": "library-book-picker-entry-e063191d-6a0b-4222-91c9-0a98937ee80b",
+        "visibleTopEdgeHit": "library-book-picker-entry-e063191d-6a0b-4222-91c9-0a98937ee80b",
+        "width": 325.6000061035156,
+        "x": 24.80000114440918,
+        "y": 387.8000183105469
+      },
+      {
+        "height": 74.80000305175781,
+        "id": "library-book-picker-entry-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+        "visibleTopEdgeHit": "library-book-picker-entry-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+        "width": 325.6000061035156,
+        "x": 24.80000114440918,
+        "y": 490.6000061035156
+      },
+      {
+        "height": 74.80000305175781,
+        "id": "library-book-picker-entry-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+        "visibleTopEdgeHit": "library-book-picker-entry-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+        "width": 325.6000061035156,
+        "x": 24.80000114440918,
+        "y": 565.4000244140625
+      },
+      {
+        "height": 100.8000030517578,
+        "id": "library-book-picker-entry-f498f920-386c-484b-8533-18f9c44579f8",
+        "visibleTopEdgeHit": "library-book-picker-entry-f498f920-386c-484b-8533-18f9c44579f8",
+        "width": 325.6000061035156,
+        "x": 24.80000114440918,
+        "y": 640.2000122070312
+      },
+      {
+        "height": 74.80000305175781,
+        "id": "library-book-picker-entry-eebf0401-d243-423b-83e4-41aa5d287d70",
+        "width": 325.6000061035156,
+        "x": 24.80000114440918,
+        "y": 741
+      }
+    ],
+    "kind": "chooser-targets",
+    "viewport": 390
+  },
+  {
+    "clientHeight": 795,
+    "focused": "library-view-list",
+    "kind": "list-scroll-owner",
+    "scrollAncestors": [
+      {
+        "height": 795,
+        "scrollHeight": 795
+      }
+    ],
+    "scrollHeight": 1461,
+    "viewport": 390,
+    "width": 342.3999938964844,
+    "y": 0
+  }
+]

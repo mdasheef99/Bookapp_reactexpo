@@ -1,0 +1,44 @@
+PASS src/components/library/__tests__/useHorizontalShelfDrag.test.ts
+FAIL src/features/books/utils/__tests__/horizontalShelfArrange.test.ts
+  ● horizontal destination and projected marker › uses only the destination track offset to choose a pile
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "b9"
+    Received: "b10"
+
+      29 |         const first = resolveHorizontalShelfDrop({ ...common, offsets: { top: 500, bottom: 0 } });
+      30 |         const second = resolveHorizontalShelfDrop({ ...common, offsets: { top: 0, bottom: 280 } });
+    > 31 |         expect(first?.beforeId).toBe('b9');
+         |                                 ^
+      32 |         expect(second?.beforeId).toBe('b13');
+      33 |     });
+      34 |     it('rejects outside, plank, missing ID and empty-tier drops', () => {
+
+      at Object.toBe (src/features/books/utils/__tests__/horizontalShelfArrange.test.ts:31:33)
+
+(node:28608) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+FAIL src/components/library/__tests__/LibraryShelf.test.tsx (20.439 s)
+  ● horizontal browsing and quick look › opens loaded facts after a hold, suppresses release navigation and routes the details action
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 450
+    Received: undefined
+
+      104 |         const navigate = jest.fn(), screen = render(<LibraryHorizontalShelf books={[book]} onBookPress={navigate} />);
+      105 |         const volume = screen.getByTestId('library-horizontal-book-quick-1');
+    > 106 |         expect(volume.props.delayLongPress).toBe(450);
+          |                                             ^
+      107 |         fireEvent(volume, 'pressIn', { nativeEvent: { pageX: 40, pageY: 100 } });
+      108 |         fireEvent(volume, 'longPress'); fireEvent.press(volume);
+      109 |         expect(navigate).not.toHaveBeenCalled();
+
+      at Object.toBe (src/components/library/__tests__/LibraryShelf.test.tsx:106:45)
+
+Test Suites: 2 failed, 1 passed, 3 total
+Tests:       2 failed, 46 passed, 48 total
+Snapshots:   0 total
+Time:        26.565 s
+Ran all test suites within paths "src/features/books/utils/__tests__/horizontalShelfArrange.test.ts", "src/components/library/__tests__/useHorizontalShelfDrag.test.ts", "src/components/library/__tests__/LibraryShelf.test.tsx".

@@ -75,7 +75,7 @@ Tabs, in order: **My Library**, **Exchange**, **Marketplace**, **Clubs**, **Prof
 
 | Area | Routes |
 | --- | --- |
-| Library | `library/index`, `library/search`, `library/[bookId]`, `library/notes` |
+| Library | `library/index`, `library/search`, `library/[bookId]`, `library/notes`, `library/note` (note reader), `library/note-compose` (write or scan a note) |
 | Exchange (P2P) | `exchange/index`, `exchange/create`, `exchange/[listingId]`, `exchange/my-transactions`, `exchange/transaction/[transactionId]` |
 | Marketplace (stack) | `marketplace/index` (search), `marketplace/book/[listingId]` (one public listing's detail), `marketplace/store/[storeId]` (public store page), `marketplace/cart`, `marketplace/requests/index`, `marketplace/requests/[requestId]` |
 | Clubs | `clubs/index`, `create`, `authors`, `invitations`, `venues`, `venues/[venueId]`, and per club `clubs/[clubId]/`: `index`, `manage`, `events`, `events/create`, `events/[eventId]/edit`, `discussion`, `discussion/[topicId]`, `reading`, `nominate`, `invite`, `applications`, `venues` |

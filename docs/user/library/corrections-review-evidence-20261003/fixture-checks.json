@@ -1,0 +1,14 @@
+{
+  "empty": "- generic: \"Independent fixture: simulated data; presentation assets mocked\"\n- button \"Empty\" [active]:\n  - generic: Empty\n- button \"Single\":\n  - generic: Single\n- button \"Large\":\n  - generic: Large\n- button \"Replace after opening\":\n  - generic: Replace after opening\n- generic: \"Selected ID: independent-999\"\n- generic: CM's Book Shelf\n- button \"Search books\"\n- button \"Shelf view\":\n  - generic: Shelf\n- button \"List view\" [pressed]:\n  - generic: List\n- button \"Add a new book to your library\":\n  - generic: + Add Book\n- button \"All, 0 books\" [pressed]:\n  - generic: All\n  - generic: \"0\"\n- button \"Reading, 0 books\":\n  - generic: Reading\n  - generic: \"0\"\n- button \"Completed, 0 books\":\n  - generic: Completed\n  - generic: \"0\"\n- button \"Wishlist, 0 books\":\n  - generic: Wishlist\n  - generic: \"0\"\n- generic: 0 books\n- generic: Showing all\n- generic: Your library is empty\n- generic: Tap the \"+ Add Book\" button to start building your collection.",
+  "emptyShelf": "- generic: \"Independent fixture: simulated data; presentation assets mocked\"\n- button \"Empty\":\n  - generic: Empty\n- button \"Single\":\n  - generic: Single\n- button \"Large\":\n  - generic: Large\n- button \"Replace after opening\":\n  - generic: Replace after opening\n- generic: \"Selected ID: independent-999\"\n- generic: CM's Book Shelf\n- button \"Search books\"\n- button \"Shelf view\" [active] [pressed]:\n  - generic: Shelf\n- button \"List view\":\n  - generic: List\n- button \"Add a new book to your library\":\n  - generic: + Add Book\n- button \"All, 0 books\" [pressed]:\n  - generic: All\n  - generic: \"0\"\n- button \"Reading, 0 books\":\n  - generic: Reading\n  - generic: \"0\"\n- button \"Completed, 0 books\":\n  - generic: Completed\n  - generic: \"0\"\n- button \"Wishlist, 0 books\":\n  - generic: Wishlist\n  - generic: \"0\"\n- generic: 0 books\n- generic: Showing all",
+  "long": {
+    "rect": {
+      "height": 178.8000030517578,
+      "width": 535.2000122070312
+    },
+    "scrollHeight": 178,
+    "text": "A full long title A full long title A full long title A full long title A full long title A full long title A full long title A full long title A full long title A full long title A full long title A full long title A full long title A full long title A full long title Fixture Author"
+  },
+  "dup": "Selected ID: independent-1",
+  "dup0": "Selected ID: independent-0"
+}

@@ -1,0 +1,2 @@
+const http=require('http'),fs=require('fs'),path=require('path');
+http.createServer((req,res)=>{const file=req.url==='/'?'fixture.html':req.url==='/fixture.bundle.js'?'fixture.bundle.js':null;if(!file){res.writeHead(404);res.end();return;}res.writeHead(200,{'Content-Type':(file.endsWith('.html')?'text/html':'application/javascript')+'; charset=utf-8','Cache-Control':'no-store'});res.end(fs.readFileSync(path.join(__dirname,file)));}).listen(19009,'127.0.0.1',()=>console.log('Independent fixture 19009'));

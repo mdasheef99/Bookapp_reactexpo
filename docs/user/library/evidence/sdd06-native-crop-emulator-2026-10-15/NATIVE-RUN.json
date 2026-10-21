@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-15",
+  "scope": "Supplemental local Android emulator verification of NoteCrop controls, selected-pixel transform, reset, and on-device OCR",
+  "device": {
+    "avd": "CodexBookConnectOCR36",
+    "serial": "emulator-5560",
+    "androidApi": 36,
+    "architecture": "x86_64",
+    "resolution": "1080x2340",
+    "densityDpi": 440
+  },
+  "app": {
+    "package": "com.bookconnect.library.dev",
+    "buildType": "debug development client",
+    "buildCommand": ".\\gradlew.bat :app:assembleDebug --offline -PreactNativeArchitectures=x86_64",
+    "apkSha256": "7C083E3DC7F2DE60D813826FE78B58B1656D1E0460B6AC9466A53485CCA8A961",
+    "metroPort": 8083,
+    "servedCheckout": "C:/Users/LEGION/Desktop/Bookconnect4_library"
+  },
+  "fixture": {
+    "path": "../sdd06-capture-ocr-2026-10-11/fixtures/english-page.png",
+    "sha256": "2E0F576FA2B2E3617D531F7B1B6F0E727A56DBC4DD52F6EFB47C86A912DF897E",
+    "description": "Original synthetic 1600x2200 English text page; includes top and bottom sentinel labels outside the intended selection; no private information"
+  },
+  "cropInteraction": {
+    "controls": "Actual NoteCrop screen and labeled inward edge controls",
+    "leftPercent": 10,
+    "topPercent": 20,
+    "rightPercent": 90,
+    "bottomPercent": 70,
+    "normalized": {
+      "x": 0.1,
+      "y": 0.2,
+      "width": 0.8,
+      "height": 0.5
+    },
+    "sourcePixelsExclusive": [160, 440, 1440, 1540],
+    "outputPixels": [1280, 1100],
+    "independentPixelOracle": "PASS; actual native crop is pixel-identical to the literal source rectangle",
+    "reset": "PASS; x=0, y=0, width=1, height=1"
+  },
+  "ocr": {
+    "implementation": "Existing native ML Kit path via the current capture adapter and OCR service; no mocked recognizer",
+    "provider": "on-device",
+    "languageHint": "en",
+    "elapsedMs": 5695,
+    "reviewOverflow": false,
+    "result": "PASS; all intended fixture text was recognized and neither outside sentinel was recognized",
+    "fullResult": "See native/capture-proof.json"
+  },
+  "sourceSha256": {
+    "src/features/books/notes/captureGeometry.ts": "65E327A1864AA713A714E2BABE180D452899E7403C84227DA0E3ACBA3DF49EF0",
+    "src/features/books/notes/captureAdapter.ts": "437F248F88EC04068BDC07FBC3E90D28217E5D5E713A6783109B7A7BBD99DDCD",
+    "src/features/books/notes/captureSession.ts": "2A4F7581E0E25496C80CE9FF06826B22BC0386C8123E19DD334F11B361433D66",
+    "src/features/books/services/ocrService.ts": "B94E0647030DDBC9336111996781DB59C3EB10CB61247DBD0716FE510BA74DAB",
+    "src/components/notes/NoteCrop.tsx": "C3D5E027D71E507AC9F6384A235ABB6BF8834C05E24644068DAE2DD0D29E5522",
+    "app/_layout.tsx": "6A7B0462814593003AF38973A33F975F70D41B3F9018040AB593A47499751A8B",
+    "temporary app/native-capture-proof.tsx": "6982AB009BA8395A67071636E991A94A1ED0D34578A119262F8D862A1470FDCA"
+  },
+  "isolation": {
+    "wifiAndCellularData": "disabled; adb reverse exposed only local Metro port 8083",
+    "developmentAuth": "local development bypass",
+    "supabase": "dummy URL at 127.0.0.1:1 and dummy key; shared project unreachable and not used",
+    "sentry": "disabled",
+    "recordSave": "none",
+    "databaseStorageMigrationOrProviderMutation": "none"
+  },
+  "cleanup": {
+    "temporaryDiagnosticRoute": "removed after preserving its source under native/diagnostic-route-source.tsx",
+    "freshEmulatorAndAvdData": "stopped and removed after evidence capture; emulator logs and scratch screenshots were removed after copying the required evidence",
+    "remainingTemporaryData": "one small JDK performance-data directory remains inside the session scratch folder because Windows denied its removal; it was left untouched",
+    "gitPublication": "nothing staged, committed, pushed, deployed, or applied"
+  },
+  "limits": [
+    "The image was the original bundled synthetic fixture, not a photo selected through Android's system gallery picker.",
+    "This is real Android API/native-module execution in an emulator, but it does not prove physical camera capture, OEM image behavior, lighting/reflection performance, physical-device layout, or TalkBack/hardware-back acceptance.",
+    "It verifies this crop/OCR slice only; SDD06-05/06 broader native acceptance and SDD06-07/release acceptance remain pending."
+  ]
+}

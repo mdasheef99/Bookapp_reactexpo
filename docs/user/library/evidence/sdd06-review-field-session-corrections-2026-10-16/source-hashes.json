@@ -1,0 +1,30 @@
+[
+  {
+    "path": "app/(tabs)/library/[bookId].tsx",
+    "sha256": "9EB3F5599718DDC4CFC5185B52959F6283FDD889ACB96538E7E9B16900312D29"
+  },
+  {
+    "path": "src/features/books/services/bookReviewService.ts",
+    "sha256": "A9DB20F032C92F74232202E573A02F57DC7E7C537EA98E400FAF0193D6BCDB8A"
+  },
+  {
+    "path": "app/(tabs)/library/__tests__/book-details-corrections.test.tsx",
+    "sha256": "5B17904FA08510E418A7799579A8925B0F2F816DF738CEF8ACDDD629E42C5E10"
+  },
+  {
+    "path": "src/components/notes/__tests__/ManualNoteJourney.test.tsx",
+    "sha256": "8DA716D0261E1831AA1CE5AD40D5A00A0939E9D3E66A63EC89257F890DFD63D8"
+  },
+  {
+    "path": "tsconfig.library-notes.json",
+    "sha256": "9D89C544BBA85C04D73F363969E4D5AE8F9CD4B45C531B278E6D0D0EF156D433"
+  },
+  {
+    "path": "src/features/books/notes/manualNotesGateway.ts",
+    "sha256": "B8744B2D73B83278EE125CFAB0F3789EA887EB2F57E98B8AFA07EBDDCAACC37E"
+  },
+  {
+    "path": "src/features/books/services/booksService.ts",
+    "sha256": "C4AD307072207A88CAEF8A6600F1872D6913DBD87D6AB4D5E7DD64632B352BD7"
+  }
+]

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Book Details — Frontispiece (Direction A2, revised)</title>
+<!-- Google Fonts: EB Garamond & Manrope -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&amp;family=Manrope:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+    /* Reset & Custom Properties */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --color-page: #faf6ee;
+      --color-ink: #30291f;
+      --color-secondary: #685d4d;
+      --color-hairline: #ded3c1;
+      --color-btn-fill: #3e3225;
+      --color-btn-text: #fffaf1;
+      --font-serif: 'EB Garamond', Georgia, serif;
+      --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: #f0ebe1;
+      color: var(--color-ink);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.5;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* Phone Canvas Container */
+    .phone-container {
+      width: 100%;
+      max-width: 390px;
+      min-height: 100vh;
+      background-color: var(--color-page);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 4px 30px rgba(48, 41, 31, 0.08);
+    }
+
+    /* Top Navigation Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      padding: 0 12px;
+      position: sticky;
+      top: 0;
+      background-color: var(--color-page);
+      z-index: 10;
+    }
+
+    .nav-btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 48px;
+      padding: 0 12px;
+      background: transparent;
+      border: none;
+      color: var(--color-ink);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+
+    .nav-btn-back:hover {
+      background-color: rgba(62, 50, 37, 0.04);
+    }
+
+    .nav-btn-more {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      background: transparent;
+      border: none;
+      color: var(--color-ink);
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 8px;
+      letter-spacing: 1px;
+    }
+
+    .nav-btn-more:hover {
+      background-color: rgba(62, 50, 37, 0.04);
+    }
+
+    /* Main Scrollable Content */
+    .content-area {
+      padding: 12px 24px 48px 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Above the fold: Frontispiece Hero */
+    .frontispiece-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding-top: 4px;
+      padding-bottom: 20px;
+    }
+
+    .cover-frame {
+      width: 150px;
+      height: 225px;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 10px 24px -4px rgba(48, 41, 31, 0.22), 0 2px 6px rgba(48, 41, 31, 0.1);
+      margin-bottom: 20px;
+      background-color: #e5ded0;
+    }
+
+    .cover-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .book-title {
+      font-family: var(--font-serif);
+      font-size: 30px;
+      font-weight: 500;
+      line-height: 1.15;
+      color: var(--color-ink);
+      letter-spacing: -0.01em;
+      margin-bottom: 6px;
+    }
+
+    .book-author {
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--color-secondary);
+      margin-bottom: 18px;
+    }
+
+    /* Status Control */
+    .status-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      border: 1px solid var(--color-hairline);
+      border-radius: 20px;
+      padding: 6px 16px 6px 18px;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--color-ink);
+      cursor: pointer;
+      background-color: rgba(255, 255, 255, 0.5);
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .status-pill-btn:hover {
+      background-color: rgba(255, 255, 255, 0.85);
+      border-color: #c9bea9;
+    }
+
+    .status-caret {
+      font-size: 11px;
+      color: var(--color-secondary);
+      transform: translateY(1px);
+    }
+
+    .status-caption {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-secondary);
+    }
+
+    /* Hairline Divider */
+    .hairline-divider {
+      height: 1px;
+      background-color: var(--color-hairline);
+      width: 100%;
+      border: none;
+      margin: 20px 0;
+    }
+
+    /* Latest Note Section (Frontispiece printed passage, no card box) */
+    .note-passage-section {
+      padding: 4px 0 24px 0;
+    }
+
+    .note-metadata {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-secondary);
+      margin-bottom: 12px;
+      letter-spacing: 0.01em;
+    }
+
+    .note-quote {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      line-height: 1.45;
+      color: var(--color-ink);
+      margin-bottom: 14px;
+    }
+
+    .note-all-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--color-ink);
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .note-all-link:hover {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* Primary Action Button */
+    .btn-primary {
+      width: 100%;
+      height: 52px;
+      background-color: var(--color-btn-fill);
+      color: var(--color-btn-text);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.15s ease;
+      margin-bottom: 8px;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.94;
+    }
+
+    .btn-primary:active {
+      opacity: 0.88;
+    }
+
+    /* Below the fold: Collapsed list rows */
+    .details-list {
+      display: flex;
+      flex-direction: column;
+      margin-top: 12px;
+    }
+
+    .list-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 56px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--color-hairline);
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    .list-row:first-child {
+      border-top: 1px solid var(--color-hairline);
+    }
+
+    .row-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-right: 12px;
+    }
+
+    .row-label {
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--color-ink);
+    }
+
+    .row-summary {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 290px;
+    }
+
+    .row-meta-single {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .row-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .row-caption-inline {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-secondary);
+    }
+
+    .chevron {
+      color: var(--color-secondary);
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    /* Destructive/Secondary text action */
+    .remove-action-container {
+      margin-top: 40px;
+      text-align: center;
+      padding-bottom: 12px;
+    }
+
+    .remove-action-btn {
+      background: transparent;
+      border: none;
+      color: var(--color-secondary);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 400;
+      cursor: pointer;
+      padding: 10px 16px;
+      border-radius: 8px;
+      transition: color 0.15s ease;
+    }
+
+    .remove-action-btn:hover {
+      color: var(--color-ink);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+  </style>
+</head>
+<body>
+<main class="phone-container" role="main">
+<!-- Top Navigation Bar (First 2 touch areas) -->
+<nav aria-label="Book navigation" class="top-bar">
+<button aria-label="Back to Library" class="nav-btn-back" type="button">
+        ‹ Library
+      </button>
+<button aria-label="More options" class="nav-btn-more" type="button">
+        ⋯
+      </button>
+</nav>
+<!-- Main Editorial Content -->
+<div class="content-area">
+<!-- Frontispiece Hero: Centred Cover & Typography -->
+<section aria-label="Book overview" class="frontispiece-hero">
+<div class="cover-frame" style="width: 168px; height: 252px; border-radius: 4px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.08); margin-bottom: 20px; background-color: #e5ded0;"><img alt="Cover of A Quiet Practice by Mira Vale" class="cover-img" src="https://lh3.googleusercontent.com/aida/AEtjO1UFuOU-G7F7bfv8StYG1qmHNwoh96hc4gII1Yd4u4JseiOGc4whQyP8lVdm3bVH1x61GzF9ndKYzMyht_Z_4lSyoRmOI-T1W_MzesiRVhmg6kAbTIqaMOZ5ZY-4Ezif56_-8atBUlwrcbw3sRayKAfW2mlj3gkZqLEqdb33_VuCJTt_ifQDT9WFL9ec4soKdNRzEbbBkT62OcDeW1CbD6mX7PxecehFhLS5UlmnB8YelMb7PeDmZ2SsBF1Q" style="width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 4px;"/></div>
+<h1 class="book-title">A Quiet Practice</h1>
+<p class="book-author">Mira Vale</p>
+<!-- Status Control: Pill dropdown + caption -->
+<div class="status-group">
+<button aria-expanded="false" aria-haspopup="listbox" aria-label="Reading status: Reading" class="status-pill-btn" style="min-height: 48px; padding: 0 20px; font-size: 16px;" type="button">
+<span>Reading</span>
+<span aria-hidden="true" class="status-caret">▾</span>
+</button>
+<span class="status-caption">Started 2 Oct</span>
+</div>
+</section>
+<!-- Hairline divider -->
+<hr aria-hidden="true" class="hairline-divider"/>
+<!-- Printed Passage: Latest Note (No card container) -->
+<section aria-label="Latest note" class="note-passage-section">
+<p class="note-metadata">Latest note · p. 42 · 14 Oct · Quote</p>
+<blockquote class="note-quote">
+          “Attention grows when we give one task our time.”
+        </blockquote>
+</section>
+<!-- Single Primary Button: Add note -->
+<button class="btn-primary" style="height: 48px; min-height: 48px; font-size: 16px; margin-bottom: 0;" type="button">
+        Add note
+      </button>
+<!-- Below the Fold: Collapsed Information Rows -->
+<section aria-label="Book sections" class="details-list" style="margin-top: 48px;"><div class="list-row" role="button" style="min-height: 56px;" tabindex="0"><div class="row-meta-single"><span class="row-label" style="font-size: 16px;">All 3 notes</span><div class="row-right"><span aria-hidden="true" class="chevron">›</span></div></div></div><div class="list-row" role="button" style="min-height: 56px;" tabindex="0"><div class="row-content"><span class="row-label" style="font-size: 16px;">My review</span><span class="row-summary" style="font-size: 16px;">A gentle book about doing less…</span></div><div class="row-right"><span aria-hidden="true" class="chevron">›</span></div></div><div class="list-row" role="button" style="min-height: 56px;" tabindex="0"><div class="row-meta-single"><span class="row-label" style="font-size: 16px;">Saved pages</span><div class="row-right"><span class="row-caption-inline" style="font-size: 16px;">1 page</span><span aria-hidden="true" class="chevron">›</span></div></div></div><div class="list-row" role="button" style="min-height: 56px;" tabindex="0"><div class="row-meta-single"><span class="row-label" style="font-size: 16px;">Book information</span><div class="row-right"><span aria-hidden="true" class="chevron">›</span></div></div></div><div class="list-row" role="button" style="min-height: 56px;" tabindex="0"><div class="row-meta-single"><span class="row-label" style="font-size: 16px;">Ownership &amp; condition</span><div class="row-right"><span aria-hidden="true" class="chevron">›</span></div></div></div></section>
+<!-- Secondary action: Remove from library -->
+<div class="remove-action-container">
+<button class="remove-action-btn" style="min-height: 48px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;" type="button">
+          Remove from library
+        </button>
+</div>
+</div>
+</main>
+</body>
+</html>

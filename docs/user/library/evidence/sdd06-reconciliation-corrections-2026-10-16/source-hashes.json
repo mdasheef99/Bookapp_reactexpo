@@ -1,0 +1,34 @@
+[
+  {
+    "path": "app/(tabs)/library/[bookId].tsx",
+    "sha256": "3020D1F20460E94C06D8EF1CD3CF360E22EF00A5B6B3C6340137D6CD55FB8986"
+  },
+  {
+    "path": "app/(tabs)/library/__tests__/book-details-corrections.test.tsx",
+    "sha256": "FDFC32A53F89645CCC707EE2FA0D0631AC6606718747061877E9445F5A14DF26"
+  },
+  {
+    "path": "src/features/books/services/bookReviewService.ts",
+    "sha256": "A9DB20F032C92F74232202E573A02F57DC7E7C537EA98E400FAF0193D6BCDB8A"
+  },
+  {
+    "path": "src/features/auth/store/authStore.ts",
+    "sha256": "011D40E4DEB35586304BBB6360022CE3DE9111768DA1CD250A7B5EFBB5326076"
+  },
+  {
+    "path": "src/application/auth/sessionCoordinator.ts",
+    "sha256": "DD40592CFE060E6E18324CDD7FD2408A91482AA991A322AA309237DA19F7F1AC"
+  },
+  {
+    "path": "src/lib/queryClient.ts",
+    "sha256": "286E6ECCFE170E0CCDB5CD22BFEFFE62163E35C34F0929B06CA5B53880C4BB44"
+  },
+  {
+    "path": "src/features/books/notes/manualNotesGateway.ts",
+    "sha256": "B8744B2D73B83278EE125CFAB0F3789EA887EB2F57E98B8AFA07EBDDCAACC37E"
+  },
+  {
+    "path": "tsconfig.library-notes.json",
+    "sha256": "9D89C544BBA85C04D73F363969E4D5AE8F9CD4B45C531B278E6D0D0EF156D433"
+  }
+]

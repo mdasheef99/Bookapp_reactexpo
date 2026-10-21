@@ -1,0 +1,45 @@
+TAP version 13
+# LOCAL_POSTGRES_VERSION=17 LOCAL_HOST=127.0.0.1 MIGRATION=20261010172118 TEST_DATA=synthetic
+# Subtest: refuses word-limit helper body or execution-attribute drift without changing the baseline
+not ok 1 - refuses word-limit helper body or execution-attribute drift without changing the baseline
+  ---
+  duration_ms: 8169.8482
+  location: 'C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\supabase\\tests\\library\\manualNotePersistence.postgres.test.mjs:230:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    async TestContext.<anonymous> (file:///C:/Users/LEGION/Desktop/Bookconnect4_library/supabase/tests/library/manualNotePersistence.postgres.test.mjs:242:4)
+    async Test.run (node:internal/test_runner/test:935:9)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: refuses same-name policy predicate, role, command or check drift before replacing policies
+not ok 2 - refuses same-name policy predicate, role, command or check drift before replacing policies
+  ---
+  duration_ms: 895.1636
+  location: 'C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\supabase\\tests\\library\\manualNotePersistence.postgres.test.mjs:249:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    async TestContext.<anonymous> (file:///C:/Users/LEGION/Desktop/Bookconnect4_library/supabase/tests/library/manualNotePersistence.postgres.test.mjs:262:4)
+    async Test.run (node:internal/test_runner/test:935:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:633:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11472.7097

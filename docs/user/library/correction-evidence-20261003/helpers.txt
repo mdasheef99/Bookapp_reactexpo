@@ -1,0 +1,77 @@
+FILTER COUNTS [
+  { key: 'all', label: 'All', count: 4, displayed: 4 },
+  { key: 'reading', label: 'Reading', count: 1, displayed: 1 },
+  { key: 'completed', label: 'Completed', count: 1, displayed: 1 },
+  { key: 'wishlist', label: 'Wishlist', count: 2, displayed: 2 }
+]
+TITLE LABEL REGION CONTRAST (opaque matching background/full-opacity text) [
+  { bg: '#445a70', fg: '#fffdf8', ratio: 7.02 },
+  { bg: '#853939', fg: '#fffdf8', ratio: 7.82 },
+  { bg: '#d6d0c4', fg: '#080604', ratio: 13.18 },
+  { bg: '#627a4d', fg: '#fffdf8', ratio: 4.68 },
+  { bg: '#23354a', fg: '#fffdf8', ratio: 12.3 },
+  { bg: '#b8622c', fg: '#080604', ratio: 4.64 },
+  { bg: '#454d52', fg: '#fffdf8', ratio: 8.48 },
+  { bg: '#363a40', fg: '#fffdf8', ratio: 11.25 },
+  { bg: '#c99a38', fg: '#080604', ratio: 7.86 },
+  { bg: '#ded6cc', fg: '#080604', ratio: 14.06 },
+  { bg: '#727a80', fg: '#080604', ratio: 4.63 },
+  { bg: '#8a9164', fg: '#080604', ratio: 6.08 },
+  { bg: '#bd7a42', fg: '#080604', ratio: 5.8 },
+  { bg: '#2e3438', fg: '#fffdf8', ratio: 12.41 }
+]
+PAGE FIXTURES [
+  { pages: 'undefined', width: 32, height: 152 },
+  { pages: 'null', width: 32, height: 152 },
+  { pages: '0', width: 32, height: 152 },
+  { pages: '-5', width: 32, height: 152 },
+  { pages: 'NaN', width: 32, height: 152 },
+  { pages: 'Infinity', width: 32, height: 152 },
+  { pages: '430', width: 32, height: 152 },
+  { pages: '1', width: 24, height: 152 },
+  { pages: '63', width: 24, height: 152 },
+  { pages: '248', width: 30, height: 152 },
+  { pages: '252', width: 30, height: 152 },
+  { pages: '331', width: 33, height: 152 },
+  { pages: '430', width: 37, height: 152 },
+  { pages: '10000', width: 44, height: 152 }
+]
+COLLECTION FIXTURES [
+  {
+    n: 0,
+    top: 0,
+    bottom: 0,
+    contentWidth: 272,
+    uniqueIds: 0,
+    stableWidths: true,
+    firstOffset: undefined
+  },
+  {
+    n: 1,
+    top: 1,
+    bottom: 0,
+    contentWidth: 272,
+    uniqueIds: 1,
+    stableWidths: true,
+    firstOffset: 12
+  },
+  {
+    n: 40,
+    top: 20,
+    bottom: 20,
+    contentWidth: 791,
+    uniqueIds: 40,
+    stableWidths: true,
+    firstOffset: 12
+  },
+  {
+    n: 1000,
+    top: 500,
+    bottom: 500,
+    contentWidth: 18711,
+    uniqueIds: 1000,
+    stableWidths: true,
+    firstOffset: 12
+  }
+]
+BRUSH ABOVE VISIBLE BOOK { visibleBookTop: 48, touchY: 33, result: null }

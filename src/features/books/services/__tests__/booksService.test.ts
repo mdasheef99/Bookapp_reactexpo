@@ -146,6 +146,21 @@ describe('booksService', () => {
 
   // ──────────────────── searchGoogleBooksCached provider fallback ────────────────────
   describe('searchGoogleBooksCached provider fallback', () => {
+    it('does not switch away from Google when a continuation request fails', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 503 });
+      await expect(booksService.searchGoogleBooksCached('pinned google continuation', 20, 20, {}, 'google'))
+        .rejects.toThrow('Google Books API error: 503');
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('continues Open Library directly without retrying Google', async () => {
+      (global.fetch as jest.Mock).mockResolvedValue({ ok: true, json: async () => ({ docs: [], numFound: 20 }) });
+      const result = await booksService.searchGoogleBooksCached('pinned open library continuation', 20, 20, {}, 'openLibrary');
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect((global.fetch as jest.Mock).mock.calls[0][0]).toContain('openlibrary.org/search.json');
+      expect(result.providerUsed).toBe('openLibrary');
+      expect(result.fallbackUsed).toBe(true);
+    });
     it('falls back to Open Library results when Google Books rate-limits the request', async () => {
       (global.fetch as jest.Mock)
         .mockResolvedValueOnce({
@@ -189,6 +204,7 @@ describe('booksService', () => {
         items: [],
         totalItems: 0,
         hasMore: false,
+        nextStartIndex: 0,
         fromCache: false,
         providerUsed: 'google',
         fallbackUsed: false,
@@ -220,6 +236,215 @@ describe('booksService', () => {
       expect((result as any).providerUsed).toBe('openLibrary');
       expect(result.items).toHaveLength(1);
       expect(result.items[0].volumeInfo.title).toBe('Open Library Rescue');
+    });
+
+    it('keeps supported genre and language filters in Open Library fallback and identifies unsupported pricing', async () => {
+      (global.fetch as jest.Mock)
+        .mockRejectedValueOnce(new Error('Google unavailable'))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            numFound: 24,
+            numFoundExact: true,
+            docs: [{ key: '/works/OLFILTERW', title: 'Filtered fallback' }],
+          }),
+        });
+
+      const result = await booksService.searchGoogleBooksCached(
+        'filtered fallback query',
+        0,
+        20,
+        { genre: 'science fiction', language: 'en', priceType: 'free' },
+      );
+
+      const fallbackUrl = (global.fetch as jest.Mock).mock.calls[1][0] as string;
+      expect(new URL(fallbackUrl).searchParams.get('q'))
+        .toBe('filtered fallback query subject:"science fiction" language:eng');
+      expect(result.totalItems).toBe(24);
+      expect(result.totalItemsExact).toBe(true);
+      expect(result.unsupportedFilters).toEqual(['priceType']);
+    });
+
+    it('maps a language-filtered Open Library work to its matching edition metadata', async () => {
+      (global.fetch as jest.Mock)
+        .mockRejectedValueOnce(new Error('Google unavailable'))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            numFound: 1,
+            numFoundExact: true,
+            docs: [{
+              key: '/works/OLCONFESSORW',
+              title: 'Confessor',
+              author_name: ['Terry Goodkind'],
+              language: ['ger', 'fre'],
+              isbn: ['9781423316640'],
+              editions: {
+                docs: [
+                  {
+                    key: '/books/OLGERM123M',
+                    title: 'Confessor',
+                    language: ['ger'],
+                    isbn_13: ['9781423316640'],
+                    cover_i: 100,
+                  },
+                  {
+                    key: '/books/OLFRENCH456M',
+                    title: 'La Confesseure',
+                    subtitle: 'Édition française',
+                    language: ['fre'],
+                    isbn_13: ['9782266240000'],
+                    cover_i: 200,
+                    publish_date: ['2015'],
+                    publisher: ['Éditions Exemple'],
+                    number_of_pages: 512,
+                  },
+                ],
+              },
+            }],
+          }),
+        });
+
+      const result = await booksService.searchGoogleBooksCached('Confessor', 0, 20, { language: 'fr' });
+      const fallbackUrl = (global.fetch as jest.Mock).mock.calls[1][0] as string;
+
+      expect(new URL(fallbackUrl).searchParams.get('q')).toBe('Confessor language:fre');
+      expect(new URL(fallbackUrl).searchParams.get('fields')).toContain('editions.language');
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe('open-library:OLFRENCH456M');
+      expect(result.items[0].volumeInfo).toMatchObject({
+        title: 'La Confesseure',
+        subtitle: 'Édition française',
+        language: 'fre',
+        publisher: 'Éditions Exemple',
+        pageCount: 512,
+        publishedDate: '2015',
+        previewLink: 'https://openlibrary.org/books/OLFRENCH456M',
+      });
+      expect(result.items[0].volumeInfo.imageLinks?.thumbnail)
+        .toBe('https://covers.openlibrary.org/b/id/200-L.jpg');
+      expect(result.items[0].volumeInfo.industryIdentifiers)
+        .toEqual([{ type: 'ISBN_13', identifier: '9782266240000' }]);
+    });
+
+    it('does not show a work when the requested language has no matching edition or work language', async () => {
+      (global.fetch as jest.Mock)
+        .mockRejectedValueOnce(new Error('Google unavailable'))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            numFound: 1,
+            docs: [{
+              key: '/works/OLGERMANONLYW',
+              title: 'A German-only edition in this response',
+              language: ['ger'],
+              editions: { docs: [{ key: '/books/OLGERMANONLYM', language: ['ger'] }] },
+            }],
+          }),
+        });
+
+      const result = await booksService.searchGoogleBooksCached('language mismatch', 0, 20, { language: 'fr' });
+
+      expect(result.items).toEqual([]);
+      expect(result.totalItems).toBe(1);
+    });
+
+    it('uses only confirmed work-level text when matching language is known but nested editions are absent', async () => {
+      (global.fetch as jest.Mock)
+        .mockRejectedValueOnce(new Error('Google unavailable'))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            numFound: 1,
+            docs: [{
+              key: '/works/OLFRENCHWORK',
+              title: 'Le livre recherché',
+              author_name: ['A. Writer'],
+              language: ['eng', 'fre'],
+              // These aggregate fields and first edition may identify a different language.
+              isbn: ['9781111111111'],
+              cover_i: 1234,
+              edition_key: ['OLENGLISHEDITION'],
+              first_publish_year: 1989,
+            }],
+          }),
+        });
+
+      const result = await booksService.searchGoogleBooksCached('Le livre recherché', 0, 20, { language: 'fr' });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].id).toBe('open-library:OLFRENCHWORK');
+      expect(result.items[0].volumeInfo).toMatchObject({
+        title: 'Le livre recherché',
+        authors: ['A. Writer'],
+        language: 'fre',
+        previewLink: 'https://openlibrary.org/works/OLFRENCHWORK',
+        infoLink: 'https://openlibrary.org/works/OLFRENCHWORK',
+      });
+      expect(result.items[0].volumeInfo.imageLinks).toBeUndefined();
+      expect(result.items[0].volumeInfo.industryIdentifiers).toBeUndefined();
+      expect(result.items[0].volumeInfo.publishedDate).toBeUndefined();
+      expect(result.items[0].volumeInfo.publisher).toBeUndefined();
+      expect(result.items[0].volumeInfo.pageCount).toBeUndefined();
+    });
+
+    it('omits an unmatched work and advances pagination by provider rows consumed', async () => {
+      (global.fetch as jest.Mock)
+        .mockRejectedValueOnce(new Error('Google unavailable'))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            numFound: 25,
+            docs: [{
+              key: '/works/OLGERMANWORK',
+              title: 'German-only work',
+              language: ['ger'],
+              isbn: ['9782222222222'],
+              cover_i: 2345,
+              edition_key: ['OLGERMANEDITION'],
+            }],
+          }),
+        });
+
+      const result = await booksService.searchGoogleBooksCached('language mismatch', 0, 20, { language: 'fr' });
+
+      expect(result.items).toEqual([]);
+      expect(result).toMatchObject({ hasMore: true, nextStartIndex: 1 });
+    });
+
+    it('marks Open Library totals approximate when the provider does not confirm an exact count', async () => {
+      (global.fetch as jest.Mock)
+        .mockRejectedValueOnce(new Error('Google unavailable'))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            num_found: 48000,
+            docs: [{ key: '/works/OLAPPROXW', title: 'Approximate fallback' }],
+          }),
+        });
+
+      const result = await booksService.searchGoogleBooksCached('approximate fallback query');
+
+      expect(result.totalItems).toBe(48000);
+      expect(result.totalItemsExact).toBe(false);
+    });
+
+    it('preserves the provider total and next-page state on a fresh cache hit', async () => {
+      const items = Array.from({ length: 20 }, (_, index) => ({
+        id: `cached-page-book-${index}`,
+        volumeInfo: { title: `Cached page book ${index}` },
+      }));
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ items, totalItems: 85 }),
+      });
+
+      const firstPage = await booksService.searchGoogleBooksCached('pagination cache metadata check');
+      const cachedPage = await booksService.searchGoogleBooksCached('pagination cache metadata check');
+
+      expect(firstPage).toMatchObject({ totalItems: 85, hasMore: true, nextStartIndex: 20, fromCache: false });
+      expect(cachedPage).toMatchObject({ totalItems: 85, hasMore: true, nextStartIndex: 20, fromCache: true });
+      expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
     it('sanitizes Open Library ISBNs before building cover URLs', async () => {
@@ -615,36 +840,6 @@ describe('booksService', () => {
       const updateArg = builder.update.mock.calls[0][0];
       expect(updateArg.reading_status).toBe('reading');
       expect(updateArg.completed_at).toBeUndefined();
-    });
-  });
-
-  // ──────────────────── addRating ────────────────────
-  describe('addRating', () => {
-    it('updates rating, review, and privacy when rating is provided', async () => {
-      const builder = mockQuery({ data: null, error: null });
-      (supabase.from as jest.Mock).mockReturnValueOnce(builder);
-
-      await booksService.addRating('ub1', 4, 'Great read', true);
-
-      expect(supabase.from).toHaveBeenCalledWith('user_books');
-      expect(builder.update).toHaveBeenCalledWith({
-        rating: 4,
-        review: 'Great read',
-        review_is_public: true,
-      });
-      expect(builder.eq).toHaveBeenCalledWith('id', 'ub1');
-    });
-
-    it('omits rating from the update payload for review-only saves', async () => {
-      const builder = mockQuery({ data: null, error: null });
-      (supabase.from as jest.Mock).mockReturnValueOnce(builder);
-
-      await booksService.addRating('ub1', undefined, 'Private note', false);
-
-      expect(builder.update).toHaveBeenCalledWith({
-        review: 'Private note',
-        review_is_public: false,
-      });
     });
   });
 

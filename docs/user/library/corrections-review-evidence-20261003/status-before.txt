@@ -1,0 +1,61 @@
+ M app.json
+ M app/(tabs)/library/[bookId].tsx
+ M app/(tabs)/library/__tests__/index.test.tsx
+ M app/(tabs)/library/_layout.tsx
+ M app/(tabs)/library/index.tsx
+ M app/(tabs)/library/notes.tsx
+ M docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md
+ M docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md
+ M package-lock.json
+ M package.json
+ M src/components/library/LibraryShelf.tsx
+ M src/components/library/index.ts
+ M src/components/notes/NoteEditor.tsx
+ M src/features/books/services/booksService.ts
+ M src/features/books/services/notesService.ts
+ M src/features/books/utils/libraryShelf.ts
+?? assets/fonts/
+?? assets/images/decorative/book-cloth.svg
+?? assets/sounds/
+?? docs/superpowers/specs/
+?? docs/user/README.md
+?? docs/user/library/HORIZONTAL-SHELF-IMPLEMENTATION.md
+?? docs/user/library/INDEPENDENT-REVIEW-20261003.md
+?? docs/user/library/INTERACTION-MAP.md
+?? docs/user/library/SDD-02-notes.md
+?? docs/user/library/SDD-03-ocr-vault.md
+?? docs/user/library/SDD-04-shelf.md
+?? docs/user/library/SDD-05-library-reading-room.md
+?? docs/user/library/TRACKER.md
+?? docs/user/library/UI-UX-INVENTORY.md
+?? docs/user/library/correction-evidence-20261003/
+?? docs/user/library/review-evidence-20261003/
+?? docs/user/library/stitch-reference/
+?? e2e/library-vault-smoke.spec.ts
+?? flows/
+?? serve19006.js
+?? src/components/library/BookSpine.tsx
+?? src/components/library/LibraryAppearance.ts
+?? src/components/library/LibraryBentoGrid.tsx
+?? src/components/library/LibraryBookList.tsx
+?? src/components/library/LibraryBookPicker.tsx
+?? src/components/library/LibraryFilterBar.tsx
+?? src/components/library/LibraryHeader.tsx
+?? src/components/library/LibraryPillNav.tsx
+?? src/components/library/LibrarySummary.tsx
+?? src/components/library/LibraryTypography.tsx
+?? src/components/library/VaultPagesList.tsx
+?? src/components/library/__tests__/
+?? src/components/library/bookClothTexture.ts
+?? src/components/library/cabinetWoodTexture.ts
+?? src/features/books/services/__tests__/ocrService.test.ts
+?? src/features/books/services/__tests__/userBookPagesService.test.ts
+?? src/features/books/services/ocrService.ts
+?? src/features/books/services/userBookPagesService.ts
+?? src/features/books/utils/__tests__/
+?? src/features/books/utils/ocrWordCap.ts
+?? src/features/books/utils/shelfLayout.ts
+?? supabase/functions/ocr-fallback/
+?? supabase/migrations/20260820064258_library_user_book_pages_vault.sql
+?? supabase/migrations/20260820071215_library_word_limit_hardening.sql
+?? supabase/migrations/__tests__/libraryUserBookPagesVault.test.ts

@@ -1,0 +1,16 @@
+import { NoteCaptureSession } from '../src/features/books/notes/captureSession';
+import type { CaptureAdapter, CapturePhoto } from '../src/features/books/notes/captureAdapter';
+const photo: CapturePhoto = { uri: 'source-owned', width: 1200, height: 800, sourceWidth: 1200, sourceHeight: 800, rotation: 0 };
+function deferred<T>() { let resolve!: (v:T)=>void; const promise=new Promise<T>(r=>{resolve=r;}); return {promise,resolve}; }
+it('retains an image while either overlapping canceled transform still uses it', async () => {
+ const one=deferred<CapturePhoto>(); const two=deferred<CapturePhoto>();
+ const adapter: jest.Mocked<CaptureAdapter> = { pick: jest.fn().mockResolvedValue(photo), rotate: jest.fn(), transform: jest.fn().mockReturnValueOnce(one.promise).mockReturnValueOnce(two.promise), recognize: jest.fn(), release: jest.fn().mockResolvedValue(undefined) };
+ const s=new NoteCaptureSession({ actorId:'actor',bookId:'book',mode:'create' },adapter,'write');
+ s.initialize({text:'A',category:null,page:''}); s.beginScan(); await s.pick('gallery');
+ const first=s.recognize(); s.cancelRecognition(); const second=s.recognize(); s.cancelScan();
+ one.resolve({...photo,uri:'first-output'}); await first;
+ const prematurelyReleased=adapter.release.mock.calls.map(c=>c[0]).includes(photo.uri);
+ two.resolve({...photo,uri:'second-output'}); await second;
+ expect(prematurelyReleased).toBe(false);
+ expect(s.snapshot().fields.text).toBe('A');
+});

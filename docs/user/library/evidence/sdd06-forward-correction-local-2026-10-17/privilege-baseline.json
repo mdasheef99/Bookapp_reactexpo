@@ -1,0 +1,171 @@
+{
+  "date": "2026-10-17",
+  "project_ref": "ahntbtktjjmvfosgkmgn",
+  "source": "Supabase MCP execute_sql read-only catalog (no business rows)",
+  "query": "SELECT expanded reading_notes relacl grantor/grantee/privilege_type/is_grantable and each non-dropped user-column attacl",
+  "table_acl": [
+    {
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "DELETE",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "INSERT",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "MAINTAIN",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "REFERENCES",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "SELECT",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRIGGER",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "TRUNCATE",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "postgres",
+      "privilege": "UPDATE",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "DELETE",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "INSERT",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "MAINTAIN",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "REFERENCES",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "SELECT",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRIGGER",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "service_role",
+      "privilege": "UPDATE",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "authenticated",
+      "privilege": "DELETE",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "authenticated",
+      "privilege": "INSERT",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "authenticated",
+      "privilege": "SELECT",
+      "grantable": false
+    },
+    {
+      "grantor": "postgres",
+      "grantee": "authenticated",
+      "privilege": "UPDATE",
+      "grantable": false
+    }
+  ],
+  "column_acl": [
+    {
+      "column": "id",
+      "acl": null
+    },
+    {
+      "column": "user_id",
+      "acl": null
+    },
+    {
+      "column": "user_book_id",
+      "acl": null
+    },
+    {
+      "column": "content",
+      "acl": null
+    },
+    {
+      "column": "tag",
+      "acl": null
+    },
+    {
+      "column": "page_number",
+      "acl": null
+    },
+    {
+      "column": "created_at",
+      "acl": null
+    },
+    {
+      "column": "updated_at",
+      "acl": null
+    },
+    {
+      "column": "version",
+      "acl": null
+    },
+    {
+      "column": "last_operation_id",
+      "acl": null
+    }
+  ],
+  "function_acl": "Both function ACLs: PUBLIC, postgres, anon, authenticated, service_role EXECUTE; grantor postgres, no grant options. Full original values in fresh-catalog.json."
+}

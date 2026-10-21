@@ -1,0 +1,38 @@
+‹ Back to scan
+Prepare photo
+Many Notes Fixture Book
+Category: No category
+Automatic text cropping is unavailable here. The full photo is selected.
+Adjust crop
+Rotate photo clockwise
+Choose another photo
+Scanning text is unavailable in this browser. You can prepare a photo or write your note instead.
+Write note instead
+Cancel scan
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]

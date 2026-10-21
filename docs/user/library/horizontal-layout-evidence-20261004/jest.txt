@@ -1,0 +1,480 @@
+(node:22536) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+FAIL src/components/library/__tests__/LibraryShelf.test.tsx (16.221 s)
+  ● horizontal Shelf layout checkpoint › restores Horizontal preference, routes real IDs, filters the same data, and keeps the selector out of List
+
+    Unable to find an element with testID: library-filter-wishlist
+
+    <View
+      testID="library-page"
+    >
+      <RCTScrollView>
+        <View>
+          <View>
+            <View>
+              <View>
+                <View>
+                  <View>
+                    <Ionicons />
+                    <Text>
+                      CM's Book Shelf
+                    </Text>
+                  </View>
+                  <View
+                    accessibilityHint="Open the catalogue to find and add books"
+                    accessibilityLabel="Search books"
+                    accessibilityRole="button"
+                    accessibilityState={
+                      {
+                        "disabled": false,
+                      }
+                    }
+                    accessible={true}
+                  >
+                    <Ionicons />
+                  </View>
+                </View>
+                <View>
+                  <View>
+                    <View
+                      accessibilityLabel="Shelf view"
+                      accessibilityRole="button"
+                      accessibilityState={
+                        {
+                          "disabled": false,
+                          "selected": true,
+                        }
+                      }
+                      accessible={true}
+                      testID="library-view-shelf"
+                    >
+                      <Ionicons />
+                      <Text>
+                        Shelf
+                      </Text>
+                    </View>
+                    <View
+                      accessibilityLabel="List view"
+                      accessibilityRole="button"
+                      accessibilityState={
+                        {
+                          "disabled": false,
+                          "selected": false,
+                        }
+                      }
+                      accessible={true}
+                      testID="library-view-list"
+                    >
+                      <Ionicons />
+                      <Text>
+                        List
+                      </Text>
+                    </View>
+                  </View>
+                  <View
+                    accessibilityHint="Open the catalogue to find a book or add one manually"
+                    accessibilityLabel="Add a new book to your library"
+                    accessibilityRole="button"
+                    accessibilityState={
+                      {
+                        "disabled": false,
+                      }
+                    }
+                    accessible={true}
+                  >
+                    <Text>
+                      + Add Book
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View
+                testID="library-collection-controls"
+              >
+                <View>
+                  <View
+                    accessibilityLabel="All, 2 books"
+                    accessibilityRole="button"
+                    accessibilityState={
+                      {
+                        "disabled": false,
+                        "selected": true,
+                      }
+                    }
+                    accessible={true}
+                  >
+                    <Text>
+                      All
+                    </Text>
+                    <Text>
+                      2
+                    </Text>
+                  </View>
+                  <View
+                    accessibilityLabel="Reading, 1 books"
+                    accessibilityRole="button"
+                    accessibilityState={
+                      {
+                        "disabled": false,
+                        "selected": false,
+                      }
+                    }
+                    accessible={true}
+                  >
+                    <Text>
+                      Reading
+                    </Text>
+                    <Text>
+                      1
+                    </Text>
+                  </View>
+                  <View
+                    accessibilityLabel="Completed, 0 books"
+                    accessibilityRole="button"
+                    accessibilityState={
+                      {
+                        "disabled": false,
+                        "selected": false,
+                      }
+                    }
+                    accessible={true}
+                  >
+                    <Text>
+                      Completed
+                    </Text>
+                    <Text>
+                      0
+                    </Text>
+                  </View>
+                  <View
+                    accessibilityLabel="Wishlist, 1 books"
+                    accessibilityRole="button"
+                    accessibilityState={
+                      {
+                        "disabled": false,
+                        "selected": false,
+                      }
+                    }
+                    accessible={true}
+                  >
+                    <Text>
+                      Wishlist
+                    </Text>
+                    <Text>
+                      1
+                    </Text>
+                  </View>
+                </View>
+                <View>
+                  <Text>
+                    2
+
+                    books
+                  </Text>
+                  <Text>
+                    Showing
+                    all
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View
+              testID="library-shelf-style-control"
+            >
+              <Text>
+                Book layout
+              </Text>
+              <View>
+                <View
+                  accessibilityLabel="Vertical shelf layout"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "disabled": false,
+                      "selected": false,
+                    }
+                  }
+                  accessible={true}
+                  testID="library-shelf-style-vertical"
+                >
+                  <Text>
+                    Vertical
+                  </Text>
+                </View>
+                <View
+                  accessibilityLabel="Horizontal shelf layout"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "disabled": false,
+                      "selected": true,
+                    }
+                  }
+                  accessible={true}
+                  testID="library-shelf-style-horizontal"
+                >
+                  <Text>
+                    Horizontal
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View
+              testID="library-arrange-controls"
+            >
+              <View>
+                <View
+                  accessibilityLabel="Arrange shelf"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "busy": false,
+                      "disabled": false,
+                    }
+                  }
+                  accessible={true}
+                  testID="library-arrange-arrange-shelf"
+                >
+                  <Text>
+                    Arrange shelf
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View>
+              <View
+                testID="library-horizontal-shelf"
+              >
+                <View
+                  testID="library-horizontal-tier-top"
+                >
+                  <Image
+                    accessible={false}
+                    pointerEvents="none"
+                  />
+                  <Text
+                    pointerEvents="none"
+                  >
+                    Upper shelf
+                  </Text>
+                  <RCTScrollView
+                    accessibilityLabel="Upper shelf books"
+                    testID="library-horizontal-scroll-top"
+                  >
+                    <View>
+                      <View
+                        pointerEvents="box-none"
+                        testID="library-horizontal-pile-top-0"
+                      >
+                        <View>
+                          <View
+                            accessibilityLabel="Open Equal title"
+                            accessibilityRole="button"
+                            accessibilityState={
+                              {
+                                "disabled": false,
+                                "selected": false,
+                              }
+                            }
+                            accessible={true}
+                            testID="library-horizontal-book-actual-id"
+                          >
+                            <Image
+                              accessible={false}
+                              pointerEvents="none"
+                            />
+                            <View
+                              pointerEvents="none"
+                            />
+                            <View
+                              pointerEvents="none"
+                            />
+                            <View
+                              pointerEvents="none"
+                            />
+                            <Text>
+                              Equal title
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  </RCTScrollView>
+                  <View
+                    pointerEvents="none"
+                    testID="library-horizontal-plank-top"
+                  >
+                    <Image
+                      accessible={false}
+                    />
+                    <View />
+                    <View />
+                  </View>
+                </View>
+                <View
+                  testID="library-horizontal-tier-bottom"
+                >
+                  <Image
+                    accessible={false}
+                    pointerEvents="none"
+                  />
+                  <Text
+                    pointerEvents="none"
+                  >
+                    Lower shelf
+                  </Text>
+                  <RCTScrollView
+                    accessibilityLabel="Lower shelf books"
+                    testID="library-horizontal-scroll-bottom"
+                  >
+                    <View>
+                      <View
+                        pointerEvents="box-none"
+                        testID="library-horizontal-pile-bottom-0"
+                      >
+                        <View>
+                          <View
+                            accessibilityLabel="Open Equal title"
+                            accessibilityRole="button"
+                            accessibilityState={
+                              {
+                                "disabled": false,
+                                "selected": false,
+                              }
+                            }
+                            accessible={true}
+                            testID="library-horizontal-book-wanted-id"
+                          >
+                            <Image
+                              accessible={false}
+                              pointerEvents="none"
+                            />
+                            <View
+                              pointerEvents="none"
+                            />
+                            <View
+                              pointerEvents="none"
+                            />
+                            <View
+                              pointerEvents="none"
+                            />
+                            <Text>
+                              Equal title
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  </RCTScrollView>
+                  <View
+                    pointerEvents="none"
+                    testID="library-horizontal-plank-bottom"
+                  >
+                    <Image
+                      accessible={false}
+                    />
+                    <View />
+                    <View />
+                  </View>
+                </View>
+              </View>
+              <Text>
+                Scroll each shelf sideways to browse your books.
+              </Text>
+              <View
+                accessibilityHint="Opens a list of book titles with larger buttons"
+                accessibilityLabel="Choose a book by title"
+                accessibilityRole="button"
+                accessibilityState={
+                  {
+                    "expanded": false,
+                  }
+                }
+                accessible={true}
+                testID="library-book-picker-open"
+              >
+                <Ionicons
+                  accessible={false}
+                />
+                <Text>
+                  Choose a book
+                </Text>
+              </View>
+            </View>
+            <View>
+              <View
+                accessibilityLabel="Continue reading Equal title"
+                accessibilityRole="button"
+                accessibilityState={
+                  {
+                    "disabled": false,
+                  }
+                }
+                accessible={true}
+              >
+                <View
+                  pointerEvents="none"
+                />
+                <Text>
+                  Current Read
+                </Text>
+                <Text>
+                  Equal title
+                </Text>
+                <Text />
+                <Text>
+                  Currently reading · Open book →
+                </Text>
+              </View>
+              <View>
+                <Ionicons />
+                <View>
+                  <Text>
+                    2
+                  </Text>
+                  <Text>
+                    In your library
+                  </Text>
+                </View>
+              </View>
+              <View
+                accessibilityLabel="Show wishlist, 1 books"
+                accessibilityRole="button"
+                accessible={true}
+              >
+                <Ionicons />
+                <View>
+                  <Text>
+                    1
+                  </Text>
+                  <Text>
+                    Wishlist
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </RCTScrollView>
+    </View>
+
+      136 |         fireEvent.press(screen.getByTestId('library-horizontal-book-actual-id'));
+      137 |         expect(require('expo-router').router.push).toHaveBeenCalledWith('/(tabs)/library/actual-id');
+    > 138 |         fireEvent.press(screen.getByTestId('library-filter-wishlist'));
+          |                                ^
+      139 |         expect(screen.queryByTestId('library-horizontal-book-actual-id')).toBeNull();
+      140 |         expect(screen.getByTestId('library-horizontal-book-wanted-id')).toBeTruthy();
+      141 |         fireEvent.press(screen.getByTestId('library-view-list'));
+
+      at Object.getByTestId (src/components/library/__tests__/LibraryShelf.test.tsx:138:32)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+PASS app/(tabs)/library/__tests__/index.test.tsx
+PASS src/features/books/utils/__tests__/horizontalShelfLayout.test.ts
+
+Test Suites: 1 failed, 2 passed, 3 total
+Tests:       1 failed, 52 passed, 53 total
+Snapshots:   0 total
+Time:        20.086 s, estimated 26 s
+Ran all test suites within paths "src/features/books/utils/__tests__/horizontalShelfLayout.test.ts", "src/components/library/__tests__/LibraryShelf.test.tsx", "app/(tabs)/library/__tests__/index.test.tsx".

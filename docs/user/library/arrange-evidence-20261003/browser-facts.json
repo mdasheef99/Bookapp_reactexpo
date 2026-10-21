@@ -1,0 +1,152 @@
+{
+  "build": [
+    "http://localhost:19006/_expo/static/js/web/entry-dc2679d01e66d79a201c14ad382addf0.js"
+  ],
+  "originalOrder": [
+    "library-shelf-spine-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+    "library-shelf-spine-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+    "library-shelf-spine-ae665879-eda1-40f1-a775-7d698a861b27",
+    "library-shelf-spine-e063191d-6a0b-4222-91c9-0a98937ee80b",
+    "library-shelf-spine-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+    "library-shelf-spine-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+    "library-shelf-spine-f498f920-386c-484b-8533-18f9c44579f8",
+    "library-shelf-spine-eebf0401-d243-423b-83e4-41aa5d287d70"
+  ],
+  "afterDrag": [
+    "library-shelf-spine-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+    "library-shelf-spine-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+    "library-shelf-spine-e063191d-6a0b-4222-91c9-0a98937ee80b",
+    "library-shelf-spine-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+    "library-shelf-spine-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+    "library-shelf-spine-f498f920-386c-484b-8533-18f9c44579f8",
+    "library-shelf-spine-eebf0401-d243-423b-83e4-41aa5d287d70",
+    "library-shelf-spine-ae665879-eda1-40f1-a775-7d698a861b27"
+  ],
+  "undoRestored": true,
+  "cancelRestored": true,
+  "savedTestOrder": [
+    "library-shelf-spine-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+    "library-shelf-spine-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+    "library-shelf-spine-e063191d-6a0b-4222-91c9-0a98937ee80b",
+    "library-shelf-spine-ae665879-eda1-40f1-a775-7d698a861b27",
+    "library-shelf-spine-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+    "library-shelf-spine-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+    "library-shelf-spine-f498f920-386c-484b-8533-18f9c44579f8",
+    "library-shelf-spine-eebf0401-d243-423b-83e4-41aa5d287d70"
+  ],
+  "reloadPreserved": true,
+  "originalOrderRestored": true,
+  "wishlistCountBeforeArrange": 1,
+  "allCountDuringArrange": 8,
+  "guardControls": {
+    "listDisabled": true,
+    "searchDisabled": true,
+    "addDisabled": true
+  },
+  "responsive": [
+    {
+      "buttons": [
+        {
+          "height": 44,
+          "id": "library-arrange-undo"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-cancel"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-save"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-earlier"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-later"
+        }
+      ],
+      "pageWidth": 320,
+      "width": 320
+    },
+    {
+      "buttons": [
+        {
+          "height": 44,
+          "id": "library-arrange-undo"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-cancel"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-save"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-earlier"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-later"
+        }
+      ],
+      "pageWidth": 430,
+      "width": 430
+    },
+    {
+      "buttons": [
+        {
+          "height": 44,
+          "id": "library-arrange-undo"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-cancel"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-save"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-earlier"
+        },
+        {
+          "height": 44,
+          "id": "library-arrange-later"
+        }
+      ],
+      "pageWidth": 1280,
+      "width": 1280
+    }
+  ],
+  "finalBuild": [
+    "http://localhost:19006/_expo/static/js/web/entry-6e3dba25faea2ff1925c32ea40326903.js"
+  ],
+  "finalChooser": {
+    "selected": true,
+    "modalClosed": true,
+    "url": "http://localhost:19006/library"
+  },
+  "finalState": {
+    "arrangeAvailable": true,
+    "height": 844,
+    "order": [
+      "library-shelf-spine-ec3caa3e-69ed-412d-ae26-287f0d01290d",
+      "library-shelf-spine-769cb839-409b-4e2c-8d1d-191c18d74f9a",
+      "library-shelf-spine-ae665879-eda1-40f1-a775-7d698a861b27",
+      "library-shelf-spine-e063191d-6a0b-4222-91c9-0a98937ee80b",
+      "library-shelf-spine-f01d2e64-3605-4ae9-87e7-f6b3315e7713",
+      "library-shelf-spine-9741e093-5945-4ec1-8ca8-8bf88e3949ff",
+      "library-shelf-spine-f498f920-386c-484b-8533-18f9c44579f8",
+      "library-shelf-spine-eebf0401-d243-423b-83e4-41aa5d287d70"
+    ],
+    "spines": 8,
+    "undoAbsent": true,
+    "url": "http://localhost:19006/library",
+    "width": 390
+  }
+}

@@ -1,0 +1,14 @@
+(node:26232) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/components/library/__tests__/LibraryShelf.test.tsx (15.104 s)
+PASS app/(tabs)/library/__tests__/index.test.tsx
+PASS src/features/books/hooks/__tests__/useShelfArrangement.test.ts
+PASS src/components/library/__tests__/useVerticalShelfDrag.test.ts
+PASS src/features/books/utils/__tests__/shelfOrder.test.ts
+PASS src/features/books/utils/__tests__/horizontalShelfLayout.test.ts
+
+Test Suites: 6 passed, 6 total
+Tests:       77 passed, 77 total
+Snapshots:   0 total
+Time:        21.322 s
+Ran all test suites within paths "src/features/books/utils/__tests__/horizontalShelfLayout.test.ts", "src/components/library/__tests__/LibraryShelf.test.tsx", "app/(tabs)/library/__tests__/index.test.tsx", "src/features/books/hooks/__tests__/useShelfArrangement.test.ts", "src/features/books/utils/__tests__/shelfOrder.test.ts", "src/components/library/__tests__/useVerticalShelfDrag.test.ts".

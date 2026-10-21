@@ -1,0 +1,122 @@
+[
+  {
+    "chooser": 0,
+    "filter": [
+      "List view",
+      "All, 8 books"
+    ],
+    "mode": [
+      "List view"
+    ],
+    "rows": 8,
+    "viewport": [
+      430,
+      844
+    ]
+  },
+  {
+    "chooser": 0,
+    "filter": [
+      "List view",
+      "Reading, 0 books"
+    ],
+    "mode": [
+      "List view"
+    ],
+    "rows": 0,
+    "viewport": [
+      430,
+      844
+    ]
+  },
+  {
+    "chooser": 0,
+    "filter": [
+      "List view",
+      "Completed, 1 books"
+    ],
+    "mode": [
+      "List view"
+    ],
+    "rows": 1,
+    "viewport": [
+      430,
+      844
+    ]
+  },
+  {
+    "chooser": 0,
+    "filter": [
+      "List view",
+      "Wishlist, 1 books"
+    ],
+    "mode": [
+      "List view"
+    ],
+    "rows": 1,
+    "viewport": [
+      430,
+      844
+    ]
+  },
+  {
+    "chooser": 1,
+    "filter": [
+      "Shelf view",
+      "All, 8 books"
+    ],
+    "mode": [
+      "Shelf view"
+    ],
+    "rows": 8,
+    "viewport": [
+      430,
+      844
+    ]
+  },
+  {
+    "chooser": 0,
+    "filter": [
+      "Shelf view",
+      "Reading, 0 books"
+    ],
+    "mode": [
+      "Shelf view"
+    ],
+    "rows": 0,
+    "viewport": [
+      430,
+      844
+    ]
+  },
+  {
+    "chooser": 1,
+    "filter": [
+      "Shelf view",
+      "Completed, 1 books"
+    ],
+    "mode": [
+      "Shelf view"
+    ],
+    "rows": 1,
+    "viewport": [
+      430,
+      844
+    ]
+  },
+  {
+    "chooser": 1,
+    "filter": [
+      "Shelf view",
+      "Wishlist, 1 books"
+    ],
+    "mode": [
+      "Shelf view"
+    ],
+    "rows": 1,
+    "viewport": [
+      430,
+      844
+    ]
+  }
+]

@@ -1,0 +1,28 @@
+R3 exhaustive status/ownership combinations, empty and ownership transitions: PASS [
+  { key: 'all', label: 'All', count: 20 },
+  { key: 'reading', label: 'Reading', count: 4 },
+  { key: 'completed', label: 'Completed', count: 4 },
+  { key: 'wishlist', label: 'Wishlist', count: 4 }
+]
+R2 all 14 corrected color pairs PASS [
+  { bg: '#445a70', fg: '#fffdf8', ratio: 7.021 },
+  { bg: '#853939', fg: '#fffdf8', ratio: 7.82 },
+  { bg: '#d6d0c4', fg: '#080604', ratio: 13.176 },
+  { bg: '#627a4d', fg: '#fffdf8', ratio: 4.684 },
+  { bg: '#23354a', fg: '#fffdf8', ratio: 12.299 },
+  { bg: '#b8622c', fg: '#080604', ratio: 4.644 },
+  { bg: '#454d52', fg: '#fffdf8', ratio: 8.479 },
+  { bg: '#363a40', fg: '#fffdf8', ratio: 11.251 },
+  { bg: '#c99a38', fg: '#080604', ratio: 7.863 },
+  { bg: '#ded6cc', fg: '#080604', ratio: 14.06 },
+  { bg: '#727a80', fg: '#080604', ratio: 4.634 },
+  { bg: '#8a9164', fg: '#080604', ratio: 6.083 },
+  { bg: '#bd7a42', fg: '#080604', ratio: 5.805 },
+  { bg: '#2e3438', fg: '#fffdf8', ratio: 12.411 }
+]
+R4 neutral geometry fixture 0 books / 272 track width: PASS
+R4 neutral geometry fixture 1 books / 272 track width: PASS
+R4 neutral geometry fixture 40 books / 697 track width: PASS
+R4 neutral geometry fixture 1000 books / 16297 track width: PASS
+R4 exact top/bottom/left/right bounds + nonzero scroll assertions PASS 10410
+Page contract and height independence: PASS

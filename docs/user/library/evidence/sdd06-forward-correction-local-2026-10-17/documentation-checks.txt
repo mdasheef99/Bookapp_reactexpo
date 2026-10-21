@@ -1,0 +1,41 @@
+REQUIREMENT_DEFINITIONS=195
+REQUIREMENT_DEFINITION_DUPLICATES=0
+REQUIREMENT_TRACEABILITY_MISSING=0
+REQUIREMENT_VALIDATOR_REGRESSION_PROBES=PASS
+DOCUMENT_SIZE_COHESION_ASSESSMENT lines=487 path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-inventory\SESSION-START.md
+WARNING: DOCUMENT_SIZE_SPLIT_ADVISORY lines=2774 
+path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-
+inventory\trackers\02-implementation-and-verification.md
+DOCUMENT_SIZE_COHESION_ASSESSMENT lines=401 path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-inventory\trackers\24-unit6f-readiness-quality-gates-evidence.md
+DOCUMENT_SIZE_COHESION_ASSESSMENT lines=440 path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-inventory\work-units\06-owner-capture-review-recovery-ux-sdd.md
+WARNING: DOCUMENT_SIZE_SPLIT_ADVISORY lines=526 
+path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-
+inventory\supporting\data-dictionary.md
+WARNING: DOCUMENT_SIZE_SPLIT_ADVISORY lines=814 
+path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-
+inventory\work-units\07b-publication-sdd.md
+DOCUMENT_SIZE_COHESION_ASSESSMENT lines=417 path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-inventory\trackers\23-unit6e-review-corrections-evidence.md
+DOCUMENT_SIZE_COHESION_ASSESSMENT lines=411 path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-inventory\work-units\07a-create-only-inventory-commit-sdd.md
+WARNING: DOCUMENT_SIZE_SPLIT_ADVISORY lines=598 
+path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-
+inventory\supporting\database-current-vs-target.md
+WARNING: DOCUMENT_SIZE_SPLIT_ADVISORY lines=2071 
+path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-
+inventory\TRACKER.md
+DOCUMENT_SIZE_POLICY_REGRESSION=PASS above_350_allowed=true advisory_above_500=true
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md', LF will be replaced by CRLF the next time Git touches it
+WU1_DIFF_CHECK=PASS
+WU2_DIFF_CHECK=PASS
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/INTERACTION-MAP.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/SDD-05-library-reading-room.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/TRACKER.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/UI-UX-INVENTORY.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'opencode.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+REPOSITORY_DIFF_CHECK=PASS
+PHASE9_CONTINUITY_CHECK=PASS
+MARKDOWN_FILES_CHECKED=76
+REQUIRED_PHASE_FILES=55

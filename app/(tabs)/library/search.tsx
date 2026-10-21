@@ -1,21 +1,14 @@
 import {
     View,
-    Text,
     FlatList,
-    TouchableOpacity,
-    Alert,
-    Share,
-    Linking,
     RefreshControl,
     StyleSheet,
 } from 'react-native';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'expo-router';
-import { booksService, GoogleBook, SearchFilters, PaginatedResult } from '@/features/books/services/booksService';
+import { booksService, GoogleBook, SearchFilters } from '@/features/books/services/booksService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useRecentSearches } from '@/hooks/useRecentSearches';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -23,37 +16,42 @@ import { useWishlist } from '@/hooks/useWishlist';
 import * as Haptics from 'expo-haptics';
 import { SortOption } from '@/lib/constants';
 import { navigateBackOrFallback } from '@/lib/navigation';
-import { ScreenBackground } from '@/components/ui/ScreenBackground';
+import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { useTheme } from '@/hooks/useTheme';
+import { BookLoading, BookScreenHeader, useBookFeedback } from '@/components/library/ui';
+import { COLUMN_MAX_WIDTH } from '@/components/library/bookDetails/bookDetailsTokens';
+import { manualAddErrorMessage, searchErrorMessage } from '@/features/books/utils/searchErrorCopy';
+import { sortSearchResults } from '@/features/books/utils/searchResults';
+import { countActiveFilters, getSearchSignature, searchProviderNotice, searchResultsCountLabel } from '@/features/books/utils/searchPresentation';
+import { useSearchBookActions } from '@/features/books/hooks/useSearchBookActions';
 
 // Import components
+import { SearchBar } from '@/components/search';
 import {
-    SkeletonCard,
     SortModal,
     RecentSearches,
-    SearchBar,
     SearchSuggestions,
     FilterModal,
     FilterChips,
     SwipeableBookCard,
     ManualEntryModal,
-} from '@/components/search';
-import { OfflineBanner } from '@/components/ui/OfflineBanner';
-
-// Loading footer for pagination
-const LoadingFooter = ({ loading }: { loading: boolean }) => {
-    const { colors } = useTheme();
-    if (!loading) return null;
-    return (
-        <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-            <Text style={{ color: colors.textTertiary, fontSize: 12 }}>Loading more...</Text>
-        </View>
-    );
-};
+} from '@/components/library/search';
+import { SearchIdleState, SearchShortQueryState, SearchNoResults, SearchErrorState, SearchLoadingFooter, SearchHeading } from '@/components/library/search/SearchStates';
+import { SearchResultsHeader } from '@/components/library/search/SearchResultsHeader';
 
 export default function SearchBooksScreen() {
+    // FU-2: fonts come from app/(tabs)/library/_layout.tsx (LibraryTypographyProvider).
+    return <SearchBooksScreenContent />;
+}
+
+function SearchBooksScreenContent() {
+    const { notify } = useBookFeedback();
     const router = useRouter();
     const { session } = useAuth();
-    const { colors } = useTheme();
+    const colors = useLibraryAppearance();
+    const { colors: themeColors } = useTheme();
+    // The shared SearchBar takes a full theme palette; library colours win.
+    const searchPalette = useMemo(() => ({ ...themeColors, ...colors }), [themeColors, colors]);
     const queryClient = useQueryClient();
     const { isOffline } = useNetworkStatus();
     const browserLocation = typeof window !== 'undefined'
@@ -71,7 +69,6 @@ export default function SearchBooksScreen() {
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [addingId, setAddingId] = useState<string | null>(null);
     const [showCachedResultsNotice, setShowCachedResultsNotice] = useState(false);
     const [showOpenLibraryFallbackNotice, setShowOpenLibraryFallbackNotice] = useState(false);
 
@@ -80,6 +77,13 @@ export default function SearchBooksScreen() {
     const [hasMore, setHasMore] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [totalItems, setTotalItems] = useState(0);
+    const [totalItemsExact, setTotalItemsExact] = useState(true);
+    const [providerUnsupportedFilters, setProviderUnsupportedFilters] = useState<Array<keyof SearchFilters>>([]);
+    const searchRequestId = useRef(0);
+    const lastSearchSignature = useRef<string | null>(null);
+    const pendingRecentSearchSignature = useRef<string | null>(null);
+    const selectedProvider = useRef<'google' | 'openLibrary' | undefined>(undefined);
+    const submittedQuery = useRef<string | null>(null);
 
     // Sort & Filter
     const [sortBy, setSortBy] = useState<SortOption>('relevance');
@@ -99,7 +103,6 @@ export default function SearchBooksScreen() {
     const { wishlistBookIds, toggleWishlist, refreshWishlist } = useWishlist(session?.user?.id);
 
     // Wishlist state
-    const [wishlistTogglingId, setWishlistTogglingId] = useState<string | null>(null);
     const [showManualEntryModal, setShowManualEntryModal] = useState(false);
     const [manualTitle, setManualTitle] = useState('');
     const [manualAuthor, setManualAuthor] = useState('');
@@ -116,7 +119,10 @@ export default function SearchBooksScreen() {
 
     // Auto-search when debounced query changes
     useEffect(() => {
-        if (debouncedQuery.trim().length >= 3 && !searchIsOffline) {
+        if ((debouncedQuery.trim().length >= 3 || (debouncedQuery.trim() && submittedQuery.current === debouncedQuery.trim())) && !searchIsOffline) {
+            const signature = getSearchSignature(debouncedQuery, filters);
+            if (lastSearchSignature.current === signature) return;
+            lastSearchSignature.current = signature;
             performSearch(debouncedQuery, 0, false);
         }
     }, [debouncedQuery, filters, searchIsOffline]);
@@ -135,11 +141,21 @@ export default function SearchBooksScreen() {
             .filter(Boolean) || []
     ), [userLibrary]);
 
+    const { addingId, wishlistTogglingId, handleAddBook, handlePreview, handleShare, handleWishlistToggle } = useSearchBookActions({
+        userId: session?.user?.id,
+        libraryBookIds,
+        wishlistBookIds,
+        toggleWishlist,
+        refreshWishlist,
+    });
+
     // Search function
     const performSearch = useCallback(async (searchQuery: string, index: number = 0, saveToRecent: boolean = true) => {
         if (!searchQuery.trim() || searchIsOffline) return;
+        const requestId = ++searchRequestId.current;
 
         if (index === 0) {
+            selectedProvider.current = undefined;
             setLoading(true);
             setResults([]);
         } else {
@@ -149,9 +165,14 @@ export default function SearchBooksScreen() {
         setShowSuggestions(false);
         setShowCachedResultsNotice(false);
         setShowOpenLibraryFallbackNotice(false);
+        setProviderUnsupportedFilters([]);
 
         try {
-            const result = await booksService.searchGoogleBooksCached(searchQuery, index, 20, filters);
+            const result = index === 0
+                ? await booksService.searchGoogleBooksCached(searchQuery, index, 20, filters)
+                : await booksService.searchGoogleBooksCached(searchQuery, index, 20, filters, selectedProvider.current);
+            if (requestId !== searchRequestId.current) return;
+            selectedProvider.current = result.providerUsed ?? 'google';
 
             if (index === 0) {
                 setResults(result.items);
@@ -161,29 +182,49 @@ export default function SearchBooksScreen() {
 
             setHasMore(result.hasMore);
             setTotalItems(result.totalItems);
-            setStartIndex(index + result.items.length);
+            setTotalItemsExact(result.totalItemsExact ?? true);
+            setProviderUnsupportedFilters(result.unsupportedFilters ?? []);
+            setStartIndex(result.nextStartIndex ?? index + result.items.length);
             setShowCachedResultsNotice(result.fromCache && index === 0);
             setShowOpenLibraryFallbackNotice(
-                result.fallbackUsed === true && result.providerUsed === 'openLibrary' && index === 0
+                result.fallbackUsed === true && result.providerUsed === 'openLibrary'
             );
 
-            if (saveToRecent && result.items.length > 0 && index === 0) {
+            const searchSignature = getSearchSignature(searchQuery, filters);
+            const explicitSubmitWasPending = pendingRecentSearchSignature.current === searchSignature;
+            if ((saveToRecent || explicitSubmitWasPending) && result.items.length > 0 && index === 0) {
                 saveRecentSearch(searchQuery);
+                if (explicitSubmitWasPending) pendingRecentSearchSignature.current = null;
             }
         } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to search. Please try again.';
+            if (requestId !== searchRequestId.current) return;
+            if (__DEV__) console.warn('Book search failed', err);
+            const message = searchErrorMessage(err);
             setError(message);
         } finally {
-            setLoading(false);
-            setLoadingMore(false);
+            if (requestId === searchRequestId.current) {
+                setLoading(false);
+                setLoadingMore(false);
+            }
         }
     }, [searchIsOffline, filters, saveRecentSearch]);
 
     const handleSearch = useCallback(() => {
         if (!searchIsOffline) {
+            submittedQuery.current = query.trim();
+            const signature = getSearchSignature(query, filters);
+            if (lastSearchSignature.current === signature && !error) {
+                if (results.length > 0) {
+                    saveRecentSearch(query);
+                } else if (loading) {
+                    pendingRecentSearchSignature.current = signature;
+                }
+                return;
+            }
+            lastSearchSignature.current = signature;
             performSearch(query, 0, true);
         }
-    }, [searchIsOffline, query, performSearch]);
+    }, [searchIsOffline, query, filters, error, results.length, loading, saveRecentSearch, performSearch]);
 
     const handleLoadMore = useCallback(() => {
         if (!loadingMore && hasMore && !searchIsOffline) {
@@ -199,14 +240,48 @@ export default function SearchBooksScreen() {
     }, [query, searchIsOffline, performSearch]);
 
     const handleClear = useCallback(() => {
+        submittedQuery.current = null;
+        selectedProvider.current = undefined;
+        searchRequestId.current += 1;
+        lastSearchSignature.current = null;
+        pendingRecentSearchSignature.current = null;
         setQuery('');
         setResults([]);
+        setLoading(false);
+        setLoadingMore(false);
+        setError(null);
         setStartIndex(0);
         setHasMore(false);
         setSuggestions([]);
         setShowCachedResultsNotice(false);
         setShowOpenLibraryFallbackNotice(false);
+        setTotalItems(0);
+        setTotalItemsExact(true);
+        setProviderUnsupportedFilters([]);
     }, []);
+
+    const handleQueryChange = useCallback((text: string) => {
+        if (text !== query) {
+            submittedQuery.current = null;
+            selectedProvider.current = undefined;
+            searchRequestId.current += 1;
+            lastSearchSignature.current = null;
+            pendingRecentSearchSignature.current = null;
+            setResults([]);
+            setLoading(false);
+            setLoadingMore(false);
+            setStartIndex(0);
+            setHasMore(false);
+            setTotalItems(0);
+            setTotalItemsExact(true);
+            setProviderUnsupportedFilters([]);
+            setShowCachedResultsNotice(false);
+            setShowOpenLibraryFallbackNotice(false);
+            setError(null);
+        }
+        setQuery(text);
+        setShowSuggestions(text.length >= 2);
+    }, [query]);
 
     const closeManualEntryModal = useCallback(() => {
         setShowManualEntryModal(false);
@@ -221,65 +296,30 @@ export default function SearchBooksScreen() {
     }, [query]);
 
     const handleSuggestionSelect = useCallback((suggestion: string) => {
+        submittedQuery.current = suggestion.trim();
         setQuery(suggestion);
         setShowSuggestions(false);
-        performSearch(suggestion, 0, true);
-    }, [performSearch]);
+        const signature = getSearchSignature(suggestion, filters);
+        if (lastSearchSignature.current !== signature) {
+            lastSearchSignature.current = signature;
+            performSearch(suggestion, 0, true);
+        }
+    }, [filters, performSearch]);
 
     const handleFilterApply = useCallback((newFilters: SearchFilters) => {
+        pendingRecentSearchSignature.current = null;
         setFilters(newFilters);
-        if (query.trim()) {
-            performSearch(query, 0, false);
-        }
-    }, [query, performSearch]);
+    }, []);
 
     const handleFilterRemove = useCallback((key: keyof SearchFilters) => {
         const newFilters = { ...filters };
         delete newFilters[key];
+        pendingRecentSearchSignature.current = null;
         setFilters(newFilters);
-        if (query.trim()) {
-            performSearch(query, 0, false);
-        }
-    }, [filters, query, performSearch]);
+    }, [filters]);
 
     // Sort results
-    const sortedResults = useMemo(() => {
-        if (sortBy === 'relevance') return results;
-        return [...results].sort((a, b) => {
-            switch (sortBy) {
-                case 'rating':
-                    return (b.volumeInfo.averageRating || 0) - (a.volumeInfo.averageRating || 0);
-                case 'newest':
-                    return (b.volumeInfo.publishedDate || '0000').localeCompare(a.volumeInfo.publishedDate || '0000');
-                case 'title':
-                    return a.volumeInfo.title.localeCompare(b.volumeInfo.title);
-                default:
-                    return 0;
-            }
-        });
-    }, [results, sortBy]);
-
-    // Book actions
-    const handleAddBook = useCallback(async (book: GoogleBook) => {
-        if (!session?.user) return;
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        setAddingId(book.id);
-        try {
-            await booksService.addToLibrary(session.user.id, book);
-            await Promise.all([
-                queryClient.invalidateQueries({ queryKey: ['library'] }),
-                refreshWishlist(),
-            ]);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert('Added!', `"${book.volumeInfo.title}" is now in your library`);
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to add book. Please try again.';
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Oops!', message);
-        } finally {
-            setAddingId(null);
-        }
-    }, [session, queryClient, refreshWishlist]);
+    const sortedResults = useMemo(() => sortSearchResults(results, sortBy), [results, sortBy]);
 
     const handleManualAddBook = useCallback(async () => {
         if (!session?.user) return;
@@ -288,7 +328,7 @@ export default function SearchBooksScreen() {
         const trimmedAuthor = manualAuthor.trim();
 
         if (!trimmedTitle) {
-            Alert.alert('Title required', 'Enter a book title to add it manually.');
+            notify({ kind: 'error', message: 'Enter a book title to add it manually.' });
             return;
         }
 
@@ -309,70 +349,16 @@ export default function SearchBooksScreen() {
             closeManualEntryModal();
             handleClear();
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert('Added!', `"${bookData.title}" is now in your library`);
+            notify({ kind: 'success', message: `"${bookData.title}" is now in your library` });
         } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to add book manually.';
+            if (__DEV__) console.warn('Manual add failed', error);
+            const message = manualAddErrorMessage(error);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Oops!', message);
+            notify({ kind: 'error', message });
         } finally {
             setManualSubmitting(false);
         }
-    }, [session, manualTitle, manualAuthor, queryClient, refreshWishlist, closeManualEntryModal, handleClear]);
-
-    const handlePreview = useCallback(async (previewLink?: string) => {
-        if (!previewLink) {
-            Alert.alert('No Preview', 'Preview is not available for this book.');
-            return;
-        }
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        try {
-            await Linking.openURL(previewLink);
-        } catch (err) {
-            Alert.alert('Error', 'Could not open preview link.');
-        }
-    }, []);
-
-    const handleShare = useCallback(async (book: GoogleBook) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        try {
-            await Share.share({
-                message: `Check out "${book.volumeInfo.title}" by ${book.volumeInfo.authors?.[0] || 'Unknown Author'}!\n\n${book.volumeInfo.infoLink || ''}`,
-                title: book.volumeInfo.title,
-            });
-        } catch (err) { }
-    }, []);
-
-    const handleWishlistToggle = useCallback(async (book: GoogleBook) => {
-        if (!session?.user) return;
-
-        if (libraryBookIds.has(book.id) && !wishlistBookIds.has(book.id)) {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Already in Library', 'This book is already in your library.');
-            return;
-        }
-
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        setWishlistTogglingId(book.id);
-
-        try {
-            const success = await toggleWishlist(book);
-
-            if (!success) {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                Alert.alert('Oops!', 'Failed to update wishlist');
-                return;
-            }
-
-            await queryClient.invalidateQueries({ queryKey: ['library'] });
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Failed to update wishlist';
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Oops!', message);
-        } finally {
-            setWishlistTogglingId(null);
-        }
-    }, [session, libraryBookIds, wishlistBookIds, toggleWishlist, queryClient]);
+    }, [session, manualTitle, manualAuthor, queryClient, refreshWishlist, closeManualEntryModal, handleClear, notify]);
 
     // Render book card using extracted component
     const renderItem = useCallback(({ item, index }: { item: GoogleBook; index: number }) => (
@@ -390,121 +376,30 @@ export default function SearchBooksScreen() {
         />
     ), [libraryBookIds, addingId, wishlistBookIds, wishlistTogglingId, handleAddBook, handlePreview, handleShare, handleWishlistToggle]);
 
-    // Render helpers
-    const renderSkeletons = () => (
-        <View>
-            {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)}
-        </View>
-    );
-
-    const renderError = () => (
-        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 80, paddingHorizontal: 32 }}>
-            <View style={{ width: 80, height: 80, backgroundColor: '#FEE2E2', borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Ionicons name="alert-circle-outline" size={40} color="#EF4444" />
-            </View>
-            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '600', textAlign: 'center' }}>Something went wrong</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 8 }}>{error}</Text>
-            <TouchableOpacity
-                onPress={handleSearch}
-                style={{ backgroundColor: colors.accent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14, marginTop: 20, flexDirection: 'row', alignItems: 'center' }}
-                accessibilityLabel="Try Again"
-                accessibilityHint="Retry the failed search"
-            >
-                <Ionicons name="refresh" size={18} color="#fff" />
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600', marginLeft: 8 }}>Try Again</Text>
-            </TouchableOpacity>
-        </View>
-    );
-
-    const renderEmptyState = () => (
-        <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 60, paddingHorizontal: 40, opacity: 0.8 }}>
-            <View style={{ width: 100, height: 100, backgroundColor: colors.bgCard, borderRadius: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 1, borderColor: colors.border }}>
-                <Ionicons name="library-outline" size={48} color={colors.accent} />
-            </View>
-            <Text style={{ color: colors.textPrimary, fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 8 }}>Discover Books</Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 15, textAlign: 'center', lineHeight: 22 }}>
-                Search for your favorite titles, authors, or genres
-            </Text>
-        </View>
-    );
-
-    const renderNoResults = () => (
-        <View style={styles.noResultsContainer}>
-            <View style={[styles.noResultsIconCircle, { backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.border }]}>
-                <Ionicons name="search-outline" size={36} color={colors.textTertiary} />
-            </View>
-            <Text style={{ color: colors.textSecondary, fontSize: 18, fontWeight: '600', textAlign: 'center' }}>No books found</Text>
-            <Text style={{ color: colors.textTertiary, fontSize: 15, textAlign: 'center', marginTop: 8 }}>
-                Try a different search term or adjust filters
-            </Text>
-            <TouchableOpacity
-                testID="library-manual-entry-open"
-                onPress={openManualEntryModal}
-                style={[styles.manualEntryButton, { backgroundColor: colors.accent }]}
-                accessibilityLabel="Add book manually"
-                accessibilityHint="Opens a form to add a book without Google Books results"
-            >
-                <Ionicons name="create-outline" size={18} color="#fff" />
-                <Text style={[styles.manualEntryButtonText, { color: '#fff' }]}>
-                    Add it manually
-                </Text>
-            </TouchableOpacity>
-            <Text style={{ color: colors.textTertiary, fontSize: 13, textAlign: 'center', marginTop: 10 }}>
-                Can’t find the book? Save a basic title and optional author to your library.
-            </Text>
-        </View>
-    );
-
-    const activeFiltersCount = [
-        filters.genre && filters.genre !== 'all',
-        filters.language && filters.language !== 'all',
-        filters.priceType && filters.priceType !== 'all',
-    ].filter(Boolean).length;
+    const activeFiltersCount = countActiveFilters(filters);
+    const fallbackFiltersNotApplied = showOpenLibraryFallbackNotice && providerUnsupportedFilters.length > 0;
+    const resultsCountLabel = searchResultsCountLabel({ resultsLength: results.length, totalItems, totalItemsExact, fallbackFiltersNotApplied });
+    const providerNotice = searchProviderNotice(providerUnsupportedFilters);
 
     return (
-        <ScreenBackground>
-            {/* Offline Banner */}
-            <OfflineBanner visible={searchIsOffline} />
-
-            <View style={{ flex: 1, paddingTop: isOffline ? 60 : 60, paddingHorizontal: 16 }}>
-                {/* Header with Back Button */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                    <TouchableOpacity
-                        onPress={() => navigateBackOrFallback(router, '/(tabs)/library')}
-                        style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 20,
-                            backgroundColor: 'rgba(255,255,255,0.9)',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: 0.1,
-                            shadowRadius: 4,
-                            elevation: 3,
-                        }}
-                    >
-                        <Ionicons name="arrow-back" size={22} color="#1A1A1A" />
-                    </TouchableOpacity>
-                    <Text style={{ fontSize: 24, fontWeight: '700', color: '#1A1A1A', marginLeft: 12 }}>
-                        Search Books
-                    </Text>
-                </View>
+        <View style={[styles.screen, { backgroundColor: colors.bgPrimary }]}>
+            <View style={styles.column} aria-hidden={showManualEntryModal || showFilterModal || showSortModal}
+                accessibilityElementsHidden={showManualEntryModal || showFilterModal || showSortModal}
+                importantForAccessibility={showManualEntryModal || showFilterModal || showSortModal ? 'no-hide-descendants' : 'auto'}>
+                <BookScreenHeader backLabel="Back to library" onBack={() => navigateBackOrFallback(router, '/(tabs)/library')} />
+                <SearchHeading offline={searchIsOffline} />
 
                 {/* Search Bar */}
-                <View style={{ position: 'relative', zIndex: 100 }}>
+                <View style={styles.search}>
                     <SearchBar
                         query={query}
-                        onQueryChange={(text) => {
-                            setQuery(text);
-                            if (text.length >= 2) setShowSuggestions(true);
-                        }}
+                        onQueryChange={handleQueryChange}
                         onSubmit={handleSearch}
                         onClear={handleClear}
                         loading={loading}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
+                        paletteOverride={searchPalette}
                     />
 
                     {/* Suggestions Dropdown */}
@@ -524,6 +419,7 @@ export default function SearchBooksScreen() {
                     <RecentSearches
                         searches={recentSearches}
                         onSearch={(q) => {
+                            submittedQuery.current = q.trim();
                             setQuery(q);
                             performSearch(q, 0, true);
                         }}
@@ -533,121 +429,39 @@ export default function SearchBooksScreen() {
 
                 {/* Results Header with Sort & Filter */}
                 {results.length > 0 && !loading && (
-                    <>
-                        {showCachedResultsNotice && (
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    marginBottom: 12,
-                                    paddingHorizontal: 12,
-                                    paddingVertical: 10,
-                                    borderRadius: 14,
-                                    backgroundColor: colors.bgCard,
-                                    borderWidth: 1,
-                                    borderColor: colors.border,
-                                }}
-                            >
-                                <Ionicons name="cloud-offline-outline" size={16} color={colors.textSecondary} />
-                                <Text style={{ color: colors.textSecondary, fontSize: 13, marginLeft: 8, flex: 1 }}>
-                                    Showing recent cached Google Books results.
-                                </Text>
-                            </View>
-                        )}
-                        {showOpenLibraryFallbackNotice && (
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    marginBottom: 12,
-                                    paddingHorizontal: 12,
-                                    paddingVertical: 10,
-                                    borderRadius: 14,
-                                    backgroundColor: colors.bgCard,
-                                    borderWidth: 1,
-                                    borderColor: colors.border,
-                                }}
-                            >
-                                <Ionicons name="library-outline" size={16} color={colors.textSecondary} />
-                                <Text style={{ color: colors.textSecondary, fontSize: 13, marginLeft: 8, flex: 1 }}>
-                                    Showing results from Open Library while Google Books is unavailable.
-                                </Text>
-                            </View>
-                        )}
-
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                            <Text style={{ fontSize: 14, color: colors.textSecondary, fontWeight: '500' }}>
-                                {totalItems > 0 ? `${totalItems.toLocaleString()} results` : `${results.length} results`}
-                            </Text>
-                            <View style={{ flexDirection: 'row', gap: 8 }}>
-                                {/* Filter Button */}
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        setShowFilterModal(true);
-                                    }}
-                                    style={{
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        backgroundColor: activeFiltersCount > 0 ? colors.accent : colors.bgCard,
-                                        paddingHorizontal: 12,
-                                        paddingVertical: 8,
-                                        borderRadius: 12,
-                                        borderWidth: 1,
-                                        borderColor: activeFiltersCount > 0 ? colors.accent : colors.border,
-                                    }}
-                                    accessibilityLabel="Filter results"
-                                    accessibilityHint="Opens filter options"
-                                >
-                                    <Ionicons name="filter" size={16} color={activeFiltersCount > 0 ? '#fff' : colors.textSecondary} />
-                                    {activeFiltersCount > 0 && (
-                                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>
-                                            {activeFiltersCount}
-                                        </Text>
-                                    )}
-                                </TouchableOpacity>
-
-                                {/* Sort Button */}
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                        setShowSortModal(true);
-                                    }}
-                                    style={{
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        backgroundColor: colors.bgCard,
-                                        paddingHorizontal: 12,
-                                        paddingVertical: 8,
-                                        borderRadius: 12,
-                                        borderWidth: 1,
-                                        borderColor: colors.border,
-                                    }}
-                                    accessibilityLabel="Sort results"
-                                    accessibilityHint="Opens sort options"
-                                >
-                                    <Ionicons name="swap-vertical" size={16} color={colors.textSecondary} />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </>
+                    <SearchResultsHeader
+                        showCachedNotice={showCachedResultsNotice}
+                        providerNotice={showOpenLibraryFallbackNotice ? providerNotice : null}
+                        countLabel={resultsCountLabel}
+                        activeFiltersCount={activeFiltersCount}
+                        filterOpen={showFilterModal}
+                        sortOpen={showSortModal}
+                        onOpenFilter={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setShowFilterModal(true);
+                        }}
+                        onOpenSort={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            setShowSortModal(true);
+                        }}
+                    />
                 )}
 
                 {/* Content */}
                 {error ? (
-                    renderError()
+                    <SearchErrorState message={error} onRetry={handleSearch} />
                 ) : loading ? (
-                    renderSkeletons()
+                    <BookLoading variant="list" label="Searching books" />
                 ) : (
                     <FlatList
                         data={sortedResults}
                         keyExtractor={(item, index) => `${item.id}-${index}`}
                         renderItem={renderItem}
-                        contentContainerStyle={{ paddingBottom: 100 }}
+                        contentContainerStyle={styles.results}
                         showsVerticalScrollIndicator={false}
                         onEndReached={handleLoadMore}
                         onEndReachedThreshold={0.5}
-                        ListFooterComponent={<LoadingFooter loading={loadingMore} />}
+                        ListFooterComponent={<SearchLoadingFooter loading={loadingMore} />}
                         refreshControl={
                             <RefreshControl
                                 refreshing={refreshing}
@@ -656,7 +470,13 @@ export default function SearchBooksScreen() {
                                 colors={[colors.accent]}
                             />
                         }
-                        ListEmptyComponent={query ? renderNoResults() : renderEmptyState()}
+                        ListEmptyComponent={searchIsOffline && query
+                            ? <SearchNoResults offline={searchIsOffline} providerNotice={showOpenLibraryFallbackNotice ? providerNotice : null} onAddManually={openManualEntryModal} />
+                            : query.trim().length > 0 && query.trim().length < 3 && submittedQuery.current !== query.trim()
+                                ? <SearchShortQueryState />
+                                : query
+                                    ? <SearchNoResults offline={searchIsOffline} providerNotice={showOpenLibraryFallbackNotice ? providerNotice : null} onAddManually={openManualEntryModal} />
+                                    : <SearchIdleState />}
                     />
                 )}
             </View>
@@ -686,36 +506,13 @@ export default function SearchBooksScreen() {
                 onCancel={closeManualEntryModal}
                 onSave={handleManualAddBook}
             />
-        </ScreenBackground>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    noResultsContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 80,
-        paddingHorizontal: 32,
-    },
-    noResultsIconCircle: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 16,
-    },
-    manualEntryButton: {
-        marginTop: 20,
-        paddingHorizontal: 18,
-        paddingVertical: 12,
-        borderRadius: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    manualEntryButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
-        marginLeft: 8,
-    },
+    screen: { flex: 1 },
+    column: { flex: 1, width: '100%', maxWidth: COLUMN_MAX_WIDTH, alignSelf: 'center', paddingHorizontal: LIBRARY_SPACING.md },
+    search: { position: 'relative', zIndex: 100 },
+    results: { paddingBottom: LIBRARY_SPACING.xxl },
 });

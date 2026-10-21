@@ -1,0 +1,36 @@
+‹ Back to options
+Scan text
+Many Notes Fixture Book
+Category: No category
+Take a clear photo of printed text, or choose one already on this device. Prepare the selected area before reading it.
+Capture page
+Choose photo
+Write note instead
+Scanning text is unavailable in this browser. You can prepare a photo or write your note instead.
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]

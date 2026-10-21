@@ -1,0 +1,39 @@
+(node:14176) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/components/notes/__tests__/ManualNoteJourney.test.tsx (22.314 s)
+  ● Console
+
+    console.warn
+      Clipboard has been extracted from react-native core and will be removed in a future release. It can now be installed and imported from '@react-native-clipboard/clipboard' instead of 'react-native'. See https://github.com/react-native-clipboard/clipboard
+
+      110 | });
+      111 | it('mounts the saved reader, omits absent metadata and copies only the confirmed body with failure feedback', async () => {
+    > 112 |   noteRecord = { ...original, tag: null, page_number: null }; const set = jest.spyOn(Clipboard, 'setString').mockImplementation(() => {});
+          |                                                                                      ^
+      113 |   const get = jest.spyOn(Clipboard, 'getString').mockResolvedValue(original.content);
+      114 |   render(wrap(<NoteReaderScreen />)); await screen.findByText(original.content);
+      115 |   expect(screen.queryByText('No category')).toBeNull(); expect(screen.queryByText(/Page \d/)).toBeNull();
+
+      at warnOnce (node_modules/react-native/Libraries/Utilities/warnOnce.js:12:11)
+      at Object.warnOnce [as Clipboard] (node_modules/react-native/index.js:181:5)
+      at Object.Clipboard (src/components/notes/__tests__/ManualNoteJourney.test.tsx:112:86)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+PASS src/components/notes/__tests__/NoteEditor.ocr.test.tsx (6.073 s)
+PASS src/components/notes/__tests__/ManualNoteFlow.test.tsx (5.272 s)
+PASS src/features/books/services/__tests__/userBookPagesService.test.ts
+PASS src/features/books/notes/__tests__/manualNotesGateway.test.ts
+PASS src/features/books/notes/__tests__/noteNavigation.test.tsx
+PASS src/features/books/notes/__tests__/manualNotePersistenceAdapter.test.ts
+PASS src/features/books/notes/__tests__/manualNotes.test.ts
+PASS src/features/books/services/__tests__/notesService.test.ts
+PASS src/features/books/notes/__tests__/composerBrowserHistory.test.ts
+
+Test Suites: 10 passed, 10 total
+Tests:       134 passed, 134 total
+Snapshots:   0 total
+Time:        48.59 s, estimated 139 s
+Ran all test suites within paths "src/components/notes/__tests__/ManualNoteJourney.test.tsx", "src/features/books/notes/__tests__/noteNavigation.test.tsx", "src/components/notes/__tests__/ManualNoteFlow.test.tsx", "src/features/books/notes/__tests__/manualNotes.test.ts", "src/features/books/notes/__tests__/manualNotesGateway.test.ts", "src/features/books/services/__tests__/notesService.test.ts", "src/components/notes/__tests__/NoteEditor.ocr.test.tsx", "src/features/books/services/__tests__/userBookPagesService.test.ts", "src/features/books/notes/__tests__/composerBrowserHistory.test.ts", "src/features/books/notes/__tests__/manualNotePersistenceAdapter.test.ts".

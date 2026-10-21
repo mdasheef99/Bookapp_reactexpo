@@ -1,0 +1,37 @@
+{
+  "FU2 home heading probe (daylight, hour 12)": {
+    "console": [
+      "warning: \"shadow*\" style props are deprecated. Use \"boxShadow\".",
+      "warning: [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.",
+      "warning: Sentry disabled: missing EXPO_PUBLIC_SENTRY_DSN",
+      "warning: props.pointerEvents is deprecated. Use style.pointerEvents",
+      "error: Failed to load resource: net::ERR_FAILED"
+    ],
+    "pageErrors": [],
+    "fonts": {
+      "probes": [
+        {
+          "text": "My Library",
+          "fontFamily": "system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\"",
+          "fontWeight": "500"
+        },
+        {
+          "text": "The Cover Fixture Book",
+          "fontFamily": "LibraryGaramondSemiBold",
+          "fontWeight": "400"
+        },
+        {
+          "text": "Ada Cover",
+          "fontFamily": "LibraryManrope",
+          "fontWeight": "400"
+        }
+      ],
+      "loaded": [
+        "ionicons",
+        "LibraryGaramondSemiBold",
+        "LibraryManrope",
+        "LibraryManropeBold"
+      ]
+    }
+  }
+}

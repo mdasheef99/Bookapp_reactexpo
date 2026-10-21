@@ -1,0 +1,28 @@
+{
+  "scope": "Confirmed SOL-01 and SOL-02 only; same Sol correction session",
+  "branch": "codex/library-cover-shelf",
+  "head": "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+  "files": [
+    {
+      "path": "src/features/books/notes/captureSession.ts",
+      "beforeSha256": "269686A0DD783F47035ADC5C8DC50C6DC8944A3F70AD2EA0AB4EF7D9D494F092",
+      "afterSha256": "2A4F7581E0E25496C80CE9FF06826B22BC0386C8123E19DD334F11B361433D66"
+    },
+    {
+      "path": "app/(tabs)/library/note-compose.tsx",
+      "beforeSha256": "942D01801626BC8BB92CA8DB138DB6B285F92486530F4E608BF21DB6E48AC57B",
+      "afterSha256": "26AA6E22B0AC3D965FDE9ADB586CEB1E0D795AFC044567D1D412092238225225"
+    },
+    {
+      "path": "src/features/books/notes/__tests__/captureSession.test.ts",
+      "beforeSha256": "FFC8BB45129FB0E0975642F8B5036D1BF488F644FD1A39972C31B640449973D1",
+      "afterSha256": "DAD5D3EB988596C5733F1734FA7296B42AEA5B199120444EC976FD86515797D1"
+    },
+    {
+      "path": "src/components/notes/__tests__/NoteCaptureJourney.test.tsx",
+      "beforeSha256": "DAA28AD7F490F9A97FFDDF44FAB470ABD2B3F69EF8E7FD4E59C94C18584CEB77",
+      "afterSha256": "5FEE8DC78A160C3E57486C54847F293C602EEF4A5B729890A0C62414707D5F55"
+    }
+  ],
+  "nativeEvidence": "NATIVE-RUN.json predates these corrections; adapter, geometry, service unchanged"
+}

@@ -1,0 +1,63 @@
+// Session-owned native diagnostic. Archived and removed before the final bundle/review.
+import { useEffect, useState } from 'react';
+import { ScrollView, Text } from 'react-native';
+import { Asset } from 'expo-asset';
+import * as fs from 'expo-file-system/legacy';
+import { createCaptureAdapter, CapturePhoto, onDeviceAvailability } from '@/features/books/notes/captureAdapter';
+import { NoteCaptureSession } from '@/features/books/notes/captureSession';
+import { FULL_CROP } from '@/features/books/notes/captureGeometry';
+
+export default function CaptureOcrProof() {
+  const [status, setStatus] = useState('Preparing synthetic native fixtures…');
+  useEffect(() => {
+    if (!__DEV__) return;
+    let active = true;
+    void (async () => {
+      const records: any[] = []; const adapter = createCaptureAdapter();
+      const load = async (module: number, width: number, height: number): Promise<CapturePhoto> => {
+        const asset = Asset.fromModule(module); await asset.downloadAsync();
+        return { uri: asset.localUri ?? asset.uri, width, height, sourceWidth: width, sourceHeight: height, rotation: 0 };
+      };
+      const exportPhoto = async (photo: CapturePhoto, name: string) => { await fs.copyAsync({ from: photo.uri, to: fs.documentDirectory + name }); return { name, width: photo.width, height: photo.height }; };
+      try {
+        records.push({ availability: onDeviceAvailability() });
+        const regions = await load(require('../../docs/user/library/evidence/sdd06-capture-ocr-2026-10-11/fixtures/regions.png'), 120, 80);
+        const selected = await adapter.transform(regions, { x: .25, y: .25, width: .5, height: .5 }); records.push(await exportPhoto(selected, 'regions-crop.png'));
+        const rotated = await adapter.rotate(regions); records.push(await exportPhoto(rotated, 'regions-rotated.png'));
+        const selectedRotated = await adapter.transform(rotated, { x: .25, y: .25, width: .5, height: .5 }); records.push(await exportPhoto(selectedRotated, 'regions-rotated-crop.png'));
+        const oriented = await load(require('../../docs/user/library/evidence/sdd06-capture-ocr-2026-10-11/fixtures/oriented-regions.jpg'), 80, 120);
+        const exif = await adapter.transform(oriented, FULL_CROP); records.push(await exportPhoto(exif, 'exif-decoded.png'));
+        const exifRotated = await adapter.rotate(exif); records.push(await exportPhoto(exifRotated, 'exif-rotated.png'));
+        const page = await load(require('../../docs/user/library/evidence/sdd06-capture-ocr-2026-10-11/fixtures/english-page.png'), 1600, 2200);
+        const crop = await adapter.transform(page, { x: .1, y: .2, width: .8, height: .5 }); records.push(await exportPhoto(crop, 'english-selection.png'));
+        for (let run = 0; run < 2; run++) {
+          const started = Date.now(); const result = await adapter.recognize(crop.uri, new AbortController().signal);
+          records.push({ fixture: 'synthetic-english-page-selection', run: run + 1, elapsedMs: Date.now() - started, ...result });
+        }
+        const rotatedPage = await adapter.rotate(page); const rotatedCrop = await adapter.transform(rotatedPage, { x: .3, y: .1, width: .5, height: .8 });
+        const started = Date.now(); const rotatedResult = await adapter.recognize(rotatedCrop.uri, new AbortController().signal);
+        records.push({ fixture: 'clockwise-page-selection', elapsedMs: Date.now() - started, ...rotatedResult });
+        // Actual session + adapter cancellation and preservation, without a save/database path.
+        let signalNativeStart: (() => void) | undefined;
+        const nativeStarted = new Promise<void>(resolve => { signalNativeStart = resolve; });
+        const session = new NoteCaptureSession({ actorId: 'synthetic-actor', bookId: 'synthetic-book', mode: 'edit', noteId: 'synthetic-saved-note' }, {
+          ...adapter, pick: async () => page, recognize: (uri, signal) => { const work = adapter.recognize(uri, signal); signalNativeStart?.(); return work; },
+        }, 'write');
+        session.initialize({ text: 'Synthetic pre-scan edit', category: 'question', page: '24' }, { id: 'synthetic-saved-note', version: 3 } as any);
+        session.beginScan(); await session.pick('gallery'); session.setCrop({ x: .1, y: .2, width: .8, height: .5 });
+        const canceled = session.recognize(); await nativeStarted; session.cancelRecognition(); await canceled;
+        records.push({ canceled: session.snapshot().step === 'crop' && session.snapshot().fields.text === 'Synthetic pre-scan edit', cancellationPoint: 'after-native-adapter-dispatch' });
+        await session.recognize(); records.push({ candidate: { category: session.snapshot().fields.category, page: session.snapshot().fields.page, mode: session.identity.mode, noteId: session.identity.noteId, step: session.snapshot().step } });
+        session.cancelScan(); records.push({ restored: session.snapshot().fields.text === 'Synthetic pre-scan edit' }); session.dispose();
+        for (const item of [selected, rotated, selectedRotated, exif, exifRotated, crop, rotatedPage, rotatedCrop]) await adapter.release(item.uri);
+        await fs.writeAsStringAsync(fs.documentDirectory + 'capture-proof.json', JSON.stringify({ type: 'native-emulator-synthetic-fixtures', records }, null, 2));
+        console.log('CAPTURE_OCR_NATIVE_PROOF_COMPLETE'); if (active) setStatus('Synthetic native proof complete. Results written to the app document directory.');
+      } catch (error) {
+        await fs.writeAsStringAsync(fs.documentDirectory + 'capture-proof.json', JSON.stringify({ records, error: error instanceof Error ? error.message : 'Unknown native failure' }, null, 2));
+        console.log('CAPTURE_OCR_NATIVE_PROOF_FAILED'); if (active) setStatus('Native proof failed; inspect the synthetic diagnostic receipt.');
+      }
+    })();
+    return () => { active = false; };
+  }, []);
+  return <ScrollView style={{ flex: 1, padding: 24, backgroundColor: 'white' }}><Text style={{ color: 'black' }}>{__DEV__ ? status : 'Unavailable'}</Text></ScrollView>;
+}

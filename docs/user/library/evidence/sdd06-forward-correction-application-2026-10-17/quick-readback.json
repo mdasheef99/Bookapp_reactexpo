@@ -1,0 +1,11 @@
+[
+  {
+    "version": "20261017083830",
+    "name": "library_manual_note_privilege_revision_correction",
+    "sql_md5": "ec5e6bfb4e89e845c26ab0cd00c36fb6",
+    "sql_bytes": 17285,
+    "created_at_writable": false,
+    "table_update": false,
+    "direct_trigger_execute": false
+  }
+]

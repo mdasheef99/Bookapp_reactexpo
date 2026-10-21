@@ -1,0 +1,11 @@
+warning: in the working copy of 'app/(tabs)/library/index.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/HORIZONTAL-SHELF-IMPLEMENTATION.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/INTERACTION-MAP.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/SDD-05-library-reading-room.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/TRACKER.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/UI-UX-INVENTORY.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/library/LibraryArrangeControls.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/library/LibraryBookPicker.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/library/__tests__/LibraryShelf.test.tsx', LF will be replaced by CRLF the next time Git touches it

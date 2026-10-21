@@ -1,0 +1,13 @@
+{
+  "kind": "Read-only native UI capability assessment, not native acceptance",
+  "recordedUtc": "2026-10-11T14:24:50.7139271Z",
+  "windowsComputerUseImportAndAppInventory": "Available: @oai/sky import and list_apps succeeded",
+  "runningEmulatorWindowReturned": false,
+  "installedAndroidStudioReturned": true,
+  "maestroOnPath": false,
+  "unifiedCuaNativeApi": "Disabled in current tool surface",
+  "newNativeBuildOrUiInputPerformed": false,
+  "existingNativeEvidence": "NATIVE-RUN.json: synthetic fixtures; real manipulator/ML Kit/session; no camera/picker or mounted native UI acceptance",
+  "nativeUiStatus": "NOT_RUN",
+  "nextAction": "Prepare an isolated mounted-composer native UI fixture for the existing development APK; verify camera/gallery intake and native Back/cancel without live record writes"
+}

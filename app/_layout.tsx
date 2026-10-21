@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from 'react';
-import { View, ActivityIndicator, Pressable, Text } from 'react-native';
+import { View, ActivityIndicator, Pressable, Text, Platform } from 'react-native';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useAuthInitializationError, useAuthStatus } from '@/features/auth/store/authStore';
 import { AuthBootstrapOwner } from '@/application/auth/AuthBootstrapOwner';
@@ -14,7 +14,9 @@ import '../global.css';
 import { appQueryClient } from '@/lib/queryClient';
 import { isAuthBypassEnabled } from '@/features/auth/config/authRuntimeConfig';
 import { retryBlockedSessionTransition } from '@/application/auth/sessionCoordinator';
+import { initializeComposerHistory } from '@/features/books/notes/composerBrowserHistory';
 
+if (Platform.OS === 'web' && typeof window !== 'undefined') initializeComposerHistory(window);
 initSentry();
 
 function InitialLayout() {

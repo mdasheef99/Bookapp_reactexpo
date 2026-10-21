@@ -1,0 +1,9 @@
+PASS src/components/library/__tests__/horizontalWebPress.test.ts (14.736 s)
+  actual web press responder timing
+    √ opens at 450ms with zero activation delay and suppresses the release click (24 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        15.836 s
+Ran all test suites within paths "src/components/library/__tests__/horizontalWebPress.test.ts".

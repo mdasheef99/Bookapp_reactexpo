@@ -1,0 +1,1 @@
+Fixture built. Actual Arrange state/gestures/Shelf, mocked theme/fonts/images; no native performance certification.

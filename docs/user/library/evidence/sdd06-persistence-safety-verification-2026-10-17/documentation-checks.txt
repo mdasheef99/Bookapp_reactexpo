@@ -1,0 +1,64 @@
+Phase 9 continuity validator (exit 0)
+REQUIREMENT_DEFINITIONS=195
+REQUIREMENT_DEFINITION_DUPLICATES=0
+REQUIREMENT_TRACEABILITY_MISSING=0
+REQUIREMENT_VALIDATOR_REGRESSION_PROBES=PASS
+DOCUMENT_SIZE_COHESION_ASSESSMENT lines=487 path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-inventory\SESSION-START.md
+WARNING: DOCUMENT_SIZE_SPLIT_ADVISORY lines=2770 
+path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-
+inventory\trackers\02-implementation-and-verification.md
+DOCUMENT_SIZE_COHESION_ASSESSMENT lines=401 path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-inventory\trackers\24-unit6f-readiness-quality-gates-evidence.md
+DOCUMENT_SIZE_COHESION_ASSESSMENT lines=440 path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-inventory\work-units\06-owner-capture-review-recovery-ux-sdd.md
+WARNING: DOCUMENT_SIZE_SPLIT_ADVISORY lines=524 
+path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-
+inventory\supporting\data-dictionary.md
+WARNING: DOCUMENT_SIZE_SPLIT_ADVISORY lines=814 
+path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-
+inventory\work-units\07b-publication-sdd.md
+DOCUMENT_SIZE_COHESION_ASSESSMENT lines=417 path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-inventory\trackers\23-unit6e-review-corrections-evidence.md
+DOCUMENT_SIZE_COHESION_ASSESSMENT lines=411 path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-inventory\work-units\07a-create-only-inventory-commit-sdd.md
+WARNING: DOCUMENT_SIZE_SPLIT_ADVISORY lines=596 
+path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-
+inventory\supporting\database-current-vs-target.md
+WARNING: DOCUMENT_SIZE_SPLIT_ADVISORY lines=2069 
+path=C:\Users\LEGION\Desktop\Bookconnect4_library\docs\multi-tenant-bookstore-marketplace\implementation\phase-9-image-
+inventory\TRACKER.md
+DOCUMENT_SIZE_POLICY_REGRESSION=PASS above_350_allowed=true advisory_above_500=true
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md', LF will be replaced by CRLF the next time Git touches it
+WU1_DIFF_CHECK=PASS
+WU2_DIFF_CHECK=PASS
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/INTERACTION-MAP.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/SDD-05-library-reading-room.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/TRACKER.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/UI-UX-INVENTORY.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'opencode.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+REPOSITORY_DIFF_CHECK=PASS
+PHASE9_CONTINUITY_CHECK=PASS
+MARKDOWN_FILES_CHECKED=76
+REQUIRED_PHASE_FILES=55
+
+Local documentation links (exit 0)
+{"files":8,"links":331,"failures":[]}
+
+Artifact hashes / optional OS process inventory (exit 1)
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/INTERACTION-MAP.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/SDD-05-library-reading-room.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/TRACKER.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/user/library/UI-UX-INVENTORY.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'opencode.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+[{"Path":"C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\supabase\\migrations\\20261010172118_library_manual_note_persistence.sql","Hash":"EADD4D8A16D87801735EC59A101A95732A59E64E9902A576000B5CF0AAFB291D"},{"Path":"C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\supabase\\tests\\library\\manualNotePersistence.postgres.test.mjs","Hash":"7A6C4072504357968D38116BFF47627D484EDC758528E49DA2C4057472B0989D"},{"Path":"C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\src\\features\\books\\notes\\manualNotesGateway.ts","Hash":"B8744B2D73B83278EE125CFAB0F3789EA887EB2F57E98B8AFA07EBDDCAACC37E"},{"Path":"C:\\Users\\LEGION\\Desktop\\Bookconnect4_library\\docs\\user\\library\\evidence\\sdd06-live-session-review-2026-10-11\\live-migration.json","Hash":"43F02DBD5CA3CC38DF45EF4A5B028DC0EC3F3BB9E36626227871668EF146A5CB"}]
+Get-CimInstance: 
+Line |
+   2 |  …  -Compress; Get-CimInstance Win32_Process -Filter "Name='postgres.exe …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Access denied 
+
+The final command's nonzero exit is the optional CIM process inventory access denial, not a source/hash or harness failure. The existing harness exited zero after its cleanup hook. Standalone git whitespace validation is recorded in README.md.

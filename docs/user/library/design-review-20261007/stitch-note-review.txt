@@ -1,0 +1,594 @@
+- main:
+  - iframe [active] [id="I0_1791356632714"] [name="I0_1791356632714"]:
+    - main:
+      - button:
+      - button "BookConnect Passage Capture Prototype"
+      - button:
+      - toolbar:
+        - button:
+        - button:
+        - button:
+        - button:
+      - button:
+      - button:
+      - button:
+      - button "Account Menu":
+        - img "Profile image for MD ASHEEF NAGARALLI"
+      - button:
+      - button:
+      - button:
+      - button:
+      - button "Choose File"
+      - button:
+      - button:
+      - button:
+      - button "42%" [active]:
+        - generic: 42%
+      - button "Helpful Links":
+      - button "Choose File"
+      - application:
+        - generic: palette
+        - generic: Quiet Reader
+        - generic: Primary
+        - generic "Click to copy": "#394B3B"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #0e1f12 — Click to copy"'
+        - 'generic "T20 #233426 — Click to copy"'
+        - 'generic "T30 #394b3b — Click to copy"'
+        - 'generic "T40 #506352 — Click to copy"'
+        - 'generic "T50 #697c6a — Click to copy"'
+        - 'generic "T60 #829683 — Click to copy"'
+        - 'generic "T70 #9cb09c — Click to copy"'
+        - 'generic "T80 #b7ccb7 — Click to copy"'
+        - 'generic "T90 #d3e8d2 — Click to copy"'
+        - 'generic "T95 #e1f6e0 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Secondary
+        - generic "Click to copy": "#A37E3E"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #281900 — Click to copy"'
+        - 'generic "T20 #422c00 — Click to copy"'
+        - 'generic "T30 #5f4104 — Click to copy"'
+        - 'generic "T40 #79591c — Click to copy"'
+        - 'generic "T50 #957132 — Click to copy"'
+        - 'generic "T60 #b18a49 — Click to copy"'
+        - 'generic "T70 #cea561 — Click to copy"'
+        - 'generic "T80 #ebc079 — Click to copy"'
+        - 'generic "T90 #ffdeab — Click to copy"'
+        - 'generic "T95 #ffeed9 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Tertiary
+        - generic "Click to copy": "#A34836"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #3e0400 — Click to copy"'
+        - 'generic "T20 #5f1608 — Click to copy"'
+        - 'generic "T30 #7d2c1c — Click to copy"'
+        - 'generic "T40 #9c4331 — Click to copy"'
+        - 'generic "T50 #bb5a47 — Click to copy"'
+        - 'generic "T60 #db735e — Click to copy"'
+        - 'generic "T70 #fb8c76 — Click to copy"'
+        - 'generic "T80 #ffb4a5 — Click to copy"'
+        - 'generic "T90 #ffdad3 — Click to copy"'
+        - 'generic "T95 #ffede9 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Neutral
+        - generic "Click to copy": "#302820"
+        - 'generic "T0 #000000 — Click to copy"'
+        - 'generic "T10 #211a13 — Click to copy"'
+        - 'generic "T20 #372f27 — Click to copy"'
+        - 'generic "T30 #4f453c — Click to copy"'
+        - 'generic "T40 #675d53 — Click to copy"'
+        - 'generic "T50 #80756b — Click to copy"'
+        - 'generic "T60 #9b8f84 — Click to copy"'
+        - 'generic "T70 #b6a99e — Click to copy"'
+        - 'generic "T80 #d2c4b8 — Click to copy"'
+        - 'generic "T90 #efe0d4 — Click to copy"'
+        - 'generic "T95 #fdeee1 — Click to copy"'
+        - 'generic "T100 #ffffff — Click to copy"'
+        - generic: Headline
+        - generic: EB Garamond
+        - generic: Aa
+        - button "Primary"
+        - button "Secondary"
+        - button "Inverted"
+        - button "Outlined"
+        - generic: search
+        - generic: Search
+        - generic: Body
+        - generic: Manrope
+        - generic: Aa
+        - generic: home
+        - generic: search
+        - generic: person
+        - generic: Label
+        - generic: Manrope
+        - generic: Aa
+        - generic: edit
+        - generic: edit
+        - text: Label
+        - generic: auto_fix_high
+        - generic: category
+        - generic: sell
+        - generic: delete
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe:
+          - banner:
+            - button "Return to Library":
+              - generic: arrow_back_ios_new
+              - generic: Library
+            - heading "Book details" [level=1]
+            - generic: person
+          - main:
+            - generic: Sample Book
+            - button "Book actions menu":
+              - generic: more_horiz
+            - button "Replace image"
+            - generic: Vol. I
+            - generic: auto_stories
+            - heading "A Quiet Practice" [level=2]
+            - paragraph: Mira Vale (sample)
+            - generic: Reading
+            - generic: Print Edition
+            - button "center_focus_strong Capture passage":
+              - generic: center_focus_strong
+              - generic: Capture passage
+            - button "edit_note Add note":
+              - generic: edit_note
+              - generic: Add note
+            - heading "Notes & passages" [level=3]
+            - generic: "2"
+            - button "View all (2) chevron_right":
+              - generic: View all (2)
+              - generic: chevron_right
+            - article:
+              - generic: format_quote
+              - generic: Page 24
+              - generic: Captured yesterday
+              - blockquote: “The small things we notice become the shape of our days. A quiet moment can make room for a better question.”
+            - article:
+              - generic: Page 24
+              - generic: lightbulb
+              - text: Thought
+              - paragraph: I want to pause before starting the next task.
+            - heading "Capture Passage" [level=3]
+            - paragraph: Select an input method for page 24+
+            - button "close":
+              - generic: close
+            - button "photo_camera Take photo Capture text directly with camera chevron_right":
+              - generic: photo_camera
+              - paragraph: Take photo
+              - paragraph: Capture text directly with camera
+              - generic: chevron_right
+            - button "photo_library Choose photo Select an existing image from gallery chevron_right":
+              - generic: photo_library
+              - paragraph: Choose photo
+              - paragraph: Select an existing image from gallery
+              - generic: chevron_right
+            - button "content_paste Paste text Paste or type excerpt directly chevron_right":
+              - generic: content_paste
+              - paragraph: Paste text
+              - paragraph: Paste or type excerpt directly
+              - generic: chevron_right
+            - button "Cancel"
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe:
+          - banner:
+            - button "Return to Book details":
+              - generic: arrow_back_ios_new
+              - generic: Book details
+            - heading "Notes & passages" [level=1]
+            - generic: person
+          - main:
+            - generic: auto_stories
+            - generic: Reading Context
+            - heading "A Quiet Practice" [level=2]
+            - paragraph: Mira Vale (sample)
+            - generic: bookmark_added
+            - button "edit_note Notes 1":
+              - generic: edit_note
+              - generic: Notes
+              - generic: "1"
+            - button "format_quote Passages 1":
+              - generic: format_quote
+              - generic: Passages
+              - generic: "1"
+            - navigation "Category filters":
+              - button "All"
+              - button "Quote"
+              - button "Thought": Thought
+              - button "Takeaway"
+              - button "Action"
+              - button "Question"
+            - article:
+              - generic: menu_book
+              - text: Page 24
+              - generic: Thought
+              - generic: stylus_note
+              - paragraph: “I want to pause before starting the next task.”
+            - button "add Add note":
+              - generic: add
+              - generic: Add note
+            - button "bookmark_add Capture passage":
+              - generic: bookmark_add
+              - generic: Capture passage
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe:
+          - banner:
+            - button "Return to Book details":
+              - generic: arrow_back_ios_new
+              - generic: Book details
+            - heading "Notes & passages" [level=1]
+            - generic: person
+          - main:
+            - generic: auto_stories
+            - heading "A Quiet Practice" [level=2]
+            - generic: Sample
+            - paragraph: Mira Vale (sample)
+            - button "Book information":
+              - generic: more_vert
+            - tablist "Notes and passages filter":
+              - tab "Notes 1":
+                - generic: Notes
+                - generic: "1"
+              - tab "Passages 1" [selected]:
+                - generic: Passages
+                - generic: "1"
+            - generic: verified_user
+            - paragraph: Saved excerpts from this book. Only saved text is kept.
+            - 'button "Passage from Page 24: The small things we notice become the shape of our days."':
+              - generic: bookmark
+              - text: Page 24
+              - generic: format_quote
+              - text: Book excerpt
+              - paragraph: “The small things we notice become the shape of our days. A quiet moment can make room for a better question.”
+              - generic: 21 words
+              - generic: 108 characters
+              - generic: View details
+              - generic: arrow_forward
+            - button "edit_note Add note":
+              - generic: edit_note
+              - generic: Add note
+            - button "document_scanner Capture passage":
+              - generic: document_scanner
+              - generic: Capture passage
+            - heading [level=3]: Capture passage
+            - button:
+              - generic: close
+            - paragraph:
+              - text: Choose a method to extract text from
+              - emphasis: A Quiet Practice
+              - text: .
+            - button:
+              - generic: photo_camera
+              - generic: Take photo
+              - generic: Instant OCR text recognition from physical page
+              - generic: chevron_right
+            - button:
+              - generic: photo_library
+              - generic: Choose photo
+              - generic: Extract text from saved reading snapshots
+              - generic: chevron_right
+            - button:
+              - generic: content_paste
+              - generic: Paste text
+              - generic: Paste copied excerpt or transcribe passage text
+              - generic: chevron_right
+            - button: Cancel
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe:
+          - banner:
+            - button "Return to Prepare photo":
+              - generic: arrow_back_ios_new
+              - generic: Prepare photo
+            - heading "Review passage" [level=1]
+            - generic: person
+          - main:
+            - generic: menu_book
+            - paragraph: A Quiet Practice
+            - paragraph: Mira Vale (sample)
+            - generic: Draft Passage
+            - tablist "Review extraction view":
+              - tab "document_scanner Available extracted text":
+                - generic: document_scanner
+                - generic: Available extracted text
+              - tab "auto_stories Your passage (Preview)" [selected]:
+                - generic: auto_stories
+                - generic: Your passage (Preview)
+            - button "photo_camera Compare photo":
+              - generic: photo_camera
+              - generic: Compare photo
+            - button "Use text in a note instead arrow_forward":
+              - generic: Use text in a note instead
+              - generic: arrow_forward
+            - generic: Passage Excerpt Canvas
+            - generic: edit_note
+            - text: Touch text to refine
+            - textbox: The small things we notice become the shape of our days. A quiet moment can make room for a better question.
+            - generic: bookmark_border
+            - generic: Page 24 archival quote
+            - generic: "21"
+            - generic: / 800 words
+            - generic: ·
+            - generic: "108"
+            - generic: / 4,000 characters
+            - generic: Within limits
+            - generic: tag
+            - generic: Page number
+            - generic: Required · Positive integer
+            - spinbutton "tag Page number": "24"
+            - paragraph: Required for passage anchor.
+            - generic: info
+            - paragraph: One passage per page. If this page already has a passage, you will be asked before replacing it.
+            - button "bookmark_add Save passage":
+              - generic: bookmark_add
+              - generic: Save passage
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe:
+          - main:
+            - button "Cancel source change":
+              - generic: Cancel
+            - heading "Prepare photo" [level=1]
+            - button "Reading tips":
+              - generic: lightbulb
+            - generic: menu_book
+            - generic: A Quiet Practice
+            - generic: ·
+            - generic: Sample photo (Page 24)
+            - generic: lock_reset
+            - paragraph: Photos are temporary and discarded after review. Only saved text is kept.
+            - generic: Chapter II
+            - generic: "24"
+            - paragraph: The Unhurried Mind
+            - paragraph: The small things we notice become the shape of our days. A quiet moment can make room for a better question. When we listen to what remains unhurried, the page begins to speak with its own patient cadence.
+            - paragraph: Memory does not measure length; it marks depth. What lingers after the book is closed is often just an unspoken sentence.
+            - generic: all_inclusive
+            - generic: center_focus_strong
+            - generic: Passage focus
+            - button "crop Framing":
+              - generic: crop
+              - generic: Framing
+            - button "rotate_90_degrees_cw Rotate 90°":
+              - generic: rotate_90_degrees_cw
+              - generic: Rotate 90°
+            - button "restart_alt Reset":
+              - generic: restart_alt
+              - generic: Reset
+            - generic: verified
+            - paragraph: A clear photo can continue without cropping.
+            - button "Use photo arrow_forward":
+              - generic: Use photo
+              - generic: arrow_forward
+            - button "photo_camera Retake / Choose another":
+              - generic: photo_camera
+              - generic: Retake / Choose another
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe:
+          - banner:
+            - button "Return to Library":
+              - generic: arrow_back_ios_new
+              - generic: Notes & passages
+            - heading "Saved passage" [level=1]
+            - generic: person
+          - main:
+            - generic: menu_book
+            - generic: A Quiet Practice
+            - generic: Mira Vale (sample)
+            - generic: auto_stories
+            - generic: Pg. 24
+            - article:
+              - generic: “
+              - generic: bookmark
+              - generic: Page 24
+              - blockquote:
+                - paragraph: “The small things we notice become the shape of our days. A quiet moment can make room for a better question.”
+              - generic: 21 words · 108 characters
+            - button "edit_note Add note on this page":
+              - generic: edit_note
+              - generic: Add note on this page
+            - button "edit Edit":
+              - generic: edit
+              - generic: Edit
+            - button "content_copy Copy text":
+              - generic: content_copy
+              - generic: Copy text
+            - button "delete_outline Delete":
+              - generic: delete_outline
+              - generic: Delete
+            - generic: shield_with_heart
+            - generic: Privacy & Storage Guarantee
+            - paragraph: Photos are temporary and discarded after review. Only saved text is kept.
+            - generic: check_circle
+            - generic: Text copied to clipboard
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe:
+          - banner:
+            - button "Return to Library":
+              - generic: arrow_back_ios_new
+              - generic: Library
+            - heading "Passage Capture Review" [level=1]
+            - generic: person
+          - main:
+            - generic: auto_stories
+            - paragraph: Reading Context
+            - paragraph: A Quiet Practice · Mira Vale (sample)
+            - generic: bookmark
+            - generic: Category
+            - generic: Select intent
+            - radiogroup "Note Category":
+              - radio "format_quote Quote Direct excerpt with personal commentary":
+                - generic: format_quote
+                - generic: Quote
+                - paragraph: Direct excerpt with personal commentary
+              - radio "spa Reflect check Personal thought or reaction" [checked]:
+                - generic: spa
+                - generic: Reflect
+                - generic: check
+                - paragraph: Personal thought or reaction
+              - radio "flare Distill Summary or core takeaway":
+                - generic: flare
+                - generic: Distill
+                - paragraph: Summary or core takeaway
+              - radio "psychology_alt Apply Actionable practice or experiment":
+                - generic: psychology_alt
+                - generic: Apply
+                - paragraph: Actionable practice or experiment
+            - generic: Reflection Note
+            - generic: edit_note
+            - text: EB Garamond Draft
+            - generic: format_ink_highlighter
+            - generic: Focus Mode
+            - button "Clear text":
+              - generic: backspace
+              - text: Clear
+            - textbox "Reflection Note":
+              - /placeholder: Record your contemplative observation or quote...
+              - text: I want to pause before starting the next task.
+            - generic: Unsaved edits
+            - generic: history_edu
+            - generic: 9 / 500 words
+            - generic: Page number (optional)
+            - generic: menu_book
+            - spinbutton "Page number (optional)": "24"
+            - generic: p.
+            - generic: input
+            - generic: Capture Source
+            - generic: OCR Assist
+            - button "photo_camera Take photo":
+              - generic: photo_camera
+              - generic: Take photo
+            - button "photo_library Choose photo":
+              - generic: photo_library
+              - generic: Choose photo
+            - button "content_paste Paste text":
+              - generic: content_paste
+              - generic: Paste text
+            - generic: info
+            - paragraph: Source text replaces note text with confirmation if note is not empty.
+            - generic: local_florist
+            - button "check Save note":
+              - generic: check
+              - generic: Save note
+            - button "Cancel":
+              - generic: Cancel
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: drag_indicator
+        - generic: Generating Screen...
+        - button:
+        - button:
+        - button:
+        - generic: 390 x 884
+        - iframe:
+          - banner:
+            - button "Book details":
+              - generic: arrow_back_ios_new
+            - generic: A Quiet Practice · Mira Vale
+            - heading "Review Notes" [level=1]
+            - button "Filter notes":
+              - generic: tune
+            - button "Note actions":
+              - generic: bookmark_added
+            - generic: person
+          - main:
+            - button "Exit review session":
+              - generic: arrow_back
+              - generic: Exit review
+            - generic: 2 of 5 · Sample
+            - generic: touch_app
+            - paragraph: Swipe left to set aside for this session; right when reviewed. Your notes stay saved.
+            - generic: menu_book
+            - paragraph: A Quiet Practice · Mira Vale (Sample)
+            - generic: Question
+            - generic: Page 42
+            - paragraph: “What remains of thought once the constant imperative to respond is stripped away?”
+            - generic: 14 words
+            - generic: 3 of 5
+            - generic: Thought
+            - generic: Page 24
+            - paragraph: “I want to pause before starting the next task.”
+            - paragraph: "Chapter II: On deliberate pacing and quiet intervals"
+            - generic: Created Oct 14
+            - button "Open full note view":
+              - generic: Open full note
+              - generic: north_east
+            - generic: west
+            - generic: Set aside
+            - generic: Reviewed
+            - generic: east
+            - button "replay Review again (set aside)":
+              - generic: replay
+              - generic: Review again (set aside)
+            - button "Undo previous card action" [disabled]
+            - button "check Reviewed":
+              - generic: check
+              - generic: Reviewed
+            - generic: spa
+            - paragraph: Session-only review. Your saved notes stay intact.
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - generic: devices
+        - generic: Generating Screen...
+        - iframe
+        - button "Generating Screen...":
+          - generic: Generating Screen...
+        - button "Remove":
+        - textbox:
+          - paragraph: What would you like to change or create?
+        - button "Choose File"
+        - button:
+        - button:
+        - button:
+        - button:
+        - button "Balanced":
+          - generic: Balanced
+        - button:
+        - button [disabled]:
+        - button [expanded]:
+          - status:
+            - generic: Agent log
+        - menu "Agent log":
+          - menuitem "Refine ONLY NR01–NR07 Note Review. Visible screens...":
+            - generic: Refine ONLY NR01–NR07 Note Review. Visible screens...
+          - menuitem "Create a NEW named group of BookConnect Note Revie...":
+            - generic: Create a NEW named group of BookConnect Note Revie...
+          - menuitem "Update all note screens with approved five categor...":
+            - generic: Update all note screens with approved five categor...
+          - 'menuitem "Clean actual State gallery DOM: REMOVE Local buffe..."':
+            - generic: "Clean actual State gallery DOM: REMOVE Local buffe..."
+          - menuitem "Correct State gallery Save not confirmed panel ONL...":
+            - generic: Correct State gallery Save not confirmed panel ONL...
+          - 'menuitem "Final correction based on actual canvas: old sourc..."':
+            - generic: "Final correction based on actual canvas: old sourc..."
+          - menuitem "Correct ALL six existing screens before adding var...":
+            - generic: Correct ALL six existing screens before adding var...
+          - menuitem "Create a NEW native-mobile design project named \"B...":
+            - generic: Create a NEW native-mobile design project named "B...
+        - button "Expand panel":
+        - generic "Exit Zen Mode"

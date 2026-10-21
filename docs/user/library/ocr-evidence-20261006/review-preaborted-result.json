@@ -1,0 +1,7 @@
+{
+  "fixture": "google-public-sign",
+  "preAbortedRequest": true,
+  "status": 200,
+  "mockedQuotaCalls": 1,
+  "mockedEgressCalls": 1
+}

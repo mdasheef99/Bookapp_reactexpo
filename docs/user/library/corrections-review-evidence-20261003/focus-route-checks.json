@@ -1,0 +1,29 @@
+{
+  "focusChecks": [
+    {
+      "focus": "List view",
+      "mode": [
+        "List view"
+      ]
+    },
+    {
+      "focus": "Shelf view",
+      "mode": [
+        "Shelf view"
+      ]
+    }
+  ],
+  "routeBefore": "http://localhost:19006/library",
+  "detail": "http://localhost:19006/library/ae665879-eda1-40f1-a775-7d698a861b27",
+  "returned": "http://localhost:19006/library",
+  "restored": {
+    "filter": [
+      "Shelf view",
+      "All, 8 books"
+    ],
+    "mode": [
+      "Shelf view"
+    ],
+    "scrollY": 0
+  }
+}

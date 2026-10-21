@@ -1,0 +1,135 @@
+{
+  "captured": "2026-10-11T01:48:00Z",
+  "root": "C:/Users/LEGION/Desktop/Bookconnect4_library",
+  "branch": "codex/library-cover-shelf",
+  "head": "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+  "staged": null,
+  "status": [
+    " M app/(tabs)/library/[bookId].tsx",
+    " M app/(tabs)/library/_layout.tsx",
+    " M app/(tabs)/library/notes.tsx",
+    " M app/_layout.tsx",
+    " M docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md",
+    " M docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/supporting/data-dictionary.md",
+    " M docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/supporting/database-current-vs-target.md",
+    " M docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/01-planning-and-decisions.md",
+    " M docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md",
+    " M docs/user/library/INTERACTION-MAP.md",
+    " M docs/user/library/SDD-05-library-reading-room.md",
+    " M docs/user/library/TRACKER.md",
+    " M docs/user/library/UI-UX-INVENTORY.md",
+    " M package-lock.json",
+    " M package.json",
+    " M src/components/notes/NoteCard.tsx",
+    " M src/components/notes/NoteEditor.tsx",
+    " M src/components/notes/TagSelector.tsx",
+    " M src/features/books/services/__tests__/notesService.test.ts",
+    " M src/features/books/services/notesService.ts",
+    "?? app.config.js",
+    "?? app/(tabs)/library/note-compose.tsx",
+    "?? app/(tabs)/library/note.tsx",
+    "?? coverage/",
+    "?? docs/superpowers/specs/",
+    "?? docs/user/library/BROWSER-QA-20261004.md",
+    "?? docs/user/library/LIBRARY-EXPERIENCE-ASTRA-REVIEW-20261007.md",
+    "?? docs/user/library/LIBRARY-EXPERIENCE-AUDIT.md",
+    "?? docs/user/library/LIBRARY-EXPERIENCE-HANDOFF.md",
+    "?? docs/user/library/LIBRARY-EXPERIENCE-LUNA-REVIEW-20261007.md",
+    "?? docs/user/library/LIBRARY-EXPERIENCE-STITCH-COMPARISON.md",
+    "?? docs/user/library/MANUAL-NOTE-FORWARD-CORRECTION-PLAN.md",
+    "?? docs/user/library/MANUAL-NOTE-PERSISTENCE-PLAN.md",
+    "?? docs/user/library/NOTE-CATEGORY-ROLLOUT.md",
+    "?? docs/user/library/NOTE-REVIEW-DESIGN.md",
+    "?? docs/user/library/OCR-U0-PREFLIGHT.md",
+    "?? docs/user/library/OPTION-B-DESIGN-REVIEW-20261008.md",
+    "?? docs/user/library/OPTION-B-IMPLEMENTATION-PLAN.md",
+    "?? docs/user/library/OPTION-B-NAVIGATION-CONTRACT.md",
+    "?? docs/user/library/OPTION-B-REVIEW-20261009.md",
+    "?? docs/user/library/SDD-02-notes.md",
+    "?? docs/user/library/SDD-03-ocr-vault.md",
+    "?? docs/user/library/SDD-04-shelf.md",
+    "?? docs/user/library/SDD-06-after-book-entry-ui.md",
+    "?? docs/user/library/correction-evidence-20261003/fixture.bundle.js",
+    "?? docs/user/library/corrections-review-evidence-20261003/fixture.bundle.js",
+    "?? docs/user/library/design-review-20261007/",
+    "?? docs/user/library/evidence/",
+    "?? docs/user/library/ocr-evidence-20261006/",
+    "?? docs/user/library/search-reading-room-20261005.jpg",
+    "?? e2e/library-manual-note-browser-history.spec.ts",
+    "?? e2e/library-vault-smoke.spec.ts",
+    "?? flows/",
+    "?? playwright.manual-note-history.config.ts",
+    "?? serve19006.js",
+    "?? src/components/library/VaultPagesList.tsx",
+    "?? src/components/notes/ManualNoteUi.tsx",
+    "?? src/components/notes/__tests__/",
+    "?? src/features/books/notes/",
+    "?? src/features/books/services/__tests__/ocrService.test.ts",
+    "?? src/features/books/services/__tests__/userBookPagesService.test.ts",
+    "?? src/features/books/services/ocrService.ts",
+    "?? src/features/books/services/userBookPagesService.ts",
+    "?? src/features/books/utils/__tests__/ocrWordCap.test.ts",
+    "?? src/features/books/utils/ocrWordCap.ts",
+    "?? supabase/functions/ocr-fallback/",
+    "?? supabase/migrations/20260820064258_library_user_book_pages_vault.sql",
+    "?? supabase/migrations/20260820071215_library_word_limit_hardening.sql",
+    "?? supabase/migrations/20261010172118_library_manual_note_persistence.sql",
+    "?? supabase/migrations/__tests__/libraryUserBookPagesVault.test.ts",
+    "?? supabase/tests/library/",
+    "?? tsconfig.library-notes.json"
+  ],
+  "files": [
+    {
+      "path": "app/(tabs)/library/note-compose.tsx",
+      "sha256": "86698EA50743A6CC3296F8F2A249AB4309B9209415CBCEB8CE696214042CCA91",
+      "status": "?? app/(tabs)/library/note-compose.tsx"
+    },
+    {
+      "path": "src/components/notes/ManualNoteUi.tsx",
+      "sha256": "3761537E14368953EACA71C1029547557EB604803B077A83B91143C97DC0727E",
+      "status": "?? src/components/notes/ManualNoteUi.tsx"
+    },
+    {
+      "path": "src/features/books/services/ocrService.ts",
+      "sha256": "A5AE0DE334286FB1782110FD2D691B50E65027A7319E95AFE30DB99AF70A02BF",
+      "status": "?? src/features/books/services/ocrService.ts"
+    },
+    {
+      "path": "tsconfig.library-notes.json",
+      "sha256": "17EE15E7D9769353F54820D55762CD5F0243C6F6657E0145EA7C38906C99AB7A",
+      "status": "?? tsconfig.library-notes.json"
+    },
+    {
+      "path": "docs/user/library/TRACKER.md",
+      "sha256": "EE85F9B239685F74AEB957DC53F40F9EB54402EAAC546540B9BF5C3A23B29A3B",
+      "status": " M docs/user/library/TRACKER.md"
+    },
+    {
+      "path": "docs/user/library/SDD-06-after-book-entry-ui.md",
+      "sha256": "73CD95AEED52E39E0EE540E157CAD0CC8DA490BDF321EE6FF4D1752B83A2CF86",
+      "status": "?? docs/user/library/SDD-06-after-book-entry-ui.md"
+    },
+    {
+      "path": "docs/user/library/INTERACTION-MAP.md",
+      "sha256": "D31305174B85F717400640A9E6CB0EF0428D3440BD32D9F0981F8B3B19E7FEBB",
+      "status": " M docs/user/library/INTERACTION-MAP.md"
+    },
+    {
+      "path": "docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md",
+      "sha256": "C98AA7A755468F3C79A4C485B3DEFF309A132A3802D5321FE0DC9830AF5C5050",
+      "status": " M docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md"
+    },
+    {
+      "path": "docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md",
+      "sha256": "8F92583DF4F1E1915A811C588E438835CF51D6FD4B7C6FA13DD917B455D82C1C",
+      "status": " M docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md"
+    }
+  ],
+  "tests": "Fresh pre-edit: 13 suites / 169 tests PASS; scoped TypeScript PASS. Commands in receipt.",
+  "processes": [
+    "19006 PID 22592 pre-existing preview, preserved",
+    "5037 PID 25400 pre-existing adb, preserved",
+    "8081/8083/8084/8085 no listener at inspection; process command line inaccessible in sandbox",
+    "adb devices: none; AVD BookConnect_Pixel5_API36 exists"
+  ]
+}

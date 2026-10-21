@@ -1,0 +1,79 @@
+**No—I’m not confident that all pages follow the philosophy yet.** The SDD has a much stronger behavioral foundation, but that is different from demonstrating a calm, coherent visual experience.
+
+My assessment is: **the principles are mostly present in the specification; some proposed interactions still contradict them; aesthetic consistency across B01–B16 remains unproved.** We have five earlier concept images, not current visual evidence for every specified state.
+
+**Where the philosophy holds—and where it weakens**
+
+| Pages | Assessment | What needs attention |
+|---|---|---|
+| **B01 Book Details** | **Partly aligned.** Prioritizing the book and personal material supports reader goals. | “Secondary collapsed book details/management” is too broad. Frequently used reading-status controls and consequential privacy settings should not become difficult to discover. |
+| **B02/B03/B10 Collection states** | **Strong direction.** Reading before editing, preserved position, and distinct empty/error states support predictability. | Keep the book heading, collection controls, and navigation stable across states. An error should not make the whole page feel like a different destination. |
+| **B04 Category/input choice** | **Mixed.** Optional categories preserve choice. | Five descriptions, Skip, and two input methods can make a quick note feel like a form to complete. Category choice must feel optional, not like a prerequisite. |
+| **B05/B07/B09 Writing, OCR review, editing** | **Strong shared foundation, with unnecessary repetition.** One form and explicit saves are sensible. | Repeating the full category selector consumes attention and space. Show the current category with an obvious Change action. Keep text central and validation nearby. |
+| **B06/B15 Capture and crop** | **Partly aligned.** Accurate crop recognition and safe cancellation support trust. | Requiring readers to manipulate a crop every time would undermine low-effort capture. A usable full-image default should allow immediate recognition. |
+| **B08 Reader** | **Most aligned conceptually.** Full, selectable text with explicit Edit serves revisiting. | It needs a distinctly quieter hierarchy than the editor. Category, page, and source should support the text rather than surround it with badges. |
+| **B11/B12 Save failure and exit** | **Aligned if implemented carefully.** Preservation and contextual language are good. | Avoid trapping readers during uncertain saving or making them navigate competing Retry, Save, and Keep editing controls. |
+| **B13/B16 OCR recovery** | **Currently overcomplicated.** Honest error distinctions are valuable. | Too many recovery choices make the reader diagnose the workflow. Prioritize the most useful next action and one alternative; let ordinary Back handle navigation. |
+| **B14 Incomplete extraction** | **Necessary interruption.** This is a justified place to slow down. | Acceptance, editing, and reacceptance must form an understandable loop. A warning followed by unexplained blocked saving would contradict reader control. |
+
+The distinction is important: **a calm interface can contain serious warnings and explicit controls. It becomes less calm when the reader has to interpret competing actions or repeatedly make the same decision.**
+
+**Do they have a consistent aesthetic structure?**
+
+**The SDD proposes one, but does not specify or demonstrate enough to establish it.**
+
+“Warm paper, forest green, literary typography, shared spacing and radii” establishes a visual direction. It does not settle:
+
+- Which information consistently occupies the header.
+- Where book context appears and how much space it takes.
+- Which actions are primary, secondary, contextual, or destructive.
+- How editable text differs from saved text.
+- How source excerpts differ from personal commentary.
+- How errors enter a page without displacing its structure.
+- How layouts adapt to large text and the keyboard.
+
+The five earlier images already showed **palette consistency alongside structural inconsistency**: repeated book context, faint metadata, crowded review controls, ambiguous text representations, and oversized emphasis on some secondary actions. Reusing those colors would carry both the strengths and the weaknesses forward.
+
+I would use **four related page families**, rather than making every screen look identical:
+
+| Family | Shared structure | Purposeful difference |
+|---|---|---|
+| **Book overview and collection** | Predictable header, selected-book context, stable collection entry/actions | Overview summarizes; collection supports browsing |
+| **Compose, OCR review, edit** | Same field order, category/page treatment, validation placement, keyboard-aware save area | Titles and save labels explain the current task |
+| **Capture, crop, recognition** | Stable source context, dominant image/work area, predictable forward action | Controls change to match the current image operation |
+| **Read and recovery** | Reading retains a quiet text hierarchy; recovery stays attached to the affected task | Recovery should not become a separate visual destination unless necessary |
+
+Dialogs should use one consistent pattern across these families: clear consequence, understandable choices, accessible focus, and a safe dismissal behavior.
+
+**Five concrete aesthetic decisions I would make before approval**
+
+1. **Standardize navigation language and placement.**  
+   Back means the previous step; Cancel means leaving the flow. Do not show both mechanically on every page when their effects are indistinguishable.
+
+2. **Show book context once at the appropriate strength.**  
+   Avoid repeating a long title in the header, source strip, and content card. Keep attribution available without letting it dominate writing.
+
+3. **Give text the largest share of useful space.**  
+   Reduce repeated selectors, explanatory banners, decorative stacks, and metadata before reducing font size.
+
+4. **Separate content ownership through structure, not category color alone.**  
+   A Quote note can contain both an excerpt and commentary. Styling the entire note as a quotation could incorrectly attribute the reader’s commentary to the author.
+
+5. **Define readable secondary text and stable error placement.**  
+   “Secondary” must not mean faint. Errors should appear near the affected input or operation, preserve entered content, and avoid unnecessary layout jumps.
+
+**What I would need to confidently approve consistency**
+
+A current, native-size visual set covering the four families—not necessarily sixteen polished screens—plus representative variants:
+
+- A long note and long book title.
+- Large text with the keyboard open.
+- No category and no page.
+- Inline validation and save failure.
+- Empty, filtered-empty, and failed collection loading.
+- Crop, incomplete extraction, and failed recognition.
+- Dark theme, if included in the release.
+
+Then a connected prototype should establish whether navigation, focus, reading position, and state transitions actually behave consistently.
+
+**My judgment: keep the direction, but don’t approve every page yet.** The strongest foundation is the shared writing/reading lifecycle. The weakest areas are the category-heavy entry, recovery-action overload, and insufficiently defined visual hierarchy. Resolve those before treating the sixteen states as one coherent experience.

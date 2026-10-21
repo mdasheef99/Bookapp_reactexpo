@@ -1,0 +1,650 @@
+{
+  "observed_date": "2026-10-10",
+  "project": {
+    "id": "ahntbtktjjmvfosgkmgn",
+    "name": "Bookconnect_reactexpo",
+    "status": "ACTIVE_HEALTHY",
+    "region": "ap-southeast-2",
+    "postgres": "17.6.1.063"
+  },
+  "catalog": {
+    "tables": [
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "name": "reading_notes",
+        "force_rls": false
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+        "rls": true,
+        "name": "user_books",
+        "force_rls": false
+      }
+    ],
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "reading_notes",
+        "default": "gen_random_uuid()",
+        "not_null": true
+      },
+      {
+        "name": "user_id",
+        "type": "uuid",
+        "table": "reading_notes",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "user_book_id",
+        "type": "uuid",
+        "table": "reading_notes",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "content",
+        "type": "text",
+        "table": "reading_notes",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "tag",
+        "type": "text",
+        "table": "reading_notes",
+        "default": null,
+        "not_null": true
+      },
+      {
+        "name": "page_number",
+        "type": "integer",
+        "table": "reading_notes",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "reading_notes",
+        "default": "now()",
+        "not_null": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "reading_notes",
+        "default": "now()",
+        "not_null": false
+      },
+      {
+        "name": "id",
+        "type": "uuid",
+        "table": "user_books",
+        "default": "gen_random_uuid()",
+        "not_null": true
+      },
+      {
+        "name": "user_id",
+        "type": "uuid",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "book_id",
+        "type": "uuid",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "reading_status",
+        "type": "text",
+        "table": "user_books",
+        "default": "'want_to_read'::text",
+        "not_null": false
+      },
+      {
+        "name": "ownership",
+        "type": "text",
+        "table": "user_books",
+        "default": "'owned'::text",
+        "not_null": false
+      },
+      {
+        "name": "condition",
+        "type": "text",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "rating",
+        "type": "integer",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "review",
+        "type": "text",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "review_is_public",
+        "type": "boolean",
+        "table": "user_books",
+        "default": "true",
+        "not_null": false
+      },
+      {
+        "name": "available_for_lending",
+        "type": "boolean",
+        "table": "user_books",
+        "default": "false",
+        "not_null": false
+      },
+      {
+        "name": "completed_at",
+        "type": "timestamp with time zone",
+        "table": "user_books",
+        "default": null,
+        "not_null": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "table": "user_books",
+        "default": "now()",
+        "not_null": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "table": "user_books",
+        "default": "now()",
+        "not_null": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "reading_notes_pkey",
+        "definition": "CREATE UNIQUE INDEX reading_notes_pkey ON public.reading_notes USING btree (id)"
+      },
+      {
+        "name": "idx_reading_notes_user_book",
+        "definition": "CREATE INDEX idx_reading_notes_user_book ON public.reading_notes USING btree (user_book_id)"
+      },
+      {
+        "name": "idx_reading_notes_user",
+        "definition": "CREATE INDEX idx_reading_notes_user ON public.reading_notes USING btree (user_id)"
+      },
+      {
+        "name": "idx_reading_notes_tag",
+        "definition": "CREATE INDEX idx_reading_notes_tag ON public.reading_notes USING btree (tag)"
+      },
+      {
+        "name": "idx_reading_notes_created",
+        "definition": "CREATE INDEX idx_reading_notes_created ON public.reading_notes USING btree (created_at DESC)"
+      },
+      {
+        "name": "user_books_pkey",
+        "definition": "CREATE UNIQUE INDEX user_books_pkey ON public.user_books USING btree (id)"
+      },
+      {
+        "name": "user_books_user_id_book_id_key",
+        "definition": "CREATE UNIQUE INDEX user_books_user_id_book_id_key ON public.user_books USING btree (user_id, book_id)"
+      }
+    ],
+    "constraints": [
+      {
+        "name": "user_books_book_id_fkey",
+        "type": "f",
+        "table": "user_books",
+        "validated": true,
+        "definition": "FOREIGN KEY (book_id) REFERENCES books(id)"
+      },
+      {
+        "name": "user_books_condition_check",
+        "type": "c",
+        "table": "user_books",
+        "validated": true,
+        "definition": "CHECK ((condition = ANY (ARRAY['new'::text, 'like_new'::text, 'good'::text, 'acceptable'::text, 'poor'::text])))"
+      },
+      {
+        "name": "user_books_ownership_check",
+        "type": "c",
+        "table": "user_books",
+        "validated": true,
+        "definition": "CHECK ((ownership = ANY (ARRAY['owned'::text, 'wishlist'::text, 'borrowed'::text, 'lent_out'::text])))"
+      },
+      {
+        "name": "user_books_pkey",
+        "type": "p",
+        "table": "user_books",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "user_books_rating_check",
+        "type": "c",
+        "table": "user_books",
+        "validated": true,
+        "definition": "CHECK (((rating >= 1) AND (rating <= 5)))"
+      },
+      {
+        "name": "user_books_reading_status_check",
+        "type": "c",
+        "table": "user_books",
+        "validated": true,
+        "definition": "CHECK ((reading_status = ANY (ARRAY['want_to_read'::text, 'reading'::text, 'completed'::text])))"
+      },
+      {
+        "name": "user_books_user_id_book_id_key",
+        "type": "u",
+        "table": "user_books",
+        "validated": true,
+        "definition": "UNIQUE (user_id, book_id)"
+      },
+      {
+        "name": "user_books_user_id_fkey",
+        "type": "f",
+        "table": "user_books",
+        "validated": true,
+        "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      },
+      {
+        "name": "reading_notes_500w_check",
+        "type": "c",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "CHECK (check_note_word_limit(content))"
+      },
+      {
+        "name": "reading_notes_content_not_empty",
+        "type": "c",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "CHECK ((btrim(content) <> ''::text))"
+      },
+      {
+        "name": "reading_notes_page_number_positive",
+        "type": "c",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "CHECK (((page_number IS NULL) OR (page_number > 0)))"
+      },
+      {
+        "name": "reading_notes_pkey",
+        "type": "p",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "reading_notes_tag_check",
+        "type": "c",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "CHECK ((tag = ANY (ARRAY['quote'::text, 'reflect'::text, 'distill'::text, 'apply'::text])))"
+      },
+      {
+        "name": "reading_notes_user_book_id_fkey",
+        "type": "f",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "FOREIGN KEY (user_book_id) REFERENCES user_books(id) ON DELETE CASCADE"
+      },
+      {
+        "name": "reading_notes_user_id_fkey",
+        "type": "f",
+        "table": "reading_notes",
+        "validated": true,
+        "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+      }
+    ]
+  },
+  "security": {
+    "policies": [
+      {
+        "name": "Users can delete own notes",
+        "check": null,
+        "roles": [
+          "public"
+        ],
+        "table": "reading_notes",
+        "using": "(auth.uid() = user_id)",
+        "command": "DELETE",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "Users can insert own notes",
+        "check": "(auth.uid() = user_id)",
+        "roles": [
+          "public"
+        ],
+        "table": "reading_notes",
+        "using": null,
+        "command": "INSERT",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "Users can update own notes",
+        "check": null,
+        "roles": [
+          "public"
+        ],
+        "table": "reading_notes",
+        "using": "(auth.uid() = user_id)",
+        "command": "UPDATE",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "Users can view own notes",
+        "check": null,
+        "roles": [
+          "public"
+        ],
+        "table": "reading_notes",
+        "using": "(auth.uid() = user_id)",
+        "command": "SELECT",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "Users can add books to their library",
+        "check": "(auth.uid() = user_id)",
+        "roles": [
+          "public"
+        ],
+        "table": "user_books",
+        "using": null,
+        "command": "INSERT",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "Users can delete their books",
+        "check": null,
+        "roles": [
+          "public"
+        ],
+        "table": "user_books",
+        "using": "(auth.uid() = user_id)",
+        "command": "DELETE",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "Users can update their books",
+        "check": "(auth.uid() = user_id)",
+        "roles": [
+          "public"
+        ],
+        "table": "user_books",
+        "using": "(auth.uid() = user_id)",
+        "command": "UPDATE",
+        "permissive": "PERMISSIVE"
+      },
+      {
+        "name": "Users can view their own books",
+        "check": null,
+        "roles": [
+          "public"
+        ],
+        "table": "user_books",
+        "using": "(auth.uid() = user_id)",
+        "command": "SELECT",
+        "permissive": "PERMISSIVE"
+      }
+    ],
+    "triggers": null,
+    "functions": [
+      {
+        "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+        "config": [
+          "search_path=public"
+        ],
+        "signature": "check_note_word_limit(text)",
+        "definition": "CREATE OR REPLACE FUNCTION public.check_note_word_limit(p_content text)\n RETURNS boolean\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'public'\nAS $function$\n  SELECT COALESCE(array_length(regexp_split_to_array(btrim(COALESCE(p_content,'')), '\\s+'), 1), 0) <= 500\n$function$\n",
+        "security_definer": false
+      }
+    ],
+    "privileges": [
+      {
+        "role": "anon",
+        "delete": true,
+        "insert": true,
+        "select": true,
+        "update": true,
+        "trigger": true,
+        "truncate": true,
+        "references": true
+      },
+      {
+        "role": "authenticated",
+        "delete": true,
+        "insert": true,
+        "select": true,
+        "update": true,
+        "trigger": true,
+        "truncate": true,
+        "references": true
+      },
+      {
+        "role": "service_role",
+        "delete": true,
+        "insert": true,
+        "select": true,
+        "update": true,
+        "trigger": true,
+        "truncate": true,
+        "references": true
+      }
+    ]
+  },
+  "integrity": {
+    "maintain": {
+      "anon": true,
+      "authenticated": true
+    },
+    "integrity": {
+      "notes": 2,
+      "missing_books": 0,
+      "null_timestamps": 0,
+      "owner_book_mismatches": 0
+    },
+    "column_acl": null,
+    "role_memberships": null,
+    "synthetic_word_limit": {
+      "blank": true,
+      "500_words": true,
+      "501_words": false,
+      "mixed_whitespace_501": false
+    }
+  },
+  "migrations": {
+    "relevant": [
+      {
+        "version": "20260212150120",
+        "name": "create_reading_notes"
+      },
+      {
+        "version": "20260820034004",
+        "name": "reading_notes_fk_and_cleanup"
+      },
+      {
+        "version": "20260820064258",
+        "name": "library_user_book_pages_vault"
+      },
+      {
+        "version": "20260820071215",
+        "name": "library_word_limit_hardening"
+      }
+    ],
+    "latest": [
+      {
+        "version": "20261009080831",
+        "name": "marketplace_phase9_edition_picker_operation_fences"
+      },
+      {
+        "version": "20261009081039",
+        "name": "marketplace_phase9_edition_picker_worker_completion"
+      },
+      {
+        "version": "20261009081057",
+        "name": "marketplace_phase9_edition_picker_commit_cleanup"
+      },
+      {
+        "version": "20261009081205",
+        "name": "marketplace_phase9_edition_picker_confirmation"
+      },
+      {
+        "version": "20261010110835",
+        "name": "marketplace_phase9_edition_picker_selection_eligibility"
+      }
+    ],
+    "total": 176
+  },
+  "advisors": {
+    "security": [],
+    "performance": [
+      {
+        "name": "unindexed_foreign_keys",
+        "level": "INFO",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys",
+        "detail": "Table \\`public.user_books\\` has a foreign key \\`user_books_book_id_fkey\\` without a covering index. This can lead to suboptimal query performance.",
+        "metadata": {
+          "name": "user_books",
+          "type": "table",
+          "schema": "public",
+          "fkey_name": "user_books_book_id_fkey",
+          "fkey_columns": [
+            3
+          ]
+        },
+        "observed_at": "2026-10-10T15:54:18.832Z"
+      },
+      {
+        "name": "auth_rls_initplan",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+        "detail": "Table \\`public.user_books\\` has a row level security policy \\`Users can view their own books\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+        "metadata": {
+          "name": "user_books",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-10T15:54:18.832Z"
+      },
+      {
+        "name": "auth_rls_initplan",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+        "detail": "Table \\`public.user_books\\` has a row level security policy \\`Users can add books to their library\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+        "metadata": {
+          "name": "user_books",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-10T15:54:18.832Z"
+      },
+      {
+        "name": "auth_rls_initplan",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+        "detail": "Table \\`public.user_books\\` has a row level security policy \\`Users can update their books\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+        "metadata": {
+          "name": "user_books",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-10T15:54:18.832Z"
+      },
+      {
+        "name": "auth_rls_initplan",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+        "detail": "Table \\`public.user_books\\` has a row level security policy \\`Users can delete their books\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+        "metadata": {
+          "name": "user_books",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-10T15:54:18.832Z"
+      },
+      {
+        "name": "auth_rls_initplan",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+        "detail": "Table \\`public.reading_notes\\` has a row level security policy \\`Users can view own notes\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+        "metadata": {
+          "name": "reading_notes",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-10T15:54:18.832Z"
+      },
+      {
+        "name": "auth_rls_initplan",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+        "detail": "Table \\`public.reading_notes\\` has a row level security policy \\`Users can insert own notes\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+        "metadata": {
+          "name": "reading_notes",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-10T15:54:18.832Z"
+      },
+      {
+        "name": "auth_rls_initplan",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+        "detail": "Table \\`public.reading_notes\\` has a row level security policy \\`Users can update own notes\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+        "metadata": {
+          "name": "reading_notes",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-10T15:54:18.832Z"
+      },
+      {
+        "name": "auth_rls_initplan",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan",
+        "detail": "Table \\`public.reading_notes\\` has a row level security policy \\`Users can delete own notes\\` that re-evaluates current_setting() or auth.<function>() for each row. This produces suboptimal query performance at scale. Resolve the issue by replacing \\`auth.<function>()\\` with \\`(select auth.<function>())\\`. See [docs](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select) for more info.",
+        "metadata": {
+          "name": "reading_notes",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-10T15:54:18.832Z"
+      },
+      {
+        "name": "unused_index",
+        "level": "INFO",
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+        "detail": "Index \\`idx_reading_notes_tag\\` on table \\`public.reading_notes\\` has not been used",
+        "metadata": {
+          "name": "reading_notes",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-10T15:54:18.832Z"
+      }
+    ]
+  },
+  "limits": {
+    "mode": "read-only",
+    "business_content_fetched": false,
+    "database_writes": 0,
+    "storage_writes": 0,
+    "role_denial_tests": "NOT_RUN",
+    "concurrency_tests": "NOT_RUN",
+    "native_tests": "NOT_RUN"
+  }
+}
+

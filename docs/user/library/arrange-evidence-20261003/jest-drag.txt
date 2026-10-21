@@ -1,0 +1,10 @@
+PASS src/components/library/__tests__/useVerticalShelfDrag.test.ts
+  vertical drag lifecycle and frame scrolling
+    √ scrolls near a valid edge, stops outside the cabinet and discards an outside drop (39 ms)
+    √ commits exactly once on successful drop and ignores canceled gestures (7 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       2 passed, 2 total
+Snapshots:   0 total
+Time:        4.701 s
+Ran all test suites within paths "src/components/library/__tests__/useVerticalShelfDrag.test.ts".

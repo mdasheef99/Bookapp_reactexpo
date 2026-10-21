@@ -1,0 +1,118 @@
+[
+  {
+    "cabinet": {
+      "bottom": 931.2000122070312,
+      "height": 528,
+      "left": 24,
+      "right": 296,
+      "top": 403.2000122070313,
+      "width": 272,
+      "x": 24,
+      "y": 403.2000122070313
+    },
+    "tiers": [
+      {
+        "client": 272,
+        "content": 272,
+        "minHeight": 46,
+        "plankGap": 0,
+        "row": "top"
+      },
+      {
+        "client": 272,
+        "content": 272,
+        "minHeight": 44,
+        "plankGap": 0,
+        "row": "bottom"
+      }
+    ],
+    "viewport": 320
+  },
+  {
+    "cabinet": {
+      "bottom": 881.2000122070312,
+      "height": 528,
+      "left": 24,
+      "right": 366.3999938964844,
+      "top": 353.20001220703125,
+      "width": 342.3999938964844,
+      "x": 24,
+      "y": 353.20001220703125
+    },
+    "tiers": [
+      {
+        "client": 342,
+        "content": 342,
+        "minHeight": 46,
+        "plankGap": 0,
+        "row": "top"
+      },
+      {
+        "client": 342,
+        "content": 342,
+        "minHeight": 44,
+        "plankGap": 0,
+        "row": "bottom"
+      }
+    ],
+    "viewport": 390
+  },
+  {
+    "cabinet": {
+      "bottom": 881.2000122070312,
+      "height": 528,
+      "left": 24,
+      "right": 406.3999938964844,
+      "top": 353.20001220703125,
+      "width": 382.3999938964844,
+      "x": 24,
+      "y": 353.20001220703125
+    },
+    "tiers": [
+      {
+        "client": 382,
+        "content": 382,
+        "minHeight": 46,
+        "plankGap": 0,
+        "row": "top"
+      },
+      {
+        "client": 382,
+        "content": 382,
+        "minHeight": 44,
+        "plankGap": 0,
+        "row": "bottom"
+      }
+    ],
+    "viewport": 430
+  },
+  {
+    "cabinet": {
+      "bottom": 881.2000122070312,
+      "height": 528,
+      "left": 364,
+      "right": 916,
+      "top": 353.20001220703125,
+      "width": 552,
+      "x": 364,
+      "y": 353.20001220703125
+    },
+    "tiers": [
+      {
+        "client": 552,
+        "content": 552,
+        "minHeight": 46,
+        "plankGap": 0,
+        "row": "top"
+      },
+      {
+        "client": 552,
+        "content": 552,
+        "minHeight": 44,
+        "plankGap": 0,
+        "row": "bottom"
+      }
+    ],
+    "viewport": 1280
+  }
+]

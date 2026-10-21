@@ -1,0 +1,93 @@
+
+Library
+Many Notes Fixture Book
+Mona Notes
+
+Want to Read
+
+Reading
+
+Completed
+Add note
+
+Notes
+7
+View All →
+Quote
+14 Sept 2026 • 03:30 pm
+A quoted line from the fixture book that should render in the note card.
+
+Page 42
+Thought
+15 Sept 2026 • 03:30 pm
+Reflection fixture note with page number twelve.
+
+Page 12
+Takeaway
+16 Sept 2026 • 03:30 pm
+Takeaway note with no page number.
+
+Saved Pages
+
+No saved pages yet.
+My review
+
+Your Rating
+
+
+
+
+
+Your Review
+
+Private Review
+Book options
+
+Ownership
+
+Owned
+
+Lent Out
+
+Borrowed
+
+Wishlist
+Available for Lending
+Condition
+New
+Like New
+Good
+Fair
+Poor
+Remove from Library
+Community reviews
+
+Book information
+
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]

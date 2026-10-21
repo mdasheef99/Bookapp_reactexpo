@@ -1,0 +1,53 @@
+{
+  "pixelChecks": [
+    {
+      "mode": "automatic",
+      "independentSourceRectangleExclusive": [
+        168,
+        134,
+        1151,
+        1949
+      ],
+      "outputSize": [
+        983,
+        1815
+      ],
+      "expectedSize": [
+        983,
+        1815
+      ],
+      "differenceBounds": null,
+      "pass": true
+    },
+    {
+      "mode": "manual",
+      "independentSourceRectangleExclusive": [
+        168,
+        134,
+        1151,
+        1839
+      ],
+      "outputSize": [
+        983,
+        1705
+      ],
+      "expectedSize": [
+        983,
+        1705
+      ],
+      "differenceBounds": null,
+      "pass": true
+    }
+  ],
+  "detectedBlockCount": 7,
+  "cachedReviewOcrCalls": 1,
+  "manualReviewOcrCalls": 2,
+  "manualOcrInput": "transformed",
+  "manualResultEqualsSourceTextWithoutBottomSentinel": true,
+  "manualBottomSentinelAbsent": true,
+  "manualTopSentinelPresent": true,
+  "nativeRecognitionElapsedMs": [
+    7635,
+    5594
+  ]
+}

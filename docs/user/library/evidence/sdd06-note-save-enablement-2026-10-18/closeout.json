@@ -1,0 +1,18 @@
+{
+  "receipt_pointers_verified": 12,
+  "receipt_relative_links": "PASS",
+  "gates": {
+    "ownedBookWrites": "true",
+    "stableCreateReconciliation": "true",
+    "optionalFiveCategories": "true",
+    "serverManagedEditVersion": "true"
+  },
+  "temporary_route_absent": true,
+  "probe_absent_from_export": true,
+  "migration_source_changes": false,
+  "index_empty": true,
+  "gateway_sha256": "1c14067ab7698577e52e9b9b1a2bc4555cfdf2fc3fa1936181fe4a3dd300062c",
+  "export_entry": "entry-bcb205393c9062fa3611d6102c664855.js",
+  "export_entry_sha256": "1fb9d8dbece977c557ab230555ab546196e3e810f4af490bd15b6fb5d49883f7",
+  "export_bytes": 5547742
+}

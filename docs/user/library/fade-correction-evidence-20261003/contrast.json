@@ -1,0 +1,58 @@
+[
+  {
+    "background": "rgb(133, 57, 57)",
+    "effectiveOpacity": 1,
+    "foreground": "rgb(255, 253, 248)",
+    "text": "The Bed of Procrustes",
+    "ratio": 7.819976068395899
+  },
+  {
+    "background": "rgb(46, 52, 56)",
+    "effectiveOpacity": 1,
+    "foreground": "rgb(255, 253, 248)",
+    "text": "ZZ_TEST Playwright Nomination Book",
+    "ratio": 12.410903561214331
+  },
+  {
+    "background": "rgb(35, 53, 74)",
+    "effectiveOpacity": 1,
+    "foreground": "rgb(255, 253, 248)",
+    "text": "Dune",
+    "ratio": 12.29918653095825
+  },
+  {
+    "background": "rgb(133, 57, 57)",
+    "effectiveOpacity": 1,
+    "foreground": "rgb(255, 253, 248)",
+    "text": "Sand Dune Stabilization, Shelterbelts and Afforestation in Dry Zones",
+    "ratio": 7.819976068395899
+  },
+  {
+    "background": "rgb(189, 122, 66)",
+    "effectiveOpacity": 1,
+    "foreground": "rgb(8, 6, 4)",
+    "text": "The Science of Dune",
+    "ratio": 5.804917349858632
+  },
+  {
+    "background": "rgb(214, 208, 196)",
+    "effectiveOpacity": 1,
+    "foreground": "rgb(8, 6, 4)",
+    "text": "Fooled by Randomness",
+    "ratio": 13.176298953826722
+  },
+  {
+    "background": "rgb(214, 208, 196)",
+    "effectiveOpacity": 1,
+    "foreground": "rgb(8, 6, 4)",
+    "text": "Oil, electricity and Taleb’s ‚Black Swan‘",
+    "ratio": 13.176298953826722
+  },
+  {
+    "background": "rgb(54, 58, 64)",
+    "effectiveOpacity": 1,
+    "foreground": "rgb(255, 253, 248)",
+    "text": "The Black Swan",
+    "ratio": 11.250731250268455
+  }
+]

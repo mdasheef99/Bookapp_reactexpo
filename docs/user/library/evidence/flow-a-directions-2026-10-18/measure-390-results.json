@@ -1,0 +1,735 @@
+{
+ "A1r-daylight": {
+  "controls": [
+   {
+    "name": "Back to Library",
+    "top": 12,
+    "h": 48,
+    "w": 78
+   },
+   {
+    "name": "More options",
+    "top": 12,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "GROUP: Reading status",
+    "top": 260,
+    "h": 42,
+    "w": 115
+   },
+   {
+    "name": "Add note",
+    "top": 639,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "All 3 notes ›",
+    "top": 736,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "My review A gentle book about doing less… ›",
+    "top": 792,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Saved pages 1 page ›",
+    "top": 848,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Book information ›",
+    "top": 904,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Ownership & condition ›",
+    "top": 960,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Remove from library",
+    "top": 1056,
+    "h": 24,
+    "w": 145
+   }
+  ],
+  "sizes": {
+   "14": 3,
+   "16": 21,
+   "18": 1,
+   "20": 1,
+   "22": 1,
+   "24": 1,
+   "28": 1
+  },
+  "small": [
+   "14px Started 2 Oct",
+   "14px Quote · p. 42 · 14 Oct",
+   "14px Thought · 12 Oct"
+  ],
+  "docH": 1144,
+  "banned": [],
+  "aboveFold": [
+   {
+    "name": "Back to Library",
+    "top": 12,
+    "h": 48,
+    "w": 78
+   },
+   {
+    "name": "More options",
+    "top": 12,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "GROUP: Reading status",
+    "top": 260,
+    "h": 42,
+    "w": 115
+   },
+   {
+    "name": "Add note",
+    "top": 639,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "All 3 notes ›",
+    "top": 736,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "My review A gentle book about doing less… ›",
+    "top": 792,
+    "h": 56,
+    "w": 350
+   }
+  ],
+  "smallTargets": [
+   {
+    "name": "GROUP: Reading status",
+    "top": 260,
+    "h": 42,
+    "w": 115
+   },
+   {
+    "name": "Remove from library",
+    "top": 1056,
+    "h": 24,
+    "w": 145
+   }
+  ]
+ },
+ "A1r-midnight": {
+  "controls": [
+   {
+    "name": "Back to Library",
+    "top": 12,
+    "h": 48,
+    "w": 78
+   },
+   {
+    "name": "More options",
+    "top": 12,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "GROUP: Reading status",
+    "top": 260,
+    "h": 42,
+    "w": 115
+   },
+   {
+    "name": "Add note",
+    "top": 639,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "All 3 notes ›",
+    "top": 736,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "My review A gentle book about doing less… ›",
+    "top": 792,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Saved pages 1 page ›",
+    "top": 848,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Book information ›",
+    "top": 904,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Ownership & condition ›",
+    "top": 960,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Remove from library",
+    "top": 1056,
+    "h": 48,
+    "w": 177
+   }
+  ],
+  "sizes": {
+   "14": 3,
+   "16": 21,
+   "18": 1,
+   "20": 1,
+   "22": 1,
+   "24": 1,
+   "28": 1
+  },
+  "small": [
+   "14px Started 2 Oct",
+   "14px Quote · p. 42 · 14 Oct",
+   "14px Thought · 12 Oct"
+  ],
+  "docH": 1168,
+  "banned": [],
+  "aboveFold": [
+   {
+    "name": "Back to Library",
+    "top": 12,
+    "h": 48,
+    "w": 78
+   },
+   {
+    "name": "More options",
+    "top": 12,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "GROUP: Reading status",
+    "top": 260,
+    "h": 42,
+    "w": 115
+   },
+   {
+    "name": "Add note",
+    "top": 639,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "All 3 notes ›",
+    "top": 736,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "My review A gentle book about doing less… ›",
+    "top": 792,
+    "h": 56,
+    "w": 350
+   }
+  ],
+  "smallTargets": [
+   {
+    "name": "GROUP: Reading status",
+    "top": 260,
+    "h": 42,
+    "w": 115
+   }
+  ]
+ },
+ "A2r-daylight": {
+  "controls": [
+   {
+    "name": "Back to Library",
+    "top": 4,
+    "h": 48,
+    "w": 88
+   },
+   {
+    "name": "More options",
+    "top": 4,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "Reading status: Reading",
+    "top": 427,
+    "h": 48,
+    "w": 121
+   },
+   {
+    "name": "Add note",
+    "top": 696,
+    "h": 48,
+    "w": 342
+   },
+   {
+    "name": "All 3 notes ›",
+    "top": 792,
+    "h": 56,
+    "w": 342
+   },
+   {
+    "name": "My review A gentle book about doing less… ›",
+    "top": 848,
+    "h": 79,
+    "w": 342
+   },
+   {
+    "name": "Saved pages 1 page ›",
+    "top": 927,
+    "h": 56,
+    "w": 342
+   },
+   {
+    "name": "Book information ›",
+    "top": 983,
+    "h": 56,
+    "w": 342
+   },
+   {
+    "name": "Ownership & condition ›",
+    "top": 1039,
+    "h": 56,
+    "w": 342
+   },
+   {
+    "name": "Remove from library",
+    "top": 1135,
+    "h": 48,
+    "w": 177
+   }
+  ],
+  "sizes": {
+   "11": 1,
+   "14": 2,
+   "16": 17,
+   "20": 2,
+   "30": 1
+  },
+  "small": [
+   "14px Started 2 Oct",
+   "14px Latest note · p. 42 · 14 Oct · Quote"
+  ],
+  "docH": 1243,
+  "banned": [],
+  "aboveFold": [
+   {
+    "name": "Back to Library",
+    "top": 4,
+    "h": 48,
+    "w": 88
+   },
+   {
+    "name": "More options",
+    "top": 4,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "Reading status: Reading",
+    "top": 427,
+    "h": 48,
+    "w": 121
+   },
+   {
+    "name": "Add note",
+    "top": 696,
+    "h": 48,
+    "w": 342
+   },
+   {
+    "name": "All 3 notes ›",
+    "top": 792,
+    "h": 56,
+    "w": 342
+   }
+  ],
+  "smallTargets": []
+ },
+ "A2r-midnight-LOCAL-RECOLOUR": {
+  "controls": [
+   {
+    "name": "Back to Library",
+    "top": 4,
+    "h": 48,
+    "w": 88
+   },
+   {
+    "name": "More options",
+    "top": 4,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "Reading status: Reading",
+    "top": 427,
+    "h": 48,
+    "w": 121
+   },
+   {
+    "name": "Add note",
+    "top": 696,
+    "h": 48,
+    "w": 342
+   },
+   {
+    "name": "All 3 notes ›",
+    "top": 792,
+    "h": 56,
+    "w": 342
+   },
+   {
+    "name": "My review A gentle book about doing less… ›",
+    "top": 848,
+    "h": 79,
+    "w": 342
+   },
+   {
+    "name": "Saved pages 1 page ›",
+    "top": 927,
+    "h": 56,
+    "w": 342
+   },
+   {
+    "name": "Book information ›",
+    "top": 983,
+    "h": 56,
+    "w": 342
+   },
+   {
+    "name": "Ownership & condition ›",
+    "top": 1039,
+    "h": 56,
+    "w": 342
+   },
+   {
+    "name": "Remove from library",
+    "top": 1135,
+    "h": 48,
+    "w": 177
+   }
+  ],
+  "sizes": {
+   "11": 1,
+   "14": 2,
+   "16": 17,
+   "20": 2,
+   "30": 1
+  },
+  "small": [
+   "14px Started 2 Oct",
+   "14px Latest note · p. 42 · 14 Oct · Quote"
+  ],
+  "docH": 1243,
+  "banned": [],
+  "aboveFold": [
+   {
+    "name": "Back to Library",
+    "top": 4,
+    "h": 48,
+    "w": 88
+   },
+   {
+    "name": "More options",
+    "top": 4,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "Reading status: Reading",
+    "top": 427,
+    "h": 48,
+    "w": 121
+   },
+   {
+    "name": "Add note",
+    "top": 696,
+    "h": 48,
+    "w": 342
+   },
+   {
+    "name": "All 3 notes ›",
+    "top": 792,
+    "h": 56,
+    "w": 342
+   }
+  ],
+  "smallTargets": []
+ },
+ "A3r-daylight": {
+  "controls": [
+   {
+    "name": "Back to Library",
+    "top": 20,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "Reading · Started 2 Oct ▾",
+    "top": 100,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "Your notes, 3 notes, open all notes",
+    "top": 172,
+    "h": 326,
+    "w": 350
+   },
+   {
+    "name": "Add note",
+    "top": 514,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "My review — A gentle book about doing less… ›",
+    "top": 627,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Book information ›",
+    "top": 683,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Ownership & condition ›",
+    "top": 739,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Book options ›",
+    "top": 795,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Remove from library",
+    "top": 883,
+    "h": 40,
+    "w": 175
+   }
+  ],
+  "sizes": {
+   "14": 3,
+   "16": 17,
+   "18": 1,
+   "19": 1,
+   "22": 1,
+   "24": 2
+  },
+  "small": [
+   "14px Quote · p. 42 · 14 Oct",
+   "14px Thought · 12 Oct",
+   "14px Question · p. 31 · 9 Oct"
+  ],
+  "docH": 979,
+  "banned": [],
+  "aboveFold": [
+   {
+    "name": "Back to Library",
+    "top": 20,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "Reading · Started 2 Oct ▾",
+    "top": 100,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "Your notes, 3 notes, open all notes",
+    "top": 172,
+    "h": 326,
+    "w": 350
+   },
+   {
+    "name": "Add note",
+    "top": 514,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "My review — A gentle book about doing less… ›",
+    "top": 627,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Book information ›",
+    "top": 683,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Ownership & condition ›",
+    "top": 739,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Book options ›",
+    "top": 795,
+    "h": 56,
+    "w": 350
+   }
+  ],
+  "smallTargets": [
+   {
+    "name": "Remove from library",
+    "top": 883,
+    "h": 40,
+    "w": 175
+   }
+  ]
+ },
+ "A3r-midnight": {
+  "controls": [
+   {
+    "name": "Back to Library",
+    "top": 20,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "Reading · Started 2 Oct ▾",
+    "top": 100,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "Your notes, 3 notes, open all notes",
+    "top": 172,
+    "h": 326,
+    "w": 350
+   },
+   {
+    "name": "Add note",
+    "top": 514,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "My review — A gentle book about doing less… ›",
+    "top": 627,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Book information ›",
+    "top": 683,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Ownership & condition ›",
+    "top": 739,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Book options ›",
+    "top": 795,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Remove from library",
+    "top": 883,
+    "h": 48,
+    "w": 175
+   }
+  ],
+  "sizes": {
+   "14": 3,
+   "16": 17,
+   "18": 1,
+   "19": 1,
+   "22": 1,
+   "24": 2
+  },
+  "small": [
+   "14px Quote · p. 42 · 14 Oct",
+   "14px Thought · 12 Oct",
+   "14px Question · p. 31 · 9 Oct"
+  ],
+  "docH": 987,
+  "banned": [],
+  "aboveFold": [
+   {
+    "name": "Back to Library",
+    "top": 20,
+    "h": 48,
+    "w": 48
+   },
+   {
+    "name": "Reading · Started 2 Oct ▾",
+    "top": 100,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "Your notes, 3 notes, open all notes",
+    "top": 172,
+    "h": 326,
+    "w": 350
+   },
+   {
+    "name": "Add note",
+    "top": 514,
+    "h": 48,
+    "w": 350
+   },
+   {
+    "name": "My review — A gentle book about doing less… ›",
+    "top": 627,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Book information ›",
+    "top": 683,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Ownership & condition ›",
+    "top": 739,
+    "h": 56,
+    "w": 350
+   },
+   {
+    "name": "Book options ›",
+    "top": 795,
+    "h": 56,
+    "w": 350
+   }
+  ],
+  "smallTargets": []
+ }
+}

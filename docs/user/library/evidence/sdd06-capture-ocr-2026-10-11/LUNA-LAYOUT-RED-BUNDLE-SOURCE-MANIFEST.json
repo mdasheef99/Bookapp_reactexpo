@@ -1,0 +1,134 @@
+﻿{
+    "root":  "C:\\Users\\LEGION\\Desktop\\Bookconnect4_library",
+    "branch":  "codex/library-cover-shelf",
+    "head":  "1b743a13328ec30280a524aaeea15e364fc3d6c5",
+    "scope":  "Local capture/OCR only; persistence held; four gates false",
+    "files":  [
+                  {
+                      "path":  "app/_layout.tsx",
+                      "status":  " M app/_layout.tsx",
+                      "sha256":  "6A7B0462814593003AF38973A33F975F70D41B3F9018040AB593A47499751A8B"
+                  },
+                  {
+                      "path":  "app/(tabs)/library/note-compose.tsx",
+                      "status":  "?? app/(tabs)/library/note-compose.tsx",
+                      "sha256":  "26AA6E22B0AC3D965FDE9ADB586CEB1E0D795AFC044567D1D412092238225225"
+                  },
+                  {
+                      "path":  "src/components/notes/ManualNoteUi.tsx",
+                      "status":  "?? src/components/notes/ManualNoteUi.tsx",
+                      "sha256":  "0CCB6D804CB24C633DBFBCBF32F7CFC5CC43700D94C51D543B39ED61F323FE7F"
+                  },
+                  {
+                      "path":  "src/components/notes/NoteCrop.tsx",
+                      "status":  "?? src/components/notes/NoteCrop.tsx",
+                      "sha256":  "C3D5E027D71E507AC9F6384A235ABB6BF8834C05E24644068DAE2DD0D29E5522"
+                  },
+                  {
+                      "path":  "src/features/books/notes/captureAdapter.ts",
+                      "status":  "?? src/features/books/notes/captureAdapter.ts",
+                      "sha256":  "437F248F88EC04068BDC07FBC3E90D28217E5D5E713A6783109B7A7BBD99DDCD"
+                  },
+                  {
+                      "path":  "src/features/books/notes/captureGeometry.ts",
+                      "status":  "?? src/features/books/notes/captureGeometry.ts",
+                      "sha256":  "65E327A1864AA713A714E2BABE180D452899E7403C84227DA0E3ACBA3DF49EF0"
+                  },
+                  {
+                      "path":  "src/features/books/notes/captureSession.ts",
+                      "status":  "?? src/features/books/notes/captureSession.ts",
+                      "sha256":  "2A4F7581E0E25496C80CE9FF06826B22BC0386C8123E19DD334F11B361433D66"
+                  },
+                  {
+                      "path":  "src/features/books/notes/composerBrowserHistory.ts",
+                      "status":  "?? src/features/books/notes/composerBrowserHistory.ts",
+                      "sha256":  "18750CC31F4949115F489D4F8F5DB7FA37F7430AA874728B43D9BD8FC19ABADD"
+                  },
+                  {
+                      "path":  "src/features/books/services/ocrService.ts",
+                      "status":  "?? src/features/books/services/ocrService.ts",
+                      "sha256":  "B94E0647030DDBC9336111996781DB59C3EB10CB61247DBD0716FE510BA74DAB"
+                  },
+                  {
+                      "path":  "src/features/books/notes/__tests__/captureAdapter.test.ts",
+                      "status":  "?? src/features/books/notes/__tests__/captureAdapter.test.ts",
+                      "sha256":  "BCA5505570B471B04F5EAB18F9C69C899A420E7D169BE64B68CD279CBA152B28"
+                  },
+                  {
+                      "path":  "src/features/books/notes/__tests__/captureSession.test.ts",
+                      "status":  "?? src/features/books/notes/__tests__/captureSession.test.ts",
+                      "sha256":  "DAD5D3EB988596C5733F1734FA7296B42AEA5B199120444EC976FD86515797D1"
+                  },
+                  {
+                      "path":  "src/features/books/notes/__tests__/composerBrowserHistory.test.ts",
+                      "status":  "?? src/features/books/notes/__tests__/composerBrowserHistory.test.ts",
+                      "sha256":  "4B2C2EB9213FC729352E3ED9E35181CDA056FAD947C403050C8A2BC2EED6957E"
+                  },
+                  {
+                      "path":  "src/components/notes/__tests__/NoteCaptureJourney.test.tsx",
+                      "status":  "?? src/components/notes/__tests__/NoteCaptureJourney.test.tsx",
+                      "sha256":  "5FEE8DC78A160C3E57486C54847F293C602EEF4A5B729890A0C62414707D5F55"
+                  },
+                  {
+                      "path":  "tsconfig.library-notes.json",
+                      "status":  "?? tsconfig.library-notes.json",
+                      "sha256":  "1E393B06E1B2CD3A2C4E3EB18D67B42547119372F17493316ACC6CBB5D1B3C98"
+                  },
+                  {
+                      "path":  "docs/user/library/TRACKER.md",
+                      "status":  " M docs/user/library/TRACKER.md",
+                      "sha256":  "0154CC98084DEF94CC54A8CDAA27FA3080DABF961F66CBDD900DF97562F394F1"
+                  },
+                  {
+                      "path":  "docs/user/library/SDD-06-after-book-entry-ui.md",
+                      "status":  "?? docs/user/library/SDD-06-after-book-entry-ui.md",
+                      "sha256":  "0D6A59065E2BCC10D0247D4588FFABDF59EEF17FDD7FFFD52A319FBDA7C11C4E"
+                  },
+                  {
+                      "path":  "docs/user/library/INTERACTION-MAP.md",
+                      "status":  " M docs/user/library/INTERACTION-MAP.md",
+                      "sha256":  "C476A76B9F8246A08065BFEEB71BCDFA7C37E2D9192711C9C4B7DE55FE321DA0"
+                  },
+                  {
+                      "path":  "docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md",
+                      "status":  " M docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md",
+                      "sha256":  "A7D73A49E53B3828B6E2AC445E714BAD5D8D755E436932262445025DBFBD901B"
+                  },
+                  {
+                      "path":  "docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md",
+                      "status":  " M docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/trackers/02-implementation-and-verification.md",
+                      "sha256":  "05319F97D9D323E7B8B005B4FA335566B601D45B5FEE6913A46B3C01A43BFE4B"
+                  },
+                  {
+                      "path":  "src/components/notes/__tests__/CategoryPicker.web-semantics.test.tsx",
+                      "sha256":  "B7E031DF86585EE4C13744F41877531190D4D02AA150C45AE17EA793BE28559B",
+                      "status":  "?? src/components/notes/__tests__/CategoryPicker.web-semantics.test.tsx"
+                  }
+              ],
+    "newEvidenceDirectory":  "docs/user/library/evidence/sdd06-capture-ocr-2026-10-11",
+    "temporaryExport":  ".tmp/sdd06-capture-web",
+    "temporaryNativeProofRouteRemoved":  true,
+    "recordedUtc":  "2026-10-11T11:41:51.5350814Z",
+    "contextFiles":  [
+                         {
+                             "path":  "package.json",
+                             "sha256":  "0E7EF78C031C9B001CF957D95D76C15C0EC30DD94C41C08CA97D78B88D9F5E98"
+                         },
+                         {
+                             "path":  "package-lock.json",
+                             "sha256":  "4056031EDABE8A39B239DF32C3B2C467E56A872E4C3706C4E79BF868234DE1AD"
+                         },
+                         {
+                             "path":  "app.config.js",
+                             "sha256":  "47B52553125C40EDD4A570659B87F6101037D1A46224DAD6B769A9E529016AEE"
+                         },
+                         {
+                             "path":  "app.json",
+                             "sha256":  "1F5E1104AFDADCFF29B3E2EC0441AC012C280B6617AC64C0EF9588564B5520DD"
+                         },
+                         {
+                             "path":  "src/features/books/notes/manualNotesGateway.ts",
+                             "sha256":  "B8744B2D73B83278EE125CFAB0F3789EA887EB2F57E98B8AFA07EBDDCAACC37E"
+                         }
+                     ]
+}

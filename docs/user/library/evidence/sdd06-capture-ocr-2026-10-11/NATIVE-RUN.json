@@ -1,0 +1,49 @@
+{
+  "recordedUtc": "2026-10-11T09:28:30.1646049Z",
+  "stage": "Post-Sol correction source",
+  "kind": "Android emulator; synthetic fixtures; real manipulator/ML Kit/session; fixture picker only",
+  "emulator": "emulator-5556",
+  "avd": "BookConnect_Pixel5_API36",
+  "package": "com.bookconnect.library.dev",
+  "api": 36,
+  "abi": "x86_64",
+  "server": "session-owned Metro 8083 in this checkout",
+  "diagnosticSha256": "890307B86BEC21C79FD10D8DBCC0EB6C2C16FE243D25072E8BF18EE652FC80FA",
+  "source": [
+    {
+      "path": "src/features/books/notes/captureGeometry.ts",
+      "sha256": "65E327A1864AA713A714E2BABE180D452899E7403C84227DA0E3ACBA3DF49EF0"
+    },
+    {
+      "path": "src/features/books/notes/captureAdapter.ts",
+      "sha256": "437F248F88EC04068BDC07FBC3E90D28217E5D5E713A6783109B7A7BBD99DDCD"
+    },
+    {
+      "path": "src/features/books/notes/captureSession.ts",
+      "sha256": "2A4F7581E0E25496C80CE9FF06826B22BC0386C8123E19DD334F11B361433D66"
+    },
+    {
+      "path": "src/features/books/services/ocrService.ts",
+      "sha256": "B94E0647030DDBC9336111996781DB59C3EB10CB61247DBD0716FE510BA74DAB"
+    },
+    {
+      "path": "app/_layout.tsx",
+      "sha256": "6A7B0462814593003AF38973A33F975F70D41B3F9018040AB593A47499751A8B"
+    },
+    {
+      "path": "src/features/books/notes/composerBrowserHistory.ts",
+      "sha256": "18750CC31F4949115F489D4F8F5DB7FA37F7430AA874728B43D9BD8FC19ABADD"
+    }
+  ],
+  "resultSha256": "64D5CCF62AD03E6192F742A66F4688BF7B983BA2351EB0FF931B22E4FAA53AE2",
+  "pixelSha256": "0822A25380DA342CBC74E86BB776E3CE7788A1AA0D86A77D9F5291710F184BAB",
+  "cancellation": "After actual native-adapter dispatch; adoption canceled, crop retained, subsequent recognition then checkpoint restoration pass; computation may continue",
+  "mutations": "Only owned emulator settings and app-private synthetic diagnostic files; no shared database/Storage/account/provider writes",
+  "limitations": [
+    "No system camera/picker UI",
+    "No native keyboard/TalkBack/large text/hardware Back acceptance",
+    "No physical device/iOS/multilingual acceptance",
+    "No real save/persistence proof"
+  ],
+  "temporaryRoutesRemoved": true
+}

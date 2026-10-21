@@ -1,0 +1,39 @@
+‹ Book details
+Notes
+Many Notes Fixture Book
+✓ All
+Quote
+Thought
+Takeaway
+Action
+Question
+Couldn't load your notes.
+Retry
+Add note
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]

@@ -1,0 +1,9 @@
+{
+  "kind": "Local export source inspection; not browser QA",
+  "diagnosticAbsent": true,
+  "correctedCapturePresent": true,
+  "fourWriteGatesFalse": true,
+  "entryPath": ".tmp/sdd06-capture-web/_expo/static/js/web/entry-737716bc7a3490106854ce8e88dc0f66.js",
+  "entrySha256": "16E21C51F7EBA46EB51F14D372431C1271A564463F7B538E36F805BBDC466BCD",
+  "sourceSnapshotSha256": "415BF0DB470369BA3CF03DD5AA801D535A2D0EAD4D342AD13CBA791B21FC634D"
+}

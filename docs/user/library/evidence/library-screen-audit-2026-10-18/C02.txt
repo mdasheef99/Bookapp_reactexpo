@@ -1,0 +1,56 @@
+
+Library
+Zero Notes Fixture
+Zed Empty
+
+Want to Read
+
+Reading
+
+Completed
+Add note
+
+Notes
+0
+View All →
+
+No notes yet. Add a note for this book.
+
+Saved Pages
+
+No saved pages yet.
+My review
+
+Book options
+
+Community reviews
+
+Book information
+
+⏷
+⏷
+My Library
+⏷
+⏷
+Exchange
+⏷
+⏷
+Marketplace
+⏷
+⏷
+Clubs
+⏷
+⏷
+Profile
+⏷
+⏷
+marketplace/cart
+⏷
+⏷
+marketplace/requests/index
+⏷
+⏷
+marketplace/book/[listingId]
+⏷
+⏷
+marketplace/requests/[requestId]

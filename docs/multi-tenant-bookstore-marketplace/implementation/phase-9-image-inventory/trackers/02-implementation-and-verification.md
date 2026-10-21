@@ -6256,3 +6256,100 @@ Date/session: 2026-10-17, Claude Code session in the codex/edition-picker worktr
 ## 2026-10-17 - PR #16 merged; Render metadata worker deployed
 
 PR #16 merged by the Owner as f376c26. Render metadata worker deployed from main (dep-db9mtcijnfac73ct2op0, live 12:50:09Z, /health 200). Pre-deploy: clean build PASS, worker integration 14/14, merged-tree Jest 3,650 passed / 0 failed, CI 3/3. Rollback target 76348f3. Evidence in tracker 37 §68.
+## 2026-10-02 — Scoped Library UI verification log
+
+This is continuity evidence for the separately authorized Library UI checkpoint;
+it does not advance or reopen a Phase 9 work unit. Owning acceptance and raw
+evidence: [Library SDD-05 §14](../../../../user/library/SDD-05-library-reading-room.md).
+
+- Implemented units 1–2: coherent Library phase colors/fonts, labeled/persisted
+  view selection, visible catalogue actions, wrapping filters and actual count
+  above the collection, walnut grain/bevel/contact shading. Existing page-based
+  geometry, identity, routing and reduced-motion contracts are preserved.
+- RED controls/material assertions: 3 failed/11 passed; appearance module
+  missing before implementation. Final focused Library checks: **47 tests /
+  6 suites PASS** after fixing one unsupported test matcher. Web export **PASS**.
+  Full tsc: **36 existing errors outside Library / zero Library errors**.
+- Browser review: 320×844, 390×844 and 1280×720; filter wrapping and 44px targets,
+  same Shelf/List page appearance, preference reload, keyboard selection,
+  empty/single shelves, unchanged real book metrics, detail/return and catalogue
+  destinations. The existing catalogue offline state prevented provider search;
+  no query text or Add/save was submitted. Default viewport and All/Shelf restored.
+- Served entry matches this worktree's export. Package/lockfile hashes match
+  the pre-edit snapshot. No database/business-data/Storage write, direct database
+  audit, migration, dependency change, stage, commit, push or deployment occurred.
+- Native touch/haptics and live overflow remain unverified by this web check.
+  Library's next action is capture review before selecting subsequent polish;
+  Phase 9 M46/canary status and its post-canary authorization boundary are unchanged.
+- Continuity validator PASS: 195 definitions, zero duplicates/missing traceability,
+  76 Markdown files and 55 required phase files. Repository diff check PASS;
+  staged diff empty. Library/source/evidence edits remain uncommitted.
+
+## 2026-10-03 — Independent Library review evidence
+
+- Authorized review-only scope: current vertical shelf, page-based proportions/support, first aesthetics checkpoint. Read actual modified/untracked components and related service/hook/test paths. [Review and complete evidence](../../../../user/library/INDEPENDENT-REVIEW-20261003.md).
+- Findings: List same-orientation ScrollView nesting; four base spine contrast failures; reachable wishlist/status count mismatch; brush band extends above visible short books; hitSlop does not prove 44px web targets. No application fixes made. Deferred designs remain pending.
+- Own exact-path Jest **6 suites / 47 tests PASS**. Own tsc **36 existing non-Library errors**, diagnostics identical to previous checkpoint. HTML/JS readback equals local dist and previous entry SHA256. No fresh export run.
+- Browser normal/320/390/430/1280, Shelf/List all four filters, empty/single, persistence reload, keyboard Shelf/Dune, detail return, Add/Search offline catalogue routes, below-shelf scroll. Pure 0/1/40/1000/invalid-page/count/contrast/brush fixtures; actual-component static 40-book overflow with mocked effects. Native/device refresh/performance/gestures unverified. All/Shelf/default viewport restored, temporary fixture tab/server closed.
+- No app source, test baseline, package, migration, provider enrichment, direct DB audit, Supabase/Storage/business-data write, stage/commit/push/deploy/apply. Only review/evidence/continuity docs changed; previous user work preserved.
+- Library next action: present R1–R5 and select a bounded correction scope. Phase 9 M46/main-integrated handoff and next-work-unit authorization gate unchanged; DOC-13/ACTIVE remain unchanged.
+- Closeout: Phase 9 continuity PASS (195 definitions, zero duplicates/missing traceability, 76 Markdown files / 55 required files); document-size notices advisory. `git diff --check` PASS, staged diff empty. Scoped review/documentation work is uncommitted.
+
+## 2026-10-03 — Scoped Library correction verification
+
+- Owning scope: [Library SDD-05 §16](../../../../user/library/SDD-05-library-reading-room.md), LIB-RC01–05; one bounded List owner/refresh, spine contrast, count/filter parity, brush height, accessible book chooser. Physical shelf dimensions/order/support/routes remain. The previous independent report is preserved as historical evidence.
+- New regression RED **11 failed / 49 passed**; final exact-path focused Library Jest **72 tests / 8 suites PASS**. Final Expo web export PASS; served HTML/JS equals local dist (`entry-6b59ba95a006a51221f5b511c7441570.js`, SHA-256 `A1EE0A8FEAFB012EA4C0EBB037FE9B02682C945666100B4B28F3C63867620190`). Full tsc **36 unchanged non-Library errors / zero Library errors**. Raw logs/readback in [correction evidence](../../../../user/library/correction-evidence-20261003/).
+- Final-bundle browser: 320/390/430 phones and 1280 desktop, both modes/all filters/counts, List persistence, selected-mode focus after remount, named chooser keyboard trap/Escape/focus return, independent ≥74.8px activation rows and exact Dune detail ID/return. All/Shelf/default viewport restored. No catalogue query or business-data action submitted.
+- Isolated actual-component 1,000-book simulated collection, with mocked theme/fonts/images/icons and no auth/service/live data: scroll to final book, exact fixture ID activation, mounted List window observed at most 73 rows, bounded chooser and Golden/daylight filter/palette checks. This establishes bounded web rendering, not native performance. Temporary fixture tab/port-19008 server closed. Native refresh/windowing/gesture cancellation/touch/sound/haptics/reduced motion remain NOT_RUN.
+- Earlier Library/OCR/vault/package changes preserved; package hashes match the pre-correction snapshot. No Supabase MCP/direct DB audit, provider enrichment, database/Storage/business-data write, migration, dependency change, stage/commit/push/deploy/apply. Changes are local and uncommitted on `codex/library-cover-shelf`.
+- Library next action: independent R1–R5 rereview against §16 and fresh evidence before another polish unit. Final acceptance remains open. Phase 9 M46/main-integrated handoff, active unit and next-work-unit authority gate unchanged; DOC-13/ACTIVE remain unchanged. Continuity/diff closeout is recorded after final documentation validation.
+- Correction closeout: Phase 9 continuity PASS (195 definitions, zero duplicates/missing traceability, 76 Markdown files / 55 required files); existing document-size notices advisory. Repository `git diff --check` PASS, staged diff empty. Source/tests/docs/evidence remain uncommitted; exact next Library action remains independent correction rereview.
+
+## 2026-10-03 — Scoped Library P3 entrance verification
+
+- Owning contract: [SDD-05 §17 / LIB-RC02](../../../../user/library/SDD-05-library-reading-room.md). Removed ancestor opacity fade; retained 20px/800 ms entrance translation and initialized reduced-motion translation to zero. Only the existing Shelf component and five regression cases changed in application/test scope.
+- RED **4 failed / 1 passed**, 16 unrelated cases skipped. Final exact-path Jest **77 tests / 8 suites PASS**; fresh Expo export PASS. HTTP HTML/JS matches `entry-bf18b5746c9237d3c4d481aaab3656f4.js`, SHA-256 `C80A3333219FE642157F608497E2315B1F9D63CC094448DDF723A66591BCAF1A`; package hashes unchanged. Full tsc **36 unchanged diagnostics outside Library**. [Raw evidence](../../../../user/library/fade-correction-evidence-20261003/).
+- Actual authenticated tab reloaded onto the verified entry, eight existing entries. Sixteen DOM readings during movement keep effective opacity 1. Both modes at 320/390/430 and desktop, all filters at 390, chooser keyboard trap/Escape/focus return at all widths, persisted List reload, real scroll-owner movement and keyboard Dune detail/return pass within evidence. Live Science of Dune CSS pair is 5.80:1. The page-scope timing API was unavailable; Node-timestamped DOM readings were used. Synthetic PageDown did not move List; actual browser scrolling did. Native refresh/gesture/performance/assistive-technology verification remains NOT_RUN.
+- Preview HTTP initially refused; restarted the existing Library server hidden (PID 15372) and left it serving. Original All/List/default viewport/top scroll restored; no fixture tab/server added. Independent reports remain historical and unchanged.
+- No database/Storage/business-data write, Supabase audit, provider enrichment, migration, dependency change, stage/commit/push/external deploy/apply. Earlier workspace changes preserved. Marketplace Phase 9/M46 status, active unit, DOC-13/ACTIVE and authority unchanged. Library next action: independent P3 correction rereview against §17 and fresh authenticated evidence before further polish. Final acceptance remains open; continuity/diff closeout follows validation.
+- Scoped closeout: continuity PASS (195 definitions, zero duplicates/missing traceability, 76 Markdown files / 55 required files); size notices advisory. Repository diff check PASS, staged diff empty. Source/tests/docs/evidence remain uncommitted. No external data/service mutation, publication or application; exact next action remains the independent P3 correction rereview.
+
+## 2026-10-03 — Scoped Library Unit 3 verification
+
+- Library-owned scope only: SDD-05 §18 improves vertical spine title sizing/edge definition and adds a dynamic full-title/available-author caption for spine hover, keyboard focus, and press. It reuses the existing chooser and detail ID; no new data, query, route, schema, or dependency.
+- Focused Shelf, chooser and Home integration Jest: **34/34 tests across 3 suites PASS**. Fresh Expo web export rendered in the authenticated local app; keyboard focus showed the saved title/author caption, and tap opened the existing detail route before Back restored All/Shelf. `npx tsc --noEmit` still reports **36 diagnostics outside Library**, none in Library.
+- Native press/reduced-motion rendering, assistive-technology behavior, performance, and standalone pointer-hover verification remain NOT_RUN. No database/Storage/business-data mutation, migration, dependency change, stage, commit, push, or deployment.
+- Phase 9/M46, DOC-13/ACTIVE, active marketplace work unit and authority are unchanged. Library's current handoff is recorded in its tracker; user deferred the independent P3 rereview and next chooses Unit 4 or Horizontal Stacks.
+
+## 2026-10-03 — Scoped Library vertical realism checkpoint
+
+The user-approved personal Library pass is recorded in SDD-05 section 19 and the Library tracker. Two existing components and their geometry regression refine board thickness, contact shadows and rounded spine shading. Cabinet height remains 440px; book metrics and routes remain. Focused Jest: 63 tests / 3 suites PASS; fresh Expo web export PASS. Authenticated browser checks at 320/390px and desktop show grounded rows and no page horizontal overflow. Native and full TypeScript checks were NOT_RUN in this pass. Earlier workspace changes remain; this pass is uncommitted. No database/Storage mutation, migration, stage, commit, push or deployment occurred. Phase 9/M46, the active marketplace unit, DOC-13/ACTIVE and authority are unchanged. Library next action: user reviews this realism checkpoint before selecting another refinement.
+
+## 2026-10-03 — Scoped Library Arrange design continuity
+
+- Library-owned design only: [SDD-05 §20](../../../../user/library/SDD-05-library-reading-room.md#20-arrange-shelf-shared-order-separate-dragging-2026-10-03), LIB-ARR01–05, records shared Library-ID ordering and draft/one-step Undo/Save/Cancel; each Shelf layout owns its drag/drop geometry and edge scrolling. Vertical has one shared track; horizontal remains planned with independent tier tracks. No universal drag engine is introduced.
+- Routing/handoff updates are in the user README, Library tracker, UI/UX inventory, interaction map, and Horizontal Shelf section 8. Storage/sync, filtered editing, and new-entry/membership policies remain unresolved before implementation. The source still uses newest-added-first ordering; no Arrange controller/control/storage or horizontal app component was added.
+- Earlier accepted vertical source was committed at the user's request as `60ac8dd`, containing only two components and the geometry test. Prior verification remains historical; no new app tests/export/type/browser/native checks ran for this documentation task. All Arrange acceptance remains NOT_RUN. Documentation validator/link/diff results are recorded in the Library tracker after execution.
+- Current Library unit is `library_arrange_shared_order_design_recorded_implementation_pending`; exact next step is the §20.4 design choices under implementation authority, with mandatory horizontal read-through. No source/dependency change, live schema audit, migration, database/Storage mutation, stage/commit/push/deployment/application occurred in this documentation task. Existing changes remain preserved. Marketplace Phase 9/M46, DOC-13/ACTIVE and authority are unchanged.
+
+## 2026-10-03 — Scoped Library vertical Arrange implementation
+
+- Explicit user implementation authority plus confirmed device-only persistence supersedes the design-only Library handoff. [SDD-05 §§20–21](../../../../user/library/SDD-05-library-reading-room.md#20-arrange-shelf-shared-order-separate-dragging-2026-10-03) owns shared Library-ID ordering/draft/one-step Undo/Save/Cancel, account-scoped AsyncStorage and separate vertical drop/edge geometry. Horizontal presentation and cross-device sync remain pending/deferred.
+- Completed controls, gesture integration, keyboard/chooser selection and competing action guards. Explicit Library Jest: **100 tests / 11 suites PASS**; TypeScript: zero Library errors / 36 unchanged elsewhere; fresh export and served entry hash PASS. Authenticated app exercises drag/Undo/Cancel/Save/reload/keyboard; isolated 80-book actual-source fixture reaches an off-screen destination and preserves IDs. Exact evidence/limits are in the [Library tracker](../../../../user/library/TRACKER.md) and its Arrange evidence README. Native/assistive/performance checks remain NOT_RUN.
+- Read-only MCP verified project `ahntbtktjjmvfosgkmgn` / `Bookconnect_reactexpo` and inspected Library columns; no schema migration, Supabase Database/Storage write or new dependency. Browser verification wrote only local order preferences and restored the original eight-ID order. Temporary fixture tab/server is closed.
+- Current Library unit: `library_vertical_arrange_web_checkpoint_ready_for_user_review`; exact next action: review this checkpoint with the user before further feature authorization; horizontal sessions reuse the existing shared source with their own geometry. Source/docs/evidence are uncommitted; no staging/commit/push/deploy/application. Earlier work is preserved. Marketplace Phase 9/M46, DOC-13/ACTIVE, global next action and authority remain unchanged.
+
+## 2026-10-04 — Bounded Library Arrange correction verification
+
+- Independent P1 tier-boundary mapping and P2 canceled-draft save-message findings were reproduced before correction: five new regression cases failed; 16 existing tests passed in the two affected suites. The P2 correction honors intentional membership cancellation rather than restoring stale IDs. [SDD-05 §21.1](../../../../user/library/SDD-05-library-reading-room.md#211-bounded-independent-review-corrections-2026-10-04) owns the correction; [Library tracker](../../../../user/library/TRACKER.md) owns its closeout.
+- Final focused Jest: 54/54 tests across 5 suites PASS (order/projection, state/storage, drag lifecycle, Shelf, Home). Tests apply the actual contiguous row split after moves for 2/5/6 entries, both boundary directions and ID preservation; the pending-save race covers addition/removal and fresh Save after cancellation. Existing Node `punycode` deprecation warning persists.
+- Fresh Expo web export PASS using `--max-workers 0` after the default worker spawn failed with EPERM. Served/local bundle `entry-d6930e5d7d9654c6b9181a8e92bf3e1d.js` SHA-256 matches `37A9E53E62BC96AFC672A903035DBFBA5205CB9E718945276D83884D1DE32676`. No fresh browser gesture or native verification ran; the open tab may require reload. Build/type/validator closeout is recorded in the Library tracker.
+- Work unit `library_arrange_bounded_review_corrections_stop`: report and stop per user request. Two source files, two tests and continuity documentation changed; all earlier work is preserved and uncommitted. No database/Storage/local-preference mutation, migration/dependency, stage/commit/push/external deployment/application. Marketplace Phase 9/M46, DOC-13/ACTIVE and authority remain unchanged.
+
+## 2026-10-04 — Scoped Library shelf contact/depth visual pass
+
+User authorized a focused plan and implementation. LibraryShelf adds noninteractive per-book footprints and stronger board top/underside light falloff within unchanged book/cabinet/row geometry. SDD-05 §22 and the Library tracker own behavior, capture and handoff. Existing Shelf/drag tests: 26/26 across two suites PASS; fresh web export PASS. Authenticated browser loaded entry-bbb219bcfc8b2d6b26db027cff288cf3.js; 440px cabinet/eight entries preserved, live selected-book boundary drags both directions and Cancel PASS. No Save/preference/database/Storage write. Full TypeScript/native/performance checks were not rerun. Current scoped unit: library_shelf_contact_depth_ready_for_user_review; next action: user review of the capture. Source/docs/capture remain uncommitted alongside preserved earlier work. No dependency, migration, stage/commit/push/external deployment/application. Marketplace Phase 9/M46, DOC-13/ACTIVE, active marketplace unit and authority remain unchanged. Documentation validation/diff closeout is recorded in the Library tracker.
+
+## 2026-10-04 — Library local commit authorization
+
+The user accepted and explicitly authorized committing the reviewed Arrange, corrected drop/save paths and shelf-contact/depth checkpoint. The scoped commit containing this handoff includes application/test source and Library shelf documentation/evidence; OCR/vault/notes/dependencies/services/migrations remain excluded. Prior app verification is recorded in the Library tracker; this commit transaction checks staged scope, whitespace and documentation continuity. No additional app/native validation is claimed. No push, external deployment, database/Storage/preference write or migration/application. Current Library unit: library_arrange_shelf_local_commit_checkpoint; next action: user selects the next Library unit. Marketplace Phase 9/M46, DOC-13/ACTIVE and authority remain unchanged.
