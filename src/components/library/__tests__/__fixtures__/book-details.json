@@ -106,6 +106,9 @@
                           }
                         ],
                         "props": {
+                          "accessible": false,
+                          "aria-hidden": true,
+                          "importantForAccessibility": "no-hide-descendants",
                           "style": {
                             "backgroundColor": "<colour>",
                             "borderRadius": 4,
@@ -117,7 +120,8 @@
                             },
                             "shadowOpacity": 0.12,
                             "shadowRadius": 8
-                          }
+                          },
+                          "testID": "book-cover-frame"
                         },
                         "type": "View"
                       },
@@ -1233,6 +1237,9 @@
                           }
                         ],
                         "props": {
+                          "accessible": false,
+                          "aria-hidden": true,
+                          "importantForAccessibility": "no-hide-descendants",
                           "style": {
                             "backgroundColor": "<colour>",
                             "borderRadius": 4,
@@ -1244,7 +1251,8 @@
                             },
                             "shadowOpacity": 0.12,
                             "shadowRadius": 8
-                          }
+                          },
+                          "testID": "book-cover-frame"
                         },
                         "type": "View"
                       },
@@ -3641,6 +3649,9 @@
                           }
                         ],
                         "props": {
+                          "accessible": false,
+                          "aria-hidden": true,
+                          "importantForAccessibility": "no-hide-descendants",
                           "style": {
                             "backgroundColor": "<colour>",
                             "borderRadius": 4,
@@ -3652,7 +3663,8 @@
                             },
                             "shadowOpacity": 0.12,
                             "shadowRadius": 8
-                          }
+                          },
+                          "testID": "book-cover-frame"
                         },
                         "type": "View"
                       },

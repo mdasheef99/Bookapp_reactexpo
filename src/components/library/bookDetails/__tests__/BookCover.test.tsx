@@ -22,3 +22,15 @@ describe('Flow A fix round 1 cover', () => {
     expect(StyleSheet.flatten(ui.getByTestId('book-cover-row').props.style).flexDirection).toBe('row');
   });
 });
+
+describe('Book Details cover semantics', () => {
+  it('hides a real cover from assistive tech on web, since expo-image renders no alt for it', () => {
+    const createDOMProps = require('react-native-web/dist/cjs/modules/createDOMProps') as
+      (element: string, props: Record<string, unknown>) => Record<string, unknown>;
+    const ui = render(<BookCover title="Dune" authors={['Frank Herbert']} coverUrl="https://example.com/dune.jpg" />);
+    const frame = ui.getByTestId('book-cover-frame', { includeHiddenElements: true });
+    expect(createDOMProps('div', frame.props)['aria-hidden']).toBe(true);
+    expect(frame.props.importantForAccessibility).toBe('no-hide-descendants');
+    expect(ui.getByRole('heading', { name: 'Dune' })).toBeOnTheScreen();
+  });
+});

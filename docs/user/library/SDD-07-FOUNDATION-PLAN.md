@@ -363,7 +363,9 @@ Builds run in worktree `Bookconnect4_fu1a`, branch `sdd07/fu1a-fu3`, orchestrate
 
 **Active work unit:** `sdd07_flow_d_design`.
 
-**Next exact action (2026-10-21, after Flow D):** the owner picks the next library unit: the Book Details cover alt fix (`BookCover.tsx`), the `search.tsx` presentation split, or TB-1 re-scoped against `main`. Flow D is built, verified and merged to `main` (SDD-07 §13, D07-20, D07-21). See the TRACKER top entry.
+**Next exact action (2026-10-21, after the Flow D follow-ups):** the owner decides whether to open a fresh tab-bar unit from `main` (icons, theme colours, contrast, 200% zoom; `main` already has the five tabs — SDD-07 §13.7) or pick another library unit. The cover alt fix and the `search.tsx` split are merged to `main`. See the TRACKER top entry.
+
+**Earlier next action (2026-10-21, after Flow D, done):** the owner picks the next library unit: the Book Details cover alt fix (`BookCover.tsx`), the `search.tsx` presentation split, or TB-1 re-scoped against `main`. Flow D is built, verified and merged to `main` (SDD-07 §13, D07-20, D07-21). See the TRACKER top entry.
 
 **Earlier next action (2026-10-21, Flow D, done — merged to `main`):** the lead finalizes the Flow D design (`.spec/FLOWD-DESIGN.md` in `Bookconnect4_flowd`, branch `sdd07/flow-d`, base `main` `60a6b6c`) under the owner's delegation and shows the owner a summary; then the Codex build. Commit and push only on owner approval. See the TRACKER top entry.
 

@@ -55,7 +55,9 @@ export function BookCover({ title, authors, coverUrl }: BookCoverProps) {
       }}
       style={[styles.coverRow, stacked && styles.stacked]}
     >
-      <View style={[styles.shadow, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}>
+      {/* The heading names the book, so the cover is decorative; expo-image drops an empty alt on web. */}
+      <View testID="book-cover-frame" accessible={false} aria-hidden importantForAccessibility="no-hide-descendants"
+        style={[styles.shadow, { backgroundColor: colors.bgCard, shadowColor: colors.shadow }]}>
         {coverUrl ? (
           <Image source={{ uri: coverUrl }} accessible={false} style={coverStyle} contentFit="cover" />
         ) : (

@@ -114,7 +114,8 @@ to `payment_ready`. No payment, pickup or settlement.
 
 Personal library, book search and reading notes. `booksService` searches Google
 Books and Open Library and reads/writes `books` and `user_books`;
-`notesService` handles notes; `utils/libraryShelf.ts` supplies the shelf
+`notesService` handles notes; `hooks/useSearchBookActions.ts` holds the
+search result actions; `utils/libraryShelf.ts` supplies the shelf
 filters and counts, and `src/components/library/LibraryShelf.tsx` renders the
 shelf.
 UI is in `src/components/library/` (library catalogue search components in

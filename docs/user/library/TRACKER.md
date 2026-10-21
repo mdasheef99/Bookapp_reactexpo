@@ -1,5 +1,16 @@
 # Library Tracker
 
+**SDD-07 follow-ups after Flow D — cover alt and `search.tsx` split — built, reviewed, verified and merged to `main` — 2026-10-21:** `sdd07_followups_on_main`. Branch `sdd07/followups`, worktree `Bookconnect4_flowd`, base `main` `e252513`. Full record: SDD-07 §13.7.
+- **Owner instruction (2026-10-21):** "ok do 1 , but see if you can split the serach using opencode models"; then approved the browser check, docs, commit and push.
+- **What the owner would notice:** nothing visual. Screen readers no longer meet an unlabelled cover picture on Book Details; the search screen code is in smaller files with identical behaviour.
+- **Built:** cover fix by the lead (revert-proven test; Book Details render fixture regenerated, only the frame props differ). Search split by Muse Spark 1.3 xhigh (opencode, own worktree `Bookconnect4_split`, ~17 min) from the lead's brief; `search.tsx` 672 → 518 lines plus four new files; the lead extended the strict-list test and read every moved line.
+- **Verification:** full Jest 417/418 suites, 5083 tests (4 skipped); tsc 0; `lint:library` 0 errors, 118 warnings; ratchet 93/0/0 unchanged; axe 27/27. Real-data web check (Haiku, read-only) PASS; the console had only connection-loss and token-refresh errors from the browser going offline. Focused Luna `max` review PASS, no findings, fingerprint unchanged.
+- **Found on the way:** Metro would not start because the stalled opencode reviewers had left ~129k snapshot files in `.spec/tmp/xdg-*`; deleted. Give opencode reviewers an `XDG_DATA_HOME` outside the worktree.
+- **TB-1:** `main` already shows the five tabs (count and labels done); icons, theme colours/contrast and the 200%-zoom check remain — a fresh small unit from `main`, not the parked branch (SDD-07 §13.7).
+- **Database/storage mutations:** none. Real `.env`/`.env.local` copied for the web check, git-ignored, deleted at cleanup.
+- **Committed and pushed:** to `main` (owner approved 2026-10-21).
+- **Next exact action:** the owner decides whether to open the fresh tab-bar unit (icons, theme colours, contrast, 200% zoom; app-wide, clubs heads-up) or pick another library unit.
+
 **SDD-07 Flow D (Remaining) built, reviewed, verified and merged to `main` — 2026-10-21:** `sdd07_flow_d_on_main`. Built on `sdd07/flow-d`, worktree `Bookconnect4_flowd`, base `main` `60a6b6c`. Full record: SDD-07 §13, decisions D07-20 and D07-21.
 - **Owner decisions (2026-10-21):** move the library-only search components into `src/components/library/search/` as a separate pure-move commit; header title "My Library"; hide "Scan text" on the web composer choose step (new decision amending D07-18 for web); delete the unused `LibraryPillNav`; include the home-shelf debounce test (F12); Flow D design delegated to the lead, who shows the owner a summary before the build.
 - **Committed (owner approved):** `a725350` — `ManualEntryModal`, `SwipeableBookCard`, `FilterModal`, `SortModal`, `RecentSearches`, `SearchSuggestions` (+ the FilterModal test) moved to `src/components/library/search/`; barrel, import and test-mock updates only. `SearchBar`, `SkeletonCard`, `BookCard` and the other shared search components unchanged. The moved files entered the `lint:library` scope, so the ratchet baseline was re-recorded for the larger scope: raw-style 235 → 344, accessible-name 1 → 4 (no new violations; Flow D lowers them). `lint:library` errors 1 → 2: the second is a pre-existing `react/no-unescaped-entities` in `ManualEntryModal.tsx:60`, now in scope. Verification: Jest 73/73 suites, 1325 tests (library, notes, search, books, marketplace components, test-utils, eslint-rules); scoped tsc 0; whole-project tsc 0.
@@ -12,7 +23,7 @@
 - **Residual:** Book Details cover (`BookCover.tsx`) has the same `expo-image` empty-alt gap on real data; shared `SearchBar` "Clear search" is 44 px; `search.tsx` 671 lines (presentation split candidate); `BookButton` outside `STRICT_FILES`; exchange-listing delete copy; TB-1 parked.
 - **Database/storage mutations:** none. Real `.env`/`.env.local` copied for the web check (git-ignored, never committed); deleted at cleanup on the owner's word.
 - **Committed and pushed:** Flow D code + docs on `sdd07/flow-d`, pushed to `main` (owner approved 2026-10-21).
-- **Next exact action:** the owner picks the next library unit: the Book Details cover alt fix (`BookCover.tsx`), the `search.tsx` presentation split, or TB-1 re-scoped against `main`.
+- **Next action then:** the owner picked the cover fix and the `search.tsx` split (entry above).
 
 **SDD-07 Flow C (Capture) built, reviewed, verified and merged to `main` — 2026-10-20:** `sdd07_flow_c_on_main`. Built on `sdd07/flow-c`, worktree `Bookconnect4_flowc`, base `main` `0a083f1`; fast-forwarded to `main` at `60a6b6c` (owner approved). Full record: SDD-07 §12, decision D07-19.
 - **Design:** the owner delegated it to the lead ("go with your recommendation, you yourself write the sdd"); finalized in `.spec/FLOWC-DESIGN.md` (never committed).

@@ -1,5 +1,7 @@
 # SDD-07 tab-bar unit — TB-1 (decision D07-01)
 
+**Update 2026-10-21:** `main` already shows the five tabs (the marketplace routes now sit under one folder), so the tab-count/label goal is met there; icons, theme colours/contrast and the 200%-zoom check are still open. This parked build targets the old layout and is not to be revived as built; see SDD-07 §13.7.
+
 **Status:** BUILT, REVIEWED and PARKED, 2026-10-19. **Uncommitted** on `sdd07/tab-bar` in `Bookconnect4_fu1a`. It waits for the owner's "Marketplace" label decision (§13) and commit approval. See §13 for the build record.
 **Approval:** APPROVED 2026-10-18. Owner's words: "I approve TB-1 decisions TB-D1 to TB-D5 as recommended. I'll forward the clubs heads-up myself. Build TB-1 on sdd07/tab-bar (probe the models first), don't commit until I approve."
 - Decisions TB-D1 to TB-D5 are approved as recommended (§5).

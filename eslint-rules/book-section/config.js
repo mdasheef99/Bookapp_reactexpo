@@ -4,6 +4,8 @@ const plugin = require('./index');
 const STRICT_FILES = [
     'app/(tabs)/library/search.tsx',
     'src/features/books/utils/searchErrorCopy.ts',
+    'src/features/books/utils/searchPresentation.ts',
+    'src/features/books/hooks/useSearchBookActions.ts',
     'src/components/library/search/BookCard.tsx',
     'src/components/library/search/FilterModal.tsx',
     'src/components/library/search/GenreTag.tsx',
@@ -13,6 +15,8 @@ const STRICT_FILES = [
     'src/components/library/search/RatingStars.tsx',
     'src/components/library/search/RecentSearches.tsx',
     'src/components/library/search/SearchSuggestions.tsx',
+    'src/components/library/search/SearchStates.tsx',
+    'src/components/library/search/SearchResultsHeader.tsx',
     'src/components/library/search/SortModal.tsx',
     'src/components/library/search/SwipeableBookCard.tsx',
     'src/components/library/search/WishlistButton.tsx',
