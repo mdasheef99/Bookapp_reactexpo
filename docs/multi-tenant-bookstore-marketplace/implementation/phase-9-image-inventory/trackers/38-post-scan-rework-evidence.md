@@ -1143,3 +1143,43 @@ Final checks, 2026-10-22: full src/features/imageInventory Jest 841 passed,
 ```
 
 Active work unit: `post_scan_rework_slice4b_script_languages`. Exact next authorized action: commit 4a's fix, the 4b code, tests and docs on this branch (never `.claude/` or `.env.local`), rebase onto origin/main, re-run a key suite, and push to main; then start slice 5 from the kickstart prompt.
+
+## 26. Slice 5 SDD written, reviewed and approved; reorder recorded, 2026-10-22
+
+```text
+Date/session: 2026-10-22, orchestrating Claude session (slice 5 design).
+Authorized work unit and scope: Owner asked for the slice 5 SDD (5a and 5b in one
+  file), its review, and on approval to record the reorder and prepare the 5a
+  Codex brief. Docs only.
+Completed: work-units/post-scan-rework/01a-slice5-typed-isbn-sdd.md written from
+  three read-only Haiku code maps, the author's own code checks and read-only
+  Supabase MCP queries. Reviewed twice: Sonnet subagent (approve_with_fixes,
+  F1-F12) and OpenCode Go DeepSeek v4.1 Flash max (rework, F14-F22); author
+  finding F13 (worker decoder refuses hand-added cards). All 22 findings
+  verified in code or live and applied (SDD §17). OpenCode Go Argon failed
+  four times at the provider ("Upstream request failed: Endpoint is
+  unavailable"). Owner approved the SDD with D5-1 to D5-6 as recommended.
+Files/components/migrations: 01a-slice5-typed-isbn-sdd.md (new); SDD-0 §7.1
+  row 5 and §7.2a reorder note; SDD-1 status note and §7 superseded banner.
+  No code. No migration file (M78 is designed only).
+Verification actually run: read-only SQL on ahntbtktjjmvfosgkmgn (migration
+  history through M77; provider registry; normalized language/ISBN helpers;
+  ISBN-only key text; service_role privileges; edition jobs by card type);
+  live Open Library HTTP (/isbn 302, search.json?isbn= shape for two works,
+  /books headers). Phase 9 validator and git diff --check: see §27 or the
+  closing handoff.
+Supabase/external mutations: none. Read-only SELECTs and public HTTP GETs only.
+Decisions/deviations/risks: D5-1 slice 5 built after 4b and before Stage 2
+  (slices 11, 13); D5-2 saving an ISBN drops a chosen edition; D5-3 new stage
+  name `edition`; D5-4 5b keeps title required, optional ISBN; D5-5 ISBN shown
+  in the sheet only; D5-6 5b has no migration and accepts a book added without
+  its ISBN when the Owner leaves instead of retrying. Found: Search Books never
+  worked for hand-added cards (worker decoder, B3a); fixed by 5a. Slices 11 and
+  13 pass 2 must account for owner_isbn13 and the identity change.
+Tracker/source-doc updates: this entry; TRACKER.md and DOC-13 handoffs.
+Next authorized action and gate: write the 5a Codex brief and have it reviewed
+  (Argon, else DeepSeek). Sending it needs the Owner's approval to create the
+  M78 migration file, and a new branch for 5a from origin/main.
+```
+
+Active work unit: `post_scan_rework_slice5a_typed_isbn_sheet`. Exact next authorized action: review the 5a Codex brief; then, on the Owner's approval of migration-file creation, cut the 5a branch from origin/main and send the brief.
