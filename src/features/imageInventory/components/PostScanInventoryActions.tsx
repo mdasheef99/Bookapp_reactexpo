@@ -7,18 +7,23 @@ import type { useInventoryCommitCoordinator } from '../commit/useInventoryCommit
 import type { CandidateCommitDraft } from '../commit/inventoryCommitCoordinator';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 
-export function PostScanFooter({ sessionId, isOffline, active, inputCount, cardCount, overflow }: {
-  sessionId: string; isOffline: boolean; active: boolean; inputCount: number; cardCount: number; overflow: boolean;
+export function PostScanFooter({ sessionId, isOffline, active, inputCount, detectedCount, overflow }: {
+  sessionId: string; isOffline: boolean; active: boolean; inputCount: number; detectedCount: number | undefined; overflow: boolean;
 }) {
   const router = useRouter(); const { colors } = useTheme();
+  // SDD-1 §6 (4a), AC4-3: the aggregate includes added and removed books.
+  const fullScan = overflow || (detectedCount !== undefined && detectedCount >= 15);
+  const limitText = 'This scan already has 15 books — scan the rest separately.';
   return <View style={{ gap: 12, paddingTop: 4 }}>
     {isOffline && inputCount === 0 ? <Text selectable style={{ color: colors.textSecondary }}>Reconnect to choose a replacement image.</Text> : null}
     {inputCount === 0 ? <Button title="Choose replacement image" onPress={() => router.push(inventoryRoutes.scan())}
       disabled={isOffline || !active} /> : null}
     <Button title="View session summary" variant="secondary" onPress={() => router.push(inventoryRoutes.summary(sessionId))} />
-    {!overflow ? <Button title="Add missed book" variant="secondary" onPress={() => router.push(inventoryRoutes.missed(sessionId))}
-      disabled={isOffline || cardCount >= 15 || !active}
-      accessibilityHint="Creates one staged manual candidate without running image analysis" /> : null}
+    <Button title="Add a book" variant="secondary" onPress={() => router.push(inventoryRoutes.missed(sessionId))}
+      disabled={isOffline || fullScan || detectedCount === undefined || !active}
+      accessibilityHint="Add a book to this scan by title" />
+    {fullScan ? <Text selectable accessibilityLabel={limitText} accessibilityLiveRegion="polite"
+      style={{ color: colors.textSecondary }}>{limitText}</Text> : null}
   </View>;
 }
 export function PostScanBulkAction({ candidates, inventoryCommit, disabled, remainingReviewCount, blockedCandidateIds }: {

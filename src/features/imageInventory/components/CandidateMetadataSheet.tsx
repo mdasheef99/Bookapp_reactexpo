@@ -6,7 +6,6 @@ import { useTheme } from '@/hooks/useTheme';
 import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import type { EditionChoices } from '../contracts/ownerEditionPicker';
 import type { OwnerCandidateCommandSlot } from '../identity/useOwnerCardCommand';
-import type { CompactReviewEdits } from '../review/compactReviewDraft';
 import { type ImageInventoryIdentity, useOwnerInventoryCandidate } from '../queries/ownerUxQueries';
 import { CandidateEditionPicker } from './CandidateEditionPicker';
 import type { CompactEditionSearchDraft } from './CandidateEditionPicker';
@@ -25,12 +24,11 @@ function focus(target: View | null | undefined) {
   else { const handle = findNodeHandle(target); if (handle !== null) AccessibilityInfo.setAccessibilityFocus(handle); }
 }
 export function CandidateMetadataSheet({ identity, card, visible, disabled, onClose,
-  onEditManually, commandSlot, onSelection, onPendingChange, restoreFocusRef, disabledReason, cardDraft, onIdentitySaved }: {
+  commandSlot, onSelection, onPendingChange, restoreFocusRef, disabledReason, cardDraft, onIdentitySaved }: {
   identity: ImageInventoryIdentity; card: Pick<OwnerBatchReviewCard, 'sessionId' | 'candidateId' | 'metadataState' | 'metadataSummary' | 'candidateVersion' | 'metadataRevision' | 'reviewVersion'>; visible: boolean; disabled: boolean;
   // Explains a caller-owned lock; it never enables or disables anything itself.
   disabledReason?: string | null;
   onClose: () => void;
-  onEditManually?: (edits: CompactReviewEdits) => void;
   commandSlot?: OwnerCandidateCommandSlot;
   onSelection?: (choices: EditionChoices, previousRevision: number) => void;
   onPendingChange?: (pending: boolean) => void;
@@ -66,11 +64,6 @@ export function CandidateMetadataSheet({ identity, card, visible, disabled, onCl
     if (selectionLocked()) return;
     onClose(); queueMicrotask(() => focus(restoreFocusRef?.current));
   };
-  const editIdentity = () => {
-    if (disabled || selectionLocked()) return;
-    onEditManually?.({ metadataChoice: { mode: 'manual', selectionId: null } });
-    queueMicrotask(() => focus(restoreFocusRef?.current));
-  };
   return <Modal visible={visible} transparent animationType="slide" accessibilityViewIsModal
     onRequestClose={close} onShow={() => focus(headingRef.current)}>
     <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: '#0008' }}>
@@ -88,7 +81,7 @@ export function CandidateMetadataSheet({ identity, card, visible, disabled, onCl
           </> : null}
           {commandSlot && onSelection ? <CandidateEditionPicker identity={identity} sessionId={card.sessionId}
             candidateId={card.candidateId} commandSlot={commandSlot} disabled={disabled}
-            onSelection={onSelection} onPendingChange={handlePendingChange} onEditIdentity={onEditManually ? editIdentity : undefined}
+            onSelection={onSelection} onPendingChange={handlePendingChange}
             cardDraft={cardDraft} onIdentitySaved={onIdentitySaved}
             minimumVersions={minimumVersions}>{summary}</CandidateEditionPicker> : summary()}
           <Button title="Close metadata" variant="secondary" disabled={selectionPending || selectionLocked()} onPress={close} />

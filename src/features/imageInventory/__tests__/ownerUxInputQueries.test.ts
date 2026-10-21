@@ -34,13 +34,12 @@ describe('Phase 9 remove-input cache synchronization', () => {
             client, identity, sessionId, canonical,
         )).resolves.toBe(true);
 
-        expect(invalidate).toHaveBeenCalledTimes(5);
+        expect(invalidate).toHaveBeenCalledTimes(4);
         expect(invalidate.mock.calls.map(([options]) => options?.queryKey)).toEqual(expect.arrayContaining([
             imageInventoryKeys.discovery(identity),
             imageInventoryKeys.session(identity, sessionId),
             imageInventoryKeys.inputs(identity, sessionId),
             imageInventoryKeys.readiness(identity, sessionId),
-            [...imageInventoryKeys.identity(identity), 'candidates'],
         ]));
     });
 

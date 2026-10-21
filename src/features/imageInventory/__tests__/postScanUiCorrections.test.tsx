@@ -68,7 +68,6 @@ function renderCard(card: OwnerBatchReviewCard = reviewCard(),
             canMutate
             removePending={false}
             addPending={false}
-            onOpenFullCorrection={jest.fn()}
             onRemove={jest.fn()}
             onAdd={onAdd}
             onDraftChange={onDraftChange}
@@ -117,7 +116,7 @@ describe('Phase 9 Unit 6G bounded post-scan UI corrections', () => {
             card: unsaved,
             defaults: { ...defaults, condition: 'good' as const, priceMinor: 25000 },
             isOffline: false, canMutate: true, removePending: false, addPending: false,
-            onOpenFullCorrection: jest.fn(), onRemove: jest.fn(),
+            onRemove: jest.fn(),
             onAdd: jest.fn(async () => ({ status: 'succeeded' as const })),
             onDraftChange: jest.fn(),
         };
@@ -164,7 +163,7 @@ describe('Phase 9 Unit 6G bounded post-scan UI corrections', () => {
             identity: { userId: testUuid(90), storeId: testUuid(91) },
             card: initial, defaults, isOffline: false, canMutate: true,
             removePending: false, addPending: false,
-            onOpenFullCorrection: jest.fn(), onRemove: jest.fn(),
+            onRemove: jest.fn(),
             onAdd: jest.fn(async () => ({ status: 'succeeded' as const })),
             onDraftChange: jest.fn(), onAuthorityStateChange: jest.fn(),
         };
@@ -191,7 +190,7 @@ describe('Phase 9 Unit 6G bounded post-scan UI corrections', () => {
             identity: { userId: testUuid(90), storeId: testUuid(91) },
             card: initial, defaults, isOffline: false, canMutate: true,
             removePending: false, addPending: false,
-            onOpenFullCorrection: jest.fn(), onRemove: jest.fn(),
+            onRemove: jest.fn(),
             onAdd: jest.fn(async () => ({ status: 'succeeded' as const })),
             onDraftChange: jest.fn(), onAuthorityStateChange: jest.fn(),
         };
@@ -214,7 +213,7 @@ describe('Phase 9 Unit 6G bounded post-scan UI corrections', () => {
             identity: { userId: testUuid(90), storeId: testUuid(91) },
             card: initial, defaults, isOffline: false, canMutate: true,
             removePending: false, addPending: false,
-            onOpenFullCorrection: jest.fn(), onRemove: jest.fn(),
+            onRemove: jest.fn(),
             onAdd: jest.fn(async () => ({ status: 'succeeded' as const })),
             onDraftChange: jest.fn(), onAuthorityStateChange: jest.fn(),
         };
@@ -236,8 +235,7 @@ describe('Phase 9 Unit 6G bounded post-scan UI corrections', () => {
         const screen = render(
             <BatchReviewCard identity={{ userId: testUuid(90), storeId: testUuid(91) }}
                 card={reviewCard()} defaults={defaults} isOffline={false} canMutate
-                removePending={false} addPending={false}
-                onOpenFullCorrection={jest.fn()} onRemove={jest.fn()}
+                removePending={false} addPending={false} onRemove={jest.fn()}
                 onAdd={jest.fn(async () => ({ status: 'succeeded' as const }))}
                 onDraftChange={jest.fn()}
                 onPendingIdentityChange={onPendingIdentityChange} />,
@@ -258,7 +256,7 @@ describe('Phase 9 Unit 6G bounded post-scan UI corrections', () => {
             identity: { userId: testUuid(90), storeId: testUuid(91) },
             card: initial, defaults, isOffline: false, canMutate: true,
             removePending: false, addPending: false,
-            onOpenFullCorrection: jest.fn(), onRemove: jest.fn(),
+            onRemove: jest.fn(),
             onAdd: jest.fn(async () => ({ status: 'succeeded' as const })),
             onDraftChange: jest.fn(), onAuthorityStateChange: jest.fn(),
         };
@@ -283,7 +281,7 @@ describe('Phase 9 Unit 6G bounded post-scan UI corrections', () => {
             identity: { userId: testUuid(90), storeId: testUuid(91) },
             card: initial, defaults, isOffline: false, canMutate: true,
             removePending: false, addPending: false,
-            onOpenFullCorrection: jest.fn(), onRemove: jest.fn(),
+            onRemove: jest.fn(),
             onAdd: jest.fn(async () => ({ status: 'succeeded' as const })),
             onDraftChange: jest.fn(), onAuthorityStateChange: jest.fn(),
         };
@@ -308,7 +306,7 @@ describe('Phase 9 Unit 6G bounded post-scan UI corrections', () => {
             identity: { userId: testUuid(90), storeId: testUuid(91) },
             card: initial, defaults, isOffline: false, canMutate: true,
             removePending: false, addPending: false,
-            onOpenFullCorrection: jest.fn(), onRemove: jest.fn(),
+            onRemove: jest.fn(),
             onAdd: jest.fn(async () => ({ status: 'succeeded' as const })),
             onDraftChange: jest.fn(),
         };
@@ -601,7 +599,7 @@ describe('card Ready badge uses the add-now rule', () => {
             <BatchReviewCard
                 identity={{ userId: testUuid(90), storeId: testUuid(91) }}
                 card={reviewCard()} defaults={defaults} isOffline={false} canMutate
-                removePending={false} addPending onOpenFullCorrection={jest.fn()}
+                removePending={false} addPending
                 onRemove={jest.fn()} onAdd={jest.fn()} onDraftChange={jest.fn()}
             />,
         );

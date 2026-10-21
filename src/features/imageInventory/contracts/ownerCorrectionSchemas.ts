@@ -19,13 +19,6 @@ export const addManualCandidateRequestSchema = z.object({
     }
 });
 
-export const markFalseRequestSchema = z.object({
-    candidateId: uuidSchema,
-    expectedCandidateVersion: versionSchema,
-    idempotencyKey: idempotencyKeySchema,
-    commandId: uuidSchema,
-}).strict();
-
 const allowedActionSchema = z.enum([
     'approve',
     'reject',
@@ -115,37 +108,11 @@ export const decideVariantRequestSchema = z.object({
     idempotencyKey: idempotencyKeySchema,
 }).strict();
 
-export const replaceVariantRequestSchema = z.object({
-    storeId: uuidSchema,
-    sourceProposalId: uuidSchema,
-    expectedVersion: versionSchema,
-    variantText: safeTextSchema(1, 256),
-    variantLanguage: languageSchema,
-    variantScript: z.literal('Latn'),
-    variantType: z.enum(['primary_roman', 'roman_alternative', 'translation_candidate']),
-    reason: reasonSchema,
-    note: noteSchema,
-    idempotencyKey: idempotencyKeySchema,
-}).strict().superRefine((value, context) => {
-    if (
-        value.variantType === 'translation_candidate'
-        && value.variantLanguage.split('-')[0] !== 'en'
-    ) context.addIssue({ code: 'custom', path: ['variantLanguage'], message: 'translation must be English' });
-});
-
 export const decideVariantResponseSchema = z.object({
     decision_id: uuidSchema,
     proposal_id: uuidSchema,
     status: z.enum(['active', 'rejected']),
     version: versionSchema,
-    replayed: z.boolean(),
-}).strict();
-
-export const replaceVariantResponseSchema = z.object({
-    decision_id: uuidSchema,
-    source_proposal_id: uuidSchema,
-    replacement_proposal_id: uuidSchema,
-    status: z.literal('active'),
     replayed: z.boolean(),
 }).strict();
 

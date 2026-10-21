@@ -1,13 +1,11 @@
 import { parseOwnerEditionPickerResponse as parseClient, parseOwnerEditionPickerRequest as requestClient } from '../contracts/ownerEditionPicker';
 import { parseOwnerEditionPickerResponse as parseServer, parseOwnerEditionPickerRequest as requestServer } from '../../../../supabase/functions/_shared/imageInventory/contracts/ownerEditionPicker';
 import { editionChoices, editionConfirmRequest, editionMetadata, editionUuid } from '../../../../supabase/functions/__tests__/fixtures/phase9/editionPickerContracts';
-import { applyEditionSelection, applyCompactEditionSelection, editionSelectionAuthority } from '../review/editionSelectionDraft';
-import { buildReviewInput, createReviewDraft } from '../review/reviewForm';
+import { applyCompactEditionSelection, editionSelectionAuthority } from '../review/editionSelectionDraft';
 import { buildCompactReview, compactReviewDisplay } from '../review/compactReviewDraft';
-import { pickerCard, pickerDefaults, pickerDetail, pickerReview, selectedChoices } from '../testing/editionPickerClientFixtures';
+import { pickerCard, pickerDefaults, pickerReview, selectedChoices } from '../testing/editionPickerClientFixtures';
 
 // Picker §§6-7 / EP-AC11/19: only server-owned confirmation can close fresh resume.
-const defaults = { condition: 'good' as const, location: 'A1', quantity: 1, publication: 'private' as const };
 function suggestion(confirmedByOwner: boolean, script: string | null = 'Latn') {
   const choices = selectedChoices();
   return { ...choices, rows: [], optionsExpiresAt: null, reviewVersion: null,
@@ -46,34 +44,23 @@ it('never guesses confirmation from an option source when the server says false'
   const unconfirmed = { ...choices, selection: { ...choices.selection!, confirmedByOwner: false } };
   expect(editionSelectionAuthority(unconfirmed, null)).toBe('confirmation_required');
 });
-it.each([null, 'Latn'])('full fresh resume uses confirmed suggestion and coherent script %s', script => {
-  const choices = suggestion(true, script);
-  const draft = createReviewDraft(pickerDetail(choices), defaults, choices);
-  expect(draft).toMatchObject({ originalTitle: choices.selection.snapshot.title,
-    authors: choices.selection.snapshot.authors, metadataMode: 'edition_option',
-    selectionId: choices.selection.selectionId, script: script ?? '',
-    originalFieldConfirmation: { title: true, authors: [true] }, priceMinor: '' });
-  const result = buildReviewInput({ ...draft, priceMinor: '0' });
-  expect(result.success).toBe(true);
-  if (result.success) expect(result.data).toMatchObject({ script, quantity: 1, priceMinor: 0,
-    metadataChoice: { mode: 'edition_option', selectionId: choices.selection.selectionId } });
-});
 it.each([null, 'Latn'])('compact fresh resume uses confirmed suggestion after expiry, script %s', script => {
   const choices = suggestion(true, script);
   const edits = { quantity: 8, priceMinor: 100, shelfLocation: 'A2',
     notes: { publicNote: '', internalNote: 'latest note' } };
   const review = buildCompactReview(pickerCard(choices), pickerDefaults, edits, choices);
-  expect(review).toMatchObject({ script, quantity: 8, priceMinor: 100, shelfLocation: 'A2',
+  expect(review).toMatchObject({ originalTitle: 'Chosen edition', authors: ['Chosen author'],
+    originalLanguage: 'en', originalFieldConfirmation: { title: true, authors: [true] }, script, quantity: 8, priceMinor: 100, shelfLocation: 'A2',
     notes: { ...edits.notes, publicNote: null }, metadataChoice: { mode: 'edition_option', selectionId: choices.selection.selectionId } });
 });
 it('does not adopt confirmation from a different card or stale metadata revision', () => {
   const choices = suggestion(true);
-  const detail = pickerDetail(choices);
+  const card = pickerCard(choices);
   for (const stale of [{ ...choices, candidateId: editionUuid(99) },
     { ...choices, metadataRevision: choices.metadataRevision + 1 }]) {
-    const draft = createReviewDraft(detail, defaults, stale);
-    expect(draft.metadataMode).not.toBe('edition_option');
-    expect(draft.originalFieldConfirmation.title).toBe(false);
+    const review = buildCompactReview(card, { ...pickerDefaults, priceMinor: 100 }, {}, stale);
+    expect(review).not.toBeNull();
+    expect(review!.metadataChoice.mode).not.toBe('edition_option');
   }
 });
 it('keeps an empty shelf edit invalid instead of substituting a default during resume', () => {
@@ -81,10 +68,8 @@ it('keeps an empty shelf edit invalid instead of substituting a default during r
   expect(compactReviewDisplay(card, pickerDefaults, edits).location).toBe('');
   expect(buildCompactReview(card, pickerDefaults, edits, choices)).toBeNull();
 });
-it('never applies an unconfirmed historical receipt over the latest full or compact edits', () => {
+it('never applies an unconfirmed historical receipt over the latest compact edits', () => {
   const response = suggestion(false);
-  const draft = { ...createReviewDraft(pickerDetail(), defaults), originalTitle: 'Latest manual title', priceMinor: '0' };
   const edits = { originalTitle: 'Latest manual title', quantity: 9, priceMinor: 0 };
-  expect(applyEditionSelection(draft, response, 7)).toBe(draft);
   expect(applyCompactEditionSelection(edits, response, 7)).toBe(edits);
 });

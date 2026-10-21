@@ -33,7 +33,6 @@ describe('Phase 9 NEW 6G-D commit cache synchronization', () => {
 
         const approved = [
             imageInventoryKeys.candidate(identity, sessionId, candidateId),
-            [...imageInventoryKeys.identity(identity), 'candidates'],
             imageInventoryKeys.discovery(identity),
             imageInventoryKeys.readiness(identity, sessionId),
             ownerBatchReviewKeys.sessionV3(identity, sessionId),

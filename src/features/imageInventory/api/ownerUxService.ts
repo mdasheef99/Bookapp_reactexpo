@@ -5,13 +5,11 @@ import {
 
     type OwnerCandidateDetail,
     type OwnerCandidateCommitResult,
-    type OwnerCandidatePage,
     type OwnerDiscovery,
     type OwnerInputPage,
     type OwnerRemoveInputResult,
     type OwnerDuplicateInputResult,
     type OwnerSessionReadiness,
-    type OwnerSessionSummary,
 
 } from '../contracts/ownerUxContracts';
 import type { OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
@@ -22,21 +20,6 @@ import type { OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
 
 import { invokeOwnerUx as invoke } from './ownerUxTransport';
 export { OwnerUxClientError, type OwnerUxErrorCode } from './ownerUxTransport';
-
-export type CandidatePageRequest =
-    | {
-        scope: 'session';
-        sessionId: string;
-        attention?: 'all' | 'needs_attention' | 'review_ready';
-        pageSize?: number;
-        cursor?: string | null;
-    }
-    | {
-        scope: 'needs_review';
-        attention?: 'all' | 'needs_attention';
-        pageSize?: number;
-        cursor?: string | null;
-    };
 
 export type UpdateCandidateReviewRequest = Readonly<{
     sessionId: string;
@@ -86,9 +69,6 @@ export const ownerUxService = {
     discover(): Promise<OwnerDiscovery> {
         return invoke('discover_scan_session', {});
     },
-    readSession(sessionId: string): Promise<OwnerSessionSummary> {
-        return invoke('read_scan_session', { sessionId });
-    },
     listInputs(
         sessionId: string,
         pageSize = 20,
@@ -107,13 +87,6 @@ export const ownerUxService = {
         signal?: AbortSignal,
     ): Promise<OwnerDuplicateInputResult> {
         return invoke('resolve_duplicate_scan_input', request, signal);
-    },
-    listCandidates(request: CandidatePageRequest): Promise<OwnerCandidatePage> {
-        return invoke('list_scan_candidates', {
-            ...request,
-            pageSize: request.pageSize ?? 20,
-            cursor: request.cursor ?? null,
-        });
     },
     readCandidate(
         sessionId: string,

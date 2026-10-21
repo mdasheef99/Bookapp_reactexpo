@@ -276,7 +276,7 @@ deploy.
 | 1 | Quick fix for the stuck "Review book": Add re-saves when the review was reset (before Add, or by Add's own save) | 1 | — | None | App | M / med (SDD-1 pass 2) | D02, D03 (interim), D04 |
 | 2 | Declutter: one edition button, simplified sheet, edition line, cleaner card and header, "Leave without saving?" | 1 | 1 | None | App | M / low | D05, D07, D09, D10, D47 |
 | 3 | Remove the after-Add buttons and the Inventory tab's duplicate list | 1 | 2 | None | App | S / low | D04, D12 |
-| 4 | Remove full correction; keep and simplify "Add a book" (title and author) | 1 | 2 | Maybe one (§14 Q9 only; Q1 needs none) | App (+ server) | M / med (Q9 may split to 4b) | D11, D13 |
+| 4 | Remove full correction; keep and simplify "Add a book" (title and author) | 1 | 2 | None (Q9 uses existing functions; Q1 needs none) | App | 4a M / med (deletions, "Add a book", summary); 4b M / high (stale wording, script) | D11, D13 |
 | 5 | Typed ISBN in the edition sheet and in "Add a book" | 1 | 2, 4 | One per part (no Owner ISBN path exists, F29; §14 Q2) | App + Owner API + database + worker | L / high (split expected: 5a sheet ISBN lookup, 5b ISBN in "Add a book") | D06, D13 |
 | 6 | Catalogue link fix: every Add finds or creates the catalogue edition and links it | 2 | — | One | Database | M / med | D34, D35, D40 |
 | 7 | Lean catalogue writes from Open Library, stats table, shared cache | 2 | 6 | One | Database + worker | L / med | D33, D35–D37, D39, D40 |
@@ -640,7 +640,8 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
   2. The orchestrating session reviews the diff, with a written trace for
      each new outcome: what the server does, what the screen shows, and what
      the Owner can do next.
-  3. The review loop runs when the slice is risky (see below).
+  3. The review loop runs when the slice is risky; the medium review pass
+     runs when the slice is medium (both below).
   4. Haiku runs the tests.
   5. Haiku runs the browser check.
   6. Documentation, validator and `git diff --check`.
@@ -648,7 +649,8 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
 - **Review loop, for risky slices:** a slice is risky when it touches save,
   Add, retry or idempotency logic, server contracts, tenant or security rules,
   or SQL. The orchestrating session decides this at slice start and says why.
-  UI-only or deletion slices with strong tests skip the loop.
+  UI-only or deletion slices with strong tests skip the loop, unless the
+  orchestrating session or the Owner classes them as medium (next bullet).
   1. Two read-only reviews run in parallel (starts staggered ~45 s): OpenCode
      Go DeepSeek v4.1 Flash and MiniMax 3.1 Flash, both at max.
   2. The orchestrating session verifies every finding in the code and rejects,
@@ -662,6 +664,22 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
 
   Findings, verdicts and corrections are recorded in the slice's tracker
   entry.
+- **Medium review pass (Owner, 2026-10-20; first used for slice 4a):** for a
+  slice that is not risky but changes behaviour beyond plain deletion. It
+  replaces the loop above; it is one pass with no round 2.
+  1. OpenCode Go DeepSeek v4.1 Flash (max) and MiniMax 3.1 Flash (max), the
+     second started ~45 s after the first, both read-only with no shell,
+     review the slice diff.
+  2. The orchestrating session verifies every finding in the code and
+     rejects, with a reason, any that are wrong.
+  3. Codex `gpt-6.1-sol` (xhigh) makes one bounded red-first correction for
+     the confirmed findings only.
+  4. Then the pre-merge review (above) runs on the whole slice, after the
+     tests and before documentation; its confirmed findings get its own one
+     bounded fix round. Anything still open after that goes to the Owner.
+
+  Findings, verdicts and corrections are recorded in the slice's tracker
+  entry.
 - **Planning the browser check:** at slice start, the orchestrating session:
   - picks the test cards and confirms their server state, read only;
   - writes Haiku's script and shows it to the Owner before code is written.
@@ -672,14 +690,16 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
   the planned browser check, or a shared resource such as a dev-server port
   goes to the Owner first, with a recommendation. The orchestrating session
   does not decide these itself.
-- **Documentation updates (Owner, 2026-10-19):**
+- **Documentation updates (Owner, 2026-10-19; amended 2026-10-20):**
   1. The orchestrating session writes a short fact sheet: what was done,
      evidence, mutations and the next action.
-  2. OpenCode Go Muse Spark 1.3 (xhigh) writes, from that fact sheet only:
+  2. OpenCode Go DeepSeek v4.1 Flash (max), with no shell, drafts from that
+     fact sheet only:
      - the tracker entry, in the SESSION-START log shape;
      - the ACTIVE, DOC-13, SESSION-START and TRACKER handoffs.
-
-     It then runs the validator and `git diff --check`.
-  3. The orchestrating session reviews that diff.
+  3. OpenCode Go MiniMax 3.1 Flash (max), read-only, reviews that docs diff
+     against the fact sheet and the evidence.
+  4. The orchestrating session runs the validator and `git diff --check`,
+     and reviews the diff.
 
   SDD wording and decisions stay with the orchestrating session.

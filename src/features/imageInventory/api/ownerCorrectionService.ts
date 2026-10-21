@@ -5,9 +5,6 @@ import {
     candidateUuidSchema,
     decideVariantRequestSchema,
     decideVariantResponseSchema,
-    markFalseRequestSchema,
-    replaceVariantRequestSchema,
-    replaceVariantResponseSchema,
     toOwnerVariantReview,
     variantReviewRowSchema,
     type OwnerVariantReview,
@@ -55,8 +52,8 @@ export class OwnerCorrectionClientError extends Error {
 }
 
 type RpcResult = Readonly<{ data: unknown; error: unknown }>;
-type CandidateOperation = 'add' | 'false';
-type VariantOperation = 'review' | 'decide' | 'replace';
+type CandidateOperation = 'add';
+type VariantOperation = 'review' | 'decide';
 
 function requestInvalid(): OwnerCorrectionClientError {
     return new OwnerCorrectionClientError('P9_REQUEST_INVALID');
@@ -74,7 +71,7 @@ function normalizeRpcError(
     error: unknown,
 ): OwnerCorrectionClientError {
     const token = errorToken(error);
-    const parsed = operation === 'add' || operation === 'false'
+    const parsed = operation === 'add'
         ? candidateErrorCodeSchema.safeParse(token)
         : variantErrorCodeSchema.safeParse(token);
     return new OwnerCorrectionClientError(parsed.success ? parsed.data : 'P9_INTERNAL_ERROR');
@@ -111,9 +108,7 @@ async function authenticatedRpc(
 }
 
 export type AddManualCandidateRequest = z.input<typeof addManualCandidateRequestSchema>;
-export type MarkFalseRequest = z.input<typeof markFalseRequestSchema>;
 export type DecideVariantRequest = z.input<typeof decideVariantRequestSchema>;
-export type ReplaceVariantRequest = z.input<typeof replaceVariantRequestSchema>;
 export type ExpectedVariant = Readonly<{ proposalId: string; version: number }>;
 
 const parseOrThrow = <T>(schema: z.ZodType<T>, value: unknown): T => {
@@ -139,21 +134,6 @@ export const ownerCorrectionService = {
             p_title: request.title,
             p_authors: request.authors,
             p_language: request.language,
-            p_idempotency_key: request.idempotencyKey,
-            p_command_id: request.commandId,
-        }, identity);
-        return {
-            candidateId: decodeOrInternal(candidateUuidSchema, result.data),
-            authenticatedUserId: userId,
-        };
-    },
-
-    async markFalse(input: MarkFalseRequest, identity: OwnerRequestIdentity) {
-        const request = parseOrThrow(markFalseRequestSchema, input);
-        const { result, userId } = await authenticatedRpc('false', 'phase9_skip_candidate', {
-            p_candidate_id: request.candidateId,
-            p_expected_version: request.expectedCandidateVersion,
-            p_reason: 'false_detection',
             p_idempotency_key: request.idempotencyKey,
             p_command_id: request.commandId,
         }, identity);
@@ -216,20 +196,4 @@ export const ownerCorrectionService = {
         return { ...decodeOrInternal(decideVariantResponseSchema, result.data), authenticatedUserId: userId };
     },
 
-    async replaceVariant(input: ReplaceVariantRequest, identity: OwnerRequestIdentity) {
-        const request = parseOrThrow(replaceVariantRequestSchema, input);
-        const { result, userId } = await authenticatedRpc('replace', 'phase9_owner_replace_search_variant', {
-            p_store_id: request.storeId,
-            p_source_proposal_id: request.sourceProposalId,
-            p_expected_version: request.expectedVersion,
-            p_variant_text: request.variantText,
-            p_variant_language: request.variantLanguage,
-            p_variant_script: request.variantScript,
-            p_variant_type: request.variantType,
-            p_reason: request.reason,
-            p_note: request.note,
-            p_idempotency_key: request.idempotencyKey,
-        }, identity);
-        return { ...decodeOrInternal(replaceVariantResponseSchema, result.data), authenticatedUserId: userId };
-    },
 };

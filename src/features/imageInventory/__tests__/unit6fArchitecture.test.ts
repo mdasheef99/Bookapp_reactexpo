@@ -10,6 +10,21 @@ describe('Phase 9 Unit 6F privacy, media-purpose, and Unit 7 boundary', () => {
             source: fs.readFileSync(path.join(root, String(name)), 'utf8'),
         }));
     const production = productionSources.map(({ source }) => source).join('\n');
+
+    // Post-scan SDD-1 §6 (4a), AC4-1: test sources name the old paths deliberately.
+    it.each(['/candidate/', 'inventory/reviews', 'inventoryRoutes.candidate', 'inventoryRoutes.reviews'])(
+        'no source references removed routes: %s', (reference) => {
+            const matches = ['src', 'app'].flatMap((directory) => {
+                const directoryRoot = path.join(process.cwd(), directory);
+                return fs.readdirSync(directoryRoot, { recursive: true })
+                    .map(String)
+                    .filter((name) => /\.[cm]?[jt]sx?$/u.test(name) && !/[\\/]__tests__[\\/]/u.test(name))
+                    .filter((name) => fs.readFileSync(path.join(directoryRoot, name), 'utf8').includes(reference))
+                    .map((name) => `${directory}/${name.replaceAll('\\', '/')}`);
+            });
+            expect(matches).toEqual([]);
+        },
+    );
     const authorizedUnit6gDCommitSurfaces = new Set([
         'commit/inventoryCommitCoordinator.ts',
         'commit/inventoryCommitBatchExecution.ts',

@@ -25,7 +25,7 @@ missing methods there when a new test needs them.
 | Pattern | Used by |
 | --- | --- |
 | Direct table reads through RLS | Older features (library, exchange, clubs, notifications), public marketplace projections, and the Store Owner gate, dashboard, subscription and store profile reads (`src/features/stores/services/`) |
-| RPCs (`supabase.rpc`) | Clubs commands, Phase 6 commerce commands and safe reads, public discovery, and one Phase 9 exception: the manual-candidate / skip / search-variant corrections in `ownerCorrectionService.ts` |
+| RPCs (`supabase.rpc`) | Clubs commands, Phase 6 commerce commands and safe reads, public discovery, and one Phase 9 exception: `ownerCorrectionService.ts` (add a manual candidate; `resolveExpectedVariants` and `decideVariant`, kept for slice 4b) |
 | Edge Function `phase9-owner-ingestion` | Most Phase 9 Owner actions (scan sessions, review, Add to Inventory, edition picker, publication) and all Store View management, called from `src/features/imageInventory/api/*` and `src/features/storeView/api/*` |
 | Direct Storage upload | The client uploads scan images straight to Storage with a signed upload URL issued by the function (`capture/uploadTransport.ts`). On upload completion the function downloads the object once, checks its size and records its SHA-256 hash; the media worker later checks the stored bytes against that hash. |
 | Realtime (`supabase.channel`) | Credit balance and credit events (`src/features/credits/services/creditService.ts`) and the commerce notification inbox (`notificationsService.ts`) |

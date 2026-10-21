@@ -8,6 +8,7 @@ import {
     resetImageInventoryIdentityForTests,
 } from '../queries/ownerUxQueries';
 import { synchronizeCandidateReviewSuccess } from '../queries/ownerUxReviewQueries';
+import { ownerBatchReviewKeys } from '../queries/ownerBatchReviewKeys';
 import { synchronizeCloseSuccess } from '../queries/ownerUxCloseQueries';
 import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
@@ -17,7 +18,7 @@ describe('Phase 9 Unit 6B private query identity', () => {
     beforeEach(() => {
         resetImageInventoryIdentityForTests();
     });
-    it('isolates users, stores, sessions, candidates, contracts, filters, and cursors', () => {
+    it('isolates users, stores, sessions, candidates, and contracts', () => {
         const first = identity('user-1', 'store-1');
         const secondUser = identity('user-2', 'store-1');
         const secondStore = identity('user-1', 'store-2');
@@ -32,26 +33,6 @@ describe('Phase 9 Unit 6B private query identity', () => {
             imageInventoryKeys.inputs(first, 'session-2'),
             imageInventoryKeys.candidate(first, 'session-1', 'candidate-1'),
             imageInventoryKeys.candidate(first, 'session-1', 'candidate-2'),
-            imageInventoryKeys.candidates(first, {
-                scope: 'session',
-                sessionId: 'session-1',
-                attention: 'all',
-                pageSize: 20,
-                cursor: null,
-            }),
-            imageInventoryKeys.candidates(first, {
-                scope: 'session',
-                sessionId: 'session-1',
-                attention: 'all',
-                pageSize: 20,
-                cursor: 'cursor-2',
-            }),
-            imageInventoryKeys.candidates(first, {
-                scope: 'needs_review',
-                attention: 'needs_attention',
-                pageSize: 20,
-                cursor: null,
-            }),
         ];
 
         expect(new Set(keys.map((key) => JSON.stringify(key))).size).toBe(keys.length);
@@ -156,7 +137,9 @@ describe('Phase 9 Unit 6B private query identity', () => {
         expect(client.getQueryData(
             imageInventoryKeys.candidate(active, testUuid(1), testUuid(2)),
         )).toEqual(canonical);
-        expect(invalidate).toHaveBeenCalled();
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: ownerBatchReviewKeys.sessionV3(active, testUuid(1)) });
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: ownerBatchReviewKeys.batchReview(active, testUuid(1)) });
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: ownerBatchReviewKeys.readinessV3(active, testUuid(1)) });
 
         await coordinateImageInventoryIdentity(identity('user-2', 'store-2'), client);
         await synchronizeCandidateReviewSuccess(

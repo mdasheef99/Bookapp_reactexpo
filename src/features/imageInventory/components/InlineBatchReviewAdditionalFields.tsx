@@ -5,11 +5,11 @@ import { useTheme } from '@/hooks/useTheme';
 import type { OwnerCandidateReview } from '../contracts/ownerUxReviewSchema';
 import type { CompactReviewDisplay, CompactReviewEdits } from '../review/compactReviewDraft';
 import {
-    LANGUAGE_OPTIONS,
     PUBLICATION_CHOICES,
     type ScanSetupFormState,
 } from '../scanSetup/scanSetupForm';
 import { FieldSummary } from './BatchReviewFieldSummary';
+import { LanguageChooserPanel } from './LanguageChooserPanel';
 
 type DamageType = OwnerCandidateReview['damageDisclosure']['damageTypes'][number];
 type AdditionalSection = 'language' | 'location' | 'publication' | 'damage' | null;
@@ -85,12 +85,6 @@ export function InlineBatchReviewAdditionalFields({
         minHeight: 44,
         backgroundColor: colors.bgCard,
     } as const;
-    const normalizedLanguageSearch = languageSearch.trim().toLocaleLowerCase();
-    const visibleLanguages = LANGUAGE_OPTIONS.filter((choice) => (
-        !normalizedLanguageSearch
-        || choice.label.toLocaleLowerCase().includes(normalizedLanguageSearch)
-        || choice.value.toLocaleLowerCase().includes(normalizedLanguageSearch)
-    ));
     const damage = display.damage;
     const updateDamage = (patch: Partial<OwnerCandidateReview['damageDisclosure']>) => {
         const next = { ...damage, ...patch };
@@ -160,21 +154,10 @@ export function InlineBatchReviewAdditionalFields({
                     testSuffix="language" error={errorFields.has('originalLanguage')}
                     onPress={() => toggle('language')} disabled={disabled} />
                 {open === 'language' ? (
-                    <View testID="card-language-picker" style={panelStyle}>
-                        <TextInput accessibilityLabel="Search languages" testID="card-language-search"
-                            value={languageSearch} maxLength={80} onChangeText={setLanguageSearch}
-                            editable={!disabled} style={inputStyle} />
-                        {visibleLanguages.map((choice) => (
-                            <Button key={choice.value} title={choice.label} variant="secondary"
-                                onPress={() => {
-                                    onChange({ originalLanguage: choice.value });
-                                    setOpen(null);
-                                }} disabled={disabled} />
-                        ))}
-                        {visibleLanguages.length === 0 ? (
-                            <Text selectable style={{ color: colors.textSecondary }}>No languages found.</Text>
-                        ) : null}
-                    </View>
+                    <LanguageChooserPanel search={languageSearch} onSearchChange={setLanguageSearch}
+                        disabled={disabled} onSelect={(originalLanguage) => {
+                            onChange({ originalLanguage }); setOpen(null);
+                        }} />
                 ) : null}
             </View>
 

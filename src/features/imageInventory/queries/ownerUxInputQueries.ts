@@ -107,7 +107,6 @@ export function useResolveDuplicateOwnerInventoryInput(
                 client.invalidateQueries({ queryKey: imageInventoryKeys.session(identity, sessionId) }),
                 client.invalidateQueries({ queryKey: imageInventoryKeys.inputs(identity, sessionId) }),
                 client.invalidateQueries({ queryKey: imageInventoryKeys.readiness(identity, sessionId) }),
-                client.invalidateQueries({ queryKey: [...imageInventoryKeys.identity(identity), 'candidates'] }),
             ]);
         },
     });
@@ -128,7 +127,6 @@ export async function synchronizeRemoveInputSuccess(
         client.invalidateQueries({ queryKey: imageInventoryKeys.session(identity, sessionId) }),
         client.invalidateQueries({ queryKey: imageInventoryKeys.inputs(identity, sessionId) }),
         client.invalidateQueries({ queryKey: imageInventoryKeys.readiness(identity, sessionId) }),
-        client.invalidateQueries({ queryKey: [...imageInventoryKeys.identity(identity), 'candidates'] }),
     ]);
     return true;
 }

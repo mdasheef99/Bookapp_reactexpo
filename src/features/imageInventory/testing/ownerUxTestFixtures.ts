@@ -1,6 +1,5 @@
 import type {
     OwnerCandidateDetail,
-    OwnerCandidatePage,
     OwnerSessionSummary,
 } from '../contracts/ownerUxContracts';
 
@@ -104,17 +103,5 @@ export function sessionSummaryFixture(): OwnerSessionSummary {
         allInputsTerminal: true,
         closeState: 'closeable',
         presentationRevision: 3,
-    };
-}
-
-export function candidatePageFixture(
-    items: OwnerCandidatePage['items'],
-    nextCursor: string | null = null,
-): OwnerCandidatePage {
-    return {
-        items,
-        pageInfo: { nextCursor, hasMore: nextCursor !== null },
-        scopeVersion: 1,
-        sessionVersion: items[0]?.sessionStatus ? 2 : null,
     };
 }

@@ -1,8 +1,7 @@
 jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanupAsync, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { Button } from '@/components/ui/Button';
-import { Modal, Platform, Text, type View } from 'react-native';
+import { Modal, Platform, StyleSheet, Text, type View } from 'react-native';
 import { CandidateEditionPicker } from '../components/CandidateEditionPicker';
 import { CandidateMetadataSheet } from '../components/CandidateMetadataSheet';
 import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
@@ -67,13 +66,13 @@ it('ordinary sheet and hardware close return focus without adopting or editing a
   const originalOS = Platform.OS;
   Object.defineProperty(Platform, 'OS', { configurable: true, value: 'web' });
   jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(pickerDetail(selectedChoices(), pickerReview));
-  const focus = jest.fn(); const close = jest.fn(); const manual = jest.fn();
+  const focus = jest.fn(); const close = jest.fn();
   const view = render(<QueryClientProvider client={client}><CandidateMetadataSheet identity={pickerIdentity}
-    card={pickerCard()} visible disabled={false} onClose={close} onEditManually={manual}
+    card={pickerCard()} visible disabled={false} onClose={close}
     restoreFocusRef={{ current: { focus } as unknown as View }} /></QueryClientProvider>);
   fireEvent.press(view.getByText('Close metadata'));
   await act(async () => jest.runAllTicks());
-  expect(close).toHaveBeenCalledTimes(1); expect(focus).toHaveBeenCalledTimes(1); expect(manual).not.toHaveBeenCalled();
+  expect(close).toHaveBeenCalledTimes(1); expect(focus).toHaveBeenCalledTimes(1);
   fireEvent(view.UNSAFE_getByType(Modal), 'requestClose');
   await act(async () => jest.runAllTicks());
   expect(close).toHaveBeenCalledTimes(2); expect(focus).toHaveBeenCalledTimes(2);
@@ -100,7 +99,7 @@ it('a cached older set cannot replace the current saved metadata or expose stale
   jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(detail);
   const view = render(<QueryClientProvider client={client}><CandidateMetadataSheet identity={pickerIdentity}
     card={pickerCard(current)} visible disabled={false} commandSlot={slots}
-    onSelection={jest.fn()} onClose={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
+    onSelection={jest.fn()} onClose={jest.fn()} /></QueryClientProvider>);
   await waitFor(() => expect(read).toHaveBeenCalled());
   expect(view.getByText('Title: New saved choice')).toBeTruthy();
   expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeNull();
@@ -118,7 +117,7 @@ it('sheet offers only edition search and choices', async () => {
   jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(pickerDetail(selectedChoices(), pickerReview));
   const view = render(<QueryClientProvider client={client}><CandidateMetadataSheet identity={pickerIdentity}
     card={pickerCard()} visible disabled={false} commandSlot={slots}
-    onSelection={jest.fn()} onClose={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
+    onSelection={jest.fn()} onClose={jest.fn()} /></QueryClientProvider>);
   await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
   expect(view.getByRole('header', { name: 'Find or change edition' })).toBeTruthy();
   for (const text of ['Detected details', 'Use detected details', 'Edit manually', 'Wrong title or author? Fix it']) {
@@ -207,53 +206,11 @@ describe('selection-error recovery', () => {
   });
 });
 
-// Owner amendment 2026-10-16: offer the existing manual identity path when nothing is selectable.
-describe('no selectable edition', () => {
-  const blockedRow = { optionId: '00000000-0000-4000-8000-000000000041', ordinal: 0,
-    googleBooksUrl: 'https://books.google.com/books?id=blocked', eligibility: 'ineligible' as const,
-    metadata: { ...pickerChoices().rows[0].metadata!, title: 'Other book' } };
-  function mountWithEdit(onEditIdentity: jest.Mock, disabled = false) {
-    return render(<QueryClientProvider client={client}><CandidateEditionPicker identity={pickerIdentity}
-      sessionId={pickerChoices().sessionId} candidateId={pickerChoices().candidateId} commandSlot={slots}
-      disabled={disabled} onSelection={jest.fn()} onEditIdentity={onEditIdentity}>{() => null}</CandidateEditionPicker></QueryClientProvider>);
-  }
-  it('offers Edit title/author for a fresh set with no eligible row', async () => {
-    read.mockResolvedValue(pickerChoices({ rows: [blockedRow] }));
-    const edit = jest.fn(); const view = mountWithEdit(edit);
-    await waitFor(() => expect(view.queryByText('Edit title/author')).toBeTruthy());
-    fireEvent.press(view.getByText('Edit title/author'));
-    expect(edit).toHaveBeenCalledTimes(1); expect(lookup).not.toHaveBeenCalled();
-  });
-  it('offers it for a fresh empty result set too', async () => {
-    read.mockResolvedValue(pickerChoices({ rows: [] }));
-    const view = mountWithEdit(jest.fn());
-    await waitFor(() => expect(view.queryByText('No book results were returned.')).toBeTruthy());
-    expect(view.getByText('Edit title/author')).toBeTruthy();
-  });
-  it('does not offer it when an eligible row exists or results are not fresh', async () => {
-    read.mockResolvedValue(pickerChoices());
-    const view = mountWithEdit(jest.fn());
-    await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
-    expect(view.queryByText('Edit title/author')).toBeNull();
-    read.mockResolvedValue(pickerChoices({ rows: [], optionsExpiresAt: null, lookupStatus: 'idle' }));
-    const expired = mountWithEdit(jest.fn());
-    await waitFor(() => expect(expired.queryAllByText('Search Books').length).toBeGreaterThan(0));
-    expect(expired.queryByText('Edit title/author')).toBeNull();
-  });
-  it('a locked picker keeps the prompt but cannot invoke it', async () => {
-    read.mockResolvedValue(pickerChoices({ rows: [blockedRow] }));
-    const edit = jest.fn(); const view = mountWithEdit(edit, true);
-    await waitFor(() => expect(view.queryByText('Edit title/author')).toBeTruthy());
-    fireEvent.press(view.getByText('Edit title/author'));
-    expect(edit).not.toHaveBeenCalled();
-  });
-});
-
 describe('disabled sheet reason', () => {
   const mountSheet = (disabled: boolean) => render(<QueryClientProvider client={client}><CandidateMetadataSheet
     identity={pickerIdentity} card={pickerCard()} visible disabled={disabled} commandSlot={slots}
     disabledReason="Finish editing the title or author on this card before choosing an edition."
-    onSelection={jest.fn()} onClose={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
+    onSelection={jest.fn()} onClose={jest.fn()} /></QueryClientProvider>);
   it('explains a caller-owned lock only while disabled', async () => {
     jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(pickerDetail());
     const locked = mountSheet(true);
@@ -273,7 +230,7 @@ describe('no selectable edition: guarded cases', () => {
     googleBooksUrl: null, eligibility: 'unavailable' as const, metadata: null };
   const mountPrompt = () => render(<QueryClientProvider client={client}><CandidateEditionPicker identity={pickerIdentity}
     sessionId={pickerChoices().sessionId} candidateId={pickerChoices().candidateId} commandSlot={slots}
-    disabled={false} onSelection={jest.fn()} onEditIdentity={jest.fn()}>{() => null}</CandidateEditionPicker></QueryClientProvider>);
+    disabled={false} onSelection={jest.fn()}>{() => null}</CandidateEditionPicker></QueryClientProvider>);
   it('does not blame the title/author when every result is only unavailable', async () => {
     read.mockResolvedValue(pickerChoices({ rows: [unavailable] }));
     const view = mountPrompt();
@@ -289,8 +246,9 @@ describe('no selectable edition: guarded cases', () => {
   it('announces the no-match explanation politely', async () => {
     read.mockResolvedValue(pickerChoices({ rows: [blocked] }));
     const view = mountPrompt();
-    await waitFor(() => expect(view.queryByText('Edit title/author')).toBeTruthy());
+    await waitFor(() => expect(view.queryByText(/No result matches this book's title and author/u)).toBeTruthy());
     expect(view.getByText(/No result matches this book's title and author/u).props.accessibilityLiveRegion).toBe('polite');
+    expect(view.queryByText('Edit title/author')).toBeNull();
   });
 });
 
@@ -299,7 +257,7 @@ describe('metadata detail loading state', () => {
   const unavailable = 'Metadata details are unavailable right now.';
   const mountSheet = () => render(<QueryClientProvider client={client}><CandidateMetadataSheet
     identity={pickerIdentity} card={pickerCard()} visible disabled={false}
-    onClose={jest.fn()} onEditManually={jest.fn()} /></QueryClientProvider>);
+    onClose={jest.fn()} /></QueryClientProvider>);
   it('shows Loading metadata without the unavailable error or Retry while the first read is pending', async () => {
     const pending = deferred<ReturnType<typeof pickerDetail>>();
     jest.spyOn(ownerUxService, 'readCandidate').mockReturnValue(pending.promise as never);
@@ -319,4 +277,24 @@ describe('metadata detail loading state', () => {
     expect(view.queryByText(unavailable)).toBeTruthy();
     expect(view.queryByText('Retry metadata')).toBeTruthy();
   });
+});
+
+// Post-scan SDD-1 §6 (4a), D2-6: the kept batch-card sheet owns this coverage.
+it('keeps the batch-card edition sheet controls at their natural touch-target height', async () => {
+    jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(pickerDetail(selectedChoices(), pickerReview));
+    const close = jest.fn();
+    const view = render(<QueryClientProvider client={client}><CandidateMetadataSheet identity={pickerIdentity}
+        card={pickerCard()} visible disabled={false} commandSlot={slots}
+        onSelection={jest.fn()} onClose={close} /></QueryClientProvider>);
+    await waitFor(() => expect(view.getByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+    const selection = view.getByRole('button', { name: 'Select result 1: Chosen edition' });
+    const selectionStyle = StyleSheet.flatten(selection.props.style);
+    expect(selectionStyle.minHeight).toBeGreaterThanOrEqual(48);
+    expect(selectionStyle.flexBasis).toBeUndefined();
+    expect(selectionStyle.flexGrow).toBeUndefined();
+    const closeStyle = StyleSheet.flatten(view.getByRole('button', { name: 'Close metadata' }).props.style);
+    expect(closeStyle.flexBasis).toBeUndefined();
+    expect(closeStyle.flexGrow).toBeUndefined();
+    fireEvent.press(view.getByRole('button', { name: 'Close metadata' }));
+    expect(close).toHaveBeenCalledTimes(1);
 });

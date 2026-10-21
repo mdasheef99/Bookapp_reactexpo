@@ -36,9 +36,6 @@ export async function synchronizeInventoryCommitSuccess(
             ),
         });
     }
-    await client.invalidateQueries({
-        queryKey: [...imageInventoryKeys.identity(identity), 'candidates'],
-    });
     await client.invalidateQueries({ queryKey: imageInventoryKeys.discovery(identity) });
     await client.invalidateQueries({
         queryKey: imageInventoryKeys.readiness(identity, sessionId),

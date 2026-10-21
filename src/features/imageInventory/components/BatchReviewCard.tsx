@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { useTheme } from '@/hooks/useTheme';
@@ -36,7 +36,7 @@ export { sourceBadgeLabel } from './BatchReviewFieldSummary';
 
 export function BatchReviewCard({
     identity, card, defaults, isOffline, canMutate, removePending, addPending,
-    addOutcome, onOpenFullCorrection, onRemove, onAdd, onDraftChange,
+    addOutcome, onRemove, onAdd, onDraftChange,
     onAuthorityStateChange, onPendingIdentityChange, onUnsavedEditsChange, commandSlot, onEditionSelection, onEditionPendingChange, onEditionChoices,
 }: {
     identity: ImageInventoryIdentity;
@@ -47,7 +47,6 @@ export function BatchReviewCard({
     removePending: boolean;
     addPending: boolean;
     addOutcome?: CandidateCommitOutcome;
-    onOpenFullCorrection: () => void;
     onRemove: (candidateId: string) => void;
     onAdd: (card: OwnerBatchReviewCard, edits: CompactReviewEdits,
         review: NonNullable<ReturnType<typeof buildCompactReview>>) => Promise<unknown>;
@@ -313,7 +312,7 @@ export function BatchReviewCard({
                 ) : null}
 
                 {!editable ? <Text selectable style={{ color: colors.textSecondary }}>
-                    Open full correction to prepare this book before it can be finalized.
+                    This book can't be changed now.
                 </Text> : null}
 
                 <View style={{ gap: 8 }}>
@@ -334,10 +333,6 @@ export function BatchReviewCard({
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                         {((commandSlot && editable) || card.allowedActions.includes('view_metadata')) ? <MetadataSheetTrigger title="Find or change edition" focusRef={editionTriggerRef} style={{ flexGrow: 1, flexBasis: 150 }}
                             onPress={() => openMetadata(editionTriggerRef)} /> : null}
-                        <Button title="Open full correction" variant="secondary" size="sm"
-                            style={{ flexGrow: 1, flexBasis: 150, width: 'auto' }}
-                            onPress={onOpenFullCorrection}
-                            accessibilityHint="Opens the existing full review for deep corrections" />
                     </View>
                     {card.allowedActions.includes('remove_from_scan') ? (
                         <>

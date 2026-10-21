@@ -1,10 +1,9 @@
-import { acceptCandidateRead, assertCandidatePageAuthority } from './ownerCandidateAuthority';
+import { acceptCandidateRead } from './ownerCandidateAuthority';
 import { type QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { appQueryClient } from '@/lib/queryClient';
 import {
     OwnerUxClientError,
     ownerUxService,
-    type CandidatePageRequest,
 } from '../api/ownerUxService';
 import { OWNER_UX_CONTRACT_VERSION } from '../contracts/ownerUxContracts';
 import { cancelAllCaptureWork } from '../capture/captureCancellation';
@@ -19,11 +18,6 @@ export type ImageInventoryIdentity = Readonly<{
     userId: string;
     storeId: string;
 }>;
-
-type CandidatePageKeyContext = CandidatePageRequest & {
-    pageSize: number;
-    cursor: string | null;
-};
 
 const root = ['phase9', 'ownerInventory', OWNER_UX_CONTRACT_VERSION] as const;
 
@@ -55,18 +49,6 @@ export const imageInventoryKeys = {
         sessionId,
         pageSize,
         cursor,
-    ] as const,
-    candidates: (
-        identity: ImageInventoryIdentity,
-        context: CandidatePageKeyContext,
-    ) => [
-        ...imageInventoryKeys.identity(identity),
-        'candidates',
-        context.scope,
-        'sessionId' in context ? context.sessionId : null,
-        context.attention ?? 'all',
-        context.pageSize,
-        context.cursor,
     ] as const,
     candidate: (
         identity: ImageInventoryIdentity,
@@ -169,21 +151,6 @@ export function useOwnerInventoryDiscovery(identity: ImageInventoryIdentity | nu
     });
 }
 
-export function useOwnerInventorySession(
-    identity: ImageInventoryIdentity | null,
-    sessionId: string | null,
-) {
-    return useQuery({
-        ...commonQueryOptions,
-        queryKey: imageInventoryKeys.session(
-            identity ?? { userId: 'unresolved', storeId: 'unresolved' },
-            sessionId ?? 'unresolved',
-        ),
-        queryFn: () => ownerUxService.readSession(sessionId as string),
-        enabled: Boolean(identity && sessionId),
-    });
-}
-
 export function useOwnerInventoryInputs(
     identity: ImageInventoryIdentity | null,
     sessionId: string | null,
@@ -199,37 +166,6 @@ export function useOwnerInventoryInputs(
         enabled: Boolean(identity && sessionId),
         refetchInterval: (query) => inputPollingInterval(query.state.data?.items, visible),
         refetchIntervalInBackground: false,
-    });
-}
-
-export function useOwnerInventoryCandidates(
-    identity: ImageInventoryIdentity | null,
-    request: CandidatePageRequest | null,
-) {
-    const client = useQueryClient();
-    const context = request
-        ? { ...request, pageSize: request.pageSize ?? 20, cursor: request.cursor ?? null }
-        : {
-            scope: 'needs_review' as const,
-            attention: 'all' as const,
-            pageSize: 20,
-            cursor: null,
-        };
-    return useQuery({
-        ...commonQueryOptions,
-        queryKey: imageInventoryKeys.candidates(
-            identity ?? { userId: 'unresolved', storeId: 'unresolved' },
-            context,
-        ),
-        queryFn: async ({ signal }) => {
-            const fence = captureOwnerRequest(identity!, signal);
-            try {
-                const page = await ownerUxService.listCandidates(request as CandidatePageRequest);
-                fence.assertCurrent();
-                return assertCandidatePageAuthority(client, identity!, page);
-            } finally { fence.release(); }
-        },
-        enabled: Boolean(identity && request),
     });
 }
 

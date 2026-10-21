@@ -45,46 +45,6 @@ describe('Phase 9 Unit 6B Owner UX service', () => {
         });
     });
 
-    it('uses bounded page defaults and forwards opaque paging context', async () => {
-        invoke.mockResolvedValue({
-            data: {
-                contractVersion: 'phase9-owner-ux-v1',
-                data: {
-                    items: [],
-                    pageInfo: { nextCursor: null, hasMore: false },
-                    scopeVersion: 1,
-                    sessionVersion: null,
-                },
-            },
-            error: null,
-        });
-
-        await ownerUxService.listCandidates({
-            scope: 'needs_review',
-            attention: 'needs_attention',
-            cursor: 'opaque',
-        });
-
-        expect(invoke).toHaveBeenCalledWith('phase9-owner-ingestion', {
-            body: {
-                action: 'list_scan_candidates',
-                contractVersion: 'phase9-owner-ux-v1',
-                scope: 'needs_review',
-                attention: 'needs_attention',
-                pageSize: 20,
-                cursor: 'opaque',
-            },
-        });
-    });
-
-    it.each([0, 51, 1.5])('rejects an invalid page size before invoking the Edge boundary: %s', async (pageSize) => {
-        await expect(ownerUxService.listCandidates({
-            scope: 'needs_review',
-            pageSize,
-        })).rejects.toMatchObject({ code: 'P9_REQUEST_INVALID' });
-        expect(invoke).not.toHaveBeenCalled();
-    });
-
     it('decodes an HTTP error from a real Response without losing its receiver', async () => {
         invoke.mockResolvedValueOnce({ data: null, error: { context: new Response(
             JSON.stringify({ error: 'P9_OWNER_NOT_AUTHORIZED', retryable: true,
@@ -246,16 +206,11 @@ describe('Phase 9 Unit 6B Owner UX service', () => {
     });
 
     it.each([
-        () => ownerUxService.readSession('not-a-uuid'),
         () => ownerUxService.readCandidate(
             '00000000-0000-4000-8000-000000000001',
             'not-a-uuid',
         ),
         () => ownerUxService.readReadiness('not-a-uuid'),
-        () => ownerUxService.listCandidates({
-            scope: 'needs_review',
-            cursor: '',
-        }),
     ])('rejects malformed adapter requests before network invocation', async (request) => {
         await expect(request()).rejects.toMatchObject({ code: 'P9_REQUEST_INVALID' });
         expect(invoke).not.toHaveBeenCalled();

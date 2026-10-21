@@ -762,3 +762,145 @@ Mutations: one inventory commit through the app (Book 6 in session 7a81bdb6, in 
 Deferred: the needs-review queue route (`/inventory/reviews`) no longer has an entry on the Inventory tab (SDD §5 removes the button); its removal or reuse belongs to a later slice.
 
 Active work unit: `post_scan_rework_slice3_inventory_tab`, until the slice-3 PR merges. Exact next authorized action: the Owner merges PR #25 (slice 2), then the slice-3 PR; then slice 4 ("Remove full correction; simplify Add a book", SDD-1 §6) with Codex and the full process. No migration.
+
+## 21. Slice 4a built: remove the full correction screen and finish "Add a book", 2026-10-21
+
+```text
+Date/session: 2026-10-21; slice-4a session.
+Authorized work unit and scope: post_scan_rework_slice4a_remove_full_correction;
+  slice 4a (SDD-1 §6, parts tagged 4a) on branch
+  claude/phase9-psr-slice4a-remove-full-correction, cut from origin/main 1268403
+  (slices 1–3 merged, PRs #24–#26). origin/main has since moved to 60a6b6c; the
+  branch is not yet synced. App only: no migration, no SQL, no Storage, Edge or
+  deploy change. Supabase MCP was not used (read-only checks are for 4b).
+Completed:
+  - Deleted the full-correction routes (inventory/reviews,
+    scan/[sessionId]/candidate/[candidateId]), their screens/components, the Mark
+    false and replace-variant clients and schemas, the legacy Add variant, the
+    full-review draft model (review/reviewForm.ts, applyEditionSelection),
+    candidateConflict.ts, ownerCorrectionWorkflow.ts, CandidateCard,
+    ReviewFieldControls, CompactReviewEditors, hooks with no remaining caller,
+    and the dead imageInventoryKeys.candidates query key with every read and
+    invalidation of it and candidatePageFixture.
+  - "Add a book" (renamed from "Add missed book"): the 15-book rule reads
+    counts.detected >= 15 (the button is disabled with visible scan-full text,
+    and disabled without text while the count is not loaded; P9_LIMIT_EXCEEDED
+    shows the same text); the language defaults to the session hint through the
+    shared chooser panel; the leave guard uses useUnsavedEditsLeaveGuard and
+    OwnerConfirmationDialog; the final SDD bullets are Submit, definitive
+    refusal, unclear result, retry, success, and scope or identity change
+    (fields locked while a kept request exists; retry replays the same
+    idempotency key and command ID; unclear results invalidate the batch review;
+    one navigation).
+  - Card hint text only: "This book can't be changed now." (the condition is
+    unchanged, !editable). The readiness summary shows one "Back to review" in
+    place of each old "Review next blocker" condition. Notes already saved on a
+    review are kept.
+Process and evidence:
+  1. Codex gpt-6.1-sol xhigh built it red-first: RED 39 failed (38 valid; one
+     test waited for a deleted button and was corrected), RED-2 9 failed for
+     their own reasons, GREEN 454/454.
+  2. Medium review pass: MiniMax 3.1 Flash (10 findings: 7 held, 2 rejected, 1
+     deferred) and DeepSeek v4.1 Flash (run 1 blocked by the provider content
+     filter; run 2: 7 findings, one new — the limit test did not assert the
+     disabled Add button). DeepSeek run 2 had read MiniMax's output from the
+     same folder, so independence was compromised; later reviews kept outputs
+     outside the worktree.
+  3. The SDD-1 "Add a book" leave-guard text was rewritten after two independent
+     Sonnet reviews; the first found a blocker: editing fields after an unclear
+     result broke the retry and navigation.
+  4. Fix round 1 (Codex): F1 busy trap, F2 hint condition restored, F3 silent
+     exits, M2 invalidation coverage, N1–N5. Fix 1b (Codex): field lock,
+     unclear-dialog copy, one-tick success, batch invalidation on unclear,
+     limit-disabled assertion, slow test fixed at the cause (no raised timeout).
+  5. Pre-merge review: DeepSeek ended without a report (likely context/step
+     limit); MiniMax ran as the fallback: 8 findings, 6 accepted (#1, #3–#7), 2
+     rejected (#2: SDD rule plus existing header retry; #8: only one button can
+     render). Orchestrator finding P1 (silent lock on a server user mismatch)
+     was added.
+  6. Fix round 2 by MiniMax (Codex hit its usage limit), in three phases: tests
+     only (RED: exactly 3 expected failures), product fix (P1, R1, R5), then R3
+     dead-key removal and test updates.
+  7. Picker suite timeouts: Codex showed the pre-round code failed the same way;
+     the cause was machine contention (an Expo server with --clear running
+     alongside Jest). Codex hardened ownerEditionPickerMounted.test.tsx (native
+     mock preloading, spy restoration, findBy polling); default timeouts
+     unchanged.
+Files/components/migrations: 81 files changed versus 1268403 in src/, app/ and
+  e2e/ (26 deleted, 55 modified), plus one new file,
+  src/features/imageInventory/components/LanguageChooserPanel.tsx; +1208 /
+  −5575 lines. No migration and no server change.
+Earlier verification (quiet machine, 2026-10-21, before the Back-to-review
+  fix): picker suite 16/16 twice; npx jest
+  src/features/imageInventory: 67 suites passed / 1 skipped, 775 passed / 4
+  skipped, 0 failed; app/(store-owner) routes 7 suites, 9/9; npx tsc --noEmit
+  clean; --noUnusedLocals 50 diagnostics repo-wide, none introduced by this
+  slice. The folder test count is lower than slice 3's 849 because the deleted
+  screens' test files were deleted.
+Browser check (2026-10-21, web, real backend, Owner signed in): the Owner's
+  image was scanned into a new session 8eb9b18a-2088-49c6-a915-16fc194cd253 (11
+  books). A Haiku subagent ran the script, then the orchestrator re-checked
+  every failure in the browser.
+  - Passed: "Add a book" present and enabled (no "Add missed book"; no "Open
+    full correction" anywhere); the form shows heading "Add a book", "Adds one
+    book to this scan for you to check.", Title, Authors, Language preset to
+    English and "Add book"; the one approved manual book "The Name of the Rose"
+    / Umberto Eco was added (Detected 11 → 12; card BOOK 12, language en,
+    "Finding edition…"; nothing added to inventory); /inventory/reviews and the
+    candidate route show "Unmatched Route"; on the closed session
+    7a81bdb6-ed34-40cb-b5a9-cff85402cf48 "Add a book" is disabled (by design).
+  - Leave guard on web, with the in-app back link: dialog "Leave without
+    adding?" / "This book's details exist only on this screen." / Stay / Leave;
+    Stay keeps the typed title; Leave exits and adds nothing (Detected stays 12).
+  - Not app bugs: the subagent saw 6 of 11 cards because the list renders cards
+    as they scroll into view; its "no leave dialog" came from a full-page reload
+    used as Back (that unloads the app).
+  - Bug found and fixed (new in 4a): the summary's "Back to review" used
+    router.push to the session route, which stacked a second session screen;
+    that copy showed "Saved scan progress could not be loaded." and its Retry
+    did not clear it. Fix (Codex, red-first: RED 4 failed → GREEN 11/11 in
+    ReadinessSummaryScreen.test.tsx):
+    router.dismissTo(inventoryRoutes.session(sessionId)) on both buttons
+    (expo-router 6.0). Re-checked in the browser: session → summary → "Back to
+    review" returns with all cards; summary opened directly → "Back to review"
+    opens the session with all cards.
+  - Open observations (not fixed, not shown to be caused by 4a): (1) why a
+    second mounted session screen fails its session/inputs reads and Retry does
+    not re-send them (no longer reachable through "Back to review"); (2) when
+    the 11 new cards first rendered, six
+    phase9_owner_candidate_edition_choices_v1 calls returned 400 and the edge
+    function returned 409 (42 other calls that hour returned 200). Codex's
+    investigation of both was cut off by its usage limit.
+Final verification after the fix (quiet machine, 2026-10-21): npx tsc --noEmit
+  clean; npx jest src/features/imageInventory: 67 suites passed / 1 skipped,
+  777 passed / 4 skipped, 0 failed; app/(store-owner) 7 suites, 9/9.
+Deviations:
+  - MiniMax ran a few read-only shell commands (wc, rg, cat, ls) despite the
+    no-shell instruction in fix round 2; no effect on files.
+  - The picker-suite timeouts were diagnosed on the pre-round code and fixed at
+    the cause; default timeouts were not raised.
+  - Codex hit its usage limit twice (fix round 2; the Back-to-review
+    investigation).
+Deferred items (recorded, not fixed):
+  - After P9_STATE_CONFLICT the message asks the Owner to refresh, but the
+    screen has no refresh control (MiniMax #9 / DeepSeek #7; pre-existing).
+  - Scope or identity change during an add: the kept request is dropped; if that
+    add had succeeded, the Owner could add the same book again under a new key
+    (accepted for 4a; rare).
+  - 4a→4b gap: a card blocked only by variant_source_stale cannot be added and
+    shows the generic hint until 4b; 4b must merge before the Owner's next scan.
+D2-5 exceptions (kept on purpose):
+  - resolveExpectedVariants and decideVariant (approved; used by 4b).
+  - list_scan_candidates transport/contract/schema and the OwnerCandidatePage
+    type stay (wire contract; the server function stays for older apps); no app
+    caller remains.
+Process decisions recorded this slice (Owner, 2026-10-21):
+  - SDD reviews use Sonnet + OpenCode "Argon"; complex SDDs use Opus instead of
+    Sonnet; Argon also reviews complex code.
+  - Large review diffs are split between reviewers; a stalled OpenCode session
+    may be resumed by ID.
+```
+
+Mutations: none by this session beyond the approved app actions in the browser check (one new scan session with 11 books from the Owner's image, and one manual candidate, "The Name of the Rose", added through the app; nothing added to inventory). No migration, SQL or Storage mutation. Nothing deployed.
+
+Active work unit: `post_scan_rework_slice4a_remove_full_correction`. Exact next authorized action: on the Owner's go: commit (code, tests, docs; not `.claude/` or `.env.local`), sync the branch with origin/main `60a6b6c`, Haiku re-runs the final tests, push and open the slice-4a PR. Then slice 4b code. Slice 4b's SDD and its read-only Supabase check were done in a separate session (branch `claude/phase9-psr-slice4b-sdd-ffa027`, uncommitted; recorded there in tracker 38 §22) and wait for the Owner's approval and decisions 4b-1 to 4b-5.

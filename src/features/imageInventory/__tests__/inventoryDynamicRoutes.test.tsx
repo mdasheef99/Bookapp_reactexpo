@@ -2,12 +2,10 @@ import { render } from '@testing-library/react-native';
 import { useLocalSearchParams } from 'expo-router';
 import PreviewRoute from '../../../../app/(store-owner)/inventory/scan/preview';
 import SessionRoute from '../../../../app/(store-owner)/inventory/scan/[sessionId]';
-import CandidateRoute from '../../../../app/(store-owner)/inventory/scan/[sessionId]/candidate/[candidateId]';
 import MissedRoute from '../../../../app/(store-owner)/inventory/scan/[sessionId]/missed';
 import SummaryRoute from '../../../../app/(store-owner)/inventory/scan/[sessionId]/summary';
 import {
     InvalidInventoryRouteScreen,
-    InventoryCandidateFoundationScreen,
     InventoryMissedFoundationScreen,
     InventoryPreviewFoundationScreen,
     InventorySessionFoundationScreen,
@@ -19,7 +17,6 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('../screens/InventoryFoundationScreens', () => ({
     InvalidInventoryRouteScreen: jest.fn(() => null),
-    InventoryCandidateFoundationScreen: jest.fn(() => null),
     InventoryMissedFoundationScreen: jest.fn(() => null),
     InventoryPreviewFoundationScreen: jest.fn(() => null),
     InventorySessionFoundationScreen: jest.fn(() => null),
@@ -28,19 +25,12 @@ jest.mock('../screens/InventoryFoundationScreens', () => ({
 
 const params = useLocalSearchParams as jest.Mock;
 const sessionId = '00000000-0000-4000-8000-000000000001';
-const candidateId = '00000000-0000-4000-8000-000000000002';
 
 const routes = [
     ['preview', PreviewRoute, InventoryPreviewFoundationScreen, { sessionId }],
     ['session', SessionRoute, InventorySessionFoundationScreen, { sessionId }],
     ['missed', MissedRoute, InventoryMissedFoundationScreen, { sessionId }],
     ['summary', SummaryRoute, InventorySummaryFoundationScreen, { sessionId }],
-    [
-        'candidate',
-        CandidateRoute,
-        InventoryCandidateFoundationScreen,
-        { sessionId, candidateId },
-    ],
 ] as const;
 
 describe('Phase 9 Unit 6B dynamic route guard entry', () => {

@@ -90,7 +90,7 @@ Visible tabs: **Dashboard**, **Inventory**, **Store View**, **Orders**, **Subscr
 | `index` (hidden) | Gate: resolves the Owner's state from the server and routes onward |
 | `onboarding`, `status`, `setup` (hidden) | Store application, review status, setup checklist |
 | `dashboard` | Store health, quotas, subscription, compliance blockers |
-| `inventory/` (stack) | `index` (inventory hub), `reviews` (needs-review queue), `scan/` (scan flow: `index`, `preview`, `[sessionId]/index`, `[sessionId]/candidate/[candidateId]`, `[sessionId]/missed`, `[sessionId]/summary`) |
+| `inventory/` (stack) | `index` (inventory hub), `scan/` (scan flow: `index`, `preview`, `[sessionId]/index`, `[sessionId]/missed`, `[sessionId]/summary`) |
 | `store-view/` (stack) | `index` (committed stock list), `[inventoryId]` (detail, edit, photos, history) |
 | `orders/index`, `orders/[requestId]` | Phase 6 Owner order-request inbox and detail |
 | `store-profile` (hidden) | Store profile and public storefront settings |

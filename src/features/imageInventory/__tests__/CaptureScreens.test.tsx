@@ -81,9 +81,6 @@ jest.mock('../queries/ownerUxQueries', () => ({
         data: { items: mockPreviewInputItems }, isLoading: false, error: null, isFetchedAfterMount: true,
         refetch: jest.fn().mockResolvedValue({ data: { items: mockPreviewInputItems }, isError: false, error: null }),
     })),
-    useOwnerInventorySession: jest.fn(() => ({
-        data: { status: 'active' }, error: null, refetch: jest.fn(),
-    })),
 }));
 const mockStartV2 = jest.fn();
 jest.mock('../queries/ownerBatchReviewQueries', () => ({

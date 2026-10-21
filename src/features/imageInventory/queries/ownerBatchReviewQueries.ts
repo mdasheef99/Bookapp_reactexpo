@@ -154,9 +154,6 @@ export async function synchronizeRemoveCandidateSuccess(
         client.invalidateQueries({
             queryKey: ownerBatchReviewKeys.readinessV3(identity, sessionId),
         }),
-        client.invalidateQueries({
-            queryKey: [...imageInventoryKeys.identity(identity), 'candidates'],
-        }),
     ]);
     return true;
 }
@@ -222,9 +219,6 @@ export async function synchronizeCloseV3Success(
         }),
         client.invalidateQueries({
             queryKey: ownerBatchReviewKeys.batchReview(identity, sessionId),
-        }),
-        client.invalidateQueries({
-            queryKey: [...imageInventoryKeys.identity(identity), 'candidates'],
         }),
     ]);
     return true;

@@ -17,8 +17,8 @@ const formSchema = z.object({
     }
 });
 
-export function createEmptyMissedBookDraft(): MissedBookDraft {
-    return { title: '', authors: [], language: 'en' };
+export function createEmptyMissedBookDraft(languageHint = 'en'): MissedBookDraft {
+    return { title: '', authors: [], language: languageHint };
 }
 
 export type MissedBookBuildResult =
@@ -34,7 +34,7 @@ export function buildMissedBookRequest(draft: MissedBookDraft): MissedBookBuildR
         errors[field] = field === 'title'
             ? 'Enter a title between 1 and 512 characters.'
             : field === 'language'
-                ? 'Enter a valid BCP-47 language tag.'
+                ? 'Choose a valid language.'
                 : 'Enter up to 20 unique authors, each 1 to 256 characters.';
     }
     return { success: false, errors };

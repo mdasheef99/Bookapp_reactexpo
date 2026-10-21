@@ -1,13 +1,14 @@
 jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
-import { assertCandidatePageAuthority } from '../queries/ownerCandidateAuthority';
+import { assertBatchAuthority } from '../queries/ownerCandidateAuthority';
 import { QueryClient } from '@tanstack/react-query';
 import { acceptEditionChoices, acceptEditionLookupReceipt } from '../queries/ownerEditionPickerCache';
 import { ownerEditionPickerKeys } from '../queries/ownerEditionPickerKeys';
+import { ownerBatchReviewKeys } from '../queries/ownerBatchReviewKeys';
 import { synchronizeCandidateReviewSuccess } from '../queries/ownerUxReviewQueries';
 import { synchronizeInventoryCommitSuccess } from '../queries/ownerInventoryCommitQueries';
 import { synchronizeRemoveCandidateSuccess } from '../queries/ownerBatchReviewQueries';
 import { imageInventoryKeys, resetImageInventoryIdentityForTests } from '../queries/ownerUxQueries';
-import { pickerChoices, selectedChoices, pickerIdentity, pickerDetail, pickerReview } from '../testing/editionPickerClientFixtures';
+import { pickerChoices, selectedChoices, pickerIdentity, pickerDetail, pickerReview, pickerCard } from '../testing/editionPickerClientFixtures';
 import { testUuid } from '../testing/ownerUxTestFixtures';
 
 let client: QueryClient;
@@ -89,18 +90,18 @@ it('a read with unchanged metadata revision cannot erase the accepted selection'
   acceptEditionChoices(client, pickerIdentity, request, latest, 'read');
   expect(acceptEditionChoices(client, pickerIdentity, request, { ...latest, selection: null }, 'read')).toEqual(latest);
 });
-it('a newer candidate page prevents an older Save success from regressing detail or selection', async () => {
-  client.setQueryData(imageInventoryKeys.candidates(pickerIdentity, {
-    scope: 'session', sessionId: request.sessionId, pageSize: 20, cursor: null,
-  }), { items: [{ ...request, candidateVersion: 12 }] });
+it('a newer batch review card prevents an older Save success from regressing detail or selection', async () => {
+  client.setQueryData(ownerBatchReviewKeys.batchReview(pickerIdentity, request.sessionId), {
+    items: [pickerCard(selectedChoices({ candidateVersion: 12, reviewVersion: 1 }), pickerReview)],
+  });
   await synchronizeCandidateReviewSuccess(client, pickerIdentity, request.sessionId, request.candidateId,
     pickerDetail(selectedChoices({ reviewVersion: 1 }), pickerReview));
   expect(client.getQueryData(imageInventoryKeys.candidate(pickerIdentity, request.sessionId, request.candidateId))).toBeUndefined();
 });
-it('older candidate pages cannot restore pre-selection summary authority', () => {
+it('older batch cards cannot restore pre-selection summary authority', () => {
   acceptEditionChoices(client, pickerIdentity, request, selectedChoices({ candidateVersion: 12 }), 'read');
   const page = { items: [{ ...request, candidateVersion: 4 }] } as never;
-  expect(() => assertCandidatePageAuthority(client, pickerIdentity, page)).toThrow('AUTHORITY_CHANGED');
+  expect(() => assertBatchAuthority(client, pickerIdentity, page)).toThrow('AUTHORITY_CHANGED');
 });
 
 it('a pending read cannot regress a terminal lookup for the same generation and options version', () => {

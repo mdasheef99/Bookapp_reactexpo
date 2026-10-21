@@ -10,7 +10,7 @@ const parseOwnerUxResponse = (action: any, value: unknown) => ({
 });
 import {
   editionChoices, editionConfirmRequest, editionContractVersion, editionLookupReceipt,
-  editionMetadata, editionReadRequest, editionRequests, editionReview, editionRow,
+  editionMetadata, editionRequests, editionReview, editionRow,
   editionSaveReviewRequest, editionSelectRequest, editionUuid,
   invalidEditionChoices, invalidEditionRequests,
 } from '../../../../supabase/functions/__tests__/fixtures/phase9/editionPickerContracts';
@@ -77,34 +77,6 @@ describe('Owner edition-picker client wire contracts (SDD §§5-7/9)', () => {
   });
   it('does not accept a mixed option/suggestion source or a changed expected version', () => {
     expect(() => parseOwnerUxRequest({ ...editionSelectRequest, ...editionConfirmRequest, optionsVersion: 1 })).toThrow();
-  });
-});
-
-describe('Edition selection review serialization', () => {
-  it('preserves the saved selection ID and selling fields through the existing review draft', () => {
-    const { buildReviewInput, createReviewDraft } = require('../review/reviewForm');
-    const { candidateDetailFixture, sessionSummaryFixture } = require('../testing/ownerUxTestFixtures');
-    const draft = createReviewDraft(candidateDetailFixture({
-      metadata: {
-        state: 'selected', revision: 7, selectionVersion: 1, selectionId: editionUuid(5),
-        canonicalEditionId: null, snapshot: editionMetadata, representativeCover: null,
-      },
-      review: { value: editionReview, reviewVersion: 1 },
-    }), sessionSummaryFixture().defaults);
-    expect(buildReviewInput(draft)).toEqual({ success: true, data: editionReview, errors: {} });
-  });
-  it('rejects a changed selection ID for the new source just as for the existing selected source', () => {
-    const { buildReviewInput, createReviewDraft } = require('../review/reviewForm');
-    const { candidateDetailFixture, sessionSummaryFixture } = require('../testing/ownerUxTestFixtures');
-    const draft = createReviewDraft(candidateDetailFixture(), sessionSummaryFixture().defaults);
-    Object.assign(draft, {
-      originalTitle: 'The Fixture Book', authors: ['Fixture Author'], originalLanguage: 'en', script: 'Latn',
-      metadataMode: 'edition_option', selectionId: editionUuid(5), currentMetadataSelectionId: editionUuid(99),
-      priceMinor: '12000', originalFieldConfirmation: { title: true, authors: [true] },
-    });
-    const result = buildReviewInput(draft);
-    expect(result.success).toBe(false);
-    expect(result.errors.metadataChoice).toBeDefined();
   });
 });
 

@@ -68,10 +68,6 @@ jest.mock('../queries/ownerUxQueries', () => ({
             'phase9', 'ownerInventory', 'phase9-owner-ux-v1', 'identity', who.userId, who.storeId,
             'inputs', sessionId,
         ],
-        candidates: (who: { userId: string; storeId: string }, request: unknown) => [
-            'phase9', 'ownerInventory', 'phase9-owner-ux-v1', 'identity', who.userId, who.storeId,
-            'candidates', request,
-        ],
         candidate: (who: { userId: string; storeId: string }, sessionId: string, candidateId: string) => [
             'phase9', 'ownerInventory', 'phase9-owner-ux-v1', 'identity', who.userId, who.storeId,
             'candidate', sessionId, candidateId,
@@ -83,12 +79,6 @@ jest.mock('../queries/ownerUxQueries', () => ({
     },
     useOwnerInventoryDiscovery: () => mockDiscovery,
     useOwnerInventoryCandidate: () => ({
-        data: undefined, isLoading: false, error: null, refetch: jest.fn(),
-    }),
-    useOwnerInventoryCandidates: () => ({
-        data: undefined, isLoading: false, error: null, refetch: jest.fn(),
-    }),
-    useOwnerInventorySession: () => ({
         data: undefined, isLoading: false, error: null, refetch: jest.fn(),
     }),
     useOwnerInventoryInputs: () => ({

@@ -496,24 +496,30 @@ missed can still be added (PSR-D11, D13).
 | | |
 |---|---|
 | **Migration** | None. Existing functions clear the stale-wording blocker. |
-| **Size / risk** | M / med |
+| **Size / risk** | 4a (deletions, "Add a book", summary): M / med — the SDD-0 §15 medium review pass: DeepSeek v4.1 Flash (max) and MiniMax 3.1 Flash (max) review the diff (~45 s apart, read-only, no shell); each finding is verified in the code; one bounded red-first Codex correction; then the pre-merge review. 4b (stale search wording, script recompute): M / high — full process (SDD-0 §15 review loop). |
+| **Order** | 4a is built first, as its own PR from `main`; 4b follows on its own branch (Owner, 2026-10-20). 4a deletes `VariantDecisionSheet`, the only screen that clears `variant_source_stale`, so between the 4a and 4b merges a card blocked only by stale search wording cannot be added. During that gap such a card shows the generic "This book can't be changed now." hint or its blocker message with no action; this is accepted for the gap only. 4b is merged before the Owner's next scan session; if it is not, the Owner is told before that scan. |
 | **Not in scope** | Remove all (slice 10); closing by the server (slice 11) |
 
-### Routes and screens removed
+Subsections and acceptance checks are tagged **4a** or **4b**. 4a: "Routes and
+screens removed", "Readiness summary", "Notes", "Add a book"; AC4-1, AC4-2,
+AC4-3, AC4-5, AC4-6, AC4-8, AC4-9. 4b: "Stale search wording", "Script";
+AC4-4, AC4-4b, AC4-7.
+
+### Routes and screens removed (4a)
 
 **Routes:**
 - `app/(store-owner)/inventory/scan/[sessionId]/candidate/[candidateId].tsx`,
   with its registration in `scan/[sessionId]/_layout.tsx` L7;
 - `app/(store-owner)/inventory/reviews.tsx`, with its registration in
   `app/(store-owner)/inventory/_layout.tsx`;
-- the `candidate()` and `reviews()` helpers in
+- the `candidate()` and `reviews()` helpers and `parseCandidateRouteParams` in
   `navigation/inventoryRoutes.ts`.
 
 **Screens and components:**
 - `screens/CandidateReviewRouteScreen.tsx`;
-- `screens/CandidateReviewScreens.tsx`;
+- `screens/CandidateReviewScreens.tsx` (with `InventoryReviewsScreen`);
 - `screens/CandidateListScreen.tsx`;
-- `InventoryCandidateFoundationScreen`;
+- `InventoryCandidateFoundationScreen` and `InventoryReviewsFoundationScreen`;
 - `components/CandidateCorrectionActions.tsx`;
 - `components/VariantDecisionSheet.tsx`;
 - `components/ReviewFormFields.tsx`;
@@ -524,19 +530,62 @@ missed can still be added (PSR-D11, D13).
 - `CandidateReviewState`.
 
 **Also removed:**
-- the legacy Add variant (`AddCandidateToInventoryAction.tsx` L95–233);
-- the picker's `onEditIdentity`;
-- the unused functions in `InventoryFoundationScreens.tsx` (L104–113,
-  L119–131, L137–152, L166–183);
-- `components/CompactReviewEditors.tsx`;
-- the Mark false client (`ownerCorrectionService.ts` L151–164) and its query
-  hook.
+- the legacy Add variant (`AddCandidateToInventoryAction.tsx` L93–231);
+- the picker's `onEditIdentity`, with the `offerIdentityEdit` branch and the
+  "Edit title/author" button it gates (`CandidateEditionPicker.tsx` L63,
+  L120; the no-match explanation stays), and `CandidateMetadataSheet`'s
+  `onEditManually` (only `CandidateReviewEditionSheet` passed it);
+- the unused functions in `InventoryFoundationScreens.tsx` (`ScanSetup`,
+  `Reviews`, `Session`, `Candidate`; at 1268403 L107, L122, L140, L169), then
+  the now-unused `FoundationCard` and `QueryState`;
+- `components/CompactReviewEditors.tsx` (already without importers);
+- the Mark false client (`ownerCorrectionService.ts` L151–164) and
+  `replaceVariant`, with their now-unused request and response schemas;
+- the query hooks `useMarkCandidateFalse`, `useOwnerCandidateVariants`,
+  `useDecideOwnerVariant` and `useReplaceOwnerVariant`, and
+  `useOwnerInventoryCandidates` / `useOwnerInventorySession` once nothing uses
+  them (`useOwnerInventoryCandidate` stays: `CandidateMetadataSheet` uses it);
+- the files and exports left without a non-test importer:
+  `components/CandidateCard.tsx` (with `candidateQueuePolish.test.ts`),
+  `components/ReviewFieldControls.tsx`, `review/candidateConflict.ts`,
+  `review/ownerCorrectionWorkflow.ts` (with `ownerCorrectionWorkflow.test.ts`),
+  `useUpdateOwnerCandidateReview` (with its cases in
+  `ownerUxReviewQueries.test.tsx`), BatchReviewCard's `onOpenFullCorrection`
+  prop, and `CandidateMetadataSheet`'s `editIdentity`;
+- the full-review draft model: `review/reviewForm.ts` as a whole (its only
+  importers are deleted files) with `reviewForm.test.ts`, and
+  `applyEditionSelection` in `review/editionSelectionDraft.ts`.
+  `editionSelectionAuthority` and `applyCompactEditionSelection` stay (the
+  card uses them), and `ReviewDraft` goes with the file. In
+  `ownerEditionPickerConfirmation`, `ownerEditionPickerContracts` and
+  `ownerEditionPickerDrafts` tests, a case that only exercises the full draft
+  is removed; where no card-path (compact) case covers the same rule, the
+  case is converted to the card path instead of dropped.
+
+Also removed with the legacy Add variant: `useAddOwnerCandidateToInventory`
+and `synchronizeCandidateCommitSuccess` in `queries/ownerUxReviewQueries.ts`
+(L69–100) and the imports only they used; the `LegacyProps` type and the
+dispatcher (L233–236), so `AddCandidateToInventoryAction` is the coordinated
+variant only. `synchronizeCandidateReviewSuccess` in the same file stays (the
+coordinator, batch and picker queries use it). With the list and session
+hooks gone, `ownerUxService.listCandidates`, `CandidatePageRequest` and their
+page schema go if nothing else uses them.
+
+The exact list is rechecked with a no-importer search before merge, and
+anything that search shows newly unused because of 4a is removed too. Files
+that were already without importers before 4a (for example
+`PublicCopyMediaManager.tsx`) are out of scope.
 
 The server functions stay (R06).
 
+**Kept for 4b (Owner, 2026-10-20; a deliberate D2-5 exception that 4b
+ends):** `ownerCorrectionService.resolveExpectedVariants` and
+`ownerCorrectionService.decideVariant` stay in 4a although nothing calls them
+until 4b's stale-wording sequence does.
+
 **Card.**
-- Remove "Open full correction" (L331–335).
-- The hint shown when a card can't be edited (L305–307) becomes "This book
+- Remove "Open full correction" (L337–340 at 1268403).
+- The hint shown when a card can't be edited (L315–317) becomes "This book
   can't be changed now."
 
 **Every link into a removed screen changes:**
@@ -544,12 +593,15 @@ The server functions stay (R06).
 | Link | Change |
 |---|---|
 | `CandidateListScreen.tsx` L84–87 | Deleted with the screen |
-| `CaptureProgressScreens.tsx` L285–288 | Deleted with the button |
-| `ReadinessSummaryScreen.tsx` L259–267 and L277 | "Review next blocker" becomes "Back to review", which goes to the session screen |
+| `CaptureProgressScreens.tsx` L304 | Deleted with the button |
+| `ReadinessSummaryScreen.tsx` L259–267 and L277 | "Review next blocker" becomes "Back to review", which goes to `inventoryRoutes.session(sessionId)`. Each old button keeps its own condition (pre-close blockers present, or `nextBlockingCandidateId` set; the two cannot hold at once, since the first needs no canonical Close response and the second needs one); one "Back to review" button renders for their union, in place of each. |
 | `MissedBookScreen.tsx` L138 | See "Add a book" below |
-| `AddCandidateToInventoryAction.tsx` L163, `inventoryRoutes.reviews()` | Deleted with the legacy variant |
+| `AddCandidateToInventoryAction.tsx` L161, `inventoryRoutes.reviews()` | Deleted with the legacy variant |
 
-### Readiness summary stays until slice 11
+Line numbers in this section were rechecked against `main` 1268403
+(2026-10-20).
+
+### Readiness summary stays until slice 11 (4a)
 
 The summary route is the only place to close a session by hand
 (`ReadinessSummaryScreen.tsx` L292–303). The app's automatic close needs zero
@@ -558,7 +610,7 @@ removed cards (`close/sessionAutoClosePolicy.ts` L33–38).
 - Removing it now would leave sessions with a removed card open. Each Owner
   can have only one open session, so that would block their next scan.
 
-### Stale search wording (Q9, the approved default): no migration
+### Stale search wording (Q9, the approved default): no migration (4b)
 
 `variant_source_stale` blocks Add while a search-variant proposal is `stale`
 (M55 L119–121). A save that changes the title or authors can itself make
@@ -597,12 +649,13 @@ removed cards (`close/sessionAutoClosePolicy.ts` L33–38).
 - Rejection only marks a proposal `rejected`. It does not touch
   `phase9_owner_replace_search_variant`.
 
-### Notes and script
+### Notes (4a) and script (4b)
 
-**Notes** are no longer edited during a scan. They start empty, and the Owner
-edits them in Store View (D11).
+**Notes** are not edited during a scan; the card has no notes editor. A
+review keeps any notes already saved on it, and a card with none sends empty
+notes. The Owner edits notes in Store View (D11; Owner, 2026-10-20).
 
-**Script is no longer an Owner field, and it is recomputed (SDD-0 F41).**
+**Script is no longer an Owner field, and it is recomputed (SDD-0 F41; 4b).**
 - A null script is **not** used. Both validators skip the script check for a
   null script (`ownerUxReviewSchema.ts` L105–111; M29 L789), so a null
   script would switch off the title/language check (R07).
@@ -616,21 +669,97 @@ edits them in Store View (D11).
 - This recompute is the second named exception in D2-3.
 - The Add commit does not read the script (M39; M69 L99–234).
 
-### "Add a book" (was "Add missed book")
+### "Add a book" (was "Add missed book") (4a)
 
 **Entry** (`PostScanInventoryActions.tsx` L19–21).
-- The label becomes "Add a book".
-- At 15 visible cards the button is disabled, with "This scan already has 15
-  books — scan the rest separately." (Q1).
-- The form maps the server's `P9_LIMIT_EXCEEDED` to the same text, because
-  the server's count includes removed cards (M5 L143–144;
-  `ownerCorrectionService.ts` L38).
+- The label becomes "Add a book" on the entry button, the stack title
+  (`scan/[sessionId]/_layout.tsx` L8) and the screen heading
+  (`MissedBookScreen.tsx` L193). The description (L194) becomes "Adds one
+  book to this scan for you to check.", and the unavailable message (L188)
+  becomes "This scan cannot accept another book."
+- At 15 books in the scan the button stays visible but disabled, with "This
+  scan already has 15 books — scan the rest separately." (Q1).
+  - "Books in the scan" is the batch read's `counts.detected`: every
+    candidate the scan created, including added, removed and false ones
+    (M52 L285). Visible cards are not used; they omit added and removed books.
+  - The server's own rule is `max(candidate_index) + 1 > 15` (M5 L143–144).
+    Indexes restart at 1 for each image (M12 vision insert) and a manual book
+    takes the session's highest index + 1, so in a session with several
+    images the app can be stricter than the server, never looser (Owner,
+    2026-10-20).
+  - On the legacy over-limit fence (`overflow`), the button is also shown
+    disabled with the same text, instead of being hidden.
+  - `PostScanFooter` takes `detectedCount` (from
+    `batchReview.data.counts.detected`) instead of `cardCount`. While that
+    data is not loaded, the button stays disabled. The scan-full text is
+    visible text under the button (`accessibilityLiveRegion="polite"`), not
+    only a hint. The offline and not-active disabled states keep their
+    current behaviour and do not show the scan-full text.
+- The form maps the server's `P9_LIMIT_EXCEEDED` to the same text
+  (`ownerCorrectionService.ts` L38), with no retry.
 
 **Form** (`MissedBookScreen.tsx`, `missedBookForm.ts`):
 - title (required) and authors (optional);
-- language, defaulting to the pre-scan hint (today `'en'`, L21);
+- language, defaulting to the session's `defaults.languageHint` from the
+  `useOwnerSessionV3` read the screen already makes. The form renders only
+  after that read has data (it shows "Loading scan session…" until then), so
+  the initial draft and its fingerprint baseline are created from the hint;
+  the hint never makes the form dirty, and a language the Owner chooses is
+  never overwritten. The hint is any valid BCP-47 tag and need not be in
+  `LANGUAGE_OPTIONS`; the form shows the current value as text either way.
+  `createEmptyMissedBookDraft` and its language error text change to match.
+  The free-text BCP-47 input is replaced by the card's language chooser:
+  only the panel body (the search box and the option buttons,
+  `InlineBatchReviewAdditionalFields.tsx` L162–178) is extracted into one
+  shared component, with test IDs `card-language-picker` and
+  `card-language-search` unchanged; each screen keeps its own current-value
+  row and open/close state. No new picker. The card's behaviour, labels and
+  test IDs do not change, and its existing tests pass unchanged;
 - an "Add book" button;
-- the existing leave guard and fingerprint stay.
+- the fingerprint stays. The leave guard moves to `useUnsavedEditsLeaveGuard`
+  with `OwnerConfirmationDialog`, because `Alert.alert` does nothing on
+  react-native-web (Owner, 2026-10-20). `dirty` is computed from the committed
+  fingerprint. In order:
+  - *Submit.* The frozen request is kept as `pending`. `busy` is a separate
+    in-flight flag: true only while an add (a submit or "Retry same
+    addition") is running, including the candidate read, cache sync and
+    batch invalidation after the server call (`mutation.isPending` alone
+    does not cover these). While busy the dialog has no confirm action, so
+    only Stay is offered.
+  - *Definitive refusal.* Only when the add call itself is refused with an
+    `OwnerCorrectionClientError` other than `P9_INTERNAL_ERROR` is `pending`
+    cleared; the fields unlock and the error is shown (a later Add uses a
+    new key, which is safe because the server refused the original).
+  - *Unclear result.* `P9_INTERNAL_ERROR`, a network, timeout or parse
+    failure, and any failure or mismatch of the follow-up read or cache sync
+    while the screen's scope and identity are unchanged keep `pending`. The
+    screen shows "The result is unclear. Retry the exact same addition."
+    (polite) with "Retry same addition", and invalidates the batch review
+    query so the review list is current if the Owner leaves. While `pending`
+    exists the fields, "Add another author" and "Choose language" are
+    disabled (exposed as disabled to assistive technology) and the language
+    panel is closed, so the draft cannot diverge from the frozen request
+    (D2-2). While `pending` exists and nothing is in flight, the dialog
+    offers Stay and Leave, with the description "The book may already have
+    been added. Check the review list before adding it again."; a dialog
+    already open when an add ends unclear switches to this form. Retry is
+    unavailable while offline; Leave stays available.
+  - *Retry.* It replays the kept request (same idempotency key and command
+    ID), so it cannot create a second book; if it is again unclear, the
+    same message is shown and the Owner can leave.
+  - *Success.* The committed fingerprint, clearing `pending` and clearing
+    the in-flight flag happen in the same tick. The success navigation must
+    not be blocked: `router.replace` runs once, from an effect after `dirty`
+    has become false.
+  - *Scope or identity change.* The screen is replaced, the stale result is
+    ignored, nothing navigates, and the kept request is dropped; the new
+    screen starts clean. Residual risk: if that add had succeeded, the Owner
+    could add the same book again under a new key; the new card is visible
+    on the review list. Accepted for 4a (an account or store switch during
+    an add is rare).
+
+  The hook's signature does not change. AC4-9 is tested with the real guard
+  hook, not a stub.
 
 **After success:**
 - `router.replace` to the session screen, instead of `router.push` to the
@@ -643,42 +772,57 @@ edits them in Store View (D11).
 |---|---|
 | AC4-1: Given any card or screen, then no route or button leads to full correction, the review queue, Mark false or search-wording review (D11). | `__tests__/inventoryRouteRegistration.test.ts` → rewrite as "registers no candidate or reviews route" (it asserts today that both exist); `inventoryNavigation.test.ts` → "has no candidate or reviews helper"; `unit6fArchitecture.test.ts` → "no source references removed routes" |
 | AC4-2: Given fewer than 15 cards, when the Owner adds a book by title and author, then the app returns to the review list, and a normal card appears that can be added (D13, R10). | `__tests__/OwnerCorrectionScreens.test.tsx` → rewrite the L156 test as "adds a book and returns to the review list" |
-| AC4-3: Given 15 visible cards, or a `P9_LIMIT_EXCEEDED` answer, then "Add a book" shows the scan-full text (Q1). | `CaptureProgressScreens.test.tsx` → "explains the 15-book limit"; `OwnerCorrectionScreens.test.tsx` → "maps the limit error to the scan-full text" |
+| AC4-3: Given 15 books in the scan (`counts.detected`), the legacy over-limit fence, or a `P9_LIMIT_EXCEEDED` answer, then "Add a book" is shown disabled with the scan-full text (Q1). | `CaptureProgressScreens.test.tsx` → "explains the 15-book limit" and "shows the limit text instead of hiding the button on overflow"; `OwnerCorrectionScreens.test.tsx` → "maps the limit error to the scan-full text" |
 | AC4-4: Given a card blocked only by `variant_source_stale`, when Add is pressed, then each stale proposal is rejected, the review is saved, and the book is added. If a rejection fails, nothing is saved or added (D11, R07). | `inventoryCommitCoordinator.test.ts` → "rejects stale search wording before saving" and "stops when a stale rejection fails"; SQL `phase9VariantOwnerDecisions.integration.test.mjs` → "owner reject clears variant_source_stale" (a regression test for the existing function) |
 | AC4-4b: Given an identity edit on a card with an active variant, when Add is pressed, then the variant the save made stale is rejected in the second round, and the book is added. | `inventoryCommitCoordinator.test.ts` → "rejects variants made stale by the Add save"; SQL `phase9VariantLifecyclePolicy.integration.test.mjs` → "identity save stales active variant" (a regression test) |
-| AC4-5: Given a book added from a card, then its notes are empty, and they can be edited in Store View (D11). | existing Store View notes tests; `compactReviewDraft.test.ts` → "compact review sends empty notes" |
+| AC4-5: Given a card with no saved notes, then its added book has empty notes. Given a card whose review already has notes, then Add keeps them unchanged. Either way they can be edited in Store View (D11). | existing Store View notes tests; `compactReviewDraft.test.ts` → "sends empty notes when none are saved" and "keeps notes already saved" |
 | AC4-6: Accessibility. "Add a book", its limit text and its fields have labels and are announced (R14). | `OwnerCorrectionScreens.test.tsx` → "add-a-book controls are labelled" |
 | AC4-7: Given a card observed as Latin script, when the title is changed to Devanagari with language Hindi, then the script becomes `Deva`, and the card is added. Given a title that fits neither script, then the card shows "Choose a valid language." The server still rejects an explicit script that does not fit the title (F41, R07). | `compactReviewDraft.test.ts` → "recomputes script from title and language"; SQL `phase9OwnerUxContracts.integration.test.mjs` → "mismatched explicit script rejected" (a regression test) |
 | AC4-8: Given the readiness summary, then Close still works, and "Back to review" replaces "Review next blocker". | `ReadinessSummaryScreen.test.tsx` → rewrite the L196 case |
+| AC4-9: Given unsaved text in "Add a book", when the Owner goes back, then a dialog offers Stay and Leave on every platform. While the book is being added, only Stay is offered. After an unclear result the fields are disabled, Stay and Leave are offered with the "may already have been added" text, and "Retry same addition" replays the same idempotency key and command ID; a definitive refusal unlocks the fields. After a successful add, no dialog appears and the screen navigates once. | `OwnerCorrectionScreens.test.tsx` → "asks before leaving with unsaved text", "does not ask after a successful add", "keeps fields disabled after an unclear result", "retry replays the same key and command ID", "a definitive refusal after an unclear result unlocks the fields", "navigates once after success" |
 
 **Tests to delete or change:**
 - Delete:
   - `CandidateReviewScreens.test.tsx`;
   - `VariantDecisionSheet.test.tsx`;
-  - `ownerEditionPickerFullReview.test.tsx`.
+  - `ownerEditionPickerFullReview.test.tsx`;
+  - `candidateQueuePolish.test.ts` and `ownerCorrectionWorkflow.test.ts`
+    (their modules are deleted).
 - Remove these cases:
   - the Mark false cases in `OwnerCorrectionScreens.test.tsx` (L109–154);
-  - the Mark false cases in `ownerCorrectionService.test.ts` (L169–222) and
-    in `ownerCorrectionWorkflow.test.ts`;
+  - the Mark false cases in `ownerCorrectionService.test.ts` (L169–222);
+  - the `useUpdateOwnerCandidateReview` cases in `ownerUxReviewQueries.test.tsx`
+    (L79–198);
   - the legacy cases in `AddCandidateToInventoryAction.test.tsx` (L88–120);
   - the candidate-route case and its mock in `inventoryDynamicRoutes.test.tsx`
     (L9–15, L34–41);
   - the removed-route assertions in `unit6gMountedRouteIntegration.test.tsx`
-    L282 and `unit6gMountedRouteComposition.test.tsx` L564–570.
+    L282 and `unit6gMountedRouteComposition.test.tsx` L564–570;
+  - the "Open full correction" assertions in `batchReviewCard.test.tsx`.
 - Change:
-  - `ownerEditionPickerMounted.test.tsx`: move the touch-target case
-    (L179–186), which renders `CandidateReviewEditionSheet`, to
-    `ownerEditionPickerSheetStates.test.tsx`;
+  - `ownerEditionPickerMounted.test.tsx`: delete the full-review trigger
+    case (L179–186), which renders the deleted `CandidateReviewEditionSheet`;
+    `ownerEditionPickerSheetStates.test.tsx` gets the same touch-target check
+    against the card's sheet (`CandidateMetadataSheet`). If "opens the
+    picker" is not covered for the card trigger elsewhere, that half is
+    rewritten against the card trigger;
   - `ownerCorrectionArchitecture.test.ts`: remove the deleted files from
     `productionFiles` (L4–17), and rewrite the L51 case;
   - `unit6gMountedRouteComposition.test.tsx` L779: fix the assertion, which
     can never fail as written.
 
-**Done means:**
+**Done means (4a; 4b adds its own checks and ends the "Kept for 4b"
+exception):**
 - the tests above pass;
-- `tsc`, lint and the image-inventory Jest folder pass;
-- a repository search finds no import of a deleted file;
-- `CODEBASE_MAP/` and the validator's file lists are updated (D2-5).
+- `tsc --noEmit` passes, and `tsc --noEmit --noUnusedLocals` reports nothing
+  new in the touched files (the repository has no ESLint config, so this is
+  the lint step);
+- the image-inventory Jest folder passes;
+- a repository search finds no reference to a deleted file or symbol;
+- `CODEBASE_MAP/` and the validator's file lists are updated (D2-5). At
+  1268403 the validator lists none of the deleted files (it lists the kept
+  `InventoryFoundationScreens.tsx`), so only the map changes
+  (`CODEBASE_MAP/04-features.md`).
 
 ---
 
@@ -830,7 +974,7 @@ worker and SQL identities are proven equal.
 | PSR-D47 | 2 (app); 13 (server, SDD-4) | AC2-7; AC13-9 |
 | PSR-R06 | 3, 4, 5 | AC5-5, AC5-9 |
 | PSR-R07 | 1, 2, 4 | AC1-3, AC1-5, AC1-9, AC2-10, AC4-4, AC4-7 |
-| PSR-R14 | 2, 4, 5 | AC2-6, AC4-6, AC5-6 |
+| PSR-R14 | 2, 4, 5 | AC2-6, AC4-6, AC4-9, AC5-6 |
 
 ## 10. Pass-2 evidence and reviews
 

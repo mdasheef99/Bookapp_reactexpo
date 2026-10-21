@@ -316,23 +316,20 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
         input.acceptedCandidateCount = originalCount;
     });
 
-    it('renders terminal over-limit guidance and keeps full correction on the candidate card', () => {
+    it('renders terminal over-limit guidance without a full-correction action', () => {
         const screen = render(
             <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
         expect(screen.getByText(/More than 15 books/u)).toBeTruthy();
         expect(screen.queryByText('Open first book in full review')).toBeNull();
-        fireEvent.press(screen.getByText('Open full correction'));
-        expect(mockRouter.push).toHaveBeenCalledWith(
-            '/(store-owner)/inventory/scan/00000000-0000-4000-8000-000000000010/candidate/00000000-0000-4000-8000-000000000002',
-        );
+        expect(screen.queryByRole('button', { name: 'Open full correction' })).toBeNull();
     });
 
     it('opens the real missed-book route from an accessible reviewable session', () => {
         const screen = render(
             <InventorySessionProgressScreen sessionId="00000000-0000-4000-8000-000000000010" />,
         );
-        fireEvent.press(screen.getByText('Add missed book'));
+        fireEvent.press(screen.getByRole('button', { name: 'Add a book' }));
         expect(mockRouter.push).toHaveBeenCalledWith(
             '/(store-owner)/inventory/scan/00000000-0000-4000-8000-000000000010/missed',
         );
@@ -387,7 +384,7 @@ describe('Phase 9 Unit 6C server progress and handoff', () => {
         expect(screen.queryByText(/Books found:/u)).toBeNull();
         expect(screen.queryByText('Continue to book review')).toBeNull();
         expect(screen.queryByText('Original book')).toBeNull();
-        expect(screen.queryByText('Add missed book')).toBeNull();
+        expect(screen.getByRole('button', { name: 'Add a book' })).toBeDisabled();
         mockInputs.data.items = [singleInput];
     });
 
@@ -686,4 +683,46 @@ it.each(['ready', 'failed'] as const)('does not refetch the batch review when ed
     act(() => view.UNSAFE_getByType(BatchReviewCard).props.onEditionChoices({ ...choices, lookupStatus: status }));
     expect(mockRefetch).not.toHaveBeenCalled();
     batch.items[0] = original;
+});
+
+// Post-scan SDD-1 §6 (4a), AC4-3/6: capacity comes from the aggregate, never visible cards.
+describe('slice 4a add-a-book capacity', () => {
+    it('disables Add a book without scan-full text until detectedCount is loaded', () => {
+        const previous = mockBatchReview.data;
+        mockBatchReview.data = undefined;
+        mockBatchReview.isLoading = true;
+        const view = render(<InventorySessionProgressScreen sessionId={(mockSessionV3.data as any).sessionId} />);
+        try {
+            expect(view.getByRole('button', { name: /^Add (?:a book|missed book)$/u })).toBeDisabled();
+            expect(view.queryByText('This scan already has 15 books — scan the rest separately.')).toBeNull();
+        } finally { view.unmount(); mockBatchReview.data = previous; mockBatchReview.isLoading = false; }
+    });
+    it('explains the 15-book limit', () => {
+        const batch = mockBatchReview.data as any;
+        const previous = batch.counts;
+        batch.counts = { ...previous, detected: 15, committed: 10, ownerRemoved: 4 };
+        const view = render(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
+        try {
+            expect(batch.items.length).toBeLessThan(15);
+            const button = view.getByRole('button', { name: /^Add (?:a book|missed book)$/u });
+            expect(button).toBeDisabled();
+            expect(button.props.accessibilityLabel).toBe('Add a book');
+            expect(button.props.accessibilityHint).toMatch(/add.*book.*title/iu);
+            const text = 'This scan already has 15 books — scan the rest separately.';
+            expect(view.getByText(text).props).toMatchObject({ selectable: true, accessibilityLiveRegion: 'polite' });
+            expect(view.getByLabelText(text)).toBeTruthy();
+        } finally { view.unmount(); batch.counts = previous; }
+    });
+    it('shows the limit text instead of hiding the button on overflow', () => {
+        const batch = mockBatchReview.data as any;
+        const previous = mockInputs.data.items;
+        mockInputs.data.items = [previous[0], { ...previous[0], inputId: '00000000-0000-4000-8000-000000000099' }];
+        const view = render(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
+        try {
+            expect(view.getByRole('button', { name: /^Add (?:a book|missed book)$/u })).toBeDisabled();
+            const text = 'This scan already has 15 books — scan the rest separately.';
+            expect(view.getByText(text).props).toMatchObject({ selectable: true, accessibilityLiveRegion: 'polite' });
+            expect(view.getByLabelText(text)).toBeTruthy();
+        } finally { view.unmount(); mockInputs.data.items = previous; }
+    });
 });

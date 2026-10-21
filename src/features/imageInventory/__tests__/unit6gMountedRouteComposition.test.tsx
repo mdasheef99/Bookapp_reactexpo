@@ -14,7 +14,6 @@ import type { EditionChoices } from '../contracts/ownerEditionPicker';
 const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn() };
 const mockWorkflow = { selected: null as any, select: jest.fn(), clear: jest.fn() };
 const mockIdentity = { userId: 'owner-1', storeId: 'store-1' };
-let mockPreviewInputItems: any[] = [];
 const mockQueryClient = { invalidateQueries: jest.fn(() => Promise.resolve()) };
 
 let mockDiscovery: any;
@@ -290,10 +289,10 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         jest.clearAllMocks();
         resetMocks();
         mockQueryClient.invalidateQueries.mockReset().mockResolvedValue(undefined);
-        mockPreviewInputItems = [];
+
     });
 
-    it('SCENARIO A: Start v2 -> ONE image -> upload -> registration -> processing before candidates -> automatic card arrival -> full correction -> v3 Close', async () => {
+    it('SCENARIO A: Start v2 -> ONE image -> upload -> registration -> processing before candidates -> automatic card arrival -> v3 Close', async () => {
         // Phase 1: pre-scan defaults and semantic Start v2 on the real setup screen.
         const setup = render(<InventoryCaptureSetupScreen />);
         fireEvent.changeText(setup.getByTestId('setup-location'), 'Front shelf');
@@ -347,7 +346,7 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
 
         // Phase 2: private upload + registration through Unit 6 preview.
         mockWorkflow.selected = selectedMedia;
-        mockPreviewInputItems = [];
+
         mockSuccessfulUploadRegistration();
         const preview = render(
             <InventoryCapturePreviewScreen sessionId="00000000-0000-4000-8000-000000000010" />,
@@ -399,12 +398,6 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         expect(titleTexts.length).toBeGreaterThan(0);
         const titleTexts2 = screen.getAllByText(/Detected Book Two/u);
         expect(titleTexts2.length).toBeGreaterThan(0);
-
-        // Full correction remains reachable through client navigation delegation.
-        fireEvent.press(screen.getAllByText('Open full correction')[0]);
-        expect(mockRouter.push).toHaveBeenCalledWith(
-            '/(store-owner)/inventory/scan/00000000-0000-4000-8000-000000000010/candidate/00000000-0000-4000-8000-000000000021',
-        );
 
         // Phase 4: v3 readiness and v3 Close.
         mockSessionV3 = {
@@ -566,10 +559,7 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         expect(screen.getByRole('header', { name: 'Find or change edition' })).toBeTruthy();
         expect(screen.getByTestId('metadata-no-selected-details')).toBeTruthy();
         fireEvent.press(screen.getByText('Close metadata'));
-        fireEvent.press(screen.getByText('Open full correction'));
-        expect(mockRouter.push).toHaveBeenCalledWith(
-            '/(store-owner)/inventory/scan/00000000-0000-4000-8000-000000000010/candidate/00000000-0000-4000-8000-000000000021',
-        );
+
 
         mockBatchReview = batchReviewFixture([cardFixture({
             metadataState: 'manual', candidateVersion: 3, reviewVersion: 2,
@@ -618,7 +608,7 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
         expect(screen.queryByText(/Books found:/u)).toBeNull();
         expect(screen.queryByText('Continue to book review')).toBeNull();
         expect(screen.queryByText(/Detected Book One/u)).toBeNull();
-        expect(screen.queryByText('Add missed book')).toBeNull();
+        expect(screen.getByRole('button', { name: 'Add a book' })).toBeDisabled();
         mockInputs.data.items = [];
     });
 
@@ -777,7 +767,8 @@ describe('Phase 9 NEW 6G-C mounted production-route composition', () => {
                 key="remove-distinct" />,
         );
         expect(screen.getAllByText('Remove from this scan').length).toBeGreaterThan(0);
-        expect(screen.queryByText('Mark false detection')).toBeNull();
+        // SDD-1 §6 AC4-1: matches the actual Mark false control too.
+        expect(screen.queryByRole('button', { name: /mark false/iu })).toBeNull();
     });
 
     it('Task 7: the mounted post-scan Add all carries a confirmed held edition without creating a saved review', async () => {

@@ -18,13 +18,11 @@ export type CompactEditionSearchDraft = Readonly<{ identityChanged: boolean; pen
 
 // Picker §§3/6-7/13.2: only explicit Search Books acquires alternatives.
 export function CandidateEditionPicker({ identity, sessionId, candidateId, commandSlot,
-  disabled, onSelection, onPendingChange, onEditIdentity, cardDraft, onIdentitySaved, minimumVersions, children }: {
+  disabled, onSelection, onPendingChange, cardDraft, onIdentitySaved, minimumVersions, children }: {
   identity: ImageInventoryIdentity; sessionId: string; candidateId: string;
   commandSlot: OwnerCandidateCommandSlot; disabled: boolean;
   onSelection: (choices: EditionChoices, previousRevision: number) => void;
   onPendingChange?: (pending: boolean) => void;
-  // Existing manual identity path; offered when a fresh result set has nothing selectable.
-  onEditIdentity?: () => void;
   cardDraft?: CompactEditionSearchDraft;
   onIdentitySaved?: (detail: OwnerCandidateDetail) => void;
   minimumVersions?: CandidateVersions;
@@ -55,12 +53,10 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
   const selectionRecovery = picker.selectEdition.error ? editionSelectionRecovery(picker.selectEdition.error) : null;
   const saveSearchRecovery = picker.saveIdentityAndSearch.error ? editionSelectionRecovery(picker.saveIdentityAndSearch.error) : null;
   const lookupRecovery = picker.requestOptions.error ? editionSelectionRecovery(picker.requestOptions.error) : null;
-  // Offer the manual identity path only for a genuine no-match: never when every row is merely
-  // unavailable, and never over an Owner-confirmed choice (switching to manual would drop it).
+  // SDD-1 §6 (4a): explain genuine no-match results; identity edits stay on the card.
   const noMatch = !!(choices && fresh && !choices.selection?.confirmedByOwner
     && !choices.rows.some(row => row.eligibility === 'eligible' && row.metadata)
     && (choices.rows.length === 0 || choices.rows.some(row => row.eligibility === 'ineligible' && row.metadata)));
-  const offerIdentityEdit = noMatch && !identityChanged && !!onEditIdentity;
   const act = async (kind: 'selection' | 'lookup', work: () => Promise<unknown>) => {
     const success = kind === 'selection' ? 'Edition saved.' : 'Edition search requested.';
     setMessage(null);
@@ -117,7 +113,6 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
       selectedOptionId={choices.selection?.optionId ?? null} onSelect={select} /> : null}
     {noMatch && !identityChanged ? <>
       <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No result matches this book's title and author. Fix them on the card, then search again.</Text>
-      {offerIdentityEdit ? <Button title="Edit title/author" variant="secondary" disabled={blocked} onPress={() => { if (!blocked) onEditIdentity?.(); }} /> : null}
     </> : null}
     {message ? <Text accessibilityLiveRegion="polite" style={{ color: message === 'Edition saved.' ? colors.accent : colors.textSecondary }}>{message}</Text> : null}
     {selectionRecovery?.kind === 'refresh' ? <Button title="Refresh edition choices" variant="secondary"

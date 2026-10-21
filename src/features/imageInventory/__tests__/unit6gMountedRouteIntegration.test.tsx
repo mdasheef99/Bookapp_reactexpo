@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, cleanup, render, waitFor } from '@testing-library/react-native';
 import type { PropsWithChildren } from 'react';
 import SessionRoute from '../../../../app/(store-owner)/inventory/scan/[sessionId]/index';
 
@@ -279,12 +279,6 @@ describe('Phase 9 NEW 6G-C genuine mounted production-route composition', () => 
         expect(screen.getByText('Finding books')).toBeTruthy();
         expect(screen.getByTestId('post-scan-review-summary')).toBeTruthy();
         expect(screen.getByText('In review')).toBeTruthy();
-
-        // Full-correction navigation stays reachable through the composed path.
-        fireEvent.press(screen.getAllByText('Open full correction')[0]);
-        expect(mockRouter.push).toHaveBeenCalledWith(
-            '/(store-owner)/inventory/scan/00000000-0000-4000-8000-000000000010/candidate/00000000-0000-4000-8000-000000000021',
-        );
 
         // Aggregate failure degrades only the compact-review subsection;
         // Unit 6 remains mounted and usable.

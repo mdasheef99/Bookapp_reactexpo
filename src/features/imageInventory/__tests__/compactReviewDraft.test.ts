@@ -330,3 +330,18 @@ it('keeps a pending card blocked even when stale choices are ready', () => {
         review: null, issues: [{ field: 'metadataChoice', safeMessage: 'Finding the edition…' }],
     });
 });
+
+// Post-scan SDD-1 §6 Notes (4a), AC4-5: preservation controls, no notes editor.
+it('sends empty notes when none are saved', () => {
+    const review = buildCompactReview(card({ review: null, reviewVersion: null }), defaults, {});
+    expect(review).not.toBeNull();
+    expect(review?.notes).toEqual({ publicNote: null, internalNote: null });
+});
+it('keeps notes already saved', () => {
+    const value = card({ review: { ...savedReview, notes: {
+        publicNote: 'Owner public note', internalNote: 'Private shelf history',
+    } } });
+    const review = buildCompactReview(value, defaults, { priceMinor: 4200 });
+    expect(review).not.toBeNull();
+    expect(review?.notes).toEqual({ publicNote: 'Owner public note', internalNote: 'Private shelf history' });
+});

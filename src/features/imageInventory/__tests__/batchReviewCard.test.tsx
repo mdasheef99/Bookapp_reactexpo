@@ -34,7 +34,6 @@ jest.mock('../queries/ownerUxQueries', () => ({
     }),
 }));
 
-const onOpenFullCorrection = jest.fn();
 const onRemove = jest.fn();
 const onSaveEdits = jest.fn();
 const onAdd = jest.fn(() => Promise.resolve({ status: 'succeeded' as const }));
@@ -113,7 +112,7 @@ function renderCard(overrides: Record<string, unknown> = {}) {
             defaults={defaults}
             isOffline={false}
             canMutate
-            onOpenFullCorrection={onOpenFullCorrection}
+
             onRemove={onRemove}
             onAdd={onAdd}
             removePending={false}
@@ -152,7 +151,7 @@ it('shows only pending attention and a pending edition line with ready stale cho
     const view = render(<BatchReviewCard identity={{ userId: testUuid(90), storeId: testUuid(91) }}
         card={value} defaults={defaults} canMutate isOffline={false} removePending={false} addPending={false}
         commandSlot={{ claimSlot: () => 'slot', releaseSlot: jest.fn(), isCommandActive: () => false }}
-        onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
+        onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
     expect(view.getByText('• Finding the edition…')).toBeTruthy();
     expect(view.getByText('Finding edition…')).toBeTruthy();
     expect(view.queryByText('Ready')).toBeNull();
@@ -172,7 +171,7 @@ it.each(['selection', 'session', 'candidate', 'manual'] as const)('does not disp
     const view = render(<BatchReviewCard identity={{ userId: testUuid(90), storeId: testUuid(91) }}
         card={value} defaults={defaults} canMutate isOffline={false} removePending={false} addPending={false}
         commandSlot={{ claimSlot: () => 'slot', releaseSlot: jest.fn(), isCommandActive: () => false }}
-        onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
+        onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
     expect(view.queryByText('Stale publisher · 2002')).toBeNull();
     expect(view.getByText('Edition chosen')).toBeTruthy();
     mockEditionChoices = undefined;
@@ -185,7 +184,7 @@ it('shows the identity-changed edition line for an untrusted snapshot after a ti
     const view = render(<BatchReviewCard identity={{ userId: testUuid(90), storeId: testUuid(91) }}
         card={value} defaults={defaults} canMutate isOffline={false} removePending={false} addPending={false}
         commandSlot={{ claimSlot: () => 'slot', releaseSlot: jest.fn(), isCommandActive: () => false }}
-        onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
+        onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
     expect(view.getByText('Edition chosen')).toBeTruthy();
     fireEvent.press(view.getByLabelText('Edit title for Book 1: Observed Title'));
     fireEvent.changeText(view.getByTestId('card-title-input'), 'Changed title');
@@ -279,10 +278,9 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(onRemove).toHaveBeenCalledTimes(1);
     });
 
-    it('navigates to the existing Unit 6 full-correction controller without inventing new actions', () => {
+    it('keeps metadata-only cards within compact review', () => {
         const screen = renderCard({ allowedActions: ['view_metadata', 'remove_from_scan'] });
-        fireEvent.press(screen.getByText('Open full correction'));
-        expect(onOpenFullCorrection).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole('button', { name: 'Open full correction' })).toBeNull();
         expect(screen.queryByText('Choose another match')).toBeNull();
         expect(screen.queryByText('Add to inventory')).toBeNull();
         expect(screen.queryByText(/Add all/iu)).toBeNull();
@@ -442,10 +440,9 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         );
     });
 
-    it('retains Open full correction as the review:null deep-correction escape route', () => {
+    it('keeps a review:null card within compact review', () => {
         const screen = renderCard({ reviewVersion: null, review: null });
-        fireEvent.press(screen.getByText('Open full correction'));
-        expect(onOpenFullCorrection).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole('button', { name: 'Open full correction' })).toBeNull();
     });
 
     it('shows whole-rupee INR presentation derived from integer minor units', () => {
@@ -662,10 +659,8 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         fireEvent.press(screen.getByLabelText('Find or change edition'));
         expect(screen.getByRole('header', { name: 'Find or change edition' })).toBeTruthy();
         expect(screen.queryByText('Detected details')).toBeNull();
-        expect(onOpenFullCorrection).not.toHaveBeenCalled();
         fireEvent.press(screen.getByText('Close metadata'));
-        fireEvent.press(screen.getByText('Open full correction'));
-        expect(onOpenFullCorrection).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole('button', { name: 'Open full correction' })).toBeNull();
     });
 
     it('shows the bounded selected metadata snapshot, cover, and a clear provider status', () => {
@@ -706,7 +701,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
             <BatchReviewCard
                 identity={{ userId: testUuid(90), storeId: testUuid(91) }}
                 card={initial} defaults={defaults} isOffline={false} canMutate
-                onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove}
+                onRemove={onRemove}
                 onAdd={onAdd} removePending={false} addPending={false}
                 onDraftChange={onDraftChange}
                 onAuthorityStateChange={onAuthorityStateChange}
@@ -718,7 +713,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
             <BatchReviewCard
                 identity={{ userId: testUuid(90), storeId: testUuid(91) }}
                 card={{ ...initial, candidateVersion: 3 }} defaults={defaults}
-                isOffline={false} canMutate onOpenFullCorrection={onOpenFullCorrection}
+                isOffline={false} canMutate
                 onRemove={onRemove} onAdd={onAdd} removePending={false}
                 addPending={false} onDraftChange={onDraftChange}
                 onAuthorityStateChange={onAuthorityStateChange}
@@ -743,7 +738,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
             <BatchReviewCard
                 identity={{ userId: testUuid(90), storeId: testUuid(91) }}
                 card={card()} defaults={defaults} isOffline={false} canMutate
-                onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove}
+                onRemove={onRemove}
                 onAdd={onAdd} removePending={false} addPending={false}
                 onDraftChange={onDraftChange} addOutcome={outcome}
             />,
@@ -771,7 +766,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
             <BatchReviewCard
                 identity={{ userId: testUuid(90), storeId: testUuid(91) }}
                 card={card()} defaults={defaults} isOffline={false} canMutate
-                onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove} onAdd={onAdd}
+                onRemove={onRemove} onAdd={onAdd}
                 removePending={false} addPending={false} onDraftChange={onDraftChange}
                 addOutcome={outcome}
             />,
@@ -799,7 +794,7 @@ function mountEdition(snapshotPatch: Partial<NonNullable<ReturnType<typeof selec
                 metadataChoice: { mode: 'edition_option', selectionId: choices.selection.selectionId } } })}
         defaults={defaults} isOffline={false} canMutate removePending={false} addPending={false}
         commandSlot={{ claimSlot: jest.fn(), releaseSlot: jest.fn(), isCommandActive: () => false }}
-        onOpenFullCorrection={onOpenFullCorrection} onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
+        onRemove={onRemove} onAdd={onAdd} onDraftChange={onDraftChange} />);
 }
 it('edition line shows the chosen edition and clears on a title change', () => {
     const view = mountEdition({ publisher: 'Publisher', publishedDate: 'April 1, 1999', isbn13: '9781234567890' });
@@ -820,4 +815,19 @@ it('edition line is announced', () => {
     expect(view.getByText('Chosen publisher · 2002').props.accessibilityLiveRegion).toBe('polite');
     expect(view.getByText('Chosen publisher · 2002').props.accessibilityLabel).toBe('Chosen publisher · 2002');
     expect(view.getByTestId('card-review-status').props.accessibilityLiveRegion).toBe('polite');
+});
+
+// Post-scan SDD-1 §6 (4a), AC4-1: compact review has no full-correction exit.
+it('has no Open full correction action', () => {
+    const screen = renderCard();
+    expect(screen.queryByRole('button', { name: 'Open full correction' })).toBeNull();
+});
+it('explains a card that cannot be changed without directing to removed correction', () => {
+    const screen = renderCard({ review: null, reviewVersion: null, allowedActions: ['view_metadata'] });
+    expect(screen.getByText("This book can't be changed now.")).toBeTruthy();
+    expect(screen.queryByText(/Open full correction/iu)).toBeNull();
+});
+it('does not show the cannot-change hint for a saved review without save_review', () => {
+    const screen = renderCard({ allowedActions: ['view_metadata'] });
+    expect(screen.queryByText("This book can't be changed now.")).toBeNull();
 });

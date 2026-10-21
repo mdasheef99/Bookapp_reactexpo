@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, FlatList, Text, View } from 'react-native';
+import { AppState, FlatList, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
 import { PostScanFooter, PostScanBulkAction } from '../components/PostScanInventoryActions';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
-import { useTheme } from '@/hooks/useTheme';
 import { BatchReviewCard } from '../components/BatchReviewCard';
 import type { EditionChoices } from '../contracts/ownerEditionPicker';
 import { PostScanSessionHeader } from '../components/post-scan-session-header';
@@ -48,7 +47,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const removeCandidate = useRemoveOwnerInventoryCandidate(identity, sessionId);
     const inventoryCommit = useInventoryCommitCoordinator(identity, sessionId);
     const { isOffline } = useNetworkStatus();
-    const { colors } = useTheme();
     const removal = useInputRemoval({ identity, sessionId,
         sessionActive: session.data?.status === 'active', isOffline });
     const [candidateMessage, setCandidateMessage] = useState<string | null>(null);
@@ -301,10 +299,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         onAuthorityStateChange={handleAuthorityStateChange}
                         onPendingIdentityChange={handlePendingIdentityChange}
                         onUnsavedEditsChange={handleUnsavedEditsChange}
-                        onOpenFullCorrection={() => router.push(inventoryRoutes.candidate(
-                            sessionId,
-                            item.candidateId,
-                        ))}
                         onRemove={(candidateId) => handleCandidateRemove(
                             candidateId, item.candidateVersion,
                         )}
@@ -354,7 +348,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                 ListFooterComponent={!loading && !unavailable && !retryableError ? (
                     <PostScanFooter sessionId={sessionId} isOffline={isOffline}
                         active={session.data?.status === 'active'} inputCount={inputs.data?.items.length ?? 0}
-                        cardCount={cards.length} overflow={unsupportedLegacyOverflow} />
+                        detectedCount={batchReview.data?.counts.detected} overflow={unsupportedLegacyOverflow} />
                 ) : null}
             />
             {showBulkControls ? (

@@ -69,7 +69,6 @@ export async function synchronizeCloseSuccess(
         client.invalidateQueries({ queryKey: imageInventoryKeys.discovery(identity) }),
         client.invalidateQueries({ queryKey: imageInventoryKeys.session(identity, sessionId) }),
         client.invalidateQueries({ queryKey: imageInventoryKeys.inputs(identity, sessionId) }),
-        client.invalidateQueries({ queryKey: [...imageInventoryKeys.identity(identity), 'candidates'] }),
     ]);
     return true;
 }

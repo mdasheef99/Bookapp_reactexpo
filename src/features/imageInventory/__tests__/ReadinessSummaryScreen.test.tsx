@@ -3,6 +3,8 @@ import { InventoryReadinessSummaryScreen } from '../screens/ReadinessSummaryScre
 import { testUuid } from '../testing/ownerUxTestFixtures';
 
 const mockPush = jest.fn();
+const mockDismissTo = jest.fn();
+const mockCanGoBack = jest.fn();
 const mockRefetch = jest.fn();
 const mockBatchRefetch = jest.fn();
 const mockClose = jest.fn();
@@ -10,7 +12,10 @@ let mockOffline = false;
 let mockState: Record<string, unknown>;
 let mockBatchReviewState: Record<string, unknown>;
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({
+    push: mockPush, dismissTo: mockDismissTo, canGoBack: mockCanGoBack,
+    replace: jest.fn(), back: jest.fn(),
+}) }));
 jest.mock('@react-navigation/native', () => ({ useIsFocused: () => true }));
 jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ colors: {
     textPrimary: '#111', textSecondary: '#333', bgCard: '#fff', border: '#ccc',
@@ -193,7 +198,12 @@ describe('Phase 9 Unit 6F readiness summary and Close', () => {
         expect(screen.getByText(/cannot be added or retried from this session/iu)).toBeTruthy();
     });
 
-    it('composes pre-close blockers from the supplemental batch aggregate with review-next-blocker navigation', () => {
+    // SDD-1 §6 (4a), AC4-8: return to the session, including direct summary entry.
+    it.each([
+        { history: 'session already in history', canGoBack: true },
+        { history: 'summary opened directly without history', canGoBack: false },
+    ])('Back to review dismisses to the session from pre-close blockers ($history)', ({ canGoBack }) => {
+        mockCanGoBack.mockReturnValue(canGoBack);
         mockState = {
             data: readiness({ allInputsTerminal: true, closeState: 'not_closeable' }),
             isLoading: false, error: null, refetch: mockRefetch, isFetchedAfterMount: true,
@@ -220,10 +230,12 @@ describe('Phase 9 Unit 6F readiness summary and Close', () => {
         expect(screen.getByTestId('pre-close-review-blockers')).toBeTruthy();
         expect(screen.getByText('Price needs correction: 2')).toBeTruthy();
         expect(screen.getByText('Shelf location missing: 1')).toBeTruthy();
-        fireEvent.press(screen.getByText('Review next blocker'));
-        expect(mockPush).toHaveBeenCalledWith(
-            `/(store-owner)/inventory/scan/${testUuid(1)}/candidate/${testUuid(21)}`,
-        );
+        expect(screen.getAllByRole('button', { name: 'Back to review' })).toHaveLength(1);
+        fireEvent.press(screen.getByRole('button', { name: 'Back to review' }));
+        expect(mockPush).not.toHaveBeenCalled();
+        expect(mockDismissTo).toHaveBeenCalledTimes(1);
+        expect(mockDismissTo).toHaveBeenCalledWith('/(store-owner)/inventory/scan/' + testUuid(1));
+        expect(screen.queryByText('Review next blocker')).toBeNull();
     });
 
     it('never lets visible review cards substitute for server-authoritative v3 Close availability', () => {
@@ -265,4 +277,29 @@ describe('Phase 9 Unit 6F readiness summary and Close', () => {
         fireEvent.press(screen.getByText('Retry book review'));
         expect(mockBatchRefetch).toHaveBeenCalled();
     });
+
+// Post-scan SDD-1 §6 (4a), AC4-8: canonical blocker response uses the same return path.
+it.each([
+    { history: 'session already in history', canGoBack: true },
+    { history: 'summary opened directly without history', canGoBack: false },
+])('Back to review dismisses to the session after a canonical Close response ($history)', async ({ canGoBack }) => {
+    mockCanGoBack.mockReturnValue(canGoBack);
+    mockClose.mockResolvedValue({
+        sessionId: testUuid(1), sessionStatus: 'active', sessionVersion: 3,
+        allInputsTerminal: true, closeSummary, blockerCounts: { ...zeroBlockerCounts, price_invalid: 1 },
+        nextBlockingCandidateId: testUuid(21), closeState: 'not_closeable',
+        closeAllowed: false, presentationRevision: 4,
+    });
+    const screen = render(<InventoryReadinessSummaryScreen sessionId={testUuid(1)} />);
+    fireEvent.press(screen.getByText('Close session'));
+    fireEvent.press(screen.getAllByText('Close session').at(-1)!);
+    await waitFor(() => expect(mockClose).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Back to review' })).toHaveLength(1));
+    fireEvent.press(screen.getByRole('button', { name: 'Back to review' }));
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockDismissTo).toHaveBeenCalledTimes(1);
+    expect(mockDismissTo).toHaveBeenCalledWith('/(store-owner)/inventory/scan/' + testUuid(1));
+    expect(screen.queryByText('Review next blocker')).toBeNull();
+});
+
 });

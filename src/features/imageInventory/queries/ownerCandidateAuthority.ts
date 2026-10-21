@@ -1,6 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import type { EditionChoices } from '../contracts/ownerEditionPicker';
-import type { OwnerCandidateDetail, OwnerCandidateCommitResult, OwnerCandidatePage } from '../contracts/ownerUxContracts';
+import type { OwnerCandidateDetail, OwnerCandidateCommitResult } from '../contracts/ownerUxContracts';
 import type { OwnerBatchReview, OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
 import type { RemoveCandidateFromScanResult } from '../api/ownerBatchReviewService';
 import { getResolvedImageInventoryIdentity, imageInventoryKeys, type ImageInventoryIdentity } from './ownerUxQueries';
@@ -51,12 +51,8 @@ export function knownCandidateVersions(
   const card = client.getQueryData<OwnerBatchReview>(
     ownerBatchReviewKeys.batchReview(identity, scope.sessionId))?.items
     ?.find(item => item.candidateId === scope.candidateId);
-  const summaries = client.getQueriesData<OwnerCandidatePage>({
-    queryKey: [...imageInventoryKeys.identity(identity), 'candidates'],
-  }).flatMap(([, page]) => page?.items?.filter(item => item.sessionId === scope.sessionId
-    && item.candidateId === scope.candidateId) ?? []);
   return [...(choices ? [choices] : []), ...(detail ? [candidateVersions(detail)] : []),
-    ...(card ? [card] : []), ...summaries];
+    ...(card ? [card] : [])];
 }
 // Corresponding counters within a card, never a combined/universal revision.
 export function candidateAuthorityIsCurrent(
@@ -87,18 +83,6 @@ export function assertBatchAuthority(
     }
   }
   return batch;
-}
-export function assertCandidatePageAuthority(
-  client: QueryClient, identity: ImageInventoryIdentity, page: OwnerCandidatePage,
-): OwnerCandidatePage {
-  assertOwnerScope(identity);
-  for (const item of page.items) {
-    if ((cardHasConfirmedOutcome(client, identity, item) && item.candidateState !== 'committed')
-      || knownCandidateVersions(client, identity, item).some(accepted => versionsRegress(item, accepted))) {
-      throw authorityChanged();
-    }
-  }
-  return page;
 }
 export function assertCardVersions(client: QueryClient, identity: ImageInventoryIdentity, card: OwnerBatchReviewCard): void {
   assertOwnerCardCurrent(client, identity, card);

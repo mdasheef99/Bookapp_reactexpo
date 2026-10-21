@@ -257,13 +257,10 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                                             </Text>
                                         ))}
                                         <Button
-                                            title="Review next blocker"
+                                            title="Back to review" accessibilityLabel="Back to review"
                                             variant="secondary"
                                             style={{ marginTop: 4 }}
-                                            onPress={() => router.push(inventoryRoutes.candidate(
-                                                sessionId,
-                                                preCloseBlockers[0][1].candidateId,
-                                            ))}
+                                            onPress={() => router.dismissTo(inventoryRoutes.session(sessionId))}
                                         />
                                     </View>
                                 ) : null
@@ -274,7 +271,7 @@ function Summary({ identity, sessionId }: { identity: ImageInventoryIdentity; se
                                 </Text>
                             ) : null}
                             {canonical?.nextBlockingCandidateId ? (
-                                <Button title="Review next blocker" variant="secondary" style={{ marginTop: 14 }} onPress={() => router.push(inventoryRoutes.candidate(sessionId, canonical.nextBlockingCandidateId!))} />
+                                <Button title="Back to review" accessibilityLabel="Back to review" variant="secondary" style={{ marginTop: 14 }} onPress={() => router.dismissTo(inventoryRoutes.session(sessionId))} />
                             ) : null}
                             {!canonical && uncommittedCount && uncommittedCount > 0 ? (
                                 <View testID="partial-close-warning" style={{ gap: 6, marginTop: 16 }}>

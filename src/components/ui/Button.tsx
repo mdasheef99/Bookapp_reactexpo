@@ -7,6 +7,7 @@ import {
     ViewStyle,
     TextStyle,
     ActivityIndicator,
+    type AccessibilityState,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/hooks/useTheme';
@@ -25,6 +26,7 @@ interface ButtonProps {
     textStyle?: TextStyle;
     accessibilityLabel?: string;
     accessibilityHint?: string;
+    accessibilityState?: AccessibilityState;
     testID?: string;
 }
 
@@ -57,6 +59,7 @@ export const Button: React.FC<ButtonProps> = ({
     textStyle,
     accessibilityLabel,
     accessibilityHint,
+    accessibilityState,
     testID,
 }) => {
     const { colors } = useTheme();
@@ -127,7 +130,7 @@ export const Button: React.FC<ButtonProps> = ({
             accessibilityLabel={accessibilityLabel ?? title}
             accessibilityHint={accessibilityHint}
             accessibilityRole="button"
-            accessibilityState={{ disabled: isDisabled }}
+            accessibilityState={{ ...accessibilityState, disabled: isDisabled }}
             testID={testID}
         >
             {isGradient ? (
