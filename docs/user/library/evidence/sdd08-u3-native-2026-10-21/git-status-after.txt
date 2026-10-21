@@ -1,0 +1,65 @@
+ M package-lock.json
+ M package.json
+ M src/features/books/export/__tests__/deliver.web.test.ts
+ M src/features/books/export/__tests__/fileName.test.ts
+ M src/features/books/export/__tests__/useExportActions.test.tsx
+ M src/features/books/export/deliver.ts
+ M src/features/books/export/deliver.web.ts
+ M src/features/books/export/fileName.ts
+ M src/features/books/export/useExportActions.ts
+?? .spec/BRIEF-U1-FIX1.md
+?? .spec/BRIEF-U1.md
+?? .spec/BRIEF-U2-FIX1.md
+?? .spec/BRIEF-U2-FIX2.md
+?? .spec/BRIEF-U2.md
+?? .spec/BRIEF-U3-FIX1.md
+?? .spec/BRIEF-U3.md
+?? .spec/REVIEW-U1-FIX1.md
+?? .spec/REVIEW-U1.md
+?? .spec/REVIEW-U2-FIX2.md
+?? .spec/REVIEW-U2.md
+?? .spec/REVIEW-U3.md
+?? .spec/U1-FIX1-REPORT.md
+?? .spec/U1-FIX1-REVIEW-LUNA.md
+?? .spec/U1-REPORT.md
+?? .spec/U1-REVIEW-LUNA.md
+?? .spec/U2-FIX1-REPORT.md
+?? .spec/U2-FIX2-REVIEW-LUNA.md
+?? .spec/U2-JEST-FAILURES.txt
+?? .spec/U2-REPORT.md
+?? .spec/U2-REVIEW-LUNA.md
+?? .spec/U3-FIX1-REPORT.md
+?? .spec/U3-REPORT.md
+?? .spec/U3-REVIEW-LUNA.md
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/NATIVE-RUN.json
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/apk.sha256
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/final-find-leftovers.txt
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/git-status-after.txt
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/git-status-before.txt
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/library.csv
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/md-find-open.txt
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/native/diagnostic-route-source.tsx
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/node-reference-hermes-facts.txt
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/notes-page1.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/notes-shared-attempt2.pdf
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/notes.md
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/notes.pdf
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/pdf-find-after.txt
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/pdf-find-open.txt
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/pdf-find-while-print-preview.txt
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/rapid-find-after-back1.txt
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/rapid-find-open-1.txt
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-01-launch.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-02-loaded.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-02-route.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-03-csv-chooser.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-04-csv-after.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-05-md-chooser.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-06-md-after.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-07-pdf-chooser.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-08-pdf-retry.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-09-print-target.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-10-pdf-after.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-11-rapid-chooser.png
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/shot-12-rapid-after-back1.png
+?? src/features/books/export/__tests__/deliver.native.test.ts

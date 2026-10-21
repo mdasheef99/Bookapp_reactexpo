@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-21",
+  "scope": "SDD-08 Unit 4 passage card (quote PNG) on Android emulator",
+  "device": {"avd": "BookConnect_Pixel5_API36", "serial": "emulator-5570", "api": 36, "abi": "x86_64", "note": "-wipe-data -no-snapshot; wifi/data disabled via svc. Emulator was killed and relaunched (wipe-data again, APK reinstalled) once after adb lost the device mid-run; all fixture results below are from the second boot."},
+  "app": {"package": "com.bookconnect.library.dev", "apkSha256": "6f9e757328c127388d29bd8de539544846634d5652922ccad1fa7db0d18da97c",
+    "commands": ["npx expo prebuild --platform android --no-install", "gradlew.bat :app:assembleDebug --offline -PreactNativeArchitectures=x86_64 (JDK 21 Adoptium, ANDROID_HOME set, node on PATH)", "npx expo start --dev-client --port 8084"],
+    "offlineWorked": true, "prebuildRewrotePackageJson": true, "packageJsonRestored": "byte-identical to pre-run copy (which already had uncommitted modifications)"},
+  "isolation": {"auth": "EXPO_PUBLIC_DEV_SKIP_AUTH=true", "supabase": "dummy http://127.0.0.1:1", "signIn": "none"},
+  "sourceSha256": {
+    "src/features/books/export/passageCard.ts": "2b81d4ef205b7e86808ba0778bd3b8d6ea8db271ec33daa0870a692ce0046f8e",
+    "src/features/books/export/captureCard.ts": "1df9fd2624ef6c8c68e7e6816a96a3da4e201aa9ddc6ac8fd59f5600205c36d4",
+    "src/features/books/export/deliver.ts": "c9d81e936564e02e5c60f4e6ecbba5b654ebc6142e6eff4e66253bcd048b84d0",
+    "src/features/books/export/fileName.ts": "70b6cd4a1a5da5a9aaac3c94fe473ca68417797ac2e49eef22eb012869579a42",
+    "src/components/library/export/PassageCard.tsx": "76a2326d439cf0da037464fe3a16b3a8f93900f060a62caa53159032b761c206",
+    "src/components/library/export/PassageCardPreview.tsx": "923e8ebcd1d2a51c278ab807a2ce386f190a0ae3a97241ae91792e3dea38ecf7",
+    "app/(tabs)/library/native-card-proof.tsx (temporary)": "9ae15dbd748ead838646c98decb18077a262545aa529aceaee5e37820ed79ec4"
+  },
+  "fixtures": {
+    "A": {"shareEnabled": true, "png": "1080x1350", "shortened": false, "file": "bookconnect-quote-walden-2026-10-21.png"},
+    "B": {"shareEnabled": true, "png": "1080x1350", "shortened": true, "file": "bookconnect-quote-long-test-2026-10-21.png"},
+    "C": {"shareEnabled": true, "png": "1080x1350", "shortened": false, "file": "bookconnect-quote-किताब-की-कहानी-2026-10-21.png"},
+    "D": {"shareEnabled": true, "png": "1080x1350", "shortened": true, "file": "bookconnect-quote-ಪುಸ್ತಕ-ಕಥೆ-2026-10-21.png"},
+    "E": {"shareEnabled": true, "png": "1080x1350", "shortened": true, "file": "bookconnect-quote-测试-2026-10-21.png"},
+    "F": {"shareEnabled": true, "png": "1080x1350", "shortened": true, "file": "bookconnect-quote-many-lines-2026-10-21.png"}
+  },
+  "results": {
+    "1_build": "PASS", "2_fit_runs": "PASS", "3_png": "PASS", "4_caption": "PASS", "5_preview_matches": "PASS",
+    "6_cleanup": "PASS (attempt dirs gone after Back; cache/exports left empty; no .png anywhere in cache before or after; capture temp never observed mid-flow)",
+    "7_cancel_during_capture": "PARTIAL (share tap + cancel + reopen tap sent in one adb call: preview closed, no share sheet, no error, no leftover files; the reopen tap did not open a preview; a separate reopen later worked)",
+    "8_offline_entry": "NOT TESTED", "9_cleanup": "PASS"
+  }
+}

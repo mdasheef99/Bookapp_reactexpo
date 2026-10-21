@@ -1,0 +1,35 @@
+ M package-lock.json
+ M package.json
+ M src/features/books/export/__tests__/deliver.web.test.ts
+ M src/features/books/export/__tests__/fileName.test.ts
+ M src/features/books/export/__tests__/useExportActions.test.tsx
+ M src/features/books/export/deliver.ts
+ M src/features/books/export/deliver.web.ts
+ M src/features/books/export/fileName.ts
+ M src/features/books/export/useExportActions.ts
+?? .spec/BRIEF-U1-FIX1.md
+?? .spec/BRIEF-U1.md
+?? .spec/BRIEF-U2-FIX1.md
+?? .spec/BRIEF-U2-FIX2.md
+?? .spec/BRIEF-U2.md
+?? .spec/BRIEF-U3-FIX1.md
+?? .spec/BRIEF-U3.md
+?? .spec/REVIEW-U1-FIX1.md
+?? .spec/REVIEW-U1.md
+?? .spec/REVIEW-U2-FIX2.md
+?? .spec/REVIEW-U2.md
+?? .spec/REVIEW-U3.md
+?? .spec/U1-FIX1-REPORT.md
+?? .spec/U1-FIX1-REVIEW-LUNA.md
+?? .spec/U1-REPORT.md
+?? .spec/U1-REVIEW-LUNA.md
+?? .spec/U2-FIX1-REPORT.md
+?? .spec/U2-FIX2-REVIEW-LUNA.md
+?? .spec/U2-JEST-FAILURES.txt
+?? .spec/U2-REPORT.md
+?? .spec/U2-REVIEW-LUNA.md
+?? .spec/U3-FIX1-REPORT.md
+?? .spec/U3-REPORT.md
+?? .spec/U3-REVIEW-LUNA.md
+?? docs/user/library/evidence/sdd08-u3-native-2026-10-21/git-status-before.txt
+?? src/features/books/export/__tests__/deliver.native.test.ts

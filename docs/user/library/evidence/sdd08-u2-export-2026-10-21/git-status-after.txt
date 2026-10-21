@@ -1,0 +1,57 @@
+ M app/(tabs)/library/__tests__/index.test.tsx
+ M app/(tabs)/library/index.tsx
+ M app/(tabs)/library/notes.tsx
+ M docs/user/library/SDD-08-export-and-share.md
+ M eslint-rules/book-section/__tests__/config.test.js
+ M eslint-rules/book-section/config.js
+ M src/components/library/LibraryHeader.tsx
+ M src/components/library/__tests__/LibraryHomeControls.test.tsx
+ M src/components/notes/__tests__/FlowBBuild1.test.tsx
+?? .spec/BRIEF-U1-FIX1.md
+?? .spec/BRIEF-U1.md
+?? .spec/BRIEF-U2-FIX1.md
+?? .spec/BRIEF-U2-FIX2.md
+?? .spec/BRIEF-U2.md
+?? .spec/REVIEW-U1-FIX1.md
+?? .spec/REVIEW-U1.md
+?? .spec/REVIEW-U2-FIX2.md
+?? .spec/REVIEW-U2.md
+?? .spec/U1-FIX1-REPORT.md
+?? .spec/U1-FIX1-REVIEW-LUNA.md
+?? .spec/U1-REPORT.md
+?? .spec/U1-REVIEW-LUNA.md
+?? .spec/U2-FIX1-REPORT.md
+?? .spec/U2-FIX2-REVIEW-LUNA.md
+?? .spec/U2-JEST-FAILURES.txt
+?? .spec/U2-REPORT.md
+?? .spec/U2-REVIEW-LUNA.md
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/README.md
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/git-status-after.txt
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/git-status-before.txt
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/library.csv
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/notes.md
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/playwright.sdd08u2.config.ts
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/requests.json
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/sdd08-u2-results.json
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/sdd08-u2.pw.ts
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/shot-01-library-home-390.png
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/shot-02-dialog-default-390.png
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/shot-03-dialog-pdf-ready-390.png
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/shot-04-offline-library-app-localhost.png
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/shot-04-offline-library-localhost.png
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/shot-05-offline-notes-app-localhost.png
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/shot-05-offline-notes-localhost.png
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/shot-06-library-w320.png
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/shot-07-notes-w320.png
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/shot-08-notes-zoom2-390.png
+?? docs/user/library/evidence/sdd08-u2-export-2026-10-21/shot-09-library-zoom2-390.png
+?? src/components/library/export/ExportNotesDialog.tsx
+?? src/components/library/export/__tests__/ExportNotesDialog.test.tsx
+?? src/components/library/export/index.ts
+?? src/features/books/export/__tests__/deliver.web.test.ts
+?? src/features/books/export/__tests__/loaders.test.ts
+?? src/features/books/export/__tests__/useExportActions.test.tsx
+?? src/features/books/export/deliver.ts
+?? src/features/books/export/deliver.web.ts
+?? src/features/books/export/loaders.ts
+?? src/features/books/export/useExportActions.ts

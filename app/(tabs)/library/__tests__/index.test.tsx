@@ -9,10 +9,23 @@ import { BookButton } from '@/components/library/ui';
 import { LibraryBookRow } from '@/components/library/LibraryBookList';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import { MIN_TARGET } from '@/components/library/LibraryAppearance';
+import type { ExportFeedback } from '@/features/books/export/useExportActions';
 
 const mockRouterPush = jest.fn();
 let mockOffline = false;
+let mockExportAvailable = false;
+let mockExportBusy = false;
+let mockExportFeedback: ExportFeedback = null;
+const mockExportRun = jest.fn();
+const mockExportActor = jest.fn();
+jest.mock('@/features/books/export/deliver', () => ({ exportDeliveryAvailable: () => mockExportAvailable }));
+jest.mock('@/features/books/export/useExportActions', () => ({ useLibraryCsvExport: (actor: string) => {
+    mockExportActor(actor);
+    return { run: mockExportRun, busy: mockExportBusy, feedback: mockExportFeedback };
+} }));
 jest.mock('@/hooks/useNetworkStatus', () => ({ useNetworkStatus: () => ({ isOffline: mockOffline }) }));
+
+beforeEach(() => { mockExportAvailable = false; mockExportBusy = false; mockExportFeedback = null; });
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
@@ -67,6 +80,71 @@ jest.mock('@/components/ui/Button', () => {
             </TouchableOpacity>
         ),
     };
+});
+
+describe('Library CSV export wiring', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockOffline = false; mockExportAvailable = true;
+        (booksService.getUserLibrary as jest.Mock).mockReset().mockResolvedValue([{ id: 'saved', book: { title: 'Saved book' } }]);
+        mockExportRun.mockResolvedValue(undefined);
+    });
+
+    it('passes the actor to the hook and offers a named quiet export beside Add', async () => {
+        const ui = renderScreen();
+        await ui.findByText('1 book');
+        expect(mockExportActor).toHaveBeenCalledWith('reader-1');
+        expect(ui.getByText('Export library')).toBeOnTheScreen();
+        fireEvent.press(ui.getByRole('button', { name: 'Export library as CSV' }));
+        expect(mockExportRun).toHaveBeenCalledTimes(1);
+        expectSinglePrimary(ui);
+        ui.unmount(); ui.queryClient.clear();
+    });
+
+    it('hides export on the native stub', async () => {
+        mockExportAvailable = false;
+        const ui = renderScreen(); await ui.findByText('1 book');
+        expect(ui.queryByRole('button', { name: 'Export library as CSV' })).toBeNull();
+        ui.unmount(); ui.queryClient.clear();
+    });
+
+    it('disables the entry offline and announces the connection caption below the header', async () => {
+        mockOffline = true;
+        const ui = renderScreen(); await ui.findByText('1 book');
+        expect(ui.getByRole('button', { name: 'Export library as CSV' })).toBeDisabled();
+        fireEvent.press(ui.getByRole('button', { name: 'Export library as CSV' }));
+        expect(mockExportRun).not.toHaveBeenCalled();
+        expect(ui.getByText('Export needs a connection.').props.accessibilityLiveRegion).toBe('polite');
+        expect(ui.getByRole('button', { name: 'Add a book' })).toBeEnabled();
+        ui.unmount(); ui.queryClient.clear();
+    });
+
+    it('shows busy on the disabled export control', async () => {
+        mockExportBusy = true;
+        const ui = renderScreen(); await ui.findByText('1 book');
+        const button = ui.getByRole('button', { name: 'Export library as CSV' });
+        expect(button).toBeDisabled(); expect(button.props.accessibilityState.busy).toBe(true);
+        expect(ui.getByText('Exporting…')).toBeOnTheScreen();
+        ui.unmount(); ui.queryClient.clear();
+    });
+
+    it.each([
+        { kind: 'saved', message: 'Saved to your downloads.' },
+        { kind: 'empty', message: 'Your library is empty.' },
+        { kind: 'error', message: "Couldn't export. Try again." },
+    ] as const)('announces $kind feedback and provides the error retry', async feedback => {
+        mockExportFeedback = feedback;
+        const ui = renderScreen(); await ui.findByText('1 book');
+        const caption = ui.getByText(feedback.message);
+        expect(caption.props.accessibilityLiveRegion).toBe('polite');
+        expect(caption.props['aria-live']).toBe('polite');
+        expect(StyleSheet.flatten(caption.props.style)).toMatchObject(LIBRARY_TEXT.caption);
+        if (feedback.kind === 'error') {
+            fireEvent.press(ui.getByRole('button', { name: 'Try again' }));
+            expect(mockExportRun).toHaveBeenCalledTimes(1);
+        }
+        ui.unmount(); ui.queryClient.clear();
+    });
 });
 
 const renderScreen = () => {

@@ -1,12 +1,12 @@
 /** Flow B build B1: passage link, notes list states, note reader layout, NoteDialog spec. */
 import React from 'react';
-import { AccessibilityInfo, Clipboard, FlatList, ScrollView, StyleSheet } from 'react-native';
+import { AccessibilityInfo, Clipboard, FlatList, Platform, ScrollView, StyleSheet } from 'react-native';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import NotesScreen from '../../../../app/(tabs)/library/notes';
 import NoteReaderScreen from '../../../../app/(tabs)/library/note';
 import { NotePassageLink } from '../NotePassageLink';
 import { NoteDialog } from '../ManualNoteUi';
-import { BookButton } from '@/components/library/ui';
+import { BookButton, BookFeedbackProvider } from '@/components/library/ui';
 import { MIN_TARGET } from '@/components/library/LibraryAppearance';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import { COLUMN_MAX_WIDTH, DIALOG_MAX_WIDTH } from '@/components/library/bookDetails/bookDetailsTokens';
@@ -14,12 +14,29 @@ import { expectSinglePrimary } from '@/test-utils/bookSection';
 import type { ManualNote } from '@/features/books/notes/manualNoteContract';
 import type { NoteOperation } from '@/features/books/notes/noteSaveCoordinator';
 import { registerNoteContext } from '@/features/books/notes/noteNavigation';
+import type { ExportFeedback } from '@/features/books/export/useExportActions';
+import { PassageCardPreview } from '@/components/library/export/PassageCardPreview';
+
+jest.mock('@/features/books/export/captureCard', () => ({ captureCardPng: jest.fn(), releaseCardCapture: jest.fn() }));
 
 let mockParams: Record<string, string>;
 let mockOffline = false;
+let mockExportAvailable = false;
+let mockExportBusy = false;
+let mockExportReady = false;
+let mockExportFeedback: ExportFeedback = null;
+const mockExportRun = jest.fn();
+const mockExportPrint = jest.fn();
+const mockExportCancel = jest.fn();
+const mockExportDispose = jest.fn();
+jest.mock('@/features/books/export/deliver', () => ({ exportDeliveryAvailable: () => mockExportAvailable }));
+jest.mock('@/features/books/export/useExportActions', () => ({ useNotesExport: () => ({
+  run: mockExportRun, busy: mockExportBusy, feedback: mockExportFeedback,
+  ready: mockExportReady, print: mockExportPrint, cancel: mockExportCancel, dispose: mockExportDispose,
+}) }));
 let mockDeleteAuthorized = true;
 let mockBookError = false;
-let mockBookData: { id: string; title: string } | undefined;
+let mockBookData: { id: string; title: string; authors: string[] } | undefined;
 let mockCollection: ManualNote[] | undefined;
 let mockCollectionPending = false;
 let mockCollectionError = false;
@@ -82,10 +99,13 @@ beforeEach(() => {
   jest.useFakeTimers().setSystemTime(new Date('2026-10-20T12:00:00Z'));
   jest.clearAllMocks();
   mockOffline = false; mockDeleteAuthorized = true; mockBookError = false;
-  mockBookData = { id: 'book', title: 'Selected book' };
+  mockBookData = { id: 'book', title: 'Selected book', authors: [] };
   mockCollection = []; mockCollectionPending = false; mockCollectionError = false;
   mockRecord = undefined; mockRecordPending = false; mockRecordError = false;
   mockOperations = [];
+  mockExportAvailable = false; mockExportBusy = false; mockExportFeedback = null;
+  mockExportReady = false;
+  mockExportRun.mockResolvedValue(undefined);
   mockDelete.mockResolvedValue(undefined);
   mockParams = { userBookId: 'book' };
 });
@@ -221,6 +241,52 @@ describe('note reader layout', () => {
   beforeEach(() => {
     mockRecord = note();
     mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'collection', canBack: true }) };
+  });
+
+  it('shows the native quote entry offline and opens a preview using the saved content and first author', async () => {
+    mockOffline = true;
+    mockBookData = { id: 'book', title: 'Walden', authors: ['Thoreau', 'Second author'] };
+    render(<NoteReaderScreen />);
+    const entry = screen.getByRole('button', { name: 'Share quote as image' });
+    expect(screen.getByText('Share as image')).toBeOnTheScreen();
+    expect(entry).toBeEnabled();
+    fireEvent.press(entry);
+    expect(screen.getByRole('dialog', { name: 'Share quote as image' })).toBeOnTheScreen();
+    expect(screen.UNSAFE_getByType(PassageCardPreview).props).toMatchObject({
+      visible: true, quote: mockRecord!.content, title: 'Walden', author: 'Thoreau', page: 42,
+    });
+    fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('dialog', { name: 'Share quote as image' })).toBeNull();
+    await flush();
+  });
+
+  it.each([null, 'reflect', 'distill', 'apply', 'question'] as const)('omits image sharing for category %s', async tag => {
+    mockRecord = note({ tag }); render(<NoteReaderScreen />);
+    expect(screen.queryByRole('button', { name: 'Share quote as image' })).toBeNull();
+    expect(screen.queryByText('Share as image')).toBeNull(); await flush();
+  });
+
+  it('hides the quote entry on web', async () => {
+    const original = Platform.OS; Platform.OS = 'web';
+    try {
+      render(<NoteReaderScreen />);
+      expect(screen.queryByRole('button', { name: 'Share quote as image' })).toBeNull();
+      expect(screen.queryByText('Share as image')).toBeNull(); await flush();
+    } finally { Platform.OS = original; }
+  });
+
+  it('omits absent author and page when opening the quote preview', async () => {
+    mockRecord = note({ page_number: null }); render(<NoteReaderScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'Share quote as image' }));
+    expect(screen.UNSAFE_getByType(PassageCardPreview).props).toMatchObject({ author: null, page: null });
+    await flush();
+  });
+
+  it('disables the image entry while deleting', async () => {
+    mockDelete.mockReturnValueOnce(new Promise(() => {})); render(<NoteReaderScreen />);
+    fireEvent.press(screen.getByRole('button', { name: 'Delete note' }));
+    fireEvent.press(screen.getAllByRole('button', { name: 'Delete note' }).slice(-1)[0]);
+    expect(screen.getByRole('button', { name: 'Share quote as image' })).toBeDisabled(); await flush();
   });
 
   it('has no Read title, shows caption book and meta, and keeps Delete as the trailing text button', async () => {
@@ -407,5 +473,90 @@ describe('NoteDialog destructive spec', () => {
   it('defaults an unspecified confirm to primary', () => {
     const tree = render(<NoteDialog spec={{ title: 'Leave?', message: 'Unsaved.', keep: 'Stay here', confirm: 'Leave', action: jest.fn() }} onKeep={jest.fn()} />);
     expect(tree.UNSAFE_queryAllByType(BookButton).find(instance => instance.props.label === 'Leave')!.props.variant).toBe('primary');
+  });
+});
+
+describe('notes export entry', () => {
+  beforeEach(() => { mockExportAvailable = true; });
+
+  it('keeps PDF ready after loading and prints from the final press before closing', async () => {
+    mockExportRun.mockResolvedValueOnce(true);
+    const ui = render(<BookFeedbackProvider><NotesScreen /></BookFeedbackProvider>);
+    const entry = screen.getByRole('button', { name: 'Export notes for Selected book' });
+    expect(StyleSheet.flatten(entry.props.style).minHeight).toBeGreaterThanOrEqual(MIN_TARGET);
+    expect(screen.getByText('Export')).toBeOnTheScreen();
+    fireEvent.press(entry);
+    fireEvent.press(screen.getByRole('radio', { name: 'PDF' }));
+    fireEvent.press(screen.getByRole('radio', { name: 'All books' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Export' }));
+    await flush();
+    expect(mockExportRun).toHaveBeenCalledWith({ format: 'pdf', scope: 'all' });
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
+    expect(mockExportPrint).not.toHaveBeenCalled();
+    mockExportReady = true;
+    ui.rerender(<BookFeedbackProvider><NotesScreen /></BookFeedbackProvider>);
+    expect(screen.getByText('Your PDF is ready. Choose Print, then Save as PDF.')).toBeOnTheScreen();
+    let promiseResolved = false;
+    const pending = Promise.resolve().then(() => { promiseResolved = true; });
+    fireEvent.press(screen.getByRole('button', { name: 'Print' }));
+    expect(mockExportPrint).toHaveBeenCalledTimes(1);
+    expect(promiseResolved).toBe(false);
+    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
+    expect(mockExportDispose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Saved to your downloads.')).toBeNull();
+    await pending;
+  });
+
+  it('closes after a one-step Markdown export', async () => {
+    mockExportRun.mockResolvedValueOnce(false);
+    render(<BookFeedbackProvider><NotesScreen /></BookFeedbackProvider>);
+    fireEvent.press(screen.getByRole('button', { name: 'Export notes for Selected book' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Export' }));
+    await flush();
+    expect(mockExportRun).toHaveBeenCalledWith({ format: 'markdown', scope: 'book' });
+    expect(screen.queryByRole('dialog', { name: 'Export notes' })).toBeNull();
+    expect(mockExportPrint).not.toHaveBeenCalled();
+  });
+
+  it.each(['unavailable', 'no-data'])('hides the export entry when %s', condition => {
+    if (condition === 'unavailable') mockExportAvailable = false;
+    else { mockCollection = undefined; mockCollectionPending = true; }
+    render(<NotesScreen />);
+    expect(screen.queryByRole('button', { name: 'Export notes for Selected book' })).toBeNull();
+  });
+
+  it('disables export offline with a visible connection caption', () => {
+    mockOffline = true;
+    render(<NotesScreen />);
+    const entry = screen.getByRole('button', { name: 'Export notes for Selected book' });
+    expect(entry).toBeDisabled(); fireEvent.press(entry);
+    expect(screen.queryByText('Includes private notes. Notes still saving are not included.')).toBeNull();
+    expect(screen.getByText('Export needs a connection.').props.accessibilityLiveRegion).toBe('polite');
+    expect(mockExportRun).not.toHaveBeenCalled();
+  });
+
+  it('announces busy and prevents opening another export', () => {
+    mockExportBusy = true;
+    render(<NotesScreen />);
+    const entry = screen.getByRole('button', { name: 'Export notes for Selected book' });
+    expect(entry).toBeDisabled(); expect(entry.props.accessibilityState.busy).toBe(true);
+    expect(screen.getByText('Exporting…')).toBeOnTheScreen();
+  });
+
+  it.each([
+    { kind: 'saved', message: 'Saved to your downloads.' },
+    { kind: 'empty', message: 'No notes to export yet.' },
+    { kind: 'error', message: "Couldn't export. Try again." },
+  ] as const)('announces $kind feedback inline and retries an error', async feedback => {
+    mockExportFeedback = feedback;
+    render(<NotesScreen />);
+    const caption = screen.getByText(feedback.message);
+    expect(caption.props.accessibilityLiveRegion).toBe('polite');
+    expect(caption.props['aria-live']).toBe('polite');
+    expect(StyleSheet.flatten(caption.props.style)).toMatchObject(LIBRARY_TEXT.caption);
+    if (feedback.kind === 'error') {
+      fireEvent.press(screen.getByRole('button', { name: 'Try again' })); await flush();
+      expect(mockExportRun).toHaveBeenCalledWith({ format: 'markdown', scope: 'book' });
+    }
   });
 });

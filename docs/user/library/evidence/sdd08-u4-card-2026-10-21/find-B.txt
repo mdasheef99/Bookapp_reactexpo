@@ -1,0 +1,3 @@
+cache/exports
+cache/exports/mvieeaje-tvv8jz1m
+cache/exports/mvieeaje-tvv8jz1m/bookconnect-quote-long-test-2026-10-21.png

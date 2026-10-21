@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-21",
+  "scope": "SDD-08 Unit 3 native export delivery (CSV, Markdown, PDF) on Android emulator",
+  "device": {"avd": "BookConnect_Pixel5_API36", "serial": "emulator-5570", "androidApi": 36, "abi": "x86_64", "note": "AVD launched with -wipe-data -no-snapshot; wifi/data disabled via svc after boot"},
+  "app": {"package": "com.bookconnect.library.dev", "buildType": "debug dev client", "apkSha256": "8d4ca6d860412cb708a80f1e187a2bfc4330bcb4d2b533bb595437ff79b8de1d",
+    "commands": ["npx expo prebuild --platform android --no-install", "JAVA_HOME=jdk-21 (Adoptium) ANDROID_HOME=%LOCALAPPDATA%/Android/Sdk; gradlew.bat :app:assembleDebug --offline -PreactNativeArchitectures=x86_64", "npx expo start --dev-client --port 8084"],
+    "offlineWorked": true, "buildTime": "13m 1s", "metroPort": 8084,
+    "launch": "adb shell am start -a VIEW -d exp+booktalks-mobile://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8084 then exp+booktalks-mobile://native-export-proof"},
+  "isolation": {"auth": "EXPO_PUBLIC_DEV_SKIP_AUTH=true, APP_ENV=development", "supabase": "dummy http://127.0.0.1:1 and dummy key", "signIn": "none", "shareTargetsEntered": "Print preview only (opened and backed out)"},
+  "sourceSha256": {
+"src/features/books/export/deliver.ts": "c4a461b3b982ef11a579d585e512cd795cd92693bce9437d1372ea5996d166fb",
+"src/features/books/export/fileName.ts": "6f490e09f0deb24936b5984e3b1b1318c62811da47fc1cac4b451bf686443fb5",
+"src/features/books/export/dates.ts": "9cbb48b7c150a99d3800b16ee7fe867a042ef7315af2b9287248f8850b036663",
+"src/features/books/export/libraryCsv.ts": "edac7093d397355c2dd5c5abf3eec2d97574ff55e55ed89b93ebb10306cb9452",
+"src/features/books/export/notesMarkdown.ts": "ca2cddae76798298d82a4372395ce81e8d394c74ffb3dafdd62257df308e8709",
+"src/features/books/export/notesPrintHtml.ts": "d315a142d8419e7d371b77e009da1bb2b937153e7c3e0e23f79bcfb5c94aeddf",
+"src/features/books/export/types.ts": "2e9c3dc42b2ff395ccffb4e86758fb00763e5523efba910a4f7c7f111bfd12e5",
+"app/native-export-proof.tsx (temporary)": "3eebda571edb74aa4046a8c0d0101e925c81e5418d0c4ef32241c535d124db64"
+  },
+  "results": {
+    "1_build": "PASS",
+    "2_hermes_facts": "PASS (all 5 filenames and date equal Node 22 reference; date 2026-10-04; CJK slug 50 chars)",
+    "3_csv": "PASS (BOM EF BB BF, 3 CRLF and no bare LF, formula title prefixed with apostrophe, Hindi and Kannada intact, resolved 'shared', attempt dir gone)",
+    "4_markdown": "PASS (UTF-8, Hindi/Kannada intact, resolved 'shared', attempt dir gone)",
+    "5_pdf": "PARTIAL (second attempt resolved 'shared', dir gone, PDF renders real Devanagari and Kannada glyphs via PyMuPDF; FIRST PDF attempt after cold start never resolved: WebView renderer crash logged, file left in cache/Print and empty attempt dir left in cache/exports)",
+    "6_share_targets": "PARTIAL (targets listed; no CSV share to a local target; PDF opened in the system Print target, which rendered the content; Drive/Gmail/Messages/Quick Share/Bluetooth not used)",
+    "7_rapid": "FAIL against criterion (second concurrent shareAsync rejected: Another share request is being processed now; first resolved shared; both attempt dirs gone, only one dir observed at the 5s check)",
+    "8_cleanup": "see final report"
+  },
+  "knownLeftovers": "cache/exports/mvi9z06j-pw6j0s5l (empty) and cache/Print/f5f51e54-9079-4086-ae49-58808907851c.pdf from the hung first PDF attempt (see final-find-leftovers.txt)"
+}

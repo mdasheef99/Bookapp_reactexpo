@@ -1282,3 +1282,41 @@ Completed scoped unit `library_sdd06_automatic_text_crop_complete_review_pending
 Verification: five focused Jest suites / 67 tests and scoped TypeScript PASS. Actual Android API 36 ML Kit returned seven boxes; independent pixel comparisons PASS for the automatic 983×1815 and manual 983×1705 outputs. Cached review used one OCR pass; manual adjustment used a second pass on the transformed URI and excluded outside bottom text. Full Jest: 2,523 passed / three failed / four pending tests, with 30 additional Playwright/empty-fixture collector failures; all failed names are in [the receipt](./evidence/sdd06-auto-crop-2026-10-15/README.md). These unrelated failures remain unresolved. Continuity PASS (195 definitions, no duplicates/missing traceability, regression probes PASS, 76 Markdown files); diff/changed-source whitespace and local-link checks PASS. No system picker/camera, physical-device, hardware Back or TalkBack acceptance is inferred.
 
 The diagnostic route was archived and removed; emulator/Metro stopped; new AVD data removed. A denied JDK performance-data folder remains in the task scratch directory and is recorded in the receipt. All four write gates remain false and persistence remains ON HOLD. No database, Storage, cloud-provider or migration mutation; no stage, commit, push, deploy or application. Existing mixed changes are preserved and this work is uncommitted. Marketplace Phase 9 Unit7C/M46, DOC-13/ACTIVE and mutation authority remain unchanged. Exact next authorized action: owner reviews the implemented automatic-crop behavior and evidence.
+
+## 2026-10-21 — TB-2 tab bar built; SDD-08 drafted and reviewed
+
+Worktree `Bookconnect4_tabbar`, branch `sdd07/tab-bar-main` off `main` `4a1daea`. All of it is uncommitted.
+- **TB-2:** the tab bar on `main` now has icons, theme colours, the contrast fix (RA-W01), the 200%-zoom fallback (D07-15 closed on this branch) and labels Library / Exchange / Market / Clubs / Profile (owner chose "Market"). Jest 52/52 tab tests and 645/645 neighbouring tests pass, `tsc` is 0, 3/3 mutants are killed, and the web check is 7/7 PASS. Record: [TB-1 §14](./SDD-07-TAB-BAR-UNIT.md#14-tb-2--rebuild-on-main-2026-10-21). Not run: axe, native screen readers, devices.
+- **SDD-08:** draft [SDD-08](./SDD-08-export-and-share.md). Owner decision: CSV is for books only, and notes export as Markdown/PDF. A Sonnet read-only review returned APPROVE WITH FIXES with 17 findings: 15 applied, 1 partly rejected, 1 nit left. Roadmap row updated. No implementation, install or migration.
+- The SDD-07 web "Scan text" residual was already closed by D07-20 (Flow D). It was listed as open by mistake in conversation; no change needed.
+- Database/storage mutations: none. Nothing staged, committed or pushed.
+- **Next exact action:** the owner (1) approves the TB-2 commit and merge, and (2) answers SDD-08 decisions D08-01 to D08-11.
+
+## 2026-10-21 — SDD-08 approved; Unit 1 builders built and verified
+
+The owner accepted every D08-01 to D08-11 recommendation and authorized implementation ("yes"). Branch `sdd08/export` (worktree `Bookconnect4_sdd08`, from `main` `4a1daea`, with the SDD-08 doc commit cherry-picked). Unit 1, the pure CSV/Markdown/print-HTML/file-name builders, is built by Codex Sol and reviewed by Luna (FAIL with 6 findings, all fixed, then PASS). The lead verified: 136 export tests, 725 books and lint-rule tests, `tsc` 0, lint 0 errors, and 8/8 mutants killed. Record: [SDD-08 §12.1](./SDD-08-export-and-share.md#121-unit-1-pure-builders-2026-10-21). Database/storage mutations: none. Uncommitted. **Next exact action:** the owner approves the Unit 1 commit, then Unit 2.
+
+## 2026-10-21 — SDD-08 Unit 2 built and verified
+
+Unit 1 is committed as `c1da51d`. Unit 2 (paged loaders, web CSV/Markdown download, two-step web PDF print, the notes and library export entries) is built by Codex Sol in 3 runs and reviewed by Luna (round 1: 5 findings accepted and fixed, 2 rejected; confirmation: fixed, plus one low finding fixed by the lead). The lead verified 1,490 tests, `tsc` 0, lint 0 errors, 13/13 mutants killed, and the web check with real downloads. A read-only live check found two foreign keys from `reading_notes` to `user_books`, so the all-notes export joins on the client. Record: [SDD-08 §12.2–§12.3](./SDD-08-export-and-share.md#123-unit-2-loaders-web-delivery-and-entry-points-2026-10-21). Database/storage mutations: none. Uncommitted. **Next exact action:** the owner approves the Unit 2 commit, then Unit 3 (native installs and delivery).
+
+## 2026-10-21 — SDD-08 Unit 3 native delivery built and verified
+
+Unit 2 is committed as `c4b7614`. The lead installed `expo-print` and `expo-sharing` (D08-04). Unit 3 adds native cache-file delivery through the system share sheet (a separate folder per attempt, temp files deleted afterwards), a one-step native PDF with a 60 s render timeout, a 200-byte file-name cap, and a print page margin. It was built by Codex Sol in 3 runs and reviewed by Luna (PASS WITH FINDINGS: 2 accepted and fixed, 1 rejected). The lead verified 1,542 tests, `tsc` 0, lint 0 errors, and 15/15 mutants killed. A Sonnet subagent ran an Android API 36 emulator check: CSV, Markdown and PDF share; Hermes file names and dates; Devanagari and Kannada glyphs. It found a PDF render hang (now fixed with the timeout, verified in Jest only) and tight margins (fixed, not re-rendered on the device). Record: [SDD-08 §12.4](./SDD-08-export-and-share.md#124-unit-3-native-delivery-2026-10-21). Database/storage mutations: none. Uncommitted. **Next exact action:** the owner approves the Unit 3 commit, then Unit 4 (the passage card).
+
+## 2026-10-21 — SDD-08 Unit 4 passage card built and verified
+
+Unit 3 is committed as `86be322`. The lead installed `react-native-view-shot` 4.0.3 (D08-04). Unit 4 adds "Share as image" on native Quote notes (hidden on web, D08-11). It opens a preview whose card measures its rendered lines, steps the size down, cuts with "…" and shows "Shortened to fit the card.", then captures a 1080×1350 PNG from a hidden card at output resolution and shares it through the Unit 3 cache path. It was built by Codex Sol in 3 runs. Reviews: Luna (FAIL, 3 accepted and fixed; then a confirmation, with 1 MED fixed by the lead), then opencode at the owner's request (GLM and MiniMax: 4 accepted and fixed; GLM confirmation PASS). The lead verified 1,663 tests, `tsc` 0, lint 0 errors, and mutants all killed apart from one accepted redundant guard. The Android emulator check passed for 6 fixtures: sharp 1080×1350 PNGs, real Devanagari, Kannada and CJK, and caption and ellipsis agreeing. Record: [SDD-08 §12.5](./SDD-08-export-and-share.md#125-unit-4-passage-card-2026-10-21). Database/storage mutations: none. Uncommitted. **Next exact action:** the owner approves the Unit 4 commit. SDD-08 then has no build work left; the CSV checks in Sheets and Excel and the merge decisions remain.
+
+## 2026-10-22 — SDD-08 full-branch review and fixes
+
+Unit 4 is committed as `2dcf97d`. A PR-style review of the whole branch since `4a1daea` was run by four free opencode models: MiniMax and GLM gave verdicts, DeepSeek left notes only, and Beam produced no output. Fixed by Codex Sol and verified by the lead:
+- the CSV `Published date` formula guard;
+- **D08-12** (owner): shared native export files are kept, and the next export deletes export folders 10 minutes old or more;
+- the Safari print iframe kept until `afterprint`;
+- lowercase ISBN-10 `x`;
+- the Markdown `1\.` escape;
+- Back and Escape cancel a busy export;
+- the dead barrel deleted.
+
+MiniMax confirmation: PASS. The lead verified 1,698 tests, `tsc` 0 and lint 0 errors, and all mutants were killed. Record: [SDD-08 §12.6](./SDD-08-export-and-share.md#126-full-branch-review-and-fixes-2026-10-22). Database/storage mutations: none. Uncommitted. **Next exact action:** the owner approves the fix commit. Then sync with the latest `main`, run the full suite, and get the owner's merge decision.
