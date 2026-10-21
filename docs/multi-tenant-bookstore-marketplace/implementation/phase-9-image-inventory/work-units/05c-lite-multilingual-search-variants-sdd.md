@@ -313,7 +313,9 @@ Separately authorize and review:
 3. persistence and lifecycle mapping;
 4. language enablement and benchmark evidence;
 5. active-only search integration;
-6. exceptional Owner-review integration.
+6. exceptional Owner-review integration. Before any language is switched on, clearing
+   stale search wording on the scan card must exist (post-scan rework SDD-1 §6, deferred
+   from slice 4b on 2026-10-21; slice 4a removed the only Owner screen for it).
 
 Current runtime remains authoritative until each affected implementation seam
 is separately changed and verified.

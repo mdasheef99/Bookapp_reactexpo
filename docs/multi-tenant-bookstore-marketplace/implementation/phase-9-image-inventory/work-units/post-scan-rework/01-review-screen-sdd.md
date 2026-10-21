@@ -118,7 +118,8 @@ Server functions do not change in slices 1–4.
 
   No screen decides readiness itself.
 - **D2-2, every hidden request is frozen in full.** A hidden step is the
-  slice 1 re-save or the slice 4 stale-wording rejection.
+  slice 1 re-save (the slice 4 stale-wording rejection was deferred to
+  Unit 5C on 2026-10-21).
   - The first time the coordinator builds the request, it freezes the whole
     request: payload, expected versions, idempotency key and command ID.
   - A retry replays exactly that request. It never rebuilds the request from
@@ -495,15 +496,16 @@ missed can still be added (PSR-D11, D13).
 
 | | |
 |---|---|
-| **Migration** | None. Existing functions clear the stale-wording blocker. |
-| **Size / risk** | 4a (deletions, "Add a book", summary): M / med — the SDD-0 §15 medium review pass: DeepSeek v4.1 Flash (max) and MiniMax 3.1 Flash (max) review the diff (~45 s apart, read-only, no shell); each finding is verified in the code; one bounded red-first Codex correction; then the pre-merge review. 4b (stale search wording, script recompute): M / high — full process (SDD-0 §15 review loop). |
-| **Order** | 4a is built first, as its own PR from `main`; 4b follows on its own branch (Owner, 2026-10-20). 4a deletes `VariantDecisionSheet`, the only screen that clears `variant_source_stale`, so between the 4a and 4b merges a card blocked only by stale search wording cannot be added. During that gap such a card shows the generic "This book can't be changed now." hint or its blocker message with no action; this is accepted for the gap only. 4b is merged before the Owner's next scan session; if it is not, the Owner is told before that scan. |
+| **Migration** | None. |
+| **Size / risk** | 4a (deletions, "Add a book", summary): M / med — the SDD-0 §15 medium review pass: DeepSeek v4.1 Flash (max) and MiniMax 3.1 Flash (max) review the diff (~45 s apart, read-only, no shell); each finding is verified in the code; one bounded red-first Codex correction; then the pre-merge review. 4b (script recompute, three languages, removal of the unused variant client; Owner, 2026-10-21): S / med — the same medium review pass. It changes the review that Add saves but not Add's requests, retry or idempotency, so the review loop is not needed. |
+| **Order** | 4a is built first, as its own PR from `main`; 4b follows on its own branch (Owner, 2026-10-20), after the 4a PR merges. 4a deletes `VariantDecisionSheet`, the only screen that clears `variant_source_stale`; clearing it is deferred to Unit 5C (see "Stale search wording" below), and no card can reach that blocker today (tracker 38 §22), so 4b has no deadline tied to the next scan (Owner, 2026-10-21). |
 | **Not in scope** | Remove all (slice 10); closing by the server (slice 11) |
 
 Subsections and acceptance checks are tagged **4a** or **4b**. 4a: "Routes and
 screens removed", "Readiness summary", "Notes", "Add a book"; AC4-1, AC4-2,
-AC4-3, AC4-5, AC4-6, AC4-8, AC4-9. 4b: "Stale search wording", "Script";
-AC4-4, AC4-4b, AC4-7.
+AC4-3, AC4-5, AC4-6, AC4-8, AC4-9. 4b: "Stale search wording" (deferred,
+with the removal), "Script and languages"; AC4-7, AC4-10, AC4-11. AC4-4 and
+AC4-4b are deferred with stale search wording.
 
 ### Routes and screens removed (4a)
 
@@ -579,9 +581,9 @@ that were already without importers before 4a (for example
 The server functions stay (R06).
 
 **Kept for 4b (Owner, 2026-10-20; a deliberate D2-5 exception that 4b
-ends):** `ownerCorrectionService.resolveExpectedVariants` and
+ends by removing them, Owner 2026-10-21):** `ownerCorrectionService.resolveExpectedVariants` and
 `ownerCorrectionService.decideVariant` stay in 4a although nothing calls them
-until 4b's stale-wording sequence does.
+until 4b removes them.
 
 **Card.**
 - Remove "Open full correction" (L337–340 at 1268403).
@@ -610,64 +612,131 @@ removed cards (`close/sessionAutoClosePolicy.ts` L33–38).
 - Removing it now would leave sessions with a removed card open. Each Owner
   can have only one open session, so that would block their next scan.
 
-### Stale search wording (Q9, the approved default): no migration (4b)
+### Stale search wording: deferred to Unit 5C (Owner, 2026-10-21)
 
-`variant_source_stale` blocks Add while a search-variant proposal is `stale`
-(M55 L119–121). A save that changes the title or authors can itself make
-`proposed` or `active` proposals stale: the candidate trigger
-`phase9_candidate_variant_refresh` (M24) does this.
+Clearing `variant_source_stale` at Add is **not** built in slice 4. It is a
+known gap, recorded here and in SDD-0 §11.
 
-**Admission.**
-- `batchReviewStatus.ts` adds `addResolvableBlockerCodes =
-  ['variant_source_stale']`.
-- If every blocker on a card is in that set, `cardAttentionItems` hides those
-  blockers, and `cardReadyNow` and `candidateCanStartCommit` treat the card as
-  Ready, provided `save_review` is allowed.
+**Why (read-only check, 2026-10-21, project `ahntbtktjjmvfosgkmgn`; tracker
+38 §22).**
+- The blocker exists while any proposal of the card is `stale` (M55
+  L119–121, in the function M69 L40 renamed
+  `phase9_edition_legacy_review_blockers`). While it exists the card's save
+  is refused (`phase9_update_candidate_review_v2` raises `P9_STATE_CONFLICT`,
+  M62 L120–126).
+- A card save never makes a proposal stale: since M29 (L90–101) the refresh
+  trigger skips snapshots with `value`, and the `_v2` save always writes one.
+  A proposal goes stale only inside the Add commit, after the eligibility
+  check, so it cannot block that Add.
+- Live data: 2 proposals in total (fixtures, 2026-08-01), none `stale`.
+  Search-variant generation is built (Unit 5C, M18–M28) but no language is
+  benchmarked or switched on.
+- So no card can reach the blocker today, and clearing it at Add would be a
+  multi-request change to Add (rejections, reread, re-save) with its own
+  retry and error rules, for no current case.
 
-**Sequence at Add** (each request frozen following D2-2):
-1. Read the proposals through `resolveExpectedVariants`
-   (`ownerCorrectionService.ts` L166–203).
-2. Reject each `stale` one with `phase9_owner_decide_search_variant(store,
-   proposal, expected_version, 'reject', 'card_wording_confirmed', null,
-   key)`. The function accepts `stale` rows (M24 decisions, L204–293; guard
-   at L274).
-3. Save the review (slice 1 rules).
-4. Reread. If the save made more proposals stale, reject those once (steps 1
-   and 2 again), then reread.
-5. Add, if the card is eligible. Otherwise stop with the existing "no longer
-   eligible" message.
+**What the Owner sees if it ever happens.** The card shows the blocker
+message the server sends ("Review changed search wording.", M29 L574) and
+cannot be added. This is the
+accepted 4a state, now kept until the trigger below.
 
-**Limits.**
-- There are at most two rounds of rejection per command.
-- A failed rejection stops the command before any save or Add that depends
-  on it.
+**Trigger.** Clearing stale search wording on the card is designed and built
+**before any Unit 5C language is switched on** for search-variant
+generation or activation. The 2026-10-21 design work (two-pass status read,
+frozen rejections, re-save from the reread, outcome table; tracker 38 §22)
+is the starting point, together with the Unit 5C SDD
+(`../05c-lite-multilingual-search-variants-sdd.md`, §13). That work also decides how the Owner approves search
+wording now that 4a removes the only screen for it (Unit 5C §13 item 6
+against D11).
 
-**Safety.**
-- Server validation does not change (R07): the blocker stays, and Add
-  clears its cause through a decision the Owner is authorized to make.
-- Each rejection writes the existing decision row.
-- Rejection only marks a proposal `rejected`. It does not touch
-  `phase9_owner_replace_search_variant`.
+**Removed in 4b (D2-5; Owner, 2026-10-21).** The 4a exception ends by
+removal, not by use: `ownerCorrectionService.resolveExpectedVariants` and
+`ownerCorrectionService.decideVariant`, with their request and response
+schemas, types, constants and test cases, and anything else a no-importer
+search shows unused because of this. On the 4a branch that is, in
+`api/ownerCorrectionService.ts`: `ExpectedVariant`, `DecideVariantRequest`,
+`MAX_VARIANT_PAGES`, `VARIANT_PAGE_SIZE`, `variantErrorCodeSchema` and
+`VariantErrorCode`, `VariantOperation` and the variant branch of the error
+mapping; in `contracts/ownerCorrectionSchemas.ts`: `variantReviewRowSchema`,
+`OwnerVariantReview`, `toOwnerVariantReview`, `decideVariantRequestSchema`,
+`decideVariantResponseSchema`; in `ownerCorrectionService.test.ts`: the
+`resolveExpectedVariants` and `decideVariant` cases and the M24/M25 rows of
+the `it.each` (the C06 row stays). `ownerCorrectionArchitecture.test.ts`
+rewrites its RPC list (L20–31 on main) to the RPCs that remain and its
+`networkMode: 'always'` count (L33–41) to the hooks that remain; 4a changes
+the count first, so 4b rechecks both after the rebase. The server functions
+stay (R06).
 
-### Notes (4a) and script (4b)
+### Notes (4a), script and languages (4b)
 
 **Notes** are not edited during a scan; the card has no notes editor. A
 review keeps any notes already saved on it, and a card with none sends empty
 notes. The Owner edits notes in Store View (D11; Owner, 2026-10-20).
 
 **Script is no longer an Owner field, and it is recomputed (SDD-0 F41; 4b).**
-- A null script is **not** used. Both validators skip the script check for a
-  null script (`ownerUxReviewSchema.ts` L105–111; M29 L789), so a null
-  script would switch off the title/language check (R07).
-- Instead, when the card's title or language changes, `validateCompactReview`
-  recomputes the script with the app's copy of the server rule
-  (`isLanguageScriptCoherent`, `contracts/ownerUxValidation.ts` L93):
-  1. It tries the language's expected script, then `Latn`, then the observed
-     script, and picks the first that is coherent with the title.
-  2. If none is coherent, it keeps the current script. The card then shows
-     "Choose a valid language." and is not Ready.
+- Both validators skip the script check for a null script
+  (`ownerUxReviewSchema.ts` L105–111; M29 L789), so a null script switches
+  off the title/language check (R07). Live data: 4 of 192 candidates have an
+  observed script, and 29 saved reviews have none (2026-10-21). The app now
+  sets the script whenever one fits, and never makes a card that can be
+  added today unaddable.
+- **Where.** Only in `validateCompactReview`. `compactReviewScript`, the
+  card's `edits`, and `BatchReviewCard`'s identity comparisons
+  (`identityChanged`, `chosenIdentityChanged`, the unsaved-edits flag;
+  `BatchReviewCard.tsx` L159–173) do not change, so a recomputed script is
+  never an Owner edit: it does not mark the card as edited or trigger
+  "Leave without saving?".
+- **Order.** `validateCompactReview` computes the script as today, decides
+  the metadata choice exactly as today (`compactReviewDraft.ts` L205–218),
+  and only then, if the final choice is manual (including a choice the
+  existing match just switched to manual after an identity edit),
+  recomputes the script. With a chosen edition (`edition_option` or
+  `selected`) the script stays the edition's own, even if it is null: the
+  server requires the review's script to equal the edition's (M69 L26)
+  (Owner, 2026-10-21). The recompute never changes the metadata choice.
+- **When.** Inputs are first normalised as the review schema does
+  (`canonicalBcp47` for the language, `normalizeSafeText` for the title and
+  each author); if either throws, there is no recompute and the schema
+  reports the issue. The script is recomputed when the card has no saved
+  review, when the normalised title, authors or language differ from the
+  saved review (`card.review`), or when the script is null. Otherwise the
+  saved script is kept. After a save the saved review holds the recomputed
+  script, so the card does not need saving again.
+- **How.** It tries, in order, the script named in the language tag (the
+  first subtag matching `^[A-Z][a-z]{3}$`, as the server does, M29
+  L792–794), the language's expected script, `Latn`, then the observed
+  script. The text is `[title, ...authors].join(' ')`, as both validators
+  use (`ownerUxReviewSchema.ts` L107, M29 L852–853). A script is chosen only
+  if it passes **both** the app's rule (`isLanguageScriptCoherent`,
+  `contracts/ownerUxValidation.ts` L93) **and** a new app mirror of the
+  server rule `phase9_owner_ux_language_script` (M29 L783–818; live body
+  identical, 2026-10-21): any letter in U+0370–052F, U+0590–05FF,
+  U+0E00–0EFF, U+2E80–A4CF or U+AC00–D7AF rejects every script; the
+  numerator counts the server's fixed ranges (`Latn` is `A–Z a–z
+  U+00C0–024F`); the denominator counts `\p{Alphabetic}`; the ratio must be
+  at least 0.6. The two rules differ (for example Vietnamese letters beyond
+  U+024F, or one Cyrillic letter in a Latin title, pass the app's rule but
+  not the server's), and a script only the app accepts would make the save
+  fail where today's null script passes.
+- **None fits.** The script is null, as today. No language choice could
+  make such text valid (for example a title half in Kannada and half in
+  English, where no script reaches 60 %), so a non-null fallback would
+  leave the card stuck.
+- A recomputed script can differ from the saved review; Add then saves
+  first (slice 1's save path).
 - This recompute is the second named exception in D2-3.
 - The Add commit does not read the script (M39; M69 L99–234).
+
+**Languages (4b).** `LANGUAGE_OPTIONS` (`scanSetup/scanSetupForm.ts` L16–24)
+adds Kannada (`kn`), Telugu (`te`) and Malayalam (`ml`), the South Indian
+languages the script rule already knows (`ownerUxValidation.ts` L82–91; the
+server copy in M29). The list feeds both the scan setup and the card's
+language chooser; the customer search filter has its own list
+(`components/search/FilterModal.tsx`) and does not change. The server
+accepts any well-formed language tag (`phase9_start_session_v2`, the review
+validators), so no server change is needed. Tulu, Konkani and other
+languages without a script-rule entry wait for Unit 5C (the rule's server
+copy needs a migration).
 
 ### "Add a book" (was "Add missed book") (4a)
 
@@ -773,13 +842,15 @@ notes. The Owner edits notes in Store View (D11; Owner, 2026-10-20).
 | AC4-1: Given any card or screen, then no route or button leads to full correction, the review queue, Mark false or search-wording review (D11). | `__tests__/inventoryRouteRegistration.test.ts` → rewrite as "registers no candidate or reviews route" (it asserts today that both exist); `inventoryNavigation.test.ts` → "has no candidate or reviews helper"; `unit6fArchitecture.test.ts` → "no source references removed routes" |
 | AC4-2: Given fewer than 15 cards, when the Owner adds a book by title and author, then the app returns to the review list, and a normal card appears that can be added (D13, R10). | `__tests__/OwnerCorrectionScreens.test.tsx` → rewrite the L156 test as "adds a book and returns to the review list" |
 | AC4-3: Given 15 books in the scan (`counts.detected`), the legacy over-limit fence, or a `P9_LIMIT_EXCEEDED` answer, then "Add a book" is shown disabled with the scan-full text (Q1). | `CaptureProgressScreens.test.tsx` → "explains the 15-book limit" and "shows the limit text instead of hiding the button on overflow"; `OwnerCorrectionScreens.test.tsx` → "maps the limit error to the scan-full text" |
-| AC4-4: Given a card blocked only by `variant_source_stale`, when Add is pressed, then each stale proposal is rejected, the review is saved, and the book is added. If a rejection fails, nothing is saved or added (D11, R07). | `inventoryCommitCoordinator.test.ts` → "rejects stale search wording before saving" and "stops when a stale rejection fails"; SQL `phase9VariantOwnerDecisions.integration.test.mjs` → "owner reject clears variant_source_stale" (a regression test for the existing function) |
-| AC4-4b: Given an identity edit on a card with an active variant, when Add is pressed, then the variant the save made stale is rejected in the second round, and the book is added. | `inventoryCommitCoordinator.test.ts` → "rejects variants made stale by the Add save"; SQL `phase9VariantLifecyclePolicy.integration.test.mjs` → "identity save stales active variant" (a regression test) |
+| AC4-4: Deferred with stale search wording to Unit 5C (Owner, 2026-10-21). Until then a card blocked by `variant_source_stale` shows its blocker message and cannot be added. | — |
+| AC4-4b: Deferred with AC4-4. The 2026-10-21 check showed a card save does not stale proposals (M29 L90–101). | — |
 | AC4-5: Given a card with no saved notes, then its added book has empty notes. Given a card whose review already has notes, then Add keeps them unchanged. Either way they can be edited in Store View (D11). | existing Store View notes tests; `compactReviewDraft.test.ts` → "sends empty notes when none are saved" and "keeps notes already saved" |
 | AC4-6: Accessibility. "Add a book", its limit text and its fields have labels and are announced (R14). | `OwnerCorrectionScreens.test.tsx` → "add-a-book controls are labelled" |
-| AC4-7: Given a card observed as Latin script, when the title is changed to Devanagari with language Hindi, then the script becomes `Deva`, and the card is added. Given a title that fits neither script, then the card shows "Choose a valid language." The server still rejects an explicit script that does not fit the title (F41, R07). | `compactReviewDraft.test.ts` → "recomputes script from title and language"; SQL `phase9OwnerUxContracts.integration.test.mjs` → "mismatched explicit script rejected" (a regression test) |
+| AC4-7: Given a card with manual metadata and no script, when the title and author are changed to Devanagari with language Hindi, then the script becomes `Deva` and the card is added. Given a Devanagari title with a Latin-script author whose letters are the majority, then the script becomes `Latn`. Given text that fits no script, or that only the app's rule accepts (Vietnamese beyond U+024F, a Cyrillic letter in Latin text), then the script stays null and the card can still be added, as today. Language tags `hi-Latn`, `en-Latn-US` and `HI-latn` follow the server's tag rule. Given a chosen edition, the script stays the edition's and the choice stays; given an identity edit that switches the choice to manual, the script is recomputed. A recomputed script does not mark the card as edited. (F41, R07) | `compactReviewDraft.test.ts` → "recomputes script from title, authors and language", "keeps a null script when nothing fits", "keeps a null script when only the app rule fits", "follows the language tag's script subtag", "keeps the saved script when nothing changed", "keeps the edition's script and choice", "recomputes after an identity edit switches to manual"; `batchReviewCard.test.tsx` → "a recomputed script is not an edit" (asserts `onUnsavedEditsChange` stays false); `inventoryCommitCoordinator.test.ts` → "adds after saving a recomputed script"; SQL parity test in a suite on the current migrations (PGlite harness) → "app script choice is accepted by phase9_owner_ux_language_script" over the fixtures above, chosen so the result does not depend on the test locale's `[:alpha:]` (M29 L800–802) |
 | AC4-8: Given the readiness summary, then Close still works, and "Back to review" replaces "Review next blocker". | `ReadinessSummaryScreen.test.tsx` → rewrite the L196 case |
 | AC4-9: Given unsaved text in "Add a book", when the Owner goes back, then a dialog offers Stay and Leave on every platform. While the book is being added, only Stay is offered. After an unclear result the fields are disabled, Stay and Leave are offered with the "may already have been added" text, and "Retry same addition" replays the same idempotency key and command ID; a definitive refusal unlocks the fields. After a successful add, no dialog appears and the screen navigates once. | `OwnerCorrectionScreens.test.tsx` → "asks before leaving with unsaved text", "does not ask after a successful add", "keeps fields disabled after an unclear result", "retry replays the same key and command ID", "a definitive refusal after an unclear result unlocks the fields", "navigates once after success" |
+| AC4-10: Given the scan setup or the card's language chooser, then Kannada, Telugu and Malayalam can be chosen, also by searching their names in the chooser (`InlineBatchReviewAdditionalFields.tsx` L89–93), and a card with one of them and a title in its script gets that script and can be added. | `ScanSetupForm.test.tsx` → "scan setup offers Kannada, Telugu and Malayalam"; `batchReviewCard.test.tsx` → "card language chooser finds Kannada, Telugu and Malayalam"; `compactReviewDraft.test.ts` → "Kannada title with kn gets Knda" |
+| AC4-11: Given the 4b code, then no non-test file under `src/` contains `resolveExpectedVariants`, `decideVariant`, their schemas or the RPC names `phase9_owner_search_variant_review` and `phase9_owner_decide_search_variant` (D2-5), and the server functions still exist (R06). | `ownerCorrectionArchitecture.test.ts` → "no variant decision client remains" (scans every non-test file under `src/`), with its RPC list and hook count rewritten; no-importer search before merge |
 
 **Tests to delete or change:**
 - Delete:
@@ -968,12 +1039,12 @@ worker and SQL identities are proven equal.
 | PSR-D07 | 2, 5 | AC2-4, AC2-8, AC2-10, AC5-10 |
 | PSR-D09 | 2 | AC2-5, AC2-9 |
 | PSR-D10 | 2, 5 | AC2-3, AC5-1 |
-| PSR-D11 | 4 | AC4-1, AC4-4, AC4-4b, AC4-5 |
+| PSR-D11 | 4 | AC4-1, AC4-5, AC4-11 (AC4-4, AC4-4b deferred) |
 | PSR-D12 | 3 | AC3-1 to AC3-4 |
 | PSR-D13 | 4, 5 | AC4-2, AC4-3, AC5-5, AC5-9 |
 | PSR-D47 | 2 (app); 13 (server, SDD-4) | AC2-7; AC13-9 |
 | PSR-R06 | 3, 4, 5 | AC5-5, AC5-9 |
-| PSR-R07 | 1, 2, 4 | AC1-3, AC1-5, AC1-9, AC2-10, AC4-4, AC4-7 |
+| PSR-R07 | 1, 2, 4 | AC1-3, AC1-5, AC1-9, AC2-10, AC4-7, AC4-10 |
 | PSR-R14 | 2, 4, 5 | AC2-6, AC4-6, AC4-9, AC5-6 |
 
 ## 10. Pass-2 evidence and reviews
@@ -993,7 +1064,7 @@ the first pass-2 draft:
 |---|---|
 | 1 | The frozen draft is replaced by the server review. The reset caused by Add's own save is handled. Whole requests are frozen for replay. Any unseen change stops Add. |
 | 2 | Script is part of the identity rule. "No author" is part of the card rule. Old results hide after an identity edit. Only one message shows while the lookup is pending. |
-| 4 | The script is recomputed, not cleared; a null script would switch off a server check. Stale wording is rejected in up to two rounds. The test and route deletion lists are complete. |
+| 4 | The script is recomputed, not cleared; a null script would switch off a server check. Stale wording is rejected in up to two rounds (superseded 2026-10-21: deferred to Unit 5C, SDD-1 §6). The test and route deletion lists are complete. |
 | 5 | Reduced to a design direction with explicit requirements. |
 
 One finding was not adopted, because the code already covers it: the

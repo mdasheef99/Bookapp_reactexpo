@@ -904,3 +904,80 @@ Process decisions recorded this slice (Owner, 2026-10-21):
 Mutations: none by this session beyond the approved app actions in the browser check (one new scan session with 11 books from the Owner's image, and one manual candidate, "The Name of the Rose", added through the app; nothing added to inventory). No migration, SQL or Storage mutation. Nothing deployed.
 
 Active work unit: `post_scan_rework_slice4a_remove_full_correction`. Exact next authorized action: on the Owner's go: commit (code, tests, docs; not `.claude/` or `.env.local`), sync the branch with origin/main `60a6b6c`, Haiku re-runs the final tests, push and open the slice-4a PR. Then slice 4b code. Slice 4b's SDD and its read-only Supabase check were done in a separate session (branch `claude/phase9-psr-slice4b-sdd-ffa027`, uncommitted; recorded there in tracker 38 §22) and wait for the Owner's approval and decisions 4b-1 to 4b-5.
+
+## 22. Slice 4b SDD and read-only Supabase check, 2026-10-21
+
+```text
+Date/session: 2026-10-21; slice-4b SDD session (worktree
+  phase9-psr-slice4b-sdd-ffa027, branch claude/phase9-psr-slice4b-sdd-ffa027;
+  after the Owner reported 4a complete, the branch was moved onto slice 4a's
+  local tip 8c1b004 and the doc edits re-applied). No product code.
+Supabase MCP, read-only (SELECT and catalog reads only), project verified:
+  https://ahntbtktjjmvfosgkmgn.supabase.co.
+  (a) phase9_owner_search_variant_review returns stale rows when p_status is
+      null, but only rows whose field the card's saved review confirms
+      (confirmed IS NOT NULL); it pages the whole store newest first; the
+      client reads at most 3 x 100 and throws P9_INTERNAL_ERROR on any id not
+      found. Live body is later than M24 (author_position = author_index-1).
+  (b) phase9_owner_decide_search_variant is identical to M24 L204-293:
+      Owner only (phase9_is_store_owner); replay answered before the version
+      check; P9_STALE_VERSION on mismatch; reject refused only from rejected.
+  (c) No, not on a card save. The live trigger fires only when
+      committed_inventory_id changes or the snapshot has no 'value' (M29
+      L90-101); the app saves through _v2, which always writes 'value'. At
+      commit it stales changed proposed/active proposals on the added book.
+      The SDD's "the save makes proposals stale" and the second rejection
+      round were wrong and are removed.
+  (d) variant_source_stale: EXISTS a stale proposal for the candidate (M55
+      L119-121; live phase9_edition_legacy_review_blockers after the M69
+      rename; also phase9_owner_ux_attention). The _v2 save raises
+      P9_STATE_CONFLICT while any blocker remains (M62 L120-126).
+  Also: every proposal change sets the card's review_ready=false and
+  version+1 (trigger phase9_owner_ux_variant_revision, M29 L137-148; found by
+  the Argon review, confirmed live). With a chosen edition the server
+  requires review script = edition script (M69 L26). Live data: 2 proposals
+  (fixtures), 0 stale; 4 of 192 candidates have an observed script; 29 saved
+  reviews have a null script.
+SDD changes (SDD-1 §6 4b parts; SDD-0 F26, F41 citation, §15 "SDD reviews"):
+  stale-wording section rewritten (server facts, admission, one-round
+  sequence with two status reads, frozen rejection list and keys, re-save
+  from the reread, retry rules, outcome table, wiring); script recompute
+  covers title + authors, never null with manual metadata, keeps a chosen
+  edition's script; AC4-4, AC4-4b, AC4-7 rewritten; new SQL suite named
+  because the variant suites stop at M27/M28.
+Reviews (read-only; outputs kept outside the worktree):
+  Opus subagent: approve with fixes, 11 findings; all verified and applied
+  (#4 reworded: an already-rejected proposal answers P9_STALE_VERSION).
+  OpenCode Go gemini-4-argon-contributor: approve with fixes, 7 findings; all
+  verified and applied (run 1 aborted on a file outside the worktree; run 2
+  had the live facts inline).
+Owner decisions (2026-10-21, after discussing scope and the existing Unit 5C
+  plan): 4b is reduced to S / med: (1) script recompute, (2) Kannada, Telugu
+  and Malayalam in LANGUAGE_OPTIONS, (3) removal of the unused
+  resolveExpectedVariants / decideVariant client (ends the 4a D2-5
+  exception). Clearing stale search wording is deferred: built before any
+  Unit 5C language is switched on (SDD-1 §6, SDD-0 §11, 05c §13 item 6). A
+  chosen edition keeps its own script even if null (4b-4). If no script fits,
+  the script stays null as today (corrects the earlier "never null" text,
+  which could leave a mixed-script card stuck). The large design above and
+  its review findings are kept as the starting point for the deferred work.
+  Decisions 4b-1, 4b-2, 4b-3, 4b-5 are moot.
+Small-4b SDD review (read-only, outputs outside the worktree):
+  Sonnet subagent: approve with fixes, 11 findings, all verified and applied.
+  Main one (high): the app's script rule is looser than the server's
+  phase9_owner_ux_language_script (M29 L783-818; live body identical), so a
+  recompute could pick a script the server refuses; the recompute now
+  requires both rules, with a SQL parity test. Others: recompute only in
+  validateCompactReview after the edition choice; input normalisation and
+  the server's tag-subtag rule; exact removal list and architecture-test
+  rewrites; AC4-10/11 tests; leftovers from the large design reworded; link
+  added in Unit 5C §13.
+  OpenCode Go gemini-4-argon-contributor: run 1 stalled with no output and was
+  stopped; run 2 was stopped on the Owner's instruction (2026-10-21: "ignore
+  argon"). The small-4b text has one independent review (Sonnet).
+
+```
+
+Mutations: none. Nothing staged, committed, pushed or deployed. No database or Storage mutation.
+
+Active work unit: `post_scan_rework_slice4b_script_languages` (SDD only). Exact next authorized action: on the Owner's go, commit these docs on this branch; recheck the brief's line numbers on this branch, then send the 4b Codex brief (`.claude/psr-slice4b/`, red-first) with the SDD-0 §15 medium review pass. The 4b PR follows the slice-4a PR.

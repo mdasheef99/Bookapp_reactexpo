@@ -276,7 +276,7 @@ deploy.
 | 1 | Quick fix for the stuck "Review book": Add re-saves when the review was reset (before Add, or by Add's own save) | 1 | — | None | App | M / med (SDD-1 pass 2) | D02, D03 (interim), D04 |
 | 2 | Declutter: one edition button, simplified sheet, edition line, cleaner card and header, "Leave without saving?" | 1 | 1 | None | App | M / low | D05, D07, D09, D10, D47 |
 | 3 | Remove the after-Add buttons and the Inventory tab's duplicate list | 1 | 2 | None | App | S / low | D04, D12 |
-| 4 | Remove full correction; keep and simplify "Add a book" (title and author) | 1 | 2 | None (Q9 uses existing functions; Q1 needs none) | App | 4a M / med (deletions, "Add a book", summary); 4b M / high (stale wording, script) | D11, D13 |
+| 4 | Remove full correction; keep and simplify "Add a book" (title and author) | 1 | 2 | None (Q9 deferred to Unit 5C; Q1 needs none) | App | 4a M / med (deletions, "Add a book", summary); 4b S / med (script recompute, three languages, removal of the unused variant client; Owner, 2026-10-21) | D11, D13 |
 | 5 | Typed ISBN in the edition sheet and in "Add a book" | 1 | 2, 4 | One per part (no Owner ISBN path exists, F29; §14 Q2) | App + Owner API + database + worker | L / high (split expected: 5a sheet ISBN lookup, 5b ISBN in "Add a book") | D06, D13 |
 | 6 | Catalogue link fix: every Add finds or creates the catalogue edition and links it | 2 | — | One | Database | M / med | D34, D35, D40 |
 | 7 | Lean catalogue writes from Open Library, stats table, shared cache | 2 | 6 | One | Database + worker | L / med | D33, D35–D37, D39, D40 |
@@ -385,7 +385,7 @@ any fact in a migration plan (AGENTS.md database rule).
 | F23 | `store_usage_counters` (store, counter key, period start/end, value) exists from the marketplace foundation and is empty; `phase9_usage_reservations` holds per-job cost reservations. No per-store daily book limit exists. | Live |
 | F24 | The Owner API is Edge Function `phase9-owner-ingestion` v17 (JWT on); the Render metadata worker runs `main` `f376c26`. | Tracker 37 §72, 10-17 |
 | F25 | The stuck "Review book" card: a saved review with `review_ready=false`, no card edits and no blockers. `needsSave` is false, so `candidateCanStartCommit` requires `reviewReady`, Add is disabled, the attention list is empty and `reviewStatusLabel` falls through to "Review book" (`batchReviewStatus.ts` L41). A test pins this (`postScanUiCorrections.test.tsx` ~L546). Today only the full-correction Save clears it for a card with no edits. The server needs-review predicate also counts `ready` cards without `review_ready`, so the hub's "Review books (N)" can disagree with the cards. | Code map, spot-checked |
-| F26 | Blocker `variant_source_stale` (a `phase9_search_variant_proposals` row with status `stale`) is not card-resolvable (`draftResolvableBlockerCodes`); only the full correction's search-wording sheet clears it. Live rows today: 1 proposed, 1 rejected, 0 stale. | Code, live |
+| F26 | Blocker `variant_source_stale` (a `phase9_search_variant_proposals` row with status `stale`) is not card-resolvable (`draftResolvableBlockerCodes`); only the full correction's search-wording sheet clears it. Live rows today: 1 proposed, 1 rejected, 0 stale. Re-checked 2026-10-21 (tracker 38 §22): the card's `_v2` save refuses while the blocker is there, and it never makes a proposal stale (since M29 the refresh trigger skips snapshots with `value`); clearing it is deferred to Unit 5C (SDD-1 §6; Owner, 2026-10-21). | Code, live |
 | F27 | "Mark false" (`phase9_skip_candidate`) and "Add missed book" (`phase9_add_manual_candidate`) are direct client RPCs, not Owner API actions. The batch card's allowed actions do not include `mark_false` or `add_missed`; the candidate detail does. The "Add missed book" button is disabled at 15 cards. | Batch-card grant `20260913000061…sql` L251–258 (`view_metadata`, `remove_from_scan`, `view_readiness`, `save_review`, `add_to_inventory`); detail grant `20260913000062…sql` L55–60 (`mark_false`, `add_missed`). The app contract's union type (`ownerBatchReviewContracts.ts` L111–114) lists `add_missed`, but the server never grants it on a batch card. |
 | F28 | After a batch-card Add the app shows only "View in Store View"; "Continue Reviewing" appears only on the full-correction screen's Add. | `AddCandidateToInventoryAction.tsx`: the batch card passes `card` (`BatchReviewCard.tsx` L310) and gets the coordinated variant (L42–62, Store View button only); the full-correction screen (`CandidateReviewScreens.tsx` L329) gets the legacy variant (L95–204, both buttons); dispatch at L235–238. |
 | F29 | No Owner path sets an ISBN. The edition-search command carries no query text; the query identity comes from the card (`observed_isbn_clue` is written only from vision output), and Open Library / Google search by ISBN only when the card has no title or author. | Code map |
@@ -400,7 +400,7 @@ any fact in a migration plan (AGENTS.md database rule).
 | F38 | Price and condition are required before any Add, whatever the publication choice: the review blockers raise `price_invalid` for a missing or negative price and also for ₹0 when the card's `publicationIntent` is `publish`, and `condition_missing` for no condition (`phase9_owner_ux_review_blockers`, M55 `20260830000055` L108–109; the shape check repeats the ₹0 rule, M29 L845–848). So under today's gate "missing price or condition" stops Add itself; only ₹0 is a price case that could reach publication. | Code |
 | F39 | Lock order is not purely session → candidate. Owner Add and Remove lock the session, then the candidate (M69 L127–129). But every candidate write fires the session-scope trigger, which then updates the session row (M29 L40–50), and the edition worker locks the candidate first (M67 L38–42). `phase9_add_manual_candidate` takes no session lock before inserting (M5 L137–143). | Code |
 | F40 | The Open Library normalizer always returns `categories: []` (`metadata/openLibrary/normalizer.ts` L130); only the Google decoder fills categories (`googleBooks/decoder.ts` L162). With Google off, no provider genres exist until Open Library subjects are normalized. | Code |
-| F41 | The card's script is carried from the saved review or the observed value and is not recomputed when the title or language changes (`review/compactReviewDraft.ts` L175–177); validation checks title text against language and script (`contracts/ownerUxValidation.ts` L94–104), so a cross-script title fix needs the script to follow. | Code |
+| F41 | The card's script is carried from the saved review or the observed value and is not recomputed when the title or language changes (`review/compactReviewDraft.ts` L168–171, `compactReviewScript`); validation checks title text against language and script (`contracts/ownerUxValidation.ts` L94–104), so a cross-script title fix needs the script to follow. | Code |
 | F42 | Edition-option cleanup checks each option list against its own source's registry row (`phase9_edition_source_policy`, M73 `20261011000073` L154–164), which accepts only `google_books` and `open_library`. Switching Google off clears only Google-sourced lists; a catalogue-sourced list would be cleared at once unless the policy learns that source. | Code |
 | F43 | The edition worker's search context uses the Owner's confirmed title and authors when they are confirmed (M67 L77–82), so query keys can carry Owner-typed text. | Code |
 | F44 | `phase9_replay` raises `P9_IDEMPOTENCY_MISMATCH` when the same key arrives with a different fingerprint (M5 L25–35); today's Add fingerprint includes the command ID and all three expected versions (M69 L121–123). | Code |
@@ -501,6 +501,14 @@ verified conclusions are carried into SDD-2 and SDD-4.
 - "Notify me when available" (belongs in the notifications docs, DOC-10).
 - Legal pages and seller details (to be discussed).
 - Re-enabling Google, with retention rules.
+- Regional-language books, by finishing Unit 5C (`05c-lite-multilingual-search-variants-sdd.md`)
+  (Owner, 2026-10-21): a real regional-shelf scan test, then the per-language
+  benchmark; clearing stale search wording on the card (SDD-1 §6, deferred
+  from slice 4b) **before any language is switched on**; how the Owner
+  approves search wording now that 4a removes the only screen for it (5C §13
+  item 6 against D11); Tulu, Konkani and other languages without a
+  script-rule entry; partial-word and typo-tolerant search (search matches
+  whole words only today). Candidate for the Stage 3 reassessment (§7.2a).
 
 **Part 2 (own SDD after Part 1):**
 - Barcode mode: online only; EAN-13 978/979 with check digit; read cooldown;
@@ -566,7 +574,7 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
 | Q6 | Daily limit storage: reuse `store_usage_counters` or a Phase 9 counter table. | Decide in pass 2 after reading its RLS and grants; one atomic check-and-increment either way. | SDD-3 slice 12 |
 | Q7 | Default for the category pre-scan field. | Auto-detect. Slice 15 is outlined on this default; Owner approval of the SDD set confirms it. | SDD-5 slice 15 |
 | Q8 | "Add all ready" footer (INV-19) under the single Add. | Keep it; it calls the single Add once per ready card, each independently. | SDD-4 slice 13 |
-| Q9 | Cards blocked by `variant_source_stale` (F26) once full correction is gone. | Slice 4 must give the card a way to clear it without the sheet, without weakening validation (PSR-R07): for example, saving the card resolves its stale proposals because the card's own title and author are the confirmed wording. Needs a server change; decide in pass 2 whether it fits slice 4 (one migration) or needs its own slice. | SDD-1 slice 4 |
+| Q9 | Cards blocked by `variant_source_stale` (F26) once full correction is gone. | **Resolved 2026-10-21 (Owner): deferred.** No card can reach the blocker today (tracker 38 §22); clearing it on the card is built before any Unit 5C language is switched on (SDD-1 §6, §11 below). The earlier idea (a card save resolves stale proposals) was not adopted. | SDD-1 slice 4 |
 | Q10 | The hub's "Review books (N)" count and the server needs-review predicate (F25) once the review step is hidden. | Slice 3 removes the "Review books" entry; the predicate is left alone until slice 13 makes `review_ready` follow the card. | SDD-1 slices 3–4 |
 | Q11 | Daily limit admission when several photos are in flight. | **Reserve at upload:** each upload reserves 15 books against the store's day (atomic, store-wide, so several Owners or staff cannot over-admit); vision completion converts the reservation to the real count and releases the rest; failed, rejected or removed photos release their reservation; a photo is refused when fewer than 15 remain only if the store prefers exactness — otherwise allow it and cap the real count. Counting only at completion cannot bound overshoot when several uploads are admitted before any completes (round-2 review). Pass 2 confirms. | SDD-3 slice 12 |
 | Q12 | How a session is marked as started on the new pre-scan, so Add may publish it (§9). | A value written only by the new session-start contract, atomically when the new session row is inserted — never on resume or replay. Absent or default means **unmarked** (no auto-publish). The old `phase9_start_session_v2` signature stays callable. Pass 2 picks the smallest safe form (a new column or contract marker). | SDD-4 slice 14 |
@@ -599,6 +607,11 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
   Codex `gpt-6.1-sol` (xhigh) as a second opinion when a review falls short.
   Agent output is input, never authority; the SDDs are written and verified by
   the orchestrating session.
+- **SDD reviews (Owner, 2026-10-21):** every SDD change is reviewed read-only by
+  Sonnet and OpenCode Go `gemini-4-argon-contributor`; a complex SDD (state
+  machine, idempotency or multi-request flows) by Opus instead of Sonnet, with
+  Argon still. Large review diffs are split between reviewers. Each finding is
+  verified in the code before the orchestrating session writes the final text.
 - **Who writes code (Owner, 2026-10-19):** Codex `gpt-6.1-sol` (xhigh) writes
   all product code and tests, from a strict brief that names:
   - the SDD section and the files;
