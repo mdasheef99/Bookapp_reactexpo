@@ -32,7 +32,6 @@ import { OwnerConfirmationDialog } from './OwnerConfirmationDialog';
 import { cardAttentionItems, reviewStatusLabel } from './batchReviewStatus';
 
 export { applyCompactEdits, type CompactReviewEdits } from '../review/compactReviewDraft';
-export { sourceBadgeLabel } from './BatchReviewFieldSummary';
 
 export function BatchReviewCard({
     identity, card, defaults, isOffline, canMutate, removePending, addPending,

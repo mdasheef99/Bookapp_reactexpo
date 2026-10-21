@@ -508,7 +508,10 @@ verified conclusions are carried into SDD-2 and SDD-4.
   approves search wording now that 4a removes the only screen for it (5C §13
   item 6 against D11); Tulu, Konkani and other languages without a
   script-rule entry; partial-word and typo-tolerant search (search matches
-  whole words only today). Candidate for the Stage 3 reassessment (§7.2a).
+  whole words only today). Much of 5C already exists in code (re-checked
+  2026-10-21, 5C §2). Fuzzy, language-filtered search in the store view and
+  the marketplace is planned with the marketplace search work (Owner,
+  2026-10-21; 5C §10). Candidate for the Stage 3 reassessment (§7.2a).
 
 **Part 2 (own SDD after Part 1):**
 - Barcode mode: online only; EAN-13 978/979 with check digit; read cooldown;

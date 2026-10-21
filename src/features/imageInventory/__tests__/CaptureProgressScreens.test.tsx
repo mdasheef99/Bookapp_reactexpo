@@ -693,7 +693,7 @@ describe('slice 4a add-a-book capacity', () => {
         mockBatchReview.isLoading = true;
         const view = render(<InventorySessionProgressScreen sessionId={(mockSessionV3.data as any).sessionId} />);
         try {
-            expect(view.getByRole('button', { name: /^Add (?:a book|missed book)$/u })).toBeDisabled();
+            expect(view.getByRole('button', { name: /^Add a book$/u })).toBeDisabled();
             expect(view.queryByText('This scan already has 15 books — scan the rest separately.')).toBeNull();
         } finally { view.unmount(); mockBatchReview.data = previous; mockBatchReview.isLoading = false; }
     });
@@ -704,7 +704,7 @@ describe('slice 4a add-a-book capacity', () => {
         const view = render(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
         try {
             expect(batch.items.length).toBeLessThan(15);
-            const button = view.getByRole('button', { name: /^Add (?:a book|missed book)$/u });
+            const button = view.getByRole('button', { name: /^Add a book$/u });
             expect(button).toBeDisabled();
             expect(button.props.accessibilityLabel).toBe('Add a book');
             expect(button.props.accessibilityHint).toMatch(/add.*book.*title/iu);
@@ -719,7 +719,7 @@ describe('slice 4a add-a-book capacity', () => {
         mockInputs.data.items = [previous[0], { ...previous[0], inputId: '00000000-0000-4000-8000-000000000099' }];
         const view = render(<InventorySessionProgressScreen sessionId={batch.sessionId} />);
         try {
-            expect(view.getByRole('button', { name: /^Add (?:a book|missed book)$/u })).toBeDisabled();
+            expect(view.getByRole('button', { name: /^Add a book$/u })).toBeDisabled();
             const text = 'This scan already has 15 books — scan the rest separately.';
             expect(view.getByText(text).props).toMatchObject({ selectable: true, accessibilityLiveRegion: 'polite' });
             expect(view.getByLabelText(text)).toBeTruthy();

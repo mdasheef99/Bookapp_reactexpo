@@ -20,6 +20,14 @@ const mockTheme = {
 jest.mock('@/hooks/useTheme', () => ({ useTheme: () => mockTheme }));
 
 describe('ScanSetupForm', () => {
+    // SDD-1 §6 (4b), AC4-10 / D2-6.
+    it.each([['kn', 'Kannada'], ['te', 'Telugu'], ['ml', 'Malayalam']])('scan setup offers Kannada, Telugu and Malayalam: %s', (value, label) => {
+        const onChange = jest.fn();
+        const screen = render(<ScanSetupForm form={initialScanSetupForm} onChange={onChange} />);
+        fireEvent.press(screen.getByTestId('setup-language-selector'));
+        fireEvent.press(screen.getByRole('button', { name: label }));
+        expect(onChange).toHaveBeenLastCalledWith({ ...initialScanSetupForm, languageHint: value });
+    });
     it('groups the SDD defaults and keeps required fields bounded', () => {
         const onChange = jest.fn();
         const screen = render(<ScanSetupForm form={initialScanSetupForm} onChange={onChange} />);

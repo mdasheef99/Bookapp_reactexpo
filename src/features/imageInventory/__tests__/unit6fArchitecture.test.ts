@@ -12,8 +12,12 @@ describe('Phase 9 Unit 6F privacy, media-purpose, and Unit 7 boundary', () => {
     const production = productionSources.map(({ source }) => source).join('\n');
 
     // Post-scan SDD-1 §6 (4a), AC4-1: test sources name the old paths deliberately.
-    it.each(['/candidate/', 'inventory/reviews', 'inventoryRoutes.candidate', 'inventoryRoutes.reviews'])(
-        'no source references removed routes: %s', (reference) => {
+    it.each([
+        '/candidate/', 'inventory/reviews', 'inventoryRoutes.candidate', 'inventoryRoutes.reviews',
+        'VariantDecisionSheet', 'CandidateReviewScreens', 'CandidateCorrectionActions',
+        'CandidateReviewEditionSheet', 'onEditIdentity', 'onEditManually',
+    ])(
+        'no source references removed routes or names: %s', (reference) => {
             const matches = ['src', 'app'].flatMap((directory) => {
                 const directoryRoot = path.join(process.cwd(), directory);
                 return fs.readdirSync(directoryRoot, { recursive: true })

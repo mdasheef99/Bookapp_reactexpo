@@ -7,6 +7,8 @@ import {
     type OwnerCandidateReview,
 } from '../contracts/ownerUxReviewSchema';
 import type { ScanSetupFormState } from '../scanSetup/scanSetupForm';
+import { canonicalBcp47, normalizeSafeText, languageScripts,
+    isLanguageScriptCoherent, isServerLanguageScriptCoherent } from '../contracts/ownerUxValidation';
 
 export type CompactReviewEdits = Omit<Partial<OwnerCandidateReview>, 'priceMinor'> & {
     priceMinor?: number | null;
@@ -201,7 +203,7 @@ export function validateCompactReview(
     const baseChoice = edits.metadataChoice ?? card.review?.metadataChoice ?? selectedMetadataChoice;
     const trustedChoices = choices?.sessionId === card.sessionId && choices.candidateId === card.candidateId
         && choices.selection?.selectionId === baseChoice?.selectionId ? choices : undefined;
-    const script = compactReviewScript(card, edits, trustedChoices);
+    let script = compactReviewScript(card, edits, trustedChoices);
     let metadataChoice: OwnerCandidateReview['metadataChoice'];
     if (!baseChoice || baseChoice.mode === 'manual' || !baseChoice.selectionId) {
         metadataChoice = { mode: 'manual' as const, selectionId: null };
@@ -215,6 +217,29 @@ export function validateCompactReview(
             ? baseChoice : { mode: 'manual' as const, selectionId: null };
     } else {
         metadataChoice = { mode: 'manual' as const, selectionId: null };
+    }
+    // SDD-1 §6 (4b), AC4-7: derive only after the unchanged choice decision.
+    // This value belongs to validation's review, never to the Owner's edits.
+    if (metadataChoice.mode === 'manual') {
+        try {
+            const language = canonicalBcp47(display.language);
+            const title = normalizeSafeText(display.title, 512);
+            const authors = display.authors.map(author => normalizeSafeText(author, 256));
+            if (!card.review || script === null || title !== card.review.originalTitle
+                || JSON.stringify(authors) !== JSON.stringify(card.review.authors)
+                || language !== card.review.originalLanguage) {
+                const explicit = language.split('-').slice(1).find(part => /^[A-Z][a-z]{3}$/u.test(part));
+                const text = [title, ...authors].join(' ');
+                script = [explicit, languageScripts[language.split('-')[0]], 'Latn', card.observed.script]
+                    .find((candidate): candidate is string => candidate != null
+                        && isLanguageScriptCoherent(text, language, candidate)
+                        && isServerLanguageScriptCoherent(text, language, candidate)) ?? null;
+            } else {
+                script = card.review.script;
+            }
+        } catch {
+            // Invalid inputs retain their script; the review schema reports the issue.
+        }
     }
     const candidate = {
         originalTitle: display.title,

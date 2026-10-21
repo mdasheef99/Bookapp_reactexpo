@@ -68,6 +68,13 @@ feature is in `supabase/functions/_shared/imageInventory/` and `workers/` (see 0
 Source-scanning architecture tests restrict what code may do in this module
 (see 06 "Architecture guard tests").
 
+`review/compactReviewDraft.ts` derives a manual review's script during validation,
+after deciding its metadata choice. `contracts/ownerUxValidation.ts` holds the
+shared language/script map, app coherence rule and server-rule mirror. The card's
+edit tracking uses the original script accessor. Scan setup and the card language
+chooser share `scanSetup/scanSetupForm.ts`'s language options (including Kannada,
+Telugu and Malayalam). See [post-scan SDD-1 §6](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/01-review-screen-sdd.md#6-slice-4--remove-full-correction-simplify-add-a-book).
+
 ### Store View — `src/features/storeView/`
 
 Management of books already added to inventory: list, detail, edit, stock

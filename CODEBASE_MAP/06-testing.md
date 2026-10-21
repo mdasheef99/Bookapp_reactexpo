@@ -89,6 +89,13 @@ The real-Postgres runner accepts the switches `-IncludeU8C`,
 `-IncludeDuplicateConfirmation`, `-IncludeEditionPicker` and
 `-IncludeOpenLibrary`; read the script header before use.
 
+`phase9CompactReviewScript.integration.test.mjs` loads the production compact
+review validator and shared app fixtures directly from TypeScript, then checks
+every non-null script against `phase9_owner_ux_language_script` in the disposable
+PGlite database through the edition-picker migrations. It is included by
+`test:phase9:db` and can run alone with `node --experimental-vm-modules --test
+supabase/tests/phase9/phase9CompactReviewScript.integration.test.mjs`.
+
 `supabase/tests/phase9/phase9OpenLibraryRequestSpacing.test.mjs` is not matched
 by any npm script; run it directly with `node --test` after building the
 metadata worker. It uses mocked HTTP and no database.
@@ -114,6 +121,8 @@ patterns. Read them before adding code to these modules:
 - `ownerCorrectionArchitecture.test.ts`, `ownerInventoryReadArchitecture.test.ts`,
   `unit6fArchitecture.test.ts` (same folder) and
   `src/features/storeView/__tests__/storeViewManagementArchitecture.test.ts`.
+  The correction guard scans all non-test `src/` files for removed variant-client
+  symbols and RPC names, and checks that their server functions remain in SQL.
 - `src/features/marketplace/services/__tests__/consumerDiscoveryService.test.ts`
   asserts consumer discovery never reads `store_inventory`.
 

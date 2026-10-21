@@ -79,7 +79,7 @@ const scriptPatterns = {
     Arab: /\p{Script=Arabic}/gu,
     Mtei: /\p{Script=Meetei_Mayek}/gu,
 } as const;
-const languageScripts: Record<string, keyof typeof scriptPatterns> = {
+export const languageScripts: Readonly<Record<string, keyof typeof scriptPatterns>> = {
     en: 'Latn',
     kn: 'Knda',
     ta: 'Taml',
@@ -90,6 +90,13 @@ const languageScripts: Record<string, keyof typeof scriptPatterns> = {
     mni: 'Mtei',
 };
 
+function languageAcceptsScript(language: string, script: string): boolean {
+    const explicit = language.split('-').slice(1).find((part) => /^[A-Z][a-z]{3}$/u.test(part));
+    if (explicit && explicit !== script) return false;
+    const expected = languageScripts[language.split('-')[0]];
+    return !expected || script === expected || script === 'Latn';
+}
+
 export function isLanguageScriptCoherent(
     text: string,
     language: string,
@@ -97,11 +104,29 @@ export function isLanguageScriptCoherent(
 ): boolean {
     if (!(script in scriptPatterns)) return false;
     const parsedScript = script as keyof typeof scriptPatterns;
-    const explicit = language.split('-').slice(1).find((part) => /^[A-Z][a-z]{3}$/u.test(part));
-    if (explicit && explicit !== parsedScript) return false;
-    const expected = languageScripts[language.split('-')[0]];
-    if (expected && parsedScript !== expected && parsedScript !== 'Latn') return false;
+    if (!languageAcceptsScript(language, parsedScript)) return false;
     const letters = text.match(/\p{L}/gu) ?? [];
     const matching = text.match(scriptPatterns[parsedScript]) ?? [];
+    return letters.length > 0 && matching.length / letters.length >= 0.6;
+}
+
+const serverScriptRanges = {
+    Latn: /[A-Za-z\u00C0-\u024F]/gu,
+    Arab: /[\u0600-\u06FF]/gu,
+    Deva: /[\u0900-\u097F]/gu,
+    Taml: /[\u0B80-\u0BFF]/gu,
+    Telu: /[\u0C00-\u0C7F]/gu,
+    Knda: /[\u0C80-\u0CFF]/gu,
+    Mlym: /[\u0D00-\u0D7F]/gu,
+    Mtei: /[\uABC0-\uABFF]/gu,
+} as const;
+
+// SDD-1 §6 (4b), AC4-7: mirror M29 phase9_owner_ux_language_script.
+// Its fixed numerator and Alphabetic denominator differ from the app rule above.
+export function isServerLanguageScriptCoherent(text: string, language: string, script: string): boolean {
+    if (!(script in serverScriptRanges) || !languageAcceptsScript(language, script)) return false;
+    if (/[\u0370-\u052F\u0590-\u05FF\u0E00-\u0EFF\u2E80-\uA4CF\uAC00-\uD7AF]/u.test(text)) return false;
+    const letters = text.match(/\p{Alphabetic}/gu) ?? [];
+    const matching = text.match(serverScriptRanges[script as keyof typeof serverScriptRanges]) ?? [];
     return letters.length > 0 && matching.length / letters.length >= 0.6;
 }

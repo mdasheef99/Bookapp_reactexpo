@@ -53,10 +53,12 @@ it('rebases compact selection onto latest edits without losing zero false empty 
     originalLanguage: 'en', script: 'Latn', metadataChoice: { mode: 'edition_option', selectionId: testUuid(30) },
     originalFieldConfirmation: { title: true, authors: [true] } });
 });
-it('compact builder preserves supplied null script and unsaved notes', () => {
+// SDD-1 §6 (4b), AC4-7: manual validation derives a script when the input is null.
+it('compact builder recomputes a null manual script and preserves unsaved notes', () => {
   const card = pickerCard(selectedChoices({ reviewVersion: 1 }), pickerReview);
   expect(buildCompactReview(card, pickerDefaults, { script: null, priceMinor: 100, notes: { publicNote: '', internalNote: 'unsaved' } }))
-    .toMatchObject({ script: null, notes: { publicNote: null, internalNote: 'unsaved' }, priceMinor: 100 });
+    .toMatchObject({ script: 'Latn', metadataChoice: { mode: 'manual', selectionId: null },
+      notes: { publicNote: null, internalNote: 'unsaved' }, priceMinor: 100 });
 });
 it('initial compact review can resume an unambiguous saved option before the first review', () => {
   const choices = selectedChoices();

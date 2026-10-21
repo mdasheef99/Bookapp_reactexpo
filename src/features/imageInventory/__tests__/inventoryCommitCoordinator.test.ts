@@ -13,6 +13,8 @@ import {
 import { candidateCommitAuthorityKey, candidateCommitPreparation } from '../commit/inventoryCommitPolicy';
 import { cardAttentionItems, reviewStatusLabel } from '../components/batchReviewStatus';
 import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
+import { validateCompactReview } from '../review/compactReviewDraft';
+import { scriptCases, scriptDefaults, scriptReview } from '../testing/compactScriptFixtures';
 
 const sessionId = testUuid(1);
 const inventoryId = testUuid(90);
@@ -113,6 +115,23 @@ function harness(custom: Partial<InventoryCommitCoordinatorDependencies> = {}) {
 }
 
 describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
+    // SDD-1 §6 (4b), AC4-7: the actual coordinator saves validation's derived value.
+    it.each([scriptCases[0], scriptCases[2]])('adds after saving a recomputed script: $name', async input => {
+        const saved = scriptReview({ originalTitle: input.title, authors: [...input.authors], originalLanguage: input.language });
+        const item = draft(1, { review: saved });
+        const recomputed = validateCompactReview(item.card, scriptDefaults, {}).review!;
+        const after = readyDetail(item.card.candidateId, { review: { value: recomputed, reviewVersion: 3 } });
+        const test = harness({ saveReview: jest.fn().mockResolvedValue(after), readCandidate: jest.fn().mockResolvedValue(after) });
+        expect(recomputed?.script).toBe(input.expected);
+        expect(candidateCanStartCommit({ ...item, review: recomputed })).toBe(true);
+        await expect(test.coordinator.addCandidate({ ...item, review: recomputed })).resolves.toMatchObject({ status: 'succeeded' });
+        expect(test.saveReview).toHaveBeenCalledTimes(input.expected === null ? 0 : 1);
+        if (input.expected !== null) {
+            expect(test.saveReview).toHaveBeenCalledWith(expect.objectContaining({ review: recomputed }));
+            expect(test.saveReview.mock.invocationCallOrder[0]).toBeLessThan(test.commitCandidate.mock.invocationCallOrder[0]);
+        }
+        expect(test.commitCandidate).toHaveBeenCalledTimes(1);
+    });
     it('uses the same Save versus direct-Add eligibility for card, bulk, and frozen commands', async () => {
         const unsaved = {
             ...draft(1, { review: null, reviewVersion: null, reviewReady: false,

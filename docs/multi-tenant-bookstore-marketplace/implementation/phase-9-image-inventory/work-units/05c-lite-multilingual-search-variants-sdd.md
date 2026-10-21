@@ -1,6 +1,6 @@
 # Phase 9 Unit 5C Lite: Model-Assisted Multilingual Search Variants
 
-**Status:** approved target design; Units 5C-1 through 5C-6 backend live-verified; visual UI not started
+**Status:** approved target design; Units 5C-1 through 5C-6 backend live-verified; visual UI not started; no language switched on (re-checked 2026-10-21, §2)
 **Decision date:** 2026-07-29
 **Scope:** Unit 5C specification only
 **Supersedes:** the previously governing selected-language and post-metadata English-alias method
@@ -46,9 +46,28 @@ Current runtime remains unchanged:
   not become candidates;
 - `p9-vision-v2` is a strict closed contract;
 - `book_search_aliases` is live with its M01 target/source/status vocabulary;
-- Unit 5B is fixture/mock verified only and performs no Roman-query fallback;
-- no Unit 5C generation, activation, or search-projection runtime exists;
-  Unit 5C-2 private proposal persistence and replay fencing are live.
+- Unit 5B is fixture/mock verified only and performs no Roman-query fallback.
+
+Unit 5C runtime as re-checked in code and read-only in the live project on
+2026-10-21 (post-scan rework tracker 38 §24; this corrects the earlier line
+"no Unit 5C generation, activation, or search-projection runtime exists"):
+
+- generation exists in code: the scan prompt asks the model for a title
+  Romanization, an English translation candidate and one Romanization per
+  author (`geminiVisionSchema.ts`, `geminiMultilingualEnrichment.ts`), and the
+  vision worker stores accepted proposals privately (Unit 5C-2, with replay
+  fencing; `visionAnalysisWorker.ts`). Whether the deployed
+  `phase9-owner-ingestion` (version 17) already includes this was not checked;
+- store-scoped search over active variants is live (M20-M23);
+- the activation rules, benchmark evidence and per-language rollout are live
+  (M24-M28), but no benchmark or rollout exists, so no proposal activates
+  automatically;
+- the Owner decision RPCs remain on the server, but post-scan rework slice 4a
+  removed the only Owner screen and slice 4b the unused app client, so the app
+  offers no way to approve a proposal either;
+- live data: 0 proposal sets, 0 aliases, 2 fixture proposals; every scan so
+  far was Latin-script, for which no Romanization is generated;
+- search matches exact or complete tokens only; there is no fuzzy matching.
 
 Approved target:
 
@@ -265,6 +284,14 @@ Only active variants enter later search indexing. Alias hits display confirmed
 original title and author as primary values; an approved Roman form may appear
 secondarily. Source text already in Latin script is displayed once.
 
+Fuzzy matching (Owner, 2026-10-21): customers should find regional-language
+books by approximate Roman spellings, narrowed by a language filter, in both the
+store view and the marketplace. This is planned with the marketplace search
+work, not in Phase 9 now; until then search stays exact or complete-token. That
+planning also decides how variants become active (see §8-§9), since fuzzy
+matching on hidden, store-scoped variants may justify a lighter gate than the
+100-sample benchmark.
+
 ## 11. Metadata-independent fallback
 
 Metadata resolution may be `not_attempted`, `no_match`, `ambiguous`,
@@ -316,6 +343,8 @@ Separately authorize and review:
 6. exceptional Owner-review integration. Before any language is switched on, clearing
    stale search wording on the scan card must exist (post-scan rework SDD-1 §6, deferred
    from slice 4b on 2026-10-21; slice 4a removed the only Owner screen for it).
+7. fuzzy, language-filtered search in the store view and the marketplace (§10),
+   planned with the marketplace search work (Owner, 2026-10-21).
 
 Current runtime remains authoritative until each affected implementation seam
 is separately changed and verified.

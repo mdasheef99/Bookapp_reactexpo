@@ -87,21 +87,32 @@ afterEach(async () => {
     resetImageInventoryIdentityForTests();
     jest.restoreAllMocks();
 });
-async function mount() {
-    const screen = render(<QueryClientProvider client={client}>
+function screenElement() {
+    return <QueryClientProvider client={client}>
         <InventoryMissedBookScreen sessionId={sessionId} />
-    </QueryClientProvider>);
+    </QueryClientProvider>;
+}
+async function mount() {
+    const screen = render(screenElement());
     await waitFor(() => expect(screen.getByTestId('missed-title')).toBeTruthy());
     return screen;
 }
-// Accept the old submit copy here so unrelated copy cannot hide a navigation/error/guard failure.
+// Offline Web pauses refetches, so a batch invalidation can stay pending until reconnect.
+function stallBatchReviewRefresh() {
+    const invalidate = client.invalidateQueries.bind(client);
+    jest.spyOn(client, 'invalidateQueries').mockImplementation(((filters: { queryKey?: readonly unknown[] } = {}) => {
+        if (filters.queryKey?.includes('batchReview')) return new Promise<void>(() => {});
+        return invalidate(filters as never);
+    }) as typeof client.invalidateQueries);
+}
+// Narrow submit copy so stale copy cannot hide a navigation/error/guard failure.
 function submit(screen: Awaited<ReturnType<typeof mount>>) {
-    fireEvent.press(screen.getByRole('button', { name: /^Add (?:book|candidate)$/u }));
+    fireEvent.press(screen.getByRole('button', { name: /^Add book$/u }));
 }
 async function addBook(screen: Awaited<ReturnType<typeof mount>>) {
     fireEvent.changeText(screen.getByTestId('missed-title'), ' A book ');
     fireEvent.changeText(screen.getByTestId('missed-author-0'), ' An author ');
-    await waitFor(() => expect(screen.getByRole('button', { name: /^Add (?:book|candidate)$/u })).not.toBeDisabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Add book$/u })).not.toBeDisabled());
     submit(screen);
     await waitFor(() => expect(client.getQueryData(imageInventoryKeys.candidate(identity, sessionId, candidateId))).toBeTruthy());
 }
@@ -119,6 +130,8 @@ function openLanguages(screen: Awaited<ReturnType<typeof mount>>) {
 
 it('adds a book and returns to the review list', async () => {
     const screen = await mount();
+    expect(screen.getByRole('button', { name: 'Add book' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Add candidate' })).toBeNull();
     await addBook(screen);
     await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/(store-owner)/inventory/scan/' + sessionId));
     expect(mockRouter.push).not.toHaveBeenCalled();
@@ -136,11 +149,74 @@ it('invalidates the session batch query after adding a book', async () => {
         queryKey: ownerBatchReviewKeys.batchReview(identity, sessionId),
     }));
 });
+it('publishes an unclear result while the review refresh never settles', async () => {
+    stallBatchReviewRefresh();
+    jest.mocked(ownerCorrectionService.addManualCandidate)
+        .mockRejectedValueOnce(new OwnerCorrectionClientError('P9_INTERNAL_ERROR'));
+    const screen = await mount();
+    fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+    submit(screen);
+    await waitFor(() => expect(screen.getByText('The result is unclear. Retry the exact same addition.')).toBeTruthy());
+    expect(screen.getByRole('button', { name: 'Retry same addition' })).not.toBeDisabled();
+    leave();
+    expect(screen.getByRole('alertdialog', { name: 'Leave without adding?' })).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Leave' }));
+    expect(mockNavigation.dispatch).toHaveBeenCalledWith({ type: 'GO_BACK' });
+});
+it('navigates once after success while the review refresh never settles', async () => {
+    stallBatchReviewRefresh();
+    const screen = await mount();
+    await addBook(screen);
+    await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledTimes(1));
+    expect(mockRouter.replace).toHaveBeenCalledWith('/(store-owner)/inventory/scan/' + sessionId);
+    expect(mockReplacePreventDefault).not.toHaveBeenCalled();
+    expect(leave().preventDefault).not.toHaveBeenCalled();
+});
+it('publishes the conflict refusal while the session re-read never settles', async () => {
+    jest.mocked(ownerCorrectionService.addManualCandidate)
+        .mockRejectedValueOnce(new OwnerCorrectionClientError('P9_STATE_CONFLICT'));
+    let sessionReadStuck = false;
+    jest.mocked(ownerBatchReviewService.readSessionV3).mockImplementation(async () => (
+        sessionReadStuck ? new Promise<never>(() => {}) : session
+    ));
+    const screen = await mount();
+    fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+    sessionReadStuck = true;
+    submit(screen);
+    await waitFor(() => expect(screen.getByText('The item state changed. Refresh before trying again.')).toBeTruthy());
+    expect(screen.getByTestId('missed-title')).toHaveProp('editable', true);
+    expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Retry same addition' })).toBeNull();
+});
+it('keeps the newer outcome when a late conflict re-check reports an error', async () => {
+    const reRead = deferred<OwnerSessionSummaryV3>();
+    let reReadHeld = false;
+    jest.mocked(ownerBatchReviewService.readSessionV3).mockImplementation(async () => (
+        reReadHeld ? reRead.promise : session
+    ));
+    jest.mocked(ownerCorrectionService.addManualCandidate)
+        .mockRejectedValueOnce(new OwnerCorrectionClientError('P9_STATE_CONFLICT'))
+        .mockRejectedValueOnce(new OwnerCorrectionClientError('P9_REQUEST_INVALID'));
+    const screen = await mount();
+    fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+    reReadHeld = true;
+    submit(screen);
+    await waitFor(() => expect(screen.getByText('The item state changed. Refresh before trying again.')).toBeTruthy());
+    submit(screen);
+    await waitFor(() => expect(screen.getByText('Check the entered information and try again.')).toBeTruthy());
+    await act(async () => { reRead.reject(new Error('late session read failure')); });
+    await waitFor(() => expect(screen.getByText('This scan cannot accept another book.')).toBeTruthy());
+    expect(screen.getByText('Check the entered information and try again.')).toBeTruthy();
+    expect(screen.queryByText('The latest scan-session state could not be verified.')).toBeNull();
+});
 it('maps the limit error to the scan-full text', async () => {
     jest.mocked(ownerCorrectionService.addManualCandidate).mockRejectedValue(new OwnerCorrectionClientError('P9_LIMIT_EXCEEDED'));
     const screen = await mount();
     fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
-    await waitFor(() => expect(screen.getByRole('button', { name: /^Add (?:book|candidate)$/u })).not.toBeDisabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Add book$/u })).not.toBeDisabled());
     submit(screen);
     await waitFor(() => expect(screen.getByText(fullText)).toBeTruthy());
     expect(screen.getByRole('button', { name: 'Add book' })).toBeDisabled();
@@ -242,7 +318,7 @@ it('offers only Stay while adding the book', async () => {
     jest.mocked(ownerCorrectionService.addManualCandidate).mockReturnValue(pending.promise);
     const screen = await mount();
     fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
-    await waitFor(() => expect(screen.getByRole('button', { name: /^Add (?:book|candidate)$/u })).not.toBeDisabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Add book$/u })).not.toBeDisabled());
     submit(screen);
     await waitFor(() => expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(1));
     expect(leave().preventDefault).toHaveBeenCalled();
@@ -265,7 +341,7 @@ it('does not offer leave while the post-add read is still running', async () => 
     jest.mocked(ownerUxService.readCandidate).mockReturnValue(read.promise);
     const screen = await mount();
     fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
-    await waitFor(() => expect(screen.getByRole('button', { name: /^Add (?:book|candidate)$/u })).not.toBeDisabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Add book$/u })).not.toBeDisabled());
     submit(screen);
     await waitFor(() => expect(ownerUxService.readCandidate).toHaveBeenCalledTimes(1));
     expect(leave().preventDefault).toHaveBeenCalled();
@@ -309,9 +385,27 @@ it('keeps the add disabled offline', async () => {
     mockOffline = true;
     const screen = await mount();
     fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
-    expect(screen.getByRole('button', { name: /^Add (?:book|candidate)$/u })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Add book$/u })).toBeDisabled();
     submit(screen);
     expect(ownerCorrectionService.addManualCandidate).not.toHaveBeenCalled();
+});
+it('disables Retry offline and keeps Leave available', async () => {
+    jest.mocked(ownerCorrectionService.addManualCandidate)
+        .mockRejectedValueOnce(new OwnerCorrectionClientError('P9_INTERNAL_ERROR'));
+    const screen = await mount();
+    fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+    submit(screen);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry same addition' })).not.toBeDisabled());
+    mockOffline = true;
+    act(() => { screen.rerender(screenElement()); });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry same addition' })).toBeDisabled());
+    fireEvent.press(screen.getByRole('button', { name: 'Retry same addition' }));
+    expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(1);
+    leave();
+    expect(screen.getByRole('button', { name: 'Leave' })).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Leave' }));
+    expect(mockNavigation.dispatch).toHaveBeenCalledWith({ type: 'GO_BACK' });
 });
 it('retry replays the same key and command ID', async () => {
     const retry = deferred<Awaited<ReturnType<typeof ownerCorrectionService.addManualCandidate>>>();
@@ -320,7 +414,7 @@ it('retry replays the same key and command ID', async () => {
         .mockReturnValueOnce(retry.promise);
     const screen = await mount();
     fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
-    await waitFor(() => expect(screen.getByRole('button', { name: /^Add (?:book|candidate)$/u })).not.toBeDisabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Add book$/u })).not.toBeDisabled());
     submit(screen);
     await waitFor(() => expect(screen.getByText('Retry same addition')).toBeTruthy());
     const original = jest.mocked(ownerCorrectionService.addManualCandidate).mock.calls[0][0];
@@ -342,6 +436,36 @@ it('retry replays the same key and command ID', async () => {
     await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledTimes(1));
     expect(mockReplacePreventDefault).not.toHaveBeenCalled();
     expect(screen.queryByRole('alertdialog')).toBeNull();
+});
+
+it('shows the same unclear result after a second failure and replays the third attempt identically', async () => {
+    const success = deferred<Awaited<ReturnType<typeof ownerCorrectionService.addManualCandidate>>>();
+    jest.mocked(ownerCorrectionService.addManualCandidate)
+        .mockRejectedValueOnce(new OwnerCorrectionClientError('P9_INTERNAL_ERROR'))
+        .mockRejectedValueOnce(new Error('connection lost'))
+        .mockReturnValueOnce(success.promise);
+    const screen = await mount();
+    fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+    submit(screen);
+    const retry = () => screen.getByRole('button', { name: 'Retry same addition' });
+    await waitFor(() => expect(retry()).not.toBeDisabled());
+    const original = jest.mocked(ownerCorrectionService.addManualCandidate).mock.calls[0][0];
+    fireEvent.press(retry());
+    await waitFor(() => expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(retry()).not.toBeDisabled());
+    expect(screen.getByText('The result is unclear. Retry the exact same addition.')).toBeTruthy();
+    leave();
+    expect(screen.getByRole('button', { name: 'Leave' })).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', { name: 'Stay' }));
+    fireEvent.press(retry());
+    await waitFor(() => expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(3));
+    const third = jest.mocked(ownerCorrectionService.addManualCandidate).mock.calls[2][0];
+    expect(third).toBe(original);
+    expect(third.idempotencyKey).toBe(original.idempotencyKey);
+    expect(third.commandId).toBe(original.commandId);
+    await act(async () => { success.resolve({ candidateId, authenticatedUserId: identity.userId }); });
+    await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledTimes(1));
 });
 
 it.each([
@@ -534,20 +658,20 @@ it('navigates once after success', async () => {
     try {
         const screen = await mount();
         await addBook(screen);
-        expect(mockRouter.replace).not.toHaveBeenCalled();
-        expect(screen.getByTestId('missed-title')).toHaveProp('editable', false);
+        // The outcome is published without waiting for the paused batch refresh.
+        await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledTimes(1));
+        expect(mockRouter.replace).toHaveBeenCalledWith('/(store-owner)/inventory/scan/' + sessionId);
+        expect(screen.getByTestId('missed-title')).toHaveProp('editable', true);
         await act(async () => { batch.resolve({
             sessionId, status: 'active', sessionVersion: 1, presentationRevision: 1,
             defaults: session.defaults, batchLabel: null, items: [], updatedAt: '2026-10-20T00:00:00Z',
             counts: { detected: 0, processing: 0, needsAttention: 0, reviewReadySaved: 0,
                 committed: 0, ownerRemoved: 0, falseDetections: 0 },
         }); });
-        await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledTimes(1));
-        expect(mockRouter.replace).toHaveBeenCalledWith('/(store-owner)/inventory/scan/' + sessionId);
+        expect(mockRouter.replace).toHaveBeenCalledTimes(1);
         expect(mockReplacePreventDefault).not.toHaveBeenCalled();
         expect(leave().preventDefault).not.toHaveBeenCalled();
         expect(screen.queryByRole('alertdialog')).toBeNull();
-        expect(screen.getByTestId('missed-title')).toHaveProp('editable', true);
     } finally { unsubscribe(); }
 });
 
@@ -574,7 +698,26 @@ it('announces whether the language chooser is open', async () => {
         .toMatchObject({ expanded: true });
 });
 
-it('drops the addition when the store changes', async () => {
+it.each([
+    ['store', async () => {
+        (storeOwnerService.getGateState as jest.Mock).mockResolvedValue({
+            state: 'active_owner', storeId: otherStoreId, storeName: 'Other store',
+        });
+        client.setQueryData(storeOwnerKeys.gate(identity.userId), {
+            state: 'active_owner', storeId: otherStoreId, storeName: 'Other store',
+        });
+    }],
+    ['account', async () => {
+        const otherUserId = testUuid(92);
+        setAuthState({ status: 'authenticated', initializationError: null, session: {
+            access_token: 'test', refresh_token: 'test', expires_in: 3600, token_type: 'bearer',
+            user: { id: otherUserId, aud: 'authenticated', app_metadata: {}, user_metadata: {}, created_at: '2026-10-20T00:00:00Z' },
+        } });
+        client.setQueryData(storeOwnerKeys.gate(otherUserId), {
+            state: 'active_owner', storeId: identity.storeId, storeName: 'Test store',
+        });
+    }],
+])('drops the addition when the %s changes', async (_name, switchScope) => {
     const add = deferred<Awaited<ReturnType<typeof ownerCorrectionService.addManualCandidate>>>();
     jest.mocked(ownerCorrectionService.addManualCandidate).mockReturnValue(add.promise);
     const screen = await mount();
@@ -583,15 +726,8 @@ it('drops the addition when the store changes', async () => {
     submit(screen);
     await waitFor(() => expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(1));
 
-    // The resolved store changes while the add is in flight, so the screen is replaced.
-    await act(async () => {
-        (storeOwnerService.getGateState as jest.Mock).mockResolvedValue({
-            state: 'active_owner', storeId: otherStoreId, storeName: 'Other store',
-        });
-        client.setQueryData(storeOwnerKeys.gate(identity.userId), {
-            state: 'active_owner', storeId: otherStoreId, storeName: 'Other store',
-        });
-    });
+    // The resolved scope or identity changes while the add is in flight, so the screen is replaced.
+    await act(async () => { await switchScope(); });
     await waitFor(() => expect(screen.getByTestId('missed-title').props.value).toBe(''));
 
     await act(async () => { add.resolve({ candidateId, authenticatedUserId: identity.userId }); });

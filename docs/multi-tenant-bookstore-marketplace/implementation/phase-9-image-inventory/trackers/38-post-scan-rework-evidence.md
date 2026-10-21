@@ -981,3 +981,165 @@ Small-4b SDD review (read-only, outputs outside the worktree):
 Mutations: none. Nothing staged, committed, pushed or deployed. No database or Storage mutation.
 
 Active work unit: `post_scan_rework_slice4b_script_languages` (SDD only). Exact next authorized action: on the Owner's go, commit these docs on this branch; recheck the brief's line numbers on this branch, then send the 4b Codex brief (`.claude/psr-slice4b/`, red-first) with the SDD-0 §15 medium review pass. The 4b PR follows the slice-4a PR.
+
+## 23. Slice 4b local implementation and verification, 2026-10-21
+
+Date/session: 2026-10-21, Codex coding brief, selected worktree on
+`claude/phase9-psr-slice4b-sdd-ffa027`, starting at `39b993a`.
+
+Authorized work unit and scope: `post_scan_rework_slice4b_script_languages`;
+Owner approved the small scope and implementation start. SDD-1 §2 D2-3/5/6
+and §6 (4b only), AC4-7, AC4-10, AC4-11. Stale wording remains deferred.
+
+Completed: script derivation only during manual compact-review validation,
+after the unchanged choice decision; normalized inputs, both coherence rules,
+null fallback, saved-script stability, chosen-edition preservation; three shared
+language options; removal of variant operations and their unused contracts,
+types/constants/error branch/cases. No remaining variant query keys existed.
+The production card identity/edit logic and `commit/` files are unchanged.
+
+Files/components/migrations: five production TS files, eight affected Jest
+files, two shared test fixtures and one new current-migration PGlite parity
+suite. No migration. All paths and every new test/red reason are recorded in
+[the slice verification report](../supporting/post-scan-slice4b-verification.md).
+
+Verification actually run: all named tests before product code; initial Jest
+34 failed / 164 passed / 198 total, SQL 12 passed / 13 failed / 25 total
+(including the parent). Saved-script preservation was strengthened red-first
+with a separate 1 failed / 81 name-filtered skipped run. Final full feature
+assertions: 67 passed suites / 1 skipped, 831 passed tests / 4 skipped, 0 failed;
+serial-process non-exit warning and cleanup follow-up are recorded in the report.
+PGlite parity: 25 passed, 0 failed, through current M77. Ordinary TypeScript:
+10 diagnostics in untouched Library/Clubs/e2e paths; type-check gate open.
+HEAD reproduces the same ten ordinary errors. The no-unused compiler comparison is HEAD 54 / current 54, zero new diagnostics; affected handle proof is 8 suites / 229 tests, exit 0. Final test-only cleanup reruns passed service 8/8 and architecture 9/9. The full feature process exited naturally with code 0; its warning is retained. The report owns raw failures and method details.
+
+Supabase/external mutations: none. No MCP, CLI, database/Storage, migration,
+provider or deployment action. Nothing staged, committed, pushed or branched;
+pre-existing untracked `.claude/` is preserved. No Python tests were run.
+
+Decisions/deviations/risks: no SDD behavior or acceptance change, and no new
+product decision. Two old picker null-script expectations and three stale-choice
+assertions were updated to the approved recompute behavior, preserving their
+notes and choice checks. The type-check environment and full-run process warning
+remain explicitly visible; no successful TypeScript build or live acceptance is
+claimed. Medium/pre-merge reviews and browser checks were not part of this
+bounded coding execution and are not claimed complete.
+
+Tracker/source-doc updates: ACTIVE, DOC-13, SESSION-START, phase tracker,
+implementation tracker, this evidence, requirements traceability and the relevant
+codebase maps. The approved SDD text is unchanged. Validator and final whitespace
+results are recorded in the verification report.
+
+Active work unit: `post_scan_rework_slice4b_script_languages`. Exact next
+authorized action: the orchestrating session reviews the uncommitted 4b diff
+under SDD-0 §15's medium review pass. The type-check gate needs a dependency
+repair and rerun; Git publication and all external actions remain unauthorized.
+
+## 24. Slice 4b review, browser check and type check, 2026-10-21
+
+```text
+Branch claude/phase9-psr-slice4b-sdd-ffa027, base 39b993a, implementation
+uncommitted (Codex gpt-6.1-sol xhigh; tracker 38 §23).
+Medium review pass (SDD-0 §15), read-only, outputs in .claude/psr-slice4b-review/
+(not committed):
+  OpenCode Go models refused: "An active OpenCode Go subscription is required".
+  Owner chose the free OpenCode models.
+  opencode/deepseek-v4.1-flash-free (max): no blocking or correctness defect;
+    ran the affected suites (229/229); could not write its report in plan
+    mode, so its findings were taken from its session summary.
+  opencode/minimax-m3.1-flash-free: run 1 ended on a misspelled path
+    (auto-rejected); run 2 stalled; no report.
+  GPT-6 Luna via Codex (xhigh, read-only; Owner request): approve, no findings.
+  Haiku 5.5 (Owner request): approve with fixes; medium finding that the
+    server [:alpha:] denominator is locale-defined and could count digits.
+    Disproved live (read-only SELECT, project ahntbtktjjmvfosgkmgn):
+    datctype en_US.UTF-8; '٠' '५' '೫' '5' anusvara and virama are not
+    [:alpha:]; phase9_owner_ux_language_script accepts kn/Knda, hi/Deva,
+    te/Telu, ml/Mlym, ta/Taml pure-script titles and hi/Deva with Arabic-Indic
+    digits; rejects mixed 'ಕನ್ನಡ Book ಕುವೆಂಪು' for Knda and Latn. The server
+    denominator is never larger than \p{Alphabetic} for these inputs, so the
+    app mirror is the stricter rule. Low items: forced save before Add for an
+    old null-script card is intended (SDD-1 §6); SQL parity checks only the
+    accept direction; one test title names Kannada but covers all three.
+  No code correction.
+Tests (Haiku run, report only): Jest 7 failed / 824 passed, every failure
+  "Exceeded timeout of 5000 ms" under machine load (two reviewers running);
+  batchReviewCard.test.tsx alone 58/58; PGlite parity 25/25; git diff --check
+  clean. npx tsc --noEmit: 10 TS2307/TS7006 errors with the shared install;
+  after npm ci in this worktree (package-lock unchanged) exit 0, zero errors.
+Browser check (Haiku, built-in browser, Owner signed in, scan 8eb9b18a):
+  card language chooser lists English, French, German, Spanish, Hindi, Urdu,
+  Tamil, Kannada, Telugu, Malayalam; searching "Kannada" shows only Kannada.
+  Added through the app, read-only readback of owner_review_snapshot:
+    9cc79d91 'गोदान' / 'प्रेमचंद', hi, script Deva, manual, committed
+    98441e59 'ಮಲೆಗಳಲ್ಲಿ ಮದುಮಗಳು' / 'ಕುವೆಂಪು', kn, script Knda, manual, committed
+    70e992d4 'ಕನ್ನಡ Book' / 'ಕುವೆಂಪು', en, script null, manual, committed
+    42012546 'Only Doing It for Sixty Years' / 'Test Author', en, Latn, committed
+  Not run in the browser: chosen edition (the panel lists editions only after
+  Search Books) and leave guard (the web scan page has no back control);
+  covered by "keeps the edition's script and choice" and "a recomputed script
+  is not an edit". One card (Hatha Yoga Book 5) kept an unsaved price edit.
+Database writes: the four app Adds above (dev data). Orchestrator SQL was
+  read-only. No migration, Storage, Edge or deploy change.
+Found for Unit 5C (corrected below): 05c SDD §2 still says no generation,
+  activation or search-projection runtime exists; the code has Gemini
+  romanization in the scan prompt, proposal persistence in the vision worker
+  and active-variant search (M20-M23); activation stays gated (0 rollouts
+  live). Deployed phase9-owner-ingestion is version 17; whether it includes
+  romanization was not checked.
+SDD-1 AC4-10 chooser reference corrected to LanguageChooserPanel.tsx L18.
+SDD corrections (Owner, 2026-10-21): 05c §2 runtime status rewritten from the
+  findings above (header status line too); 05c §10 and §13 item 7 record the
+  Owner's decision that fuzzy, language-filtered search in the store view and
+  the marketplace is planned with the marketplace search work; SDD-0 §11
+  regional-books bullet points to it. No behaviour change in Phase 9.
+```
+
+Active work unit: `post_scan_rework_slice4b_script_languages`. Exact next authorized action: on the Owner's go, commit the 4b code, tests and docs on this branch (never `.claude/` or `.env.local`), push the branch and open the 4b PR after the slice-4a PR.
+
+## 25. Slice 4a pre-merge review and fix, 2026-10-22
+
+```text
+Target: PR #27 tip 8c1b004 (base 4a1daea = origin/main). Earlier pre-merge
+review (DeepSeek, 2026-10-21) stalled without a report; fixes 3 and 4 landed
+after it started. Reviews here, read-only in the 4a worktree, outputs in
+.claude/psr-4a-premerge/ (not committed):
+  OpenCode Go deepseek-v4.1-flash (max), product code: approve with fixes.
+    Medium: MissedBookScreen run() awaited client.invalidateQueries before the
+    unclear message (L130-134), before success (L164), and sessionQuery.refetch
+    before the conflict message (L176). TanStack Query pauses refetches while
+    offline on react-native-web, so finally never ran: inFlight stuck, no
+    message, leave dialog Stay only. Confirmed in code. Low: dead re-export
+    sourceBadgeLabel (BatchReviewCard.tsx L35). Low UX: Add shows no spinner
+    during the post-RPC busy window (not changed).
+  OpenCode Go muse-spark-1.3 (xhigh), tests: approve with fixes; five test
+    gaps, no product defect (product checked: Retry disabled when
+    !gate.canMutate, MissedBookScreen L256).
+  minimax-m3.1-flash-free: no report (temp-folder write auto-rejected).
+Fix (OpenCode DeepSeek, build agent, on the 4b branch, brief FIX-BRIEF.md):
+  outcome published first, refresh best-effort with caught rejection; conflict
+  shows the refusal at once and replaces it only if the background re-check
+  fails. Red: 4 failed / 42 passed (the three never-settling-refresh tests and
+  the updated success timing). Green: 4 suites, 146 passed, 0 failed; tsc exit 0.
+  Tests added: offline Retry disabled with Leave available; unclear again after
+  Retry with an identical third attempt; store and account switch; exact
+  "Add book"/"Add a book" labels; six more removed names in unit6fArchitecture.
+  Dead re-export removed.
+Second review (OpenCode Go muse-spark-1.3 xhigh, read-only, fix diff only):
+  request changes, one medium: the conflict re-check ran in the background
+  with only scope guards, so a late error could overwrite the outcome of a
+  newer submit on the same screen. Confirmed in code. Fixed (OpenCode
+  DeepSeek, FIX2-BRIEF.md): a run-generation ref gates both re-check
+  callbacks; stray awaits on the now-synchronous reportUnclear dropped.
+  Red: new test "keeps the newer outcome when a late conflict re-check
+  reports an error" failed (second refusal replaced by the verify message).
+  Green: OwnerCorrectionScreens 47/47. Not changed: Muse's minor note on
+  toBe(original) (Retry really reuses the same command object).
+Final checks, 2026-10-22: full src/features/imageInventory Jest 841 passed,
+  4 skipped, 3 failed, all "Exceeded timeout of 5000 ms" under load
+  (ownerEditionPickerMounted, ownerEditionPickerSheetStates,
+  CaptureWorkflowNavigation); those three suites alone with -w 1: 49/49
+  passed. npx tsc --noEmit exit 0. git diff --check clean.
+```
+
+Active work unit: `post_scan_rework_slice4b_script_languages`. Exact next authorized action: commit 4a's fix, the 4b code, tests and docs on this branch (never `.claude/` or `.env.local`), rebase onto origin/main, re-run a key suite, and push to main; then start slice 5 from the kickstart prompt.

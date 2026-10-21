@@ -21,6 +21,9 @@ export const LANGUAGE_OPTIONS: ReadonlyArray<Readonly<{ value: string; label: st
     { value: 'hi', label: 'Hindi' },
     { value: 'ur', label: 'Urdu' },
     { value: 'ta', label: 'Tamil' },
+    { value: 'kn', label: 'Kannada' },
+    { value: 'te', label: 'Telugu' },
+    { value: 'ml', label: 'Malayalam' },
 ];
 
 export const CONDITION_CHOICES: ReadonlyArray<Readonly<{

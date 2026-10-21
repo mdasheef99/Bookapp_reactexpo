@@ -72,6 +72,7 @@ function LoadedMissedBookForm({
     const pendingRef = useRef<AddManualCandidateRequest | null>(null);
     const [inFlight, setInFlight] = useState(false);
     const inFlightRef = useRef(false);
+    const runGeneration = useRef(0);
     const pendingFingerprintRef = useRef<string | null>(null);
     const [committedFingerprint, setCommittedFingerprint] = useState<string | null>(null);
     const scope = `${identity.userId}:${identity.storeId}:${sessionId}`;
@@ -123,14 +124,20 @@ function LoadedMissedBookForm({
 
     const run = async (command: AddManualCandidateRequest) => {
         if (!gate.canMutate || inFlightRef.current) return;
+        const generation = ++runGeneration.current;
         const callScope = activeScope.current;
         const isCurrent = () => activeScope.current === callScope
             && getResolvedImageInventoryIdentity()?.userId === identity.userId
             && getResolvedImageInventoryIdentity()?.storeId === identity.storeId;
-        const reportUnclear = async () => {
+        const refreshReviewList = () => {
+            void client.invalidateQueries({
+                queryKey: ownerBatchReviewKeys.batchReview(identity, sessionId),
+            }).catch(() => undefined);
+        };
+        const reportUnclear = () => {
             if (!isCurrent()) return;
-            await client.invalidateQueries({ queryKey: ownerBatchReviewKeys.batchReview(identity, sessionId) });
-            if (isCurrent()) setMessage('The result is unclear. Retry the exact same addition.');
+            setMessage('The result is unclear. Retry the exact same addition.');
+            refreshReviewList();
         };
         let addSucceeded = false;
         let successfulFingerprint: string | null = null;
@@ -142,7 +149,7 @@ function LoadedMissedBookForm({
             addSucceeded = true;
             if (!isCurrent()) return;
             if (result.authenticatedUserId !== identity.userId) {
-                await reportUnclear();
+                reportUnclear();
                 return;
             }
             const canonical = await ownerUxService.readCandidate(sessionId, result.candidateId);
@@ -151,39 +158,45 @@ function LoadedMissedBookForm({
                 canonical.sessionId !== sessionId
                 || canonical.candidateId !== result.candidateId
             ) {
-                await reportUnclear();
+                reportUnclear();
                 return;
             }
             const synchronized = await synchronizeCorrectionCandidate(
                 client, identity, sessionId, result.candidateId, canonical,
             );
             if (!synchronized) {
-                await reportUnclear();
+                reportUnclear();
                 return;
             }
-            await client.invalidateQueries({ queryKey: ownerBatchReviewKeys.batchReview(identity, sessionId) });
             if (activeScope.current !== callScope
                 || getResolvedImageInventoryIdentity()?.userId !== identity.userId
                 || getResolvedImageInventoryIdentity()?.storeId !== identity.storeId) return;
+            refreshReviewList();
             successfulFingerprint = pendingFingerprintRef.current;
         } catch (error) {
             if (!isCurrent()) return;
             if (addSucceeded || !(error instanceof OwnerCorrectionClientError) || error.code === 'P9_INTERNAL_ERROR') {
-                await reportUnclear();
+                reportUnclear();
                 return;
             }
             if (error instanceof OwnerCorrectionClientError && error.code === 'P9_STATE_CONFLICT') {
-                const refreshed = await sessionQuery.refetch();
-                if (
-                    activeScope.current !== callScope
-                    || refreshed.isError
-                    || refreshed.error !== null
-                    || refreshed.data?.sessionId !== sessionId
-                ) setMessage('The latest scan-session state could not be verified.');
-                else setMessage(error.message);
                 pendingRef.current = null;
                 pendingFingerprintRef.current = null;
                 setPending(null);
+                setMessage(error.message);
+                void sessionQuery.refetch().then((refreshed) => {
+                    if (!isCurrent() || runGeneration.current !== generation) return;
+                    if (
+                        activeScope.current !== callScope
+                        || refreshed.isError
+                        || refreshed.error !== null
+                        || refreshed.data?.sessionId !== sessionId
+                    ) setMessage('The latest scan-session state could not be verified.');
+                }).catch(() => {
+                    if (isCurrent() && runGeneration.current === generation) {
+                        setMessage('The latest scan-session state could not be verified.');
+                    }
+                });
                 return;
             }
             pendingRef.current = null;

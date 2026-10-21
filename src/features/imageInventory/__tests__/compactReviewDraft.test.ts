@@ -7,91 +7,10 @@ import {
 } from '../review/compactReviewDraft';
 import { candidateCommitPreparation, candidateCanStartBulkCommit, candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
 import { selectedChoices, pickerCard, pickerDefaults, pickerReview } from '../testing/editionPickerClientFixtures';
+import { scriptCard, scriptCases, scriptDefaults, scriptReview } from '../testing/compactScriptFixtures';
+import { isLanguageScriptCoherent } from '../contracts/ownerUxValidation';
 
-const savedReview: OwnerCandidateReview = {
-    originalTitle: 'Saved title',
-    authors: ['Saved author'],
-    originalLanguage: 'hi',
-    script: 'Latn',
-    metadataChoice: {
-        mode: 'selected',
-        selectionId: '00000000-0000-4000-8000-000000000099',
-    },
-    quantity: 2,
-    priceMinor: 30_000,
-    baseCondition: 'good',
-    damageDisclosure: {
-        hasDamage: true,
-        damageTypes: ['cover'],
-        damageNote: 'Bent corner',
-        isSellable: true,
-        completeReadableSafe: true,
-    },
-    shelfLocation: 'Saved shelf',
-    notes: { publicNote: null, internalNote: null },
-    publicationIntent: 'private',
-    duplicateIntent: null,
-    originalFieldConfirmation: { title: true, authors: [true] },
-    candidateDisposition: 'reviewed',
-};
-
-const defaults = {
-    languageHint: 'en',
-    condition: 'very_good' as const,
-    location: 'Batch shelf',
-    priceMinor: 25_000,
-    quantity: 1,
-    publication: 'publish' as const,
-    script: null,
-    batchLabel: '',
-};
-
-function card(overrides: Partial<OwnerBatchReviewCard> = {}): OwnerBatchReviewCard {
-    return {
-        sessionId: '00000000-0000-4000-8000-000000000010',
-        candidateId: '00000000-0000-4000-8000-000000000021',
-        inputId: '00000000-0000-4000-8000-000000000001',
-        ordinal: 1,
-        candidateState: 'ready',
-        candidateVersion: 2,
-        metadataState: 'selected',
-        metadataRevision: 3,
-        reviewVersion: 1,
-        reviewDisposition: 'reviewed',
-        observed: {
-            title: 'Observed title',
-            authors: ['Observed author'],
-            language: 'fr',
-            script: 'Latn',
-        },
-        metadataSummary: {
-            title: 'Selected title',
-            authors: ['Selected author'],
-            language: 'de',
-            coverReference: null,
-            selectionId: savedReview.metadataChoice.selectionId,
-        },
-        review: savedReview,
-        fieldSources: {
-            cover: 'missing',
-            title: 'matched',
-            authors: 'matched',
-            language: 'matched',
-            condition: 'custom',
-            price: 'custom',
-            quantity: 'custom',
-            location: 'custom',
-            publication: 'custom',
-            damage: 'custom',
-        },
-        attentionCodes: [],
-        blockers: [],
-        reviewReady: true,
-        allowedActions: ['save_review', 'add_to_inventory'],
-        updatedAt: '2026-08-24T00:00:00.000Z',
-        ...overrides,
-    };
-}
+import { card, defaults, savedReview } from '../testing/compactReviewDraftFixtures';
 
 function expectDisplayAndSave(
     value: OwnerBatchReviewCard,
@@ -320,7 +239,9 @@ it.each(['selection', 'session', 'candidate'] as const)('does not trust a stale 
     const unowned = { ...pickerCard(choices), observed: { ...pickerCard(choices).observed, script: null } };
     const unownedResult = validateCompactReview(unowned, pickerDefaults,
         { originalTitle: 'Edition A', priceMinor: 100 }, stale);
-    expect(unownedResult.review?.script).toBe(unowned.observed.script);
+    // SDD-1 §6 (4b): untrusted choice becomes manual, then derives from the card text.
+    expect(unownedResult.review?.metadataChoice).toEqual({ mode: 'manual', selectionId: null });
+    expect(unownedResult.review?.script).toBe('Latn');
 });
 
 it('keeps a pending card blocked even when stale choices are ready', () => {
@@ -344,4 +265,93 @@ it('keeps notes already saved', () => {
     const review = buildCompactReview(value, defaults, { priceMinor: 4200 });
     expect(review).not.toBeNull();
     expect(review?.notes).toEqual({ publicNote: 'Owner public note', internalNote: 'Private shelf history' });
+});
+
+// SDD-1 §6 (4b), AC4-7 / AC4-10. Null remains a successful manual path.
+describe('script recomputation', () => {
+    it.each(scriptCases)('recomputes script from title, authors and language: $name', input => {
+        const value = scriptCard(input);
+        const result = validateCompactReview(value, scriptDefaults, {});
+        expect(result.issues).toEqual([]);
+        expect(result.review?.script).toBe(input.expected);
+        expect(candidateCanStartBulkCommit({ card: value, edits: {}, review: result.review!,
+            acceptedAuthorityKey: candidateCommitAuthorityKey(value) })).toBe(true);
+    });
+    it('keeps a null script when nothing fits', () => {
+        const result = validateCompactReview(scriptCard(scriptCases[2]), scriptDefaults, {});
+        expect(result.review).toMatchObject({ script: null, metadataChoice: { mode: 'manual', selectionId: null } });
+        expect(result.issues).toEqual([]);
+    });
+    it.each([scriptCases[3], scriptCases[4], scriptCases[18]])('keeps a null script when only the app rule fits: $name', input => {
+        expect(isLanguageScriptCoherent([input.title, ...input.authors].join(' '), input.language, 'Latn')).toBe(true);
+        expect(validateCompactReview(scriptCard(input), scriptDefaults, {}).review).toMatchObject({ script: null });
+    });
+    it.each(scriptCases.slice(5, 11))('follows the language tag\'s script subtag: $name', input => {
+        const result = validateCompactReview(scriptCard(input), scriptDefaults, {});
+        expect(result.review?.script).toBe(input.expected);
+        expect(result.review?.originalLanguage).toBe(input.language === 'HI-latn' ? 'hi-Latn' : input.language);
+    });
+    it('keeps the saved script when nothing changed', () => {
+        const value = scriptCard();
+        value.review = scriptReview({ originalTitle: 'Kamal', authors: ['Amar'], originalLanguage: 'hi-Latn', script: 'Latn' });
+        value.fieldSources = { ...value.fieldSources, title: 'custom', authors: 'custom', language: 'custom' };
+        expect(validateCompactReview(value, scriptDefaults, {
+            originalTitle: '  Kamal  ', authors: [' Amar '], originalLanguage: 'HI-latn', quantity: 4, script: 'Deva',
+        }).review).toMatchObject({ script: 'Latn', originalTitle: 'Kamal', authors: ['Amar'], originalLanguage: 'hi-Latn' });
+    });
+    it.each(['edition_option', 'selected'] as const)('keeps the edition\'s script and choice: %s', mode => {
+        for (const script of [null, 'Latn']) {
+            const choices = selectedChoices({ reviewVersion: 1 });
+            choices.selection = { ...choices.selection!, snapshot: { ...choices.selection!.snapshot, script } };
+            const saved = { ...pickerReview, priceMinor: 100, script,
+                metadataChoice: { mode, selectionId: choices.selection.selectionId } };
+            expect(validateCompactReview(pickerCard(choices, saved), pickerDefaults, {}, choices).review)
+                .toMatchObject({ script, metadataChoice: saved.metadataChoice });
+        }
+    });
+    it('recomputes after an identity edit switches to manual', () => {
+        const choices = selectedChoices({ reviewVersion: 1 });
+        const value = pickerCard(choices, { ...pickerReview, priceMinor: 100 });
+        const result = validateCompactReview(value, pickerDefaults, {
+            originalTitle: 'कमल', authors: ['अमर A'], originalLanguage: 'hi',
+        }, choices);
+        expect(result.review).toMatchObject({ script: 'Deva', metadataChoice: { mode: 'manual', selectionId: null } });
+    });
+    it.each([
+        { originalTitle: 'कमल कमल कमल कमल कमल' }, { authors: ['अमर अमर अमर अमर अमर'] }, { originalLanguage: 'hi' },
+    ])('recomputes each changed saved identity field: %p', patch => {
+        const value = scriptCard();
+        value.review = scriptReview({ originalTitle: 'Title', authors: ['Author'], originalLanguage: 'en', script: 'Latn' });
+        value.fieldSources = { ...value.fieldSources, title: 'custom', authors: 'custom', language: 'custom' };
+        const result = validateCompactReview(value, scriptDefaults, patch);
+        // Each independent edit remains valid, selecting a coherent script or null.
+        expect(result.review).not.toBeNull();
+        expect(result.review?.script).toBe('originalLanguage' in patch ? 'Latn' : null);
+    });
+    it('does not need another save after saving the recomputed script', () => {
+        const value = scriptCard();
+        const first = validateCompactReview(value, scriptDefaults, {}).review!;
+        expect(first?.script).toBe('Deva');
+        const saved: OwnerBatchReviewCard = { ...value, review: first, reviewVersion: 1, reviewReady: true,
+            allowedActions: ['save_review', 'add_to_inventory'] as OwnerBatchReviewCard['allowedActions'],
+            fieldSources: { ...value.fieldSources, title: 'custom', authors: 'custom', language: 'custom' } };
+        const next = validateCompactReview(saved, scriptDefaults, {}).review!;
+        expect(next).toEqual(first);
+        expect(candidateCommitPreparation({ card: saved, edits: {}, review: next,
+            acceptedAuthorityKey: candidateCommitAuthorityKey(saved) })).toMatchObject({ needsSave: false, resave: null });
+    });
+    it.each([
+        { originalTitle: '<b>unsafe</b>' }, { authors: ['\u202Eunsafe'] }, { originalLanguage: 'not_a_tag' },
+    ])('lets the schema report invalid normalization without recomputing: %p', edits => {
+        expect(() => validateCompactReview(scriptCard(), scriptDefaults, edits)).not.toThrow();
+        expect(validateCompactReview(scriptCard(), scriptDefaults, edits).review).toBeNull();
+    });
+    it.each([
+        { title: 'Kannada title with kn gets Knda', input: scriptCases[9] },
+        { title: 'Kannada title with kn-IN gets Knda', input: scriptCases[10] },
+        { title: 'Telugu title with te gets Telu', input: scriptCases[11] },
+        { title: 'Malayalam title with ml gets Mlym', input: scriptCases[12] },
+    ])('$title', ({ input }) => {
+        expect(validateCompactReview(scriptCard(input), scriptDefaults, {}).review).toMatchObject({ script: input.expected });
+    });
 });

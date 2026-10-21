@@ -24,11 +24,13 @@ function harness() {
   const draft = { card, edits: { priceMinor: 100 }, acceptedAuthorityKey: candidateCommitAuthorityKey(card) };
   return { coordinator, draft, result, saveReview, readCandidate, commitCandidate, synchronizeIneligible };
 }
-it('compact review preserves unsaved notes and explicit null script before Save', () => {
+// SDD-1 §6 (4b), AC4-7: a script edit switches to manual before recomputation.
+it('compact review preserves unsaved notes and derives the manual script before Save', () => {
   const card = pickerCard(selectedChoices({ reviewVersion: 1 }), pickerReview);
   expect(buildCompactReview(card, pickerDefaults, {
     script: null, priceMinor: 100, notes: { publicNote: '', internalNote: 'latest unsaved' },
-  })).toMatchObject({ script: null, notes: { publicNote: null, internalNote: 'latest unsaved' } });
+  })).toMatchObject({ script: 'Latn', metadataChoice: { mode: 'manual', selectionId: null },
+    notes: { publicNote: null, internalNote: 'latest unsaved' } });
 });
 it.each(['single', 'bulk'] as const)('%s saves latest coherent controlled choice and selling fields before Add', async kind => {
   const h = harness();

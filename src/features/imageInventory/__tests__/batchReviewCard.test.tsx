@@ -11,6 +11,7 @@ let mockMetadataDetail = candidateDetailFixture();
 let mockEditionChoices: import('../contracts/ownerEditionPicker').EditionChoices | undefined;
 import { selectedChoices } from '../testing/editionPickerClientFixtures';
 import { cardAttentionItems } from '../components/batchReviewStatus';
+import { scriptCard, scriptDefaults, scriptCases } from '../testing/compactScriptFixtures';
 jest.mock('../components/EditionChoicesReader', () => ({ EditionChoicesReader: ({ onChoices }: any) => {
     const React = require('react');
     React.useEffect(() => { if (mockEditionChoices) onChoices(mockEditionChoices); }, [onChoices]);
@@ -103,6 +104,46 @@ const defaults = {
     priceMinor: null, quantity: 1, publication: 'private' as const, script: null,
     batchLabel: '',
 };
+
+// SDD-1 §6 (4b), AC4-7: real card validation and dirty-state reporting.
+it.each([scriptCases[0], scriptCases[2]])('a recomputed script is not an edit: $name', async input => {
+    const value = scriptCard(input);
+    const unsaved = jest.fn();
+    const draftChange = jest.fn();
+    const add = jest.fn(async () => ({ status: 'succeeded' as const }));
+    const view = render(<BatchReviewCard identity={{ userId: testUuid(90), storeId: testUuid(91) }}
+        card={value} defaults={scriptDefaults} canMutate isOffline={false} removePending={false} addPending={false}
+        onRemove={jest.fn()} onAdd={add} onDraftChange={draftChange} onUnsavedEditsChange={unsaved} />);
+    expect(view.getByTestId('card-review-status').props.accessibilityLabel).toBe('Ready');
+    expect(view.queryByText('Edited · saved when added')).toBeNull();
+    expect(view.queryByText('Leave without saving?')).toBeNull();
+    expect(unsaved).toHaveBeenCalledWith(value.candidateId, false);
+    expect(unsaved.mock.calls.every(([, dirty]) => dirty === false)).toBe(true);
+    expect(draftChange).not.toHaveBeenCalled();
+    await act(async () => fireEvent.press(view.getByText('Add to inventory')));
+    expect(add).toHaveBeenCalledWith(value, {}, expect.objectContaining({ script: input.expected }));
+    expect(unsaved.mock.calls.every(([, dirty]) => dirty === false)).toBe(true);
+});
+
+// AC4-10 / D2-6: search by name, choose, and submit the actual card review.
+it.each(scriptCases.filter(input => ['Kannada', 'Telugu', 'Malayalam'].includes(input.name)))(
+    'card language chooser finds Kannada, Telugu and Malayalam: $name', async input => {
+        const value = scriptCard({ ...input, language: 'en' });
+        const add = jest.fn(async () => ({ status: 'succeeded' as const }));
+        const view = render(<BatchReviewCard identity={{ userId: testUuid(90), storeId: testUuid(91) }}
+            card={value} defaults={scriptDefaults} canMutate isOffline={false} removePending={false} addPending={false}
+            onRemove={jest.fn()} onAdd={add} onDraftChange={jest.fn()} />);
+        fireEvent.press(view.getByTestId('card-additional-details-toggle'));
+        fireEvent.press(view.getByTestId('card-language-field'));
+        fireEvent.changeText(view.getByLabelText('Search languages'), input.name);
+        fireEvent.press(within(view.getByTestId('card-language-picker')).getByLabelText(input.name));
+        expect(view.getByText(`Language: ${input.language}`)).toBeTruthy();
+        expect(view.getByTestId('card-review-status').props.accessibilityLabel).toBe('Ready');
+        await act(async () => fireEvent.press(view.getByText('Add to inventory')));
+        expect(add).toHaveBeenCalledWith(value, expect.objectContaining({ originalLanguage: input.language }),
+            expect.objectContaining({ originalLanguage: input.language, script: input.expected }));
+    },
+);
 
 function renderCard(overrides: Record<string, unknown> = {}) {
     return render(

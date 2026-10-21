@@ -869,3 +869,16 @@ Picker §3 / EP-D07 amendment (2026-10-17) -> EditionIdentityFix.tsx, CandidateE
 ## 2026-10-17 - Matching variants (M77) and exhausted-search recovery (M75)
 
 DOC-3 §5.2.1 rules 6-8 (2026-10-17) / picker §4.1 -> explicitEditionTitle.ts (worker) and M77 phase9_edition_title_key / phase9_edition_author_middle_match / phase9_edition_explicit_query (SQL superset), shared cases explicitEditionMatchingCases.json (14 new plus 2 code-point parity cases, one renamed) -> EP-AC02; SQL proof phase9EditionExplicitMatching.integration.test.mjs (48/48 with M77, 10 expected RED without). DOC-3 §5.2.1 rule 9 / picker §13.14 amendment -> openLibrary/normalizer.ts and adapter.ts work-level authors -> EP-AC02; tests phase9_open_library_author_isolation.test.ts work-level authors block. Picker §4.3 amendment (M75) -> phase9_edition_job_exhausted, phase9_edition_legacy_choices, phase9_edition_lookup_receipt, phase9_request_candidate_edition_options_v1 -> EP-AC05/EP-AC09 failure/retry behaviour; proof phase9EditionExhaustedLookupRecovery.integration.test.mjs (11/11 with M75, 5 expected RED without). No acceptance ID added.
+
+## Post-scan rework slice 4b - app implementation evidence
+
+The approved [SDD-1 sections 2/6](../work-units/post-scan-rework/01-review-screen-sdd.md)
+owns these requirements; this table adds evidence without changing acceptance.
+[Tracker 38 section 23](../trackers/38-post-scan-rework-evidence.md#23-slice-4b-local-implementation-and-verification-2026-10-21)
+and the [verification report](./post-scan-slice4b-verification.md) own counts and gates.
+
+| Acceptance | Implementation and proof |
+| --- | --- |
+| AC4-7 / D2-3 | Manual-only recompute in `validateCompactReview`, after the existing choice decision; shared language map and server mirror in `ownerUxValidation`; `compactReviewDraft`, real card dirty-state/Add, coordinator and current-migration SQL parity tests. Covers saved stability, both edition modes including null, input normalization, mixed scripts, blocked ranges and tag subtags. |
+| AC4-10 / D2-6 | Shared `LANGUAGE_OPTIONS` adds kn/te/ml; scan-setup and searchable card chooser selection/accessible-name tests plus script/Add coverage for all three. Customer search filters are unchanged. |
+| AC4-11 / D2-5 / R06 | Variant service/schema/type/constants/cases removed; all non-test `src/` architecture scan, server-definition preservation checks and no-importer search. Manual Add's one offline-disabled mutation remains. |
