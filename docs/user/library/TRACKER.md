@@ -1,5 +1,14 @@
 # Library Tracker
 
+**SDD-08 merged and pushed; SDD-09 drafted, reviewed and APPROVED — 2026-10-22:** `sdd09_approved`. SDD-08 (`sdd08/export`) merged into `main` as `c54f9d4` and pushed (owner approved both). SDD-09 drafted on branch `sdd09/reading-history`, worktree `Bookconnect4_sdd09`, from `main` `5946e68`.
+- **Owner scope (chat):** the lean list — 18 items in 5 units; reading rhythm (opt-in streaks, targets, reminders) to its own future SDD; "On this day" to SDD-10; eleven items removed for complexity (SDD-09 §11).
+- **Read-only evidence:** live DB via Supabase MCP (project verified; Postgres 17.6): `user_books` status CHECK has 3 values and no triggers; the clubs RPC `set_club_current_book_reading_status` also writes status, so history is recorded by a trigger (D09-02); 38 `user_books` rows. Code inventory by Haiku, spot-checked.
+- **Review:** MiniMax 3.1 (opencode `max`, read-only, fingerprint unchanged) APPROVE WITH FIXES, 11 findings: 9 applied, 1 applied as a documented limit, 2 rejected with reasons (SDD-09 §12).
+- **Deep reviews (owner request):** Gemini Argon failed to start (endpoint unavailable); DeepSeek v4.1 flash APPROVE WITH FIXES, 13 findings, all applied (one in part); GPT 6.1 Sol xhigh (Codex, read-only) REWORK, 13 findings, all applied; Sonnet consistency pass APPROVE WITH FIXES, 13 findings, all applied. Key changes: 10-minute mis-tap window on a database timestamp, row lock in `library_start_reread`, picked dates as separate `date` columns, and stricter constraints and grants. New decision D09-17 (wishlist ownership); D09-05 and D09-07 changed (SDD-09 §12).
+- **Database/storage mutations:** none. No migration file. Nothing staged, committed or pushed.
+- **Owner approval:** every D09 recommendation accepted, with D09-05 simplified to no automatic undo (wrong taps fixed in Edit dates; `library_reopen_read` added). Design only — no implementation yet.
+- **Next exact action:** the owner OKs committing the SDD-09 docs on `sdd09/reading-history`; then the lead drafts the Unit 1 migration file, which needs its own approval before it is created and another before it is applied.
+
 **SDD-07 follow-ups after Flow D — cover alt and `search.tsx` split — built, reviewed, verified and merged to `main` — 2026-10-21:** `sdd07_followups_on_main`. Branch `sdd07/followups`, worktree `Bookconnect4_flowd`, base `main` `e252513`. Full record: SDD-07 §13.7.
 - **Owner instruction (2026-10-21):** "ok do 1 , but see if you can split the serach using opencode models"; then approved the browser check, docs, commit and push.
 - **What the owner would notice:** nothing visual. Screen readers no longer meet an unlabelled cover picture on Book Details; the search screen code is in smaller files with identical behaviour.
