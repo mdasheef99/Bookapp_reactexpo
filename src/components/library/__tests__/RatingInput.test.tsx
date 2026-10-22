@@ -32,6 +32,13 @@ describe('RatingInput radio group', () => {
     expect(radios.map(r => r.props.tabIndex)).toEqual([1, 2, 3, 4, 5].map(v => v === (rating || 1) ? 0 : -1));
   });
 
+  it('centres the label and stars only when centered is set', () => {
+    const plain = render(<RatingInput rating={3} onChange={jest.fn()} />);
+    expect(StyleSheet.flatten(plain.getByLabelText('Your rating').props.style).alignItems).toBeUndefined();
+    const centred = render(<RatingInput rating={3} onChange={jest.fn()} centered />);
+    expect(StyleSheet.flatten(centred.getByLabelText('Your rating').props.style).alignItems).toBe('center');
+  });
+
   it('still calls onChange(3) when pressing the checked third star', () => {
     const onChange = jest.fn();
     const ui = render(<RatingInput rating={3} onChange={onChange} />);

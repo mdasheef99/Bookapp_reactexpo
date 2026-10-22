@@ -14,7 +14,6 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { LIBRARY_SPACING, useLibraryAppearance } from '../LibraryAppearance';
 import { LIBRARY_TEXT } from '../LibraryTypography';
 import { BookButton, useBookFeedback } from '../ui';
-import { RatingInput } from '../RatingInput';
 
 export const finishPanelStorageKey = (actorId: string, readId: string) =>
   `library_finishPanel:v1:${actorId}:${readId}`;
@@ -25,8 +24,6 @@ export interface FinishPanelProps {
   read: ReadingRead;
   allReads: ReadingRead[];
   justFinished: boolean;
-  rating: number;
-  onRate: (rating: number) => void;
   disabled?: boolean;
   timeZone?: string;
   nextReadUserBookId?: string | null;
@@ -48,8 +45,6 @@ export function FinishPanel({
   read,
   allReads,
   justFinished,
-  rating,
-  onRate,
   disabled = false,
   timeZone,
   nextReadUserBookId,
@@ -277,7 +272,6 @@ export function FinishPanel({
       <Text testID="library-finish-heading" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>
         {headingText(count)}
       </Text>
-      <RatingInput rating={rating} onChange={onRate} disabled={disabled || isOffline} />
       <View style={styles.thought}>
         <Text style={[LIBRARY_TEXT.label, { color: colors.textPrimary }]}>One thought on this book?</Text>
         <TextInput

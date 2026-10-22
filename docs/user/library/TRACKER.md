@@ -1384,3 +1384,12 @@ Owner decision after the lead's recommendation: rating stays inline on Book Deta
 - Review: GLM found 2 medium (whitespace-only, signed-out spinner) and 4 low issues; all fixed; GLM confirmation PASS. MiniMax failed twice with server errors. The Haiku web check then found Save never enabled when the book was already cached (init/reset effect order); fixed with a regression test that failed before the fix.
 
 Verification: `tsc` 0; `lint:library` 0 errors (102 warnings); library Jest 2,025/2,025; mutants killed (Save always enabled, no remove confirm, no discard guard, whitespace not blank, stale retry). Haiku web A1–A8 PASS; Android B1, B3, B4, B5 (200% text) PASS, B2 inconclusive (the emulator keyboard never fully rendered). Residual: in the browser pane a second browser Back after "Keep editing" did not re-prompt (shared composer guard; in-app Back prompts correctly). Dev-account data changed through the app only (review on "Hooked"). No database or storage changes.
+
+### 2026-10-23 — Review page owner feedback rounds (D07-23, §14.2a–b)
+
+Owner: the page did not scroll and ratings were not visible; then asked for rating and review at the top of Book Details, a more polished review page and a properly laid-out visibility control. The lead confirmed the misses by inspection (no stars on the page; fixed-size box scrolling internally; text-only toggle). Built by Muse (Fix 3, Fix 4); the lead finished Fix 5 after Muse stalled:
+- Book Details: centred stars plus Write/Edit review and the first-line serif quote directly under the cover; lower review row removed; the Finished panel no longer has its own stars.
+- Review page: book card with cover, title and author; large stars with a word label; growing paper text area with character count (the page scrolls, not the box); visibility card with eye icon, label, caption and a right-aligned Switch (off thumb in secondary ink for contrast); full-width Save; rating is part of the draft.
+- The header no longer repeats the book title; the RatingInput `centered` prop aligns the label with the stars.
+
+Verification: `tsc` 0; `lint:library` 0 errors; library Jest 2,043/2,043. The lead reviewed Android screenshots (`rp-shots4`) at font scale 1.0 and 2.0: Book Details top, the review page top and bottom, a 279-character review growing the box with the page scrolling to Save, the discard dialog, and the restored scale. The switch colour change after that capture is covered by tests only. No database changes.

@@ -42,6 +42,7 @@ import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import { BookButton, BookScreenHeader, BookLoading, BookError, BookOffline, useBookFeedback } from '@/components/library/ui';
 import { BookCover } from '@/components/library/bookDetails/BookCover';
 import { DetailRow } from '@/components/library/bookDetails/DetailRow';
+import { RatingReviewSummary } from '@/components/library/bookDetails/RatingReviewSummary';
 import { NotePassages } from '@/components/library/bookDetails/NotePassages';
 import { classifyBookLoadError } from '@/components/library/bookDetails/classifyBookLoadError';
 import {
@@ -54,7 +55,6 @@ import {
     StatusSelector,
     OwnershipSelector,
     ConditionPicker,
-    RatingInput,
     DeleteBookModal,
     ReadingStatus,
     Ownership,
@@ -463,7 +463,6 @@ export default function BookDetailScreen() {
 
         // Skip blank lines so the row never shows an empty first line.
         const reviewFirstLine = userBook.review?.split('\n').find((line: string) => line.trim() !== '') ?? '';
-        const hasConfirmedReview = Boolean(reviewFirstLine);
         const showSavedPages = !vaultPagesLoading && Array.isArray(vaultPages) && vaultPages.length > 0;
 
         const publishedYear = book.published_date ? String(book.published_date).slice(0, 4) : '';
@@ -559,6 +558,14 @@ export default function BookDetailScreen() {
                     <ScrollView contentContainerStyle={topStyles.content}>
                         {isOffline && <BookOffline message="Offline · Showing saved content." />}
                         <BookCover title={book.title} authors={book.authors ?? []} coverUrl={book.cover_url} />
+                        <RatingReviewSummary
+                            rating={userBook.rating || 0}
+                            onRate={(val) => submitReview({ rating: val })}
+                            reviewFirstLine={reviewFirstLine}
+                            isPrivate={!isReviewPublic}
+                            onOpenReview={() => router.push({ pathname: '/(tabs)/library/review', params: { bookId } })}
+                            disabled={isOffline}
+                        />
                         <StatusSelector status={displayedStatus} onChange={handleStatusChange} disabled={statusDisabled} busy={statusPending} />
                         {showHistorySlot ? (
                             <View style={topStyles.historySlot}>
@@ -705,8 +712,6 @@ export default function BookDetailScreen() {
                                         read={latestFinishedRead}
                                         allReads={allReadsData}
                                         justFinished={finishedInSession}
-                                        rating={userBook.rating || 0}
-                                        onRate={(val) => submitReview({ rating: val })}
                                         disabled={isOffline}
                                         nextReadUserBookId={settingsData?.next_read_user_book_id}
                                     />
@@ -745,38 +750,6 @@ export default function BookDetailScreen() {
                                     onPress={() => router.push({ pathname: '/(tabs)/library/notes', params: { userBookId: bookId } })}
                                 />
                             )}
-
-                            <View
-                                testID="book-row-review"
-                                accessibilityLabel={`Your review, ${hasConfirmedReview ? reviewFirstLine : 'No review yet.'}`}
-                                style={[topStyles.reviewRow, { borderColor: colors.divider }]}
-                            >
-                                <Text style={[LIBRARY_TEXT.body, { color: colors.textPrimary }]}>Your review</Text>
-                                {showFinishPanel && latestFinishedRead ? null : (
-                                    <RatingInput
-                                        rating={userBook.rating || 0}
-                                        onChange={(val) => submitReview({ rating: val })}
-                                        disabled={isOffline}
-                                    />
-                                )}
-                                <Text
-                                    style={[
-                                        LIBRARY_TEXT.body,
-                                        { color: hasConfirmedReview ? colors.textSecondary : colors.textTertiary },
-                                    ]}
-                                >
-                                    {hasConfirmedReview
-                                        ? (isReviewPublic ? reviewFirstLine : `${reviewFirstLine} · Private`)
-                                        : 'No review yet.'}
-                                </Text>
-                                <BookButton
-                                    label={hasConfirmedReview ? 'Edit review' : 'Write a review'}
-                                    variant="text"
-                                    disabled={isOffline}
-                                    onPress={() => router.push({ pathname: '/(tabs)/library/review', params: { bookId } })}
-                                    testID="library-review-open"
-                                />
-                            </View>
 
                             {showSavedPages && (
                                 <DetailRow
@@ -1040,12 +1013,6 @@ const topStyles = StyleSheet.create({
     },
     rows: {
         marginTop: LIBRARY_SPACING.xl,
-    },
-    reviewRow: {
-        minHeight: 56,
-        gap: LIBRARY_SPACING.sm,
-        paddingVertical: LIBRARY_SPACING.md,
-        borderTopWidth: StyleSheet.hairlineWidth,
     },
     communityReviewItem: {
         gap: LIBRARY_SPACING.xxs,

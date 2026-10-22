@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import BookDetailScreen from '../[bookId]';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { booksService } from '@/features/books/services/booksService';
@@ -225,7 +225,8 @@ describe('Unit 4 on Book Details', () => {
       await ui.findByText('Walden');
       expect(await ui.findByTestId('library-timeline')).toBeOnTheScreen();
       expect(ui.getByTestId('library-timeline-select-read-2')).toBeOnTheScreen();
-      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Add note']);
+      // D07-23: the top rating group and review button sit before the primary.
+      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Write a review', 'radiogroup', 'Add note']);
     } finally {
       ui.unmount();
       ui.client.clear();
@@ -489,7 +490,7 @@ describe('Unit 4 on Book Details', () => {
     }
   });
 
-  it('shows exactly one Your rating radiogroup with the panel shown', async () => {
+  it('shows exactly one Your rating radiogroup with the panel shown (the panel itself has no stars)', async () => {
     const reading = [baseRead({ id: 'read-1', read_number: 1, outcome: 'reading' })];
     const finished = [baseRead({ id: 'read-1', read_number: 1, outcome: 'finished' })];
     mockUserBook = makeBook({ reading_status: 'reading' });
@@ -516,10 +517,12 @@ describe('Unit 4 on Book Details', () => {
         </QueryClientProvider>,
       );
       await ui.findByTestId('library-finish-panel');
-      // Review row hides its stars while the Finished panel shows its own
-      // rating (SDD-07 §14.1), so exactly one radiogroup is visible with no
-      // expand needed and no inline editor.
+      // The top block always shows its stars; the Finished panel (SDD-09)
+      // keeps everything except its own stars, so exactly one radiogroup
+      // stays visible (SDD-07 §14.2b).
+      expect(ui.getByTestId('book-rating-review')).toBeTruthy();
       expect(ui.queryByTestId('library-review-input')).toBeNull();
+      expect(within(ui.getByTestId('library-finish-panel')).queryByLabelText('Your rating')).toBeNull();
       const ratings = ui.queryAllByLabelText('Your rating').filter(
         (node: { props: { accessibilityRole?: string } }) => node.props.accessibilityRole === 'radiogroup',
       );

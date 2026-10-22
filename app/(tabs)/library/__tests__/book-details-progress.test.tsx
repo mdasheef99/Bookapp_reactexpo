@@ -217,7 +217,7 @@ afterEach(() => {
 });
 
 describe('Unit 3a progress on Book Details', () => {
-  it('shows the bar text, pace bars and Update button in Your reading after the primary', async () => {
+  it('shows the bar text, pace bars and Update button in Your reading after the primary, keeping the D07-23 control order', async () => {
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
@@ -225,7 +225,8 @@ describe('Unit 3a progress on Book Details', () => {
       expect(ui.getByTestId('library-progress-edge')).toBeOnTheScreen();
       expect(ui.getByTestId('library-progress-pace')).toBeOnTheScreen();
       expect(ui.getByTestId('library-progress-update')).toBeOnTheScreen();
-      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Add note']);
+      // D07-23: the top rating group and review button sit before the primary.
+      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Write a review', 'radiogroup', 'Add note']);
     } finally {
       ui.unmount();
       ui.client.clear();

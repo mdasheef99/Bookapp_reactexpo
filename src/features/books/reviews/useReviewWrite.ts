@@ -21,6 +21,8 @@ import { historyKeys } from '@/features/books/history/readingHistoryContract';
 export interface ReviewWriteOptions {
   /** Skip the success toast (used when one Save writes several fields). */
   silent?: boolean;
+  /** Success toast copy for a non-silent save (a retry always notifies). */
+  toastMessage?: string;
   /** Rebuild the patch at retry time so Try again uses the current draft. */
   getRetryPatch?: () => ReviewPatch;
 }
@@ -33,6 +35,7 @@ export type ReviewSubmission = {
   requestId: string;
   textRevision: number;
   silent?: boolean;
+  toastMessage?: string;
   getRetryPatch?: () => ReviewPatch;
 };
 
@@ -92,7 +95,9 @@ export function useReviewWrite({ userId, bookId }: UseReviewWriteInput) {
       );
       if (!isCurrentReviewActor(submission.actor)) return;
       if (submission.silent) return;
-      if (typeof submission.patch.rating === 'number') {
+      if (submission.toastMessage !== undefined) {
+        notifySaveSuccess(notify, submission.toastMessage);
+      } else if (typeof submission.patch.rating === 'number') {
         notifySaveSuccess(notify, ratingSavedMessage());
       } else if (typeof submission.patch.review === 'string') {
         notifySaveSuccess(notify, reviewSavedMessage(submission.patch.review === ''));
@@ -117,6 +122,8 @@ export function useReviewWrite({ userId, bookId }: UseReviewWriteInput) {
             if (!isCurrentReviewActor(submission.actor)) return;
             mutation.mutate({
               ...submission,
+              // A retry is its own user-visible save: it always notifies.
+              silent: false,
               patch: submission.getRetryPatch?.() ?? submission.patch,
               requestId: `${submission.editorId}:${++requestSequence.current}`,
             });

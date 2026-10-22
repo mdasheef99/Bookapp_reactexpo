@@ -85,8 +85,6 @@ function renderPanel(props: Partial<React.ComponentProps<typeof FinishPanel>> = 
         read={baseRead()}
         allReads={[baseRead()]}
         justFinished
-        rating={0}
-        onRate={jest.fn()}
         {...props}
       />
     </QueryClientProvider>,
@@ -138,6 +136,19 @@ describe('FinishPanel', () => {
     } finally {
       finished.unmount();
       finished.client.clear();
+    }
+  });
+
+  it('shows no stars: rating lives at the top of Book Details (SDD-07 §14.2b)', async () => {
+    const ui = renderPanel({});
+    try {
+      await ui.findByTestId('library-finish-panel');
+      expect(ui.queryByLabelText('Your rating')).toBeNull();
+      expect(ui.queryByTestId('library-finish-thought-input')).not.toBeNull();
+      expect(ui.getByTestId('library-finish-dismiss')).toBeTruthy();
+    } finally {
+      ui.unmount();
+      ui.client.clear();
     }
   });
 

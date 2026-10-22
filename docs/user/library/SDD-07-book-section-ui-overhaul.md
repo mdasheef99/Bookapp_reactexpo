@@ -196,6 +196,7 @@ Each design keeps an agreed, unused location so later features do not need anoth
 | D07-20 | Web composer scan entry (2026-10-21, amends D07-18 for web) | **Owner decision:** on web the composer choose step shows only "Write note" (single primary) and the write step hides "Scan text"/"Scan again", because scanning is unavailable in the browser (D07-19). Native keeps both primaries (D07-18). | Built (§13.4); resolves the D07-19 web residual. |
 | D07-21 | Who finalizes Flow D; home list and Search presentation (2026-10-21) | **The owner delegated the Flow D design to the lead** and approved the summary with conditions: the ratchet ends at or below 235 / 1 and the baseline is lowered; `lint:library` ends with 0 errors; Search idle and with-results states have **no primary** (DP-03 exception: the search field is the main control), asserted by tests. Owner answers: header "My Library"; library-only search components moved to `src/components/library/search/` (two pure-move commits); `LibraryPillNav` deleted; the F12 debounce test included. Lead calls: one primary "Add a book" on home; Shelf/List and filters as radio groups; unboxed rows with one named button and a decorative thumbnail; secondary Add to library; Filter/Sort as named dialogs with radio groups; mapped plain error copy (`searchErrorCopy.ts`); quiet offline captions. | Built and merged (§13). |
 | D07-22 | Review page (2026-10-22, amends D07-02 and the review parts of D07-16) | **Owner decision:** the star rating stays inline on Book Details; writing and editing the review text moves to its own full-screen page, like the note composer. No pop-up or sheet for review text. | Design in §14. The owner asked for the change after the lead's recommendation ("ok make changes in the sdd and send it to muse for the implementaiton please"). |
+| D07-23 | Rating and review at the top of Book Details (2026-10-22, amends D07-02, D07-22 §14.1 and DP-01) | **Owner decision:** "can we set the rating and review button near the book at the top?! somewhre near the book cover and name". The stars and the Write/Edit review button sit directly under the cover, title and author. The "Your review" row further down is removed. DP-01 exception: the rating group and the review button may push the above-the-fold control count past 4. | Design in §14.2b. |
 
 ### 9.1 Original questions (kept for traceability)
 
@@ -472,7 +473,7 @@ Owner-approved as one follow-up unit on `sdd07/followups` from `main` `e252513`;
 
 ## 14. Review page (D07-22)
 
-**Status:** designed and built 2026-10-22 on branch `sdd09/review-page` (rebased onto `main` `209ae18`); reviewed (GLM: 2 medium + 4 low fixed, confirmation PASS; MiniMax unavailable: server errors), verified and committed. Not merged. As built: shared hook `src/features/books/reviews/useReviewWrite.ts`; route `app/(tabs)/library/review.tsx`. Residual: web browser-Back after "Keep editing" re-prompted only once in the browser pane (same shared guard as the note composer); Android keyboard overlap not observed because the emulator keyboard did not render.
+**Status:** designed and built 2026-10-22 on branch `sdd09/review-page` (rebased onto `main` `209ae18`); reviewed (GLM: 2 medium + 4 low fixed, confirmation PASS; MiniMax unavailable: server errors), verified and committed; owner feedback rounds §14.2a–b (D07-23) built and committed 2026-10-23. Not merged. As built: shared hook `src/features/books/reviews/useReviewWrite.ts`; route `app/(tabs)/library/review.tsx`. Residual: web browser-Back after "Keep editing" re-prompted only once in the browser pane (same shared guard as the note composer); Android keyboard overlap not observed because the emulator keyboard did not render.
 
 **Why:** a review can run to several paragraphs. On a phone, an inline field or a pop-up shares the screen with the keyboard, is easy to dismiss by accident, and has no Back step or web URL. Notes already open in their own composer page, so reviews should behave the same way. Book Details also gets shorter, which helps at large text sizes.
 
@@ -494,6 +495,31 @@ Owner-approved as one follow-up unit on `sdd07/followups` from `main` `e252513`;
 - **Save failure:** error toast with "Try again"; the text stays on the page. Nothing is lost.
 - **Book or session gone** (not found, signed out, actor changed): the page shows the same classified error states as Book Details and does not save.
 - **Large text (200%):** everything wraps; nothing is cut off; Save stays reachable.
+
+### 14.2a Owner feedback round (2026-10-22)
+
+Owner, after the first build: "it seeems the page is not scrollable and the ratings are also not visible". The lead confirmed: the page had no stars, the fixed-size text box scrolled inside itself instead of the page, and Public/Private was plain text with no visible control. Changes:
+- **Rating on the review page.** "Your rating" stars sit above the text box and are part of the draft: changing them enables Save, Save writes them with the text, and leaving asks "Discard changes?". The rating can be set without any text. Book Details keeps its inline stars (§14.1).
+- **The page scrolls, not the box.** The text box grows with its content (no inner scrolling, minimum height kept) on native and web, so a long review scrolls the whole page and Save is always reachable by scrolling. The keyboard never covers the field being typed in or Save (keyboard-avoiding on iOS and Android).
+- **A real switch.** Public/Private uses a visible on/off switch control, labelled "Public review", with the caption saying who can read it.
+
+### 14.2b Owner feedback round 2 (2026-10-22, D07-23)
+
+Owner: "can we set the rating and review button near the book at the top?! … also make the review page a bit more aesthetic please, and also the button for public view and all should be more set, it is not now, so ensure it is set properly please".
+
+**Book Details, top.** Directly under the cover, title and author, before the status selector:
+- the star rating (the existing `RatingInput`), always visible and tap-to-save ("Rating saved"), centred under the title like the cover block;
+- under the stars, a text button "Write a review", or "Edit review" when one exists, followed when one exists by the first line of the review as a short serif quote (at most 2 lines, then "…"), with "Private" shown for a private review;
+- tapping the quote also opens the review page.
+- The lower "Your review" row is removed. The Finished panel (SDD-09) no longer shows its own stars, because the top stars are always visible; it keeps its other content.
+
+**Review page, look and feel.** It should feel like the note composer's paper page, not a form:
+- a book header card: small cover thumbnail (muted placeholder if none), title in the serif heading font, author in secondary text;
+- "Your rating": large stars (at least 40px targets) with a one-word label for the chosen value ("Poor", "Fair", "Good", "Great", "Loved it"), or "Tap to rate";
+- the text area on the paper surface, serif body text, generous padding, placeholder "What did you think?", and a quiet character count under it;
+- a visibility card: one row with a leading eye icon, "Public review" label, a caption saying who can read it, and the switch aligned right, vertically centred, with a 48px row; the whole row toggles it;
+- Save as the single full-width primary at the end of the content, with even spacing (tokens only) between sections.
+- Everything still wraps at 200% text, and the page still scrolls.
 
 ### 14.3 What this replaces
 

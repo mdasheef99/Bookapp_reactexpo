@@ -125,11 +125,12 @@ describe('BookDetailScreen review persistence', () => {
         useAuthStore.setState({ session: null, status: 'unauthenticated' });
     });
 
-    it('keeps the review on Book Details read-only with no inline editor (text lives on the review page)', async () => {
+    it('shows the top rating block and no lower review row (text lives on the review page)', async () => {
         const { getByTestId, findByText, queryByTestId, unmount, queryClient } = renderScreen();
 
         await findByText('Beloved');
-        expect(getByTestId('book-row-review')).toBeTruthy();
+        expect(getByTestId('book-rating-review')).toBeTruthy();
+        expect(queryByTestId('book-row-review')).toBeNull();
         // No inline editor on Book Details (SDD-07 §14.3); text lives on the review page.
         expect(queryByTestId('library-review-input')).toBeNull();
         expect(queryByTestId('library-review-privacy-toggle')).toBeNull();

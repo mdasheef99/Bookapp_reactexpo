@@ -5,10 +5,13 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { usePreventRemove } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
@@ -17,7 +20,7 @@ import { booksService } from '@/features/books/services/booksService';
 import { isCurrentReviewActor, type ReviewPatch } from '@/features/books/services/bookReviewService';
 import { useReviewWrite, type ReviewWriteOptions } from '@/features/books/reviews/useReviewWrite';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } from '@/components/library/LibraryAppearance';
+import { LIBRARY_RADIUS, LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import {
   BookButton,
@@ -27,16 +30,23 @@ import {
   BookScreenHeader,
   useBookFeedback,
 } from '@/components/library/ui';
+import { RatingInput, ratingValueLabel } from '@/components/library/RatingInput';
+import { bookTitleInitials } from '@/components/library/bookDetails/BookCover';
 import { classifyBookLoadError } from '@/components/library/bookDetails/classifyBookLoadError';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { notifySaveSuccess, reviewSavedMessage } from '@/features/books/history/saveConfirmation';
 import { guardComposerHistory, type ComposerHistoryGuard } from '@/features/books/notes/composerBrowserHistory';
+
+const REVIEW_TEXT_MIN_HEIGHT = 160;
+const REVIEW_STAR_SIZE = 40;
+const REVIEW_COVER_SIZE = { width: 56, height: 84 };
 
 export default function ReviewScreen() {
   const { bookId } = useLocalSearchParams<{ bookId: string }>();
   const router = useRouter();
   const navigation = useNavigation();
   const colors = useLibraryAppearance();
-  const { confirm } = useBookFeedback();
+  const { notify, confirm } = useBookFeedback();
   const { user } = useAuth();
   const { isOffline } = useNetworkStatus();
 
@@ -51,9 +61,12 @@ export default function ReviewScreen() {
 
   const savedReview = userBook?.review ?? '';
   const savedIsPublic = userBook?.review_is_public ?? true;
+  const savedRating = userBook?.rating ?? 0;
 
   const [text, setText] = useState('');
   const [isPublic, setIsPublic] = useState(true);
+  const [rating, setRating] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
   const identityRef = useRef('');
   const [initialized, setInitialized] = useState(false);
   const [allowExit, setAllowExit] = useState(false);
@@ -66,13 +79,15 @@ export default function ReviewScreen() {
   textRef.current = text;
   const visibilityRef = useRef(isPublic);
   visibilityRef.current = isPublic;
+  const ratingRef = useRef(rating);
+  ratingRef.current = rating;
 
   // Whitespace-only text counts as empty: with no saved review there is
   // nothing to save, and over a saved review it means removal.
   const textIsBlank = text.trim() === '';
   const effectiveText = textIsBlank ? '' : text;
 
-  const dirty = initialized && (effectiveText !== savedReview || isPublic !== savedIsPublic);
+  const dirty = initialized && (effectiveText !== savedReview || isPublic !== savedIsPublic || rating !== savedRating);
   dirtyRef.current = dirty;
   const saving = mutation.isPending;
 
@@ -91,6 +106,7 @@ export default function ReviewScreen() {
     identityRef.current = identity;
     setText(userBook.review ?? '');
     setIsPublic(userBook.review_is_public ?? true);
+    setRating(userBook.rating ?? 0);
     setInitialized(true);
   }, [userBook, userId, bookId, actor?.revision]);
 
@@ -186,19 +202,21 @@ export default function ReviewScreen() {
   const handleSave = useCallback(async () => {
     if (!dirty || isOffline || saving) return;
     if (!bookId || !actor || !isCurrentReviewActor(actor)) return;
-    // Retry rebuilds from the live draft so Try again never resends stale text.
+    // Retry rebuilds from the live draft so Try again never resends stale values.
     const retryTextPatch = (): ReviewPatch => {
       const current = textRef.current;
       return { review: current.trim() === '' ? '' : current };
     };
     const retryVisibilityPatch = (): ReviewPatch => ({ review_is_public: visibilityRef.current });
-    // One toast per Save: every write but the last stays silent.
-    const saveAll = async (steps: { patch: ReviewPatch; opts: ReviewWriteOptions }[]) => {
-        for (let index = 0; index < steps.length; index++) {
-          const step = steps[index];
-          await submitReviewAsync(step.patch, { ...step.opts, silent: index < steps.length - 1 });
+    const retryRatingPatch = (): ReviewPatch => ({ rating: ratingRef.current });
+    // One toast per Save: every write stays silent and the page toasts once.
+    const saveAll = async (steps: { patch: ReviewPatch; opts: ReviewWriteOptions }[], removed: boolean) => {
+        const toastMessage = reviewSavedMessage(removed);
+        for (const step of steps) {
+          await submitReviewAsync(step.patch, { ...step.opts, silent: true, toastMessage });
         if (!isCurrentReviewActor(actor)) return false;
       }
+      notifySaveSuccess(notify, toastMessage);
       return true;
     };
     if (textIsBlank && savedReview !== '') {
@@ -212,11 +230,14 @@ export default function ReviewScreen() {
       if (!ok) return;
       try {
         const steps: { patch: ReviewPatch; opts: ReviewWriteOptions }[] = [];
+        if (rating !== savedRating) {
+          steps.push({ patch: { rating }, opts: { getRetryPatch: retryRatingPatch } });
+        }
         if (isPublic !== savedIsPublic) {
           steps.push({ patch: { review_is_public: isPublic }, opts: { getRetryPatch: retryVisibilityPatch } });
         }
         steps.push({ patch: { review: '' }, opts: { getRetryPatch: retryTextPatch } });
-        if (!(await saveAll(steps))) return;
+        if (!(await saveAll(steps, true))) return;
         finishExit(() => goToDetails());
       } catch {
         // Error toast comes from the shared mutation; keep the text.
@@ -225,23 +246,25 @@ export default function ReviewScreen() {
     }
     try {
       const steps: { patch: ReviewPatch; opts: ReviewWriteOptions }[] = [];
+      if (rating !== savedRating) {
+        steps.push({ patch: { rating }, opts: { getRetryPatch: retryRatingPatch } });
+      }
       if (effectiveText !== savedReview) {
         steps.push({ patch: { review: effectiveText }, opts: { getRetryPatch: retryTextPatch } });
       }
       if (isPublic !== savedIsPublic) {
         steps.push({ patch: { review_is_public: isPublic }, opts: { getRetryPatch: retryVisibilityPatch } });
       }
-      if (!(await saveAll(steps))) return;
+      if (!(await saveAll(steps, false))) return;
       finishExit(() => goToDetails());
     } catch {
       // Error toast comes from the shared mutation; keep the text.
     }
-  }, [dirty, isOffline, saving, bookId, actor, textIsBlank, effectiveText, savedReview, isPublic, savedIsPublic, confirm, submitReviewAsync, finishExit, goToDetails]);
+  }, [dirty, isOffline, saving, bookId, actor, textIsBlank, effectiveText, savedReview, isPublic, savedIsPublic, rating, savedRating, notify, confirm, submitReviewAsync, finishExit, goToDetails]);
 
   const backHeader = (
     <BookScreenHeader
       title="Your review"
-      bookTitle={userBook?.book.title}
       backLabel="Back"
       backAccessibilityLabel="Back to Book Details"
       backTestID="library-review-back"
@@ -324,18 +347,57 @@ export default function ReviewScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
       {backHeader}
-      {/* Android relies on the Expo adjustResize default, so only iOS sets a behavior. */}
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
       >
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.content}
         >
-          <View style={styles.body}>
+          <View testID="library-review-body" style={styles.body}>
             {isOffline && <BookOffline message="Offline · Showing saved content." />}
+            <View testID="library-review-header" style={[styles.headerCard, { backgroundColor: colors.bgCard, borderColor: colors.controlBorder }]}>
+              {userBook.book.cover_url ? (
+                <Image
+                  testID="library-review-cover"
+                  source={{ uri: userBook.book.cover_url }}
+                  style={styles.headerCover}
+                  contentFit="cover"
+                  accessible={false}
+                />
+              ) : (
+                <View
+                  testID="library-review-cover-placeholder"
+                  accessible={false}
+                  aria-hidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={[styles.headerCover, styles.headerCoverPlaceholder, { backgroundColor: colors.coverPlaceholder }]}
+                >
+                  <Text style={[LIBRARY_TEXT.heading, { color: colors.coverPlaceholderInk }]}>
+                    {bookTitleInitials(userBook.book.title)}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.headerText}>
+                <Text
+                  accessibilityRole="header"
+                  style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}
+                >
+                  {userBook.book.title}
+                </Text>
+                {userBook.book.authors?.length ? (
+                  <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
+                    {userBook.book.authors.join(', ')}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+            <RatingInput rating={rating} onChange={setRating} disabled={saving} size={REVIEW_STAR_SIZE} />
+            <Text testID="library-rating-value" style={[LIBRARY_TEXT.label, { color: colors.textSecondary }]}>
+              {ratingValueLabel(rating)}
+            </Text>
             <Text accessibilityRole="header" style={[LIBRARY_TEXT.label, { color: colors.textPrimary }]}>
               Your thoughts
             </Text>
@@ -343,37 +405,64 @@ export default function ReviewScreen() {
               ref={inputRef}
               testID="library-review-text"
               accessibilityLabel="Your review"
-              placeholder="Write your thoughts…"
+              placeholder="What did you think?"
               placeholderTextColor={colors.textTertiary}
               multiline
+              scrollEnabled={false}
               editable={!saving}
               value={text}
               onChangeText={setText}
+              onContentSizeChange={(event) => setContentHeight(event.nativeEvent.contentSize.height)}
               style={[
-                LIBRARY_TEXT.body,
+                LIBRARY_TEXT.bodySerif,
                 styles.input,
                 {
-                  backgroundColor: colors.bgSecondary,
+                  backgroundColor: colors.bgCard,
                   color: colors.textPrimary,
                   borderColor: colors.controlBorder,
                 },
+                // The box grows with its content so the page scrolls, never the box.
+                { height: Math.max(REVIEW_TEXT_MIN_HEIGHT, contentHeight) },
               ]}
             />
-            <Pressable
-              testID="library-review-visibility"
-              accessibilityRole="switch"
-              accessibilityLabel={isPublic ? 'Public review' : 'Private review'}
-              accessibilityState={{ checked: isPublic, disabled: saving }}
-              disabled={saving}
-              onPress={() => setIsPublic((previous) => !previous)}
-              style={styles.visibility}
+            <Text testID="library-review-count" style={[LIBRARY_TEXT.caption, { color: colors.textTertiary }]}>
+              {text.length === 1 ? '1 character' : `${text.length} characters`}
+            </Text>
+              <Pressable
+                accessibilityLabel="Public review"
+                accessibilityHint="Toggles who can read your review"
+                disabled={saving}
+                onPress={() => setIsPublic((previous) => !previous)}
+                testID="library-review-visibility-row"
+              style={[styles.visibilityCard, { backgroundColor: colors.bgCard, borderColor: colors.controlBorder }]}
             >
-              <Text style={[LIBRARY_TEXT.label, { color: colors.textPrimary }]}>
-                {isPublic ? 'Public review' : 'Private review'}
-              </Text>
-              <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
-                {isPublic ? 'Anyone can read this review.' : 'Only you can read this review.'}
-              </Text>
+              <Ionicons
+                name={isPublic ? 'eye-outline' : 'eye-off-outline'}
+                size={20}
+                color={colors.textSecondary}
+                accessible={false}
+                aria-hidden
+              />
+              <View style={styles.visibilityText}>
+                <Text style={[LIBRARY_TEXT.label, { color: colors.textPrimary }]}>
+                  Public review
+                </Text>
+                <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>
+                  {isPublic ? 'Anyone can read this review.' : 'Only you can read this review.'}
+                </Text>
+              </View>
+              <Switch
+                testID="library-review-visibility"
+                accessibilityRole="switch"
+                accessibilityLabel="Public review"
+                value={isPublic}
+                onValueChange={setIsPublic}
+                trackColor={{ false: colors.controlBorder, true: colors.accent }}
+                // Off thumb uses secondary ink so it stays visible on the card in every theme.
+                thumbColor={isPublic ? colors.textOnAccent : colors.textSecondary}
+                disabled={saving}
+                pointerEvents="none"
+              />
             </Pressable>
             {saving && (
               <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
@@ -414,15 +503,47 @@ const styles = StyleSheet.create({
   input: {
     borderRadius: 12,
     padding: LIBRARY_SPACING.sm,
-    minHeight: 160,
+    minHeight: REVIEW_TEXT_MIN_HEIGHT,
     textAlignVertical: 'top',
     borderWidth: 1,
   },
-  visibility: {
-    minHeight: MIN_TARGET,
-    minWidth: MIN_TARGET,
-    justifyContent: 'center',
-    gap: LIBRARY_SPACING.xxs,
-    paddingVertical: LIBRARY_SPACING.xs,
-  },
+    headerCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: LIBRARY_SPACING.md,
+        borderRadius: LIBRARY_RADIUS.card,
+        borderWidth: 1,
+        padding: LIBRARY_SPACING.md,
+    },
+    headerCover: {
+        width: REVIEW_COVER_SIZE.width,
+        height: REVIEW_COVER_SIZE.height,
+        borderRadius: LIBRARY_RADIUS.control,
+        overflow: 'hidden',
+    },
+    headerCoverPlaceholder: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerText: {
+        flex: 1,
+        flexShrink: 1,
+        minWidth: 0,
+        gap: LIBRARY_SPACING.xxs,
+    },
+    visibilityCard: {
+        minHeight: MIN_TARGET,
+        minWidth: MIN_TARGET,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: LIBRARY_SPACING.sm,
+        borderRadius: LIBRARY_RADIUS.card,
+        borderWidth: 1,
+        paddingHorizontal: LIBRARY_SPACING.md,
+        paddingVertical: LIBRARY_SPACING.sm,
+    },
+    visibilityText: {
+        flex: 1,
+        gap: LIBRARY_SPACING.xxs,
+    },
 });
