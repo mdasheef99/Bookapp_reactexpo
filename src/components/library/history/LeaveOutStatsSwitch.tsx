@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import { ReadingRead } from '@/features/books/history/readingHistoryContract';
 import { useLeaveOutStats } from '@/features/books/history/useLeaveOutStats';
+import { leaveOutSavedMessage, notifySaveSuccess } from '@/features/books/history/saveConfirmation';
 import { LIBRARY_SPACING, useLibraryAppearance } from '../LibraryAppearance';
 import { LIBRARY_TEXT } from '../LibraryTypography';
 import { useBookFeedback } from '../ui';
@@ -46,6 +47,7 @@ export function LeaveOutStatsSwitch({ actorId, userBookId, reads, disabled = fal
       .mutateAsync(value)
       .then((saved) => {
         guard.current = false;
+        notifySaveSuccess(notify, leaveOutSavedMessage(value));
         return saved;
       })
       .catch((error: unknown) => {

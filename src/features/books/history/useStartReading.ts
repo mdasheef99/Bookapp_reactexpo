@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { historyKeys } from './readingHistoryContract';
 import { booksService } from '@/features/books/services/booksService';
 import { useBookFeedback } from '@/components/library/ui';
+import { notifySaveSuccess } from './saveConfirmation';
 
 /**
  * One start-reading path (SDD-09 §4.6 H-14/H-15, H-12).
@@ -34,6 +35,7 @@ export function useStartReading(actorId: string) {
         mutation.mutateAsync(userBookId).then(
           (saved) => {
             guard.current = false;
+            notifySaveSuccess(notify, 'Started reading');
             return saved;
           },
           (error: unknown) => {

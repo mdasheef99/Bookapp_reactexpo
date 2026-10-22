@@ -15,6 +15,11 @@ import { useReadProgress } from '@/features/books/history/useReadProgress';
 import type { ProgressValue, ReadDatesPatch } from '@/features/books/history/readingHistoryGateway';
 import { historyKeys, type ReadingRead } from '@/features/books/history/readingHistoryContract';
 import { currentPosition, dailyPages, estimateRemaining } from '@/features/books/history/progressMath';
+import {
+  nextReadSavedMessage,
+  notifySaveSuccess,
+  statusSavedMessage,
+} from '@/features/books/history/saveConfirmation';
 import { ReadingDatesSlot, noDatesPromptStorageKey } from '@/components/library/history/ReadingDatesSlot';
 import { EditDatesSheet } from '@/components/library/history/EditDatesSheet';
 import { ProgressSheet } from '@/components/library/history/ProgressSheet';
@@ -263,8 +268,8 @@ export default function BookDetailScreen() {
     // --- Mutations ---
 
     const updateStatusMutation = useMutation({
-        mutationFn: ({ status, entryId }: { status: ReadingStatus; userId: string | undefined; entryId: string }) => booksService.updateReadingStatus(entryId, status),
-        onSuccess: (_data, { status, userId, entryId }) => {
+        mutationFn: ({ status, entryId }: { status: ReadingStatus; userId: string | undefined; entryId: string; previous: ReadingStatus }) => booksService.updateReadingStatus(entryId, status),
+        onSuccess: (_data, { status, userId, entryId, previous }) => {
             const key = ['book', userId, entryId];
             queryClient.setQueryData<typeof userBook>(key, (prev: typeof userBook) => prev ? { ...prev, reading_status: status } : prev);
             if (userId === user?.id && entryId === bookId) setOptimisticStatus(null);
@@ -272,6 +277,9 @@ export default function BookDetailScreen() {
             queryClient.invalidateQueries({ queryKey: ['library'] });
             queryClient.invalidateQueries({ queryKey: key });
             invalidateHistoryReads(userId, entryId);
+            if (userId === user?.id && entryId === bookId) {
+                notifySaveSuccess(notify, statusSavedMessage(previous, status));
+            }
         },
         onError: (_error, { userId, entryId }) => {
             if (userId !== user?.id || entryId !== bookId) return;
@@ -360,13 +368,14 @@ export default function BookDetailScreen() {
 
     const handleStatusChange = useCallback((val: ReadingStatus) => {
         if (!userBook || val === userBook.reading_status) return;
+        const previous = userBook.reading_status as ReadingStatus;
         if (val === 'completed') {
             const currentReads = history.reads?.data ?? [];
             const newest = [...currentReads].sort((a, b) => b.read_number - a.read_number)[0] ?? null;
             finishBaseline.current = newest ? { id: newest.id, outcome: newest.outcome } : null;
         }
         setOptimisticStatus(val);
-        updateStatusMutation.mutate({ status: val, userId: user?.id, entryId: bookId });
+        updateStatusMutation.mutate({ status: val, userId: user?.id, entryId: bookId, previous });
     }, [userBook, updateStatusMutation, user?.id, bookId, history.reads?.data]);
 
     const historyErrorMessage = (error: unknown) =>
@@ -387,6 +396,7 @@ export default function BookDetailScreen() {
                     if (user?.id) {
                         void AsyncStorage.setItem(noDatesPromptStorageKey(user.id, readId), '1').catch(() => {});
                     }
+                    notifySaveSuccess(notify, 'Dates saved');
                     return saved;
                 },
                 (error: unknown) => {
@@ -395,50 +405,62 @@ export default function BookDetailScreen() {
                 },
             );
         return attempt();
-    }, [history.editDates, notifyHistoryError, user?.id]);
+    }, [history.editDates, notifyHistoryError, notify, user?.id]);
 
     const handleRemoveRead = useCallback((readId: string) => {
         const attempt = () =>
             history.removeRead.mutateAsync(readId).then(
-                (result) => result,
+                (result) => {
+                    notifySaveSuccess(notify, 'Read removed');
+                    return result;
+                },
                 (error: unknown) => {
                     notifyHistoryError(error, () => { void attempt(); });
                     throw error;
                 },
             );
         return attempt();
-    }, [history.removeRead, notifyHistoryError]);
+    }, [history.removeRead, notifyHistoryError, notify]);
 
     const handleReopenRead = useCallback((readId: string) => {
         const attempt = () =>
             history.reopenRead.mutateAsync(readId).then(
-                (result) => result,
+                (result) => {
+                    notifySaveSuccess(notify, 'Read reopened');
+                    return result;
+                },
                 (error: unknown) => {
                     notifyHistoryError(error, () => { void attempt(); });
                     throw error;
                 },
             );
         return attempt();
-    }, [history.reopenRead, notifyHistoryError]);
+    }, [history.reopenRead, notifyHistoryError, notify]);
 
     const handleMarkReadUnknown = useCallback((readId: string) => {
         const attempt = () =>
             history.editDates.mutateAsync({ readId, patch: { started_on: null, ended_on: null, start_unknown: true, end_unknown: true } }).then(
-                (saved) => saved,
+                (saved) => {
+                    notifySaveSuccess(notify, 'Dates marked unknown');
+                    return saved;
+                },
                 (error: unknown) => {
                     notifyHistoryError(error, () => { void attempt(); });
                     throw error;
                 },
             );
         return attempt();
-    }, [history.editDates, notifyHistoryError]);
+    }, [history.editDates, notifyHistoryError, notify]);
 
     const handleReadAgain = useCallback(() => {
         if (readAgainGuard.current) return;
         readAgainGuard.current = true;
         const attempt = () =>
             history.startReread.mutateAsync(undefined).then(
-                (result) => result,
+                (result) => {
+                    notifySaveSuccess(notify, 'Reading again');
+                    return result;
+                },
                 (error: unknown) => {
                     notifyHistoryError(error, () => { void attempt(); });
                     throw error;
@@ -447,7 +469,7 @@ export default function BookDetailScreen() {
         void attempt().catch(() => {}).finally(() => {
             readAgainGuard.current = false;
         });
-    }, [history.startReread, notifyHistoryError]);
+    }, [history.startReread, notifyHistoryError, notify]);
 
     const handleSetNextRead = useCallback((nextBookId: string | null) => {
         if (!history.setNextRead) return Promise.resolve(null);
@@ -457,6 +479,7 @@ export default function BookDetailScreen() {
             history.setNextRead.mutateAsync(nextBookId).then(
                 (saved) => {
                     nextReadGuard.current = false;
+                    notifySaveSuccess(notify, nextReadSavedMessage(nextBookId));
                     return saved;
                 },
                 (error: unknown) => {
@@ -472,7 +495,7 @@ export default function BookDetailScreen() {
             nextReadGuard.current = false;
             return null;
         });
-    }, [history, notifyHistoryError]);
+    }, [history, notifyHistoryError, notify]);
 
     const handleSaveProgress = useCallback((value: ProgressValue) => {
         const attempt = () => {
@@ -481,6 +504,7 @@ export default function BookDetailScreen() {
             return readProgress.addProgress.mutateAsync(value).then(
                 (saved) => {
                     progressSaveGuard.current = false;
+                    notifySaveSuccess(notify, 'Progress saved');
                     return saved;
                 },
                 (error: unknown) => {
@@ -494,7 +518,7 @@ export default function BookDetailScreen() {
             );
         };
         return attempt();
-    }, [readProgress.addProgress, notifyHistoryError]);
+    }, [readProgress.addProgress, notifyHistoryError, notify]);
 
     const handleSaveTotalPages = useCallback((total: number | null) => {
         const attempt = () => {
@@ -503,6 +527,7 @@ export default function BookDetailScreen() {
             return readProgress.setTotalPages.mutateAsync(total).then(
                 (saved) => {
                     progressSaveGuard.current = false;
+                    notifySaveSuccess(notify, 'Total pages saved');
                     return saved;
                 },
                 (error: unknown) => {
@@ -516,7 +541,7 @@ export default function BookDetailScreen() {
             );
         };
         return attempt();
-    }, [readProgress.setTotalPages, notifyHistoryError]);
+    }, [readProgress.setTotalPages, notifyHistoryError, notify]);
 
     const toggleRow = (id: keyof OpenRowsState) => {
         setOpenRows((prev) => ({ ...prev, [id]: !prev[id] }));

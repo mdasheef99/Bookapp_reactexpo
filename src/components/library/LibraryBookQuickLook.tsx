@@ -11,6 +11,7 @@ import { historyKeys } from '@/features/books/history/readingHistoryContract';
 import { readingHistoryGateway } from '@/features/books/history/readingHistoryGateway';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useBookFeedback, BookButton, BookFeedbackSlot } from './ui';
+import { notifySaveSuccess } from '@/features/books/history/saveConfirmation';
 
 /** Facts already loaded with the Library entry; no invented progress or extra request. */
 export function LibraryBookQuickLook({ book, onClose, onDetails }: {
@@ -57,6 +58,7 @@ function QuickLookBody({ book, onClose, onDetails }: {
                 });
                 throw error;
             }
+            notifySaveSuccess(notify, finished ? 'Reading again' : 'Started reading');
             client.invalidateQueries({ queryKey: ['library'] });
             client.invalidateQueries({ queryKey: historyKeys.readsForBook(actorId, targetId) });
             client.invalidateQueries({ queryKey: historyKeys.readsForUser(actorId) });
@@ -86,7 +88,6 @@ function QuickLookBody({ book, onClose, onDetails }: {
                     </Pressable>
                 </View>
                 <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={{ padding: 20, gap: 12 }}>
-                    <BookFeedbackSlot />
                     <View style={styles.bookHeader}>
                         {book.book.cover_url ? <Image source={{ uri: book.book.cover_url }} contentFit="contain" accessible={false} style={{ width: 64, height: 96 }} /> : null}
                         <View style={{ flex: 1, minWidth: 0 }}>
@@ -109,6 +110,9 @@ function QuickLookBody({ book, onClose, onDetails }: {
                     onPress={() => { onClose(); onDetails(book); }} style={[styles.details, { borderColor: colors.border }]}>
                     <Text style={{ fontFamily: fonts.label, color: colors.textPrimary }}>View details</Text>
                 </Pressable>
+                <View pointerEvents="box-none" style={styles.feedbackOverlay}>
+                    <BookFeedbackSlot />
+                </View>
             </View>
         </View>
     </Modal>;
@@ -121,4 +125,5 @@ const styles = StyleSheet.create({
     bookHeader: { flexDirection: 'row', alignItems: 'center', gap: 16 },
     fact: { paddingVertical: 8, borderBottomWidth: 1, gap: 4 },
     details: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderTopWidth: 1 },
+    feedbackOverlay: { position: 'absolute', top: 8, left: 12, right: 12, zIndex: 1 },
 });

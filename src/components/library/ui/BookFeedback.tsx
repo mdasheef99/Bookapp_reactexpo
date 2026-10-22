@@ -45,7 +45,7 @@ function useToastState() {
 function ToastRegion({ toast, dismiss }: { toast: Toast | null; dismiss: () => void }) {
   const colors = useLibraryAppearance();
   const fonts = useLibraryTypography();
-  return <View accessibilityLiveRegion="polite" testID="book-feedback-live-region" pointerEvents="box-none" style={styles.region}>
+  return <View accessibilityLiveRegion="polite" aria-live="polite" testID="book-feedback-live-region" pointerEvents="box-none" style={styles.region}>
     {toast && <View key={toast.id} testID="book-feedback-toast" pointerEvents={toast.kind === 'error' ? 'auto' : 'none'} style={[styles.toast, {
       backgroundColor: colors[`${toast.kind}Surface`], borderColor: colors[toast.kind],
     }]}>

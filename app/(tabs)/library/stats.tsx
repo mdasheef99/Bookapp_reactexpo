@@ -13,6 +13,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import { BookButton, BookScreenHeader, useBookFeedback } from '@/components/library/ui';
+import { goalSavedMessage, notifySaveSuccess } from '@/features/books/history/saveConfirmation';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { navigateBackOrFallback } from '@/lib/navigation';
 
@@ -109,6 +110,7 @@ function LibraryStatsBody({ timeZone, initialView = 'year', yearOverride }: Libr
         (saved) => {
           goalGuard.current = false;
           setGoalText(saved ? String(saved.target_books) : '');
+          notifySaveSuccess(notify, goalSavedMessage(parsed));
           return saved;
         },
         (error: unknown) => {
@@ -130,9 +132,11 @@ function LibraryStatsBody({ timeZone, initialView = 'year', yearOverride }: Libr
     goalGuard.current = true;
     const attempt = () =>
       goalState.setGoal.mutateAsync(null).then(
-        () => {
+        (saved) => {
           goalGuard.current = false;
           setGoalText('');
+          notifySaveSuccess(notify, goalSavedMessage(null));
+          return saved;
         },
         (error: unknown) => {
           goalGuard.current = false;

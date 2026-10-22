@@ -14,6 +14,7 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { LIBRARY_RADIUS, LIBRARY_SPACING, useLibraryAppearance } from '../LibraryAppearance';
 import { LIBRARY_TEXT } from '../LibraryTypography';
 import { BookButton, useBookFeedback } from '../ui';
+import { notifySaveSuccess } from '@/features/books/history/saveConfirmation';
 import { PageEdgeBar } from './PageEdgeBar';
 import { ProgressSheet } from './ProgressSheet';
 
@@ -167,6 +168,7 @@ export function ContinueReadingCard({ actorId, onOpenBook }: ContinueReadingCard
         addProgress.mutateAsync({ readId: selected.read.id, value }).then(
           (saved) => {
             progressGuard.current = false;
+            notifySaveSuccess(notify, 'Progress saved');
             return saved;
           },
           (error: unknown) => {
@@ -191,6 +193,7 @@ export function ContinueReadingCard({ actorId, onOpenBook }: ContinueReadingCard
         setTotalPages.mutateAsync({ readId: selected.read.id, total: next }).then(
           (saved) => {
             progressGuard.current = false;
+            notifySaveSuccess(notify, 'Total pages saved');
             return saved;
           },
           (error: unknown) => {

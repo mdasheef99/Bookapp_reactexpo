@@ -48,6 +48,16 @@ export { useStartReading } from './useStartReading';
 export { useOpenReadBookIds } from './useOpenReadBookIds';
 export { useOpenReadsWithProgress } from './useOpenReadsWithProgress';
 export { useReadProgress } from './useReadProgress';
+export { estimateDay, roughEstimateLabel, todayDay } from './estimateDay';
+export type { EstimateDirection, RoughEstimateDays } from './estimateDay';
+export {
+  goalSavedMessage,
+  leaveOutSavedMessage,
+  nextReadSavedMessage,
+  noteProgressSavedMessage,
+  notifySaveSuccess,
+  statusSavedMessage,
+} from './saveConfirmation';
 export {
   currentPosition,
   dailyPages,

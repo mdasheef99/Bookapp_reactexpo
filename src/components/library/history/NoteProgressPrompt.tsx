@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useBookReadingHistory } from '@/features/books/history/useBookReadingHistory';
 import { useReadProgress } from '@/features/books/history/useReadProgress';
 import { currentPosition } from '@/features/books/history/progressMath';
+import { noteProgressSavedMessage, notifySaveSuccess } from '@/features/books/history/saveConfirmation';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { LIBRARY_SPACING, useLibraryAppearance } from '../LibraryAppearance';
 import { LIBRARY_TEXT } from '../LibraryTypography';
@@ -113,9 +114,11 @@ export function NoteProgressPrompt({
     updateGuard.current = true;
     const attempt = () =>
       readProgress.addProgress.mutateAsync({ page: pageNumber as number }).then(
-        () => {
+        (saved) => {
           updateGuard.current = false;
           setHidden(true);
+          notifySaveSuccess(notify, noteProgressSavedMessage(pageNumber as number));
+          return saved;
         },
         (error: unknown) => {
           updateGuard.current = false;

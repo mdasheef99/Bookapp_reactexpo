@@ -199,7 +199,6 @@ export function ProgressSheet({
           style={[styles.dialog, { backgroundColor: colors.bgRaised }]}
         >
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.dialogContent}>
-            <BookFeedbackSlot />
             <Text accessibilityRole="header" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>
               {PROGRESS_SHEET_TITLE}
             </Text>
@@ -368,6 +367,9 @@ export function ProgressSheet({
             ) : null}
             <BookButton ref={closeRef} label="Close" variant="secondary" onPress={onClose} testID="library-progress-close" />
           </ScrollView>
+          <View pointerEvents="box-none" style={styles.feedbackOverlay}>
+            <BookFeedbackSlot />
+          </View>
         </View>
       </View>
     </Modal>
@@ -391,6 +393,13 @@ const styles = StyleSheet.create({
   },
   dialogContent: {
     gap: LIBRARY_SPACING.md,
+  },
+  feedbackOverlay: {
+    position: 'absolute',
+    top: LIBRARY_SPACING.sm,
+    left: LIBRARY_SPACING.sm,
+    right: LIBRARY_SPACING.sm,
+    zIndex: 1,
   },
   stepRow: {
     flexDirection: 'row',

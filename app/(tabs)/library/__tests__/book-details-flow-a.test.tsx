@@ -478,7 +478,7 @@ describe('status writes', () => {
     }
   });
 
-  it('success does not notify', async () => {
+  it('success shows the status confirmation once', async () => {
     (booksService.getBookDetails as jest.Mock).mockResolvedValue(makeBook({ reading_status: 'reading' }));
     (manualNotesGateway.list as jest.Mock).mockResolvedValue([]);
     (booksService.updateReadingStatus as jest.Mock).mockResolvedValue({});
@@ -488,7 +488,8 @@ describe('status writes', () => {
       fireEvent.press(within(ui.getByLabelText('Reading status')).getByRole('radio', { name: 'Finished' }));
       await waitFor(() => expect(booksService.updateReadingStatus).toHaveBeenCalled());
       await waitFor(() => expect(ui.client.isMutating()).toBe(0));
-      expect(mockNotify).not.toHaveBeenCalled();
+      await waitFor(() => expect(mockNotify).toHaveBeenCalledTimes(1));
+      expect(mockNotify).toHaveBeenCalledWith({ kind: 'success', message: 'Marked as Finished' });
     } finally {
       ui.unmount();
       ui.client.clear();
