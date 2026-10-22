@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, ReactNode } from 're
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useLibraryBooks } from '@/features/books/hooks/useLibraryBooks';
+import { useOpenReadBookIds } from '@/features/books/history/useOpenReadBookIds';
 import { useShelfArrangement } from '@/features/books/hooks/useShelfArrangement';
 import { LibraryArrangeControls } from '@/components/library/LibraryArrangeControls';
 import { LibraryHorizontalShelf } from '@/components/library/LibraryHorizontalShelf';
@@ -25,6 +26,8 @@ import {
     LibraryShelf,
     LibrarySummary,
 } from '@/components/library';
+import { ContinueReadingCard } from '@/components/library/history/ContinueReadingCard';
+import { GoalSummary } from '@/components/library/history/GoalSummary';
 import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import { BookButton } from '@/components/library/ui';
@@ -60,6 +63,7 @@ function LibraryHome() {
     const isShelf = viewMode === 'shelf';
     const { data, error, isError, isLoading, isRefetching, refetch } = useLibraryBooks(session?.user?.id);
     const books = useMemo(() => data ?? [], [data]);
+    const openReadIds = useOpenReadBookIds(session?.user?.id ?? '');
     const [shelfDragging, setShelfDragging] = useState(false);
 
     useEffect(() => {
@@ -99,10 +103,10 @@ function LibraryHome() {
     const collection = isShelf ? arrangement.orderedBooks : books;
     const filteredBooks = useMemo(() => filterLibraryBooks(collection, activeFilter), [activeFilter, collection]);
     const activeFilterLabel = getLibraryFilterLabel(filterChips, activeFilter);
-    const currentBook = books.find((book) => book.reading_status === 'reading' && book.ownership !== 'wishlist');
     const wishlistCount = filterChips.find((chip) => chip.key === 'wishlist')?.count ?? 0;
     const openSearch = () => router.push('/(tabs)/library/search');
     const openBook = (item: LibraryBookEntry) => router.push(`/(tabs)/library/${item.id}`);
+    const openBookById = (userBookId: string) => router.push(`/(tabs)/library/${userBookId}`);
     const exportProps = exportDeliveryAvailable() ? {
         onExport: () => { void csvExport.run(); }, exportDisabled: isOffline || arrangement.active, exportBusy: csvExport.busy,
     } : {};
@@ -141,6 +145,7 @@ function LibraryHome() {
             <View testID="library-collection-controls">
                 <LibraryFilterBar chips={filterChips} activeFilter={activeFilter} onChange={setActiveFilter} disabled={arrangement.active} />
                 <LibrarySummary count={filteredBooks.length} />
+                <GoalSummary actorId={session?.user?.id ?? ''} />
                 {isOffline && books.length > 0 && <Text accessibilityLiveRegion="polite"
                     {...(Platform.OS === 'web' ? { 'aria-live': 'polite', role: 'status' } as const : {})}
                     style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>Offline · Showing saved content.</Text>}
@@ -154,24 +159,30 @@ function LibraryHome() {
         </View>
     );
 
+    // SDD-09 H-12: one continue-reading card under the Home controls in both
+    // views. The shelf bento no longer renders its own Current Read card; the
+    // shared card below is the single Current Read display (no duplication).
+    const continueReadingCard = (
+        <ContinueReadingCard actorId={session?.user?.id ?? ''} onOpenBook={openBookById} />
+    );
+
     return (
         <LibraryPageBackground>
             {isShelf ? (
                 <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} style={styles.scrollView} scrollEnabled={!shelfDragging}>
                     <View style={styles.content}>
                         {collectionHeader}
+                        {continueReadingCard}
                         <LibraryShelfStyleControl value={shelfStyle} onChange={handleShelfStyleChange}
                             disabled={arrangement.saving || shelfDragging} />
                         <LibraryArrangeControls arrangement={arrangement} bookCount={books.length} dragging={shelfDragging}
                             interactionHint={shelfStyle === 'horizontal' ? 'Tap a book, then drag it. Hold near an edge to scroll, or use Earlier and Later.' : undefined}
                             onEnter={() => { setActiveFilter('all'); arrangement.enter(); }} />
                         {shelfStyle === 'horizontal'
-                            ? <LibraryHorizontalShelf books={filteredBooks} onBookPress={openBook} arrangement={arrangement} onDraggingChange={setShelfDragging} />
-                            : <LibraryShelf books={filteredBooks} onBookPress={openBook} arrangement={arrangement} onDraggingChange={setShelfDragging} />}
+                            ? <LibraryHorizontalShelf books={filteredBooks} onBookPress={openBook} arrangement={arrangement} onDraggingChange={setShelfDragging} openReadIds={openReadIds} />
+                            : <LibraryShelf books={filteredBooks} onBookPress={openBook} arrangement={arrangement} onDraggingChange={setShelfDragging} openReadIds={openReadIds} />}
                         <LibraryBentoGrid
-                            currentBook={currentBook ? { title: currentBook.book.title, author: currentBook.book.authors?.[0] ?? '' } : null}
                             booksCount={books.length} wishlistCount={wishlistCount}
-                            onCurrentBookPress={currentBook && !arrangement.active ? () => openBook(currentBook) : undefined}
                             onWishlistPress={arrangement.active ? undefined : () => setActiveFilter('wishlist')}
                         />
                     </View>
@@ -179,7 +190,8 @@ function LibraryHome() {
             ) : (
                 <View style={[styles.content, styles.listViewport]}>
                     <LibraryBookList books={filteredBooks} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel}
-                        isRefetching={isRefetching} onRefresh={refetch} onBookPress={openBook} onShowAll={() => setActiveFilter('all')} header={collectionHeader} />
+                        isRefetching={isRefetching} onRefresh={refetch} onBookPress={openBook} onShowAll={() => setActiveFilter('all')}
+                        header={<>{collectionHeader}{continueReadingCard}</>} />
                 </View>
             )}
         </LibraryPageBackground>

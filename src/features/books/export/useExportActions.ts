@@ -71,9 +71,10 @@ function useExportAction(actorId: string | null | undefined, context: string) {
 export function useLibraryCsvExport(actorId: string | null | undefined) {
   const action = useExportAction(actorId, JSON.stringify([actorId, 'library']));
   const run = () => action.run(async signal => {
-    const rows = await loadLibraryForExport(actorId!, signal);
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const rows = await loadLibraryForExport(actorId!, signal, { timeZone });
     if (signal.aborted) return null;
-    const csv = buildLibraryCsv(rows);
+    const csv = buildLibraryCsv(rows, { timeZone });
     if (csv.rowCount === 0) return { kind: 'empty', message: 'Your library is empty.' };
     const result = await deliverTextFile({ fileName: buildFileName('library-csv', { kind: 'all' }, new Date()),
       mimeType: 'text/csv;charset=utf-8', text: csv.text });

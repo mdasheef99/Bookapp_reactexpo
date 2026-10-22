@@ -4,7 +4,8 @@ import type { ExportLibraryRow, ExportOptions } from './types';
 
 const HEADERS = [
   'Title', 'Authors', 'ISBN-13', 'ISBN-10', 'Publisher', 'Published date', 'Pages',
-  'Status', 'Ownership', 'Condition', 'Rating', 'Review', 'Review visibility', 'Date added', 'Date finished',
+  'Status', 'Ownership', 'Condition', 'Rating', 'Review', 'Review visibility', 'Date added',
+  'Started', 'Finished', 'Times read', 'Last outcome',
 ];
 
 function guardText(value: string): string {
@@ -33,6 +34,7 @@ export function buildLibraryCsv(
       skipped += 1;
       continue;
     }
+    const history = row.history ?? { started: null, finished: null, timesRead: 0, lastOutcome: '' as const };
     const fields = [
       guardText(book.title ?? ''),
       guardText(book.authors?.join('; ') ?? ''),
@@ -48,7 +50,10 @@ export function buildLibraryCsv(
       guardText(row.review ?? ''),
       row.review ? (row.review_is_public ? 'Public' : 'Private') : '',
       formatExportDate(row.created_at, options),
-      formatExportDate(row.completed_at, options),
+      history.started ?? '',
+      history.finished ?? '',
+      history.timesRead,
+      history.lastOutcome,
     ];
     records.push(fields.map(csvField).join(','));
   }

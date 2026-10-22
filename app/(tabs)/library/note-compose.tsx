@@ -155,11 +155,11 @@ export default function NoteComposeScreen() {
   useEffect(() => {
     if (departing.current || !allowExit || !returned.current || operation?.status !== 'confirmed' || !operation.record) return;
     const record = operation.record; noteSaves.forget(operation.submission.id);
-    if (mode === 'edit') returnToSavedReader(router, navigation, returnContext, record.id);
+    if (mode === 'edit') returnToSavedReader(router, navigation, returnContext, record.id, { justSaved: true });
     else {
       const readerContext = registerNoteContext({ actorId, bookId, origin: mode === 'create' ? 'collection' : context.origin,
         canBack: mode === 'create' ? operation.submission.origin === 'collection' : context.canBack });
-      router.replace(readerHref(bookId, record.id, readerContext));
+      router.replace(readerHref(bookId, record.id, readerContext, true));
     }
   }, [allowExit, operation, mode, context.readerReturn, context.canBack, context.origin, actorId, bookId, router, navigation]);
   const save = (compared?: ManualNote) => {

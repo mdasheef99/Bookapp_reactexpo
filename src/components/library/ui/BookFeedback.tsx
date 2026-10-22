@@ -8,8 +8,12 @@ import { BookButton } from './BookButton';
 
 export type BookFeedbackKind = 'success' | 'error' | 'info';
 export interface BookConfirmSpec { title: string; message: string; keep: string; confirm: string; destructive?: boolean }
+export interface BookFeedbackAction { label: string; onPress: () => void }
+export type BookFeedbackNotifyInput =
+  | { kind: 'error'; message: string; action?: BookFeedbackAction }
+  | { kind: 'success' | 'info'; message: string; action?: never };
 export interface BookFeedbackApi {
-  notify(input: { kind: BookFeedbackKind; message: string }): void;
+  notify(input: BookFeedbackNotifyInput): void;
   confirm(spec: BookConfirmSpec): Promise<boolean>;
 }
 
@@ -47,6 +51,7 @@ function ToastRegion({ toast, dismiss }: { toast: Toast | null; dismiss: () => v
     }]}>
       <Text accessibilityRole={toast.kind === 'error' ? 'alert' : undefined}
         style={[styles.message, { color: colors.textPrimary, fontFamily: fonts.body }]}>{toast.message}</Text>
+      {toast.kind === 'error' && toast.action ? <BookButton label={toast.action.label} variant="text" onPress={toast.action.onPress} testID="book-feedback-action" /> : null}
       {toast.kind === 'error' && <BookButton label="Dismiss" variant="text" onPress={dismiss} />}
     </View>}
   </View>;

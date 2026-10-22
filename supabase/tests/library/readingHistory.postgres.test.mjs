@@ -220,6 +220,24 @@ test('the next-read choice also clears when that book is marked Finished', () =>
   assert.equal((await c.query('SELECT next_read_user_book_id FROM public.user_reading_settings WHERE user_id=$1', [OWNER])).rows[0].next_read_user_book_id, null);
 }));
 
+// Client write shapes: a PostgREST upsert sends ON CONFLICT DO UPDATE SET <every payload column>,
+// which needs UPDATE on user_id/year (not granted). Clients must update first, then insert.
+test('settings and goals: upsert shape is refused; update-then-insert works', () => asUser(OWNER, async c => {
+  await addBook(c, 37); await addBook(c, 38);
+  await c.query('INSERT INTO public.user_reading_settings(user_id,next_read_user_book_id) VALUES($1,$2)', [OWNER, UB(37)]);
+  await c.query('SAVEPOINT s');
+  await rejectsCode(c.query(`INSERT INTO public.user_reading_settings(user_id,next_read_user_book_id) VALUES($1,$2)
+    ON CONFLICT (user_id) DO UPDATE SET user_id=EXCLUDED.user_id, next_read_user_book_id=EXCLUDED.next_read_user_book_id`, [OWNER, UB(38)]), '42501');
+  await c.query('ROLLBACK TO SAVEPOINT s');
+  assert.equal((await c.query('UPDATE public.user_reading_settings SET next_read_user_book_id=$2 WHERE user_id=$1', [OWNER, UB(38)])).rowCount, 1);
+  await c.query('INSERT INTO public.user_reading_goals(user_id,year,target_books) VALUES($1,2027,12)', [OWNER]);
+  await c.query('SAVEPOINT g');
+  await rejectsCode(c.query(`INSERT INTO public.user_reading_goals(user_id,year,target_books) VALUES($1,2027,20)
+    ON CONFLICT (user_id,year) DO UPDATE SET user_id=EXCLUDED.user_id, year=EXCLUDED.year, target_books=EXCLUDED.target_books`, [OWNER]), '42501');
+  await c.query('ROLLBACK TO SAVEPOINT g');
+  assert.equal((await c.query('UPDATE public.user_reading_goals SET target_books=20 WHERE user_id=$1 AND year=2027', [OWNER])).rowCount, 1);
+}));
+
 test("another user can't see my progress, goals or settings; anon can't reopen", async () => {
   await asUser(OWNER, async c => {
     await addBook(c, 29, 'reading');

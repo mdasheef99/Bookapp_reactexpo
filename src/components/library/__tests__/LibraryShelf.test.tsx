@@ -9,6 +9,7 @@ import { LibraryShelf } from '../LibraryShelf';
 import { LibraryHorizontalShelf } from '../LibraryHorizontalShelf';
 import { LibraryBookRow } from '../LibraryBookList';
 import { LibraryBookQuickLook } from '../LibraryBookQuickLook';
+import { BookFeedbackProvider } from '../ui';
 
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('react-native-gesture-handler', () => ({
@@ -96,7 +97,12 @@ jest.mock('expo-router', () => {
 
 const renderLibraryScreen = () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } });
-    return { queryClient, ...render(<QueryClientProvider client={queryClient}><LibraryScreen /></QueryClientProvider>) };
+    return { queryClient, ...render(<QueryClientProvider client={queryClient}><BookFeedbackProvider><LibraryScreen /></BookFeedbackProvider></QueryClientProvider>) };
+};
+
+const renderWithLibraryProviders = (ui: React.ReactElement) => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } });
+    return { queryClient, ...render(<QueryClientProvider client={queryClient}><BookFeedbackProvider>{ui}</BookFeedbackProvider></QueryClientProvider>) };
 };
 
 describe('horizontal browsing and quick look', () => {
@@ -105,7 +111,7 @@ describe('horizontal browsing and quick look', () => {
     it('waits the full 450ms through the press responder before opening quick look', () => {
         jest.useFakeTimers();
         try {
-            const navigate = jest.fn(), screen = render(<LibraryHorizontalShelf books={[book]} onBookPress={navigate} />);
+            const navigate = jest.fn(), screen = renderWithLibraryProviders(<LibraryHorizontalShelf books={[book]} onBookPress={navigate} />);
             const volume = screen.getByTestId('library-horizontal-book-quick-1');
             const event = { currentTarget: 1, target: 1, persist: () => {}, nativeEvent: { pageX: 40, pageY: 100, locationX: 10, locationY: 20, touches: [{ pageX: 40, pageY: 100 }] } };
             fireEvent(volume, 'responderGrant', event);
@@ -119,7 +125,7 @@ describe('horizontal browsing and quick look', () => {
         } finally { jest.useRealTimers(); }
     });
     it('opens loaded facts after a hold, suppresses release navigation and routes the details action', () => {
-        const navigate = jest.fn(), screen = render(<LibraryHorizontalShelf books={[book]} onBookPress={navigate} />);
+        const navigate = jest.fn(), screen = renderWithLibraryProviders(<LibraryHorizontalShelf books={[book]} onBookPress={navigate} />);
         const volume = screen.getByTestId('library-horizontal-book-quick-1');
         fireEvent(volume, 'pressIn', { nativeEvent: { pageX: 40, pageY: 100 } });
         fireEvent(volume, 'longPress'); fireEvent.press(volume);
@@ -131,7 +137,7 @@ describe('horizontal browsing and quick look', () => {
         expect(navigate).toHaveBeenCalledWith(book); expect(screen.queryByTestId('library-book-quick-look')).toBeNull();
     });
     it('cancels hold and tap after pointer movement and track scrolling', () => {
-        const navigate = jest.fn(), screen = render(<LibraryHorizontalShelf books={[book]} onBookPress={navigate} />);
+        const navigate = jest.fn(), screen = renderWithLibraryProviders(<LibraryHorizontalShelf books={[book]} onBookPress={navigate} />);
         let volume = screen.getByTestId('library-horizontal-book-quick-1');
         fireEvent(volume, 'pressIn', { nativeEvent: { pageX: 40, pageY: 100 } });
         fireEvent(volume, 'touchMove', { nativeEvent: { touches: [{ pageX: 65, pageY: 100 }] } });
@@ -147,7 +153,7 @@ describe('horizontal browsing and quick look', () => {
         const motion = require('react-native-reanimated');
         motion.useReducedMotion.mockReturnValue(true); motion.withTiming.mockClear();
         try {
-            const screen = render(<LibraryHorizontalShelf books={[book]} onBookPress={jest.fn()} />);
+            const screen = renderWithLibraryProviders(<LibraryHorizontalShelf books={[book]} onBookPress={jest.fn()} />);
             const volume = screen.getByTestId('library-horizontal-book-quick-1');
             fireEvent(volume, 'hoverIn'); fireEvent(volume, 'longPress');
             expect(screen.getByTestId('library-book-quick-look')).toBeTruthy();
@@ -157,18 +163,20 @@ describe('horizontal browsing and quick look', () => {
     });
     it('provides a visible chooser alternative, omits missing facts and dismisses with back', () => {
         const unknown = { id: 'unknown', reading_status: null, ownership: null, book: { title: 'Unknown' } };
-        const screen = render(<LibraryHorizontalShelf books={[unknown]} onBookPress={jest.fn()} />);
+        const screen = renderWithLibraryProviders(<LibraryHorizontalShelf books={[unknown]} onBookPress={jest.fn()} />);
         fireEvent.press(screen.getByTestId('library-book-picker-open'));
         fireEvent.press(screen.getByTestId('library-book-picker-quick-unknown'));
         expect(screen.getByTestId('library-book-quick-look')).toBeTruthy();
         expect(screen.getAllByText('Not recorded')).toHaveLength(2);
         for (const value of ['Pages', 'Lending', 'Your rating', 'Your review', 'Condition']) expect(screen.queryByText(value)).toBeNull();
-        fireEvent(screen.UNSAFE_getByType(require('react-native').Modal), 'requestClose');
+        const quickLookModal = screen.UNSAFE_getAllByType(require('react-native').Modal)
+            .find((modal: any) => modal.props.accessibilityLabel === 'Book quick look')!;
+        fireEvent(quickLookModal, 'requestClose');
         expect(screen.queryByTestId('library-book-quick-look')).toBeNull();
     });
     it('exposes independent overflow controls and updates their boundaries', () => {
         const books = Array.from({ length: 17 }, (_, i) => ({ ...book, id: `overflow-${i}` }));
-        const screen = render(<LibraryHorizontalShelf books={books} onBookPress={jest.fn()} />);
+        const screen = renderWithLibraryProviders(<LibraryHorizontalShelf books={books} onBookPress={jest.fn()} />);
         fireEvent(screen.getByTestId('library-horizontal-shelf'), 'layout', { nativeEvent: { layout: { width: 300 } } });
         expect(screen.getByTestId('library-horizontal-top-previous').props.accessibilityState.disabled).toBe(true);
         expect(screen.getByTestId('library-horizontal-top-next').props.accessibilityState.disabled).toBe(false);
@@ -192,7 +200,7 @@ describe('D07-08 / D07-13 home and quick-look labels', () => {
     it.each([true, false])('omits every Lending fact for available_for_lending=%s and uses shared labels', available_for_lending => {
         const book = { id: 'quick', ownership: 'lent_out', reading_status: 'completed', condition: 'acceptable', available_for_lending,
             book: { title: 'A book' } };
-        const ui = render(<LibraryBookQuickLook book={book} onClose={jest.fn()} onDetails={jest.fn()} />);
+        const ui = renderWithLibraryProviders(<LibraryBookQuickLook book={book} onClose={jest.fn()} onDetails={jest.fn()} />);
         expect(ui.queryByText('Lending')).toBeNull();
         expect(ui.queryByText('Available to lend')).toBeNull();
         expect(ui.queryByText('Not available to lend')).toBeNull();
@@ -200,7 +208,7 @@ describe('D07-08 / D07-13 home and quick-look labels', () => {
     });
     it.each([null, ''])('keeps Not recorded for missing status/ownership %s and omits an empty condition', missing => {
         const book = { id: 'quick', ownership: missing, reading_status: missing, condition: '', book: { title: 'A book' } };
-        const ui = render(<LibraryBookQuickLook book={book} onClose={jest.fn()} onDetails={jest.fn()} />);
+        const ui = renderWithLibraryProviders(<LibraryBookQuickLook book={book} onClose={jest.fn()} onDetails={jest.fn()} />);
         expect(ui.getAllByText('Not recorded')).toHaveLength(2);
         expect(ui.queryByText('Condition')).toBeNull();
     });
@@ -275,7 +283,7 @@ describe('horizontal Shelf layout checkpoint', () => {
     });
     it('renders separate overflow tracks with fixed planks outside them and no duplicate IDs', () => {
         const books = Array.from({ length: 17 }, (_, index) => ({ id: `pile-${index}`, ownership: 'owned', reading_status: 'want_to_read', book: { title: 'Pile book' } }));
-        const screen = render(<LibraryHorizontalShelf books={books} onBookPress={jest.fn()} />);
+        const screen = renderWithLibraryProviders(<LibraryHorizontalShelf books={books} onBookPress={jest.fn()} />);
         fireEvent(screen.getByTestId('library-horizontal-shelf'), 'layout', { nativeEvent: { layout: { width: 342 } } });
         const upper = screen.getByTestId('library-horizontal-scroll-top');
         const lower = screen.getByTestId('library-horizontal-scroll-bottom');
@@ -647,21 +655,41 @@ describe('LibraryShelf single shelf SDD-04', () => {
         ];
         (booksService.getUserLibrary as jest.Mock).mockResolvedValueOnce(entries);
         (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce('shelf');
-        const { getByLabelText, getByTestId, getByText, queryByText, queryByTestId, queryClient, unmount } = renderLibraryScreen();
-        await waitFor(() => expect(getByTestId('library-shelf-spine-reading-entry')).toBeTruthy());
-        expect(getByText('In your library')).toBeTruthy();
-        expect(getByLabelText('All, 2 books')).toBeTruthy();
-        expect(getByLabelText('Show wishlist, 1 books')).toBeTruthy();
-        expect(queryByText('New Notes')).toBeNull();
-        expect(queryByText('65%')).toBeNull();
-        expect(queryByText('148')).toBeNull();
-        fireEvent.press(getByLabelText('Show wishlist, 1 books'));
-        expect(getByTestId('library-shelf-spine-wishlist-entry')).toBeTruthy();
-        expect(queryByTestId('library-shelf-spine-reading-entry')).toBeNull();
-        fireEvent.press(getByLabelText('Continue reading Actual Reading Book'));
-        expect(require('expo-router').router.push).toHaveBeenCalledWith('/(tabs)/library/reading-entry');
-        unmount();
-        queryClient.clear();
+        // SDD-09 H-12: the Current Read display is the shared ContinueReadingCard
+        // (gateway-driven), not the bento prop, so this test feeds the new source.
+        const { readingHistoryGateway } = require('@/features/books/history/readingHistoryGateway');
+        const openReadsSpy = jest.spyOn(readingHistoryGateway, 'openReadsWithProgress').mockResolvedValue([
+            {
+                read: {
+                    id: 'read-1', user_book_id: 'reading-entry', user_id: 'reader-1', read_number: 1,
+                    outcome: 'reading', started_at: '2026-10-01T10:00:00.000Z', ended_at: null,
+                    started_on: null, ended_on: null, start_unknown: false, end_unknown: false,
+                    total_pages: 320, counts_in_stats: true, created_at: '2026-10-01T10:00:00.000Z',
+                    updated_at: '2026-10-20T10:00:00.000Z',
+                },
+                bookTitle: 'Actual Reading Book',
+                latestProgress: null,
+            },
+        ]);
+        try {
+            const { getByLabelText, getByTestId, getByText, queryByText, queryByTestId, queryClient, unmount } = renderLibraryScreen();
+            await waitFor(() => expect(getByTestId('library-shelf-spine-reading-entry')).toBeTruthy());
+            expect(getByText('In your library')).toBeTruthy();
+            expect(getByLabelText('All, 2 books')).toBeTruthy();
+            expect(getByLabelText('Show wishlist, 1 books')).toBeTruthy();
+            expect(queryByText('New Notes')).toBeNull();
+            expect(queryByText('65%')).toBeNull();
+            expect(queryByText('148')).toBeNull();
+            fireEvent.press(getByLabelText('Show wishlist, 1 books'));
+            expect(getByTestId('library-shelf-spine-wishlist-entry')).toBeTruthy();
+            expect(queryByTestId('library-shelf-spine-reading-entry')).toBeNull();
+            fireEvent.press(getByLabelText('Continue reading Actual Reading Book'));
+            expect(require('expo-router').router.push).toHaveBeenCalledWith('/(tabs)/library/reading-entry');
+            unmount();
+            queryClient.clear();
+        } finally {
+            openReadsSpy.mockRestore();
+        }
     });
 
     describe('F2 [bookId] route transition (SDD-05 §3)', () => {

@@ -33,6 +33,10 @@ export interface BookSectionColors {
     accentPressed: string;
     /** PROPOSED - focus indicator, the one boundary that must clear 3:1 on every surface. */
     focusRing: string;
+    /** SDD-09 H-06 reading outline: neutral accent for books with an open read, >= 3:1 on shelf wood. */
+    readingOutline: string;
+    /** SDD-09 Unit 2b fix: dark inner stroke of the two-tone reading ring; with readingOutline, max contrast >= 3:1 on any cloth or wood. */
+    readingOutlineInner: string;
     // Lines
     /** Alias of border. Decorative: today's border sits at 1.37-1.80:1. */
     divider: string;
@@ -77,7 +81,7 @@ const daylightPalette: PaletteBase = {
     bgPrimary: '#faf6ee', bgSecondary: '#eee5d6', bgCard: '#fffdf8', bgRaised: '#fffaf0',
     overlay: 'rgba(39, 28, 19, 0.55)',
     textPrimary: '#30291f', textSecondary: '#685d4d', textTertiary: '#6f6350', textDisabled: '#a4987f',
-    accent: '#3e3225', accentPressed: '#2b2219', focusRing: '#7a5c33', onAccent: '#fffaf1',
+    accent: '#3e3225', accentPressed: '#2b2219', focusRing: '#7a5c33', readingOutline: '#a8d5c8', readingOutlineInner: '#0f2420', onAccent: '#fffaf1',
     border: '#ded3c1', controlBorder: '#8a7c60',
     error: '#ad3f36', errorSurface: '#f9ebe8', onErrorSurface: '#fff8f4',
     success: '#3f6b4a', successSurface: '#e6efe6', info: '#2f5670', infoSurface: '#e6eef3',
@@ -90,7 +94,7 @@ const goldenPalette: PaletteBase = {
     bgPrimary: '#fbf2e4', bgSecondary: '#f0e0c8', bgCard: '#fff9ed', bgRaised: '#fff8e8',
     overlay: 'rgba(51, 35, 21, 0.55)',
     textPrimary: '#33271d', textSecondary: '#6a5845', textTertiary: '#755c48', textDisabled: '#a68f70',
-    accent: '#493627', accentPressed: '#34261b', focusRing: '#86632f', onAccent: '#fff8ec',
+    accent: '#493627', accentPressed: '#34261b', focusRing: '#86632f', readingOutline: '#e6d3a8', readingOutlineInner: '#3d2c14', onAccent: '#fff8ec',
     border: '#deceb6', controlBorder: '#93794f',
     error: '#9c382f', errorSurface: '#f9e7e2', onErrorSurface: '#fff7f0',
     success: '#43613f', successSurface: '#e8efdf', info: '#33566b', infoSurface: '#e7eef1',
@@ -103,7 +107,7 @@ const midnightPalette: PaletteBase = {
     bgPrimary: '#211e1a', bgSecondary: '#383229', bgCard: '#2d2923', bgRaised: '#37312a',
     overlay: 'rgba(5, 4, 2, 0.62)',
     textPrimary: '#f3eada', textSecondary: '#c4b8a4', textTertiary: '#b4a58c', textDisabled: '#6e6252',
-    accent: '#dfc496', accentPressed: '#c9ab77', focusRing: '#f0d9ae', onAccent: '#2c2318',
+    accent: '#dfc496', accentPressed: '#c9ab77', focusRing: '#f0d9ae', readingOutline: '#c2dde3', readingOutlineInner: '#10222b', onAccent: '#2c2318',
     border: '#504638', controlBorder: '#8d7f66',
     error: '#ffb3a6', errorSurface: '#402723', onErrorSurface: '#2b1512',
     success: '#a9c69b', successSurface: '#2b3327', info: '#a8c6d6', infoSurface: '#232f36',

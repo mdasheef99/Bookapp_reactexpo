@@ -1,19 +1,66 @@
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { NoteWriteError } from '../notes/manualNoteContract';
-import type { ExportLibraryRow, ExportNote, ExportNotesBook } from './types';
+import { formatExportDate } from './dates';
+import type { ExportHistorySummary, ExportLibraryRow, ExportNote, ExportNotesBook, ExportOptions } from './types';
 
 const PAGE_SIZE = 500;
-const LIBRARY_COLUMNS = 'reading_status,ownership,condition,rating,review,review_is_public,created_at,completed_at,user_id,book:books(title,authors,isbn_13,isbn_10,publisher,published_date,page_count)';
+const LIBRARY_COLUMNS = 'id,reading_status,ownership,condition,rating,review,review_is_public,created_at,completed_at,user_id,book:books(title,authors,isbn_13,isbn_10,publisher,published_date,page_count)';
 const BOOK_COLUMNS = 'id,user_id,book:books(title,authors)';
 const NOTE_COLUMNS = 'id,user_id,user_book_id,content,tag,page_number,created_at,updated_at';
+const READS_COLUMNS = 'id,user_id,user_book_id,read_number,outcome,started_at,ended_at,started_on,ended_on,start_unknown,end_unknown,created_at';
 type RelatedBook = Pick<ExportNotesBook, 'title' | 'authors'>;
 type BookRow = { id: string; user_id: string; book: RelatedBook | RelatedBook[] | null };
 type NoteRow = ExportNote & { id: string; user_id: string; user_book_id: string };
-type LibraryRow = Omit<ExportLibraryRow, 'book'> & {
+type LibraryRow = Omit<ExportLibraryRow, 'book' | 'history'> & {
+  id: string;
   user_id: string;
   book: ExportLibraryRow['book'] | NonNullable<ExportLibraryRow['book']>[];
 };
+type HistoryReadRow = {
+  id: string;
+  user_id: string;
+  user_book_id: string;
+  read_number: number;
+  outcome: string;
+  started_at: string | null;
+  ended_at: string | null;
+  started_on: string | null;
+  ended_on: string | null;
+  start_unknown: boolean;
+  end_unknown: boolean;
+  created_at: string | null;
+};
+
+function exportEdgeToDay(
+  picked: string | null,
+  instant: string | null,
+  unknownFlag: boolean,
+  options?: ExportOptions,
+): string | null {
+  if (unknownFlag) return null;
+  if (typeof picked === 'string' && picked.length > 0) return picked;
+  if (typeof instant === 'string' && instant.length > 0) {
+    const day = formatExportDate(instant, options ?? {});
+    return day === '' ? null : day;
+  }
+  return null;
+}
+
+function historySummaryForBook(reads: HistoryReadRow[], options?: ExportOptions): ExportHistorySummary {
+  if (reads.length === 0) return { started: null, finished: null, timesRead: 0, lastOutcome: '' };
+  const sorted = [...reads].sort((a, b) => a.read_number - b.read_number);
+  const latest = sorted[sorted.length - 1];
+  const start = exportEdgeToDay(latest.started_on, latest.started_at, latest.start_unknown, options);
+  const rawEnd = exportEdgeToDay(latest.ended_on, latest.ended_at, latest.end_unknown, options);
+  // A stopped read's end is a stop date, not a finish (SDD-09 Unit 2b fix).
+  const finished = latest.outcome === 'finished' ? rawEnd : null;
+  const timesRead = sorted.filter((read) => read.outcome === 'finished').length;
+  const lastOutcome = latest.outcome === 'reading' ? 'Reading'
+    : latest.outcome === 'finished' ? 'Finished'
+    : latest.outcome === 'did_not_finish' ? 'Did not finish' : '';
+  return { started: start, finished, timesRead, lastOutcome };
+}
 
 function checkRequest(actorId: string, signal?: AbortSignal) {
   if (signal?.aborted) {
@@ -36,7 +83,7 @@ function relatedBook<T>(book: T | T[] | null): T | null {
 }
 
 async function readPages<T extends { user_id: string }>(
-  table: 'user_books' | 'reading_notes', columns: string, actorId: string,
+  table: 'user_books' | 'reading_notes' | 'user_book_reads', columns: string, actorId: string,
   ascending: boolean, signal?: AbortSignal, equalities: Record<string, string> = {},
 ): Promise<T[]> {
   const rows: T[] = [];
@@ -57,9 +104,25 @@ async function readPages<T extends { user_id: string }>(
   }
 }
 
-export async function loadLibraryForExport(actorId: string, signal?: AbortSignal): Promise<ExportLibraryRow[]> {
+export async function loadLibraryForExport(
+  actorId: string,
+  signal?: AbortSignal,
+  options?: ExportOptions,
+): Promise<ExportLibraryRow[]> {
   const rows = await readPages<LibraryRow>('user_books', LIBRARY_COLUMNS, actorId, false, signal);
-  return rows.map(({ user_id: _owner, book, ...row }) => ({ ...row, book: relatedBook(book) }));
+  const reads = await readPages<HistoryReadRow>('user_book_reads', READS_COLUMNS, actorId, true, signal);
+  const byBook = new Map<string, HistoryReadRow[]>();
+  for (const read of reads) {
+    if (read.user_id !== actorId) continue;
+    const list = byBook.get(read.user_book_id) ?? [];
+    list.push(read);
+    byBook.set(read.user_book_id, list);
+  }
+  return rows.map(({ user_id: _owner, id, book, ...row }) => ({
+    ...row,
+    book: relatedBook(book),
+    history: historySummaryForBook(byBook.get(id) ?? [], options),
+  }));
 }
 
 function exportNote(note: ExportNote): ExportNote {

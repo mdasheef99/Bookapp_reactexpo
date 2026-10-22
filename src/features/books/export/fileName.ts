@@ -36,6 +36,7 @@ export function buildFileName(
 ): string {
   const day = formatExportDate(date, options);
   if (kind === 'library-csv') return `bookconnect-library-${day}.csv`;
+  if (kind === 'year-png') return `bookconnect-year-${day}.png`;
   const slug = scope.kind === 'all' ? 'all' : bookSlug(scope.title);
   if (kind === 'quote-png') return `bookconnect-quote-${slug}-${day}.png`;
   const extension = kind === 'notes-md' ? 'md' : 'pdf';

@@ -17,9 +17,9 @@ import { CABINET_WOOD_TEXTURE_URI } from './cabinetWoodTexture';
 import { useHorizontalShelfDrag } from './useHorizontalShelfDrag';
 import { LibraryBookQuickLook } from './LibraryBookQuickLook';
 
-export function LibraryHorizontalShelf({ books, onBookPress, arrangement, onDraggingChange }: {
+export function LibraryHorizontalShelf({ books, onBookPress, arrangement, onDraggingChange, openReadIds }: {
     books: LibraryBookEntry[]; onBookPress: (book: LibraryBookEntry) => void; arrangement?: ShelfArrangement;
-    onDraggingChange?: (active: boolean) => void;
+    onDraggingChange?: (active: boolean) => void; openReadIds?: ReadonlySet<string>;
 }) {
     const fonts = useLibraryTypography();
     const colors = useLibraryAppearance();
@@ -126,6 +126,7 @@ export function LibraryHorizontalShelf({ books, onBookPress, arrangement, onDrag
                         onPress={() => arranging ? selectBook(volume.item) : onBookPress(volume.item)}
                         onQuickLook={() => openQuickLook(volume.item)} cancelSignal={cancelSignal}
                         selected={selectedId === volume.item.id} arranging={arranging} disabled={!!arrangement?.saving}
+                        reading={openReadIds?.has(volume.item.id) ?? false}
                         onInteractionChange={(book, source, active) => {
                             const setSourceId = source === 'focus' ? setFocusedId : setHoveredId;
                             setSourceId((previous) => active ? book.id : previous === book.id ? null : previous);

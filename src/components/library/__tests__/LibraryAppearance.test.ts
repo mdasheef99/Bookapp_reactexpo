@@ -64,6 +64,10 @@ const BOOK_TOKEN_PAIRS: readonly TokenPair[] = [
     { token: 'info', background: 'bgCard', role: 'text' },
     { token: 'info', background: 'infoSurface', role: 'text' },
     { token: 'coverPlaceholderInk', background: 'coverPlaceholder', role: 'text' },
+    { token: 'readingOutline', background: 'shadow', role: 'uiBoundary' },
+    // readingOutlineInner is measured against the physical cloth and wood in
+    // readingOutline.test.tsx (two-tone max >= 3:1), not against a phase surface.
+    { token: 'readingOutlineInner', background: 'bgPrimary', role: 'decorative' },
     { token: 'accent', background: 'bgPrimary', role: 'uiBoundary' },
     { token: 'accent', background: 'bgCard', role: 'uiBoundary' },
     { token: 'accentPressed', background: 'bgPrimary', role: 'uiBoundary' },

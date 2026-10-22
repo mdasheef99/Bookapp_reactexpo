@@ -9,7 +9,7 @@ import { stableSeed, spineMetrics, spineColorFromTitle, spineTextColor, spineDiv
 import { useLibraryTypography } from './LibraryTypography';
 import { BOOK_CLOTH_TEXTURE_URI } from './bookClothTexture';
 
-export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractionChange, tiltDeg = 0, swept = false, gapAfter = 0, arranging = false, selected = false, testID }: {
+export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractionChange, tiltDeg = 0, swept = false, gapAfter = 0, arranging = false, selected = false, reading = false, testID }: {
     item: LibraryBookEntry;
     index: number;
     onPress: () => void;
@@ -21,6 +21,7 @@ export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractio
     gapAfter?: number;
     arranging?: boolean;
     selected?: boolean;
+    reading?: boolean;
     testID?: string;
 }) {
     const fonts = useLibraryTypography();
@@ -100,7 +101,7 @@ export function BookSpine({ item, onPress, isReduceMotion, playTak, onInteractio
                 onHoverIn={handleHoverIn} onHoverOut={handleHoverOut}
                 onFocus={handleFocus} onBlur={handleBlur}
                 accessibilityRole="button"
-                accessibilityLabel={`${arranging ? 'Select' : 'Open'} ${item.book.title}${item.book.authors?.[0] ? ` by ${item.book.authors[0]}` : ''}`}
+                accessibilityLabel={`${arranging ? 'Select' : 'Open'} ${item.book.title}${item.book.authors?.[0] ? ` by ${item.book.authors[0]}` : ''}${reading ? ', Reading' : ''}`}
                 accessibilityState={arranging ? { selected } : undefined}
                 accessibilityHint={arranging ? 'Select, then drag this book or use the Earlier and Later controls below the shelf' : undefined}
                 testID={testID ?? `library-shelf-spine-${item.id}`}

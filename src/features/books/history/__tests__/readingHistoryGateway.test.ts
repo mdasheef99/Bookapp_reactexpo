@@ -68,6 +68,9 @@ describe('actor checks', () => {
     await expect(readingHistoryGateway.readsForUser('actor')).rejects.toThrow(
       'Sign in again to continue.',
     );
+    await expect(readingHistoryGateway.openReadBookIds('actor')).rejects.toThrow(
+      'Sign in again to continue.',
+    );
     await expect(readingHistoryGateway.progressForRead('actor', 'read-1')).rejects.toThrow(
       'Sign in again to continue.',
     );
@@ -204,11 +207,38 @@ describe('ordering', () => {
     expect(builder.order).toHaveBeenCalledWith('read_number', { ascending: true });
   });
 
-  it('orders readsForUser by ended_at descending nulls last', async () => {
+  it('orders readsForUser by read_number then created_at for a stable order', async () => {
     const builder = queryBuilder({ data: [], error: null });
     fromMock.mockReturnValueOnce(builder);
     await readingHistoryGateway.readsForUser('actor');
-    expect(builder.order).toHaveBeenCalledWith('ended_at', { ascending: false, nullsFirst: false });
+    expect(builder.order).toHaveBeenNthCalledWith(1, 'read_number', { ascending: true });
+    expect(builder.order).toHaveBeenNthCalledWith(2, 'created_at', { ascending: true });
+  });
+
+  it('openReadBookIds selects only the open-read columns and filters to reading', async () => {
+    const builder = queryBuilder({
+      data: [
+        { user_book_id: 'book-1', user_id: 'actor', outcome: 'reading' },
+        { user_book_id: 'book-foreign', user_id: 'other', outcome: 'reading' },
+        { user_book_id: 'book-finished', user_id: 'actor', outcome: 'finished' },
+        { user_book_id: '', user_id: 'actor', outcome: 'reading' },
+      ],
+      error: null,
+    });
+    fromMock.mockReturnValueOnce(builder);
+    await expect(readingHistoryGateway.openReadBookIds('actor')).resolves.toEqual(['book-1']);
+    expect(fromMock).toHaveBeenCalledWith('user_book_reads');
+    expect(builder.select).toHaveBeenCalledWith('user_book_id,user_id,outcome');
+    expect(builder.eq).toHaveBeenCalledWith('user_id', 'actor');
+    expect(builder.eq).toHaveBeenCalledWith('outcome', 'reading');
+  });
+
+  it('openReadBookIds forwards an AbortSignal', async () => {
+    const builder = queryBuilder({ data: [], error: null });
+    fromMock.mockReturnValueOnce(builder);
+    const controller = new AbortController();
+    await readingHistoryGateway.openReadBookIds('actor', controller.signal);
+    expect(builder.abortSignal).toHaveBeenCalledWith(controller.signal);
   });
 
   it('orders progressForRead by recorded_at ascending', async () => {

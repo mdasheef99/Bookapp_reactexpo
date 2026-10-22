@@ -43,7 +43,19 @@ jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({
 jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => ({ session: { user: { id: 'actor' } } }) }));
 jest.mock('@/features/books/hooks/useLibraryBooks', () => ({ useLibraryBooks: () => ({ data: [], isLoading: false, isError: false, isRefetching: false }) }));
 jest.mock('@/features/books/hooks/useShelfArrangement', () => ({ useShelfArrangement: () => ({ active: false, orderedBooks: [], cancel: jest.fn() }) }));
-jest.mock('@tanstack/react-query', () => ({ useQuery: () => ({ data: [], isPending: false, isError: false, isRefetching: false }) }));
+jest.mock('@tanstack/react-query', () => {
+  const React = require('react');
+  return {
+    useQuery: () => ({ data: [], isPending: false, isError: false, isRefetching: false }),
+    // SDD-09 H-12: Home renders the continue-reading card, which also uses
+    // the client and mutations. The static empty state keeps these suites on
+    // the library rows and export wiring.
+    useQueryClient: () => ({ invalidateQueries: jest.fn() }),
+    useMutation: () => ({ mutateAsync: jest.fn(), isPending: false }),
+    QueryClient: jest.fn(),
+    QueryClientProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  };
+});
 jest.mock('@/features/books/notes/useManualNotes', () => ({
   useNoteContext: () => ({ actorId: 'actor', book: { data: { id: 'book-id', title: 'Walden' }, isPending: false, isError: false } }),
   useNoteOperations: () => [],
@@ -82,7 +94,7 @@ it('reads fresh library rows, sends a dated UTF-8 CSV and gives inline saved fee
   const { result } = renderHook(() => useLibraryCsvExport('actor'));
   expect(result.current.feedback).toBeNull();
   await act(async () => { await result.current.run(); });
-  expect(loadLibraryForExport).toHaveBeenCalledWith('actor', expect.any(AbortSignal));
+  expect(loadLibraryForExport).toHaveBeenCalledWith('actor', expect.any(AbortSignal), { timeZone: expect.any(String) });
   expect(deliverTextFile).toHaveBeenCalledWith({ fileName: 'bookconnect-library-2026-10-21.csv',
     mimeType: 'text/csv;charset=utf-8', text: expect.stringContaining('Private review') });
   expect((deliverTextFile as jest.Mock).mock.calls[0][0].text.startsWith('\uFEFF')).toBe(true);
@@ -379,12 +391,14 @@ describe('native exports', () => {
 
   it.each(['android', 'ios'] as const)('renders the native Library CSV entry on %s and shares without a caption', async platform => {
     const previousOS = Platform.OS; Platform.OS = platform;
-    const ui = render(<LibraryScreen />);
+    // SDD-09 H-12: Home now renders the continue-reading card, which notifies
+    // through the library feedback provider (always present via LibraryLayout).
+    const ui = render(<BookFeedbackProvider><LibraryScreen /></BookFeedbackProvider>);
     try {
       const entry = ui.getByRole('button', { name: 'Export library as CSV' });
       expect(entry).toBeEnabled();
       await act(async () => { fireEvent.press(entry); });
-      expect(loadLibraryForExport).toHaveBeenCalledWith('actor', expect.any(AbortSignal));
+      expect(loadLibraryForExport).toHaveBeenCalledWith('actor', expect.any(AbortSignal), { timeZone: expect.any(String) });
       expect(deliverTextFile).toHaveBeenCalledTimes(1);
       expect(ui.queryByText('Saved to your downloads.')).toBeNull();
     } finally { ui.unmount(); Platform.OS = previousOS; }

@@ -51,6 +51,7 @@ export interface ReadingSettings {
 export const historyKeys = {
   readsForBook: (actor: string, book: string) => ['library-history-reads-book', actor, book] as const,
   readsForUser: (actor: string) => ['library-history-reads-user', actor] as const,
+  openReads: (actor: string) => ['library-history-open-reads', actor] as const,
   progressForRead: (actor: string, read: string) => ['library-history-progress', actor, read] as const,
   goal: (actor: string, year: number) => ['library-history-goal', actor, year] as const,
   settings: (actor: string) => ['library-history-settings', actor] as const,
@@ -63,13 +64,20 @@ export class ReadingHistoryError extends Error {
   }
 }
 
-function toLocalDay(value: string | null): string | null {
+export function toLocalDay(value: string | null, timeZone?: string): string | null {
   if (value === null) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === 'year')?.value.padStart(4, '0');
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+  if (!year || !month || !day) return null;
   return `${year}-${month}-${day}`;
 }
 
@@ -80,11 +88,15 @@ export type ReadDateEdges = Pick<
 
 /**
  * Effective calendar days (YYYY-MM-DD) for a read.
- * A picked day wins over the instant (converted to the device's local day);
+ * A picked day wins over the instant (converted to the local day in
+ * `timeZone`, or the device zone when omitted);
  * `*_unknown = true` forces null.
  */
-export function effectiveReadDates(read: ReadDateEdges): { start: string | null; end: string | null } {
-  const start = read.start_unknown ? null : (read.started_on ?? toLocalDay(read.started_at));
-  const end = read.end_unknown ? null : (read.ended_on ?? toLocalDay(read.ended_at));
+export function effectiveReadDates(
+  read: ReadDateEdges,
+  timeZone?: string,
+): { start: string | null; end: string | null } {
+  const start = read.start_unknown ? null : (read.started_on ?? toLocalDay(read.started_at, timeZone));
+  const end = read.end_unknown ? null : (read.ended_on ?? toLocalDay(read.ended_at, timeZone));
   return { start: start ?? null, end: end ?? null };
 }
