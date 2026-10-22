@@ -1399,3 +1399,16 @@ Verification: `tsc` 0; `lint:library` 0 errors; library Jest 2,043/2,043. The le
 Owner: stars on Book Details were too easy to change; the rating should change only via the edit button, and the button should read just "Edit". Book Details now shows the stars as one image ("Your rating: N of 5" / "Not rated yet") and an "Edit" button (accessible name "Edit your rating and review"); the rating changes only on the review page, as part of its draft. `BookButton` gained an optional `accessibilityLabel`. The lead made the product change; a Sonnet subagent updated 30 tests (Muse stalled three times on opencode permission refusals), moving rating-save guarantees to the review page, and added `RatingReviewSummary.test.tsx`.
 
 Verification: `tsc` 0; `lint:library` 0 errors; library Jest 2,055/2,055 (re-run by the lead). Android (`rp-shots5`, viewed by the lead): 4 display stars plus "Edit" under the cover; tapping a star changes nothing; "Edit" opens the review page with the stars editable. Residual: the `ratingSavedMessage` fallback in `useReviewWrite` stays as an unreachable path. No database changes.
+
+### 2026-10-23 — Android crash when saving a rating change
+
+Owner reported that the app crashed on the emulator after changing the rating and tapping Save. The lead reproduced it. Logcat showed `IllegalStateException: addViewAt: ... The specified child already has a parent` (ReactTextView) in the Fabric mount layer.
+
+Root cause: on React Native 0.81 New Architecture, Android flattens a View that has only layout styles. `RatingInput` is `disabled={saving}` while Save runs, and its disabled style adds `opacity`. That switched the group View from flattened to real, so Fabric re-parented its Text children and threw. The same thing can happen in `ChoiceRadioGroup` (disabled opacity) and the `LibraryFilterBar` row. Fix (commit `74b16ee`): `collapsable={false}` on those three views, with guard tests for RatingInput and ChoiceRadioGroup. The Book Details render fixture was regenerated; the only change is four `collapsable: false` lines.
+
+Why nothing caught it:
+- It is a native mount exception, outside JavaScript, so the root error boundary cannot catch it. Dev builds show the dev-launcher error screen; a release build would close the app.
+- Jest's renderer never mounts native views.
+- The same "child already has a parent" error was seen once during SDD-09 and was wrongly dismissed as a dev glitch.
+
+Verification: `tsc` 0; `lint:library` 0 errors (103 warnings); library Jest 2,056/2,056. Android retest (`crash2`, screenshots viewed by the lead): Hooked → Edit → 4 stars → Save showed "Review saved" and returned to Book Details with 4 stars. Then 5 stars, text, Public on → Save gave 5 stars and the new text. No `addViewAt` or "already has a parent" in logcat, and the app process was unchanged throughout. Dev-account data changed through the app only (Hooked: 5 stars, public review "Retest note"). No database changes.
