@@ -162,10 +162,14 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
         try {
             await ui.findByText('Beloved');
             const collapsed = normalize(ui.toJSON());
-            for (const id of ['review', 'saved', 'info', 'ownership', 'community']) {
+            // The review row (SDD-07 §14.1) is plain and non-expandable: stars
+            // stay visible with no inline editor; text editing lives on the
+            // review page. Only the expandable rows are pressed here.
+            for (const id of ['saved', 'info', 'ownership', 'community']) {
                 fireEvent.press(ui.getByTestId(`book-row-${id}`));
             }
-            await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Existing review'));
+            await waitFor(() => expect(ui.getByTestId('book-row-review')).toBeTruthy());
+            expect(ui.queryByTestId('library-review-input')).toBeNull();
             const expanded = normalize(ui.toJSON());
             fireEvent.press(ui.getByRole('button', { name: 'Remove from library' }));
             const removal = normalize(ui.toJSON());
@@ -201,10 +205,13 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
             }
             expect(ui.queryByText('Completed')).toBeNull();
             expect(within(ui.getByLabelText('Reading status')).UNSAFE_queryAllByType('Ionicons' as any)).toHaveLength(0);
-            fireEvent.press(ui.getByTestId('book-row-review'));
             fireEvent.press(ui.getByTestId('book-row-saved'));
             fireEvent.press(ui.getByTestId('book-row-ownership'));
-            expect(StyleSheet.flatten(ui.getByTestId('library-review-input').props.style).borderColor).toBe(colors.controlBorder);
+            // No inline review editor on Book Details (SDD-07 §14.3); the row
+            // shows stars plus a text button that opens the review page.
+            expect(ui.queryByTestId('library-review-input')).toBeNull();
+            expect(ui.getByTestId('book-row-review')).toBeTruthy();
+            expect(ui.getByRole('button', { name: 'Edit review' })).toBeTruthy();
             for (const [label, selected] of [['Owned', true], ['Lent out', false], ['Borrowed', false], ['Wishlist', false]] as const) {
                 expect(backgroundStyle(ui.getByText(label))).toMatchObject({
                     backgroundColor: selected ? colors.bgCard : colors.bgSecondary,

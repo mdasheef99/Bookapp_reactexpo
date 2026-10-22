@@ -516,8 +516,10 @@ describe('Unit 4 on Book Details', () => {
         </QueryClientProvider>,
       );
       await ui.findByTestId('library-finish-panel');
-      fireEvent.press(ui.getByTestId('book-row-review'));
-      await ui.findByTestId('library-review-input');
+      // Review row hides its stars while the Finished panel shows its own
+      // rating (SDD-07 §14.1), so exactly one radiogroup is visible with no
+      // expand needed and no inline editor.
+      expect(ui.queryByTestId('library-review-input')).toBeNull();
       const ratings = ui.queryAllByLabelText('Your rating').filter(
         (node: { props: { accessibilityRole?: string } }) => node.props.accessibilityRole === 'radiogroup',
       );

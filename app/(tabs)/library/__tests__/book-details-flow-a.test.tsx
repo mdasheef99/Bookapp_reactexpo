@@ -650,7 +650,7 @@ describe('DP-01 focus order', () => {
       expectSinglePrimary(ui);
       expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Add note']);
 
-      for (const id of ['review', 'saved', 'info', 'ownership', 'community']) {
+      for (const id of ['saved', 'info', 'ownership', 'community']) {
         fireEvent.press(ui.getByTestId(`book-row-${id}`));
       }
       expectSinglePrimary(ui);

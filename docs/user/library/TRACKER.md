@@ -1375,3 +1375,12 @@ Owner asked to fix 200% text clipping before merging SDD-09. Cause: `LIBRARY_TEX
 - `jest.setup.ts` pins the ambient font scale to 1 for deterministic tests (per-test mocks override).
 
 Verification: `tsc` 0; `lint:library` 0 errors (103 pre-existing warnings); library Jest 1,997/1,997; full suite 6,070 passed with 3 load timeouts that pass alone (62/62). Mutants (no line-height scaling; no stacking) were killed. Haiku Android check at font scale 2.0: Home, Book Details, review row, stats PASS after the DetailRow fix; scale restored to 1.0. Known and separate: "My Library" under the status bar, tab labels truncated at 200%. No database or storage changes.
+
+## 2026-10-22 — Review page (SDD-07 D07-22, §14)
+
+Owner decision after the lead's recommendation: rating stays inline on Book Details; review text moves to its own page. Spec: SDD-07 D07-22 and §14. Built by Muse on `sdd09/review-page` (rebased onto `main` `209ae18`).
+- New route `app/(tabs)/library/review.tsx`: prefilled text box, Public/Private switch, one Save (disabled until changed), "Review saved"/"Review removed" toasts, "Remove your review?" for empty or whitespace-only text over a saved review, "Discard changes?" guard (native and web), classified error states (signed out mid-edit shows an error and never saves the draft), one toast per Save, Try again resends the current draft.
+- Book Details row: stars always visible ("Rating saved"), first non-blank line plus "· Private", "Write a review"/"Edit review" text button. Inline text field, blur-save and visibility toggle removed. Shared hook `useReviewWrite` keeps the same mutation key and stale-actor fencing.
+- Review: GLM found 2 medium (whitespace-only, signed-out spinner) and 4 low issues; all fixed; GLM confirmation PASS. MiniMax failed twice with server errors. The Haiku web check then found Save never enabled when the book was already cached (init/reset effect order); fixed with a regression test that failed before the fix.
+
+Verification: `tsc` 0; `lint:library` 0 errors (102 warnings); library Jest 2,025/2,025; mutants killed (Save always enabled, no remove confirm, no discard guard, whitespace not blank, stale retry). Haiku web A1–A8 PASS; Android B1, B3, B4, B5 (200% text) PASS, B2 inconclusive (the emulator keyboard never fully rendered). Residual: in the browser pane a second browser Back after "Keep editing" did not re-prompt (shared composer guard; in-app Back prompts correctly). Dev-account data changed through the app only (review on "Hooked"). No database or storage changes.

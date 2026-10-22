@@ -54,3 +54,18 @@ export function leaveOutSavedMessage(countsInStats: boolean): string {
 export function noteProgressSavedMessage(page: number): string {
   return `Progress updated to p. ${page}`;
 }
+
+/** Review text confirmation (saved vs removed). */
+export function reviewSavedMessage(removed: boolean): string {
+  return removed ? 'Review removed' : 'Review saved';
+}
+
+/** Star-rating confirmation. */
+export function ratingSavedMessage(): string {
+  return 'Rating saved';
+}
+
+/** Review save failure with a retry affordance. */
+export function reviewSaveFailedMessage(): string {
+  return "Couldn't save your review. Try again.";
+}

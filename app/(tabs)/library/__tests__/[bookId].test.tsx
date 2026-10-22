@@ -125,27 +125,16 @@ describe('BookDetailScreen review persistence', () => {
         useAuthStore.setState({ session: null, status: 'unauthenticated' });
     });
 
-    it('saves privacy and review text as single-field writes without forcing a rating', async () => {
-        const { getByRole, getByTestId, findByTestId, findByText, unmount, queryClient } = renderScreen();
+    it('keeps the review on Book Details read-only with no inline editor (text lives on the review page)', async () => {
+        const { getByTestId, findByText, queryByTestId, unmount, queryClient } = renderScreen();
 
         await findByText('Beloved');
-        fireEvent.press(getByTestId('book-row-review'));
-        await findByTestId('library-review-input');
-        await waitFor(() => expect(getByTestId('library-review-input').props.value).toBe('Existing review'));
-
-        fireEvent.changeText(getByTestId('library-review-input'), 'Updated review copy');
-        fireEvent.press(getByTestId('library-review-privacy-toggle'));
-        fireEvent(getByTestId('library-review-input'), 'blur');
-
-        expect(await findByText('Review saved!')).toBeOnTheScreen();
-        expect(Alert.alert).not.toHaveBeenCalled();
-        const patches = (bookReviewService.update as jest.Mock).mock.calls.map(([, entryId, patch]) => [entryId, patch]);
-        expect(patches).toEqual([
-            ['user-book-1', { review_is_public: false }],
-            ['user-book-1', { review: 'Updated review copy' }],
-        ]);
-        expect(patches.some(([, patch]) => 'rating' in patch)).toBe(false);
-        expect(await findByText('Private Review')).toBeOnTheScreen();
+        expect(getByTestId('book-row-review')).toBeTruthy();
+        // No inline editor on Book Details (SDD-07 §14.3); text lives on the review page.
+        expect(queryByTestId('library-review-input')).toBeNull();
+        expect(queryByTestId('library-review-privacy-toggle')).toBeNull();
+        expect(queryClient.getQueryData<any>(['book', 'reader-1', 'user-book-1']).review).toBe('Existing review');
+        expect((bookReviewService.update as jest.Mock)).not.toHaveBeenCalled();
 
         unmount();
         queryClient.clear();

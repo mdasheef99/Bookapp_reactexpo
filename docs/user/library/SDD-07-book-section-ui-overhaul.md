@@ -195,6 +195,7 @@ Each design keeps an agreed, unused location so later features do not need anoth
 | D07-19 | Who finalizes Flow C; capture presentation (2026-10-20) | **The owner delegated the Flow C design to the lead:** "go with your recommendation, you yourself write the sdd". Lead decisions: (1) where on-device scanning is unavailable (web, Expo Go, build without the recognizer) the intake shows the plain reason and offers the way back ("Write note instead" on a first scan, else the origin label) as its one primary, with no photo buttons, because a photo cannot be read there; (2) one crop primary "Read text" for all crop modes; busy detection/recognition shows only "Cancel reading"; (3) "Take photo" is the intake primary where scanning works; (4) the possibly-cut-off scan notice uses secondary ink, not error red (DP-04); (5) capture copy rewritten in plain words, English-only said plainly; instruction sentences use body text, caption only for short status lines (DP-02); (6) `NoteCrop.tsx` joins `STRICT_FILES`. | Built on `sdd07/flow-c` (§12). Residual: on web the choose step still offers "Scan text" as primary (D07-18), which now leads straight to the unavailable notice; left for the owner. |
 | D07-20 | Web composer scan entry (2026-10-21, amends D07-18 for web) | **Owner decision:** on web the composer choose step shows only "Write note" (single primary) and the write step hides "Scan text"/"Scan again", because scanning is unavailable in the browser (D07-19). Native keeps both primaries (D07-18). | Built (§13.4); resolves the D07-19 web residual. |
 | D07-21 | Who finalizes Flow D; home list and Search presentation (2026-10-21) | **The owner delegated the Flow D design to the lead** and approved the summary with conditions: the ratchet ends at or below 235 / 1 and the baseline is lowered; `lint:library` ends with 0 errors; Search idle and with-results states have **no primary** (DP-03 exception: the search field is the main control), asserted by tests. Owner answers: header "My Library"; library-only search components moved to `src/components/library/search/` (two pure-move commits); `LibraryPillNav` deleted; the F12 debounce test included. Lead calls: one primary "Add a book" on home; Shelf/List and filters as radio groups; unboxed rows with one named button and a decorative thumbnail; secondary Add to library; Filter/Sort as named dialogs with radio groups; mapped plain error copy (`searchErrorCopy.ts`); quiet offline captions. | Built and merged (§13). |
+| D07-22 | Review page (2026-10-22, amends D07-02 and the review parts of D07-16) | **Owner decision:** the star rating stays inline on Book Details; writing and editing the review text moves to its own full-screen page, like the note composer. No pop-up or sheet for review text. | Design in §14. The owner asked for the change after the lead's recommendation ("ok make changes in the sdd and send it to muse for the implementaiton please"). |
 
 ### 9.1 Original questions (kept for traceability)
 
@@ -468,6 +469,44 @@ Owner-approved as one follow-up unit on `sdd07/followups` from `main` `e252513`;
 - **Verification (lead):** full Jest 417/418 suites, 5083 tests pass (4 skipped); whole-project tsc 0; `lint:library` 0 errors, 118 warnings (was 120); ratchet unchanged 93/0/0; axe 27/27, empty baseline. Real-data web check (owner signed in, Haiku, read-only): Book Details has no unlabelled image and keeps its heading; Search idle, keep typing, results, Filter/Sort `aria-expanded`, Sort dialog, no results with one "Add it manually" and the prefilled manual dialog, Back, and 390 px width — PASS; the console showed only network-suspended / disconnected errors and Supabase token-refresh fetch failures from the browser losing its connection, none from search. Focused Luna `max` review of the diff (~5 min): PASS, no findings, fingerprint unchanged.
 - **TB-1 status check:** `main`'s tab bar already shows exactly five tabs (My Library, Exchange, Marketplace, Clubs, Profile) since the marketplace routes moved under one folder, so TB-1's tab-count and label part is done on `main`. Still unset there: tab icons, theme colours and label contrast (RA-W01), and an unchecked 200%-zoom overflow. The parked TB-1 branch targets the old layout and is not to be revived as built; a fresh, smaller unit from `main` is the option, with the clubs heads-up.
 - **Database/storage mutations:** none.
+
+## 14. Review page (D07-22)
+
+**Status:** designed and built 2026-10-22 on branch `sdd09/review-page` (rebased onto `main` `209ae18`); reviewed (GLM: 2 medium + 4 low fixed, confirmation PASS; MiniMax unavailable: server errors), verified and committed. Not merged. As built: shared hook `src/features/books/reviews/useReviewWrite.ts`; route `app/(tabs)/library/review.tsx`. Residual: web browser-Back after "Keep editing" re-prompted only once in the browser pane (same shared guard as the note composer); Android keyboard overlap not observed because the emulator keyboard did not render.
+
+**Why:** a review can run to several paragraphs. On a phone, an inline field or a pop-up shares the screen with the keyboard, is easy to dismiss by accident, and has no Back step or web URL. Notes already open in their own composer page, so reviews should behave the same way. Book Details also gets shorter, which helps at large text sizes.
+
+### 14.1 Book Details "Your review" row
+
+- **Rating stays inline and always visible** in the row (no expand needed). Tapping a star saves at once with the existing mutation and shows "Rating saved". While the Finished panel shows its own rating (SDD-09), the row hides its stars as today, so there is only one rating control.
+- The row no longer contains a text field or the visibility switch.
+- Below the stars: if a review exists, its first line (as today's `reviewFirstLine`) plus "Private" when it is private, and a text button **"Edit review"**. Without a review: a text button **"Write a review"**. Neither is primary (DP-03: "Add note" remains the one primary).
+- The button opens the review page. Offline: the button and the stars are disabled with the existing offline caption (D07-16).
+- The row stays below the fold (DP-01) and stays plain (no fills).
+
+### 14.2 Review page
+
+- **Route:** `app/(tabs)/library/review.tsx`, opened with `bookId`. Web gets its own URL. Same header pattern as the note composer: Back only, title "Your review", the book title under it.
+- **Body:** one multiline text field, focused on open, prefilled with the saved review, growing with its content inside a scroll view; the keyboard never covers the field or the Save button (keyboard-avoiding layout on iOS and Android). Below it the visibility switch: "Public review" / "Private review", with one line explaining who can see it. The existing review length rule (if any) is kept.
+- **One primary: "Save".** It is disabled until something changed (text or visibility), while saving, and offline (with the offline caption). Saving writes text and visibility through the existing `bookReviewService` path and mutation key, so Book Details and the rating stay consistent. On success: toast "Review saved", then return to Book Details, whose row shows the new first line.
+- **Empty text:** saving an empty review of a book that had one asks first: "Remove your review?" — "Keep editing" / "Remove review" (destructive). On confirm the text is cleared (rating untouched) and the toast says "Review removed".
+- **Leaving with changes:** Back, Android hardware back, swipe-back and web Back ask "Discard changes?" — "Keep editing" / "Discard changes" (destructive), using the same `usePreventRemove` pattern as the composer. Leaving without changes, or after a save, does not ask.
+- **Save failure:** error toast with "Try again"; the text stays on the page. Nothing is lost.
+- **Book or session gone** (not found, signed out, actor changed): the page shows the same classified error states as Book Details and does not save.
+- **Large text (200%):** everything wraps; nothing is cut off; Save stays reachable.
+
+### 14.3 What this replaces
+
+- The inline review text field, its blur-to-save, "Review text has unsaved changes." and "Saving review changes…" captions, and the visibility switch inside the row.
+- The draft-adoption logic for review text on Book Details (`reviewDraft`, `adoptReviewText`, text revisions) moves to, or is simplified on, the review page. Its guarantees stay: a save from a previous user or session is never applied to the current one, and a late save never overwrites newer text.
+- D07-16's "collapsing the review row never loses typed text" no longer applies (no typing in the row); the page's discard guard takes its place. D07-16's offline rule stays.
+- The Finished panel rating (SDD-09) and Community reviews are unchanged.
+
+### 14.4 Tests and acceptance
+
+- Jest: row shows stars / "Write a review" / "Edit review" / "Private"; rating tap saves with "Rating saved"; button opens the route with `bookId`; offline disables; page prefill, Save disabled until changed, save success toast and return, failure keeps text and offers retry, remove-review confirm, discard guard on dirty leave and no guard when clean, visibility change alone enables Save, stale actor never saved; exactly one primary per page state.
+- Existing review tests on Book Details are updated, not deleted, where the guarantee moves to the page.
+- Acceptance: web browser check and Android emulator check (normal and 200% text) by Haiku.
 
 ## Appendix A — Essence checklist (used for every Flow A review)
 
