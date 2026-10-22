@@ -29,6 +29,9 @@ export function ChoiceRadioGroup<T extends string>({
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       aria-disabled={disabled}
+      // collapsable={false}: the disabled opacity must not switch this view between flattened and
+      // unflattened on Android (Fabric then re-parents its Text and crashes: "child already has a parent").
+      collapsable={false}
       style={[styles.group, disabled && styles.disabled]}
     >
       <Text style={[LIBRARY_TEXT.label, { color: colors.textPrimary }]}>{label}</Text>

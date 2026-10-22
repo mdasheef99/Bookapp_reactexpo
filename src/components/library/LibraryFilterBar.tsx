@@ -21,6 +21,8 @@ export function LibraryFilterBar({ chips, activeFilter, onChange, disabled = fal
     const choose = (filter: LibraryFilter) => { if (!disabled) onChange(filter); };
 
     return <View accessibilityRole="radiogroup" accessibilityLabel="Filter books" accessibilityState={{ disabled }} aria-disabled={disabled}
+        // Not flattenable: toggling opacity must not re-parent the chips on Android Fabric.
+        collapsable={false}
         style={[styles.filterRow, disabled && { opacity: CONTROL_DISABLED_OPACITY }]}>
         {chips.map((chip, index) => {
             const checked = chip.key === activeFilter;

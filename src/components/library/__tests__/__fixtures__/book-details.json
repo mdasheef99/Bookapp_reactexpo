@@ -2959,6 +2959,7 @@
                                     "disabled": false
                                   },
                                   "aria-disabled": false,
+                                  "collapsable": false,
                                   "style": {
                                     "gap": 8
                                   }
@@ -3273,6 +3274,7 @@
                                     "disabled": false
                                   },
                                   "aria-disabled": false,
+                                  "collapsable": false,
                                   "style": {
                                     "gap": 8
                                   }
@@ -5235,6 +5237,7 @@
                                     "disabled": false
                                   },
                                   "aria-disabled": false,
+                                  "collapsable": false,
                                   "style": {
                                     "gap": 8
                                   }
@@ -5549,6 +5552,7 @@
                                     "disabled": false
                                   },
                                   "aria-disabled": false,
+                                  "collapsable": false,
                                   "style": {
                                     "gap": 8
                                   }

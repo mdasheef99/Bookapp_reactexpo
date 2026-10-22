@@ -42,6 +42,9 @@ export const RatingInput = ({ rating, onChange, disabled = false, size = ICON_SI
       accessibilityLabel="Your rating"
       accessibilityState={{ disabled }}
       aria-disabled={disabled}
+      // collapsable={false}: the disabled opacity must not switch this view between flattened and
+      // unflattened on Android (Fabric then re-parents its Text and crashes: "child already has a parent").
+      collapsable={false}
       style={[styles.group, centered && styles.centered, disabled && styles.disabled]}
     >
       <Text style={[LIBRARY_TEXT.label, { color: colors.textPrimary }]}>Your rating</Text>
