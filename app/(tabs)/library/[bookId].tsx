@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 
 import { booksService } from '@/features/books/services/booksService';
-import { useReviewWrite } from '@/features/books/reviews/useReviewWrite';
 import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
 import { noteKeys } from '@/features/books/notes/manualNoteContract';
 import { openNoteComposer } from '@/features/books/notes/noteNavigation';
@@ -105,7 +104,6 @@ export default function BookDetailScreen() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [openRows, setOpenRows] = useState<OpenRowsState>({});
     const [optimisticStatus, setOptimisticStatus] = useState<ReadingStatus | null>(null);
-    const { submitReview } = useReviewWrite({ userId: user?.id, bookId });
     const [datesSheetOpen, setDatesSheetOpen] = useState(false);
     const [progressSheetOpen, setProgressSheetOpen] = useState(false);
     const [finishedInSession, setFinishedInSession] = useState(false);

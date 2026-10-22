@@ -53,7 +53,8 @@ export function RatingReviewSummary({
         ))}
       </View>
       {rating > 0 ? null : (
-        <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>Not rated yet</Text>
+        // The stars already announce "Not rated yet"; this caption is for sighted readers only.
+        <Text accessible={false} importantForAccessibility="no" aria-hidden style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>Not rated yet</Text>
       )}
       <BookButton
         label="Edit"

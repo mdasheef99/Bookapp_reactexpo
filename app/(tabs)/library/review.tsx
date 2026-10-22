@@ -74,6 +74,13 @@ export default function ReviewScreen() {
   const approvedExit = useRef<(() => void) | null>(null);
   const browserHistoryGuard = useRef<ComposerHistoryGuard | null>(null);
   const inputRef = useRef<TextInput>(null);
+  const pageMounted = useRef(true);
+  useEffect(() => {
+    pageMounted.current = true;
+    return () => {
+      pageMounted.current = false;
+    };
+  }, []);
   const dirtyRef = useRef(false);
   const textRef = useRef(text);
   textRef.current = text;
@@ -212,10 +219,23 @@ export default function ReviewScreen() {
     // One toast per Save: every write stays silent and the page toasts once.
     const saveAll = async (steps: { patch: ReviewPatch; opts: ReviewWriteOptions }[], removed: boolean) => {
         const toastMessage = reviewSavedMessage(removed);
-        for (const step of steps) {
+      // A session lost before, during or after a step is an error the user sees, never a
+      // silent stop, but only on this page: after it closes, the next account sees nothing.
+      // Other failures rethrow: their toast comes from the shared mutation.
+      const sessionLost = () => {
+        if (pageMounted.current) notify({ kind: 'error', message: 'Sign in again to save review changes.' });
+        return false;
+      };
+      for (const step of steps) {
+        if (!isCurrentReviewActor(actor)) return sessionLost();
+        try {
           await submitReviewAsync(step.patch, { ...step.opts, silent: true, toastMessage });
-        if (!isCurrentReviewActor(actor)) return false;
+        } catch (error) {
+          if (!isCurrentReviewActor(actor)) return sessionLost();
+          throw error;
+        }
       }
+      if (!isCurrentReviewActor(actor)) return sessionLost();
       notifySaveSuccess(notify, toastMessage);
       return true;
     };
@@ -428,12 +448,16 @@ export default function ReviewScreen() {
             <Text testID="library-review-count" style={[LIBRARY_TEXT.caption, { color: colors.textTertiary }]}>
               {text.length === 1 ? '1 character' : `${text.length} characters`}
             </Text>
-              <Pressable
-                accessibilityLabel="Public review"
-                accessibilityHint="Toggles who can read your review"
-                disabled={saving}
-                onPress={() => setIsPublic((previous) => !previous)}
-                testID="library-review-visibility-row"
+            {/* The row is the one switch screen readers hear; the inner Switch is visual only. */}
+            <Pressable
+              accessibilityRole="switch"
+              accessibilityLabel="Public review"
+              accessibilityHint="Toggles who can read your review"
+              accessibilityState={{ checked: isPublic, disabled: saving }}
+              aria-checked={isPublic}
+              disabled={saving}
+              onPress={() => setIsPublic((previous) => !previous)}
+              testID="library-review-visibility-row"
               style={[styles.visibilityCard, { backgroundColor: colors.bgCard, borderColor: colors.controlBorder }]}
             >
               <Ionicons
@@ -453,8 +477,10 @@ export default function ReviewScreen() {
               </View>
               <Switch
                 testID="library-review-visibility"
-                accessibilityRole="switch"
-                accessibilityLabel="Public review"
+                accessible={false}
+                focusable={false}
+                importantForAccessibility="no-hide-descendants"
+                aria-hidden
                 value={isPublic}
                 onValueChange={setIsPublic}
                 trackColor={{ false: colors.controlBorder, true: colors.accent }}

@@ -529,7 +529,7 @@ Owner: "can we set the rating and review button near the book at the top?! … a
 - The inline review text field, its blur-to-save, "Review text has unsaved changes." and "Saving review changes…" captions, and the visibility switch inside the row.
 - The draft-adoption logic for review text on Book Details (`reviewDraft`, `adoptReviewText`, text revisions) moves to, or is simplified on, the review page. Its guarantees stay: a save from a previous user or session is never applied to the current one, and a late save never overwrites newer text.
 - D07-16's "collapsing the review row never loses typed text" no longer applies (no typing in the row); the page's discard guard takes its place. D07-16's offline rule stays.
-- The Finished panel rating (SDD-09) and Community reviews are unchanged.
+- Community reviews are unchanged. The Finished panel (SDD-09) no longer shows its own stars (§14.2b, D07-23).
 
 ### 14.4 Tests and acceptance
 

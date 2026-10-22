@@ -44,10 +44,12 @@ describe('RatingReviewSummary (display-only stars, D07-24)', () => {
 
   it('shows the "Not rated yet" caption only at 0', () => {
     const zero = renderSummary({ rating: 0 });
-    expect(zero.ui.getByText('Not rated yet')).toBeOnTheScreen();
+    expect(zero.ui.getByText('Not rated yet', { includeHiddenElements: true })).toBeOnTheScreen();
+    // Screen readers hear "Not rated yet" once, from the stars, not again from the caption.
+    expect(zero.ui.queryByText('Not rated yet')).toBeNull();
     zero.ui.unmount();
     const rated = renderSummary({ rating: 3 });
-    expect(rated.ui.queryByText('Not rated yet')).toBeNull();
+    expect(rated.ui.queryByText('Not rated yet', { includeHiddenElements: true })).toBeNull();
   });
 
   it('always shows an Edit button named "Edit your rating and review"', () => {

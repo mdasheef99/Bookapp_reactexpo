@@ -1,4 +1,4 @@
-import { useId, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { useMutation, useMutationState, useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -60,6 +60,14 @@ export function useReviewWrite({ userId, bookId }: UseReviewWriteInput) {
   const editorId = useId();
   const requestSequence = useRef(0);
   const textRevision = useRef(0);
+  // An error toast outlives the page; Try again must not resend a draft the user discarded.
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const reviewActor = currentReviewActor(userId);
   const reviewMutationKey = ['book-review', userId, bookId, reviewActor?.revision];
@@ -120,6 +128,10 @@ export function useReviewWrite({ userId, bookId }: UseReviewWriteInput) {
           label: 'Try again',
           onPress: () => {
             if (!isCurrentReviewActor(submission.actor)) return;
+            if (!mounted.current) {
+              notify({ kind: 'info', message: "Those review changes weren't saved." });
+              return;
+            }
             mutation.mutate({
               ...submission,
               // A retry is its own user-visible save: it always notifies.
@@ -152,22 +164,6 @@ export function useReviewWrite({ userId, bookId }: UseReviewWriteInput) {
     },
   });
 
-  const submitReview = (patch: ReviewPatch, opts?: ReviewWriteOptions) => {
-    if (!bookId || !reviewActor || !isCurrentReviewActor(reviewActor)) return;
-    if (typeof patch.review === 'string') textRevision.current += 1;
-    const submission: ReviewSubmission = {
-      actor: reviewActor,
-      entryId: bookId,
-      patch,
-      editorId,
-      requestId: `${editorId}:${++requestSequence.current}`,
-      textRevision: textRevision.current,
-      silent: opts?.silent,
-      getRetryPatch: opts?.getRetryPatch,
-    };
-    mutation.mutate(submission);
-  };
-
   const submitReviewAsync = async (patch: ReviewPatch, opts?: ReviewWriteOptions) => {
     if (!bookId || !reviewActor || !isCurrentReviewActor(reviewActor)) {
       throw new Error('Sign in again to save review changes.');
@@ -181,10 +177,11 @@ export function useReviewWrite({ userId, bookId }: UseReviewWriteInput) {
       requestId: `${editorId}:${++requestSequence.current}`,
       textRevision: textRevision.current,
       silent: opts?.silent,
+      toastMessage: opts?.toastMessage,
       getRetryPatch: opts?.getRetryPatch,
     };
     return mutation.mutateAsync(submission);
   };
 
-  return { actor: reviewActor, reviewMutationKey, reviewBusy, mutation, submitReview, submitReviewAsync };
+  return { actor: reviewActor, reviewMutationKey, reviewBusy, mutation, submitReviewAsync };
 }

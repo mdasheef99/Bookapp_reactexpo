@@ -99,7 +99,7 @@ async function pressSave(ui: Awaited<ReturnType<typeof reviewScreen>>, count: nu
     await waitFor(() => expect(requests).toHaveLength(count));
 }
 function setVisibility(ui: Awaited<ReturnType<typeof reviewScreen>>, value: boolean) {
-    fireEvent(ui.getByTestId('library-review-visibility'), 'valueChange', value);
+    fireEvent(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }), 'valueChange', value);
 }
 async function settled() {
     await waitFor(() => expect(client.isMutating()).toBe(0));
@@ -144,7 +144,7 @@ it.each(['text', 'rating', 'privacy'])('sends only the %s field selected by the 
     if (field === 'text') fireEvent.changeText(ui.getByTestId('library-review-text'), 'Edited text');
     else {
         setVisibility(ui, false);
-        expect(ui.getByTestId('library-review-visibility').props.value).toBe(false);
+        expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
         expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
     }
     await saveReview(ui);
@@ -158,7 +158,7 @@ it('sends text then visibility as two single-field saves in order', async () => 
     await pressSave(ui, 1);
     await act(async () => first.resolve()); await settled();
     setVisibility(ui, false);
-    expect(ui.getByTestId('library-review-visibility').props.value).toBe(false);
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
     expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
     const save = ui.getByTestId('library-review-save');
     expect(save.props.accessibilityState.disabled).toBe(false);
@@ -174,13 +174,13 @@ it('sends text then visibility as two single-field saves in order', async () => 
 it('keeps confirmed Public feedback while a visibility change is pending or rejected', async () => {
     const gate = deferred(); gates.push(gate); const ui = await reviewScreen();
     setVisibility(ui, false);
-    expect(ui.getByTestId('library-review-visibility').props.value).toBe(false);
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
     expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
     fireEvent.press(ui.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(1));
     expect(ui.getByTestId('library-review-text').props.value).toBe('Confirmed review');
     await act(async () => gate.reject(new Error('Visibility rejected'))); await settled();
-    expect(ui.getByTestId('library-review-visibility').props.value).toBe(false);
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
     expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
     expect(mockFeedback.notify).toHaveBeenCalledWith(expect.objectContaining({ kind: 'error', message: expect.stringContaining('Visibility rejected') }));
 });
@@ -301,7 +301,7 @@ it.each([null, { id: 'foreign', user_id: 'reader', rating: 2, review: 'Wrong row
     setVisibility(ui, false);
     fireEvent.press(ui.getByTestId('library-review-save')); await settled();
     expect(mockFeedback.notify).toHaveBeenCalledWith(expect.objectContaining({ kind: 'error', message: expect.any(String) }));
-    expect(ui.getByTestId('library-review-visibility').props.value).toBe(false);
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
     expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
     expect(client.getQueryData<any>(['book', 'reader', 'entry']).review_is_public).toBe(true);
 });
@@ -313,12 +313,12 @@ it('keeps same-actor token refresh valid while pinning each request credential',
     act(() => actor('reader', 'refreshed-token'));
     expect(requests[0].signal?.aborted).toBe(false);
     await act(async () => gate.resolve()); await settled();
-    expect(ui.getByTestId('library-review-visibility').props.value).toBe(false);
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
     expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
     setVisibility(ui, true);
     fireEvent.press(ui.getByTestId('library-review-save')); await settled();
     expect(requests[1].headers.get('Authorization')).toBe('Bearer refreshed-token');
-    expect(ui.getByTestId('library-review-visibility').props.value).toBe(true);
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(true);
     expect(ui.getByText('Anyone can read this review.')).toBeOnTheScreen();
 });
 
@@ -346,7 +346,7 @@ it('isolates another book from pending text and busy state', async () => {
     expect(other.queryByText(/Saving review changes/)).toBeNull();
     setVisibility(other, false);
     fireEvent.press(other.getByTestId('library-review-save'));
-    await waitFor(() => expect(other.getByTestId('library-review-visibility').props.value).toBe(false));
+    await waitFor(() => expect(other.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false));
     expect(requests[1].patch).toEqual({ review_is_public: false });
     await act(async () => gate.resolve()); await settled();
     expect(client.getQueryData<any>(['book', 'reader', 'other-entry'])).toMatchObject({ review: 'This book review', review_is_public: false });
@@ -513,7 +513,7 @@ it('reconciliation: new generation saves with the new session token after the ol
     fireEvent.press(second.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(2));
     expect(requests[1].headers.get('Authorization')).toBe('Bearer new-session-token');
-    await waitFor(() => expect(second.getByTestId('library-review-visibility').props.value).toBe(false));
+    await waitFor(() => expect(second.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false));
     await settled();
 });
 

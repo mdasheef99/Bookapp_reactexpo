@@ -1412,3 +1412,17 @@ Why nothing caught it:
 - The same "child already has a parent" error was seen once during SDD-09 and was wrongly dismissed as a dev glitch.
 
 Verification: `tsc` 0; `lint:library` 0 errors (103 warnings); library Jest 2,056/2,056. Android retest (`crash2`, screenshots viewed by the lead): Hooked → Edit → 4 stars → Save showed "Review saved" and returned to Book Details with 4 stars. Then 5 stars, text, Public on → Save gave 5 stars and the new text. No `addViewAt` or "already has a parent" in logcat, and the app process was unchanged throughout. Dev-account data changed through the app only (Hooked: 5 stars, public review "Retest note"). No database changes.
+
+### 2026-10-23 — Full-branch review before merge (sdd09/review-page)
+
+The owner does not review PRs, so the whole branch (`git diff main...HEAD`, 4 commits) was reviewed here before merge. Earlier rounds 25ac98b, 14f9e1a and 74b16ee had had no outside review. MiniMax failed again (server error); GLM (opencode, read-only, repo fingerprint unchanged) found 1 medium and 5 low issues. The lead checked each against the code:
+- Medium, fixed: an error toast's "Try again" outlives the page, so after "Discard changes" it could resend the discarded draft. `useReviewWrite` now ignores Try again once its page has closed and says "Those review changes weren't saved."
+- Low, fixed: a session lost before, during or after any step of one Save was silent. Now "Sign in again to save review changes." shows, but only while the review page is open; once it has closed, the next account sees nothing (the existing fencing tests require that).
+- Low, fixed: screen readers heard "Not rated yet" twice, and "Public review" twice. The caption is now sighted-only. The visibility row is the one switch (role, checked state); the inner Switch is hidden from accessibility and from keyboard focus.
+- Low, fixed: unused `useReviewWrite` on Book Details and the unused `submitReview`. SDD-07 §14.3 and SDD-09 H-14 still described the Finished panel stars; both are corrected.
+- Low, open: on web, a second browser Back after "Keep editing" may not re-prompt. This is the shared composer guard already on `main` for notes, so it is not part of this branch; it remains a known residual.
+- Also noted, low: when a later step of one Save fails, the earlier steps stay saved and only the failed step is retried. The page stays dirty, so Save sends the rest again.
+
+GLM confirmation review of the fixes: all 5 fixed, verdict MERGE. Its new lows were fixed as listed above. The final gating of the session toast came after that review and is covered by the existing fencing tests plus the new tests.
+
+Verification: `tsc` 0; `lint:library` 0 errors (102 warnings); library Jest 2,059/2,059. Three new tests (stale Try again, session lost between steps, session lost in flight) each fail when their fix is removed. Android (`crash3`, screenshots viewed by the lead): tapping the Public review card toggles it and the caption, Save enables, saving returns to Book Details with "Private", no crash, and no `addViewAt` in logcat. TalkBack itself was not run. That check began with Hooked at 3 stars instead of the 5 saved earlier. Nothing in these fixes writes a rating; most likely another tap on the dev emulator changed it, but this was not confirmed. No database changes.

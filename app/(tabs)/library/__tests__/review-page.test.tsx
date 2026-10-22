@@ -129,8 +129,8 @@ async function settled(client: QueryClient) {
   await waitFor(() => expect(client.isMutating()).toBe(0));
 }
 
-function setVisibility(ui: { getByTestId: (id: string) => any }, value: boolean) {
-  fireEvent(ui.getByTestId('library-review-visibility'), 'valueChange', value);
+function setVisibility(ui: { getByTestId: (id: string, options?: { includeHiddenElements?: boolean }) => any }, value: boolean) {
+  fireEvent(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }), 'valueChange', value);
 }
 
 beforeEach(() => {
@@ -194,7 +194,7 @@ describe('Review page prefill and Save enablement', () => {
       await ui.findByTestId('library-review-header');
       expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(true);
       setVisibility(ui, false);
-      expect(ui.getByTestId('library-review-visibility').props.value).toBe(false);
+      expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
       expect(ui.getByText('Public review')).toBeOnTheScreen();
       expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
       expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(false);
@@ -210,7 +210,7 @@ describe('Review page prefill and Save enablement', () => {
     try {
       await ui.findByTestId('library-review-header');
       expect(ui.getByTestId('library-review-text').props.value).toBe('Quiet book');
-      expect(ui.getByTestId('library-review-visibility').props.value).toBe(false);
+      expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
       expect(ui.getByText('Public review')).toBeOnTheScreen();
       expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
     } finally {
@@ -635,6 +635,72 @@ describe('Fix 1: Try again uses the current draft', () => {
   });
 });
 
+describe('Branch review fixes', () => {
+  it('Try again after leaving the page never resends the discarded draft', async () => {
+    (bookReviewService.update as jest.Mock).mockRejectedValueOnce(new Error('review down'));
+    const ui = renderReview();
+    await ui.findByTestId('library-review-header');
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'Draft I will discard');
+    fireEvent.press(ui.getByTestId('library-review-save'));
+    await waitFor(() =>
+      expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ kind: 'error', message: 'review down' })),
+    );
+    const errorCall = mockNotify.mock.calls.find(([input]: any) => input?.kind === 'error');
+    ui.unmount();
+    act(() => { errorCall[0].action.onPress(); });
+    await act(async () => { await Promise.resolve(); });
+    expect(bookReviewService.update).toHaveBeenCalledTimes(1);
+    expect(mockNotify).toHaveBeenLastCalledWith({ kind: 'info', message: "Those review changes weren't saved." });
+    ui.client.clear();
+  });
+
+  it('a session lost between the steps of one Save shows an error and sends nothing more', async () => {
+    (bookReviewService.update as jest.Mock).mockImplementationOnce(async (_actor: any, entryId: string, patch: any) => {
+      useAuthStore.setState({ session: { user: { id: 'reader-2' }, access_token: 'token-reader-2' } as any, status: 'authenticated' });
+      return { id: entryId, user_id: 'reader-1', rating: 3, review: 'Saved text', review_is_public: true, ...patch };
+    });
+    const ui = renderReview();
+    try {
+      await ui.findByTestId('library-review-header');
+      fireEvent.press(ui.getByLabelText('5 stars'));
+      fireEvent.changeText(ui.getByTestId('library-review-text'), 'New text');
+      fireEvent.press(ui.getByTestId('library-review-save'));
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith({ kind: 'error', message: 'Sign in again to save review changes.' }),
+      );
+      expect(bookReviewService.update).toHaveBeenCalledTimes(1);
+      expect((bookReviewService.update as jest.Mock).mock.calls[0][2]).toEqual({ rating: 5 });
+      expect(mockNotify).not.toHaveBeenCalledWith(expect.objectContaining({ kind: 'success' }));
+      expect(mockBack).not.toHaveBeenCalled();
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('a session lost while the only step is in flight shows an error, not silence', async () => {
+    (bookReviewService.update as jest.Mock).mockImplementationOnce(async () => {
+      useAuthStore.setState({ session: { user: { id: 'reader-2' }, access_token: 'token-reader-2' } as any, status: 'authenticated' });
+      throw new Error('Sign in again to save review changes.');
+    });
+    const ui = renderReview();
+    try {
+      await ui.findByTestId('library-review-header');
+      fireEvent.changeText(ui.getByTestId('library-review-text'), 'Only text');
+      fireEvent.press(ui.getByTestId('library-review-save'));
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith({ kind: 'error', message: 'Sign in again to save review changes.' }),
+      );
+      expect(bookReviewService.update).toHaveBeenCalledTimes(1);
+      expect(mockNotify).not.toHaveBeenCalledWith(expect.objectContaining({ kind: 'success' }));
+      expect(mockBack).not.toHaveBeenCalled();
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+});
+
 describe('Fix 2: cached book initializes on mount', () => {
   it('prefills from cache, typing enables Save, dirty Back asks "Discard changes?"', async () => {
     const ui = renderReviewCached();
@@ -928,20 +994,25 @@ describe('Fix 3: visible Switch', () => {
     try {
       await ui.findByTestId('library-review-header');
       const toggle = ui.UNSAFE_getByType(Switch);
-      expect(toggle.props.accessibilityRole).toBe('switch');
+      // Screen readers hear one switch: the row. The inner Switch is visual only.
+      expect(toggle.props.accessible).toBe(false);
       expect(toggle.props.testID).toBe('library-review-visibility');
+      const switchRow = ui.getByRole('switch', { name: 'Public review' });
+      expect(switchRow.props.testID).toBe('library-review-visibility-row');
+      expect(switchRow.props.accessibilityState).toEqual(expect.objectContaining({ checked: true }));
       expect(toggle.props.value).toBe(true);
       expect(toggle.props.trackColor).toEqual({ false: colors.controlBorder, true: colors.accent });
       expect(toggle.props.thumbColor).toBe(colors.textOnAccent);
       expect(ui.getByText('Public review')).toBeOnTheScreen();
       setVisibility(ui, false);
       expect(ui.UNSAFE_getByType(Switch).props.value).toBe(false);
+      expect(ui.getByRole('switch', { name: 'Public review' }).props.accessibilityState).toEqual(expect.objectContaining({ checked: false }));
       expect(ui.UNSAFE_getByType(Switch).props.thumbColor).toBe(colors.textSecondary);
       expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(false);
       fireEvent.press(ui.getByTestId('library-review-save'));
       await waitFor(() => expect(bookReviewService.update).toHaveBeenCalledTimes(1));
       expect((bookReviewService.update as jest.Mock).mock.calls[0][2]).toEqual({ review_is_public: false });
-      let row: any = ui.getByTestId('library-review-visibility');
+      let row: any = ui.getByTestId('library-review-visibility', { includeHiddenElements: true });
       while (row && StyleSheet.flatten(row.props.style)?.minHeight === undefined) row = row.parent;
       expect(row).toBeTruthy();
       expect(StyleSheet.flatten(row.props.style).minHeight).toBeGreaterThanOrEqual(48);

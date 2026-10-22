@@ -409,7 +409,7 @@ describe('3. Rating + review block at the top (SDD-07 §14.2b)', () => {
       expect(display.props.accessibilityRole).toBe('image');
       expect(display.props.accessibilityLabel).toBe('Your rating: 3 of 5');
       expect(ui.queryByLabelText('Your rating')).toBeNull();
-      expect(ui.queryByText('Not rated yet')).toBeNull();
+      expect(ui.queryByText('Not rated yet', { includeHiddenElements: true })).toBeNull();
       const open = ui.getByRole('button', { name: 'Edit your rating and review' });
       expect(within(open).getByText('Edit')).toBeOnTheScreen();
       const quote = ui.getByTestId('library-review-quote');
@@ -499,7 +499,7 @@ describe('3. Rating + review block at the top (SDD-07 §14.2b)', () => {
     try {
       await ui.findByText('Walden');
       expect(ui.getByTestId('book-rating-display').props.accessibilityLabel).toBe('Not rated yet');
-      expect(ui.getByText('Not rated yet')).toBeOnTheScreen();
+      expect(ui.getByText('Not rated yet', { includeHiddenElements: true })).toBeOnTheScreen();
       expect(ui.getByRole('button', { name: 'Edit your rating and review' })).toBeTruthy();
     } finally {
       ui.unmount();
