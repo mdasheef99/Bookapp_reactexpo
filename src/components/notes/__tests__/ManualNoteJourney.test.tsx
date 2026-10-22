@@ -334,17 +334,19 @@ it('retains Saved Pages excerpts during refresh failure and preserves confirmed 
   await waitFor(() => expect(screen.queryByText(page.content_excerpt)).toBeNull());
   expect(userBookPagesService.deletePage).toHaveBeenCalledTimes(1); expect(alert).not.toHaveBeenCalled();
 });
-it('labels private book reviews as reviews while submitting only explicit visibility changes', async () => {
-  const details: any = { id: 'book', user_id: 'actor', book_id: 'catalogue', reading_status: 'reading', ownership: 'owned', condition: 'good', rating: 4, review: 'My book review', review_is_public: true, available_for_lending: false,
+it('labels a private book review as a review, never as a note, and opens the review page to change it', async () => {
+  const details: any = { id: 'book', user_id: 'actor', book_id: 'catalogue', reading_status: 'reading', ownership: 'owned', condition: 'good', rating: 4, review: 'My book review', review_is_public: false, available_for_lending: false,
     book: { id: 'catalogue', title: 'Selected book', authors: ['Author'], description: 'Book description', cover_url: null, page_count: 300, publisher: 'Publisher', isbn_13: '9780000000001' } };
   (booksService.getBookDetails as jest.Mock).mockImplementation(async () => details);
-  (bookReviewService.update as jest.Mock).mockImplementation(async (_actor, _id, patch) => { Object.assign(details, patch); return details; });
   delete mockParams.noteId; render(wrap(<BookDetailScreen />));
-  fireEvent.press(await screen.findByTestId('book-row-review')); await screen.findByText('Public Review');
-  fireEvent.press(screen.getByTestId('library-review-privacy-toggle')); await screen.findByText('Private Review');
-  expect(bookReviewService.update).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'actor' }), 'book', { review_is_public: false }); expect(screen.queryByText('Private Note')).toBeNull();
-  fireEvent.press(screen.getByTestId('library-review-privacy-toggle')); await screen.findByText('Public Review');
-  expect(bookReviewService.update).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'actor' }), 'book', { review_is_public: true });
+  // Review text and visibility are edited on the review page (SDD-07 §14); Book Details only shows them.
+  await screen.findByTestId('library-review-quote');
+  expect(screen.getByText('My book review')).toBeOnTheScreen();
+  expect(screen.getByText('Private')).toBeOnTheScreen();
+  expect(screen.queryByText('Private Note')).toBeNull();
+  fireEvent.press(screen.getByTestId('library-review-open'));
+  expect(mockRouter.push).toHaveBeenLastCalledWith({ pathname: '/(tabs)/library/review', params: { bookId: 'book' } });
+  expect(bookReviewService.update).not.toHaveBeenCalled();
 });
 it('clears deleted note data and controls in retained readers without replaying its old confirmation', async () => {
   authorizeSimulatedReaderDeletion();
