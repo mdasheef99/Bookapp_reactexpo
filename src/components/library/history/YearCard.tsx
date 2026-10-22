@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 import { Text, View } from 'react-native';
 import { getLibraryAppearance, LIBRARY_SPACING } from '../LibraryAppearance';
-import { LIBRARY_TEXT, useLibraryTypography } from '../LibraryTypography';
+import { LIBRARY_TEXT_BASE, useLibraryTypography } from '../LibraryTypography';
 import { yearCardTitle } from '@/features/books/history/readingStats';
 import { PASSAGE_CARD_ASPECT, PASSAGE_CARD_REFERENCE_WIDTH } from '@/features/books/export/passageCard';
 
@@ -13,7 +13,8 @@ export interface YearCardProps {
   quote: string | null;
 }
 
-const FOOTER = LIBRARY_TEXT.caption;
+// Fixed capture geometry opts out of font scaling, so it reads the unscaled base scale.
+const FOOTER = LIBRARY_TEXT_BASE.caption;
 const DIVIDER_HEIGHT = 1;
 
 /**
@@ -53,8 +54,8 @@ export const YearCard = forwardRef<View, YearCardProps>(function YearCard(
         allowFontScaling={false}
         style={{
           fontFamily: fonts.heading,
-          fontSize: LIBRARY_TEXT.title.fontSize * scale,
-          lineHeight: LIBRARY_TEXT.title.lineHeight * scale,
+          fontSize: LIBRARY_TEXT_BASE.title.fontSize * scale,
+          lineHeight: LIBRARY_TEXT_BASE.title.lineHeight * scale,
           color: colors.textPrimary,
         }}
       >
@@ -66,8 +67,8 @@ export const YearCard = forwardRef<View, YearCardProps>(function YearCard(
         style={{
           marginTop: gap,
           fontFamily: fonts.body,
-          fontSize: LIBRARY_TEXT.body.fontSize * scale,
-          lineHeight: LIBRARY_TEXT.body.lineHeight * scale,
+          fontSize: LIBRARY_TEXT_BASE.body.fontSize * scale,
+          lineHeight: LIBRARY_TEXT_BASE.body.lineHeight * scale,
           color: colors.textPrimary,
         }}
       >
@@ -89,8 +90,8 @@ export const YearCard = forwardRef<View, YearCardProps>(function YearCard(
           style={{
             marginTop: gap,
             fontFamily: fonts.serif,
-            fontSize: LIBRARY_TEXT.bodySerif.fontSize * scale,
-            lineHeight: LIBRARY_TEXT.bodySerif.lineHeight * scale,
+            fontSize: LIBRARY_TEXT_BASE.bodySerif.fontSize * scale,
+            lineHeight: LIBRARY_TEXT_BASE.bodySerif.lineHeight * scale,
             color: colors.textPrimary,
           }}
         >

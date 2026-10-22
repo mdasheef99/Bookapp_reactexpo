@@ -35,6 +35,23 @@ jest.mock('@sentry/react-native', () => ({
   wrap: (Component: unknown) => Component,
 }));
 
+// Pin the ambient system font scale to 1 so typography assertions are
+// deterministic: LIBRARY_TEXT line heights scale with PixelRatio.getFontScale()
+// (Math.round(base * scale)), and every hard-coded size in the suite was
+// authored against the base scale. Tests that cover large type mock
+// PixelRatio.getFontScale explicitly per test (jest.spyOn still overrides this
+// pin). Direct assignment (not jest.spyOn) so jest.restoreAllMocks() in
+// individual suites cannot lift the pin.
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { PixelRatio } = require('react-native');
+  if (PixelRatio && typeof PixelRatio.getFontScale === 'function') {
+    PixelRatio.getFontScale = () => 1;
+  }
+} catch {
+  // react-native is unreachable here; per-test mocks still apply.
+}
+
 // Silence console warnings in tests (optional, uncomment if too noisy)
 // const originalWarn = console.warn;
 // console.warn = (...args: any[]) => {

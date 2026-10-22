@@ -97,12 +97,14 @@ export function NotePassages({ notes, isPending, isError, onRetry }: NotePassage
 
   return (
     <View style={[styles.notes, { borderColor: colors.divider }]}>
+      {/* flexWrap + no truncation: at large scales the count wraps whole to the
+          next line instead of cutting off ("1 n"). */}
       <View testID="book-notes-header" style={styles.notesHeader}>
-        <Text role="heading" aria-level={2} accessibilityRole="header" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>
+        <Text role="heading" aria-level={2} accessibilityRole="header" style={[LIBRARY_TEXT.heading, styles.notesTitle, { color: colors.textPrimary }]}>
           Your notes
         </Text>
         {hasData && notes.length > 0 ? (
-          <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
+          <Text style={[LIBRARY_TEXT.body, styles.notesCount, { color: colors.textSecondary }]}>
             {`${notes.length} ${notes.length === 1 ? 'note' : 'notes'}`}
           </Text>
         ) : null}
@@ -125,6 +127,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: LIBRARY_SPACING.xs,
     marginBottom: LIBRARY_SPACING.md,
+  },
+  notesTitle: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  notesCount: {
+    flexShrink: 0,
   },
   passages: {
     gap: LIBRARY_SPACING.lg,

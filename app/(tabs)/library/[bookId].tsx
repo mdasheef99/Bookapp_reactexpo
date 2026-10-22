@@ -1211,7 +1211,9 @@ const topStyles = StyleSheet.create({
     reviewInput: {
         borderRadius: LIBRARY_RADIUS.control,
         padding: LIBRARY_SPACING.sm,
-        height: REVIEW_INPUT_HEIGHT,
+        // minHeight (not height): the multiline input must grow with large
+        // system fonts instead of clipping at fontScale 2.0.
+        minHeight: REVIEW_INPUT_HEIGHT,
         textAlignVertical: 'top',
         borderWidth: 1,
     },

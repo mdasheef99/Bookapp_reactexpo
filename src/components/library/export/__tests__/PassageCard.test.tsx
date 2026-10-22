@@ -7,7 +7,8 @@ import { getLibraryAppearance } from '../../LibraryAppearance';
 jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'midnight' }) }));
 jest.mock('../../LibraryTypography', () => ({ useLibraryTypography: () => ({
   serif: 'LibraryGaramondMedium', heading: 'LibraryGaramondSemiBold', body: 'LibraryManrope', label: 'LibraryManropeBold',
-}), LIBRARY_TEXT: jest.requireActual('../../LibraryTypography').LIBRARY_TEXT }));
+}), LIBRARY_TEXT: jest.requireActual('../../LibraryTypography').LIBRARY_TEXT,
+  LIBRARY_TEXT_BASE: jest.requireActual('../../LibraryTypography').LIBRARY_TEXT_BASE }));
 
 const props = { width: 360, quote: 'A quiet passage', title: 'Walden', author: 'Thoreau', page: 42 };
 const quoteText = (ui: ReturnType<typeof render>) => ui.UNSAFE_getAllByType(Text)[0];

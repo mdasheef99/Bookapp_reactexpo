@@ -48,9 +48,10 @@ export const StatusSelector = ({ status, onChange, disabled = false, busy = fals
       >
         <View style={styles.measurementRow}>
           {VALUES.map((value, index) => (
+            // No numberOfLines here: the row never wraps (flexShrink 0), so this
+            // measures the full single-line label width that drives vertical stacking.
             <Text
               key={value}
-              numberOfLines={1}
               style={[LIBRARY_TEXT.label, styles.measurementLabel]}
               onLayout={(event) => {
                 const nextWidth = event.nativeEvent.layout.width;
@@ -113,6 +114,8 @@ export const StatusSelector = ({ status, onChange, disabled = false, busy = fals
               Platform.OS === 'web' && isFocused && [styles.focusRing, { outlineColor: colors.focusRing }],
             ]}
           >
+            {/* No numberOfLines: labels wrap onto two lines at large scales
+                (or the whole control stacks vertically) instead of truncating. */}
             <Text
               style={[
                 checked ? LIBRARY_TEXT.label : LIBRARY_TEXT.body,
@@ -158,7 +161,10 @@ const styles = StyleSheet.create({
   },
   segmentLabel: {
     textAlign: 'center',
+    width: '100%',
     maxWidth: '100%',
+    minWidth: 0,
+    flexShrink: 1,
   },
   measurementClip: {
     position: 'absolute',

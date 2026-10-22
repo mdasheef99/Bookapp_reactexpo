@@ -1365,3 +1365,13 @@ Unit 4 is committed as `2dcf97d`. A PR-style review of the whole branch since `4
 - the dead barrel deleted.
 
 MiniMax confirmation: PASS. The lead verified 1,698 tests, `tsc` 0 and lint 0 errors, and all mutants were killed. Record: [SDD-08 §12.6](./SDD-08-export-and-share.md#126-full-branch-review-and-fixes-2026-10-22). Database/storage mutations: none. Uncommitted. **Next exact action:** the owner approves the fix commit. Then sync with the latest `main`, run the full suite, and get the owner's merge decision.
+
+## 2026-10-22 — Library text at 200% (Android large text)
+
+Owner asked to fix 200% text clipping before merging SDD-09. Cause: `LIBRARY_TEXT` used fixed `lineHeight`s, which React Native does not scale with the system font scale, so glyphs were cut vertically. Built by Muse in `Bookconnect4_sdd09b`, verified and applied by the lead:
+- `LIBRARY_TEXT` line heights scale with `PixelRatio.getFontScale()` (never below base; web stays at 1). `LIBRARY_TEXT_BASE` keeps fixed-geometry export and year cards unscaled. The provider re-renders on font-scale change.
+- Status selector labels and the notes header wrap instead of truncating; the review input uses `minHeight`; a double-scaled cover title was fixed.
+- Lead fix after the emulator check: `DetailRow` stacks the value under the label at font scale ≥ 1.3 ("Owned · New" was squeezed into single letters).
+- `jest.setup.ts` pins the ambient font scale to 1 for deterministic tests (per-test mocks override).
+
+Verification: `tsc` 0; `lint:library` 0 errors (103 pre-existing warnings); library Jest 1,997/1,997; full suite 6,070 passed with 3 load timeouts that pass alone (62/62). Mutants (no line-height scaling; no stacking) were killed. Haiku Android check at font scale 2.0: Home, Book Details, review row, stats PASS after the DetailRow fix; scale restored to 1.0. Known and separate: "My Library" under the status bar, tab labels truncated at 200%. No database or storage changes.
