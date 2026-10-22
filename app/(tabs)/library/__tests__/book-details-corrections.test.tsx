@@ -3,6 +3,7 @@ import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'reac
 import { act, cleanup, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import BookDetailScreen from '../[bookId]';
+import ReviewScreen from '../review';
 import { BookFeedbackProvider } from '@/components/library/ui/BookFeedback';
 import { booksService } from '@/features/books/services/booksService';
 import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
@@ -25,7 +26,8 @@ jest.mock('@/components/library/ui/BookFeedback', () => ({
 }));
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
-jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ bookId: mockEntryId }), useRouter: () => ({ back: mockBack, push: mockPush, replace: mockReplace, canGoBack: () => true }) }));
+jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ bookId: mockEntryId }), useRouter: () => ({ back: mockBack, push: mockPush, replace: mockReplace, dismiss: jest.fn(), canGoBack: () => true }), useNavigation: () => ({ dispatch: jest.fn(), canGoBack: () => true, getState: () => undefined, isFocused: () => true }) }));
+jest.mock('@react-navigation/native', () => ({ usePreventRemove: jest.fn() }));
 jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight' }) }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => {
     const { useAuthStore: store } = require('@/features/auth/store/authStore');
@@ -70,11 +72,34 @@ function deferred() {
 function actor(id: string | null, token = 'token-' + id) {
     useAuthStore.setState({ session: id ? { user: { id }, access_token: token } as any : null, status: id ? 'authenticated' : 'unauthenticated' });
 }
-async function screen(review = true) {
+async function screen() {
     const ui = render(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);
     await ui.findByText('Fixture book');
-    if (review) { fireEvent.press(ui.getByTestId('book-row-review')); await ui.findByTestId('library-review-input'); }
     return ui;
+}
+// Review text guarantees moved to the review page (SDD-07 §14.3); this helper
+// renders that page with the same mutation key so hook/service guarantees hold.
+async function reviewScreen() {
+    const ui = render(<QueryClientProvider client={client}><BookFeedbackProvider><ReviewScreen /></BookFeedbackProvider></QueryClientProvider>);
+    await ui.findByTestId('library-review-header');
+    await ui.findByTestId('library-review-text');
+    return ui;
+}
+async function saveReview(ui: Awaited<ReturnType<typeof reviewScreen>>) {
+    const before = requests.length;
+    fireEvent.press(ui.getByTestId('library-review-save'));
+    await waitFor(() => expect(requests.length).toBeGreaterThan(before));
+    await settled();
+}
+function rateFour(ui: Awaited<ReturnType<typeof reviewScreen>>) {
+    fireEvent.press(within(ui.getByLabelText('Your rating')).getByRole('radio', { name: '4 stars' }));
+}
+async function pressSave(ui: Awaited<ReturnType<typeof reviewScreen>>, count: number) {
+    fireEvent.press(ui.getByTestId('library-review-save'));
+    await waitFor(() => expect(requests).toHaveLength(count));
+}
+function setVisibility(ui: Awaited<ReturnType<typeof reviewScreen>>, value: boolean) {
+    fireEvent(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }), 'valueChange', value);
 }
 async function settled() {
     await waitFor(() => expect(client.isMutating()).toBe(0));
@@ -108,105 +133,151 @@ beforeEach(() => {
 afterEach(() => { cleanup(); client.clear(); actor(null); jest.restoreAllMocks(); });
 
 it.each(['text', 'rating', 'privacy'])('sends only the %s field selected by the action', async field => {
-    const ui = await screen();
-    if (field === 'text') { fireEvent.changeText(ui.getByTestId('library-review-input'), 'Edited text'); fireEvent(ui.getByTestId('library-review-input'), 'blur'); }
-    else if (field === 'rating') fireEvent.press(ui.getByRole('button', { name: 'Rate book' }));
-    else fireEvent.press(ui.getByTestId('library-review-privacy-toggle'));
-    await settled();
-    const expected = field === 'text' ? { review: 'Edited text' } : field === 'rating' ? { rating: 4 } : { review_is_public: false };
+    if (field === 'rating') {
+        const ui = await reviewScreen();
+        rateFour(ui);
+        await saveReview(ui);
+        expect(requests.map(request => request.patch)).toEqual([{ rating: 4 }]);
+        return;
+    }
+    const ui = await reviewScreen();
+    if (field === 'text') fireEvent.changeText(ui.getByTestId('library-review-text'), 'Edited text');
+    else {
+        setVisibility(ui, false);
+        expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
+        expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
+    }
+    await saveReview(ui);
+    const expected = field === 'text' ? { review: 'Edited text' } : { review_is_public: false };
     expect(requests.map(request => request.patch)).toEqual([expected]);
 });
 
-it('confirms a text save exactly once when a later privacy action supersedes its observer', async () => {
-    const first = deferred(); const second = deferred(); gates.push(first, second); const ui = await screen();
-    fireEvent.changeText(ui.getByTestId('library-review-input'), 'Saved text'); fireEvent(ui.getByTestId('library-review-input'), 'blur');
-    await waitFor(() => expect(requests).toHaveLength(1)); fireEvent.press(ui.getByTestId('library-review-privacy-toggle'));
-    await waitFor(() => expect(client.isMutating()).toBe(2)); expect(requests).toHaveLength(1);
-    await act(async () => first.resolve()); await waitFor(() => expect(requests).toHaveLength(2));
+it('sends text then visibility as two single-field saves in order', async () => {
+    const first = deferred(); const second = deferred(); gates.push(first, second); const ui = await reviewScreen();
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'Saved text');
+    await pressSave(ui, 1);
+    await act(async () => first.resolve()); await settled();
+    setVisibility(ui, false);
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
+    expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
+    const save = ui.getByTestId('library-review-save');
+    expect(save.props.accessibilityState.disabled).toBe(false);
+    fireEvent.press(save);
+    await waitFor(() => expect(requests).toHaveLength(2));
     await act(async () => second.resolve()); await settled();
     expect(requests.map(request => request.patch)).toEqual([{ review: 'Saved text' }, { review_is_public: false }]);
     expect(mockBook).toMatchObject({ review: 'Saved text', review_is_public: false });
-    expect(mockFeedback.notify).toHaveBeenCalledTimes(1); expect(mockFeedback.notify).toHaveBeenCalledWith({ kind: 'success', message: 'Review saved!' });
+    expect(mockFeedback.notify).toHaveBeenCalledWith({ kind: 'success', message: 'Review saved' });
     expect(Alert.alert).not.toHaveBeenCalled();
 });
 
 it('keeps confirmed Public feedback while a visibility change is pending or rejected', async () => {
-    const gate = deferred(); gates.push(gate); const ui = await screen();
-    fireEvent.press(ui.getByTestId('library-review-privacy-toggle'));
+    const gate = deferred(); gates.push(gate); const ui = await reviewScreen();
+    setVisibility(ui, false);
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
+    expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
+    fireEvent.press(ui.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(1));
-    expect(ui.getByText('Public Review')).toBeOnTheScreen();
+    expect(ui.getByTestId('library-review-text').props.value).toBe('Confirmed review');
     await act(async () => gate.reject(new Error('Visibility rejected'))); await settled();
-    expect(ui.getByText('Public Review')).toBeOnTheScreen();
-    expect(mockFeedback.notify).toHaveBeenCalledWith({ kind: 'error', message: expect.stringContaining('Visibility rejected') });
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
+    expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
+    expect(mockFeedback.notify).toHaveBeenCalledWith(expect.objectContaining({ kind: 'error', message: expect.stringContaining('Visibility rejected') }));
 });
 
-it.each([true, false])('preserves confirmed privacy after reopening and a later text write; first success=%s', async success => {
-    const gate = deferred(); gates.push(gate); const initial = await screen();
-    fireEvent.press(initial.getByTestId('library-review-privacy-toggle'));
-    await waitFor(() => expect(requests).toHaveLength(1)); initial.unmount();
-    const reopened = await screen();
-    fireEvent.changeText(reopened.getByTestId('library-review-input'), 'Later text'); fireEvent(reopened.getByTestId('library-review-input'), 'blur');
-    expect(requests).toHaveLength(1);
-    await act(async () => { if (success) gate.resolve(); else gate.reject(new Error('Visibility rejected')); }); await settled();
-    expect(requests[1].patch).toEqual({ review: 'Later text' });
-    expect(mockBook).toMatchObject({ review: 'Later text', review_is_public: !success });
-    expect(reopened.getByText(success ? 'Private Review' : 'Public Review')).toBeOnTheScreen();
+it.each([true, false])('preserves confirmed privacy across a later text write; first success=%s', async success => {
+    const gate = deferred(); gates.push(gate);
+    const ui = await reviewScreen();
+    setVisibility(ui, false);
+    fireEvent.press(ui.getByTestId('library-review-save'));
+    await waitFor(() => expect(requests).toHaveLength(1));
+    await act(async () => { if (success) gate.resolve(); else gate.reject(new Error('Visibility rejected')); });
+    await settled();
+    expect(mockBook.review_is_public).toBe(success ? false : true);
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'Later text');
+    await saveReview(ui);
+    if (success) {
+        expect(requests[requests.length - 1].patch).toEqual({ review: 'Later text' });
+        expect(mockBook).toMatchObject({ review: 'Later text', review_is_public: false });
+    } else {
+        // The failed visibility change is still dirty, so Save writes text
+        // first and then retries the visibility change: two single-field saves.
+        expect(requests.slice(-2).map(request => request.patch)).toEqual([
+            { review: 'Later text' },
+            { review_is_public: false },
+        ]);
+        expect(mockBook).toMatchObject({ review: 'Later text', review_is_public: false });
+    }
 });
 
-it.each(['privacy', 'rating'])('retains rejected text visibly without retrying it during a later %s action', async field => {
-    const gate = deferred(); gates.push(gate); const initial = await screen();
-    fireEvent.changeText(initial.getByTestId('library-review-input'), 'Rejected draft'); fireEvent(initial.getByTestId('library-review-input'), 'blur');
-    await waitFor(() => expect(requests).toHaveLength(1)); initial.unmount(); const reopened = await screen();
-    await waitFor(() => expect(reopened.getByTestId('library-review-input').props.value).toBe('Rejected draft'));
+it.each(['visibility', 'rating'])('retains rejected text visibly without retrying it during a later %s action', async field => {
+    const gate = deferred(); gates.push(gate); const ui = await reviewScreen();
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'Rejected draft');
+    fireEvent.press(ui.getByTestId('library-review-save'));
+    await waitFor(() => expect(requests).toHaveLength(1));
     await act(async () => gate.reject(new Error('Text rejected'))); await settled();
-    fireEvent.press(field === 'privacy' ? reopened.getByTestId('library-review-privacy-toggle') : reopened.getByRole('button', { name: 'Rate book' })); await settled();
-    expect(requests[1].patch).toEqual(field === 'privacy' ? { review_is_public: false } : { rating: 4 });
-    expect(mockBook.review).toBe('Confirmed review');
-    expect(reopened.getByTestId('library-review-input').props.value).toBe('Rejected draft');
-    expect(reopened.getByText(/unsaved/i)).toBeOnTheScreen();
+    // The failed text stays in the field and is not retried by the next save.
+    expect(ui.getByTestId('library-review-text').props.value).toBe('Rejected draft');
+    if (field === 'visibility') {
+        fireEvent.changeText(ui.getByTestId('library-review-text'), 'Confirmed review');
+        setVisibility(ui, false);
+        await pressSave(ui, 2);
+        await settled();
+        expect(requests[1].patch).toEqual({ review_is_public: false });
+        expect(mockBook.review).toBe('Confirmed review');
+    } else {
+        ui.unmount();
+        const details = await reviewScreen();
+        rateFour(details);
+        await saveReview(details);
+        expect(requests[1].patch).toEqual({ rating: 4 });
+        expect(mockBook.review).toBe('Confirmed review');
+    }
 });
 
-it('preserves newer typing even when it returns to the old confirmed value', async () => {
-    const gate = deferred(); gates.push(gate); const ui = await screen();
-    fireEvent.changeText(ui.getByTestId('library-review-input'), 'Submitted text'); fireEvent(ui.getByTestId('library-review-input'), 'blur');
+it('locks the editor while saving so a late confirmation cannot overwrite newer typing', async () => {
+    const gate = deferred(); gates.push(gate); const ui = await reviewScreen();
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'Submitted text');
+    fireEvent.press(ui.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(1));
-    fireEvent.changeText(ui.getByTestId('library-review-input'), 'Confirmed review');
+    // Explicit Save serializes edits: the field and Save stay locked while the
+    // save is in flight, so newer typing cannot race a late confirmation.
+    expect(ui.getByTestId('library-review-text').props.editable).toBe(false);
+    expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(true);
     await act(async () => gate.resolve()); await settled();
-    expect(ui.getByTestId('library-review-input').props.value).toBe('Confirmed review');
     expect(client.getQueryData<any>(['book', 'reader', 'entry']).review).toBe('Submitted text');
-    expect(ui.getByText(/unsaved/i)).toBeOnTheScreen();
+    expect(ui.getByTestId('library-review-text').props.value).toBe('Submitted text');
+    expect(ui.getByTestId('library-review-text').props.editable).toBe(true);
+    expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(true);
 });
 
-it('shows inherited busy feedback and lets rating changes queue on either screen instance', async () => {
-    const first = deferred(); const second = deferred(); gates.push(first, second); const initial = await screen();
-    fireEvent.press(initial.getByTestId('library-review-privacy-toggle')); await waitFor(() => expect(requests).toHaveLength(1));
-    fireEvent.press(initial.getByRole('button', { name: 'Rate book' }));
-    await waitFor(() => expect(client.isMutating()).toBe(2)); initial.unmount(); const reopened = await screen();
-    expect(reopened.getByTestId('library-review-privacy-toggle').props.accessibilityState.busy).toBe(true);
-    expect(reopened.getByText(/Saving review changes/)).toBeOnTheScreen();
-    await act(async () => first.resolve()); await waitFor(() => expect(requests).toHaveLength(2));
-    expect(requests[1].patch).toEqual({ rating: 4 });
-    await act(async () => second.resolve()); await settled();
-    await waitFor(() => expect(reopened.queryByText(/Saving review changes/)).toBeNull());
-});
-
-it('preserves the latest queued text and explicit visibility across reopening', async () => {
-    const gate = deferred(); gates.push(gate); const initial = await screen();
-    fireEvent.changeText(initial.getByTestId('library-review-input'), 'First text'); fireEvent(initial.getByTestId('library-review-input'), 'blur');
+it('shows saving feedback on the review page while a visibility save is pending', async () => {
+    const gate = deferred(); gates.push(gate); const ui = await reviewScreen();
+    setVisibility(ui, false);
+    fireEvent.press(ui.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(1));
-    fireEvent.changeText(initial.getByTestId('library-review-input'), 'Latest text'); fireEvent(initial.getByTestId('library-review-input'), 'blur');
-    fireEvent.press(initial.getByTestId('library-review-privacy-toggle')); initial.unmount(); const reopened = await screen();
-    await waitFor(() => expect(reopened.getByTestId('library-review-input').props.value).toBe('Latest text'));
-    fireEvent.press(reopened.getByTestId('library-review-privacy-toggle'));
+    expect(ui.getByText(/Saving review changes/)).toBeOnTheScreen();
     await act(async () => gate.resolve()); await settled();
-    expect(requests.map(request => request.patch)).toEqual([{ review: 'First text' }, { review: 'Latest text' }, { review_is_public: false }, { review_is_public: true }]);
-    expect(mockBook).toMatchObject({ review: 'Latest text', review_is_public: true });
+    await waitFor(() => expect(ui.queryByText(/Saving review changes/)).toBeNull());
+    expect(requests.map(request => request.patch)).toEqual([{ review_is_public: false }]);
+});
+
+it('sends sequential text saves in order across reopening', async () => {
+    const ui = await reviewScreen();
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'First text');
+    await saveReview(ui);
+    expect(requests.map(request => request.patch)).toEqual([{ review: 'First text' }]);
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'Latest text');
+    await saveReview(ui);
+    expect(requests.map(request => request.patch)).toEqual([{ review: 'First text' }, { review: 'Latest text' }]);
+    expect(mockBook).toMatchObject({ review: 'Latest text' });
 });
 
 it.each(['switch', 'logout', 'leave-and-return'])('fences queued dispatch and late confirmation after %s', async transition => {
-    const gate = deferred(); gates.push(gate); const initial = await screen();
-    fireEvent.changeText(initial.getByTestId('library-review-input'), 'Actor A private text'); fireEvent(initial.getByTestId('library-review-input'), 'blur');
-    await waitFor(() => expect(requests).toHaveLength(1)); fireEvent.press(initial.getByTestId('library-review-privacy-toggle')); initial.unmount();
+    const gate = deferred(); gates.push(gate); const initial = await reviewScreen();
+    fireEvent.changeText(initial.getByTestId('library-review-text'), 'Actor A private text');
+    fireEvent.press(initial.getByTestId('library-review-save'));
+    await waitFor(() => expect(requests).toHaveLength(1)); initial.unmount();
     act(() => { actor(transition === 'logout' ? null : 'other-reader'); if (transition === 'leave-and-return') actor('reader'); });
     await act(async () => gate.resolve()); await settled();
     expect(requests).toHaveLength(1);
@@ -215,8 +286,9 @@ it.each(['switch', 'logout', 'leave-and-return'])('fences queued dispatch and la
 });
 
 it('pins the dispatch token and aborts the request on identity loss', async () => {
-    const gate = deferred(); gates.push(gate); const ui = await screen();
-    fireEvent.press(ui.getByTestId('library-review-privacy-toggle')); await waitFor(() => expect(requests).toHaveLength(1)); ui.unmount();
+    const gate = deferred(); gates.push(gate); const ui = await reviewScreen();
+    setVisibility(ui, false);
+    fireEvent.press(ui.getByTestId('library-review-save')); await waitFor(() => expect(requests).toHaveLength(1)); ui.unmount();
     actor('other-reader');
     expect(requests[0].headers.get('Authorization')).toBe('Bearer token-reader');
     expect(requests[0].signal?.aborted).toBe(true);
@@ -225,28 +297,37 @@ it('pins the dispatch token and aborts the request on identity loss', async () =
 
 it.each([null, { id: 'foreign', user_id: 'reader', rating: 2, review: 'Wrong row', review_is_public: false },
     { id: 'entry', user_id: 'foreign', rating: 2, review: 'Wrong owner', review_is_public: false }])('does not confirm an absent or wrong affected row: %j', async row => {
-    returnedRow = row; const ui = await screen(); fireEvent.press(ui.getByTestId('library-review-privacy-toggle')); await settled();
-    expect(mockFeedback.notify).toHaveBeenCalledWith({ kind: 'error', message: expect.any(String) });
-    expect(ui.getByText('Public Review')).toBeOnTheScreen();
+    returnedRow = row; const ui = await reviewScreen();
+    setVisibility(ui, false);
+    fireEvent.press(ui.getByTestId('library-review-save')); await settled();
+    expect(mockFeedback.notify).toHaveBeenCalledWith(expect.objectContaining({ kind: 'error', message: expect.any(String) }));
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
+    expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
     expect(client.getQueryData<any>(['book', 'reader', 'entry']).review_is_public).toBe(true);
 });
 
 it('keeps same-actor token refresh valid while pinning each request credential', async () => {
-    const gate = deferred(); gates.push(gate); const ui = await screen();
-    fireEvent.press(ui.getByTestId('library-review-privacy-toggle')); await waitFor(() => expect(requests).toHaveLength(1));
+    const gate = deferred(); gates.push(gate); const ui = await reviewScreen();
+    setVisibility(ui, false);
+    fireEvent.press(ui.getByTestId('library-review-save')); await waitFor(() => expect(requests).toHaveLength(1));
     act(() => actor('reader', 'refreshed-token'));
     expect(requests[0].signal?.aborted).toBe(false);
     await act(async () => gate.resolve()); await settled();
-    expect(ui.getByText('Private Review')).toBeOnTheScreen();
-    fireEvent.press(ui.getByTestId('library-review-privacy-toggle')); await settled();
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false);
+    expect(ui.getByText('Only you can read this review.')).toBeOnTheScreen();
+    setVisibility(ui, true);
+    fireEvent.press(ui.getByTestId('library-review-save')); await settled();
     expect(requests[1].headers.get('Authorization')).toBe('Bearer refreshed-token');
-    expect(ui.getByText('Public Review')).toBeOnTheScreen();
+    expect(ui.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(true);
+    expect(ui.getByText('Anyone can read this review.')).toBeOnTheScreen();
 });
 
 it('rechecks identity after cancellation before adopting a returned row', async () => {
     const cancellation = deferred();
     const cancel = jest.spyOn(client, 'cancelQueries').mockImplementationOnce(() => cancellation.promise);
-    const ui = await screen(); fireEvent.press(ui.getByTestId('library-review-privacy-toggle'));
+    const ui = await reviewScreen();
+    setVisibility(ui, false);
+    fireEvent.press(ui.getByTestId('library-review-save'));
     await waitFor(() => expect(cancel).toHaveBeenCalled()); ui.unmount();
     actor('other-reader');
     await act(async () => cancellation.resolve()); await settled();
@@ -255,15 +336,17 @@ it('rechecks identity after cancellation before adopting a returned row', async 
 });
 
 it('isolates another book from pending text and busy state', async () => {
-    const gate = deferred(); gates.push(gate); const original = await screen();
-    fireEvent.changeText(original.getByTestId('library-review-input'), 'Other book pending text'); fireEvent(original.getByTestId('library-review-input'), 'blur');
+    const gate = deferred(); gates.push(gate); const original = await reviewScreen();
+    fireEvent.changeText(original.getByTestId('library-review-text'), 'Other book pending text');
+    fireEvent.press(original.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(1)); original.unmount();
     mockEntryId = 'other-entry'; mockBook = { ...mockBook, id: mockEntryId, book_id: 'other-catalogue', review: 'This book review' };
-    const other = await screen();
-    expect(other.getByTestId('library-review-input').props.value).toBe('This book review');
+    const other = await reviewScreen();
+    expect(other.getByTestId('library-review-text').props.value).toBe('This book review');
     expect(other.queryByText(/Saving review changes/)).toBeNull();
-    fireEvent.press(other.getByTestId('library-review-privacy-toggle'));
-    await waitFor(() => expect(other.getByText('Private Review')).toBeOnTheScreen());
+    setVisibility(other, false);
+    fireEvent.press(other.getByTestId('library-review-save'));
+    await waitFor(() => expect(other.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false));
     expect(requests[1].patch).toEqual({ review_is_public: false });
     await act(async () => gate.resolve()); await settled();
     expect(client.getQueryData<any>(['book', 'reader', 'other-entry'])).toMatchObject({ review: 'This book review', review_is_public: false });
@@ -274,18 +357,28 @@ it.each([{}, { rating: 9 }, { review: 'Unrelated', review_is_public: false }, { 
     expect(requests).toHaveLength(0);
 });
 
-it('keeps pending rating separate from a later privacy action across reopening', async () => {
-    const gate = deferred(); gates.push(gate); const initial = await screen();
-    fireEvent.press(initial.getByRole('button', { name: 'Rate book' })); await waitFor(() => expect(requests).toHaveLength(1)); initial.unmount(); const reopened = await screen();
-    fireEvent.press(reopened.getByTestId('library-review-privacy-toggle')); await act(async () => gate.resolve()); await settled();
+it('keeps rating and visibility as separate single-field saves', async () => {
+    const details = await reviewScreen();
+    rateFour(details);
+    await saveReview(details);
+    expect(requests).toHaveLength(1);
+    expect(requests[0].patch).toEqual({ rating: 4 });
+    expect(mockBook).toMatchObject({ rating: 4, review_is_public: true });
+    details.unmount();
+    client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } });
+    const reopened = await reviewScreen();
+    setVisibility(reopened, false);
+    await saveReview(reopened);
     expect(requests.map(request => request.patch)).toEqual([{ rating: 4 }, { review_is_public: false }]);
     expect(mockBook).toMatchObject({ rating: 4, review_is_public: false });
 });
 
 it('retains named B01 destinations, management actions, and accessible Back', async () => {
     mockBook = { ...mockBook, condition: 'new' };
-    const ui = await screen(false); const buttons = ui.getAllByRole('button');
-    expect(buttons.indexOf(ui.getByRole('button', { name: 'Add note' }))).toBeLessThan(buttons.indexOf(ui.getByTestId('book-row-review')));
+    const ui = await screen(); const buttons = ui.getAllByRole('button');
+    // SDD-07 §14.2b: the rating block (with the Edit button) sits directly under
+    // the cover, before the status selector and the Add note primary.
+    expect(buttons.indexOf(ui.getByRole('button', { name: 'Edit your rating and review' }))).toBeLessThan(buttons.indexOf(ui.getByRole('button', { name: 'Add note' })));
     expect(ui.getByText('Saved note preview')).toBeOnTheScreen();
     fireEvent.press(ui.getByTestId('book-row-saved')); expect(ui.getByText('Retained saved excerpt')).toBeOnTheScreen();
     fireEvent.press(ui.getByTestId('book-row-ownership')); fireEvent.press(ui.getByRole('button', { name: 'Ownership' })); fireEvent.press(ui.getByRole('button', { name: 'Condition' }));
@@ -299,50 +392,75 @@ it('retains named B01 destinations, management actions, and accessible Back', as
     await waitFor(() => expect(booksService.removeFromLibrary).toHaveBeenCalledWith('entry'));
 });
 
-it('reconciliation: clean original editor adopts a later confirmed refetch after saving', async () => {
-    const ui = await screen();
-    fireEvent.changeText(ui.getByTestId('library-review-input'), 'Saved B');
-    fireEvent(ui.getByTestId('library-review-input'), 'blur'); await settled();
-    expect(ui.queryByText(/unsaved/i)).toBeNull();
+it('reconciliation: saved editor keeps its text and offers Save again after a later server change', async () => {
+    const ui = await reviewScreen();
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'Saved B');
+    await saveReview(ui);
+    expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(true);
     mockBook = { ...mockBook, review: 'Later server C' };
     await act(async () => { await client.invalidateQueries({ queryKey: ['book', 'reader', 'entry'], exact: true }); });
-    expect(client.getQueryData<any>(['book', 'reader', 'entry']).review).toBe('Later server C');
-    await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Later server C'));
+    await waitFor(() => expect(client.getQueryData<any>(['book', 'reader', 'entry']).review).toBe('Later server C'));
+    // Local editing state is never overwritten by a late server update; the
+    // difference re-enables Save instead of silently swapping the text.
+    await waitFor(() => expect(ui.getByTestId('library-review-text').props.value).toBe('Saved B'));
+    await waitFor(() => expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(false));
 });
 
-it('reconciliation: repeated text submissions retain arbitrary newer typing', async () => {
-    const one = deferred(); const two = deferred(); gates.push(one, two);
-    const ui = await screen();
-    fireEvent.changeText(ui.getByTestId('library-review-input'), 'B'); fireEvent(ui.getByTestId('library-review-input'), 'blur');
-    await waitFor(() => expect(requests).toHaveLength(1));
-    fireEvent(ui.getByTestId('library-review-input'), 'blur');
-    fireEvent.changeText(ui.getByTestId('library-review-input'), 'Newer C');
-    await act(async () => one.resolve()); await waitFor(() => expect(requests).toHaveLength(2));
-    await act(async () => two.resolve()); await settled();
-    expect(ui.getByTestId('library-review-input').props.value).toBe('Newer C');
-    expect(ui.getByText(/unsaved/i)).toBeOnTheScreen();
+it('reconciliation: sequential text saves retain the newest typing', async () => {
+    const ui = await reviewScreen();
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'B');
+    await saveReview(ui);
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'Newer C');
+    expect(ui.getByTestId('library-review-text').props.value).toBe('Newer C');
+    expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(false);
+    await saveReview(ui);
+    expect(requests.map(r => r.patch)).toEqual([{ review: 'B' }, { review: 'Newer C' }]);
 });
 
-it('reconciliation: failed text retries only on another blur and clears unsaved after confirmation', async () => {
-    const one = deferred(); gates.push(one); const ui = await screen();
-    fireEvent.changeText(ui.getByTestId('library-review-input'), 'Retry B'); fireEvent(ui.getByTestId('library-review-input'), 'blur');
+it('reconciliation: failed text retries only on another Save press', async () => {
+    const one = deferred(); gates.push(one); const ui = await reviewScreen();
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'Retry B');
+    fireEvent.press(ui.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(1));
     await act(async () => one.reject(new Error('Rejected'))); await settled();
-    expect(ui.getByText(/unsaved/i)).toBeOnTheScreen();
-    fireEvent(ui.getByTestId('library-review-input'), 'blur'); await settled();
+    expect(ui.getByTestId('library-review-text').props.value).toBe('Retry B');
+    expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(false);
+    fireEvent.press(ui.getByTestId('library-review-save')); await settled();
     expect(requests.map(r => r.patch)).toEqual([{review:'Retry B'}, {review:'Retry B'}]);
-    expect(ui.queryByText(/unsaved/i)).toBeNull();
+    await waitFor(() => expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(true));
 });
 
-it.each(['rating', 'public'])('reconciliation: rejected %s is not retried by a later text action', async field => {
-    if (field === 'public') mockBook.review_is_public = false;
-    const one = deferred(); gates.push(one); const ui = await screen();
-    fireEvent.press(field === 'rating' ? ui.getByRole('button', {name:'Rate book'}) : ui.getByTestId('library-review-privacy-toggle'));
+it.each(['rating', 'visibility'])('reconciliation: a later Save writes only dirty fields as single-field saves after a rejected %s', async field => {
+    if (field === 'visibility') mockBook.review_is_public = false;
+    const one = deferred(); gates.push(one);
+    if (field === 'rating') {
+        const details = await reviewScreen();
+        rateFour(details);
+        fireEvent.press(details.getByTestId('library-review-save'));
+        await waitFor(() => expect(requests).toHaveLength(1));
+        await act(async () => one.reject(new Error('Rejected'))); await settled();
+        expect(mockBook.rating).toBe(2);
+        details.unmount();
+        client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } });
+        const ui = await reviewScreen();
+        fireEvent.changeText(ui.getByTestId('library-review-text'), 'Only text');
+        await saveReview(ui);
+        expect(requests[requests.length - 1].patch).toEqual({review:'Only text'});
+        expect(mockBook.rating).toBe(2);
+        expect(mockBook.review).toBe('Only text');
+        return;
+    }
+    const ui = await reviewScreen();
+    setVisibility(ui, true);
+    fireEvent.press(ui.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(1));
     await act(async () => one.reject(new Error('Rejected'))); await settled();
-    fireEvent.changeText(ui.getByTestId('library-review-input'), 'Only text'); fireEvent(ui.getByTestId('library-review-input'), 'blur'); await settled();
-    expect(requests[1].patch).toEqual({review:'Only text'});
-    expect(mockBook.rating).toBe(2); expect(mockBook.review_is_public).toBe(field !== 'public');
+    // Save writes every dirty field: the new text plus the still-dirty
+    // visibility flip, each as its own single-field save.
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'Only text');
+    await saveReview(ui);
+    expect(requests.slice(-2).map(request => request.patch)).toEqual([{review:'Only text'}, {review_is_public: true}]);
+    expect(mockBook).toMatchObject({ review: 'Only text', review_is_public: true });
 });
 
 it.each([[], {}, {id:'entry',user_id:'reader',rating:'2',review:'x',review_is_public:true},
@@ -369,107 +487,106 @@ it('reconciliation: transport errors do not confirm', async () => {
     await expect(bookReviewService.update(currentReviewActor('reader')!, 'entry', {rating:4})).rejects.toBeDefined();
 });
 
-it('reconciliation: two mounted instances preserve a newer local draft and share busy', async () => {
+it('reconciliation: two mounted review pages keep independent drafts', async () => {
     const one = deferred(); gates.push(one);
-    const both = render(<QueryClientProvider client={client}><BookFeedbackProvider><View testID="first"><BookDetailScreen /></View><View testID="second"><BookDetailScreen /></View></BookFeedbackProvider></QueryClientProvider>);
+    const both = render(<QueryClientProvider client={client}><BookFeedbackProvider><View testID="first"><ReviewScreen /></View><View testID="second"><ReviewScreen /></View></BookFeedbackProvider></QueryClientProvider>);
     const first = within(both.getByTestId('first')); const second = within(both.getByTestId('second'));
-    await first.findByText('Fixture book'); await second.findByText('Fixture book');
-    fireEvent.press(first.getByTestId('book-row-review')); fireEvent.press(second.getByTestId('book-row-review'));
-    fireEvent.changeText(second.getByTestId('library-review-input'), 'Local unsaved C');
-    fireEvent.changeText(first.getByTestId('library-review-input'), 'Submitted B'); fireEvent(first.getByTestId('library-review-input'), 'blur');
+    await first.findByTestId('library-review-header'); await second.findByTestId('library-review-header');
+    await first.findByTestId('library-review-text'); await second.findByTestId('library-review-text');
+    fireEvent.changeText(second.getByTestId('library-review-text'), 'Local unsaved C');
+    fireEvent.changeText(first.getByTestId('library-review-text'), 'Submitted B');
+    fireEvent.press(first.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(1));
-    expect(second.getByTestId('library-review-privacy-toggle').props.accessibilityState.busy).toBe(true);
     await act(async () => one.resolve()); await settled();
-    expect(second.getByTestId('library-review-input').props.value).toBe('Local unsaved C');
-    expect(second.getByText(/unsaved/i)).toBeOnTheScreen();
+    expect(second.getByTestId('library-review-text').props.value).toBe('Local unsaved C');
+    expect(second.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(false);
 });
 
-it('reconciliation: new generation queue proceeds independently of an old in-flight request', async () => {
-    const one = deferred(); gates.push(one); const first = await screen();
-    fireEvent.press(first.getByRole('button', {name:'Rate book'})); await waitFor(() => expect(requests).toHaveLength(1)); first.unmount();
+it('reconciliation: new generation saves with the new session token after the old request settles', async () => {
+    const one = deferred(); gates.push(one); const first = await reviewScreen();
+    rateFour(first); fireEvent.press(first.getByTestId('library-review-save')); await waitFor(() => expect(requests).toHaveLength(1)); first.unmount();
+    await act(async () => one.resolve()); await settled();
     act(() => {actor(null); actor('reader', 'new-session-token');});
-    const second = await screen();
-    expect(second.getByTestId('library-review-privacy-toggle').props.accessibilityState.busy).toBe(false);
-    fireEvent.press(second.getByTestId('library-review-privacy-toggle')); await waitFor(() => expect(requests).toHaveLength(2));
+    client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } });
+    const second = await reviewScreen();
+    setVisibility(second, false);
+    fireEvent.press(second.getByTestId('library-review-save'));
+    await waitFor(() => expect(requests).toHaveLength(2));
     expect(requests[1].headers.get('Authorization')).toBe('Bearer new-session-token');
-    await waitFor(() => expect(second.getByText('Private Review')).toBeOnTheScreen());
-    await act(async () => one.resolve()); await settled();
+    await waitFor(() => expect(second.getByTestId('library-review-visibility', { includeHiddenElements: true }).props.value).toBe(false));
+    await settled();
 });
 
-it('reconciliation: pending text survives actual mutation GC timers after unmount', async () => {
+it('reconciliation: pending save completes into the cache while the reopened page shows confirmed text', async () => {
     client = new QueryClient({ defaultOptions: { queries: {retry:false}, mutations:{retry:false,gcTime:1} } });
-    const one = deferred(); gates.push(one); const first = await screen();
-    fireEvent.changeText(first.getByTestId('library-review-input'), 'Pending B'); fireEvent(first.getByTestId('library-review-input'), 'blur');
+    const one = deferred(); gates.push(one); const first = await reviewScreen();
+    fireEvent.changeText(first.getByTestId('library-review-text'), 'Pending B');
+    fireEvent.press(first.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(1)); first.unmount();
     await act(async () => {await new Promise(resolve => setTimeout(resolve,20));});
-    const second = await screen();
-    expect(second.getByTestId('library-review-input').props.value).toBe('Pending B');
-    expect(second.getByTestId('library-review-privacy-toggle').props.accessibilityState.busy).toBe(true);
+    const second = await reviewScreen();
+    expect(second.getByTestId('library-review-text').props.value).toBe('Confirmed review');
     await act(async () => one.resolve()); await settled();
-    expect(second.getByTestId('library-review-input').props.value).toBe('Pending B');
-    expect(second.queryByText(/unsaved/i)).toBeNull();
+    expect(client.getQueryData<any>(['book', 'reader', 'entry']).review).toBe('Pending B');
 });
 
-it('reconciliation: untouched blur cannot overwrite a cache update before rerender', async () => {
-    const ui = await screen(); fireEvent.changeText(ui.getByTestId('library-review-input'),'Saved B');
-    fireEvent(ui.getByTestId('library-review-input'),'blur'); await settled();
-    expect(ui.getByTestId('library-review-input').props.value).toBe('Saved B'); expect(ui.queryByText(/unsaved/i)).toBeNull();
-    mockFeedback.notify.mockClear(); (Alert.alert as jest.Mock).mockClear();
-    mockBook = {...mockBook,review:'Later server C'};
-    client.setQueryData(['book','reader','entry'], mockBook);
-    expect(ui.getByTestId('library-review-input').props.value).toBe('Saved B');
-    fireEvent(ui.getByTestId('library-review-input'),'blur'); await settled();
-    expect(requests.map(request => request.patch)).toEqual([{ review: 'Saved B' }]);
-    expect(mockBook.review).toBe('Later server C');
-    expect(client.getQueryData<any>(['book','reader','entry']).review).toBe('Later server C'); expect(mockFeedback.notify).not.toHaveBeenCalled(); expect(Alert.alert).not.toHaveBeenCalled();
+it('reconciliation: untouched Save cannot send when nothing changed', async () => {
+    const ui = await reviewScreen();
+    expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(true);
+    fireEvent.press(ui.getByTestId('library-review-save')); await settled();
+    expect(requests).toHaveLength(0);
+    expect(mockFeedback.notify).not.toHaveBeenCalled(); expect(Alert.alert).not.toHaveBeenCalled();
 });
 
-it.each(['switch','return'])('reconciliation: mounted editor never inherits old-generation pending text after %s', async transition => {
-    const one = deferred(); gates.push(one); const ui = await screen();
-    fireEvent.changeText(ui.getByTestId('library-review-input'),'Actor A secret pending'); fireEvent(ui.getByTestId('library-review-input'),'blur');
+it('reconciliation: mounted editor resets to the other session text after switch', async () => {
+    const one = deferred(); gates.push(one); const ui = await reviewScreen();
+    fireEvent.changeText(ui.getByTestId('library-review-text'),'Actor A secret pending');
+    fireEvent.press(ui.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(1));
-    mockBook = {...mockBook, user_id:transition === 'switch' ? 'other-reader':'reader',review:'Current session confirmed'};
-    act(() => {actor(null); actor(transition === 'switch' ? 'other-reader':'reader','new-token');});
-        await act(async () => { await client.invalidateQueries({queryKey:['book',transition === 'switch' ? 'other-reader':'reader','entry'],exact:true}); });
-    await waitFor(() => expect(client.getQueryData<any>(['book', transition === 'switch' ? 'other-reader':'reader', 'entry'])?.review).toBe('Current session confirmed'));
-    await ui.findByTestId('book-row-review'); if (!ui.queryByTestId('library-review-input')) fireEvent.press(ui.getByTestId('book-row-review'));
-    await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Current session confirmed'));
+    mockBook = {...mockBook, user_id: 'other-reader', review:'Current session confirmed'};
+    act(() => { actor('other-reader', 'new-token'); });
+    await waitFor(() => expect(ui.getByTestId('library-review-text').props.value).toBe('Current session confirmed'));
+    expect(ui.queryByText(/Saving review changes/)).toBeNull();
+    await act(async () => one.resolve()); await settled();
+    expect(client.getQueryData<any>(['book', 'reader', 'entry'])?.review).toBe('Confirmed review');
+});
+
+it('reconciliation: returning to the same session drops the stale draft', async () => {
+    const one = deferred(); gates.push(one); const ui = await reviewScreen();
+    fireEvent.changeText(ui.getByTestId('library-review-text'),'Actor A secret pending');
+    fireEvent.press(ui.getByTestId('library-review-save'));
+    await waitFor(() => expect(requests).toHaveLength(1));
+    act(() => { actor('other-reader', 'temp-token'); });
+    await waitFor(() => expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(true));
+    act(() => { actor('reader', 'new-token'); });
+    // The stale draft is gone; the field no longer holds the old session text.
+    await waitFor(() => expect(ui.getByTestId('library-review-text').props.value).not.toBe('Actor A secret pending'));
     expect(ui.queryByText(/Saving review changes/)).toBeNull();
     await act(async () => one.resolve()); await settled();
 });
 
 
 
-it('reconciliation: same mounted screen isolates a changed book identity from old pending text', async () => {
-    const one = deferred(); gates.push(one); const ui = await screen();
-    fireEvent.changeText(ui.getByTestId('library-review-input'),'Old book pending'); fireEvent(ui.getByTestId('library-review-input'),'blur');
+it('reconciliation: same mounted review page isolates a changed book identity', async () => {
+    const one = deferred(); gates.push(one); const ui = await reviewScreen();
+    fireEvent.changeText(ui.getByTestId('library-review-text'),'Old book pending');
+    fireEvent.press(ui.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(1));
     mockEntryId='other-entry'; mockBook={...mockBook,id:mockEntryId,book_id:'other-catalogue',review:'Other book confirmed'};
-    ui.rerender(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);
-    await ui.findByTestId('book-row-review');
-    if(!ui.queryByTestId('library-review-input')) fireEvent.press(ui.getByTestId('book-row-review'));
-    await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Other book confirmed'));
+    ui.rerender(<QueryClientProvider client={client}><BookFeedbackProvider><ReviewScreen /></BookFeedbackProvider></QueryClientProvider>);
+    await waitFor(() => expect(ui.getByTestId('library-review-text').props.value).toBe('Other book confirmed'));
     await act(async () => one.resolve()); await settled();
 });
 
-it('reconciliation: consumed history cannot clear a dirty draft after revisiting the same book instance', async () => {
-    const ui = await screen();
-    fireEvent.changeText(ui.getByTestId('library-review-input'), 'Saved B');
-    fireEvent(ui.getByTestId('library-review-input'), 'blur'); await settled();
-    const savedBook = mockBook;
-    mockEntryId = 'other-entry'; mockBook = { ...mockBook, id: mockEntryId, book_id: 'other-catalogue', review: 'Other book review' };
-    ui.rerender(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);
-    await ui.findByTestId('book-row-review');
-    if (!ui.queryByTestId('library-review-input')) fireEvent.press(ui.getByTestId('book-row-review'));
-    await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Other book review'));
-    mockEntryId = 'entry'; mockBook = savedBook;
-    ui.rerender(<QueryClientProvider client={client}><BookFeedbackProvider><BookDetailScreen /></BookFeedbackProvider></QueryClientProvider>);
-    await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Saved B'));
-    fireEvent.changeText(ui.getByTestId('library-review-input'), 'New dirty C');
+it('reconciliation: server updates never overwrite a dirty review draft', async () => {
+    const ui = await reviewScreen();
+    fireEvent.changeText(ui.getByTestId('library-review-text'), 'Saved B');
+    await saveReview(ui);
     mockBook = { ...mockBook, review: 'Later server D' };
     await act(async () => { await client.invalidateQueries({ queryKey: ['book', 'reader', 'entry'], exact: true }); });
     await waitFor(() => expect(client.getQueryData<any>(['book', 'reader', 'entry']).review).toBe('Later server D'));
-    await act(async () => { await new Promise(resolve => setTimeout(resolve, 20)); });
-    expect(ui.getByTestId('library-review-input').props.value).toBe('New dirty C');
-    expect(ui.getByText(/unsaved/i)).toBeOnTheScreen();
+    // The saved page keeps its confirmed text; the new server value surfaces
+    // as a dirty difference with Save re-enabled instead of a silent swap.
+    await waitFor(() => expect(ui.getByTestId('library-review-text').props.value).toBe('Saved B'));
+    await waitFor(() => expect(ui.getByTestId('library-review-save').props.accessibilityState.disabled).toBe(false));
 });

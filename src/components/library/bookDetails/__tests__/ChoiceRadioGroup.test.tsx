@@ -63,6 +63,8 @@ describe('ChoiceRadioGroup', () => {
     const group = ui.getByLabelText('Choose');
     expect(group.props.accessibilityRole).toBe('radiogroup');
     expect(group.props.testID).toBe('choices');
+    // Never flattenable: the disabled opacity would re-parent its Text on Android Fabric.
+    expect(group.props.collapsable).toBe(false);
     expect(ui.getByText('Choose')).toBeOnTheScreen();
     expect(group.props.accessibilityState.disabled).toBe(false);
     expect(group.props['aria-disabled']).toBe(false);

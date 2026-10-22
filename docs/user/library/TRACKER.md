@@ -1375,3 +1375,54 @@ Owner asked to fix 200% text clipping before merging SDD-09. Cause: `LIBRARY_TEX
 - `jest.setup.ts` pins the ambient font scale to 1 for deterministic tests (per-test mocks override).
 
 Verification: `tsc` 0; `lint:library` 0 errors (103 pre-existing warnings); library Jest 1,997/1,997; full suite 6,070 passed with 3 load timeouts that pass alone (62/62). Mutants (no line-height scaling; no stacking) were killed. Haiku Android check at font scale 2.0: Home, Book Details, review row, stats PASS after the DetailRow fix; scale restored to 1.0. Known and separate: "My Library" under the status bar, tab labels truncated at 200%. No database or storage changes.
+
+## 2026-10-22 — Review page (SDD-07 D07-22, §14)
+
+Owner decision after the lead's recommendation: rating stays inline on Book Details; review text moves to its own page. Spec: SDD-07 D07-22 and §14. Built by Muse on `sdd09/review-page` (rebased onto `main` `209ae18`).
+- New route `app/(tabs)/library/review.tsx`: prefilled text box, Public/Private switch, one Save (disabled until changed), "Review saved"/"Review removed" toasts, "Remove your review?" for empty or whitespace-only text over a saved review, "Discard changes?" guard (native and web), classified error states (signed out mid-edit shows an error and never saves the draft), one toast per Save, Try again resends the current draft.
+- Book Details row: stars always visible ("Rating saved"), first non-blank line plus "· Private", "Write a review"/"Edit review" text button. Inline text field, blur-save and visibility toggle removed. Shared hook `useReviewWrite` keeps the same mutation key and stale-actor fencing.
+- Review: GLM found 2 medium (whitespace-only, signed-out spinner) and 4 low issues; all fixed; GLM confirmation PASS. MiniMax failed twice with server errors. The Haiku web check then found Save never enabled when the book was already cached (init/reset effect order); fixed with a regression test that failed before the fix.
+
+Verification: `tsc` 0; `lint:library` 0 errors (102 warnings); library Jest 2,025/2,025; mutants killed (Save always enabled, no remove confirm, no discard guard, whitespace not blank, stale retry). Haiku web A1–A8 PASS; Android B1, B3, B4, B5 (200% text) PASS, B2 inconclusive (the emulator keyboard never fully rendered). Residual: in the browser pane a second browser Back after "Keep editing" did not re-prompt (shared composer guard; in-app Back prompts correctly). Dev-account data changed through the app only (review on "Hooked"). No database or storage changes.
+
+### 2026-10-23 — Review page owner feedback rounds (D07-23, §14.2a–b)
+
+Owner: the page did not scroll and ratings were not visible; then asked for rating and review at the top of Book Details, a more polished review page and a properly laid-out visibility control. The lead confirmed the misses by inspection (no stars on the page; fixed-size box scrolling internally; text-only toggle). Built by Muse (Fix 3, Fix 4); the lead finished Fix 5 after Muse stalled:
+- Book Details: centred stars plus Write/Edit review and the first-line serif quote directly under the cover; lower review row removed; the Finished panel no longer has its own stars.
+- Review page: book card with cover, title and author; large stars with a word label; growing paper text area with character count (the page scrolls, not the box); visibility card with eye icon, label, caption and a right-aligned Switch (off thumb in secondary ink for contrast); full-width Save; rating is part of the draft.
+- The header no longer repeats the book title; the RatingInput `centered` prop aligns the label with the stars.
+
+Verification: `tsc` 0; `lint:library` 0 errors; library Jest 2,043/2,043. The lead reviewed Android screenshots (`rp-shots4`) at font scale 1.0 and 2.0: Book Details top, the review page top and bottom, a 279-character review growing the box with the page scrolling to Save, the discard dialog, and the restored scale. The switch colour change after that capture is covered by tests only. No database changes.
+
+### 2026-10-23 — Display-only stars and "Edit" button (D07-24)
+
+Owner: stars on Book Details were too easy to change; the rating should change only via the edit button, and the button should read just "Edit". Book Details now shows the stars as one image ("Your rating: N of 5" / "Not rated yet") and an "Edit" button (accessible name "Edit your rating and review"); the rating changes only on the review page, as part of its draft. `BookButton` gained an optional `accessibilityLabel`. The lead made the product change; a Sonnet subagent updated 30 tests (Muse stalled three times on opencode permission refusals), moving rating-save guarantees to the review page, and added `RatingReviewSummary.test.tsx`.
+
+Verification: `tsc` 0; `lint:library` 0 errors; library Jest 2,055/2,055 (re-run by the lead). Android (`rp-shots5`, viewed by the lead): 4 display stars plus "Edit" under the cover; tapping a star changes nothing; "Edit" opens the review page with the stars editable. Residual: the `ratingSavedMessage` fallback in `useReviewWrite` stays as an unreachable path. No database changes.
+
+### 2026-10-23 — Android crash when saving a rating change
+
+Owner reported that the app crashed on the emulator after changing the rating and tapping Save. The lead reproduced it. Logcat showed `IllegalStateException: addViewAt: ... The specified child already has a parent` (ReactTextView) in the Fabric mount layer.
+
+Root cause: on React Native 0.81 New Architecture, Android flattens a View that has only layout styles. `RatingInput` is `disabled={saving}` while Save runs, and its disabled style adds `opacity`. That switched the group View from flattened to real, so Fabric re-parented its Text children and threw. The same thing can happen in `ChoiceRadioGroup` (disabled opacity) and the `LibraryFilterBar` row. Fix (commit `74b16ee`): `collapsable={false}` on those three views, with guard tests for RatingInput and ChoiceRadioGroup. The Book Details render fixture was regenerated; the only change is four `collapsable: false` lines.
+
+Why nothing caught it:
+- It is a native mount exception, outside JavaScript, so the root error boundary cannot catch it. Dev builds show the dev-launcher error screen; a release build would close the app.
+- Jest's renderer never mounts native views.
+- The same "child already has a parent" error was seen once during SDD-09 and was wrongly dismissed as a dev glitch.
+
+Verification: `tsc` 0; `lint:library` 0 errors (103 warnings); library Jest 2,056/2,056. Android retest (`crash2`, screenshots viewed by the lead): Hooked → Edit → 4 stars → Save showed "Review saved" and returned to Book Details with 4 stars. Then 5 stars, text, Public on → Save gave 5 stars and the new text. No `addViewAt` or "already has a parent" in logcat, and the app process was unchanged throughout. Dev-account data changed through the app only (Hooked: 5 stars, public review "Retest note"). No database changes.
+
+### 2026-10-23 — Full-branch review before merge (sdd09/review-page)
+
+The owner does not review PRs, so the whole branch (`git diff main...HEAD`, 4 commits) was reviewed here before merge. Earlier rounds 25ac98b, 14f9e1a and 74b16ee had had no outside review. MiniMax failed again (server error); GLM (opencode, read-only, repo fingerprint unchanged) found 1 medium and 5 low issues. The lead checked each against the code:
+- Medium, fixed: an error toast's "Try again" outlives the page, so after "Discard changes" it could resend the discarded draft. `useReviewWrite` now ignores Try again once its page has closed and says "Those review changes weren't saved."
+- Low, fixed: a session lost before, during or after any step of one Save was silent. Now "Sign in again to save review changes." shows, but only while the review page is open; once it has closed, the next account sees nothing (the existing fencing tests require that).
+- Low, fixed: screen readers heard "Not rated yet" twice, and "Public review" twice. The caption is now sighted-only. The visibility row is the one switch (role, checked state); the inner Switch is hidden from accessibility and from keyboard focus.
+- Low, fixed: unused `useReviewWrite` on Book Details and the unused `submitReview`. SDD-07 §14.3 and SDD-09 H-14 still described the Finished panel stars; both are corrected.
+- Low, open: on web, a second browser Back after "Keep editing" may not re-prompt. This is the shared composer guard already on `main` for notes, so it is not part of this branch; it remains a known residual.
+- Also noted, low: when a later step of one Save fails, the earlier steps stay saved and only the failed step is retried. The page stays dirty, so Save sends the rest again.
+
+GLM confirmation review of the fixes: all 5 fixed, verdict MERGE. Its new lows were fixed as listed above. The final gating of the session toast came after that review and is covered by the existing fencing tests plus the new tests.
+
+Verification: `tsc` 0; `lint:library` 0 errors (102 warnings); library Jest 2,059/2,059. Three new tests (stale Try again, session lost between steps, session lost in flight) each fail when their fix is removed. Android (`crash3`, screenshots viewed by the lead): tapping the Public review card toggles it and the caption, Save enables, saving returns to Book Details with "Private", no crash, and no `addViewAt` in logcat. TalkBack itself was not run. That check began with Hooked at 3 stars instead of the 5 saved earlier. Nothing in these fixes writes a rating; most likely another tap on the dev emulator changed it, but this was not confirmed. No database changes.

@@ -207,7 +207,7 @@ afterEach(() => {
 });
 
 describe('Unit 5 on Book Details', () => {
-  it('shows the leave-out switch and Reading stats link with reads, and keeps DP-01', async () => {
+  it('shows the leave-out switch and Reading stats link with reads, keeping the D07-23 control order', async () => {
     const reads = [baseRead()];
     mockHistory.mockReturnValue(
       historyState({
@@ -224,7 +224,8 @@ describe('Unit 5 on Book Details', () => {
       expect(link).toBeOnTheScreen();
       fireEvent.press(link);
       expect(mockPush).toHaveBeenCalledWith('/(tabs)/library/stats');
-      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Add note']);
+      // D07-23/D07-24: the review button sit before the primary.
+      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'Edit your rating and review', 'radiogroup', 'Add note']);
     } finally {
       ui.unmount();
       ui.client.clear();

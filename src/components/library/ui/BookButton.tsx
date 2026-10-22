@@ -7,6 +7,8 @@ export type BookButtonVariant = 'primary' | 'secondary' | 'text' | 'destructive'
 
 export interface BookButtonProps {
   label: string;
+  /** Fuller screen-reader name when the visible label is short (e.g. "Edit"). */
+  accessibilityLabel?: string;
   variant: BookButtonVariant;
   onPress: () => void;
   disabled?: boolean;
@@ -18,7 +20,7 @@ export interface BookButtonProps {
   ref?: React.Ref<View>;
 }
 
-export function BookButton({ label, variant, onPress, disabled = false, expanded, selected, testID, ref }: BookButtonProps) {
+export function BookButton({ label, accessibilityLabel, variant, onPress, disabled = false, expanded, selected, testID, ref }: BookButtonProps) {
   const colors = useLibraryAppearance();
   const variants = {
     primary: { backgroundColor: colors.accent, borderColor: colors.controlBorder, color: colors.textOnAccent },
@@ -35,7 +37,7 @@ export function BookButton({ label, variant, onPress, disabled = false, expanded
 
   // RN Web ignores accessibilityState, so the open state also goes out as aria-expanded.
   // `selected` stays native-only: aria-selected is not valid on a web button.
-  return <Pressable ref={ref} accessibilityRole="button" accessibilityLabel={label} accessibilityState={accessibilityState}
+  return <Pressable ref={ref} accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={accessibilityState}
     aria-expanded={expanded} disabled={disabled} onPress={onPress} testID={testID}
     style={({ pressed }) => [styles.button, surface, { opacity: disabled ? 0.55 : pressed ? 0.8 : 1 }]}>
     <Text style={[styles.label, { color }]}>{label}</Text>

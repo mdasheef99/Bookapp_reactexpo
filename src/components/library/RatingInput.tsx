@@ -9,11 +9,27 @@ interface RatingInputProps {
   rating: number;
   onChange: (val: number) => void;
   disabled?: boolean;
+  /** Icon size in dp (default ICON_SIZE). Touch targets stay >= MIN_TARGET. */
+  size?: number;
+  /** Centre the label and stars (Book Details summary under the cover). */
+  centered?: boolean;
+}
+
+/** One-word label for a saved or draft rating (SDD-07 §14.2b). */
+export function ratingValueLabel(rating: number): string {
+  switch (rating) {
+    case 1: return 'Poor';
+    case 2: return 'Fair';
+    case 3: return 'Good';
+    case 4: return 'Great';
+    case 5: return 'Loved it';
+    default: return 'Tap to rate';
+  }
 }
 
 const STARS = Array.from({ length: MAX_SCORE }, (_, index) => index + 1);
 
-export const RatingInput = ({ rating, onChange, disabled = false }: RatingInputProps) => {
+export const RatingInput = ({ rating, onChange, disabled = false, size = ICON_SIZE, centered = false }: RatingInputProps) => {
   const colors = useLibraryAppearance();
   const [focused, setFocused] = useState<number | null>(null);
   const refs = useRef<(View | null)[]>([]);
@@ -26,7 +42,10 @@ export const RatingInput = ({ rating, onChange, disabled = false }: RatingInputP
       accessibilityLabel="Your rating"
       accessibilityState={{ disabled }}
       aria-disabled={disabled}
-      style={[styles.group, disabled && styles.disabled]}
+      // collapsable={false}: the disabled opacity must not switch this view between flattened and
+      // unflattened on Android (Fabric then re-parents its Text and crashes: "child already has a parent").
+      collapsable={false}
+      style={[styles.group, centered && styles.centered, disabled && styles.disabled]}
     >
       <Text style={[LIBRARY_TEXT.label, { color: colors.textPrimary }]}>Your rating</Text>
       <View style={styles.stars}>
@@ -64,7 +83,7 @@ export const RatingInput = ({ rating, onChange, disabled = false }: RatingInputP
             >
               <Ionicons
                 name={star <= rating ? 'star' : 'star-outline'}
-                size={ICON_SIZE}
+                size={size}
                 color={star <= rating ? colors.textPrimary : colors.textSecondary}
                 accessible={false}
                 aria-hidden
@@ -79,6 +98,7 @@ export const RatingInput = ({ rating, onChange, disabled = false }: RatingInputP
 
 const styles = StyleSheet.create({
   group: { gap: LIBRARY_SPACING.xs },
+  centered: { alignItems: 'center' },
   stars: { flexDirection: 'row' },
   star: {
     minHeight: MIN_TARGET,

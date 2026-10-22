@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react-native';
 import BookDetailScreen from '../[bookId]';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { booksService } from '@/features/books/services/booksService';
@@ -225,7 +225,8 @@ describe('Unit 4 on Book Details', () => {
       await ui.findByText('Walden');
       expect(await ui.findByTestId('library-timeline')).toBeOnTheScreen();
       expect(ui.getByTestId('library-timeline-select-read-2')).toBeOnTheScreen();
-      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Add note']);
+      // D07-23/D07-24: the review button sit before the primary.
+      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'Edit your rating and review', 'radiogroup', 'Add note']);
     } finally {
       ui.unmount();
       ui.client.clear();
@@ -489,7 +490,7 @@ describe('Unit 4 on Book Details', () => {
     }
   });
 
-  it('shows exactly one Your rating radiogroup with the panel shown', async () => {
+  it('shows the display-only rating and no rating radiogroup with the panel shown (the panel itself has no stars)', async () => {
     const reading = [baseRead({ id: 'read-1', read_number: 1, outcome: 'reading' })];
     const finished = [baseRead({ id: 'read-1', read_number: 1, outcome: 'finished' })];
     mockUserBook = makeBook({ reading_status: 'reading' });
@@ -516,12 +517,13 @@ describe('Unit 4 on Book Details', () => {
         </QueryClientProvider>,
       );
       await ui.findByTestId('library-finish-panel');
-      fireEvent.press(ui.getByTestId('book-row-review'));
-      await ui.findByTestId('library-review-input');
-      const ratings = ui.queryAllByLabelText('Your rating').filter(
-        (node: { props: { accessibilityRole?: string } }) => node.props.accessibilityRole === 'radiogroup',
-      );
-      expect(ratings).toHaveLength(1);
+      // The top block always shows its display-only stars (D07-24); the
+      // Finished panel (SDD-09) has none, and no rating radiogroup exists.
+      expect(ui.getByTestId('book-rating-review')).toBeTruthy();
+      expect(ui.getByTestId('book-rating-display')).toBeTruthy();
+      expect(ui.queryByTestId('library-review-input')).toBeNull();
+      expect(within(ui.getByTestId('library-finish-panel')).queryByTestId('book-rating-display')).toBeNull();
+      expect(ui.queryAllByLabelText('Your rating')).toHaveLength(0);
     } finally {
       ui.unmount();
       ui.client.clear();

@@ -89,6 +89,7 @@ const contrast = (first: string, second: string) => {
 
 const SOURCES = [
     'app/(tabs)/library/[bookId].tsx',
+    'src/components/library/bookDetails/RatingReviewSummary.tsx',
     ...['StatusSelector', 'OwnershipSelector', 'ConditionPicker', 'RatingInput', 'DeleteBookModal', 'VaultPagesList']
         .map(name => `src/components/library/${name}.tsx`),
 ];
@@ -162,10 +163,15 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
         try {
             await ui.findByText('Beloved');
             const collapsed = normalize(ui.toJSON());
-            for (const id of ['review', 'saved', 'info', 'ownership', 'community']) {
+            // The top rating block (SDD-07 §14.2b) replaces the old review row:
+            // stars stay visible with no inline editor; text editing lives on
+            // the review page. Only the expandable rows are pressed here.
+            for (const id of ['saved', 'info', 'ownership', 'community']) {
                 fireEvent.press(ui.getByTestId(`book-row-${id}`));
             }
-            await waitFor(() => expect(ui.getByTestId('library-review-input').props.value).toBe('Existing review'));
+            await waitFor(() => expect(ui.getByTestId('book-rating-review')).toBeTruthy());
+            expect(ui.queryByTestId('book-row-review')).toBeNull();
+            expect(ui.queryByTestId('library-review-input')).toBeNull();
             const expanded = normalize(ui.toJSON());
             fireEvent.press(ui.getByRole('button', { name: 'Remove from library' }));
             const removal = normalize(ui.toJSON());
@@ -201,10 +207,16 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
             }
             expect(ui.queryByText('Completed')).toBeNull();
             expect(within(ui.getByLabelText('Reading status')).UNSAFE_queryAllByType('Ionicons' as any)).toHaveLength(0);
-            fireEvent.press(ui.getByTestId('book-row-review'));
             fireEvent.press(ui.getByTestId('book-row-saved'));
             fireEvent.press(ui.getByTestId('book-row-ownership'));
-            expect(StyleSheet.flatten(ui.getByTestId('library-review-input').props.style).borderColor).toBe(colors.controlBorder);
+            // No lower review row (SDD-07 §14.2b); the top block shows stars, the
+            // Edit button and the serif quote that opens the review page.
+            expect(ui.queryByTestId('book-row-review')).toBeNull();
+            expect(ui.getByTestId('book-rating-review')).toBeTruthy();
+            expect(ui.getByTestId('book-rating-display').props.accessibilityLabel).toBe('Your rating: 2 of 5');
+            expect(ui.getByRole('button', { name: 'Edit your rating and review' })).toBeTruthy();
+            expect(ui.getByTestId('library-review-quote')).toBeTruthy();
+            expect(ui.getByText('Existing review')).toBeOnTheScreen();
             for (const [label, selected] of [['Owned', true], ['Lent out', false], ['Borrowed', false], ['Wishlist', false]] as const) {
                 expect(backgroundStyle(ui.getByText(label))).toMatchObject({
                     backgroundColor: selected ? colors.bgCard : colors.bgSecondary,

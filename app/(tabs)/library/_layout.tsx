@@ -20,6 +20,7 @@ export default function LibraryLayout() {
             <Stack.Screen name="notes" options={{ animation: 'none' }} />
             <Stack.Screen name="note" options={{ animation: 'none' }} />
             <Stack.Screen name="note-compose" options={{ gestureEnabled: false, animation: 'none' }} />
+            <Stack.Screen name="review" options={{ animation: 'none' }} />
         </Stack>
         </BookFeedbackProvider>
         </LibraryTypographyProvider>
