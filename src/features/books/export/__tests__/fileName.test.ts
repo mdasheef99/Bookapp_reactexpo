@@ -92,4 +92,11 @@ describe('buildFileName', () => {
   ])('names a quote PNG with the existing slug rules for %s', (title, slug) => {
     expect(buildFileName('quote-png', { kind: 'book', title }, date, options)).toBe(`bookconnect-quote-${slug}-2026-10-03.png`);
   });
+
+  it('names a year PNG with a single year and no slug', () => {
+    expect(buildFileName('year-png', { kind: 'all' }, date, options)).toBe('bookconnect-year-2026-10-03.png');
+    expect(buildFileName('year-png', { kind: 'book', title: 'Ignored' }, date, options)).toBe(
+      'bookconnect-year-2026-10-03.png',
+    );
+  });
 });

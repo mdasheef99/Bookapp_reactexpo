@@ -12,7 +12,7 @@
 |---|---|---|---|---|
 | [SDD-07](./SDD-07-book-section-ui-overhaul.md) | Book section UI/UX overhaul | Main track | No (UI only) | Flows A (Book Details), B (notes), C (capture) and D (home/search) plus follow-ups built, reviewed, verified and merged to `main` (Flow D 2026-10-21 as `e252513`; follow-ups 2026-10-21 as `29fd8b8`; records: SDD-07 §10, §11, §12, §13 and §13.7); next: the owner decides on a fresh tab-bar unit from `main` (icons, theme colours, contrast, 200% zoom; [TB-1](./SDD-07-TAB-BAR-UNIT.md) is superseded on `main`) — see [SDD-07](./SDD-07-book-section-ui-overhaul.md) and [TRACKER](./TRACKER.md) |
 | [SDD-08](./SDD-08-export-and-share.md) | Export & share | Feature | No | Draft reviewed 2026-10-21; awaiting owner decisions D08-01–D08-11. Owner narrowed CSV to books only (notes → Markdown/PDF) |
-| SDD-09 | Reading history | Feature | Yes (event storage early; goal storage later — shape decided in SDD-09) | Not started |
+| [SDD-09](./SDD-09-reading-history.md) | Reading history | Feature | Yes — one migration in Unit 1 (four tables, a trigger on `user_books`, back-fill) | Approved 2026-10-22 (lean list: 18 items, 5 units; four reviews; D09-05 simplified to no automatic undo). Unit 1 migration file drafted and checked on local Postgres (22/22), not applied; next: owner review of the file. Reading rhythm (opt-in streaks/reminders) moved to its own future SDD; "On this day" moved to SDD-10 |
 | SDD-10 | Notes retrieval & organising | Feature | Yes (collections, shelves/tags) | Not started |
 
 ### SDD-07 — Book section UI/UX overhaul (main track)
@@ -47,7 +47,7 @@ Engagement mechanics stay out (no streaks, badges or reminders) — see SDD-07 D
 
 - **All-notes view** across books (today notes are listed per book only, newest first).
 - **Note search** — start with a simple per-user text match; add full-text search only if measured to be necessary. Must work for non-English text (the OCR is English-only, but typed notes need not be).
-- **"Today's note" resurfacing** — one past note shown quietly; no notification.
+- **"Today's note" resurfacing** — one past note shown quietly; no notification. "On this day" (a past finish, from SDD-09 history) joins it here (owner, 2026-10-22).
 - **Passage collections** — collections of Quote notes. Needs a migration.
 - **Custom shelves / tags for books** — needs a migration, and must fit the finished shelf, whose book order lives in AsyncStorage (`useShelfArrangement`, per user).
 - **Decision on Saved Pages** (`user_book_pages`) — today the UI only reads and deletes them; no current route writes them. Keep, fold into notes, or retire.

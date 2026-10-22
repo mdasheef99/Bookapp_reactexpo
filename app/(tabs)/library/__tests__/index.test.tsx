@@ -5,7 +5,7 @@ import { FlatList, Platform, ScrollView, StyleSheet } from 'react-native';
 import LibraryScreen from '../index';
 import { booksService } from '@/features/books/services/booksService';
 import { expectSinglePrimary } from '@/test-utils/bookSection';
-import { BookButton } from '@/components/library/ui';
+import { BookButton, BookFeedbackProvider } from '@/components/library/ui';
 import { LibraryBookRow } from '@/components/library/LibraryBookList';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import { MIN_TARGET } from '@/components/library/LibraryAppearance';
@@ -61,6 +61,23 @@ jest.mock('@/features/auth/hooks/useAuth', () => ({
 jest.mock('@/features/books/services/booksService', () => ({
     booksService: {
         getUserLibrary: jest.fn(),
+    },
+}));
+// SDD-09 H-12: Home renders the gateway-driven continue-reading card. These
+// suites stub the new dependency to the empty state so they keep asserting
+// the library rows and export wiring without history content.
+jest.mock('@/features/books/history/readingHistoryGateway', () => ({
+    readingHistoryGateway: {
+        openReadsWithProgress: jest.fn(() => Promise.resolve([])),
+        openReadBookIds: jest.fn(() => Promise.resolve([])),
+        settings: jest.fn(() => Promise.resolve(null)),
+        userBookTitle: jest.fn(() => Promise.resolve(null)),
+        addProgress: jest.fn(),
+        setTotalPages: jest.fn(),
+        goal: jest.fn(() => Promise.resolve(null)),
+        readsForUser: jest.fn(() => Promise.resolve([])),
+        readsForBook: jest.fn(() => Promise.resolve([])),
+        setGoal: jest.fn(),
     },
 }));
 jest.mock('@/components/ui/GlassCard', () => ({
@@ -159,7 +176,12 @@ const renderScreen = () => {
         queryClient,
         ...render(
             <QueryClientProvider client={queryClient}>
-                <LibraryScreen />
+                {/* SDD-09 H-12: Home renders the continue-reading card, which
+                    notifies through the library feedback provider (always
+                    present via LibraryLayout in production). */}
+                <BookFeedbackProvider>
+                    <LibraryScreen />
+                </BookFeedbackProvider>
             </QueryClientProvider>
         ),
     };

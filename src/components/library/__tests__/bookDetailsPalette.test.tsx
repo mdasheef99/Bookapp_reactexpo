@@ -58,6 +58,20 @@ jest.mock('@/components/notes', () => ({ NoteCard: () => null }));
 jest.mock('@/components/ui/AtmosphericBackground', () => ({
     AtmosphericBackground: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
+jest.mock('@/features/books/history/useBookReadingHistory', () => ({
+    useBookReadingHistory: () => ({
+        reads: { data: [], isPending: false, isError: false, refetch: jest.fn() },
+        editDates: { mutateAsync: jest.fn(), isPending: false, variables: undefined },
+        removeRead: { mutateAsync: jest.fn(), isPending: false, variables: undefined },
+        startReread: { mutateAsync: jest.fn(), isPending: false },
+        reopenRead: { mutateAsync: jest.fn(), isPending: false, variables: undefined },
+    }),
+}));
+jest.mock('@react-native-async-storage/async-storage', () => ({
+    getItem: jest.fn(() => Promise.resolve(null)),
+    setItem: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('@react-native-community/datetimepicker', () => () => null);
 
 const PHASES = ['daylight', 'golden', 'midnight'] as const;
 const fixtureDir = path.join(__dirname, '__fixtures__');

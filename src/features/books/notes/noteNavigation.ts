@@ -15,8 +15,16 @@ export function registerNoteContext(context: NoteRouteContext) { const id = rand
 export function composeHref(bookId: string, contextId: string, noteId?: string, operationId?: string): Href {
   return { pathname: '/(tabs)/library/note-compose', params: { bookId, contextId, ...(noteId ? { noteId } : {}), ...(operationId ? { operationId } : {}) } } as Href;
 }
-export function readerHref(bookId: string, noteId: string, contextId: string): Href {
-  return { pathname: '/(tabs)/library/note', params: { bookId, noteId, contextId } } as Href;
+export function readerHref(
+  bookId: string,
+  noteId: string,
+  contextId: string,
+  justSaved?: boolean,
+): Href {
+  return {
+    pathname: '/(tabs)/library/note',
+    params: { bookId, noteId, contextId, ...(justSaved ? { justSaved: '1' } : {}) },
+  } as Href;
 }
 export function openNoteComposer(router: Router, actorId: string, bookId: string, origin: NoteOrigin) {
   router.push(composeHref(bookId, registerNoteContext({ actorId, bookId, origin, canBack: true })));
@@ -45,8 +53,31 @@ export function returnFromNote(router: Router, context: NoteRouteContext, naviga
   if (context.origin === 'book' || !context.bookId) { returnToBook(router, navigation, context.bookId); return; }
   returnToRoute(router, navigation, 'notes', { userBookId: context.bookId }, { pathname: '/(tabs)/library/notes', params: { userBookId: context.bookId } });
 }
-export function returnToSavedReader(router: Router, navigation: NoteNavigationState, context: NoteRouteContext, noteId: string) {
-  returnToRoute(router, navigation, 'note', { bookId: context.bookId, noteId }, readerHref(context.bookId, noteId, registerNoteContext(context)), context.readerKey);
+export function returnToSavedReader(
+  router: Router,
+  navigation: NoteNavigationState,
+  context: NoteRouteContext,
+  noteId: string,
+  options?: { justSaved?: boolean },
+) {
+  const justSaved = options?.justSaved === true;
+  returnToRoute(
+    router,
+    navigation,
+    'note',
+    { bookId: context.bookId, noteId },
+    readerHref(context.bookId, noteId, registerNoteContext(context), justSaved),
+    context.readerKey,
+  );
+  if (justSaved) {
+    try {
+      (router as unknown as { setParams?: (params: Record<string, string | undefined>) => void }).setParams?.({
+        justSaved: '1',
+      });
+    } catch {
+      // Best effort: the fallback href already carries justSaved for replace paths.
+    }
+  }
 }
 export function retainedReaderKey(navigation: NoteNavigationState, bookId: string, noteId: string) {
   const state = navigation.getState(); const route = state?.routes[state.index]; const params = route?.params as Record<string, unknown> | undefined;

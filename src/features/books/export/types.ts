@@ -4,6 +4,15 @@ export interface ExportOptions {
   timeZone?: string;
 }
 
+export type ExportHistoryOutcome = '' | 'Reading' | 'Finished' | 'Did not finish';
+
+export interface ExportHistorySummary {
+  started: string | null;
+  finished: string | null;
+  timesRead: number;
+  lastOutcome: ExportHistoryOutcome;
+}
+
 export interface ExportLibraryRow {
   reading_status: string | null;
   ownership: string | null;
@@ -13,6 +22,7 @@ export interface ExportLibraryRow {
   review_is_public: boolean | null;
   created_at: string | null;
   completed_at: string | null;
+  history?: ExportHistorySummary | null;
   book: {
     title: string | null;
     authors: string[] | null;
@@ -38,5 +48,5 @@ export interface ExportNotesBook {
   notes: ExportNote[];
 }
 
-export type ExportFileKind = 'library-csv' | 'notes-md' | 'notes-pdf' | 'quote-png';
+export type ExportFileKind = 'library-csv' | 'notes-md' | 'notes-pdf' | 'quote-png' | 'year-png';
 export type ExportScope = { kind: 'all' } | { kind: 'book'; title: string | null };

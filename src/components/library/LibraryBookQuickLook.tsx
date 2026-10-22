@@ -1,18 +1,74 @@
 import React from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { LibraryBookEntry } from '@/features/books/utils/libraryShelf';
-import { useLibraryAppearance } from './LibraryAppearance';
+import { useLibraryAppearance, LIBRARY_SPACING } from './LibraryAppearance';
 import { useLibraryTypography } from './LibraryTypography';
 import { conditionLabel, ownershipLabel, readingStatusLabel } from '@/features/books/utils/libraryLabels';
+import { booksService } from '@/features/books/services/booksService';
+import { historyKeys } from '@/features/books/history/readingHistoryContract';
+import { readingHistoryGateway } from '@/features/books/history/readingHistoryGateway';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useBookFeedback, BookButton, BookFeedbackSlot } from './ui';
+import { notifySaveSuccess } from '@/features/books/history/saveConfirmation';
 
 /** Facts already loaded with the Library entry; no invented progress or extra request. */
 export function LibraryBookQuickLook({ book, onClose, onDetails }: {
     book: LibraryBookEntry | null; onClose: () => void; onDetails: (book: LibraryBookEntry) => void;
 }) {
+    if (!book) return null;
+    return <QuickLookBody book={book} onClose={onClose} onDetails={onDetails} />;
+}
+
+function QuickLookBody({ book, onClose, onDetails }: {
+    book: LibraryBookEntry; onClose: () => void; onDetails: (book: LibraryBookEntry) => void;
+}) {
     const colors = useLibraryAppearance(), fonts = useLibraryTypography();
     const closeRef = React.useRef<any>(null);
-    if (!book) return null;
+    const { session } = useAuth();
+    const actorId = session?.user?.id ?? '';
+    const client = useQueryClient();
+    const { notify } = useBookFeedback();
+    const [starting, setStarting] = React.useState(false);
+    const startGuard = React.useRef(false);
+    const showStart = book.reading_status !== 'reading';
+    const isFinished = book.reading_status === 'completed';
+    const startLabel = isFinished ? 'Read again' : 'Start reading';
+    const handleStart = () => {
+        if (startGuard.current || starting) return;
+        if (!actorId || !book) return;
+        startGuard.current = true;
+        setStarting(true);
+        const targetId = book.id;
+        const finished = isFinished;
+        const attempt = async () => {
+            try {
+                if (finished) {
+                    await readingHistoryGateway.startReread(actorId, targetId);
+                } else {
+                    await booksService.updateReadingStatus(targetId, 'reading');
+                }
+            } catch (error) {
+                const message = error instanceof Error && error.message ? error.message : "Couldn't update reading status.";
+                notify({
+                    kind: 'error',
+                    message,
+                    action: { label: 'Retry', onPress: () => { void handleStart(); } },
+                });
+                throw error;
+            }
+            notifySaveSuccess(notify, finished ? 'Reading again' : 'Started reading');
+            client.invalidateQueries({ queryKey: ['library'] });
+            client.invalidateQueries({ queryKey: historyKeys.readsForBook(actorId, targetId) });
+            client.invalidateQueries({ queryKey: historyKeys.readsForUser(actorId) });
+            client.invalidateQueries({ queryKey: historyKeys.openReads(actorId) });
+        };
+        void attempt().catch(() => {}).finally(() => {
+            startGuard.current = false;
+            setStarting(false);
+        });
+    };
     const facts = [
         ['Reading status', book.reading_status ? readingStatusLabel(book.reading_status) : 'Not recorded'],
         ['Collection', book.ownership ? ownershipLabel(book.ownership) : 'Not recorded'],
@@ -46,10 +102,17 @@ export function LibraryBookQuickLook({ book, onClose, onDetails }: {
                     {book.review?.trim() ? <View style={{ gap: 4 }}><Text style={{ fontFamily: fonts.label, color: colors.textSecondary }}>Your review</Text>
                         <Text style={{ fontFamily: fonts.body, color: colors.textPrimary }}>{book.review}</Text></View> : null}
                 </ScrollView>
+                {showStart ? <View style={{ paddingHorizontal: LIBRARY_SPACING.md, paddingBottom: LIBRARY_SPACING.xs }}>
+                    <BookButton label={startLabel} variant="secondary" disabled={starting || !actorId}
+                        onPress={handleStart} testID="library-quick-look-start-reading" />
+                </View> : null}
                 <Pressable testID="library-quick-look-details" accessibilityRole="button" accessibilityLabel={`View details for ${book.book.title}`}
                     onPress={() => { onClose(); onDetails(book); }} style={[styles.details, { borderColor: colors.border }]}>
                     <Text style={{ fontFamily: fonts.label, color: colors.textPrimary }}>View details</Text>
                 </Pressable>
+                <View pointerEvents="box-none" style={styles.feedbackOverlay}>
+                    <BookFeedbackSlot />
+                </View>
             </View>
         </View>
     </Modal>;
@@ -62,4 +125,5 @@ const styles = StyleSheet.create({
     bookHeader: { flexDirection: 'row', alignItems: 'center', gap: 16 },
     fact: { paddingVertical: 8, borderBottomWidth: 1, gap: 4 },
     details: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderTopWidth: 1 },
+    feedbackOverlay: { position: 'absolute', top: 8, left: 12, right: 12, zIndex: 1 },
 });

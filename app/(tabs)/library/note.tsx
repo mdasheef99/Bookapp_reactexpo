@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Clipboard, Platform, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { ExportButton, PassageCardPreview } from '@/components/library/export';
 import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import { bookNoteDate } from '@/components/library/bookDetails/NotePassages';
+import { NoteProgressPrompt } from '@/components/library/history/NoteProgressPrompt';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { categoryLabel, noteKeys, NoteWriteError } from '@/features/books/notes/manualNoteContract';
 import { isManualNoteDeleteAuthorized, manualNoteDeleteAdapter, manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
@@ -15,8 +16,34 @@ import { composeHref, noteRouteContext, registerNoteContext, retainedReaderKey, 
 import { useNoteContext, useNoteOperations, useNoteRemovalRefresh } from '@/features/books/notes/useManualNotes';
 
 export default function NoteReaderScreen() {
-  const { bookId = '', noteId = '', contextId } = useLocalSearchParams<{ bookId: string; noteId: string; contextId?: string }>();
+  const { bookId = '', noteId = '', contextId, justSaved } = useLocalSearchParams<{
+    bookId: string;
+    noteId: string;
+    contextId?: string;
+    justSaved?: string;
+  }>();
   const router = useRouter(); const navigation = useNavigation(); const colors = useLibraryAppearance(); const { actorId, book } = useNoteContext(bookId);
+  const justSavedFlag = justSaved === '1';
+  const [promptArmed, setPromptArmed] = useState(false);
+  const armedForNote = useRef<string | null>(null);
+  useEffect(() => {
+    if (justSavedFlag) {
+      if (armedForNote.current !== noteId) {
+        armedForNote.current = noteId;
+        setPromptArmed(true);
+      }
+      try {
+        (router as unknown as { setParams?: (params: Record<string, string | undefined>) => void }).setParams?.({
+          justSaved: undefined,
+        });
+      } catch {
+        // Best effort: clearing avoids re-offering on refresh/back.
+      }
+    } else if (armedForNote.current !== noteId) {
+      armedForNote.current = noteId;
+      setPromptArmed(false);
+    }
+  }, [justSavedFlag, noteId, router]);
   const { isOffline } = useNetworkStatus();
   const offlineRef = useRef(isOffline);
   offlineRef.current = isOffline;
@@ -71,6 +98,14 @@ export default function NoteReaderScreen() {
         {!!book.data?.title && <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{book.data.title}</Text>}
         {!!meta && <Text style={[LIBRARY_TEXT.caption, { color: colors.textTertiary }]}>{meta}</Text>}
         <Text selectable style={[LIBRARY_TEXT.bodySerif, { color: colors.textPrimary }]}>{query.data?.tag === 'quote' ? `“${query.data?.content}”` : query.data?.content}</Text>
+        {query.data && promptArmed ? (
+          <NoteProgressPrompt
+            actorId={actorId}
+            userBookId={bookId}
+            pageNumber={query.data.page_number}
+            justSaved
+          />
+        ) : null}
         {!!feedback && <NoteMessage message={feedback} error={feedbackError} />}
         <View style={[styles.deleteSection, { borderColor: colors.divider }]}>
           {isOffline && <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>Changes need a connection.</Text>}

@@ -9,6 +9,9 @@ import { booksService } from '@/features/books/services/booksService';
 import { userBookPagesService } from '@/features/books/services/userBookPagesService';
 import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
 import { expectSinglePrimary } from '@/test-utils/bookSection';
+import { useBookReadingHistory } from '@/features/books/history/useBookReadingHistory';
+
+const mockHistory = useBookReadingHistory as jest.Mock;
 
 const PHASES = ['daylight', 'golden', 'midnight'] as const;
 let mockPhase: (typeof PHASES)[number] = 'daylight';
@@ -57,6 +60,25 @@ jest.mock('@/components/library/ui/BookFeedback', () => ({
   ...jest.requireActual('@/components/library/ui/BookFeedback'),
   useBookFeedback: () => ({ notify: mockNotify, confirm: jest.fn() }),
 }));
+jest.mock('@/features/books/history/useBookReadingHistory', () => ({
+  useBookReadingHistory: jest.fn(),
+}));
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(() => Promise.resolve(null)),
+  setItem: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('@react-native-community/datetimepicker', () => () => null);
+
+function historyState(overrides: Record<string, unknown> = {}) {
+  return {
+    reads: { data: [], isPending: false, isError: false, refetch: jest.fn() },
+    editDates: { mutateAsync: jest.fn().mockResolvedValue({}), isPending: false, variables: undefined },
+    removeRead: { mutateAsync: jest.fn().mockResolvedValue(true), isPending: false, variables: undefined },
+    startReread: { mutateAsync: jest.fn().mockResolvedValue('read-2'), isPending: false },
+    reopenRead: { mutateAsync: jest.fn().mockResolvedValue(undefined), isPending: false, variables: undefined },
+    ...(overrides as Record<string, unknown>),
+  };
+}
 
 function makeBook(overrides: any = {}) {
   return {
@@ -110,6 +132,7 @@ beforeEach(() => {
   (booksService.updateCondition as jest.Mock).mockResolvedValue({});
   (booksService.toggleLendingAvailability as jest.Mock).mockResolvedValue({});
   (booksService.removeFromLibrary as jest.Mock).mockResolvedValue({});
+  mockHistory.mockReturnValue(historyState());
 });
 
 afterEach(() => {
@@ -455,7 +478,7 @@ describe('status writes', () => {
     }
   });
 
-  it('success does not notify', async () => {
+  it('success shows the status confirmation once', async () => {
     (booksService.getBookDetails as jest.Mock).mockResolvedValue(makeBook({ reading_status: 'reading' }));
     (manualNotesGateway.list as jest.Mock).mockResolvedValue([]);
     (booksService.updateReadingStatus as jest.Mock).mockResolvedValue({});
@@ -465,7 +488,8 @@ describe('status writes', () => {
       fireEvent.press(within(ui.getByLabelText('Reading status')).getByRole('radio', { name: 'Finished' }));
       await waitFor(() => expect(booksService.updateReadingStatus).toHaveBeenCalled());
       await waitFor(() => expect(ui.client.isMutating()).toBe(0));
-      expect(mockNotify).not.toHaveBeenCalled();
+      await waitFor(() => expect(mockNotify).toHaveBeenCalledTimes(1));
+      expect(mockNotify).toHaveBeenCalledWith({ kind: 'success', message: 'Marked as Finished' });
     } finally {
       ui.unmount();
       ui.client.clear();
@@ -631,6 +655,46 @@ describe('DP-01 focus order', () => {
       }
       expectSinglePrimary(ui);
       expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Add note']);
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('history controls sit after Add note: slot text under status, buttons after primary, still at most 4', async () => {
+    const read = {
+      id: 'read-1',
+      user_book_id: 'user-book-1',
+      user_id: 'reader-1',
+      read_number: 1,
+      outcome: 'finished',
+      started_at: '2026-10-01T10:00:00.000Z',
+      ended_at: '2026-10-20T10:00:00.000Z',
+      started_on: '2026-10-01',
+      ended_on: '2026-10-20',
+      start_unknown: false,
+      end_unknown: false,
+      total_pages: 320,
+      counts_in_stats: true,
+      created_at: '2026-10-01T10:00:00.000Z',
+      updated_at: '2026-10-20T10:00:00.000Z',
+    };
+    mockHistory.mockReturnValue(
+      historyState({ reads: { data: [read], isPending: false, isError: false, refetch: jest.fn() } }),
+    );
+    (booksService.getBookDetails as jest.Mock).mockResolvedValue(makeBook({ reading_status: 'completed' }));
+    (manualNotesGateway.list as jest.Mock).mockResolvedValue([makeNote('n1', '2026-10-14T12:00:00Z')]);
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      await ui.findByTestId('library-reading-dates-text');
+      await ui.findByTestId('book-note-n1-meta');
+      const controls = controlsUpToPrimary(ui);
+      expect(controls.length).toBeLessThanOrEqual(4);
+      expect(controls).toEqual(['Back to Library', 'radiogroup', 'Add note']);
+      expect(ui.getByTestId('library-reading-dates-edit')).toBeTruthy();
+      expect(ui.getByTestId('library-read-again')).toBeTruthy();
+      expectSinglePrimary(ui);
     } finally {
       ui.unmount();
       ui.client.clear();

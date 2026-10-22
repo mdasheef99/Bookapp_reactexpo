@@ -81,7 +81,9 @@ export function BookCover({ title, authors, coverUrl }: BookCoverProps) {
           accessibilityRole="header"
           style={[LIBRARY_TEXT.title, Platform.OS === 'web' && styles.wrapWords, { color: colors.textPrimary }]}
           onLayout={(event) => {
-            if (!stacked && event.nativeEvent.layout.height > LIBRARY_TEXT.title.lineHeight * fontScale * TITLE_LINE_LIMIT) {
+            // LIBRARY_TEXT.title.lineHeight already includes the system font scale,
+            // so it must not be multiplied by fontScale a second time.
+            if (!stacked && event.nativeEvent.layout.height > LIBRARY_TEXT.title.lineHeight * TITLE_LINE_LIMIT) {
               setLongTitle(true);
             }
           }}

@@ -10,6 +10,31 @@ import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
 import { noteKeys } from '@/features/books/notes/manualNoteContract';
 import { openNoteComposer } from '@/features/books/notes/noteNavigation';
 import { useNoteOperations } from '@/features/books/notes/useManualNotes';
+import { useBookReadingHistory } from '@/features/books/history/useBookReadingHistory';
+import { useReadProgress } from '@/features/books/history/useReadProgress';
+import type { ProgressValue, ReadDatesPatch } from '@/features/books/history/readingHistoryGateway';
+import { historyKeys, type ReadingRead } from '@/features/books/history/readingHistoryContract';
+import { currentPosition, dailyPages, estimateRemaining } from '@/features/books/history/progressMath';
+import {
+  effectiveTotalPages,
+  fallbackTotalForRead,
+  shouldPersistFallbackTotal,
+} from '@/features/books/history/totalPagesFallback';
+import {
+  nextReadSavedMessage,
+  notifySaveSuccess,
+  statusSavedMessage,
+} from '@/features/books/history/saveConfirmation';
+import { ReadingDatesSlot, noDatesPromptStorageKey } from '@/components/library/history/ReadingDatesSlot';
+import { EditDatesSheet } from '@/components/library/history/EditDatesSheet';
+import { ProgressSheet } from '@/components/library/history/ProgressSheet';
+import { PageEdgeBar } from '@/components/library/history/PageEdgeBar';
+import { PaceBars } from '@/components/library/history/PaceBars';
+import { ReadingTimeline } from '@/components/library/history/ReadingTimeline';
+import { LeaveOutStatsSwitch } from '@/components/library/history/LeaveOutStatsSwitch';
+import { FinishPanel } from '@/components/library/history/FinishPanel';
+import { NextReadControl } from '@/components/library/history/NextReadControl';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { conditionLabel, ownershipLabel } from '@/features/books/utils/libraryLabels';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useLibraryAppearance, LIBRARY_SPACING, LIBRARY_RADIUS, MIN_TARGET } from '@/components/library/LibraryAppearance';
@@ -70,6 +95,8 @@ type OpenRowsState = {
     community?: boolean;
 };
 
+const EMPTY_HISTORY_READS: ReadingRead[] = [];
+
 export default function BookDetailScreen() {
     const { notify } = useBookFeedback();
     const { bookId } = useLocalSearchParams<{ bookId: string }>();
@@ -88,11 +115,26 @@ export default function BookDetailScreen() {
     const requestSequence = useRef(0);
     const reviewDraft = useRef({ identity: '', revision: 0, dirty: false, textRequest: '' });
     const [optimisticStatus, setOptimisticStatus] = useState<ReadingStatus | null>(null);
+    const [datesSheetOpen, setDatesSheetOpen] = useState(false);
+    const [progressSheetOpen, setProgressSheetOpen] = useState(false);
+    const [finishedInSession, setFinishedInSession] = useState(false);
+    const finishBaseline = useRef<{ id: string; outcome: string } | null>(null);
+    const readAgainGuard = useRef(false);
+    const progressSaveGuard = useRef(false);
+    const nextReadGuard = useRef(false);
+    const history = useBookReadingHistory(user?.id ?? '', bookId);
+    const openReadForProgress = (history.reads.data ?? []).find((read) => read.outcome === 'reading') ?? null;
+    const readProgress = useReadProgress(user?.id ?? '', openReadForProgress?.id ?? '');
     const removeTrigger = useRef<View>(null);
     const pageRef = useRef<View>(null);
 
     useEffect(() => {
         setOptimisticStatus(null);
+    }, [user?.id, bookId]);
+
+    useEffect(() => {
+        setFinishedInSession(false);
+        finishBaseline.current = null;
     }, [user?.id, bookId]);
 
     useEffect(() => {
@@ -212,18 +254,37 @@ export default function BookDetailScreen() {
     const invalidateQueries = () => {
         queryClient.invalidateQueries({ queryKey: ['library'] });
         queryClient.invalidateQueries({ queryKey: ['book', user?.id, bookId] });
+        if (user?.id && bookId) {
+            queryClient.invalidateQueries({ queryKey: historyKeys.readsForBook(user.id, bookId) });
+            queryClient.invalidateQueries({ queryKey: historyKeys.readsForUser(user.id) });
+            queryClient.invalidateQueries({ queryKey: historyKeys.openReads(user.id) });
+            queryClient.invalidateQueries({ queryKey: historyKeys.settings(user.id) });
+        }
     };
+
+    const invalidateHistoryReads = useCallback((actorId: string | undefined, entryId: string | undefined) => {
+        if (!actorId || !entryId) return;
+        queryClient.invalidateQueries({ queryKey: historyKeys.readsForBook(actorId, entryId) });
+        queryClient.invalidateQueries({ queryKey: historyKeys.readsForUser(actorId) });
+        queryClient.invalidateQueries({ queryKey: historyKeys.openReads(actorId) });
+        queryClient.invalidateQueries({ queryKey: historyKeys.settings(actorId) });
+    }, [queryClient]);
 
     // --- Mutations ---
 
     const updateStatusMutation = useMutation({
-        mutationFn: ({ status, entryId }: { status: ReadingStatus; userId: string | undefined; entryId: string }) => booksService.updateReadingStatus(entryId, status),
-        onSuccess: (_data, { status, userId, entryId }) => {
+        mutationFn: ({ status, entryId }: { status: ReadingStatus; userId: string | undefined; entryId: string; previous: ReadingStatus }) => booksService.updateReadingStatus(entryId, status),
+        onSuccess: (_data, { status, userId, entryId, previous }) => {
             const key = ['book', userId, entryId];
             queryClient.setQueryData<typeof userBook>(key, (prev: typeof userBook) => prev ? { ...prev, reading_status: status } : prev);
             if (userId === user?.id && entryId === bookId) setOptimisticStatus(null);
+            if (status === 'completed' && userId === user?.id && entryId === bookId) setFinishedInSession(true);
             queryClient.invalidateQueries({ queryKey: ['library'] });
             queryClient.invalidateQueries({ queryKey: key });
+            invalidateHistoryReads(userId, entryId);
+            if (userId === user?.id && entryId === bookId) {
+                notifySaveSuccess(notify, statusSavedMessage(previous, status));
+            }
         },
         onError: (_error, { userId, entryId }) => {
             if (userId !== user?.id || entryId !== bookId) return;
@@ -274,6 +335,7 @@ export default function BookDetailScreen() {
             if (queryClient.isMutating({ mutationKey: ['book-review', submission.actor.id, submission.entryId, submission.actor.revision], exact: true }) === 1) {
                 queryClient.invalidateQueries({ queryKey: ['library'] });
                 queryClient.invalidateQueries({ queryKey: key, exact: true });
+                invalidateHistoryReads(submission.actor.id, submission.entryId);
                 const catalogueId = queryClient.getQueryData<typeof userBook>(key)?.book_id;
                 if (catalogueId) queryClient.invalidateQueries({ queryKey: ['book-public-reviews', catalogueId] });
             }
@@ -311,9 +373,194 @@ export default function BookDetailScreen() {
 
     const handleStatusChange = useCallback((val: ReadingStatus) => {
         if (!userBook || val === userBook.reading_status) return;
+        const previous = userBook.reading_status as ReadingStatus;
+        if (val === 'completed') {
+            const currentReads = history.reads?.data ?? [];
+            const newest = [...currentReads].sort((a, b) => b.read_number - a.read_number)[0] ?? null;
+            finishBaseline.current = newest ? { id: newest.id, outcome: newest.outcome } : null;
+        }
         setOptimisticStatus(val);
-        updateStatusMutation.mutate({ status: val, userId: user?.id, entryId: bookId });
-    }, [userBook, updateStatusMutation, user?.id, bookId]);
+        updateStatusMutation.mutate({ status: val, userId: user?.id, entryId: bookId, previous });
+    }, [userBook, updateStatusMutation, user?.id, bookId, history.reads?.data]);
+
+    const historyErrorMessage = (error: unknown) =>
+        error instanceof Error ? error.message : "Couldn't update your reading history.";
+
+    const notifyHistoryError = useCallback((error: unknown, retry: () => void) => {
+        notify({
+            kind: 'error',
+            message: historyErrorMessage(error),
+            action: { label: 'Retry', onPress: retry },
+        });
+    }, [notify]);
+
+    const handleSaveReadDates = useCallback((readId: string, patch: ReadDatesPatch) => {
+        const attempt = () =>
+            history.editDates.mutateAsync({ readId, patch }).then(
+                (saved) => {
+                    if (user?.id) {
+                        void AsyncStorage.setItem(noDatesPromptStorageKey(user.id, readId), '1').catch(() => {});
+                    }
+                    notifySaveSuccess(notify, 'Dates saved');
+                    return saved;
+                },
+                (error: unknown) => {
+                    notifyHistoryError(error, () => { void attempt(); });
+                    throw error;
+                },
+            );
+        return attempt();
+    }, [history.editDates, notifyHistoryError, notify, user?.id]);
+
+    const handleRemoveRead = useCallback((readId: string) => {
+        const attempt = () =>
+            history.removeRead.mutateAsync(readId).then(
+                (result) => {
+                    notifySaveSuccess(notify, 'Read removed');
+                    return result;
+                },
+                (error: unknown) => {
+                    notifyHistoryError(error, () => { void attempt(); });
+                    throw error;
+                },
+            );
+        return attempt();
+    }, [history.removeRead, notifyHistoryError, notify]);
+
+    const handleReopenRead = useCallback((readId: string) => {
+        const attempt = () =>
+            history.reopenRead.mutateAsync(readId).then(
+                (result) => {
+                    notifySaveSuccess(notify, 'Read reopened');
+                    return result;
+                },
+                (error: unknown) => {
+                    notifyHistoryError(error, () => { void attempt(); });
+                    throw error;
+                },
+            );
+        return attempt();
+    }, [history.reopenRead, notifyHistoryError, notify]);
+
+    const handleMarkReadUnknown = useCallback((readId: string) => {
+        const attempt = () =>
+            history.editDates.mutateAsync({ readId, patch: { started_on: null, ended_on: null, start_unknown: true, end_unknown: true } }).then(
+                (saved) => {
+                    notifySaveSuccess(notify, 'Dates marked unknown');
+                    return saved;
+                },
+                (error: unknown) => {
+                    notifyHistoryError(error, () => { void attempt(); });
+                    throw error;
+                },
+            );
+        return attempt();
+    }, [history.editDates, notifyHistoryError, notify]);
+
+    const handleReadAgain = useCallback(() => {
+        if (readAgainGuard.current) return;
+        readAgainGuard.current = true;
+        const attempt = () =>
+            history.startReread.mutateAsync(undefined).then(
+                (result) => {
+                    notifySaveSuccess(notify, 'Reading again');
+                    return result;
+                },
+                (error: unknown) => {
+                    notifyHistoryError(error, () => { void attempt(); });
+                    throw error;
+                },
+            );
+        void attempt().catch(() => {}).finally(() => {
+            readAgainGuard.current = false;
+        });
+    }, [history.startReread, notifyHistoryError, notify]);
+
+    const handleSetNextRead = useCallback((nextBookId: string | null) => {
+        if (!history.setNextRead) return Promise.resolve(null);
+        if (nextReadGuard.current) return Promise.resolve(null);
+        nextReadGuard.current = true;
+        const attempt = () =>
+            history.setNextRead.mutateAsync(nextBookId).then(
+                (saved) => {
+                    nextReadGuard.current = false;
+                    notifySaveSuccess(notify, nextReadSavedMessage(nextBookId));
+                    return saved;
+                },
+                (error: unknown) => {
+                    nextReadGuard.current = false;
+                    notifyHistoryError(error, () => {
+                        if (nextReadGuard.current) return;
+                        void handleSetNextRead(nextBookId);
+                    });
+                    throw error;
+                },
+            );
+        return attempt().catch(() => {
+            nextReadGuard.current = false;
+            return null;
+        });
+    }, [history, notifyHistoryError, notify]);
+
+    const handleSaveProgress = useCallback((value: ProgressValue) => {
+        const attempt = () => {
+            if (progressSaveGuard.current) return Promise.resolve(null);
+            progressSaveGuard.current = true;
+            const reads = history.reads.data ?? [];
+            const open = openReadForProgress;
+            const entries = readProgress.progress.data ?? [];
+            const fallback =
+              open && open.total_pages === null ? fallbackTotalForRead(reads, open.id) : null;
+            const persistFirst = open
+              ? shouldPersistFallbackTotal(open.total_pages, fallback, entries.length > 0)
+              : false;
+            const saveAll = async () => {
+              if (persistFirst && open && fallback !== null) {
+                await readProgress.setTotalPages.mutateAsync(fallback);
+              }
+              return readProgress.addProgress.mutateAsync(value);
+            };
+            return saveAll().then(
+                (saved) => {
+                    progressSaveGuard.current = false;
+                    notifySaveSuccess(notify, 'Progress saved');
+                    return saved;
+                },
+                (error: unknown) => {
+                    progressSaveGuard.current = false;
+                    notifyHistoryError(error, () => {
+                        if (progressSaveGuard.current) return;
+                        void attempt();
+                    });
+                    throw error;
+                },
+            );
+        };
+        return attempt();
+    }, [history.reads.data, openReadForProgress, readProgress.addProgress, readProgress.progress.data, readProgress.setTotalPages, notifyHistoryError, notify]);
+
+    const handleSaveTotalPages = useCallback((total: number | null) => {
+        const attempt = () => {
+            if (progressSaveGuard.current) return Promise.resolve(null);
+            progressSaveGuard.current = true;
+            return readProgress.setTotalPages.mutateAsync(total).then(
+                (saved) => {
+                    progressSaveGuard.current = false;
+                    notifySaveSuccess(notify, 'Total pages saved');
+                    return saved;
+                },
+                (error: unknown) => {
+                    progressSaveGuard.current = false;
+                    notifyHistoryError(error, () => {
+                        if (progressSaveGuard.current) return;
+                        void attempt();
+                    });
+                    throw error;
+                },
+            );
+        };
+        return attempt();
+    }, [readProgress.setTotalPages, notifyHistoryError, notify]);
 
     const toggleRow = (id: keyof OpenRowsState) => {
         setOpenRows((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -355,6 +602,73 @@ export default function BookDetailScreen() {
 
         const bodyStyle = [LIBRARY_TEXT.body, { color: colors.textPrimary }];
 
+        const historyReads = history.reads.data;
+        const historyLoadError = history.reads.isError === true;
+        const showHistorySlot = !!historyReads && historyReads.length > 0;
+        const showHistoryActions = displayedStatus === 'reading' || displayedStatus === 'completed';
+        const showHistoryControls = showHistorySlot || showHistoryActions;
+        const historyPendingReadId = history.editDates.isPending
+            ? (history.editDates.variables?.readId ?? null)
+            : history.removeRead.isPending
+                ? (history.removeRead.variables ?? null)
+                : history.reopenRead.isPending
+                    ? (history.reopenRead.variables ?? null)
+                    : null;
+        const sheetReads = historyReads ?? EMPTY_HISTORY_READS;
+        const openRead = (historyReads ?? []).find((read) => read.outcome === 'reading') ?? null;
+        const progressEntries = readProgress.progress.data ?? [];
+        const progressLoaded = Array.isArray(readProgress.progress.data);
+        const progressLoadError = readProgress.progress.isError === true;
+        const fallbackTotal =
+          openRead && openRead.total_pages === null && historyReads
+            ? fallbackTotalForRead(historyReads, openRead.id)
+            : null;
+        const progressTotal = openRead
+          ? effectiveTotalPages(openRead.total_pages, fallbackTotal)
+          : null;
+        const progressPosition =
+            openRead && progressLoaded ? currentPosition(progressEntries, progressTotal) : null;
+        const progressPages = progressPosition?.pages ?? null;
+        const progressPercentValue = progressPosition?.percent ?? null;
+        const progressDaily =
+            openRead && progressLoaded && progressEntries.length > 0
+                ? dailyPages(progressEntries, progressTotal)
+                : null;
+        const progressEstimateRaw =
+            openRead && progressLoaded ? estimateRemaining(progressEntries, progressTotal) : null;
+        const progressEstimate =
+            progressDaily?.hasNegativeGain === true ? null : progressEstimateRaw;
+        const showProgressSection = !!openRead && !!historyReads;
+        const progressBusy = readProgress.addProgress.isPending || readProgress.setTotalPages.isPending;
+        const settingsData = history.settings?.data;
+        const settingsError = history.settings?.isError === true;
+        const allReadsQueryData = history.allReads?.data;
+        const allReadsSuccess = history.allReads?.isSuccess;
+        const allReadsLoaded =
+            Array.isArray(allReadsQueryData) &&
+            (allReadsSuccess === undefined || allReadsSuccess === true) &&
+            allReadsQueryData.some((read) => read.user_book_id === bookId);
+        const allReadsData: ReadingRead[] = allReadsLoaded
+            ? (allReadsQueryData as ReadingRead[])
+            : [];
+        const setNextReadPending = history.setNextRead?.isPending === true;
+        const sortedReads = [...(historyReads ?? [])].sort((a, b) => b.read_number - a.read_number);
+        const newestRead = sortedReads[0] ?? null;
+        const latestFinishedRead = sortedReads.find((read) => read.outcome === 'finished') ?? null;
+        const showTimeline = !!historyReads && historyReads.length > 0;
+        const readsRefreshing = history.reads?.isFetching === true;
+        const finishBaselineValue = finishBaseline.current;
+        const showFinishPanel =
+            !readsRefreshing &&
+            finishedInSession &&
+            !!newestRead &&
+            newestRead.outcome === 'finished' &&
+            !!latestFinishedRead &&
+            newestRead.id === latestFinishedRead.id &&
+            (finishBaselineValue === null ||
+                finishBaselineValue.id !== newestRead.id ||
+                finishBaselineValue.outcome !== 'finished');
+
         return (
             <View style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
                 <View
@@ -369,6 +683,32 @@ export default function BookDetailScreen() {
                         {isOffline && <BookOffline message="Offline · Showing saved content." />}
                         <BookCover title={book.title} authors={book.authors ?? []} coverUrl={book.cover_url} />
                         <StatusSelector status={displayedStatus} onChange={handleStatusChange} disabled={statusDisabled} busy={statusPending} />
+                        {showHistorySlot ? (
+                            <View style={topStyles.historySlot}>
+                                <ReadingDatesSlot
+                                    actorId={user?.id ?? ''}
+                                    reads={historyReads!}
+                                    onEditDates={() => setDatesSheetOpen(true)}
+                                    onMarkUnknown={handleMarkReadUnknown}
+                                    unknownPending={history.editDates.isPending}
+                                    disabled={isOffline}
+                                    mode="text"
+                                />
+                            </View>
+                        ) : null}
+                        {historyLoadError ? (
+                            <View style={topStyles.historySlot}>
+                                <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
+                                    Couldn&apos;t load your reading dates.
+                                </Text>
+                                <BookButton
+                                    label="Try again"
+                                    variant="text"
+                                    onPress={() => { void history.reads.refetch?.(); }}
+                                    testID="library-reading-dates-retry"
+                                />
+                            </View>
+                        ) : null}
                         <NotePassages notes={notes} isPending={notesLoading} isError={notesError} onRetry={() => { void refetchNotes(); }} />
                         <View style={topStyles.action}>
                             {isOffline && (
@@ -378,6 +718,139 @@ export default function BookDetailScreen() {
                             )}
                             <BookButton label="Add note" variant="primary" disabled={isOffline} onPress={() => openNoteComposer(router, user!.id, bookId, 'book')} />
                         </View>
+                        {showHistoryControls ? (
+                            <View style={topStyles.historyActions}>
+                                <Text accessibilityRole="header" style={[LIBRARY_TEXT.label, { color: colors.textSecondary }]}>
+                                    Your reading
+                                </Text>
+                                {showHistorySlot ? (
+                                    <ReadingDatesSlot
+                                        actorId={user?.id ?? ''}
+                                        reads={historyReads!}
+                                        onEditDates={() => setDatesSheetOpen(true)}
+                                        onMarkUnknown={handleMarkReadUnknown}
+                                        unknownPending={history.editDates.isPending}
+                                        disabled={isOffline}
+                                        mode="controls"
+                                    />
+                                ) : null}
+                                {displayedStatus === 'completed' ? (
+                                    <BookButton
+                                        label="Read again"
+                                        variant="secondary"
+                                        disabled={statusDisabled || history.startReread.isPending}
+                                        onPress={handleReadAgain}
+                                        testID="library-read-again"
+                                    />
+                                ) : null}
+                                {displayedStatus === 'reading' ? (
+                                    <BookButton
+                                        label="Stop reading"
+                                        variant="text"
+                                        disabled={statusDisabled || statusPending}
+                                        onPress={() => handleStatusChange('want_to_read')}
+                                        testID="library-stop-reading"
+                                    />
+                                ) : null}
+                                {showProgressSection && openRead ? (
+                                    <View style={topStyles.progressSection}>
+                                        {progressPosition ? (
+                                            <PageEdgeBar
+                                                pages={progressPages}
+                                                totalPages={progressTotal}
+                                                percent={progressTotal === null ? progressPercentValue : undefined}
+                                            />
+                                        ) : null}
+                                        {progressLoadError ? (
+                                            <View style={topStyles.progressError}>
+                                                <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>
+                                                    Couldn&apos;t load your progress.
+                                                </Text>
+                                                <BookButton
+                                                    label="Try again"
+                                                    variant="text"
+                                                    onPress={() => { void readProgress.progress.refetch?.(); }}
+                                                    testID="library-progress-retry"
+                                                />
+                                            </View>
+                                        ) : null}
+                                        {progressDaily ? (
+                                            <PaceBars
+                                                days={progressDaily.days}
+                                                estimateText={progressEstimate?.text ?? null}
+                                            />
+                                        ) : progressEstimate?.text ? (
+                                            <Text
+                                                testID="library-progress-estimate"
+                                                style={[LIBRARY_TEXT.body, { color: colors.textPrimary }]}
+                                            >
+                                                {progressEstimate.text}
+                                            </Text>
+                                        ) : null}
+                                        <BookButton
+                                            label="Update progress"
+                                            variant="secondary"
+                                            disabled={progressBusy}
+                                            onPress={() => setProgressSheetOpen(true)}
+                                            testID="library-progress-update"
+                                        />
+                                    </View>
+                                ) : null}
+                                {showTimeline ? (
+                                    <ReadingTimeline
+                                        actorId={user?.id ?? ''}
+                                        userBookId={bookId}
+                                        reads={historyReads!}
+                                        notes={notes}
+                                        onOpenNotes={() => router.push({ pathname: '/(tabs)/library/notes', params: { userBookId: bookId } })}
+                                    />
+                                ) : null}
+                                {showTimeline ? (
+                                    <LeaveOutStatsSwitch
+                                        actorId={user?.id ?? ''}
+                                        userBookId={bookId}
+                                        reads={historyReads!}
+                                        disabled={isOffline}
+                                    />
+                                ) : null}
+                                {showTimeline ? (
+                                    <BookButton
+                                        label="Reading stats"
+                                        variant="text"
+                                        onPress={() => router.push('/(tabs)/library/stats')}
+                                        testID="library-reading-stats-link"
+                                    />
+                                ) : null}
+                                {showFinishPanel && latestFinishedRead ? (
+                                    <FinishPanel
+                                        actorId={user?.id ?? ''}
+                                        userBookId={bookId}
+                                        read={latestFinishedRead}
+                                        allReads={allReadsData}
+                                        justFinished={finishedInSession}
+                                        rating={userBook.rating || 0}
+                                        onRate={(val) => submitReview({ rating: val })}
+                                        disabled={isOffline}
+                                        nextReadUserBookId={settingsData?.next_read_user_book_id}
+                                    />
+                                ) : null}
+                            </View>
+                        ) : null}
+                        {history.settings ? (
+                            <View style={topStyles.historyActions}>
+                                <NextReadControl
+                                    actorId={user?.id ?? ''}
+                                    userBookId={bookId}
+                                    bookStatus={displayedStatus}
+                                    settingsData={settingsData}
+                                    settingsError={settingsError}
+                                    onRetrySettings={() => { void history.settings.refetch(); }}
+                                    onSetNextRead={handleSetNextRead}
+                                    setNextReadPending={setNextReadPending}
+                                    disabled={isOffline}
+                                />
+                            </View>
+                        ) : null}
 
                         {bookIsError && (
                             <View style={topStyles.refreshNotice}>
@@ -404,11 +877,13 @@ export default function BookDetailScreen() {
                                 expanded={Boolean(openRows.review)}
                                 onPress={handleToggleReview}
                             >
-                                <RatingInput
-                                    rating={userBook.rating || 0}
-                                    onChange={(val) => submitReview({ rating: val })}
-                                    disabled={isOffline}
-                                />
+                                {showFinishPanel && latestFinishedRead ? null : (
+                                    <RatingInput
+                                        rating={userBook.rating || 0}
+                                        onChange={(val) => submitReview({ rating: val })}
+                                        disabled={isOffline}
+                                    />
+                                )}
                                 <View>
                                     <TextInput
                                         style={[
@@ -608,6 +1083,31 @@ export default function BookDetailScreen() {
                     disabled={isOffline}
                     bookTitle={book.title}
                 />
+                <EditDatesSheet
+                    visible={datesSheetOpen}
+                    onClose={() => setDatesSheetOpen(false)}
+                    bookStatus={displayedStatus}
+                    reads={sheetReads}
+                    onSave={handleSaveReadDates}
+                    onRemove={handleRemoveRead}
+                    onReopen={handleReopenRead}
+                    pendingReadId={historyPendingReadId}
+                    disabled={isOffline}
+                />
+                {openRead ? (
+                    <ProgressSheet
+                        visible={progressSheetOpen}
+                        onClose={() => setProgressSheetOpen(false)}
+                        totalPages={openRead.total_pages}
+                        fallbackTotalPages={fallbackTotal}
+                        currentPages={progressPages}
+                        currentPercent={progressPercentValue}
+                        onSaveProgress={handleSaveProgress}
+                        onSaveTotalPages={handleSaveTotalPages}
+                        pending={progressBusy}
+                        disabled={isOffline}
+                    />
+                ) : null}
             </View>
         );
     }
@@ -687,6 +1187,21 @@ const topStyles = StyleSheet.create({
     action: {
         marginTop: LIBRARY_SPACING.lg,
     },
+    historySlot: {
+        marginTop: LIBRARY_SPACING.md,
+        gap: LIBRARY_SPACING.xs,
+    },
+    historyActions: {
+        marginTop: LIBRARY_SPACING.md,
+        gap: LIBRARY_SPACING.xs,
+    },
+    progressSection: {
+        marginTop: LIBRARY_SPACING.xs,
+        gap: LIBRARY_SPACING.xs,
+    },
+    progressError: {
+        gap: LIBRARY_SPACING.xs,
+    },
     connectionNotice: {
         marginBottom: LIBRARY_SPACING.xs,
     },
@@ -696,7 +1211,9 @@ const topStyles = StyleSheet.create({
     reviewInput: {
         borderRadius: LIBRARY_RADIUS.control,
         padding: LIBRARY_SPACING.sm,
-        height: REVIEW_INPUT_HEIGHT,
+        // minHeight (not height): the multiline input must grow with large
+        // system fonts instead of clipping at fontScale 2.0.
+        minHeight: REVIEW_INPUT_HEIGHT,
         textAlignVertical: 'top',
         borderWidth: 1,
     },

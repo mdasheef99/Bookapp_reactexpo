@@ -30,7 +30,7 @@ function renderModal(props: Partial<React.ComponentProps<typeof DeleteBookModal>
 describe('DeleteBookModal', () => {
   const colors = getLibraryAppearance('daylight');
   const description =
-    "Your notes, review and saved pages for this book will be deleted too. You can't undo this.";
+    "Your notes, review, saved pages and reading history for this book will be deleted too. You can't undo this.";
 
   it('renders D07-14 copy, dialog semantics, secondary Cancel and destructive Remove book at >= 48dp', () => {
     const previousOS = Platform.OS;

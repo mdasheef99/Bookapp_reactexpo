@@ -293,3 +293,26 @@ it.each(['host', 'slot'] as const)('lets taps pass through success and info toas
   notify('info', 'FYI'); expect(screen.getByTestId('book-feedback-toast').props.pointerEvents).toBe('none');
   notify('error', 'Oops'); expect(screen.getByTestId('book-feedback-toast').props.pointerEvents).toBe('auto');
 });
+
+it('renders an optional Retry action which runs its callback without changing existing callers', () => {
+  mount();
+  const retry = jest.fn();
+  act(() => api.notify({ kind: 'error', message: 'history down', action: { label: 'Retry', onPress: retry } }));
+  const action = screen.getByRole('button', { name: 'Retry' });
+  expect(action).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Dismiss' })).toBeOnTheScreen();
+  fireEvent.press(action);
+  expect(retry).toHaveBeenCalledTimes(1);
+  expect(screen.getByText('history down')).toBeOnTheScreen();
+});
+
+it('allows action only on error toasts; success and info toasts never render an action', () => {
+  mount();
+  const retry = jest.fn();
+  act(() => api.notify({ kind: 'success', message: 'Saved', action: { label: 'Retry', onPress: retry } } as any));
+  expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+  expect(screen.getByText('Saved')).toBeOnTheScreen();
+  act(() => api.notify({ kind: 'info', message: 'Note', action: { label: 'Retry', onPress: retry } } as any));
+  expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull();
+  expect(screen.getByText('Note')).toBeOnTheScreen();
+});

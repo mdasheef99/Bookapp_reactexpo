@@ -81,6 +81,25 @@ jest.mock('@/components/library/ui/BookFeedback', () => ({
   BookFeedbackSlot: () => null,
   useBookFeedback: () => ({ notify: mockNotify, confirm: mockConfirm }),
 }));
+jest.mock('@/features/books/history/useBookReadingHistory', () => ({
+  useBookReadingHistory: jest.fn(),
+}));
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn(() => Promise.resolve(null)),
+  setItem: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('@react-native-community/datetimepicker', () => () => null);
+
+function historyState(overrides: Record<string, unknown> = {}) {
+  return {
+    reads: { data: [], isPending: false, isError: false, refetch: jest.fn() },
+    editDates: { mutateAsync: jest.fn().mockResolvedValue({}), isPending: false, variables: undefined },
+    removeRead: { mutateAsync: jest.fn().mockResolvedValue(true), isPending: false, variables: undefined },
+    startReread: { mutateAsync: jest.fn().mockResolvedValue('read-2'), isPending: false },
+    reopenRead: { mutateAsync: jest.fn().mockResolvedValue(undefined), isPending: false, variables: undefined },
+    ...(overrides as Record<string, unknown>),
+  };
+}
 
 function makeBook(overrides: any = {}) {
   const baseBook = {
@@ -190,6 +209,8 @@ beforeEach(() => {
   (booksService.updateOwnership as jest.Mock).mockResolvedValue({});
   (booksService.updateCondition as jest.Mock).mockResolvedValue({});
   (booksService.removeFromLibrary as jest.Mock).mockResolvedValue({});
+  const { useBookReadingHistory } = require('@/features/books/history/useBookReadingHistory');
+  (useBookReadingHistory as jest.Mock).mockReturnValue(historyState());
   jest.spyOn(bookReviewService, 'update').mockImplementation(async (_actor, entryId, patch) => {
     mockUserBook = { ...mockUserBook, ...patch };
     const { rating, review, review_is_public } = mockUserBook;
@@ -723,7 +744,7 @@ describe('8. Remove from library', () => {
       expect(ui.getByRole('header', { name: 'Remove “Walden” from your library?' })).toBeOnTheScreen();
       expect(
         ui.getByText(
-          "Your notes, review and saved pages for this book will be deleted too. You can't undo this.",
+          "Your notes, review, saved pages and reading history for this book will be deleted too. You can't undo this.",
         ),
       ).toBeOnTheScreen();
 
@@ -824,6 +845,53 @@ describe('10. DP-03 and DP-01 invariants with rows', () => {
       }
       expectSinglePrimary(ui);
       expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Add note']);
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('history data present keeps at most 4 controls up to Add note', async () => {
+    const { useBookReadingHistory } = require('@/features/books/history/useBookReadingHistory');
+    (useBookReadingHistory as jest.Mock).mockReturnValue(
+      historyState({
+        reads: {
+          data: [
+            {
+              id: 'read-1',
+              user_book_id: 'user-book-1',
+              user_id: 'reader-1',
+              read_number: 1,
+              outcome: 'finished',
+              started_at: '2026-10-01T10:00:00.000Z',
+              ended_at: '2026-10-20T10:00:00.000Z',
+              started_on: '2026-10-01',
+              ended_on: '2026-10-20',
+              start_unknown: false,
+              end_unknown: false,
+              total_pages: 320,
+              counts_in_stats: true,
+              created_at: '2026-10-01T10:00:00.000Z',
+              updated_at: '2026-10-20T10:00:00.000Z',
+            },
+          ],
+          isPending: false,
+          isError: false,
+          refetch: jest.fn(),
+        },
+      }),
+    );
+    (booksService.getPublicReviewsForBook as jest.Mock).mockResolvedValue([]);
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      await ui.findByTestId('library-reading-dates-text');
+      await ui.findByTestId('book-row-saved');
+      const controls = controlsUpToPrimary(ui);
+      expect(controls.length).toBeLessThanOrEqual(4);
+      expect(controls).toEqual(['Back to Library', 'radiogroup', 'Add note']);
+      expect(ui.getByTestId('library-reading-dates-edit')).toBeTruthy();
+      expectSinglePrimary(ui);
     } finally {
       ui.unmount();
       ui.client.clear();

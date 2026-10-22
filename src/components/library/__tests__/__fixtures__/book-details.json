@@ -134,7 +134,7 @@
                             "props": {
                               "accessibilityRole": "header",
                               "aria-level": 1,
-                              "onLayout": "function onLayout(event) {\n          if (!stacked && event.nativeEvent.layout.height > _LibraryTypography.LIBRARY_TEXT.title.lineHeight * fontScale * _bookDetailsTokens.TITLE_LINE_LIMIT) {\n            setLongTitle(true);\n          }\n        }",
+                              "onLayout": "function onLayout(event) {\n          if (!stacked && event.nativeEvent.layout.height > _LibraryTypography.LIBRARY_TEXT.title.lineHeight * _bookDetailsTokens.TITLE_LINE_LIMIT) {\n            setLongTitle(true);\n          }\n        }",
                               "onTextLayout": "function onTextLayout(event) {\n          if (event.nativeEvent.lines.length > _bookDetailsTokens.TITLE_LINE_LIMIT) setLongTitle(true);\n        }",
                               "role": "heading",
                               "style": {
@@ -199,8 +199,7 @@
                                   "Want to read"
                                 ],
                                 "props": {
-                                  "numberOfLines": 1,
-                                  "onLayout": "function onLayout(event) {\n              var nextWidth = event.nativeEvent.layout.width;\n              setLabelWidths(function (current) {\n                if (current[index] === nextWidth) return current;\n                var next = (0, _toConsumableArray2.default)(current);\n                next[index] = nextWidth;\n                return next;\n              });\n            }",
+                                  "onLayout": "function onLayout(event) {\n                var nextWidth = event.nativeEvent.layout.width;\n                setLabelWidths(function (current) {\n                  if (current[index] === nextWidth) return current;\n                  var next = (0, _toConsumableArray2.default)(current);\n                  next[index] = nextWidth;\n                  return next;\n                });\n              }",
                                   "style": {
                                     "flexShrink": 0,
                                     "fontFamily": "LibraryManropeBold",
@@ -216,8 +215,7 @@
                                   "Reading"
                                 ],
                                 "props": {
-                                  "numberOfLines": 1,
-                                  "onLayout": "function onLayout(event) {\n              var nextWidth = event.nativeEvent.layout.width;\n              setLabelWidths(function (current) {\n                if (current[index] === nextWidth) return current;\n                var next = (0, _toConsumableArray2.default)(current);\n                next[index] = nextWidth;\n                return next;\n              });\n            }",
+                                  "onLayout": "function onLayout(event) {\n                var nextWidth = event.nativeEvent.layout.width;\n                setLabelWidths(function (current) {\n                  if (current[index] === nextWidth) return current;\n                  var next = (0, _toConsumableArray2.default)(current);\n                  next[index] = nextWidth;\n                  return next;\n                });\n              }",
                                   "style": {
                                     "flexShrink": 0,
                                     "fontFamily": "LibraryManropeBold",
@@ -233,8 +231,7 @@
                                   "Finished"
                                 ],
                                 "props": {
-                                  "numberOfLines": 1,
-                                  "onLayout": "function onLayout(event) {\n              var nextWidth = event.nativeEvent.layout.width;\n              setLabelWidths(function (current) {\n                if (current[index] === nextWidth) return current;\n                var next = (0, _toConsumableArray2.default)(current);\n                next[index] = nextWidth;\n                return next;\n              });\n            }",
+                                  "onLayout": "function onLayout(event) {\n                var nextWidth = event.nativeEvent.layout.width;\n                setLabelWidths(function (current) {\n                  if (current[index] === nextWidth) return current;\n                  var next = (0, _toConsumableArray2.default)(current);\n                  next[index] = nextWidth;\n                  return next;\n                });\n              }",
                                   "style": {
                                     "flexShrink": 0,
                                     "fontFamily": "LibraryManropeBold",
@@ -279,11 +276,14 @@
                             "props": {
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryManrope",
                                 "fontSize": 16,
                                 "lineHeight": 24,
                                 "maxWidth": "100%",
-                                "textAlign": "center"
+                                "minWidth": 0,
+                                "textAlign": "center",
+                                "width": "100%"
                               }
                             },
                             "type": "Text"
@@ -337,12 +337,15 @@
                             "props": {
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryManropeBold",
                                 "fontSize": 16,
                                 "fontWeight": "700",
                                 "lineHeight": 22,
                                 "maxWidth": "100%",
-                                "textAlign": "center"
+                                "minWidth": 0,
+                                "textAlign": "center",
+                                "width": "100%"
                               }
                             },
                             "type": "Text"
@@ -396,11 +399,14 @@
                             "props": {
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryManrope",
                                 "fontSize": 16,
                                 "lineHeight": 24,
                                 "maxWidth": "100%",
-                                "textAlign": "center"
+                                "minWidth": 0,
+                                "textAlign": "center",
+                                "width": "100%"
                               }
                             },
                             "type": "Text"
@@ -482,9 +488,11 @@
                               "role": "heading",
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryGaramondMedium",
                                 "fontSize": 21,
-                                "lineHeight": 27
+                                "lineHeight": 27,
+                                "minWidth": 0
                               }
                             },
                             "type": "Text"
@@ -600,41 +608,135 @@
                     "children": [
                       {
                         "children": [
+                          "Your reading"
+                        ],
+                        "props": {
+                          "accessibilityRole": "header",
+                          "style": {
+                            "color": "<colour>",
+                            "fontFamily": "LibraryManropeBold",
+                            "fontSize": 16,
+                            "fontWeight": "700",
+                            "lineHeight": 22
+                          }
+                        },
+                        "type": "Text"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              "Stop reading"
+                            ],
+                            "props": {
+                              "style": {
+                                "color": "<colour>",
+                                "fontSize": 16,
+                                "fontWeight": "600",
+                                "textAlign": "center"
+                              }
+                            },
+                            "type": "Text"
+                          }
+                        ],
+                        "props": {
+                          "accessibilityLabel": "Stop reading",
+                          "accessibilityRole": "button",
+                          "accessibilityState": {
+                            "disabled": false
+                          },
+                          "accessibilityValue": {},
+                          "accessible": true,
+                          "collapsable": false,
+                          "focusable": true,
+                          "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
+                          "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
+                          "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
+                          "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
+                          "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
+                          "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
+                          "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
+                          "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
+                          "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
+                          "style": {
+                            "alignItems": "center",
+                            "backgroundColor": "<colour>",
+                            "borderColor": "<colour>",
+                            "borderRadius": 12,
+                            "borderWidth": 1,
+                            "justifyContent": "center",
+                            "minHeight": 48,
+                            "minWidth": 48,
+                            "opacity": 1,
+                            "paddingHorizontal": 16,
+                            "paddingVertical": 12
+                          },
+                          "testID": "library-stop-reading"
+                        },
+                        "type": "View"
+                      }
+                    ],
+                    "props": {
+                      "style": {
+                        "gap": 8,
+                        "marginTop": 16
+                      }
+                    },
+                    "type": "View"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
                           {
                             "children": [
                               {
                                 "children": [
-                                  "Your review"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Your review"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "Existing review"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "Existing review"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-review"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -691,37 +793,51 @@
                             "children": [
                               {
                                 "children": [
-                                  "Saved pages"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Saved pages"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "1 page"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "1 page"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-saved"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -778,25 +894,39 @@
                             "children": [
                               {
                                 "children": [
-                                  "Book information"
+                                  {
+                                    "children": [
+                                      "Book information"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": null,
+                                    "props": {
+                                      "style": {
+                                        "flex": 1
+                                      }
+                                    },
+                                    "type": "View"
+                                  }
                                 ],
                                 "props": {
                                   "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
-                                  }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": null,
-                                "props": {
-                                  "style": {
-                                    "flex": 1
-                                  }
+                                    "alignItems": "center",
+                                    "flex": 1,
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-info"
                                 },
                                 "type": "View"
                               },
@@ -855,37 +985,51 @@
                             "children": [
                               {
                                 "children": [
-                                  "Ownership & condition"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Ownership & condition"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "Owned · Good"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "Owned · Good"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-ownership"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -942,37 +1086,51 @@
                             "children": [
                               {
                                 "children": [
-                                  "Community reviews"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Community reviews"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "1 review"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "1 review"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-community"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -1265,7 +1423,7 @@
                             "props": {
                               "accessibilityRole": "header",
                               "aria-level": 1,
-                              "onLayout": "function onLayout(event) {\n          if (!stacked && event.nativeEvent.layout.height > _LibraryTypography.LIBRARY_TEXT.title.lineHeight * fontScale * _bookDetailsTokens.TITLE_LINE_LIMIT) {\n            setLongTitle(true);\n          }\n        }",
+                              "onLayout": "function onLayout(event) {\n          if (!stacked && event.nativeEvent.layout.height > _LibraryTypography.LIBRARY_TEXT.title.lineHeight * _bookDetailsTokens.TITLE_LINE_LIMIT) {\n            setLongTitle(true);\n          }\n        }",
                               "onTextLayout": "function onTextLayout(event) {\n          if (event.nativeEvent.lines.length > _bookDetailsTokens.TITLE_LINE_LIMIT) setLongTitle(true);\n        }",
                               "role": "heading",
                               "style": {
@@ -1330,8 +1488,7 @@
                                   "Want to read"
                                 ],
                                 "props": {
-                                  "numberOfLines": 1,
-                                  "onLayout": "function onLayout(event) {\n              var nextWidth = event.nativeEvent.layout.width;\n              setLabelWidths(function (current) {\n                if (current[index] === nextWidth) return current;\n                var next = (0, _toConsumableArray2.default)(current);\n                next[index] = nextWidth;\n                return next;\n              });\n            }",
+                                  "onLayout": "function onLayout(event) {\n                var nextWidth = event.nativeEvent.layout.width;\n                setLabelWidths(function (current) {\n                  if (current[index] === nextWidth) return current;\n                  var next = (0, _toConsumableArray2.default)(current);\n                  next[index] = nextWidth;\n                  return next;\n                });\n              }",
                                   "style": {
                                     "flexShrink": 0,
                                     "fontFamily": "LibraryManropeBold",
@@ -1347,8 +1504,7 @@
                                   "Reading"
                                 ],
                                 "props": {
-                                  "numberOfLines": 1,
-                                  "onLayout": "function onLayout(event) {\n              var nextWidth = event.nativeEvent.layout.width;\n              setLabelWidths(function (current) {\n                if (current[index] === nextWidth) return current;\n                var next = (0, _toConsumableArray2.default)(current);\n                next[index] = nextWidth;\n                return next;\n              });\n            }",
+                                  "onLayout": "function onLayout(event) {\n                var nextWidth = event.nativeEvent.layout.width;\n                setLabelWidths(function (current) {\n                  if (current[index] === nextWidth) return current;\n                  var next = (0, _toConsumableArray2.default)(current);\n                  next[index] = nextWidth;\n                  return next;\n                });\n              }",
                                   "style": {
                                     "flexShrink": 0,
                                     "fontFamily": "LibraryManropeBold",
@@ -1364,8 +1520,7 @@
                                   "Finished"
                                 ],
                                 "props": {
-                                  "numberOfLines": 1,
-                                  "onLayout": "function onLayout(event) {\n              var nextWidth = event.nativeEvent.layout.width;\n              setLabelWidths(function (current) {\n                if (current[index] === nextWidth) return current;\n                var next = (0, _toConsumableArray2.default)(current);\n                next[index] = nextWidth;\n                return next;\n              });\n            }",
+                                  "onLayout": "function onLayout(event) {\n                var nextWidth = event.nativeEvent.layout.width;\n                setLabelWidths(function (current) {\n                  if (current[index] === nextWidth) return current;\n                  var next = (0, _toConsumableArray2.default)(current);\n                  next[index] = nextWidth;\n                  return next;\n                });\n              }",
                                   "style": {
                                     "flexShrink": 0,
                                     "fontFamily": "LibraryManropeBold",
@@ -1410,11 +1565,14 @@
                             "props": {
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryManrope",
                                 "fontSize": 16,
                                 "lineHeight": 24,
                                 "maxWidth": "100%",
-                                "textAlign": "center"
+                                "minWidth": 0,
+                                "textAlign": "center",
+                                "width": "100%"
                               }
                             },
                             "type": "Text"
@@ -1468,12 +1626,15 @@
                             "props": {
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryManropeBold",
                                 "fontSize": 16,
                                 "fontWeight": "700",
                                 "lineHeight": 22,
                                 "maxWidth": "100%",
-                                "textAlign": "center"
+                                "minWidth": 0,
+                                "textAlign": "center",
+                                "width": "100%"
                               }
                             },
                             "type": "Text"
@@ -1527,11 +1688,14 @@
                             "props": {
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryManrope",
                                 "fontSize": 16,
                                 "lineHeight": 24,
                                 "maxWidth": "100%",
-                                "textAlign": "center"
+                                "minWidth": 0,
+                                "textAlign": "center",
+                                "width": "100%"
                               }
                             },
                             "type": "Text"
@@ -1613,9 +1777,11 @@
                               "role": "heading",
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryGaramondMedium",
                                 "fontSize": 21,
-                                "lineHeight": 27
+                                "lineHeight": 27,
+                                "minWidth": 0
                               }
                             },
                             "type": "Text"
@@ -1731,41 +1897,135 @@
                     "children": [
                       {
                         "children": [
+                          "Your reading"
+                        ],
+                        "props": {
+                          "accessibilityRole": "header",
+                          "style": {
+                            "color": "<colour>",
+                            "fontFamily": "LibraryManropeBold",
+                            "fontSize": 16,
+                            "fontWeight": "700",
+                            "lineHeight": 22
+                          }
+                        },
+                        "type": "Text"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              "Stop reading"
+                            ],
+                            "props": {
+                              "style": {
+                                "color": "<colour>",
+                                "fontSize": 16,
+                                "fontWeight": "600",
+                                "textAlign": "center"
+                              }
+                            },
+                            "type": "Text"
+                          }
+                        ],
+                        "props": {
+                          "accessibilityLabel": "Stop reading",
+                          "accessibilityRole": "button",
+                          "accessibilityState": {
+                            "disabled": false
+                          },
+                          "accessibilityValue": {},
+                          "accessible": true,
+                          "collapsable": false,
+                          "focusable": true,
+                          "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
+                          "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
+                          "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
+                          "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
+                          "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
+                          "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
+                          "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
+                          "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
+                          "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
+                          "style": {
+                            "alignItems": "center",
+                            "backgroundColor": "<colour>",
+                            "borderColor": "<colour>",
+                            "borderRadius": 12,
+                            "borderWidth": 1,
+                            "justifyContent": "center",
+                            "minHeight": 48,
+                            "minWidth": 48,
+                            "opacity": 1,
+                            "paddingHorizontal": 16,
+                            "paddingVertical": 12
+                          },
+                          "testID": "library-stop-reading"
+                        },
+                        "type": "View"
+                      }
+                    ],
+                    "props": {
+                      "style": {
+                        "gap": 8,
+                        "marginTop": 16
+                      }
+                    },
+                    "type": "View"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
                           {
                             "children": [
                               {
                                 "children": [
-                                  "Your review"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Your review"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "Existing review"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "Existing review"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-review"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -2105,8 +2365,8 @@
                                         "color": "<colour>",
                                         "fontFamily": "LibraryManrope",
                                         "fontSize": 16,
-                                        "height": 100,
                                         "lineHeight": 24,
+                                        "minHeight": 100,
                                         "padding": 12,
                                         "textAlignVertical": "top"
                                       },
@@ -2202,37 +2462,51 @@
                             "children": [
                               {
                                 "children": [
-                                  "Saved pages"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Saved pages"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "1 page"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "1 page"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-saved"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -2401,25 +2675,39 @@
                             "children": [
                               {
                                 "children": [
-                                  "Book information"
+                                  {
+                                    "children": [
+                                      "Book information"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": null,
+                                    "props": {
+                                      "style": {
+                                        "flex": 1
+                                      }
+                                    },
+                                    "type": "View"
+                                  }
                                 ],
                                 "props": {
                                   "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
-                                  }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": null,
-                                "props": {
-                                  "style": {
-                                    "flex": 1
-                                  }
+                                    "alignItems": "center",
+                                    "flex": 1,
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-info"
                                 },
                                 "type": "View"
                               },
@@ -2532,37 +2820,51 @@
                             "children": [
                               {
                                 "children": [
-                                  "Ownership & condition"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Ownership & condition"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "Owned · Good"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "Owned · Good"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-ownership"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -3205,37 +3507,51 @@
                             "children": [
                               {
                                 "children": [
-                                  "Community reviews"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Community reviews"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "1 review"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "1 review"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-community"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -3677,7 +3993,7 @@
                             "props": {
                               "accessibilityRole": "header",
                               "aria-level": 1,
-                              "onLayout": "function onLayout(event) {\n          if (!stacked && event.nativeEvent.layout.height > _LibraryTypography.LIBRARY_TEXT.title.lineHeight * fontScale * _bookDetailsTokens.TITLE_LINE_LIMIT) {\n            setLongTitle(true);\n          }\n        }",
+                              "onLayout": "function onLayout(event) {\n          if (!stacked && event.nativeEvent.layout.height > _LibraryTypography.LIBRARY_TEXT.title.lineHeight * _bookDetailsTokens.TITLE_LINE_LIMIT) {\n            setLongTitle(true);\n          }\n        }",
                               "onTextLayout": "function onTextLayout(event) {\n          if (event.nativeEvent.lines.length > _bookDetailsTokens.TITLE_LINE_LIMIT) setLongTitle(true);\n        }",
                               "role": "heading",
                               "style": {
@@ -3742,8 +4058,7 @@
                                   "Want to read"
                                 ],
                                 "props": {
-                                  "numberOfLines": 1,
-                                  "onLayout": "function onLayout(event) {\n              var nextWidth = event.nativeEvent.layout.width;\n              setLabelWidths(function (current) {\n                if (current[index] === nextWidth) return current;\n                var next = (0, _toConsumableArray2.default)(current);\n                next[index] = nextWidth;\n                return next;\n              });\n            }",
+                                  "onLayout": "function onLayout(event) {\n                var nextWidth = event.nativeEvent.layout.width;\n                setLabelWidths(function (current) {\n                  if (current[index] === nextWidth) return current;\n                  var next = (0, _toConsumableArray2.default)(current);\n                  next[index] = nextWidth;\n                  return next;\n                });\n              }",
                                   "style": {
                                     "flexShrink": 0,
                                     "fontFamily": "LibraryManropeBold",
@@ -3759,8 +4074,7 @@
                                   "Reading"
                                 ],
                                 "props": {
-                                  "numberOfLines": 1,
-                                  "onLayout": "function onLayout(event) {\n              var nextWidth = event.nativeEvent.layout.width;\n              setLabelWidths(function (current) {\n                if (current[index] === nextWidth) return current;\n                var next = (0, _toConsumableArray2.default)(current);\n                next[index] = nextWidth;\n                return next;\n              });\n            }",
+                                  "onLayout": "function onLayout(event) {\n                var nextWidth = event.nativeEvent.layout.width;\n                setLabelWidths(function (current) {\n                  if (current[index] === nextWidth) return current;\n                  var next = (0, _toConsumableArray2.default)(current);\n                  next[index] = nextWidth;\n                  return next;\n                });\n              }",
                                   "style": {
                                     "flexShrink": 0,
                                     "fontFamily": "LibraryManropeBold",
@@ -3776,8 +4090,7 @@
                                   "Finished"
                                 ],
                                 "props": {
-                                  "numberOfLines": 1,
-                                  "onLayout": "function onLayout(event) {\n              var nextWidth = event.nativeEvent.layout.width;\n              setLabelWidths(function (current) {\n                if (current[index] === nextWidth) return current;\n                var next = (0, _toConsumableArray2.default)(current);\n                next[index] = nextWidth;\n                return next;\n              });\n            }",
+                                  "onLayout": "function onLayout(event) {\n                var nextWidth = event.nativeEvent.layout.width;\n                setLabelWidths(function (current) {\n                  if (current[index] === nextWidth) return current;\n                  var next = (0, _toConsumableArray2.default)(current);\n                  next[index] = nextWidth;\n                  return next;\n                });\n              }",
                                   "style": {
                                     "flexShrink": 0,
                                     "fontFamily": "LibraryManropeBold",
@@ -3822,11 +4135,14 @@
                             "props": {
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryManrope",
                                 "fontSize": 16,
                                 "lineHeight": 24,
                                 "maxWidth": "100%",
-                                "textAlign": "center"
+                                "minWidth": 0,
+                                "textAlign": "center",
+                                "width": "100%"
                               }
                             },
                             "type": "Text"
@@ -3880,12 +4196,15 @@
                             "props": {
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryManropeBold",
                                 "fontSize": 16,
                                 "fontWeight": "700",
                                 "lineHeight": 22,
                                 "maxWidth": "100%",
-                                "textAlign": "center"
+                                "minWidth": 0,
+                                "textAlign": "center",
+                                "width": "100%"
                               }
                             },
                             "type": "Text"
@@ -3939,11 +4258,14 @@
                             "props": {
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryManrope",
                                 "fontSize": 16,
                                 "lineHeight": 24,
                                 "maxWidth": "100%",
-                                "textAlign": "center"
+                                "minWidth": 0,
+                                "textAlign": "center",
+                                "width": "100%"
                               }
                             },
                             "type": "Text"
@@ -4025,9 +4347,11 @@
                               "role": "heading",
                               "style": {
                                 "color": "<colour>",
+                                "flexShrink": 1,
                                 "fontFamily": "LibraryGaramondMedium",
                                 "fontSize": 21,
-                                "lineHeight": 27
+                                "lineHeight": 27,
+                                "minWidth": 0
                               }
                             },
                             "type": "Text"
@@ -4143,41 +4467,135 @@
                     "children": [
                       {
                         "children": [
+                          "Your reading"
+                        ],
+                        "props": {
+                          "accessibilityRole": "header",
+                          "style": {
+                            "color": "<colour>",
+                            "fontFamily": "LibraryManropeBold",
+                            "fontSize": 16,
+                            "fontWeight": "700",
+                            "lineHeight": 22
+                          }
+                        },
+                        "type": "Text"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              "Stop reading"
+                            ],
+                            "props": {
+                              "style": {
+                                "color": "<colour>",
+                                "fontSize": 16,
+                                "fontWeight": "600",
+                                "textAlign": "center"
+                              }
+                            },
+                            "type": "Text"
+                          }
+                        ],
+                        "props": {
+                          "accessibilityLabel": "Stop reading",
+                          "accessibilityRole": "button",
+                          "accessibilityState": {
+                            "disabled": false
+                          },
+                          "accessibilityValue": {},
+                          "accessible": true,
+                          "collapsable": false,
+                          "focusable": true,
+                          "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
+                          "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
+                          "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
+                          "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
+                          "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
+                          "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
+                          "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
+                          "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
+                          "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
+                          "style": {
+                            "alignItems": "center",
+                            "backgroundColor": "<colour>",
+                            "borderColor": "<colour>",
+                            "borderRadius": 12,
+                            "borderWidth": 1,
+                            "justifyContent": "center",
+                            "minHeight": 48,
+                            "minWidth": 48,
+                            "opacity": 1,
+                            "paddingHorizontal": 16,
+                            "paddingVertical": 12
+                          },
+                          "testID": "library-stop-reading"
+                        },
+                        "type": "View"
+                      }
+                    ],
+                    "props": {
+                      "style": {
+                        "gap": 8,
+                        "marginTop": 16
+                      }
+                    },
+                    "type": "View"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
                           {
                             "children": [
                               {
                                 "children": [
-                                  "Your review"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Your review"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "Existing review"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "Existing review"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-review"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -4517,8 +4935,8 @@
                                         "color": "<colour>",
                                         "fontFamily": "LibraryManrope",
                                         "fontSize": 16,
-                                        "height": 100,
                                         "lineHeight": 24,
+                                        "minHeight": 100,
                                         "padding": 12,
                                         "textAlignVertical": "top"
                                       },
@@ -4614,37 +5032,51 @@
                             "children": [
                               {
                                 "children": [
-                                  "Saved pages"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Saved pages"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "1 page"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "1 page"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-saved"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -4813,25 +5245,39 @@
                             "children": [
                               {
                                 "children": [
-                                  "Book information"
+                                  {
+                                    "children": [
+                                      "Book information"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": null,
+                                    "props": {
+                                      "style": {
+                                        "flex": 1
+                                      }
+                                    },
+                                    "type": "View"
+                                  }
                                 ],
                                 "props": {
                                   "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
-                                  }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": null,
-                                "props": {
-                                  "style": {
-                                    "flex": 1
-                                  }
+                                    "alignItems": "center",
+                                    "flex": 1,
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-info"
                                 },
                                 "type": "View"
                               },
@@ -4944,37 +5390,51 @@
                             "children": [
                               {
                                 "children": [
-                                  "Ownership & condition"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Ownership & condition"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "Owned · Good"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "Owned · Good"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-ownership"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -5617,37 +6077,51 @@
                             "children": [
                               {
                                 "children": [
-                                  "Community reviews"
-                                ],
-                                "props": {
-                                  "style": {
-                                    "color": "<colour>",
-                                    "flexShrink": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24
+                                  {
+                                    "children": [
+                                      "Community reviews"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "1 review"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
                                   }
-                                },
-                                "type": "Text"
-                              },
-                              {
-                                "children": [
-                                  "1 review"
                                 ],
                                 "props": {
-                                  "ellipsizeMode": "tail",
-                                  "numberOfLines": 2,
                                   "style": {
-                                    "color": "<colour>",
+                                    "alignItems": "center",
                                     "flex": 1,
-                                    "fontFamily": "LibraryManrope",
-                                    "fontSize": 16,
-                                    "lineHeight": 24,
-                                    "minWidth": 0,
-                                    "textAlign": "right"
-                                  }
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-community"
                                 },
-                                "type": "Text"
+                                "type": "View"
                               },
                               {
                                 "children": null,
@@ -5972,7 +6446,7 @@
                           },
                           {
                             "children": [
-                              "Your notes, review and saved pages for this book will be deleted too. You can't undo this."
+                              "Your notes, review, saved pages and reading history for this book will be deleted too. You can't undo this."
                             ],
                             "props": {
                               "nativeID": "delete-book-modal-description",
@@ -6114,7 +6588,7 @@
                   }
                 ],
                 "props": {
-                  "accessibilityLabel": "Remove “Beloved” from your library? Your notes, review and saved pages for this book will be deleted too. You can't undo this.",
+                  "accessibilityLabel": "Remove “Beloved” from your library? Your notes, review, saved pages and reading history for this book will be deleted too. You can't undo this.",
                   "accessibilityViewIsModal": true,
                   "aria-describedby": "delete-book-modal-description",
                   "style": {

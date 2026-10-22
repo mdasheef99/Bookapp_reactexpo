@@ -1,4 +1,5 @@
 import React from 'react';
+import { StyleSheet, Text } from 'react-native';
 import { fireEvent, render, within } from '@testing-library/react-native';
 import { StatusSelector } from '../StatusSelector';
 
@@ -50,6 +51,33 @@ describe('StatusSelector radio group', () => {
     expect(group.props.accessibilityState).toMatchObject({ disabled: true, busy: true });
     for (const radio of within(group).getAllByRole('radio')) {
       expect(radio.props.accessibilityState.disabled).toBe(true);
+    }
+  });
+});
+
+describe('large-type wrapping (fontScale 2.0)', () => {
+  it('renders full segment labels without truncation props and keeps >= 44dp targets', () => {
+    const tree = render(<StatusSelector status="reading" onChange={jest.fn()} />);
+    const group = tree.getByLabelText('Reading status');
+    const radios = within(group).getAllByRole('radio');
+    expect(radios).toHaveLength(3);
+    for (const radio of radios) {
+      const texts = (radio as unknown as { findAll: (predicate: (node: { type?: unknown }) => boolean) => { props: { numberOfLines?: number; ellipsizeMode?: string } }[] })
+        .findAll((node) => node.type === Text);
+      expect(texts.length).toBeGreaterThan(0);
+      for (const text of texts) {
+        expect(text.props.numberOfLines).toBeUndefined();
+        expect(text.props.ellipsizeMode).toBeUndefined();
+      }
+      const style = StyleSheet.flatten(radio.props.style);
+      expect(style.minHeight).toBeGreaterThanOrEqual(44);
+      expect(style.height).toBeUndefined();
+    }
+    // Hidden measurement copies must not truncate either.
+    for (const label of ['Want to read', 'Reading', 'Finished']) {
+      for (const node of tree.UNSAFE_getAllByProps({ children: label })) {
+        expect(node.props.numberOfLines).toBeUndefined();
+      }
     }
   });
 });

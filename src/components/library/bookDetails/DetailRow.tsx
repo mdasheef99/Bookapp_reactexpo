@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } from '../LibraryAppearance';
-import { LIBRARY_TEXT } from '../LibraryTypography';
+import { LIBRARY_TEXT, libraryFontScale } from '../LibraryTypography';
 import { ICON_SIZE, ROW_MIN_HEIGHT, ROW_SUMMARY_LINES } from './bookDetailsTokens';
 
 export interface DetailRowProps {
@@ -29,8 +29,11 @@ export function DetailRow({
   const colors = useLibraryAppearance();
   const [focused, setFocused] = useState(false);
 
+  // At large system text the label and summary no longer fit side by side, so they stack.
+  const stacked = libraryFontScale() >= STACK_FONT_SCALE;
+
   const content = (
-    <>
+    <View testID={`detail-row-text-${id}`} style={stacked ? styles.textStacked : styles.textInline}>
       <Text style={[LIBRARY_TEXT.body, styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
       {secondary ? (
         <Text
@@ -38,16 +41,16 @@ export function DetailRow({
           ellipsizeMode="tail"
           style={[
             LIBRARY_TEXT.body,
-            styles.rowSummary,
+            stacked ? styles.rowSummaryStacked : styles.rowSummary,
             { color: absent ? colors.textTertiary : colors.textSecondary },
           ]}
         >
           {secondary}
         </Text>
-      ) : (
+      ) : stacked ? null : (
         <View style={styles.spacer} />
       )}
-    </>
+    </View>
   );
 
   if (!onPress) {
@@ -95,7 +98,22 @@ export function DetailRow({
   );
 }
 
+export const STACK_FONT_SCALE = 1.3;
+
 const styles = StyleSheet.create({
+  textInline: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LIBRARY_SPACING.xs,
+  },
+  textStacked: {
+    flex: 1,
+    gap: LIBRARY_SPACING.xs,
+  },
+  rowSummaryStacked: {
+    textAlign: 'left',
+  },
   row: {
     minHeight: ROW_MIN_HEIGHT,
     minWidth: MIN_TARGET,

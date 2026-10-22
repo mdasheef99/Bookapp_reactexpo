@@ -6,15 +6,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { LibraryBookEntry } from '@/features/books/utils/libraryShelf';
 import { stableSeed, spineColorFromTitle, spineTextColor } from '@/features/books/utils/shelfLayout';
 import { BOOK_CLOTH_TEXTURE_URI } from './bookClothTexture';
+import { useLibraryAppearance } from './LibraryAppearance';
 import { useLibraryTypography } from './LibraryTypography';
 
 export function HorizontalBookVolume({ item, width, height, selected = false, arranging = false, disabled = false,
-    onPress, onQuickLook, cancelSignal = 0, decorative = false, onInteractionChange }: {
+    onPress, onQuickLook, cancelSignal = 0, decorative = false, reading = false, onInteractionChange }: {
     item: LibraryBookEntry; width: number; height: number; selected?: boolean; arranging?: boolean; disabled?: boolean;
     onPress: () => void; onInteractionChange?: (item: LibraryBookEntry, source: 'hover' | 'focus', active: boolean) => void;
-    onQuickLook?: () => void; cancelSignal?: number; decorative?: boolean;
+    onQuickLook?: () => void; cancelSignal?: number; decorative?: boolean; reading?: boolean;
 }) {
     const fonts = useLibraryTypography();
+    const colors = useLibraryAppearance();
     const [focused, setFocused] = React.useState(false);
     const [hovered, setHovered] = React.useState(false);
     const [pressed, setPressed] = React.useState(false);
@@ -45,7 +47,7 @@ export function HorizontalBookVolume({ item, width, height, selected = false, ar
     const hasRibs = seed % 3 !== 0;
     const paperWidth = seed % 4 === 0 ? 7 : 4;
     return <Pressable testID={`library-horizontal-book-${item.id}`} accessibilityRole="button"
-        accessibilityLabel={`${arranging ? 'Select' : 'Open'} ${item.book.title}${authors ? ` by ${authors}` : ''}`}
+        accessibilityLabel={`${arranging ? 'Select' : 'Open'} ${item.book.title}${authors ? ` by ${authors}` : ''}${reading ? ', Reading' : ''}`}
         accessible={!decorative} accessibilityElementsHidden={decorative} importantForAccessibility={decorative ? 'no-hide-descendants' : 'auto'}
         accessibilityHint={arranging ? 'Tap to select, then drag to move. Earlier and Later buttons are also available.' : 'Hold for a quick look. Quick look is also available in Choose a book.'}
         accessibilityState={{ disabled, selected: arranging && selected }} disabled={disabled || decorative}
@@ -93,7 +95,10 @@ export function HorizontalBookVolume({ item, width, height, selected = false, ar
         {authors && width >= 220 ? <Text numberOfLines={1} style={[styles.author, { color, backgroundColor, fontFamily: fonts.label }]}>
             {authorLabel}
         </Text> : null}
-        {selected || focused ? <View style={styles.outline} pointerEvents="none" accessible={false} /> : null}
+        {selected || focused ? <View style={styles.outline} pointerEvents="none" accessible={false} /> : reading && !decorative ? <>
+          <View testID={`library-horizontal-reading-outline-${item.id}`} style={[styles.readingOuter, { borderColor: colors.readingOutline }]} pointerEvents="none" accessible={false} />
+          <View testID={`library-horizontal-reading-outline-inner-${item.id}`} style={[styles.readingInner, { borderColor: colors.readingOutlineInner }]} pointerEvents="none" accessible={false} />
+        </> : null}
         </View>
         </Animated.View>
     </Pressable>;
@@ -121,4 +126,8 @@ const styles = StyleSheet.create({
         borderLeftWidth: 1, borderLeftColor: 'rgba(79,53,31,0.38)', borderRightWidth: 1, borderRightColor: 'rgba(255,250,231,0.44)' },
     pageRule: { position: 'absolute', left: 0, right: 0, height: 0.7, backgroundColor: 'rgba(104,78,47,0.32)' },
     outline: { ...StyleSheet.absoluteFillObject, borderWidth: 2, borderRadius: 3, borderColor: '#c5a059' },
+    // SDD-09 Unit 2b fix: own two-tone reading ring, thicker outer + inset inner so it
+    // differs from the arranging selection by weight and inset, not hue alone.
+    readingOuter: { ...StyleSheet.absoluteFillObject, borderWidth: 3, borderRadius: 5 },
+    readingInner: { ...StyleSheet.absoluteFillObject, margin: 4, borderWidth: 2, borderRadius: 2 },
 });

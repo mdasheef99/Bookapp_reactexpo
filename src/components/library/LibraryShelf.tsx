@@ -12,7 +12,7 @@ import { getShelfTrackLayout, splitShelfRows, resolveSweptSpine, computeShelfPos
 import { BookSpine } from './BookSpine';
 import { LibraryBookPicker } from './LibraryBookPicker';
 import { useLibraryTypography } from './LibraryTypography';
-import { LIBRARY_SPACING } from './LibraryAppearance';
+import { LIBRARY_SPACING, useLibraryAppearance } from './LibraryAppearance';
 import { CABINET_WOOD_TEXTURE_URI } from './cabinetWoodTexture';
 import { useVerticalShelfDrag } from './useVerticalShelfDrag';
 import { LibraryArrangeSelection } from './LibraryArrangeControls';
@@ -22,6 +22,7 @@ type LibraryShelfProps = {
     onBookPress: (item: LibraryBookEntry) => void;
     arrangement?: ShelfArrangement;
     onDraggingChange?: (active: boolean) => void;
+    openReadIds?: ReadonlySet<string>;
 };
 
 const TOP_Y = 28;
@@ -37,8 +38,9 @@ const ROW_GEOMETRY = {
 
 const ignoreMove = () => {};
 
-export function LibraryShelf({ books, onBookPress, arrangement, onDraggingChange }: LibraryShelfProps) {
+export function LibraryShelf({ books, onBookPress, arrangement, onDraggingChange, openReadIds }: LibraryShelfProps) {
     const fonts = useLibraryTypography();
+    const colors = useLibraryAppearance();
     const isReduceMotion = !!useReducedMotion();
     const shelfTranslateY = useSharedValue(isReduceMotion ? 0 : 20);
     const audioPlayerRef = React.useRef<any>(null);
@@ -180,6 +182,7 @@ export function LibraryShelf({ books, onBookPress, arrangement, onDraggingChange
             <View testID={`library-shelf-row-${row}`} style={[styles.bookRow, { top: y }]}>
                 {entries.map((item, index) => {
                     const selected = arranging && selectedId === item.id;
+                    const isReading = openReadIds?.has(item.id) ?? false;
                     const spine = <View key={item.id} collapsable={false} style={{ flexShrink: 0, opacity: drag?.id === item.id ? 0 : 1 }}>
                         <LinearGradient colors={['rgba(17,10,5,0.52)', 'rgba(17,10,5,0.28)', 'transparent']}
                             locations={[0, 0.3, 1]} pointerEvents="none" accessible={false}
@@ -189,10 +192,13 @@ export function LibraryShelf({ books, onBookPress, arrangement, onDraggingChange
                         <BookSpine item={item} index={indexOffset + index}
                             onPress={() => arranging ? selectBook(item) : onBookPress(item)} isReduceMotion={isReduceMotion}
                             onInteractionChange={handleSpineInteraction}
-                            arranging={arranging} selected={selected} tiltDeg={postureById[item.id]?.tiltDeg ?? 0}
+                            arranging={arranging} selected={selected} reading={isReading} tiltDeg={postureById[item.id]?.tiltDeg ?? 0}
                             playTak={playTak} swept={sweptId === item.id}
                             gapAfter={layoutByBookId.get(item.id)?.gapAfter ?? 0} />
-                        {selected ? <View pointerEvents="none" style={styles.selectedOutline} /> : null}
+                        {selected ? <View pointerEvents="none" style={styles.selectedOutline} /> : isReading ? <>
+                          <View testID={`library-shelf-reading-outline-${item.id}`} pointerEvents="none" accessible={false} style={[styles.readingOuter, { borderColor: colors.readingOutline }]} />
+                          <View testID={`library-shelf-reading-outline-inner-${item.id}`} pointerEvents="none" accessible={false} style={[styles.readingInner, { borderColor: colors.readingOutlineInner }]} />
+                        </> : null}
                     </View>;
                     return selected ? <GestureDetector key={item.id} gesture={gesture} touchAction="none">{spine}</GestureDetector> : spine;
                 })}
@@ -302,6 +308,10 @@ export function LibraryShelf({ books, onBookPress, arrangement, onDraggingChange
 
 const styles = StyleSheet.create({
     selectedOutline: { position: 'absolute', top: -3, bottom: -2, left: -3, right: 0, borderWidth: 2, borderColor: '#e9c279', borderRadius: 6 },
+    // SDD-09 Unit 2b fix: own two-tone reading ring, thicker outer + inset inner so it
+    // differs from the arranging selection by weight and inset, not hue alone.
+    readingOuter: { position: 'absolute', top: -4, bottom: -3, left: -4, right: -1, borderWidth: 3, borderRadius: 7 },
+    readingInner: { position: 'absolute', top: -1, bottom: 0, left: -1, right: 2, borderWidth: 2, borderRadius: 4 },
     dropMarker: { position: 'absolute', height: ROW_H - 24, width: 3, backgroundColor: '#fff1bd', borderWidth: 0.5, borderColor: '#654329', zIndex: 20 },
     dragOverlay: { position: 'absolute', zIndex: 30, elevation: 12 },
     shelfContainer: {

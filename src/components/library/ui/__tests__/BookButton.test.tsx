@@ -60,6 +60,15 @@ describe.each(PHASES)('BookButton in %s', phase => {
   });
 });
 
+it('uses minHeight (not a fixed height) so labels can grow at fontScale 2.0', () => {
+  const tree = render(<BookButton label="Read again" variant="secondary" onPress={jest.fn()} />);
+  const style = StyleSheet.flatten(tree.getByRole('button', { name: 'Read again' }).props.style);
+  expect(style.minHeight).toBe(MIN_TARGET);
+  expect(style.minHeight).toBeGreaterThanOrEqual(44);
+  expect(style.height).toBeUndefined();
+  expect(tree.getByText('Read again').props.numberOfLines).toBeUndefined();
+});
+
 it('passes through an optional testID without making it the variant contract', () => {
   const tree = render(<BookButton label="Save" variant="primary" onPress={jest.fn()} testID="save" />);
   expect(tree.getByRole('button', { name: 'Save' }).props.testID).toBe('save');

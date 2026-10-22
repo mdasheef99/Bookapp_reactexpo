@@ -28,7 +28,7 @@ export const DeleteBookModal = ({
   const cancelRef = useRef<View>(null);
   const title = `Remove “${bookTitle}” from your library?`;
   const description =
-    "Your notes, review and saved pages for this book will be deleted too. You can't undo this.";
+    "Your notes, review, saved pages and reading history for this book will be deleted too. You can't undo this.";
 
   return (
     <Modal

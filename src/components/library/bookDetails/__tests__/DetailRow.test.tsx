@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, StyleSheet, Text } from 'react-native';
+import { PixelRatio, Platform, StyleSheet, Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { DetailRow } from '../DetailRow';
 import { getLibraryAppearance } from '../../LibraryAppearance';
@@ -87,5 +87,34 @@ describe('DetailRow', () => {
     } finally {
       Platform.OS = previousOS;
     }
+  });
+
+  describe('large system text', () => {
+    const originalOS = Platform.OS;
+    afterEach(() => {
+      jest.restoreAllMocks();
+      Object.defineProperty(Platform, 'OS', { configurable: true, value: originalOS });
+    });
+
+    const textBlock = (scale: number) => {
+      Object.defineProperty(Platform, 'OS', { configurable: true, value: 'android' });
+      jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(scale);
+      const ui = render(<DetailRow id="ownership" label="Ownership & condition" secondary="Owned · New" onPress={jest.fn()} expanded={false} />);
+      return { block: StyleSheet.flatten(ui.getByTestId('detail-row-text-ownership').props.style),
+        summary: StyleSheet.flatten(ui.getByText('Owned · New').props.style) };
+    };
+
+    it('keeps label and summary side by side at normal text', () => {
+      const { block, summary } = textBlock(1);
+      expect(block.flexDirection).toBe('row');
+      expect(summary.textAlign).toBe('right');
+    });
+
+    it('stacks the summary under the label at 200% so it is not squeezed', () => {
+      const { block, summary } = textBlock(2);
+      expect(block.flexDirection).not.toBe('row');
+      expect(summary.textAlign).toBe('left');
+      expect(summary.flex).toBeUndefined();
+    });
   });
 });
