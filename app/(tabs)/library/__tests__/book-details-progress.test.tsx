@@ -385,4 +385,103 @@ describe('Unit 3a progress on Book Details', () => {
       ui.client.clear();
     }
   });
+
+  it('uses an earlier total as the default and persists it once on the first progress save', async () => {
+    const earlier = openRead({ id: 'read-1', read_number: 1, total_pages: 400, outcome: 'finished' });
+    const open = openRead({ id: 'read-2', read_number: 2, total_pages: null });
+    mockHistory.mockReturnValue(historyState([earlier, open]));
+    const addProgress = jest.fn().mockResolvedValue({ id: 'progress-2' });
+    const setTotalPages = jest.fn().mockResolvedValue({ ...open, total_pages: 400 });
+    mockProgress.mockReturnValue({
+      progress: { data: [], isPending: false, isError: false, refetch: jest.fn() },
+      addProgress: { mutateAsync: addProgress, isPending: false },
+      setTotalPages: { mutateAsync: setTotalPages, isPending: false },
+    });
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      fireEvent.press(await ui.findByTestId('library-progress-update'));
+      expect(await ui.findByTestId('library-progress-header')).toHaveTextContent('Page 0 of 400');
+      fireEvent.press(await ui.findByTestId('library-progress-save'));
+      await waitFor(() => expect(setTotalPages).toHaveBeenCalledTimes(1));
+      expect(setTotalPages).toHaveBeenCalledWith(400);
+      await waitFor(() => expect(addProgress).toHaveBeenCalledTimes(1));
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('does not persist a fallback when the open read already has a total', async () => {
+    const earlier = openRead({ id: 'read-1', read_number: 1, total_pages: 400, outcome: 'finished' });
+    const open = openRead({ id: 'read-2', read_number: 2, total_pages: 320 });
+    mockHistory.mockReturnValue(historyState([earlier, open]));
+    const addProgress = jest.fn().mockResolvedValue({ id: 'progress-2' });
+    const setTotalPages = jest.fn().mockResolvedValue({});
+    mockProgress.mockReturnValue({
+      progress: { data: [], isPending: false, isError: false, refetch: jest.fn() },
+      addProgress: { mutateAsync: addProgress, isPending: false },
+      setTotalPages: { mutateAsync: setTotalPages, isPending: false },
+    });
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      fireEvent.press(await ui.findByTestId('library-progress-update'));
+      expect(await ui.findByTestId('library-progress-header')).toHaveTextContent('Page 0 of 320');
+      fireEvent.press(await ui.findByTestId('library-progress-save'));
+      await waitFor(() => expect(addProgress).toHaveBeenCalledTimes(1));
+      expect(setTotalPages).not.toHaveBeenCalled();
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('does not persist when no earlier total exists', async () => {
+    const open = openRead({ id: 'read-1', read_number: 1, total_pages: null });
+    mockHistory.mockReturnValue(historyState([open]));
+    const addProgress = jest.fn().mockResolvedValue({ id: 'progress-2' });
+    const setTotalPages = jest.fn().mockResolvedValue({});
+    mockProgress.mockReturnValue({
+      progress: { data: [], isPending: false, isError: false, refetch: jest.fn() },
+      addProgress: { mutateAsync: addProgress, isPending: false },
+      setTotalPages: { mutateAsync: setTotalPages, isPending: false },
+    });
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      fireEvent.press(await ui.findByTestId('library-progress-update'));
+      fireEvent.press(await ui.findByTestId('library-progress-save'));
+      await waitFor(() => expect(addProgress).toHaveBeenCalledTimes(1));
+      expect(setTotalPages).not.toHaveBeenCalled();
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('does not persist a fallback on later saves when progress already exists', async () => {
+    const earlier = openRead({ id: 'read-1', read_number: 1, total_pages: 400, outcome: 'finished' });
+    const open = openRead({ id: 'read-2', read_number: 2, total_pages: null });
+    mockHistory.mockReturnValue(historyState([earlier, open]));
+    const addProgress = jest.fn().mockResolvedValue({ id: 'progress-2' });
+    const setTotalPages = jest.fn().mockResolvedValue({});
+    mockProgress.mockReturnValue({
+      progress: { data: [progressEntry({ read_id: 'read-2' })], isPending: false, isError: false, refetch: jest.fn() },
+      addProgress: { mutateAsync: addProgress, isPending: false },
+      setTotalPages: { mutateAsync: setTotalPages, isPending: false },
+    });
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      fireEvent.press(await ui.findByTestId('library-progress-update'));
+      expect(await ui.findByTestId('library-progress-header')).toHaveTextContent(/of 400/);
+      fireEvent.press(await ui.findByTestId('library-progress-save'));
+      await waitFor(() => expect(addProgress).toHaveBeenCalledTimes(1));
+      expect(setTotalPages).not.toHaveBeenCalled();
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
 });

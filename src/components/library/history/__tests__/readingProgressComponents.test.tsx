@@ -20,6 +20,7 @@ jest.mock('expo-haptics', () => ({
 function renderSheet(
   options: {
     totalPages?: number | null;
+    fallbackTotalPages?: number | null;
     currentPages?: number | null;
     currentPercent?: number | null;
     onSaveProgress?: (value: ProgressValue) => void | Promise<unknown>;
@@ -35,6 +36,7 @@ function renderSheet(
     visible: true,
     onClose: jest.fn(),
     totalPages: options.totalPages !== undefined ? options.totalPages : 320,
+    fallbackTotalPages: options.fallbackTotalPages ?? null,
     currentPages:
       options.currentPages !== undefined ? options.currentPages : 142,
     currentPercent: options.currentPercent !== undefined ? options.currentPercent : null,
@@ -312,6 +314,34 @@ describe('ProgressSheet', () => {
       expect(ui.getByTestId('library-progress-input').props.value).toBe('44');
       fireEvent.press(await ui.findByTestId('library-progress-save'));
       await waitFor(() => expect(onSaveProgress).toHaveBeenCalledWith({ percent: 44 }));
+    } finally {
+      ui.unmount();
+    }
+  });
+
+  it('shows an earlier total as the default when the open read has none', async () => {
+    const ui = renderSheet({
+      totalPages: null,
+      currentPages: 142,
+      currentPercent: null,
+      fallbackTotalPages: 400,
+    });
+    try {
+      expect(await ui.findByTestId('library-progress-header')).toHaveTextContent('Page 142 of 400');
+      expect(ui.getByLabelText('Current page')).toBeOnTheScreen();
+    } finally {
+      ui.unmount();
+    }
+  });
+
+  it('ignores a fallback when the read already has a total', async () => {
+    const ui = renderSheet({
+      totalPages: 320,
+      currentPages: 142,
+      fallbackTotalPages: 400,
+    });
+    try {
+      expect(await ui.findByTestId('library-progress-header')).toHaveTextContent('Page 142 of 320');
     } finally {
       ui.unmount();
     }

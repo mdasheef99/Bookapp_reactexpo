@@ -8,8 +8,10 @@ import {
   ReadingRead,
   ReadingSettings,
 } from './readingHistoryContract';
+import { compareOpenReads, openReadActivityAt } from './openReadActivity';
 
 export { ReadingHistoryError } from './readingHistoryContract';
+export { compareOpenReads, openReadActivityAt } from './openReadActivity';
 
 const LOAD_MESSAGE = "Couldn't load your reading history.";
 const UPDATE_MESSAGE = "Couldn't update your reading history.";
@@ -34,6 +36,8 @@ export interface OpenReadWithProgress {
   read: ReadingRead;
   bookTitle: string;
   latestProgress: ReadingProgressEntry | null;
+  /** Latest activity = max(read.updated_at, latest progress recorded_at, read.started_at). */
+  lastActivityAt: string;
 }
 
 export interface ReadDatesPatch {
@@ -1013,9 +1017,10 @@ export const readingHistoryGateway = {
     for (const read of openReads) {
       const bookTitle = titleByBookId.get(read.user_book_id);
       if (!bookTitle) continue;
-      out.push({ read, bookTitle, latestProgress: latestByReadId.get(read.id) ?? null });
+      const latestProgress = latestByReadId.get(read.id) ?? null;
+      out.push({ read, bookTitle, latestProgress, lastActivityAt: openReadActivityAt(read, latestProgress) });
     }
-    out.sort((a, b) => Date.parse(b.read.updated_at) - Date.parse(a.read.updated_at));
+    out.sort(compareOpenReads);
     return out;
   },
 

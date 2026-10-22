@@ -13,13 +13,22 @@ export type {
   ReadingSettings,
   ReadOutcome,
 } from './readingHistoryContract';
-export { readingHistoryGateway } from './readingHistoryGateway';
+export {
+  compareOpenReads,
+  openReadActivityAt,
+  readingHistoryGateway,
+} from './readingHistoryGateway';
 export type {
   OpenReadWithProgress,
   ProgressValue,
   ReadDatesPatch,
   YearQuoteRow,
 } from './readingHistoryGateway';
+export {
+  effectiveTotalPages,
+  fallbackTotalForRead,
+  shouldPersistFallbackTotal,
+} from './totalPagesFallback';
 export {
   allTimeStats,
   averageDaysPerBook,

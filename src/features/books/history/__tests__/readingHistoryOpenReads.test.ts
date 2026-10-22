@@ -104,8 +104,8 @@ describe('openReadsWithProgress', () => {
   });
 
   it('returns the most recently updated read first', async () => {
-    const older = validRead({ id: 'read-old', updated_at: '2026-10-01T10:00:00.000Z', user_book_id: 'book-old' });
-    const newer = validRead({ id: 'read-new', updated_at: '2026-10-20T10:00:00.000Z', user_book_id: 'book-new' });
+    const older = validRead({ id: 'read-old', updated_at: '2026-10-01T10:00:00.000Z', user_book_id: 'book-old', started_at: '2026-10-01T10:00:00.000Z' });
+    const newer = validRead({ id: 'read-new', updated_at: '2026-10-20T10:00:00.000Z', user_book_id: 'book-new', started_at: '2026-10-01T10:00:00.000Z' });
     fromMock.mockReturnValueOnce(queryBuilder({ data: [older, newer], error: null }));
     fromMock.mockReturnValueOnce(
       queryBuilder({
@@ -119,6 +119,102 @@ describe('openReadsWithProgress', () => {
     fromMock.mockReturnValueOnce(queryBuilder({ data: [], error: null }));
     const rows = await readingHistoryGateway.openReadsWithProgress('actor');
     expect(rows.map((row) => row.bookTitle)).toEqual(['New', 'Old']);
+  });
+
+  it('ranks by latest activity: older updated_at but newer progress wins', async () => {
+    const stale = validRead({
+      id: 'read-stale',
+      user_book_id: 'book-stale',
+      updated_at: '2026-10-20T10:00:00.000Z',
+      started_at: '2026-10-01T10:00:00.000Z',
+    });
+    const fresh = validRead({
+      id: 'read-fresh',
+      user_book_id: 'book-fresh',
+      updated_at: '2026-10-01T10:00:00.000Z',
+      started_at: '2026-10-01T10:00:00.000Z',
+    });
+    fromMock.mockReturnValueOnce(queryBuilder({ data: [stale, fresh], error: null }));
+    fromMock.mockReturnValueOnce(
+      queryBuilder({
+        data: [
+          titleRow({ id: 'book-stale', book: { title: 'Stale' } }),
+          titleRow({ id: 'book-fresh', book: { title: 'Fresh' } }),
+        ],
+        error: null,
+      }),
+    );
+    fromMock.mockReturnValueOnce(
+      queryBuilder({
+        data: [
+          validProgress({ id: 'p-old', read_id: 'read-stale', recorded_at: '2026-10-05T10:00:00.000Z' }),
+          validProgress({ id: 'p-new', read_id: 'read-fresh', recorded_at: '2026-10-21T10:00:00.000Z' }),
+        ],
+        error: null,
+      }),
+    );
+    const rows = await readingHistoryGateway.openReadsWithProgress('actor');
+    expect(rows.map((row) => row.bookTitle)).toEqual(['Fresh', 'Stale']);
+    expect(rows[0].lastActivityAt).toBe('2026-10-21T10:00:00.000Z');
+    expect(rows[1].lastActivityAt).toBe('2026-10-20T10:00:00.000Z');
+  });
+
+  it('uses started_at when it is the latest activity', async () => {
+    const first = validRead({
+      id: 'read-a',
+      user_book_id: 'book-a',
+      updated_at: '2026-10-05T10:00:00.000Z',
+      started_at: '2026-10-06T10:00:00.000Z',
+    });
+    const second = validRead({
+      id: 'read-b',
+      user_book_id: 'book-b',
+      updated_at: '2026-10-05T10:00:00.000Z',
+      started_at: '2026-10-08T10:00:00.000Z',
+    });
+    fromMock.mockReturnValueOnce(queryBuilder({ data: [first, second], error: null }));
+    fromMock.mockReturnValueOnce(
+      queryBuilder({
+        data: [
+          titleRow({ id: 'book-a', book: { title: 'A' } }),
+          titleRow({ id: 'book-b', book: { title: 'B' } }),
+        ],
+        error: null,
+      }),
+    );
+    fromMock.mockReturnValueOnce(queryBuilder({ data: [], error: null }));
+    const rows = await readingHistoryGateway.openReadsWithProgress('actor');
+    expect(rows.map((row) => row.bookTitle)).toEqual(['B', 'A']);
+    expect(rows[0].lastActivityAt).toBe('2026-10-08T10:00:00.000Z');
+  });
+
+  it('breaks last-activity ties deterministically by read id', async () => {
+    const first = validRead({
+      id: 'read-b',
+      user_book_id: 'book-b',
+      updated_at: '2026-10-10T10:00:00.000Z',
+      started_at: '2026-10-01T10:00:00.000Z',
+    });
+    const second = validRead({
+      id: 'read-a',
+      user_book_id: 'book-a',
+      updated_at: '2026-10-10T10:00:00.000Z',
+      started_at: '2026-10-01T10:00:00.000Z',
+    });
+    fromMock.mockReturnValueOnce(queryBuilder({ data: [first, second], error: null }));
+    fromMock.mockReturnValueOnce(
+      queryBuilder({
+        data: [
+          titleRow({ id: 'book-b', book: { title: 'B' } }),
+          titleRow({ id: 'book-a', book: { title: 'A' } }),
+        ],
+        error: null,
+      }),
+    );
+    fromMock.mockReturnValueOnce(queryBuilder({ data: [], error: null }));
+    const rows = await readingHistoryGateway.openReadsWithProgress('actor');
+    expect(rows.map((row) => row.read.id)).toEqual(['read-a', 'read-b']);
+    expect(rows[0].lastActivityAt).toBe(rows[1].lastActivityAt);
   });
 
   it('batches titles and progress with deterministic latest ordering', async () => {

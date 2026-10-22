@@ -7,9 +7,15 @@ import {
   ProgressValue,
   readingHistoryGateway,
 } from '@/features/books/history/readingHistoryGateway';
+import { compareOpenReads, openReadActivityAt } from '@/features/books/history/openReadActivity';
 import { useOpenReadsWithProgress } from '@/features/books/history/useOpenReadsWithProgress';
 import { useStartReading } from '@/features/books/history/useStartReading';
 import { currentPosition } from '@/features/books/history/progressMath';
+import {
+  effectiveTotalPages,
+  fallbackTotalForRead,
+  shouldPersistFallbackTotal,
+} from '@/features/books/history/totalPagesFallback';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { LIBRARY_RADIUS, LIBRARY_SPACING, useLibraryAppearance } from '../LibraryAppearance';
 import { LIBRARY_TEXT } from '../LibraryTypography';
@@ -23,11 +29,36 @@ export interface ContinueReadingCardProps {
   onOpenBook?: (userBookId: string) => void;
 }
 
-function pickMostRecent(items: readonly OpenReadWithProgress[]): OpenReadWithProgress | null {
+function activityMillis(item: OpenReadWithProgress): number {
+  if (typeof item.lastActivityAt === 'string' && item.lastActivityAt.length > 0) {
+    const parsed = Date.parse(item.lastActivityAt);
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  return Date.parse(openReadActivityAt(item.read, item.latestProgress));
+}
+
+export function pickMostRecent(items: readonly OpenReadWithProgress[]): OpenReadWithProgress | null {
   if (items.length === 0) return null;
   let best = items[0];
-  for (const item of items) {
-    if (Date.parse(item.read.updated_at) > Date.parse(best.read.updated_at)) best = item;
+  let bestTime = activityMillis(best);
+  for (let index = 1; index < items.length; index += 1) {
+    const item = items[index];
+    const time = activityMillis(item);
+    if (time > bestTime) {
+      best = item;
+      bestTime = time;
+      continue;
+    }
+    if (time === bestTime) {
+      const order = compareOpenReads(
+        { ...item, lastActivityAt: new Date(time).toISOString() },
+        { ...best, lastActivityAt: new Date(bestTime).toISOString() },
+      );
+      if (order < 0) {
+        best = item;
+        bestTime = time;
+      }
+    }
   }
   return best;
 }
@@ -69,6 +100,14 @@ export function ContinueReadingCard({ actorId, onOpenBook }: ContinueReadingCard
 
   const items = openReads.data ?? [];
   const selected = openReads.isSuccess ? pickMostRecent(items) : null;
+  const selectedBookId = selected?.read.user_book_id ?? '';
+  const needFallback = !!selected && selected.read.total_pages === null;
+  const fallbackReads = useQuery({
+    queryKey: [...historyKeys.readsForBook(actorId, selectedBookId), 'fallback-total'],
+    queryFn: ({ signal }) => readingHistoryGateway.readsForBook(actorId, selectedBookId, signal),
+    enabled: !!actorId && !!selected && needFallback && !!selectedBookId,
+    retry: false,
+  });
   const nextId =
     openReads.isSuccess && items.length === 0 ? (settings.data?.next_read_user_book_id ?? null) : null;
   const nextTitle = useQuery({
@@ -151,7 +190,11 @@ export function ContinueReadingCard({ actorId, onOpenBook }: ContinueReadingCard
   }
 
   if (selected) {
-    const total = selected.read.total_pages;
+    const fallbackTotal =
+      selected.read.total_pages === null && Array.isArray(fallbackReads.data)
+        ? fallbackTotalForRead(fallbackReads.data, selected.read.id)
+        : null;
+    const total = effectiveTotalPages(selected.read.total_pages, fallbackTotal);
     const position = currentPosition(
       selected.latestProgress ? [selected.latestProgress] : [],
       total,
@@ -164,8 +207,19 @@ export function ContinueReadingCard({ actorId, onOpenBook }: ContinueReadingCard
     const handleSaveProgress = (value: ProgressValue) => {
       if (progressGuard.current) return Promise.resolve(null);
       progressGuard.current = true;
-      const attempt = () =>
-        addProgress.mutateAsync({ readId: selected.read.id, value }).then(
+      const persistFirst = shouldPersistFallbackTotal(
+        selected.read.total_pages,
+        fallbackTotal,
+        selected.latestProgress !== null,
+      );
+      const attempt = () => {
+        const saveAll = async () => {
+          if (persistFirst && fallbackTotal !== null) {
+            await setTotalPages.mutateAsync({ readId: selected.read.id, total: fallbackTotal });
+          }
+          return addProgress.mutateAsync({ readId: selected.read.id, value });
+        };
+        return saveAll().then(
           (saved) => {
             progressGuard.current = false;
             notifySaveSuccess(notify, 'Progress saved');
@@ -180,6 +234,7 @@ export function ContinueReadingCard({ actorId, onOpenBook }: ContinueReadingCard
             throw error;
           },
         );
+      };
       return attempt().catch(() => {
         progressGuard.current = false;
         return null;
@@ -251,7 +306,8 @@ export function ContinueReadingCard({ actorId, onOpenBook }: ContinueReadingCard
         <ProgressSheet
           visible={sheetOpen}
           onClose={() => setSheetOpen(false)}
-          totalPages={total}
+          totalPages={selected.read.total_pages}
+          fallbackTotalPages={fallbackTotal}
           currentPages={pages}
           currentPercent={percent}
           onSaveProgress={handleSaveProgress}

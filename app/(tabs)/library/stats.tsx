@@ -65,6 +65,7 @@ function LibraryStatsBody({ timeZone, initialView = 'year', yearOverride }: Libr
   const [goalText, setGoalText] = useState('');
   const [goalSynced, setGoalSynced] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [goalError, setGoalError] = useState<string | null>(null);
   const goalGuard = useRef(false);
 
   // Single goal source: `useReadingGoal` (shared with `GoalSummary`).
@@ -99,11 +100,20 @@ function LibraryStatsBody({ timeZone, initialView = 'year', yearOverride }: Libr
 
   const handleSaveGoal = () => {
     if (goalGuard.current || goalState.setGoal.isPending) return;
+    if (goalText.trim() === '') {
+      if (goalValue !== null) {
+        handleRemoveGoal();
+        return;
+      }
+      setGoalError('Enter a number of books');
+      return;
+    }
     const parsed = Number(goalText.trim());
     if (!Number.isInteger(parsed) || parsed < 1 || parsed > 999) {
       notify({ kind: 'error', message: 'Enter a number from 1 to 999.' });
       return;
     }
+    setGoalError(null);
     goalGuard.current = true;
     const attempt = () =>
       goalState.setGoal.mutateAsync(parsed).then(
@@ -129,12 +139,14 @@ function LibraryStatsBody({ timeZone, initialView = 'year', yearOverride }: Libr
 
   const handleRemoveGoal = () => {
     if (goalGuard.current || goalState.setGoal.isPending) return;
+    setGoalError(null);
     goalGuard.current = true;
     const attempt = () =>
       goalState.setGoal.mutateAsync(null).then(
         (saved) => {
           goalGuard.current = false;
           setGoalText('');
+          setGoalError(null);
           notifySaveSuccess(notify, goalSavedMessage(null));
           return saved;
         },
@@ -313,7 +325,10 @@ function LibraryStatsBody({ timeZone, initialView = 'year', yearOverride }: Libr
             placeholderTextColor={colors.textTertiary}
             keyboardType="number-pad"
             value={goalText}
-            onChangeText={setGoalText}
+            onChangeText={(next) => {
+              setGoalText(next);
+              if (goalError !== null) setGoalError(null);
+            }}
             editable={!isOffline}
             style={[
               LIBRARY_TEXT.body,
@@ -325,6 +340,15 @@ function LibraryStatsBody({ timeZone, initialView = 'year', yearOverride }: Libr
               },
             ]}
           />
+          {goalError !== null ? (
+            <Text
+              testID="library-stats-goal-error"
+              accessibilityLiveRegion="polite"
+              style={[LIBRARY_TEXT.body, { color: colors.error }]}
+            >
+              {goalError}
+            </Text>
+          ) : null}
           <BookButton
             label="Save"
             variant="secondary"

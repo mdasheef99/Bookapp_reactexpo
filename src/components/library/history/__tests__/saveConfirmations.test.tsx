@@ -36,6 +36,7 @@ jest.mock('@/features/books/history/readingHistoryGateway', () => ({
     addProgress: jest.fn(),
     setTotalPages: jest.fn(),
     startReread: jest.fn(),
+    readsForBook: jest.fn(),
   },
 }));
 jest.mock('@/features/books/services/booksService', () => ({
@@ -111,6 +112,7 @@ beforeEach(() => {
   gateway.addProgress.mockResolvedValue({ id: 'progress-2' });
   gateway.setTotalPages.mockResolvedValue(baseRead());
   gateway.startReread.mockResolvedValue('read-2');
+  (gateway as unknown as { readsForBook: jest.Mock }).readsForBook.mockResolvedValue([]);
   updateStatus.mockResolvedValue({});
 });
 

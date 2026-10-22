@@ -265,4 +265,59 @@ describe('Stats screen (H-17)', () => {
       Platform.OS = previousOS;
     }
   });
+
+  it('empty Save with an existing goal calls the remove path', async () => {
+    const setGoal = jest.fn().mockResolvedValue(null);
+    mockHooks(
+      {},
+      {
+        goal: {
+          data: { user_id: 'reader-1', year: 2026, target_books: 24, updated_at: '2026-01-01T00:00:00.000Z' },
+          isPending: false,
+          isError: false,
+          isSuccess: true,
+          refetch: jest.fn(),
+        },
+        setGoal: { mutateAsync: setGoal, isPending: false },
+      },
+    );
+    const ui = setup();
+    try {
+      const input = await ui.findByTestId('library-stats-goal-input');
+      expect(input.props.value).toBe('24');
+      fireEvent.changeText(input, '');
+      fireEvent.press(ui.getByTestId('library-stats-goal-save'));
+      await waitFor(() => expect(setGoal).toHaveBeenCalledWith(null));
+      await waitFor(() => expect(mockNotify).toHaveBeenCalled());
+      const success = mockNotify.mock.calls.map((call) => call[0]).find((toast) => toast?.kind === 'success');
+      expect(success).toMatchObject({ kind: 'success', message: 'Goal removed' });
+      expect(ui.queryByTestId('library-stats-goal-error')).toBeNull();
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('empty Save with no goal shows Enter a number of books inline and dispatches nothing', async () => {
+    const setGoal = jest.fn().mockResolvedValue(null);
+    mockHooks(
+      {},
+      {
+        goal: { data: null, isPending: false, isError: false, isSuccess: true, refetch: jest.fn() },
+        setGoal: { mutateAsync: setGoal, isPending: false },
+      },
+    );
+    const ui = setup();
+    try {
+      const input = await ui.findByTestId('library-stats-goal-input');
+      fireEvent.changeText(input, '');
+      fireEvent.press(ui.getByTestId('library-stats-goal-save'));
+      expect(await ui.findByTestId('library-stats-goal-error')).toHaveTextContent('Enter a number of books');
+      expect(setGoal).not.toHaveBeenCalled();
+      expect(mockNotify).not.toHaveBeenCalled();
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
 });

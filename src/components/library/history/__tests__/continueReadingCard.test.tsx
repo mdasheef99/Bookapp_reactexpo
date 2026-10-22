@@ -11,6 +11,7 @@ const gateway = readingHistoryGateway as unknown as {
   userBookTitle: jest.Mock;
   addProgress: jest.Mock;
   setTotalPages: jest.Mock;
+  readsForBook: jest.Mock;
 };
 const mockNotify = jest.fn();
 
@@ -35,6 +36,7 @@ jest.mock('@/features/books/history/readingHistoryGateway', () => ({
     userBookTitle: jest.fn(),
     addProgress: jest.fn(),
     setTotalPages: jest.fn(),
+    readsForBook: jest.fn(),
   },
 }));
 jest.mock('@/features/books/services/booksService', () => ({
@@ -93,6 +95,7 @@ beforeEach(() => {
   gateway.userBookTitle.mockResolvedValue(null);
   gateway.addProgress.mockResolvedValue({ id: 'progress-2' });
   gateway.setTotalPages.mockResolvedValue(validRead());
+  gateway.readsForBook.mockResolvedValue([]);
   (booksService.updateReadingStatus as jest.Mock).mockResolvedValue({});
 });
 
@@ -325,6 +328,113 @@ describe('ContinueReadingCard', () => {
       });
       await waitFor(() => expect(gateway.openReadsWithProgress).toHaveBeenCalled());
       await waitFor(() => expect(gateway.settings).toHaveBeenCalledWith('actor', expect.anything()));
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('picks the read with older updated_at but newer progress activity', async () => {
+    const stale = {
+      read: validRead({
+        id: 'read-stale',
+        user_book_id: 'book-stale',
+        updated_at: '2026-10-20T10:00:00.000Z',
+        started_at: '2026-10-01T10:00:00.000Z',
+        total_pages: 320,
+      }),
+      bookTitle: 'Stale Book',
+      latestProgress: progressEntry({
+        read_id: 'read-stale',
+        page: 10,
+        recorded_at: '2026-10-05T10:00:00.000Z',
+      }),
+      lastActivityAt: '2026-10-20T10:00:00.000Z',
+    };
+    const fresh = {
+      read: validRead({
+        id: 'read-fresh',
+        user_book_id: 'book-fresh',
+        updated_at: '2026-10-01T10:00:00.000Z',
+        started_at: '2026-10-01T10:00:00.000Z',
+        total_pages: 320,
+      }),
+      bookTitle: 'Fresh Book',
+      latestProgress: progressEntry({
+        read_id: 'read-fresh',
+        page: 20,
+        recorded_at: '2026-10-21T10:00:00.000Z',
+      }),
+      lastActivityAt: '2026-10-21T10:00:00.000Z',
+    };
+    gateway.openReadsWithProgress.mockResolvedValue([stale, fresh]);
+    const ui = renderCard();
+    try {
+      expect(await ui.findByTestId('library-continue-reading-card')).toBeOnTheScreen();
+      expect(ui.getByTestId('library-continue-reading-progress')).toHaveTextContent('p. 20 of 320');
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('breaks activity ties deterministically by read id', async () => {
+    const first = {
+      read: validRead({ id: 'read-b', user_book_id: 'book-b', updated_at: '2026-10-10T10:00:00.000Z' }),
+      bookTitle: 'B Book',
+      latestProgress: null,
+      lastActivityAt: '2026-10-10T10:00:00.000Z',
+    };
+    const second = {
+      read: validRead({ id: 'read-a', user_book_id: 'book-a', updated_at: '2026-10-10T10:00:00.000Z' }),
+      bookTitle: 'A Book',
+      latestProgress: null,
+      lastActivityAt: '2026-10-10T10:00:00.000Z',
+    };
+    gateway.openReadsWithProgress.mockResolvedValue([first, second]);
+    const ui = renderCard();
+    try {
+      expect(await ui.findByTestId('library-continue-reading-card')).toBeOnTheScreen();
+      expect(ui.getByTestId('library-continue-reading-open')).toHaveProp('accessibilityLabel', 'Continue reading A Book');
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('uses an earlier total as the default and persists it once on the first progress save', async () => {
+    const open = validRead({ id: 'read-2', user_book_id: 'user-book-1', read_number: 2, total_pages: null });
+    const earlier = validRead({ id: 'read-1', user_book_id: 'user-book-1', read_number: 1, total_pages: 400 });
+    gateway.openReadsWithProgress.mockResolvedValue([
+      { read: open, bookTitle: 'Walden', latestProgress: null, lastActivityAt: '2026-10-20T10:00:00.000Z' },
+    ]);
+    gateway.readsForBook.mockResolvedValue([earlier, open]);
+    const ui = renderCard();
+    try {
+      fireEvent.press(await ui.findByTestId('library-continue-reading-update'));
+      expect(await ui.findByTestId('library-progress-header')).toHaveTextContent('Page 0 of 400');
+      fireEvent.press(await ui.findByTestId('library-progress-save'));
+      await waitFor(() => expect(gateway.setTotalPages).toHaveBeenCalledTimes(1));
+      expect(gateway.setTotalPages).toHaveBeenCalledWith('actor', 'read-2', 400);
+      await waitFor(() => expect(gateway.addProgress).toHaveBeenCalledTimes(1));
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('does not persist a fallback when the open read already has a total', async () => {
+    const open = validRead({ total_pages: 320 });
+    gateway.openReadsWithProgress.mockResolvedValue([
+      { read: open, bookTitle: 'Walden', latestProgress: null, lastActivityAt: '2026-10-20T10:00:00.000Z' },
+    ]);
+    const ui = renderCard();
+    try {
+      fireEvent.press(await ui.findByTestId('library-continue-reading-update'));
+      fireEvent.press(await ui.findByTestId('library-progress-save'));
+      await waitFor(() => expect(gateway.addProgress).toHaveBeenCalledTimes(1));
+      expect(gateway.setTotalPages).not.toHaveBeenCalled();
+      expect(gateway.readsForBook).not.toHaveBeenCalled();
     } finally {
       ui.unmount();
       ui.client.clear();

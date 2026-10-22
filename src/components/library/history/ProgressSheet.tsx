@@ -27,6 +27,13 @@ export interface ProgressSheetProps {
   currentPercent: number | null;
   onSaveProgress: (value: ProgressValue) => void | Promise<unknown>;
   onSaveTotalPages: (total: number | null) => void | Promise<unknown>;
+  /**
+   * Earlier-read total used as the default when `totalPages` is null
+   * (SDD-09 D09-09 follow-up). Shown as "of {fallback}" and used for
+   * page-mode validation; the caller persists it with `setTotalPages`
+   * on the first progress save.
+   */
+  fallbackTotalPages?: number | null;
   pending?: boolean;
   disabled?: boolean;
 }
@@ -47,17 +54,26 @@ export function ProgressSheet({
   currentPercent,
   onSaveProgress,
   onSaveTotalPages,
+  fallbackTotalPages = null,
   pending = false,
   disabled = false,
 }: ProgressSheetProps) {
   const colors = useLibraryAppearance();
   const closeRef = useRef<View>(null);
   const hasTotal = totalPages !== null && totalPages > 0;
+  const validFallback =
+    typeof fallbackTotalPages === 'number' &&
+    Number.isInteger(fallbackTotalPages) &&
+    (fallbackTotalPages as number) > 0
+      ? (fallbackTotalPages as number)
+      : null;
+  const displayTotal = hasTotal ? (totalPages as number) : validFallback;
+  const hasDisplayTotal = displayTotal !== null && displayTotal > 0;
   const hasPagePosition = currentPages !== null && currentPages !== undefined;
   const hasPercentPosition = currentPercent !== null && currentPercent !== undefined;
-  // Page input when there is a total, or when the latest entry is pages and no
-  // total has been added yet. Otherwise % input.
-  const isPageInput = hasTotal || hasPagePosition;
+  // Page input when there is a total (or a fallback default), or when the
+  // latest entry is pages and no total has been added yet. Otherwise % input.
+  const isPageInput = hasDisplayTotal || hasPagePosition;
   const [draft, setDraft] = useState('');
   const [totalOpen, setTotalOpen] = useState(false);
   const [totalDraft, setTotalDraft] = useState('');
@@ -83,7 +99,7 @@ export function ProgressSheet({
       seedRef.current = null;
       return;
     }
-    const modeKey = hasTotal ? 'total' : 'no-total';
+    const modeKey = hasDisplayTotal ? 'total' : 'no-total';
     if (seedRef.current === modeKey) return;
     seedRef.current = modeKey;
     if (isPageInput) {
@@ -92,29 +108,29 @@ export function ProgressSheet({
       setDraft(hasPercentPosition ? String(currentPercent) : '0');
     }
     setTotalDraft(hasTotal && totalPages !== null ? String(totalPages) : '');
-  }, [visible, hasTotal, isPageInput, hasPagePosition, hasPercentPosition, currentPages, currentPercent, totalPages]);
+  }, [visible, hasTotal, hasDisplayTotal, isPageInput, hasPagePosition, hasPercentPosition, currentPages, currentPercent, totalPages]);
 
   if (!visible) return null;
 
   const busy = pending || localPending;
   const controlsDisabled = disabled || busy;
   const parsed = parseIntegerInput(draft);
-  const max = hasTotal ? (totalPages as number) : isPageInput ? Number.POSITIVE_INFINITY : 100;
+  const max = hasDisplayTotal ? (displayTotal as number) : isPageInput ? Number.POSITIVE_INFINITY : 100;
   const draftValid =
-    parsed !== null && parsed >= 0 && (hasTotal || !isPageInput ? parsed <= (max as number) : true);
+    parsed !== null && parsed >= 0 && (hasDisplayTotal || !isPageInput ? parsed <= (max as number) : true);
   const draftError =
     parsed === null
       ? isPageInput
         ? 'Enter a whole page number of 0 or more.'
         : 'Enter a whole percent between 0 and 100.'
-      : hasTotal && parsed > (totalPages as number)
-        ? `Enter a page between 0 and ${totalPages}.`
+      : hasDisplayTotal && parsed > (displayTotal as number)
+        ? `Enter a page between 0 and ${displayTotal}.`
         : !isPageInput && parsed > 100
           ? 'Enter a whole percent between 0 and 100.'
           : null;
 
   const clampDraft = (value: number) =>
-    hasTotal || !isPageInput ? Math.max(0, Math.min(max as number, value)) : Math.max(0, value);
+    hasDisplayTotal || !isPageInput ? Math.max(0, Math.min(max as number, value)) : Math.max(0, value);
 
   const savedPosition = isPageInput ? (currentPages ?? 0) : (currentPercent ?? 0);
   const step = (delta: number) => {
@@ -202,12 +218,12 @@ export function ProgressSheet({
             <Text accessibilityRole="header" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>
               {PROGRESS_SHEET_TITLE}
             </Text>
-            {hasTotal ? (
+            {hasDisplayTotal ? (
               <Text
                 testID="library-progress-header"
                 style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}
               >
-                {`Page ${parsed !== null ? parsed : (currentPages ?? 0)} of ${totalPages}`}
+                {`Page ${parsed !== null ? parsed : (currentPages ?? 0)} of ${displayTotal}`}
               </Text>
             ) : isPageInput ? (
               <Text

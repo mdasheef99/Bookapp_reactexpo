@@ -76,6 +76,7 @@ jest.mock('@/features/books/history/readingHistoryGateway', () => ({
         setTotalPages: jest.fn(),
         goal: jest.fn(() => Promise.resolve(null)),
         readsForUser: jest.fn(() => Promise.resolve([])),
+        readsForBook: jest.fn(() => Promise.resolve([])),
         setGoal: jest.fn(),
     },
 }));

@@ -16,6 +16,11 @@ import type { ProgressValue, ReadDatesPatch } from '@/features/books/history/rea
 import { historyKeys, type ReadingRead } from '@/features/books/history/readingHistoryContract';
 import { currentPosition, dailyPages, estimateRemaining } from '@/features/books/history/progressMath';
 import {
+  effectiveTotalPages,
+  fallbackTotalForRead,
+  shouldPersistFallbackTotal,
+} from '@/features/books/history/totalPagesFallback';
+import {
   nextReadSavedMessage,
   notifySaveSuccess,
   statusSavedMessage,
@@ -501,7 +506,21 @@ export default function BookDetailScreen() {
         const attempt = () => {
             if (progressSaveGuard.current) return Promise.resolve(null);
             progressSaveGuard.current = true;
-            return readProgress.addProgress.mutateAsync(value).then(
+            const reads = history.reads.data ?? [];
+            const open = openReadForProgress;
+            const entries = readProgress.progress.data ?? [];
+            const fallback =
+              open && open.total_pages === null ? fallbackTotalForRead(reads, open.id) : null;
+            const persistFirst = open
+              ? shouldPersistFallbackTotal(open.total_pages, fallback, entries.length > 0)
+              : false;
+            const saveAll = async () => {
+              if (persistFirst && open && fallback !== null) {
+                await readProgress.setTotalPages.mutateAsync(fallback);
+              }
+              return readProgress.addProgress.mutateAsync(value);
+            };
+            return saveAll().then(
                 (saved) => {
                     progressSaveGuard.current = false;
                     notifySaveSuccess(notify, 'Progress saved');
@@ -518,7 +537,7 @@ export default function BookDetailScreen() {
             );
         };
         return attempt();
-    }, [readProgress.addProgress, notifyHistoryError, notify]);
+    }, [history.reads.data, openReadForProgress, readProgress.addProgress, readProgress.progress.data, readProgress.setTotalPages, notifyHistoryError, notify]);
 
     const handleSaveTotalPages = useCallback((total: number | null) => {
         const attempt = () => {
@@ -600,11 +619,17 @@ export default function BookDetailScreen() {
         const progressEntries = readProgress.progress.data ?? [];
         const progressLoaded = Array.isArray(readProgress.progress.data);
         const progressLoadError = readProgress.progress.isError === true;
+        const fallbackTotal =
+          openRead && openRead.total_pages === null && historyReads
+            ? fallbackTotalForRead(historyReads, openRead.id)
+            : null;
+        const progressTotal = openRead
+          ? effectiveTotalPages(openRead.total_pages, fallbackTotal)
+          : null;
         const progressPosition =
-            openRead && progressLoaded ? currentPosition(progressEntries, openRead.total_pages) : null;
+            openRead && progressLoaded ? currentPosition(progressEntries, progressTotal) : null;
         const progressPages = progressPosition?.pages ?? null;
         const progressPercentValue = progressPosition?.percent ?? null;
-        const progressTotal = openRead?.total_pages ?? null;
         const progressDaily =
             openRead && progressLoaded && progressEntries.length > 0
                 ? dailyPages(progressEntries, progressTotal)
@@ -1074,6 +1099,7 @@ export default function BookDetailScreen() {
                         visible={progressSheetOpen}
                         onClose={() => setProgressSheetOpen(false)}
                         totalPages={openRead.total_pages}
+                        fallbackTotalPages={fallbackTotal}
                         currentPages={progressPages}
                         currentPercent={progressPercentValue}
                         onSaveProgress={handleSaveProgress}
