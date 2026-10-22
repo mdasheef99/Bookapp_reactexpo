@@ -91,6 +91,9 @@ async function saveReview(ui: Awaited<ReturnType<typeof reviewScreen>>) {
     await waitFor(() => expect(requests.length).toBeGreaterThan(before));
     await settled();
 }
+function rateFour(ui: Awaited<ReturnType<typeof reviewScreen>>) {
+    fireEvent.press(within(ui.getByLabelText('Your rating')).getByRole('radio', { name: '4 stars' }));
+}
 async function pressSave(ui: Awaited<ReturnType<typeof reviewScreen>>, count: number) {
     fireEvent.press(ui.getByTestId('library-review-save'));
     await waitFor(() => expect(requests).toHaveLength(count));
@@ -131,9 +134,9 @@ afterEach(() => { cleanup(); client.clear(); actor(null); jest.restoreAllMocks()
 
 it.each(['text', 'rating', 'privacy'])('sends only the %s field selected by the action', async field => {
     if (field === 'rating') {
-        const ui = await screen();
-        fireEvent.press(ui.getByRole('button', { name: 'Rate book' }));
-        await settled();
+        const ui = await reviewScreen();
+        rateFour(ui);
+        await saveReview(ui);
         expect(requests.map(request => request.patch)).toEqual([{ rating: 4 }]);
         return;
     }
@@ -224,8 +227,9 @@ it.each(['visibility', 'rating'])('retains rejected text visibly without retryin
         expect(mockBook.review).toBe('Confirmed review');
     } else {
         ui.unmount();
-        const details = await screen();
-        fireEvent.press(details.getByRole('button', { name: 'Rate book' })); await settled();
+        const details = await reviewScreen();
+        rateFour(details);
+        await saveReview(details);
         expect(requests[1].patch).toEqual({ rating: 4 });
         expect(mockBook.review).toBe('Confirmed review');
     }
@@ -354,9 +358,9 @@ it.each([{}, { rating: 9 }, { review: 'Unrelated', review_is_public: false }, { 
 });
 
 it('keeps rating and visibility as separate single-field saves', async () => {
-    const details = await screen();
-    fireEvent.press(details.getByRole('button', { name: 'Rate book' }));
-    await settled();
+    const details = await reviewScreen();
+    rateFour(details);
+    await saveReview(details);
     expect(requests).toHaveLength(1);
     expect(requests[0].patch).toEqual({ rating: 4 });
     expect(mockBook).toMatchObject({ rating: 4, review_is_public: true });
@@ -372,9 +376,9 @@ it('keeps rating and visibility as separate single-field saves', async () => {
 it('retains named B01 destinations, management actions, and accessible Back', async () => {
     mockBook = { ...mockBook, condition: 'new' };
     const ui = await screen(); const buttons = ui.getAllByRole('button');
-    // SDD-07 §14.2b: the rating block (with Edit review) sits directly under
+    // SDD-07 §14.2b: the rating block (with the Edit button) sits directly under
     // the cover, before the status selector and the Add note primary.
-    expect(buttons.indexOf(ui.getByRole('button', { name: 'Edit review' }))).toBeLessThan(buttons.indexOf(ui.getByRole('button', { name: 'Add note' })));
+    expect(buttons.indexOf(ui.getByRole('button', { name: 'Edit your rating and review' }))).toBeLessThan(buttons.indexOf(ui.getByRole('button', { name: 'Add note' })));
     expect(ui.getByText('Saved note preview')).toBeOnTheScreen();
     fireEvent.press(ui.getByTestId('book-row-saved')); expect(ui.getByText('Retained saved excerpt')).toBeOnTheScreen();
     fireEvent.press(ui.getByTestId('book-row-ownership')); fireEvent.press(ui.getByRole('button', { name: 'Ownership' })); fireEvent.press(ui.getByRole('button', { name: 'Condition' }));
@@ -430,8 +434,9 @@ it.each(['rating', 'visibility'])('reconciliation: a later Save writes only dirt
     if (field === 'visibility') mockBook.review_is_public = false;
     const one = deferred(); gates.push(one);
     if (field === 'rating') {
-        const details = await screen();
-        fireEvent.press(details.getByRole('button', {name:'Rate book'}));
+        const details = await reviewScreen();
+        rateFour(details);
+        fireEvent.press(details.getByTestId('library-review-save'));
         await waitFor(() => expect(requests).toHaveLength(1));
         await act(async () => one.reject(new Error('Rejected'))); await settled();
         expect(mockBook.rating).toBe(2);
@@ -498,8 +503,8 @@ it('reconciliation: two mounted review pages keep independent drafts', async () 
 });
 
 it('reconciliation: new generation saves with the new session token after the old request settles', async () => {
-    const one = deferred(); gates.push(one); const first = await screen();
-    fireEvent.press(first.getByRole('button', {name:'Rate book'})); await waitFor(() => expect(requests).toHaveLength(1)); first.unmount();
+    const one = deferred(); gates.push(one); const first = await reviewScreen();
+    rateFour(first); fireEvent.press(first.getByTestId('library-review-save')); await waitFor(() => expect(requests).toHaveLength(1)); first.unmount();
     await act(async () => one.resolve()); await settled();
     act(() => {actor(null); actor('reader', 'new-session-token');});
     client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } });

@@ -193,272 +193,70 @@
                       {
                         "children": [
                           {
-                            "children": [
-                              "Your rating"
-                            ],
+                            "children": null,
                             "props": {
-                              "style": {
-                                "color": "<colour>",
-                                "fontFamily": "LibraryManropeBold",
-                                "fontSize": 16,
-                                "fontWeight": "700",
-                                "lineHeight": 22
-                              }
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star",
+                              "size": 20
                             },
-                            "type": "Text"
+                            "type": "Ionicons"
                           },
                           {
-                            "children": [
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "1 star",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "2 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": true,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": 0
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star-outline",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "3 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star-outline",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "4 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star-outline",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "5 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              }
-                            ],
+                            "children": null,
                             "props": {
-                              "style": {
-                                "flexDirection": "row"
-                              }
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star",
+                              "size": 20
                             },
-                            "type": "View"
+                            "type": "Ionicons"
+                          },
+                          {
+                            "children": null,
+                            "props": {
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star-outline",
+                              "size": 20
+                            },
+                            "type": "Ionicons"
+                          },
+                          {
+                            "children": null,
+                            "props": {
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star-outline",
+                              "size": 20
+                            },
+                            "type": "Ionicons"
+                          },
+                          {
+                            "children": null,
+                            "props": {
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star-outline",
+                              "size": 20
+                            },
+                            "type": "Ionicons"
                           }
                         ],
                         "props": {
-                          "accessibilityLabel": "Your rating",
-                          "accessibilityRole": "radiogroup",
-                          "accessibilityState": {
-                            "disabled": false
-                          },
-                          "aria-disabled": false,
+                          "accessibilityLabel": "Your rating: 2 of 5",
+                          "accessibilityRole": "image",
+                          "accessible": true,
                           "style": {
-                            "alignItems": "center",
+                            "flexDirection": "row",
                             "gap": 8
-                          }
+                          },
+                          "testID": "book-rating-display"
                         },
                         "type": "View"
                       },
@@ -466,7 +264,7 @@
                         "children": [
                           {
                             "children": [
-                              "Edit review"
+                              "Edit"
                             ],
                             "props": {
                               "style": {
@@ -480,7 +278,7 @@
                           }
                         ],
                         "props": {
-                          "accessibilityLabel": "Edit review",
+                          "accessibilityLabel": "Edit your rating and review",
                           "accessibilityRole": "button",
                           "accessibilityState": {
                             "disabled": false
@@ -1770,272 +1568,70 @@
                       {
                         "children": [
                           {
-                            "children": [
-                              "Your rating"
-                            ],
+                            "children": null,
                             "props": {
-                              "style": {
-                                "color": "<colour>",
-                                "fontFamily": "LibraryManropeBold",
-                                "fontSize": 16,
-                                "fontWeight": "700",
-                                "lineHeight": 22
-                              }
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star",
+                              "size": 20
                             },
-                            "type": "Text"
+                            "type": "Ionicons"
                           },
                           {
-                            "children": [
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "1 star",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "2 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": true,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": 0
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star-outline",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "3 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star-outline",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "4 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star-outline",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "5 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              }
-                            ],
+                            "children": null,
                             "props": {
-                              "style": {
-                                "flexDirection": "row"
-                              }
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star",
+                              "size": 20
                             },
-                            "type": "View"
+                            "type": "Ionicons"
+                          },
+                          {
+                            "children": null,
+                            "props": {
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star-outline",
+                              "size": 20
+                            },
+                            "type": "Ionicons"
+                          },
+                          {
+                            "children": null,
+                            "props": {
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star-outline",
+                              "size": 20
+                            },
+                            "type": "Ionicons"
+                          },
+                          {
+                            "children": null,
+                            "props": {
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star-outline",
+                              "size": 20
+                            },
+                            "type": "Ionicons"
                           }
                         ],
                         "props": {
-                          "accessibilityLabel": "Your rating",
-                          "accessibilityRole": "radiogroup",
-                          "accessibilityState": {
-                            "disabled": false
-                          },
-                          "aria-disabled": false,
+                          "accessibilityLabel": "Your rating: 2 of 5",
+                          "accessibilityRole": "image",
+                          "accessible": true,
                           "style": {
-                            "alignItems": "center",
+                            "flexDirection": "row",
                             "gap": 8
-                          }
+                          },
+                          "testID": "book-rating-display"
                         },
                         "type": "View"
                       },
@@ -2043,7 +1639,7 @@
                         "children": [
                           {
                             "children": [
-                              "Edit review"
+                              "Edit"
                             ],
                             "props": {
                               "style": {
@@ -2057,7 +1653,7 @@
                           }
                         ],
                         "props": {
-                          "accessibilityLabel": "Edit review",
+                          "accessibilityLabel": "Edit your rating and review",
                           "accessibilityRole": "button",
                           "accessibilityState": {
                             "disabled": false
@@ -4248,272 +3844,70 @@
                       {
                         "children": [
                           {
-                            "children": [
-                              "Your rating"
-                            ],
+                            "children": null,
                             "props": {
-                              "style": {
-                                "color": "<colour>",
-                                "fontFamily": "LibraryManropeBold",
-                                "fontSize": 16,
-                                "fontWeight": "700",
-                                "lineHeight": 22
-                              }
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star",
+                              "size": 20
                             },
-                            "type": "Text"
+                            "type": "Ionicons"
                           },
                           {
-                            "children": [
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "1 star",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "2 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": true,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": 0
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star-outline",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "3 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star-outline",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "4 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              },
-                              {
-                                "children": [
-                                  {
-                                    "children": null,
-                                    "props": {
-                                      "accessible": false,
-                                      "aria-hidden": true,
-                                      "color": "<colour>",
-                                      "name": "star-outline",
-                                      "size": 20
-                                    },
-                                    "type": "Ionicons"
-                                  }
-                                ],
-                                "props": {
-                                  "accessibilityLabel": "5 stars",
-                                  "accessibilityRole": "radio",
-                                  "accessibilityState": {
-                                    "checked": false,
-                                    "disabled": false
-                                  },
-                                  "accessibilityValue": {},
-                                  "accessible": true,
-                                  "collapsable": false,
-                                  "focusable": true,
-                                  "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
-                                  "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
-                                  "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
-                                  "onKeyDown": "function onKeyDown(event) {\n            var _event$nativeEvent$ke, _event$nativeEvent, _refs$current$next;\n            var key = (_event$nativeEvent$ke = (_event$nativeEvent = event.nativeEvent) == null ? void 0 : _event$nativeEvent.key) != null ? _event$nativeEvent$ke : event.key;\n            if (disabled || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key != null ? key : '')) return;\n            event.preventDefault();\n            var next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : STARS.length - 1)) % STARS.length;\n            onChange(STARS[next]);\n            (_refs$current$next = refs.current[next]) == null || _refs$current$next.focus();\n          }",
-                                  "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
-                                  "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
-                                  "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
-                                  "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
-                                  "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
-                                  "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
-                                  "style": {
-                                    "alignItems": "center",
-                                    "borderRadius": 12,
-                                    "justifyContent": "center",
-                                    "minHeight": 48,
-                                    "minWidth": 48
-                                  },
-                                  "tabIndex": -1
-                                },
-                                "type": "View"
-                              }
-                            ],
+                            "children": null,
                             "props": {
-                              "style": {
-                                "flexDirection": "row"
-                              }
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star",
+                              "size": 20
                             },
-                            "type": "View"
+                            "type": "Ionicons"
+                          },
+                          {
+                            "children": null,
+                            "props": {
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star-outline",
+                              "size": 20
+                            },
+                            "type": "Ionicons"
+                          },
+                          {
+                            "children": null,
+                            "props": {
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star-outline",
+                              "size": 20
+                            },
+                            "type": "Ionicons"
+                          },
+                          {
+                            "children": null,
+                            "props": {
+                              "accessible": false,
+                              "aria-hidden": true,
+                              "color": "<colour>",
+                              "name": "star-outline",
+                              "size": 20
+                            },
+                            "type": "Ionicons"
                           }
                         ],
                         "props": {
-                          "accessibilityLabel": "Your rating",
-                          "accessibilityRole": "radiogroup",
-                          "accessibilityState": {
-                            "disabled": false
-                          },
-                          "aria-disabled": false,
+                          "accessibilityLabel": "Your rating: 2 of 5",
+                          "accessibilityRole": "image",
+                          "accessible": true,
                           "style": {
-                            "alignItems": "center",
+                            "flexDirection": "row",
                             "gap": 8
-                          }
+                          },
+                          "testID": "book-rating-display"
                         },
                         "type": "View"
                       },
@@ -4521,7 +3915,7 @@
                         "children": [
                           {
                             "children": [
-                              "Edit review"
+                              "Edit"
                             ],
                             "props": {
                               "style": {
@@ -4535,7 +3929,7 @@
                           }
                         ],
                         "props": {
-                          "accessibilityLabel": "Edit review",
+                          "accessibilityLabel": "Edit your rating and review",
                           "accessibilityRole": "button",
                           "accessibilityState": {
                             "disabled": false

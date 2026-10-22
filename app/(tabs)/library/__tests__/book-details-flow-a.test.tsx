@@ -579,8 +579,8 @@ describe('DP-01 focus order', () => {
       await ui.findByText("Couldn't refresh notes.");
       expect(ui.getByTestId('book-note-n1-meta')).toBeTruthy();
       const controls = controlsUpToPrimary(ui);
-      // D07-23: the top rating group and review button sit before the primary.
-      expect(controls).toEqual(['Back to Library', 'radiogroup', 'Write a review', 'radiogroup', 'Try again', 'Add note']);
+      // D07-23/D07-24: the review button sit before the primary.
+      expect(controls).toEqual(['Back to Library', 'Edit your rating and review', 'radiogroup', 'Try again', 'Add note']);
       expect(ui.getAllByRole('button', { name: 'Try again' })).toHaveLength(2);
     } finally { ui.unmount(); ui.client.clear(); }
   });
@@ -593,7 +593,7 @@ describe('DP-01 focus order', () => {
       await ui.findByText('Walden');
       await ui.findByTestId('book-note-n1-meta');
       expect(ui.getByText('‹ Library')).toBeTruthy();
-      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Write a review', 'radiogroup', 'Add note']);
+      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'Edit your rating and review', 'radiogroup', 'Add note']);
     } finally {
       ui.unmount();
       ui.client.clear();
@@ -607,7 +607,7 @@ describe('DP-01 focus order', () => {
     try {
       await ui.findByText('Walden');
       await ui.findByText("Couldn't load your notes.");
-      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Write a review', 'radiogroup', 'Try again', 'Add note']);
+      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'Edit your rating and review', 'radiogroup', 'Try again', 'Add note']);
     } finally {
       ui.unmount();
       ui.client.clear();
@@ -648,13 +648,13 @@ describe('DP-01 focus order', () => {
       await ui.findByTestId('book-row-saved');
       await ui.findByRole('button', { name: 'Community reviews, 1 review' });
       expectSinglePrimary(ui);
-      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Edit review', 'Open your review, First line', 'radiogroup', 'Add note']);
+      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'Edit your rating and review', 'Open your review, First line', 'radiogroup', 'Add note']);
 
       for (const id of ['saved', 'info', 'ownership', 'community']) {
         fireEvent.press(ui.getByTestId(`book-row-${id}`));
       }
       expectSinglePrimary(ui);
-      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Edit review', 'Open your review, First line', 'radiogroup', 'Add note']);
+      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'Edit your rating and review', 'Open your review, First line', 'radiogroup', 'Add note']);
     } finally {
       ui.unmount();
       ui.client.clear();
@@ -690,7 +690,7 @@ describe('DP-01 focus order', () => {
       await ui.findByTestId('library-reading-dates-text');
       await ui.findByTestId('book-note-n1-meta');
       const controls = controlsUpToPrimary(ui);
-      expect(controls).toEqual(['Back to Library', 'radiogroup', 'Write a review', 'radiogroup', 'Add note']);
+      expect(controls).toEqual(['Back to Library', 'Edit your rating and review', 'radiogroup', 'Add note']);
       expect(ui.getByTestId('library-reading-dates-edit')).toBeTruthy();
       expect(ui.getByTestId('library-read-again')).toBeTruthy();
       expectSinglePrimary(ui);

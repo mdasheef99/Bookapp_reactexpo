@@ -560,7 +560,6 @@ export default function BookDetailScreen() {
                         <BookCover title={book.title} authors={book.authors ?? []} coverUrl={book.cover_url} />
                         <RatingReviewSummary
                             rating={userBook.rating || 0}
-                            onRate={(val) => submitReview({ rating: val })}
                             reviewFirstLine={reviewFirstLine}
                             isPrivate={!isReviewPublic}
                             onOpenReview={() => router.push({ pathname: '/(tabs)/library/review', params: { bookId } })}

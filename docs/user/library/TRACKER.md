@@ -1393,3 +1393,9 @@ Owner: the page did not scroll and ratings were not visible; then asked for rati
 - The header no longer repeats the book title; the RatingInput `centered` prop aligns the label with the stars.
 
 Verification: `tsc` 0; `lint:library` 0 errors; library Jest 2,043/2,043. The lead reviewed Android screenshots (`rp-shots4`) at font scale 1.0 and 2.0: Book Details top, the review page top and bottom, a 279-character review growing the box with the page scrolling to Save, the discard dialog, and the restored scale. The switch colour change after that capture is covered by tests only. No database changes.
+
+### 2026-10-23 — Display-only stars and "Edit" button (D07-24)
+
+Owner: stars on Book Details were too easy to change; the rating should change only via the edit button, and the button should read just "Edit". Book Details now shows the stars as one image ("Your rating: N of 5" / "Not rated yet") and an "Edit" button (accessible name "Edit your rating and review"); the rating changes only on the review page, as part of its draft. `BookButton` gained an optional `accessibilityLabel`. The lead made the product change; a Sonnet subagent updated 30 tests (Muse stalled three times on opencode permission refusals), moving rating-save guarantees to the review page, and added `RatingReviewSummary.test.tsx`.
+
+Verification: `tsc` 0; `lint:library` 0 errors; library Jest 2,055/2,055 (re-run by the lead). Android (`rp-shots5`, viewed by the lead): 4 display stars plus "Edit" under the cover; tapping a star changes nothing; "Edit" opens the review page with the stars editable. Residual: the `ratingSavedMessage` fallback in `useReviewWrite` stays as an unreachable path. No database changes.

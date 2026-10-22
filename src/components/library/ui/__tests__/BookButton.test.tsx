@@ -78,3 +78,15 @@ it('preserves an empty accessibility label so an empty-label caller remains visi
   const tree = render(<BookButton label="" variant="primary" onPress={jest.fn()} />);
   expect(tree.getByRole('button').props.accessibilityLabel).toBe('');
 });
+
+it('defaults the accessible name to the label and lets accessibilityLabel override it', () => {
+  const plain = render(<BookButton label="Edit" variant="text" onPress={jest.fn()} />);
+  expect(plain.getByRole('button', { name: 'Edit' }).props.accessibilityLabel).toBe('Edit');
+  plain.unmount();
+  const named = render(
+    <BookButton label="Edit" accessibilityLabel="Edit your rating and review" variant="text" onPress={jest.fn()} />,
+  );
+  const button = named.getByRole('button', { name: 'Edit your rating and review' });
+  expect(button.props.accessibilityLabel).toBe('Edit your rating and review');
+  expect(named.getByText('Edit')).toBeOnTheScreen();
+});

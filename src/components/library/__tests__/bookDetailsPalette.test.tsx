@@ -213,7 +213,8 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
             // Edit button and the serif quote that opens the review page.
             expect(ui.queryByTestId('book-row-review')).toBeNull();
             expect(ui.getByTestId('book-rating-review')).toBeTruthy();
-            expect(ui.getByRole('button', { name: 'Edit review' })).toBeTruthy();
+            expect(ui.getByTestId('book-rating-display').props.accessibilityLabel).toBe('Your rating: 2 of 5');
+            expect(ui.getByRole('button', { name: 'Edit your rating and review' })).toBeTruthy();
             expect(ui.getByTestId('library-review-quote')).toBeTruthy();
             expect(ui.getByText('Existing review')).toBeOnTheScreen();
             for (const [label, selected] of [['Owned', true], ['Lent out', false], ['Borrowed', false], ['Wishlist', false]] as const) {

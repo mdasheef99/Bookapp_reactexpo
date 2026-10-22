@@ -225,8 +225,8 @@ describe('Unit 3a progress on Book Details', () => {
       expect(ui.getByTestId('library-progress-edge')).toBeOnTheScreen();
       expect(ui.getByTestId('library-progress-pace')).toBeOnTheScreen();
       expect(ui.getByTestId('library-progress-update')).toBeOnTheScreen();
-      // D07-23: the top rating group and review button sit before the primary.
-      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Write a review', 'radiogroup', 'Add note']);
+      // D07-23/D07-24: the review button sit before the primary.
+      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'Edit your rating and review', 'radiogroup', 'Add note']);
     } finally {
       ui.unmount();
       ui.client.clear();

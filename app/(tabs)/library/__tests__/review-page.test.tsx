@@ -820,6 +820,48 @@ describe('Fix 3: rating on the review page', () => {
     }
   });
 
+  it('offline: a changed rating keeps Save disabled and sends no write', async () => {
+    const ui = renderReview();
+    try {
+      await ui.findByTestId('library-review-header');
+      fireEvent.press(within(ui.getByLabelText('Your rating')).getByRole('radio', { name: '5 stars' }));
+      mockOffline = true;
+      ui.rerender(
+        <QueryClientProvider client={ui.client}>
+          <ReviewScreen />
+        </QueryClientProvider>,
+      );
+      const save = ui.getByTestId('library-review-save');
+      await waitFor(() => expect(save.props.accessibilityState.disabled).toBe(true));
+      fireEvent.press(save);
+      expect(bookReviewService.update).not.toHaveBeenCalled();
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('retries a rejected rating save on the next Save with the current stars', async () => {
+    (bookReviewService.update as jest.Mock).mockRejectedValueOnce(new Error('review down'));
+    const ui = renderReview();
+    try {
+      await ui.findByTestId('library-review-header');
+      fireEvent.press(within(ui.getByLabelText('Your rating')).getByRole('radio', { name: '4 stars' }));
+      fireEvent.press(ui.getByTestId('library-review-save'));
+      await waitFor(() => expect(bookReviewService.update).toHaveBeenCalledTimes(1));
+      await waitFor(() =>
+        expect(mockNotify).toHaveBeenCalledWith(expect.objectContaining({ kind: 'error', message: 'review down' })),
+      );
+      await settled(ui.client);
+      fireEvent.press(ui.getByTestId('library-review-save'));
+      await waitFor(() => expect(bookReviewService.update).toHaveBeenCalledTimes(2));
+      expect((bookReviewService.update as jest.Mock).mock.calls[1][2]).toEqual({ rating: 4 });
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
   it('removal keeps the saved rating unless the stars changed in the same draft', async () => {
     mockConfirmImpl = async () => true;
     const ui = renderReview();

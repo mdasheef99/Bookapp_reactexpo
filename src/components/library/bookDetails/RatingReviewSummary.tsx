@@ -1,15 +1,14 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { LIBRARY_SPACING, useLibraryAppearance } from '../LibraryAppearance';
 import { LIBRARY_TEXT } from '../LibraryTypography';
-import { RatingInput } from '@/components/library';
 import { BookButton } from '../ui/BookButton';
-import { ROW_SUMMARY_LINES } from './bookDetailsTokens';
+import { ICON_SIZE, MAX_SCORE, ROW_SUMMARY_LINES } from './bookDetailsTokens';
 
 export interface RatingReviewSummaryProps {
   rating: number;
-  onRate: (rating: number) => void;
   /** First non-blank review line, or '' when there is no review. */
   reviewFirstLine: string;
   isPrivate: boolean;
@@ -20,10 +19,11 @@ export interface RatingReviewSummaryProps {
 /**
  * Rating + review entry directly under the cover (SDD-07 §14.2b, D07-23).
  * Always visible: the stars never hide, even while the Finished panel shows.
+ * The stars are display-only here; the rating is changed on the review page
+ * (owner, 2026-10-23: tapping stars on Book Details made it too easy to change).
  */
 export function RatingReviewSummary({
   rating,
-  onRate,
   reviewFirstLine,
   isPrivate,
   onOpenReview,
@@ -34,9 +34,30 @@ export function RatingReviewSummary({
 
   return (
     <View testID="book-rating-review" style={styles.block}>
-      <RatingInput rating={rating} onChange={onRate} disabled={disabled} centered />
+      <View
+        testID="book-rating-display"
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={rating > 0 ? `Your rating: ${rating} of ${MAX_SCORE}` : 'Not rated yet'}
+        style={styles.stars}
+      >
+        {Array.from({ length: MAX_SCORE }, (_, index) => (
+          <Ionicons
+            key={index}
+            name={index < rating ? 'star' : 'star-outline'}
+            size={ICON_SIZE}
+            color={index < rating ? colors.textPrimary : colors.textSecondary}
+            accessible={false}
+            aria-hidden
+          />
+        ))}
+      </View>
+      {rating > 0 ? null : (
+        <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>Not rated yet</Text>
+      )}
       <BookButton
-        label={hasReview ? 'Edit review' : 'Write a review'}
+        label="Edit"
+        accessibilityLabel="Edit your rating and review"
         variant="text"
         disabled={disabled}
         onPress={onOpenReview}
@@ -75,6 +96,10 @@ const styles = StyleSheet.create({
     paddingVertical: LIBRARY_SPACING.sm,
     minWidth: 0,
     maxWidth: '100%',
+  },
+  stars: {
+    flexDirection: 'row',
+    gap: LIBRARY_SPACING.xs,
   },
   quote: {
     alignItems: 'center',

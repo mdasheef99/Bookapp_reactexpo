@@ -405,8 +405,13 @@ describe('3. Rating + review block at the top (SDD-07 §14.2b)', () => {
       expect(ui.queryByText(/Saving review changes/)).toBeNull();
       const block = ui.getByTestId('book-rating-review');
       expect(block).toBeTruthy();
-      expect(ui.getByLabelText('Your rating')).toBeTruthy();
-      expect(ui.getByRole('button', { name: 'Edit review' })).toBeTruthy();
+      const display = ui.getByTestId('book-rating-display');
+      expect(display.props.accessibilityRole).toBe('image');
+      expect(display.props.accessibilityLabel).toBe('Your rating: 3 of 5');
+      expect(ui.queryByLabelText('Your rating')).toBeNull();
+      expect(ui.queryByText('Not rated yet')).toBeNull();
+      const open = ui.getByRole('button', { name: 'Edit your rating and review' });
+      expect(within(open).getByText('Edit')).toBeOnTheScreen();
       const quote = ui.getByTestId('library-review-quote');
       expect(quote.props.accessibilityLabel).toBe('Open your review, First line of review');
       expect(within(quote).getByText('First line of review')).toBeOnTheScreen();
@@ -417,13 +422,13 @@ describe('3. Rating + review block at the top (SDD-07 §14.2b)', () => {
     }
   });
 
-  it('shows "Write a review" with no quote when empty, and "Private" only when private', async () => {
+  it('shows the Edit button with no quote when empty, and "Private" only when private', async () => {
     mockUserBook = makeBook({ review: null, review_is_public: true });
     const emptyUi = renderScreen();
     try {
       await emptyUi.findByText('Walden');
       expect(emptyUi.queryByTestId('library-review-quote')).toBeNull();
-      expect(emptyUi.getByRole('button', { name: 'Write a review' })).toBeTruthy();
+      expect(emptyUi.getByRole('button', { name: 'Edit your rating and review' })).toBeTruthy();
       expect(emptyUi.queryByText(/Private/)).toBeNull();
     } finally {
       emptyUi.unmount();
@@ -448,7 +453,7 @@ describe('3. Rating + review block at the top (SDD-07 §14.2b)', () => {
     try {
       await ui.findByText('Walden');
       expect(ui.queryByTestId('library-review-quote')).toBeNull();
-      expect(ui.getByRole('button', { name: 'Write a review' })).toBeTruthy();
+      expect(ui.getByRole('button', { name: 'Edit your rating and review' })).toBeTruthy();
     } finally {
       ui.unmount();
       ui.client.clear();
@@ -463,39 +468,51 @@ describe('3. Rating + review block at the top (SDD-07 §14.2b)', () => {
       const quote = ui.getByTestId('library-review-quote');
       expect(within(quote).getByText('Second line here')).toBeOnTheScreen();
       expect(within(quote).getByText('Private')).toBeOnTheScreen();
-      expect(ui.getByRole('button', { name: 'Edit review' })).toBeTruthy();
+      expect(ui.getByRole('button', { name: 'Edit your rating and review' })).toBeTruthy();
     } finally {
       ui.unmount();
       ui.client.clear();
     }
   });
 
-  it('tapping a star saves at once with "Rating saved" and leaves the text untouched', async () => {
+  it('shows display-only stars with no radios; tapping them sends no write', async () => {
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
-      const group = ui.getByLabelText('Your rating');
-      const four = within(group).getByRole('radio', { name: '4 stars' });
-      fireEvent.press(four);
-      await waitFor(() => expect(bookReviewService.update).toHaveBeenCalledTimes(1));
-      expect((bookReviewService.update as jest.Mock).mock.calls[0][2]).toEqual({ rating: 4 });
-      await waitFor(() =>
-        expect(mockNotify).toHaveBeenCalledWith({ kind: 'success', message: 'Rating saved' }),
-      );
+      const display = ui.getByTestId('book-rating-display');
+      expect(within(ui.getByTestId('book-rating-review')).queryAllByRole('radio')).toHaveLength(0);
+      expect(ui.queryByRole('radiogroup', { name: 'Your rating' })).toBeNull();
+      fireEvent.press(display);
+      await flush();
+      expect(bookReviewService.update).not.toHaveBeenCalled();
+      expect(mockNotify).not.toHaveBeenCalled();
       expect(mockUserBook.review).toBe('First line of review\nSecond line of review');
-      expect(mockUserBook.review_is_public).toBe(true);
     } finally {
       ui.unmount();
       ui.client.clear();
     }
   });
 
-  it('"Write a review" opens the review page with the bookId', async () => {
+  it('shows "Not rated yet" for the display and caption when the book has no rating', async () => {
+    mockUserBook = makeBook({ rating: null, review: null });
+    const ui = renderScreen();
+    try {
+      await ui.findByText('Walden');
+      expect(ui.getByTestId('book-rating-display').props.accessibilityLabel).toBe('Not rated yet');
+      expect(ui.getByText('Not rated yet')).toBeOnTheScreen();
+      expect(ui.getByRole('button', { name: 'Edit your rating and review' })).toBeTruthy();
+    } finally {
+      ui.unmount();
+      ui.client.clear();
+    }
+  });
+
+  it('the Edit button opens the review page (no review yet) with the bookId', async () => {
     mockUserBook = makeBook({ review: null });
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
-      fireEvent.press(ui.getByRole('button', { name: 'Write a review' }));
+      fireEvent.press(ui.getByRole('button', { name: 'Edit your rating and review' }));
       expect(mockPush).toHaveBeenCalledWith({
         pathname: '/(tabs)/library/review',
         params: { bookId: 'user-book-1' },
@@ -506,11 +523,11 @@ describe('3. Rating + review block at the top (SDD-07 §14.2b)', () => {
     }
   });
 
-  it('"Edit review" opens the review page with the bookId', async () => {
+  it('the Edit button opens the review page (with a review) with the bookId', async () => {
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
-      fireEvent.press(ui.getByRole('button', { name: 'Edit review' }));
+      fireEvent.press(ui.getByRole('button', { name: 'Edit your rating and review' }));
       expect(mockPush).toHaveBeenCalledWith({
         pathname: '/(tabs)/library/review',
         params: { bookId: 'user-book-1' },
@@ -532,7 +549,7 @@ describe('4. No inline editing on Book Details (moved to the review page, SDD-07
       expect(ui.queryByText(/unsaved/i)).toBeNull();
       expect(ui.queryByText(/Saving review changes/)).toBeNull();
       expect(bookReviewService.update).not.toHaveBeenCalled();
-      fireEvent.press(ui.getByRole('button', { name: 'Edit review' }));
+      fireEvent.press(ui.getByRole('button', { name: 'Edit your rating and review' }));
       expect(mockPush).toHaveBeenCalledWith({
         pathname: '/(tabs)/library/review',
         params: { bookId: 'user-book-1' },
@@ -847,7 +864,7 @@ describe('8. Remove from library', () => {
 });
 
 describe('9. Offline disables all row writes while keeping rows expandable', () => {
-  it('disables rating, review navigation, ownership, condition, saved-page delete, and Remove when offline', async () => {
+  it('disables review navigation, ownership, condition, saved-page delete, and Remove when offline', async () => {
     mockOffline = true;
     const ui = renderScreen();
     try {
@@ -861,24 +878,22 @@ describe('9. Offline disables all row writes while keeping rows expandable', () 
       fireEvent.press(ui.getByTestId('book-row-ownership'));
 
       // Rating block (SDD-07 §14.2b): stars and the text button are disabled offline with the existing caption.
-      const openReview = ui.getByRole('button', { name: 'Edit review' });
+      const openReview = ui.getByRole('button', { name: 'Edit your rating and review' });
       expect(openReview.props.accessibilityState.disabled).toBe(true);
       fireEvent.press(openReview);
       expect(mockPush).not.toHaveBeenCalled();
       expect(bookReviewService.update).not.toHaveBeenCalled();
 
-      const stars = within(ui.getByLabelText('Your rating')).getAllByRole('radio');
-      expect(stars.length).toBe(5);
-      fireEvent.press(stars[3]);
+      fireEvent.press(ui.getByTestId('book-rating-display'));
       expect(bookReviewService.update).not.toHaveBeenCalled();
 
       const deletePageBtn = ui.getByRole('button', { name: 'Delete page 42' });
       expect(deletePageBtn.props.accessibilityState.disabled).toBe(true);
 
-      const touchables = ['Your rating', 'Ownership', 'Condition'].flatMap(label =>
+      const touchables = ['Ownership', 'Condition'].flatMap(label =>
         within(ui.getByLabelText(label)).getAllByRole('radio'),
       );
-      expect(touchables.length).toBeGreaterThanOrEqual(14);
+      expect(touchables.length).toBeGreaterThanOrEqual(9);
       for (const touchable of touchables) {
         expect(touchable.props.accessibilityState.disabled).toBe(true);
       }
@@ -910,13 +925,13 @@ describe('10. DP-03 and DP-01 invariants with rows', () => {
       expectSinglePrimary(ui);
       // D07-23: the top rating group, review button and quote sit before the
       // primary and may push the count past 4.
-      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Edit review', 'Open your review, First line of review', 'radiogroup', 'Add note']);
+      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'Edit your rating and review', 'Open your review, First line of review', 'radiogroup', 'Add note']);
 
       for (const id of ['saved', 'info', 'ownership', 'community']) {
         fireEvent.press(ui.getByTestId(`book-row-${id}`));
       }
       expectSinglePrimary(ui);
-      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'radiogroup', 'Edit review', 'Open your review, First line of review', 'radiogroup', 'Add note']);
+      expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'Edit your rating and review', 'Open your review, First line of review', 'radiogroup', 'Add note']);
     } finally {
       ui.unmount();
       ui.client.clear();
@@ -960,7 +975,7 @@ describe('10. DP-03 and DP-01 invariants with rows', () => {
       await ui.findByTestId('library-reading-dates-text');
       await ui.findByTestId('book-row-saved');
       const controls = controlsUpToPrimary(ui);
-      expect(controls).toEqual(['Back to Library', 'radiogroup', 'Edit review', 'Open your review, First line of review', 'radiogroup', 'Add note']);
+      expect(controls).toEqual(['Back to Library', 'Edit your rating and review', 'Open your review, First line of review', 'radiogroup', 'Add note']);
       expect(ui.getByTestId('library-reading-dates-edit')).toBeTruthy();
       expectSinglePrimary(ui);
     } finally {
@@ -970,17 +985,18 @@ describe('10. DP-03 and DP-01 invariants with rows', () => {
   });
 });
 
-describe('11. Flow A choice radio integration (review rating always visible, §14.1)', () => {
-  it.each([false, true])('shows rating inline and expands ownership and condition radio groups (offline=%s)', async offline => {
+describe('11. Flow A choice radio integration (display-only rating always visible, D07-24)', () => {
+  it.each([false, true])('shows the display rating and expands ownership and condition radio groups (offline=%s)', async offline => {
     mockOffline = offline;
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
-      expect(ui.getByLabelText('Your rating')).toBeTruthy();
+      expect(ui.getByTestId('book-rating-display')).toBeTruthy();
+      expect(ui.queryByLabelText('Your rating')).toBeNull();
       expect(ui.queryByLabelText('Ownership')).toBeNull();
       expect(ui.queryByLabelText('Condition')).toBeNull();
       fireEvent.press(ui.getByTestId('book-row-ownership'));
-      for (const [name, count] of [['Your rating', 5], ['Ownership', 4], ['Condition', 5]] as const) {
+      for (const [name, count] of [['Ownership', 4], ['Condition', 5]] as const) {
         const group = ui.getByLabelText(name);
         expect(group.props.accessibilityRole).toBe('radiogroup');
         expect(group.props.accessibilityState.disabled).toBe(offline);
@@ -1050,24 +1066,17 @@ describe('Flow A fix round 2', () => {
     } finally { ui.unmount(); ui.client.clear(); }
   });
 
-  it('T2 retries a rejected rating save on the next tap (text lives on the review page)', async () => {
+  it('T2 pressing the display stars never writes, even after a rejected write elsewhere (retry lives on the review page)', async () => {
     (bookReviewService.update as jest.Mock).mockRejectedValueOnce(new Error('review down'));
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
-      const four = within(ui.getByLabelText('Your rating')).getByRole('radio', { name: '4 stars' });
-      fireEvent.press(four);
+      const display = ui.getByTestId('book-rating-display');
+      fireEvent.press(display);
+      fireEvent.press(display);
       await flush();
-      await waitFor(() => expect(ui.client.isMutating()).toBe(0));
-      expect(bookReviewService.update).toHaveBeenCalledTimes(1);
-      expect((bookReviewService.update as jest.Mock).mock.calls[0][2]).toEqual({ rating: 4 });
-      expect(mockNotify).toHaveBeenCalledWith(
-        expect.objectContaining({ kind: 'error', message: 'review down' }),
-      );
-      fireEvent.press(four);
-      await flush();
-      await waitFor(() => expect(bookReviewService.update).toHaveBeenCalledTimes(2));
-      expect(bookReviewService.update).toHaveBeenNthCalledWith(2, expect.anything(), 'user-book-1', { rating: 4 });
+      expect(bookReviewService.update).not.toHaveBeenCalled();
+      expect(mockNotify).not.toHaveBeenCalled();
     } finally { ui.unmount(); ui.client.clear(); }
   });
 });
@@ -1123,7 +1132,7 @@ describe('Flow A fix round 1', () => {
     } finally { ui.unmount(); ui.client.clear(); }
   });
 
-  it('R2 offline rating tap sends no write; text drafts live on the review page', async () => {
+  it('R2 offline display-star press sends no write; text drafts live on the review page', async () => {
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
@@ -1132,8 +1141,7 @@ describe('Flow A fix round 1', () => {
       rerenderScreen(ui);
       // Review text has no inline editor; the offline text guarantee is asserted in review-page.test.tsx.
       expect(ui.queryByTestId('library-review-input')).toBeNull();
-      const four = within(ui.getByLabelText('Your rating')).getByRole('radio', { name: '4 stars' });
-      fireEvent.press(four);
+      fireEvent.press(ui.getByTestId('book-rating-display'));
       await flush();
       expect(bookReviewService.update).not.toHaveBeenCalled();
     } finally { ui.unmount(); ui.client.clear(); }
@@ -1215,7 +1223,7 @@ describe('Flow A fix round 1', () => {
         const flag = within(quote).getByText('Private');
         expect(StyleSheet.flatten(flag.props.style)).toMatchObject({ ...LIBRARY_TEXT.caption });
       }
-      const open = ui.getByRole('button', { name: 'Edit review' });
+      const open = ui.getByRole('button', { name: 'Edit your rating and review' });
       expect(open.props.testID).toBe('library-review-open');
       expect(open.props.accessibilityState.disabled).toBe(false);
     } finally { ui.unmount(); ui.client.clear(); }
@@ -1238,9 +1246,9 @@ describe('Flow A fix round 1', () => {
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
-      const four = within(ui.getByLabelText('Your rating')).getByRole('radio', { name: '4 stars' });
-      fireEvent.press(four);
-      await waitFor(() => expect(bookReviewService.update).toHaveBeenCalled());
+      fireEvent.press(ui.getByTestId('book-rating-display'));
+      await flush();
+      expect(bookReviewService.update).not.toHaveBeenCalled();
       expect(ui.queryByText(/Saving review changes/)).toBeNull();
       expect(ui.queryByText(/unsaved/i)).toBeNull();
     } finally { ui.unmount(); ui.client.clear(); }

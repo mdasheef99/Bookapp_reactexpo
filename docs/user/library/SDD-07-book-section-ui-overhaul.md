@@ -197,6 +197,7 @@ Each design keeps an agreed, unused location so later features do not need anoth
 | D07-21 | Who finalizes Flow D; home list and Search presentation (2026-10-21) | **The owner delegated the Flow D design to the lead** and approved the summary with conditions: the ratchet ends at or below 235 / 1 and the baseline is lowered; `lint:library` ends with 0 errors; Search idle and with-results states have **no primary** (DP-03 exception: the search field is the main control), asserted by tests. Owner answers: header "My Library"; library-only search components moved to `src/components/library/search/` (two pure-move commits); `LibraryPillNav` deleted; the F12 debounce test included. Lead calls: one primary "Add a book" on home; Shelf/List and filters as radio groups; unboxed rows with one named button and a decorative thumbnail; secondary Add to library; Filter/Sort as named dialogs with radio groups; mapped plain error copy (`searchErrorCopy.ts`); quiet offline captions. | Built and merged (§13). |
 | D07-22 | Review page (2026-10-22, amends D07-02 and the review parts of D07-16) | **Owner decision:** the star rating stays inline on Book Details; writing and editing the review text moves to its own full-screen page, like the note composer. No pop-up or sheet for review text. | Design in §14. The owner asked for the change after the lead's recommendation ("ok make changes in the sdd and send it to muse for the implementaiton please"). |
 | D07-23 | Rating and review at the top of Book Details (2026-10-22, amends D07-02, D07-22 §14.1 and DP-01) | **Owner decision:** "can we set the rating and review button near the book at the top?! somewhre near the book cover and name". The stars and the Write/Edit review button sit directly under the cover, title and author. The "Your review" row further down is removed. DP-01 exception: the rating group and the review button may push the above-the-fold control count past 4. | Design in §14.2b. |
+| D07-24 | Rating edited only on the review page (2026-10-23, amends D07-23) | **Owner decision:** "the rating is editable when it is displayed ont the books, that make it too easy, i want to make it such that it should only be editable once when it opens the edit button". Book Details shows the stars read-only (one image labelled "Your rating: N of 5" or "Not rated yet"); the button reads "Edit" (owner, 2026-10-23: "make the button only as EDIT please"; accessible name "Edit your rating and review"); the rating is changed only on the review page, as part of its draft. | Built 2026-10-23. Also lowers the above-the-fold control count by one (stars are no longer a control). |
 
 ### 9.1 Original questions (kept for traceability)
 
@@ -520,6 +521,8 @@ Owner: "can we set the rating and review button near the book at the top?! … a
 - a visibility card: one row with a leading eye icon, "Public review" label, a caption saying who can read it, and the switch aligned right, vertically centred, with a 48px row; the whole row toggles it;
 - Save as the single full-width primary at the end of the content, with even spacing (tokens only) between sections.
 - Everything still wraps at 200% text, and the page still scrolls.
+
+**Amended by D07-24 (2026-10-23):** the top stars are display-only; the rating changes only on the review page.
 
 ### 14.3 What this replaces
 
