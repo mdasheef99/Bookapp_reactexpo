@@ -3,7 +3,9 @@ import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { NotePassageLink } from '@/components/notes';
+import { NoteSearchField, type NoteSearchFieldRef } from '@/components/notes/NoteSearchField';
 import { CategoryPicker, NoteButton, NoteLoading, NoteMessage, NoteScreen, ui } from '@/components/notes/ManualNoteUi';
+import { filterNotes, normaliseNoteQuery, searchCountLabel } from '@/features/books/notes/noteSearch';
 import { BookButton, BookEmpty, BookError, BookOffline } from '@/components/library/ui';
 import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
@@ -30,14 +32,24 @@ export default function NotesScreen() {
   };
   const closeExport = () => { exports.cancel(); setExportOpen(false); };
   const [filter, setFilter] = useState<NoteCategory | null>(null);
+  const [searchText, setSearchText] = useState('');
   const anchor = useRef(0); const list = useRef<FlatList<ManualNote>>(null);
+  const searchFieldRef = useRef<NoteSearchFieldRef>(null);
   const operations = useNoteOperations(actorId, userBookId);
   const query = useQuery({ queryKey: noteKeys.collection(actorId, userBookId), queryFn: ({ signal }) => manualNotesGateway.list(actorId, userBookId, signal), enabled: !!actorId && !!book.data });
-  const notes = query.data ?? []; const filtered = filter ? notes.filter(note => note.tag === filter) : notes;
+  const notes = query.data ?? [];
+  const showSearch = (query.data?.length ?? 0) > 0;
+  const isSearching = showSearch && normaliseNoteQuery(searchText).length > 0;
+  const inCategory = filter ? notes.filter(note => note.tag === filter) : notes;
+  const filtered = filterNotes(notes, { category: filter, query: showSearch ? searchText : '' });
+  const displayQuery = searchText.trim();
   const add = () => openNoteComposer(router, actorId, userBookId, 'collection');
   const header = <View style={{ gap: LIBRARY_SPACING.sm, paddingBottom: LIBRARY_SPACING.lg }}>
     {isOffline && <BookOffline message="Offline · Showing saved content." />}
-    {query.data && <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{`${notes.length} ${notes.length === 1 ? 'note' : 'notes'}`}</Text>}
+    {showSearch && <NoteSearchField ref={searchFieldRef} value={searchText} onChange={setSearchText} />}
+    {query.data && <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{isSearching ? searchCountLabel(filtered.length, inCategory.length) : `${notes.length} ${notes.length === 1 ? 'note' : 'notes'}`}</Text>}
+    <CategoryPicker selected={filter} includeAll onChange={value => { setFilter(value); anchor.current = 0; list.current?.scrollToOffset({ offset: 0, animated: false }); }} />
+    {filter && <NoteMessage caption message={`Showing ${categoryLabel(filter)} notes.`} />}
     {exportDeliveryAvailable() && query.data && <View style={{ gap: LIBRARY_SPACING.xxs }}>
       <ExportButton label={exports.busy ? 'Exporting…' : 'Export'} accessibilityLabel={`Export notes for ${book.data?.title ?? 'Selected book'}`} variant="text"
         busy={exports.busy} disabled={isOffline || exports.busy} onPress={() => setExportOpen(true)} />
@@ -49,8 +61,6 @@ export default function NotesScreen() {
       {exports.feedback.kind === 'error' && <BookButton label="Try again" variant="text" disabled={isOffline || exports.busy}
         onPress={() => { void exportNotes(lastExport.current); }} />}
     </View>}
-    <CategoryPicker selected={filter} includeAll onChange={value => { setFilter(value); anchor.current = 0; list.current?.scrollToOffset({ offset: 0, animated: false }); }} />
-    {filter && <NoteMessage caption message={`Showing ${categoryLabel(filter)} notes.`} />}
     {operations.map(operation => <View key={operation.submission.id} style={[styles.pendingRow, { borderColor: colors.divider }]}>
       <NoteMessage caption message={operation.status === 'confirmed' ? 'Saved submission ready to read' : operation.status === 'failed' ? 'Submission was not saved' : operation.status === 'conflict' ? 'Submission needs comparison' : 'Pending submission — save not confirmed'} />
       <BookButton label={operation.status === 'confirmed' ? 'Open saved submission' : 'Open pending submission'} variant="text" onPress={() => {
@@ -72,11 +82,18 @@ export default function NotesScreen() {
     {unavailable ? <View style={ui.content}>{!!actorId && operations.length > 0 && header}<NoteMessage message="This book couldn't be opened." error /><NoteButton label="Try again" onPress={() => { void book.refetch(); }} /></View>
       : book.isPending || query.isPending ? operations.length > 0 ? <View style={ui.content}>{header}<NoteLoading variant="list" /></View> : <NoteLoading variant="list" />
       : query.isError && !query.data ? <View style={ui.content}>{header}<BookError kind={isOffline ? 'offline' : 'server'} subject="your notes" onRetry={() => { void query.refetch(); }} /></View>
-      : <FlatList ref={list} data={filtered} keyExtractor={note => note.id} contentContainerStyle={ui.content}
+      : <FlatList ref={list} data={filtered} keyExtractor={note => note.id} contentContainerStyle={ui.content} keyboardShouldPersistTaps="handled"
         ListHeaderComponent={header} renderItem={({ item }) => <NotePassageLink note={item} onPress={() => openNoteReader(router, actorId, userBookId, item.id, 'collection')} />}
         ListEmptyComponent={<View style={{ gap: LIBRARY_SPACING.sm }}>
-          <BookEmpty title={filter ? `No ${categoryLabel(filter)} notes` : 'No notes yet'} message={filter ? undefined : 'Add a note for this book.'} />
-          {filter ? <BookButton label="Show all notes" variant="text" onPress={() => setFilter(null)} /> : null}
+          {notes.length === 0 ? <>
+            <BookEmpty title="No notes yet" message="Add a note for this book." />
+          </> : filtered.length === 0 && isSearching ? <>
+            <BookEmpty title={`No notes match "${displayQuery}".`} />
+            <BookButton label="Clear search" variant="text" onPress={() => { setSearchText(''); searchFieldRef.current?.focus(); }} />
+          </> : <>
+            <BookEmpty title={filter ? `No ${categoryLabel(filter)} notes` : 'No notes yet'} message={filter ? undefined : 'Add a note for this book.'} />
+            {filter ? <BookButton label="Show all notes" variant="text" onPress={() => setFilter(null)} /> : null}
+          </>}
         </View>}
         onScroll={event => { anchor.current = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={100}
         maintainVisibleContentPosition={{ minIndexForVisible: 0 }}

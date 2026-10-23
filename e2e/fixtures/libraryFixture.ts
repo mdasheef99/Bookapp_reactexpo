@@ -141,9 +141,12 @@ function applyFilters(rows: any[], sp: URLSearchParams) {
   return out;
 }
 
+// The dev server port; LIBRARY_A11Y_PORT lets a second worktree run the suite while 8083 is busy.
+const APP_PORT = process.env.LIBRARY_A11Y_PORT ?? '8083';
+
 async function installRoutes(page: Page) {
   await page.route(url => /^https?:$/.test(url.protocol)
-    && !['http://localhost:8083', 'http://127.0.0.1:8083'].includes(url.origin), async route => {
+    && ![`http://localhost:${APP_PORT}`, `http://127.0.0.1:${APP_PORT}`].includes(url.origin), async route => {
     const req = route.request();
     const url = new URL(req.url());
     const method = req.method();
@@ -199,6 +202,9 @@ async function installRoutes(page: Page) {
     else if (resource === 'books') rows = applyFilters(fx.books, sp);
     else if (resource === 'reading_notes') rows = applyFilters(fx.notes, sp);
     else if (resource === 'user_book_pages') rows = applyFilters(fx.pages, sp);
+    else if (resource === 'user_book_reads') rows = [];
+    else if (resource === 'user_reading_goals') rows = [];
+    else if (resource === 'user_reading_settings') rows = [];
     else { fx.unhandledReads.push(`${method} ${p}`); rows = []; }
 
     if (isSingle) {

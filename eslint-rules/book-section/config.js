@@ -50,6 +50,8 @@ const STRICT_FILES = [
     'src/components/notes/ManualNoteUi.tsx',
     'src/components/notes/NoteCrop.tsx',
     'src/components/notes/NotePassageLink.tsx',
+    'src/features/books/notes/noteSearch.ts',
+    'src/components/notes/NoteSearchField.tsx',
 ];
 
 const RAW_VALUE_ALLOW_LIST = [

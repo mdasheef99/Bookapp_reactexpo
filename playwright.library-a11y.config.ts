@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const port = process.env.LIBRARY_A11Y_PORT ?? '8083';
 const edgePath = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 
 export default defineConfig({
@@ -13,7 +14,7 @@ export default defineConfig({
   },
   reporter: [['list']],
   use: {
-    baseURL: 'http://localhost:8083',
+    baseURL: `http://localhost:${port}`,
     viewport: { width: 390, height: 844 },
   },
   projects: [
@@ -30,8 +31,8 @@ export default defineConfig({
   ],
   // The dev server needs a .env with EXPO_PUBLIC_SUPABASE_URL=https://ahntbtktjjmvfosgkmgn.supabase.co (the fixture host) and a placeholder anon key; all https requests are intercepted so no real credentials are used.
   webServer: {
-    command: 'npx expo start --web --port 8083',
-    url: 'http://localhost:8083',
+    command: `npx expo start --web --port ${port}`,
+    url: `http://localhost:${port}`,
     reuseExistingServer: true,
     timeout: 240_000,
   },
