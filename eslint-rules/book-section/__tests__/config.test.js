@@ -133,6 +133,8 @@ describe('book-section flat config', () => {
             'src/components/library/notes-swipe/NoteSwipeHomeTile.tsx',
             'src/components/library/notes-swipe/NoteDeckChips.tsx',
             'src/components/library/notes-swipe/NoteOrderMenu.tsx',
+            'src/features/books/history/onThisDay.ts',
+            'src/components/library/history/OnThisDayLine.tsx',
         ]);
     });
 

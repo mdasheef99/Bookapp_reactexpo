@@ -29,6 +29,7 @@ import {
 import { NoteSwipeHomeTile } from '@/components/library/notes-swipe/NoteSwipeHomeTile';
 import { ContinueReadingCard } from '@/components/library/history/ContinueReadingCard';
 import { GoalSummary } from '@/components/library/history/GoalSummary';
+import { OnThisDayLine } from '@/components/library/history/OnThisDayLine';
 import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import { BookButton } from '@/components/library/ui';
@@ -175,6 +176,7 @@ function LibraryHome() {
                         {collectionHeader}
                         {continueReadingCard}
                         {!arrangement.active && <NoteSwipeHomeTile actorId={session?.user?.id ?? ''} onPress={() => router.push({ pathname: '/(tabs)/library/notes-swipe', params: { scope: 'all' } })} />}
+                        <OnThisDayLine actorId={session?.user?.id ?? ''} books={books} booksLoaded={data !== undefined} hidden={arrangement.active} onOpenBook={openBookById} />
                         <LibraryShelfStyleControl value={shelfStyle} onChange={handleShelfStyleChange}
                             disabled={arrangement.saving || shelfDragging} />
                         <LibraryArrangeControls arrangement={arrangement} bookCount={books.length} dragging={shelfDragging}
@@ -194,7 +196,8 @@ function LibraryHome() {
                     <LibraryBookList books={filteredBooks} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel}
                         isRefetching={isRefetching} onRefresh={refetch} onBookPress={openBook} onShowAll={() => setActiveFilter('all')}
                         header={<>{collectionHeader}{continueReadingCard}
-                        {!arrangement.active && <NoteSwipeHomeTile actorId={session?.user?.id ?? ''} onPress={() => router.push({ pathname: '/(tabs)/library/notes-swipe', params: { scope: 'all' } })} />}</>} />
+                        {!arrangement.active && <NoteSwipeHomeTile actorId={session?.user?.id ?? ''} onPress={() => router.push({ pathname: '/(tabs)/library/notes-swipe', params: { scope: 'all' } })} />}
+                        <OnThisDayLine actorId={session?.user?.id ?? ''} books={books} booksLoaded={data !== undefined} hidden={arrangement.active} onOpenBook={openBookById} /></>} />
                 </View>
             )}
         </LibraryPageBackground>

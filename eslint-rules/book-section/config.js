@@ -64,6 +64,8 @@ const STRICT_FILES = [
     'src/components/library/notes-swipe/NoteSwipeHomeTile.tsx',
     'src/components/library/notes-swipe/NoteDeckChips.tsx',
     'src/components/library/notes-swipe/NoteOrderMenu.tsx',
+    'src/features/books/history/onThisDay.ts',
+    'src/components/library/history/OnThisDayLine.tsx',
 ];
 
 const RAW_VALUE_ALLOW_LIST = [
