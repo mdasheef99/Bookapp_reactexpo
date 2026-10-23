@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft, full design for 5a and 5b (2026-10-22). **Approved by the Owner 2026-10-22, with D5-1 to D5-6 as recommended.** Reviewed twice (Sonnet, then DeepSeek; Argon unavailable both times), all verified findings applied (§17). **5a implemented locally 2026-10-23** (branch `claude/phase9-psr-slice5a-typed-isbn`; M78 file created, not applied; two code-review rounds; one Owner-approved §8 clarification; evidence in tracker 38 §27). 5b not started. |
+| **Status** | Draft, full design for 5a and 5b (2026-10-22). **Approved by the Owner 2026-10-22, with D5-1 to D5-6 as recommended.** Reviewed twice (Sonnet, then DeepSeek; Argon unavailable both times), all verified findings applied (§17). **5a implemented locally 2026-10-23** (branch `claude/phase9-psr-slice5a-typed-isbn`; two code-review rounds; one Owner-approved §8 clarification; evidence in tracker 38 §27). **M78 applied to the development project 2026-10-23** (SQL editor, no `schema_migrations` row; tracker 38 §28). **5b implemented locally 2026-10-23** (branch `claude/phase9-psr-slice5b-add-isbn`, uncommitted; tracker 38 §29-§31). The worker and the Edge function are **not deployed** and the combined in-app acceptance check (AC5a-1, AC5a-16c, AC5b-1, AC5b-4, AC5b-6) has **not run**. |
 | **Build** | Two parts from this one SDD: 5a, then 5b; one branch and PR each (SDD-1 §8, PSR-R12). |
 | **Parent** | [SDD-1 §7](./01-review-screen-sdd.md) (design direction) under [SDD-0](./00-overview-sdd.md) |
 | **Decisions** | PSR-D06, PSR-D07, PSR-D10, PSR-D13; rules PSR-R06, R07, R09, R10, R14 |
@@ -491,8 +491,48 @@ Functions M78 replaces or adds, and nothing else:
 - New worker before M78: not allowed by the deploy order; the `edition` stage would
   be refused by SQL and the lookup would fail closed. The relaxed decoder alone is
   harmless on the old database.
-- Rollback: the app can ship without the box; the column and functions stay
-  (applied migrations are never edited, PSR-R06).
+- Rollback before release: the app can ship without the box; the column and
+  functions stay (applied migrations are never edited, PSR-R06).
+- **Rollback after release (whole-feature review, 2026-10-23).** Removing the box
+  from the app does not remove saved ISBNs or outstanding jobs. Rolling the Edge
+  function back to v17 strips the v2 capability and refuses `set_candidate_isbn`;
+  choices then omit `ownerIsbn13`, so an existing ISBN card is shown in title mode
+  and the Owner cannot see or clear the ISBN, although SQL still searches by it.
+  Rolling the worker back leaves ISBN jobs (empty title) and hand-added jobs (null
+  lineage ids) that the old decoder rejects; they fail closed and are retried
+  until their attempts are exhausted. Before any rollback after release: stop new
+  ISBN presses (ship the app without the box first), then list candidates with a
+  non-null `owner_isbn13` and outstanding edition jobs, and decide per case; do not
+  roll the worker back while ISBN jobs are pending. A compatible older build must
+  keep the worker context decoder (`edition_options` purpose) and the Edge
+  read/set/clear contract.
+- **Deploy checklist (added 2026-10-23).**
+  1. The Render metadata worker builds the configured branch `main` only (auto-deploy
+     off; the deploy tool cannot pin a commit; tracker 36). The reviewed 5a + 5b
+     source must therefore be on `origin/main` first. That needs an explicitly
+     authorized push and merge; nothing has been pushed. After deploying, read the
+     deployed commit back and confirm it contains the relaxed decoder and the ISBN
+     adapter before deploying the Edge function. `/health` alone is not proof.
+  2. Worker build is the existing Dockerfile (`npm ci`, then
+     `npm run build:phase9:metadata-worker`). Keep its configuration unchanged:
+     `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `PHASE9_METADATA_WORKER_ID`,
+     `PHASE9_METADATA_WORKER_INGRESS_TOKEN`, host, port, concurrency 1, provider
+     mode, Google API key, timeout and response-size limits. No ISBN-specific
+     secret is added.
+  3. Deploy only `phase9-owner-ingestion` to project `ahntbtktjjmvfosgkmgn` with
+     `verify_jwt=true` and its configured import map (documented command:
+     `supabase functions deploy --project-ref ahntbtktjjmvfosgkmgn --use-api`, name
+     the function, never `--no-verify-jwt`). Keep `SUPABASE_URL`,
+     `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. Read back: ACTIVE new
+     version, `verify_jwt` true, OPTIONS 200, unauthenticated POST 401.
+  4. M78 was applied through the SQL editor and has no `schema_migrations` row;
+     do not re-apply it, and do not treat the missing row as a missing migration.
+     The M78 file header still says "File creation only, no live application"; the
+     file is not edited because it is applied, and this section is the correction.
+  5. Then the combined in-app check. Use at least one ISBN whose work has many
+     editions (the Open Library lookup relies on the matching edition being
+     embedded in the search response), and assert the provider-call sequence
+     `search`, `edition`, then author calls (AC5a-14c).
 
 ## 11. Acceptance checks
 
@@ -618,6 +658,33 @@ tracker and DOC-13 updated; `CODEBASE_MAP/` updated for the new action and colum
 
 Built after 5a is merged, on its own branch and PR. Scope follows the
 recommendation in D5-4 and is **pending Owner confirmation**.
+
+> **Note, 2026-10-23 (Owner).** Status: the Owner approved D5-4 (title required,
+> optional ISBN) on 2026-10-22 with D5-1 to D5-6, so the scope above is
+> confirmed. Order: 5b is branched from the 5a tip (`0f4fbd1`,
+> `claude/phase9-psr-slice5b-add-isbn`) instead of waiting for the 5a merge. The
+> worker and Edge are deployed after 5b is built, then one in-app check covers
+> 5a and 5b together; no build with an ISBN box reaches real users before it.
+> Clarifications to §15.3–§15.4 (no new behaviour beyond these):
+>
+> - The pending record (§15.3 item 3) also freezes the search request's key and
+>   command ID. One press of Add is one record covering all four steps.
+> - The search request (§15.3 step 2.4) is built the way 5a's sheet builds it
+>   (§8): after the ISBN save, re-read the edition choices and build the request
+>   from them, not from the save response. The re-read checks the card and its
+>   versions against what the app already holds and records them, so a stale
+>   generation is never sent.
+> - With an ISBN, after the last step the Owner stays on Add a book, which shows
+>   "Book added. Open Find or change edition to choose its edition." and a
+>   button to leave. No message is carried to another screen. Without an ISBN,
+>   the screen leaves as today (AC5b-2).
+> - When the book is added but the ISBN steps have not finished, the leave
+>   dialog says the book is added but without its ISBN, instead of "may already
+>   have been added".
+> - Retry labels: "Retry same addition" (the add), "Retry ISBN save" (the ISBN
+>   step), "Retry search" (the search request, as in 5a's sheet).
+
+> **Evidence, 2026-10-23.** 5b is built and reviewed locally; see [tracker 38 §30](../../trackers/38-post-scan-rework-evidence.md#30-slice-5b-built-reviewed-and-verified-locally-partial-browser-check-passed-2026-10-23). Deviations from this section, decided under the Owner's delegation: (1) no Retry after a version-conflict response (§15.4 listed "version" under Retry); (2) a `P9_STATE_CONFLICT` on the ISBN save reads "Book added, but the ISBN wasn't saved. This book can't be changed now." and becomes the §15.4 text "This scan is closed…" only when a session refetch reports the scan closed, because the code can also mean the card was committed or removed (§5.5).
 
 ### 15.1 Goal and Owner experience
 

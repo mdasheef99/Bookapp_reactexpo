@@ -1284,6 +1284,211 @@ Active work unit: `post_scan_rework_slice5a_typed_isbn_sheet`. Exact next author
 - All replaced functions are owned by `postgres` with `search_path=""`. SECURITY DEFINER is kept everywhere except `phase9_edition_option_eligible`, which is not SECURITY DEFINER in the file either.
 - The whitespace-stripped md5 of all ten function bodies equals the local file.
 
-**State.** M78 is APPLIED_VERIFIED. There was no data change. The metadata worker and the owner-ingestion Edge function are not deployed yet; until they are, the app does not send the v2 header and nothing calls the new command. The fix and docs are uncommitted.
+**State.** M78 is APPLIED_VERIFIED. There was no data change. The metadata worker and the owner-ingestion Edge function are not deployed yet; until they are, the app does not send the v2 header and nothing calls the new command. The fix and docs were committed afterwards as `0f4fbd1` (§29).
 
 Active work unit: `post_scan_rework_slice5a_typed_isbn_sheet`. Exact next authorized action: on the Owner's approval, commit the M78 fix and docs on the 5a branch, deploy the metadata worker and then the owner-ingestion Edge function, then run the in-app check (AC5a-1, AC5a-16c).
+
+## 29. Slice 5b start: branch, Owner decisions and docs reconciliation, 2026-10-23
+
+**Correction to §28.** The M78 fix and the docs recorded in §28 as uncommitted were committed on the 5a branch as `0f4fbd1` (after `1d4f80e`). Nothing is pushed.
+
+**Owner decision (2026-10-23).** Build slice 5b before deploying anything. After 5b: deploy the metadata worker, then the owner-ingestion Edge function, then one in-app check covering 5a and 5b together (AC5a-1, AC5a-16c and the 5b checks). No build with an ISBN box reaches real users before that check.
+
+**Branch.** `claude/phase9-psr-slice5b-add-isbn`, cut from the 5a tip `0f4fbd1` because 5b needs 5a's code. It has its own worktree (`.claude/worktrees/phase9-psr-slice5b-add-isbn`), so the 5a branch keeps its checkout while its PR is pending. `node_modules` is a junction to the 4b worktree's install (the same one the 5a worktree uses); no `npm ci`. C: had 8.0 GB free. The first `git worktree add` failed with "Could not reset index file"; it left only the branch, and a retry with `core.longpaths=true` succeeded.
+
+**Owner answers to the 5b session summary.** Recorded as a dated note in SDD 01a §15; none changes 5b's scope:
+- D5-4 was approved on 2026-10-22, so §15's "pending Owner confirmation" is settled.
+- The pending record also freezes the search request's key and command ID: one press, one record, four steps.
+- The search request is built from re-read edition choices, as in 5a. Reason found in code: `acceptEditionChoices` (`ownerEditionPickerCache.ts` L12–44) checks the read against the card's known versions and refuses stale or regressing generations before the request is built; the 5a brief required building it from the re-read, "not from the set response". The Owner's rule was to reuse 5a's chain if the re-read exists for freshness.
+- With an ISBN, the Owner stays on Add a book after the last step, with "Book added. Open Find or change edition to choose its edition." and a button to leave.
+- The leave dialog says the book is added without its ISBN while the ISBN steps are unfinished.
+- Retry labels: "Retry same addition", "Retry ISBN save", "Retry search".
+
+**Codebase map.** Read `CODEBASE_MAP/README.md` ("When to update"). 5b adds no route, service, screen, Edge function or backend path: the add stays a direct RPC (03 L28) and the ISBN steps use the existing edition-picker Edge actions. No map change is needed.
+
+**Docs reconciled.** `ACTIVE.md`'s handoff log gained the three missing entries (slice 5 SDD, 5a built, M78 applied) and this one; DOC-13 and the phase tracker got this handoff.
+
+Supabase/external mutations: none. No code changed.
+
+### Existing edition-selection flow, browser check, 2026-10-23
+
+Haiku drove the Browser pane on the 5b app code with M78 live (Edge v17 and the
+worker still pre-5a). First run (Darwin card): no editions listed. Read-only
+evidence: the worker's lookup for that card ended `no_match` (a genuine
+provider result), and the choices RPC returned 400 only during the ~20 s after
+the cards were created, then 200. Not a 5b regression (5b has no migration,
+Edge or worker change). Second run (The Origin of Species card, lookup
+`ambiguous`): Find or change edition -> Search Books -> "4 selectable editions
+in 10 results" -> Select edition on the Standard Ebooks 2019 option ->
+"Edition saved."; the card then showed "Standard Ebooks · 2019". Read-only
+SELECT after: candidate `version` 1->2 and `metadata_revision` 4->5. Passed.
+Not verified: the 400 on `phase9_store_metadata_cache` (worker, 7 calls) has no
+baseline from before M78; console 409/403/503 responses were not attributed to
+URLs. Writes: through the app only (dev data).
+
+Active work unit: `post_scan_rework_slice5b_add_book_isbn`. Exact next authorized action: build slice 5b next (branch from 5a tip `0f4fbd1`); after 5b, deploy the metadata worker then the owner-ingestion Edge function, then run the in-app check for 5a and 5b together (AC5a-1, AC5a-16c, 5b checks).
+
+## 30. Slice 5b built, reviewed and verified locally; partial browser check passed, 2026-10-23
+
+```text
+Date/session: 2026-10-23, orchestrating Claude session; Codex gpt-6.1-sol (xhigh)
+  wrote the code in worktree phase9-psr-slice5b-add-isbn on branch
+  claude/phase9-psr-slice5b-add-isbn (cut from the 5a tip 0f4fbd1).
+Authorized work unit and scope: Owner (2026-10-23) asked to complete the 5b
+  implementation to the plan, using judgment and reporting after the browser
+  test. No migration, Edge, worker, database, deploy, stage, commit or push.
+Brief review: Muse Spark 1.3 on the Codex brief: REWORK, 13 findings, all
+  verified in code and applied (strict form schema would reject every submit;
+  navigation race with the auto-navigate effect; inputs re-enabling after
+  success; a wrong claim of mine about acceptEditionChoices; refusal-table
+  gaps; test gaps).
+Completed (SDD 01a §15, AC5b-1..8): optional ISBN box in "Add a book" (active
+  scans only); five steps per press (add -> read card -> set ISBN -> re-read
+  edition choices -> one edition search; the add is step 1 and the three ISBN steps follow), one in-memory record per press with
+  frozen add, set and lookup commands; messages and retry buttons per the
+  Owner note; the Owner stays on the screen after an ISBN add ("Back to
+  review"); no-ISBN path unchanged. New: queries/ownerMissedBookIsbnFlow.ts.
+  Changed: MissedBookScreen, missedBookForm, isbn.ts (shared error text),
+  ownerEditionPickerCommands (parameter widened), CandidateEditionIsbnSearch
+  (constant), ownerCorrectionQueries (non-blocking cache helper), tests.
+Code review round 1 (read-only, against the SDD and brief): Muse, GLM,
+  Codex gpt-6-luna: approve with fixes (GLM approve); Codex gpt-6.1-sol:
+  rework. Ten findings confirmed in code and fixed in ONE Codex round,
+  red-first: (High) the ISBN path awaited cache invalidations and could stay
+  busy offline; (Med) a failed session refetch replaced the form and removed
+  Retry and Back to review; (Med) a failed post-add card read left the review
+  list unrefreshed; (Med) a confirmed search could be offered for replay when
+  local cache acceptance threw; (Low) a mismatching set response looped on
+  Retry; (Low) P9_STATE_CONFLICT on the set was always worded "scan closed";
+  (Low) an empty assertive node; plus refusal, session-switch and cache-proof
+  tests. Rejected: GLM's note on the "Retry ISBN save" label (intentional).
+Decisions and deviations (orchestrator judgment, Owner delegated):
+  (1) No Retry after a version-conflict response (SDD 01a §15.4 listed
+  "version" under Retry; resending the same version fails again). Network and
+  internal failures still retry with the frozen command (AC5b-6).
+  (2) A P9_STATE_CONFLICT on the ISBN save now reads "Book added, but the
+  ISBN wasn't saved. This book can't be changed now."; it becomes the SDD text
+  "Book added. This scan is closed, so the ISBN can't be saved." only after a
+  session refetch reports the scan closed. The conflict can also mean the card
+  was committed or removed (SDD §5.5).
+  (3) The ISBN path caches the card without awaiting invalidations (the
+  add-only path keeps its old awaited helper unchanged).
+  (4) The Owner stays on Add a book after an ISBN add (Owner answer 4).
+Verification actually run:
+  Codex final: Jest src/features/imageInventory 971 passed, 4 skipped, 0 failed;
+  tsc only the 8 known src/features/books/export errors; git diff --check clean.
+  Haiku independent run: tsc the same 8; Jest 2,287 passed, 4 skipped, 1 failed
+  (a 5 s timeout in phase9_deployment_runtime_scaffolding, an untouched file;
+  the suite passed 18/18 alone); git diff --check clean; test:phase9:db 727 of
+  735 with 8 failures = the 3 known phase9MetadataFoundation failures plus 5
+  files that failed only because this new worktree had no .phase9-dist build.
+  After npm run build:phase9:metadata-worker those 5 files pass 117/117
+  (orchestrator re-run).
+Browser check (Haiku, web, real backend, Owner signed in at localhost:8091,
+  partial because the server-side ISBN action is not deployed): PASS.
+  Setup: Metro does not follow a node_modules junction, so the worktree has a
+  real copy (500 MB); the first sign-in attempt stopped at the login page (new
+  port, separate storage) until the Owner signed in.
+  1. Closed scan 8eb9b18a: heading "Add a book", Title/Authors/Language, NO ISBN
+     box (AC5b-8).
+  2. Active scan 60a99c91 (created by pressing Start scanning with a shelf
+     location; Haiku wrongly reported no session was made, read-only SQL showed
+     it): labels "ISBN (optional)", textbox ISBN, hint text (AC5b-5). Bad check
+     digit 9780140449130: "Check the ISBN; the last digit doesn't match" and
+     Add book disabled (AC5b-3). Valid 9780140449136: error gone, Add enabled.
+  3. Add with the ISBN: the screen stayed and showed "Book added, but the ISBN
+     wasn't saved. Open Find or change edition to enter it." with Leave and no
+     Retry (the deployed Edge answered 400 to the unknown set_candidate_isbn
+     action, a refusal); all fields read-only; no leave dialog on Leave; the
+     session screen listed the book (AC5b-4, AC5b-7).
+  4. Plain add "Haiku 5b plain": navigated by itself to the session screen and
+     listed (AC5b-2).
+  Read-only SQL afterwards: two hand-added cards (needs_review, version 1,
+  owner_isbn13 null), exactly one per press, no duplicates.
+  Not covered (needs the deployed worker and Edge): the ISBN save and ISBN
+  search against the real server (AC5b-1, AC5b-6 live), the Retry ISBN save
+  path, and the success text with Back to review.
+  Observation, not changed by 5b: hand-added cards show "Finding edition…" on
+  the session screen although no automatic lookup runs for them (SDD 01a B18).
+  Stale 404 console errors in the pane come from the failed junction load.
+  Writes: three dev rows through the app (the active scan and two cards).
+Supabase/external mutations: only through the app during the browser check
+  (one active dev scan with two hand-added cards); the orchestrator ran
+  read-only SELECTs only.
+Known pre-existing: 3 phase9MetadataFoundation failures; 8 books/export tsc
+  errors; occasional load timeouts.
+Residual risk: the ISBN path through the real server (set_candidate_isbn and
+  the ISBN search) has only run against mocks; it is covered by the combined
+  5a+5b in-app check after the worker and Edge deploys.
+```
+
+Active work unit: `post_scan_rework_slice5b_add_book_isbn`. Exact next authorized action: on the Owner's approval, commit 5b (src and docs only); after that deploy the metadata worker, then the owner-ingestion Edge function, then run the combined 5a+5b in-app check (AC5a-1, AC5a-16c, AC5b-1, AC5b-4, AC5b-6).
+
+## 31. Whole-feature review of slices 5a + 5b and its fixes, 2026-10-23
+
+```text
+Scope: database (M78 SQL and tests), Edge and worker (TypeScript), app (5a sheet,
+  5b Add a book), cross-component contract, deploy safety and docs. Diffs against
+  1d4f80e~1 in psrwhole-review/ (local only, never committed).
+Reviewers: Codex gpt-6.1-sol (database, Edge/worker, app, cross-component), Muse
+  Spark 1.3 and GLM 5.3 Flash free (all four pieces). Codex gpt-6-luna was started
+  first and cut off by the Codex usage limit; Muse replaced it on the Owner's word.
+Results: database - no defects (sol: 29/29 ISBN tests and 108/108 related, zero
+  failed; Muse approve; GLM pass). Edge/worker - no defects (sol approve; GLM
+  approve-with-fixes, deploy-order note only). App - sol REWORK (4 Mediums), Muse and
+  GLM approve-with-fixes (Lows). Cross-component - sol REWORK (1 High, 3 Mediums,
+  1 Low), Muse and GLM approve-with-fixes.
+Confirmed in code and fixed (uncommitted):
+  F1 (High) 5a edition sheet awaited cache invalidations after the re-read and in
+     the error path, and the review-save sync awaited them too; offline a paused
+     refetch never settles, so the search was never sent and Close stayed disabled.
+     Now fire-and-forget (queries/ownerEditionPickerIsbnMutation.ts; new non-blocking
+     cacheCandidateReviewSuccess in ownerUxReviewQueries.ts; the old function is
+     unchanged for other callers). Three tests (success, refused set, unsaved edits)
+     stall every invalidation; they failed first ("lookup expected 1, received 0")
+     and pass.
+  F2 (Medium) the re-read after an ISBN set was not bound to the set receipt, so
+     another device changing or clearing the ISBN made the search run on the other
+     value and 5b reported success. New choicesFollowIsbnSet (ownerEditionPickerCache.ts)
+     requires the same ISBN (null for title mode) and non-regressed candidateVersion,
+     metadataRevision and requestGeneration; 5a stops with the existing changed-book
+     refresh state, 5b with "Book added. The ISBN was saved, but this book changed
+     before the search could start. Open Find or change edition to search." and no
+     Retry. Tests for another ISBN and no ISBN failed first; a benign higher
+     generation with the same ISBN still searches. Existing fixtures that returned an
+     unrelated generation or no ISBN after a set were corrected.
+  F3 (Low, Muse) 5b re-read mismatch after a confirmed save no longer says "the ISBN
+     wasn't saved" (ISBN_READ_MISMATCH vs new ISBN_SET_MISMATCH).
+  F4 (Low, Muse) a refused ISBN save now refreshes the candidate and review lists.
+Rejected after checking: GLM "no SQL tests for M78" (a 398-line integration test
+  exists); Muse "cache-acceptance test passes for the wrong reason" (it makes the
+  real acceptance throw); Muse "v2 header Medium" (guess; the browser check showed
+  the existing flow works against Edge v17); the 17-character ISBN limit (set by
+  the SDD); the 9790 prefix and the migration-comment items (harmless; applied file
+  not edited).
+Residual, not fixed: lost-response wording says "wasn't saved" when the reply was
+  lost (Owner copy decision); no request timeout on the Add screen (Owner decision);
+  add and card read are not abortable (pre-existing); Open Library embedded-editions
+  assumption (test with a many-edition ISBN in the combined check).
+Deploy finding: the Render worker deploys the head of main only; origin/main has
+  neither 5a nor 5b. Publication to main is a prerequisite and needs the Owner's
+  explicit authorization (SDD 01a section 10 checklist).
+Coding: F1 and F2 by the orchestrator (Codex hit its usage limit again during the
+  fix round; the Owner allowed it); F3 and F4 by Muse; all red-first.
+Verification run: Jest src/features/imageInventory 982 passed, 4 skipped (71 of 72
+  suites passed, 1 suite skipped); tsc --noEmit only the 8 known books/export errors;
+  git diff --check clean. Not re-run: database suites, worker tests, browser check.
+  Fix-delta re-review (Muse Spark 1.3 and GLM 5.3 Flash free; Codex sol was blocked
+  by its usage limit until 9:07 PM and the Owner replaced it with Muse): GLM approve
+  (two Lows: a duplicated set-mismatch test in OwnerCorrectionScreens.test.tsx, and
+  the two different search-not-started messages, both intended). Muse approve with
+  fixes: its Medium (5a does not check the set response scope) was rejected after
+  checking, because ownerUxTransport.ts L212-214 already turns a set_candidate_isbn
+  response with a different session or candidate into P9_INTERNAL_ERROR before the
+  mutation sees it; its other points confirmed the refactor leaves the other callers
+  of synchronizeCandidateReviewSuccess unchanged, no unhandled rejection, original
+  error still rethrown, no false mismatch on retry, and that the changed fixtures
+  are not weakened. No further code change was made. Remaining Low: delete one of the
+  two duplicate set-mismatch tests.
+Database/storage/deploy mutations: none. Nothing committed, staged or pushed.
+```
