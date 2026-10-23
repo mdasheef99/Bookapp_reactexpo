@@ -1,5 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
-import type { EditionChoices, EditionLookupReceipt } from '../contracts/ownerEditionPicker';
+import type { EditionChoices, EditionLookupReceipt, SetCandidateIsbnResponse } from '../contracts/ownerEditionPicker';
 import type { ImageInventoryIdentity } from './ownerUxQueries';
 import { ownerEditionPickerKeys } from './ownerEditionPickerKeys';
 import { assertOwnerCardCurrent, authorityChanged, knownCandidateVersions, versionsRegress,
@@ -9,6 +9,13 @@ export function freshEditionChoices(value: EditionChoices): EditionChoices {
   return value.optionsExpiresAt && Date.parse(value.optionsExpiresAt) > Date.now()
     ? value : { ...value, rows: [], optionsExpiresAt: null };
 }
+// Whole-feature review, 2026-10-23: the one search after an ISBN set must be built from choices that
+// still describe that set (same ISBN, nothing older); otherwise another device changed the book.
+export const choicesFollowIsbnSet = (choices: EditionChoices, set: SetCandidateIsbnResponse): boolean =>
+  (choices.ownerIsbn13 ?? null) === set.ownerIsbn13
+  && choices.candidateVersion >= set.candidateVersion
+  && choices.metadataRevision >= set.metadataRevision
+  && choices.requestGeneration >= set.requestGeneration;
 export function acceptEditionChoices(
   client: QueryClient, identity: ImageInventoryIdentity, scope: OwnerCardScope,
   incoming: EditionChoices, origin: 'read' | 'selection',

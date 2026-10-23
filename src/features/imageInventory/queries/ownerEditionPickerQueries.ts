@@ -16,6 +16,7 @@ import { assertOwnerCardCurrent, authorityChanged, candidateAuthorityIsCurrent }
 import { synchronizeCandidateReviewSuccess } from './ownerUxReviewQueries';
 import { ownerBatchReviewKeys } from './ownerBatchReviewKeys';
 import { editionSelectionRecovery } from '../review/editionSelectionRecovery';
+import { useOwnerEditionPickerIsbnMutation } from './ownerEditionPickerIsbnMutation';
 
 export { ownerEditionPickerKeys } from './ownerEditionPickerKeys';
 
@@ -92,6 +93,8 @@ export function useOwnerEditionPicker(
     try { return await reread(signal, assertCurrent); }
     catch { assertCurrent(); return null; }
   };
+  const isbn = useOwnerEditionPickerIsbnMutation({ identity, scope, choices: choices.data, lifecycle,
+    assertRequest, reread, reconcile, onIdentitySaved: detail => callbackRef.current.onIdentitySaved?.(detail) });
   const selectMutation = useMutation({
     networkMode: 'always', retry: false,
     mutationFn: (request: SelectEditionRequest) => {
@@ -230,6 +233,8 @@ export function useOwnerEditionPicker(
   return {
     choices, selectEdition: selectMutation, requestOptions: lookupMutation,
     saveIdentityAndSearch: identityMutation, identityPending: identityMutation.isPending,
+    setIsbnAndSearch: isbn.mutation, isbnPending: isbn.mutation.isPending, retryIsbnSearch: isbn.retry,
+    isbnRetryAvailable: isbn.retryAvailable,
     selectionPending: selectMutation.isPending, lookupPending: lookupMutation.isPending,
     isCommandActive: () => slot.isCommandActive(candidateId),
     retryIdentitySearch: () => {

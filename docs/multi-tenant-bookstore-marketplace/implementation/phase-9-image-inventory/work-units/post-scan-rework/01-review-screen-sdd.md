@@ -15,8 +15,13 @@
 
 **Slice 5 direction confirmed by the Owner (2026-10-19).** Slice 5 departs
 from the SDD-0 §14 Q2 default (an ISBN on a single request) and stores the
-typed ISBN on the card (§7, "Why not request-scoped"). Slice 5 still gets its
-own full design pass at 5a start.
+typed ISBN on the card (§7, "Why not request-scoped").
+
+**Slice 5 design approved (Owner, 2026-10-22).** The full design for 5a and 5b
+is the [slice 5 SDD](./01a-slice5-typed-isbn-sdd.md), with decisions D5-1 to
+D5-6 as recommended there. It supersedes §7 below, which is kept as the
+earlier direction; §16 of the slice 5 SDD lists the corrections to §7's
+citations.
 
 ## Contents
 
@@ -898,6 +903,12 @@ exception):**
 ---
 
 ## 7. Slice 5 — Typed ISBN (design direction; 5a sheet, 5b "Add a book")
+
+> **Superseded for building (2026-10-22):** the approved design is the
+> [slice 5 SDD](./01a-slice5-typed-isbn-sdd.md). This section is the earlier
+> direction it was built from. Where they differ, the slice 5 SDD wins (for
+> example, 5b keeps the title required and adds an optional ISBN, and AC5-5 is
+> replaced by AC5b-1 to AC5b-8).
 
 **Goal:** the Owner can type the ISBN printed on the book to get its exact
 edition, both in the sheet and in "Add a book" (PSR-D06, D13).

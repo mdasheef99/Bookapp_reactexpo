@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import { after, before, test } from 'node:test';
 import { runMetadataWorkerBatch } from '../../../.phase9-dist/workers/phase9-metadata-worker/index.js';
 import { buildMetadataQueryIdentity } from '../../../.phase9-dist/supabase/functions/_shared/imageInventory/metadata/queryIdentity.js';
+import { decodeMetadataJobContext } from '../../../.phase9-dist/supabase/functions/_shared/imageInventory/runtime/metadataJobContext.js';
+import { requestFromMetadataContext } from '../../../.phase9-dist/supabase/functions/_shared/imageInventory/runtime/metadataGatewayContext.js';
 import {
   GOOGLE_BOOKS_CAPABILITY, GoogleBooksAdapter,
 } from '../../../.phase9-dist/supabase/functions/_shared/imageInventory/metadata/googleBooks/index.js';
@@ -332,6 +334,29 @@ test('database and runtime metadata identities are byte-equivalent across normal
     await db.exec(`DELETE FROM public.image_extraction_candidates WHERE id='${candidate}'`);
   }
   await resetActor(db);
+});
+
+test('ISBN-only edition context matches the byte-identical automatic SQL ISBN key (slice 5 §§6/12)',async()=>{
+  await resetActor(db);
+  const sql=await scalar(db,`SELECT marketplace_sec.phase9_metadata_candidate_query_identity(
+    jsonb_populate_record(NULL::public.image_extraction_candidates,
+      '{"observed_title":"","observed_authors":[],"observed_isbn_clue":"9780306406157",
+        "observed_language":"und","observed_publisher_clue":null}'::jsonb))`);
+  const expected='["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "isbn", "9780306406157", "", [], "und", []]';
+  assert.equal(sql,expected);
+  const context=decodeMetadataJobContext({
+    contractVersion:'p9-metadata-job-context-v2',jobId:'edition-isbn-parity',attempt:1,
+    claimToken:'fixture-claim',candidateId:'isbn-only-candidate',candidateState:'needs_review',
+    candidateVersion:1,storeId:STORE,sessionId:SESSION,purpose:'edition_options',
+    requestGeneration:0,optionsVersion:0,optionsAvailable:false,optionsExpiresAt:null,
+    inputId:null,observationId:null,title:'',authors:[],isbnClue:'9780306406157',
+    publisherClue:null,language:'und',script:null,queryIdentity:sql,
+    localCanonicalEditionId:null,reusableLookupId:null,reusableOutcome:null,
+    currentLookupId:null,currentOutcome:null,currentAttemptId:null,currentAttemptOutcome:null,
+    currentAttemptDisposition:null,currentAttemptCandidate:null,currentAttemptProviderRequestId:null,
+    currentPhysicalStatus:null,currentPhysicalClaimAttempt:null,providerPolicies:[],
+  });
+  assert.equal(requestFromMetadataContext(context).query.key,sql);
 });
 
 test('storage-denied response loss recovers policy denial with one physical call',async()=>{

@@ -12,6 +12,7 @@ import { createEditionLookupCommand, createEditionSelectionCommand } from '../ap
 import { EditionOptionList } from './EditionOptionList';
 import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
 import { editionSelectionRecovery } from '../review/editionSelectionRecovery';
+import { CandidateEditionIsbnSearch } from './CandidateEditionIsbnSearch';
 
 // SDD-1 §4: the card owns identity edits; the picker only searches and selects.
 export type CompactEditionSearchDraft = Readonly<{ identityChanged: boolean; pending?: boolean; request: IdentitySearchRequest | null }>;
@@ -43,13 +44,14 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
     return () => clearTimeout(timer);
   }, [expiresAt]);
   useEffect(() => {
-    onPendingChange?.(picker.selectionPending || picker.identityPending);
-  }, [onPendingChange, picker.selectionPending, picker.identityPending]);
+    onPendingChange?.(picker.selectionPending || picker.identityPending || picker.isbnPending);
+  }, [onPendingChange, picker.selectionPending, picker.identityPending, picker.isbnPending]);
   useEffect(() => () => onPendingChange?.(false), [onPendingChange]);
-  const blocked = disabled || picker.selectionPending || picker.identityPending || picker.isCommandActive();
+  const blocked = disabled || picker.selectionPending || picker.identityPending || picker.isbnPending || picker.isCommandActive();
   const identityChanged = cardDraft?.identityChanged === true;
   const fresh = !identityChanged && !!choices?.optionsExpiresAt;
-  const pending = picker.lookupPending || picker.identityPending || cardDraft?.pending === true || choices?.lookupStatus === 'pending';
+  const pending = picker.lookupPending || picker.identityPending || picker.isbnPending || cardDraft?.pending === true || choices?.lookupStatus === 'pending';
+  const isbnMode = !!choices?.ownerIsbn13;
   const selectionRecovery = picker.selectEdition.error ? editionSelectionRecovery(picker.selectEdition.error) : null;
   const saveSearchRecovery = picker.saveIdentityAndSearch.error ? editionSelectionRecovery(picker.saveIdentityAndSearch.error) : null;
   const lookupRecovery = picker.requestOptions.error ? editionSelectionRecovery(picker.requestOptions.error) : null;
@@ -85,6 +87,9 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
         if (!blocked) void act('selection', () => picker.selectEdition.mutateAsync(createEditionSelectionCommand(choices,
           { source: 'current_suggestion', selectionId: choices.selection!.selectionId })));
       }} /> : null}
+    <CandidateEditionIsbnSearch picker={picker} choices={choices} cardDraft={cardDraft} blocked={blocked}
+      showSavedIsbnRetry={isbnMode && !pending && (!fresh || choices?.lookupStatus === 'failed')}
+      pending={pending} onStart={() => setMessage(null)} />
     <Text accessibilityRole="header" style={{ color: colors.textPrimary, fontWeight: '800' }}>Book search results</Text>
     {picker.choices.isLoading ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Loading edition choices…</Text> : null}
     {picker.choices.error || stale ? <>
@@ -98,20 +103,22 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
         Complete the card's details to search with the new title
       </Text> : !identityChanged ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{choices.lookupStatus === 'failed'
         ? 'Edition search failed. Search again when ready.' : 'Alternatives are missing or expired. Your current choice is kept.'}</Text> : null}
-      <Button title={identityChanged && !cardDraft?.request ? 'Search with saved title' : 'Search Books'} disabled={blocked} onPress={() => {
+      {!isbnMode ? <Button title={identityChanged && !cardDraft?.request ? 'Search with saved title' : 'Search Books'} disabled={blocked} onPress={() => {
         if (blocked) return;
         void act('lookup', () => {
           if (identityChanged && cardDraft?.request) return picker.saveIdentityAndSearch.mutateAsync(cardDraft.request);
           picker.saveIdentityAndSearch.reset();
           return picker.requestOptions.mutateAsync(createEditionLookupCommand(choices));
         });
-      }} />
+      }} /> : null}
     </> : null}
     {fresh && choices?.lookupStatus === 'failed' ? <Text accessibilityLiveRegion="polite" style={{ color: colors.error }}>Edition search failed. Your current choice and any fresh results are kept.</Text> : null}
-    {fresh && choices?.rows.length === 0 ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No book results were returned.</Text> : null}
+    {isbnMode && fresh && choices?.lookupStatus === 'ready' && !choices.rows.some(row => row.eligibility === 'eligible' && row.metadata)
+      ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No book was found for ISBN {choices.ownerIsbn13}</Text> : null}
+    {!isbnMode && fresh && choices?.rows.length === 0 ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No book results were returned.</Text> : null}
     {choices && fresh ? <EditionOptionList rows={choices.rows} disabled={blocked}
       selectedOptionId={choices.selection?.optionId ?? null} onSelect={select} /> : null}
-    {noMatch && !identityChanged ? <>
+    {noMatch && !identityChanged && !isbnMode ? <>
       <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No result matches this book's title and author. Fix them on the card, then search again.</Text>
     </> : null}
     {message ? <Text accessibilityLiveRegion="polite" style={{ color: message === 'Edition saved.' ? colors.accent : colors.textSecondary }}>{message}</Text> : null}
@@ -119,10 +126,10 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
       disabled={blocked || picker.choices.isFetching} onPress={() => { void picker.choices.refetch(); }} /> : null}
     {selectionRecovery?.kind === 'retry' ? <Button title="Retry selection" disabled={blocked}
       onPress={() => { if (!blocked) void act('selection', picker.retrySelection); }} /> : null}
-    {picker.saveIdentityAndSearch.data?.searched === false || saveSearchRecovery?.kind === 'retry' ? <Button
+    {!isbnMode && (picker.saveIdentityAndSearch.data?.searched === false || saveSearchRecovery?.kind === 'retry' ? <Button
       title="Retry search" disabled={blocked || pending} onPress={() => {
         if (!blocked && !pending) void act('lookup', picker.retryIdentitySearch);
       }} /> : lookupRecovery?.kind === 'retry' ? <Button title="Retry search" disabled={blocked || pending}
-      onPress={() => { if (!blocked && !pending) void act('lookup', picker.retryLookup); }} /> : null}
+      onPress={() => { if (!blocked && !pending) void act('lookup', picker.retryLookup); }} /> : null)}
   </View>;
 }

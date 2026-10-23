@@ -1,14 +1,17 @@
 import {
-  EDITION_REASONS_CLIENT_INFO, parseOwnerEditionPickerRequest, parseOwnerEditionPickerResponse,
+  EDITION_REASONS_CLIENT_INFO, EDITION_REASONS_V2_CLIENT_INFO,
+  parseOwnerEditionPickerRequest, parseOwnerEditionPickerResponse,
 } from '../contracts/ownerEditionPicker.ts';
 import type {
   EditionChoices, EditionLookupReceipt, OwnerEditionPickerAction, OwnerEditionPickerRequest,
+  SetCandidateIsbnResponse,
 } from '../contracts/ownerEditionPicker.ts';
 
 // Picker §3.1/§9: a standard-header capability changes display only, never caller authority.
 export function editionPickerRpcHeaders(authorization: string, clientInfo: string | null) {
   return { Authorization: authorization,
-    ...(clientInfo === EDITION_REASONS_CLIENT_INFO ? { 'X-Client-Info': EDITION_REASONS_CLIENT_INFO } : {}) };
+    ...((clientInfo === EDITION_REASONS_CLIENT_INFO || clientInfo === EDITION_REASONS_V2_CLIENT_INFO)
+      ? { 'X-Client-Info': clientInfo } : {}) };
 }
 
 // Narrow Supabase-compatible RPC port; no service client, tenant hints or Storage authority.
@@ -21,7 +24,8 @@ export type OwnerEditionPickerRpcClient = Readonly<{
 export function isOwnerEditionPickerAction(action: unknown): action is OwnerEditionPickerAction {
   return action === 'read_candidate_edition_choices'
     || action === 'request_candidate_edition_options'
-    || action === 'select_candidate_edition';
+    || action === 'select_candidate_edition'
+    || action === 'set_candidate_isbn';
 }
 
 const safeErrors = new Set([
@@ -39,7 +43,7 @@ function rpcError(value: unknown): Error {
 /** Picker SDD §§5–6/9: the authenticated RPC owns state and every authorization/version check. */
 export async function executeOwnerEditionPicker(
   client: OwnerEditionPickerRpcClient, input: OwnerEditionPickerRequest,
-): Promise<EditionChoices | EditionLookupReceipt> {
+): Promise<EditionChoices | EditionLookupReceipt | SetCandidateIsbnResponse> {
   let request: OwnerEditionPickerRequest;
   try { request = parseOwnerEditionPickerRequest(input); }
   catch { throw new Error('P9_REQUEST_INVALID'); }
@@ -56,6 +60,10 @@ export async function executeOwnerEditionPicker(
     if (request.action === 'request_candidate_edition_options') {
       name = 'phase9_request_candidate_edition_options_v1';
       args.p_expected_request_generation = request.expectedRequestGeneration;
+    } else if (request.action === 'set_candidate_isbn') {
+      name = 'phase9_set_candidate_isbn_v1';
+      args.p_expected_candidate_version = request.expectedCandidateVersion;
+      args.p_isbn13 = request.isbn13;
     } else {
       name = 'phase9_select_candidate_edition_v1';
       Object.assign(args, {
@@ -75,7 +83,10 @@ export async function executeOwnerEditionPicker(
   if (!result || result.error !== null) throw rpcError(result?.error);
   try {
     // Controlled RPCs project worker metadata to the strict public shape before returning.
-    const data = parseOwnerEditionPickerResponse(request.action, result.data);
+    // Slice 5 §7: the strict ISBN receipt has IDs but never a selection. Model that
+    // absence explicitly so the existing ID and selected-edition post-checks stay intact.
+    const data: EditionChoices | EditionLookupReceipt | (SetCandidateIsbnResponse & { selection?: never })
+      = parseOwnerEditionPickerResponse(request.action, result.data);
     if (request.action !== 'request_candidate_edition_options') {
       if (!('candidateId' in data) || data.candidateId !== request.candidateId
         || data.sessionId !== request.sessionId) throw new Error();

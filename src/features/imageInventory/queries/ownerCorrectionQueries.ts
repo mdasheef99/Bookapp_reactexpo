@@ -29,6 +29,23 @@ export function useAddManualCandidate(identity: ImageInventoryIdentity) {
     });
 }
 
+// SDD 01a §15.3: validate and cache the card before the ISBN steps, without waiting for refetches.
+export function cacheCorrectionCandidate(
+    client: QueryClient,
+    identity: ImageInventoryIdentity,
+    sessionId: string,
+    candidateId: string,
+    canonical: OwnerCandidateDetail,
+): boolean {
+    if (
+        !identityMatches(getResolvedImageInventoryIdentity(), identity)
+        || canonical.sessionId !== sessionId
+        || canonical.candidateId !== candidateId
+    ) return false;
+    client.setQueryData(imageInventoryKeys.candidate(identity, sessionId, candidateId), canonical);
+    return true;
+}
+
 export async function synchronizeCorrectionCandidate(
     client: QueryClient,
     identity: ImageInventoryIdentity,
@@ -36,12 +53,7 @@ export async function synchronizeCorrectionCandidate(
     candidateId: string,
     canonical: OwnerCandidateDetail,
 ): Promise<boolean> {
-    if (
-        !identityMatches(getResolvedImageInventoryIdentity(), identity)
-        || canonical.sessionId !== sessionId
-        || canonical.candidateId !== candidateId
-    ) return false;
-    client.setQueryData(imageInventoryKeys.candidate(identity, sessionId, candidateId), canonical);
+    if (!cacheCorrectionCandidate(client, identity, sessionId, candidateId, canonical)) return false;
     await Promise.all([
         client.invalidateQueries({ queryKey: imageInventoryKeys.discovery(identity) }),
         client.invalidateQueries({ queryKey: imageInventoryKeys.session(identity, sessionId) }),
