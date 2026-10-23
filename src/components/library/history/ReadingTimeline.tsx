@@ -85,7 +85,7 @@ export function ReadingTimeline({
   const selected = sorted.find((read) => read.id === selectedId) ?? sorted[0] ?? null;
 
   const fallback = useQuery({
-    queryKey: noteKeys.collection(actorId, userBookId),
+    queryKey: noteKeys.list(actorId, userBookId),
     queryFn: ({ signal }) => manualNotesGateway.list(actorId, userBookId, signal),
     enabled: !!actorId && !!userBookId && notes === undefined,
     retry: false,

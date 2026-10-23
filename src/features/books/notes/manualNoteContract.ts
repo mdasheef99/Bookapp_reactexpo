@@ -8,7 +8,7 @@ export const NOTE_CATEGORIES = [
   { value: 'question', label: 'Question' },
 ] as const;
 export type NoteCategory = typeof NOTE_CATEGORIES[number]['value'];
-export type NoteOrigin = 'book' | 'collection';
+export type NoteOrigin = 'book' | 'list';
 export interface ManualNote {
   id: string;
   user_id: string;
@@ -61,7 +61,7 @@ export function fieldsChanged(fields: NoteFields, baseline?: ManualNote): boolea
 }
 export const noteKeys = {
   book: (actor: string, book: string) => ['library-note-book', actor, book] as const,
-  collection: (actor: string, book: string) => ['notes', actor, book] as const,
+  list: (actor: string, book: string) => ['notes', actor, book] as const,
   record: (actor: string, book: string, note: string) => ['library-note', actor, book, note] as const,
 };
 export class NoteWriteError extends Error {

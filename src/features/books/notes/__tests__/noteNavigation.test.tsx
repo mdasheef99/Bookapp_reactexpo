@@ -35,9 +35,9 @@ it('returns a preview-origin pending edit reader past its Notes re-entry to the 
   (returnFromNote as any)(mockRouter, context, mockNavigation);
   expect(mockState.routes).toHaveLength(1); expect(mockState.routes[0].key).toBe(bookKey); expect(mockRouter.dismiss).toHaveBeenCalledWith(2);
 });
-it('returns a collection reader to the same retained collection route', () => {
+it('returns a list reader to the same retained list route', () => {
   push('notes', { userBookId: 'book' }); const key = mockState.routes[1].key; push('note', { bookId: 'book', noteId: 'note' });
-  const context = noteRouteContext(registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'collection', canBack: true }), 'actor', 'book');
+  const context = noteRouteContext(registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'list', canBack: true }), 'actor', 'book');
   (returnFromNote as any)(mockRouter, context, mockNavigation);
   expect(mockState.routes).toHaveLength(2); expect(mockState.routes[1].key).toBe(key);
 });

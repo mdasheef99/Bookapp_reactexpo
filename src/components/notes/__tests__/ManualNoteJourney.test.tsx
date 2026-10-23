@@ -148,7 +148,7 @@ it('keeps Delete disabled when capabilities are explicitly held, without dispatc
   expect(remove).not.toHaveBeenCalled(); expect(supabase.from).not.toHaveBeenCalled();
   expect(Object.values(MANUAL_NOTE_WRITE_GATES)).toEqual([true, true, true, true]);
 });
-it('refreshes the real collection cache after confirmed simulated reader deletion', async () => {
+it('refreshes the real list cache after confirmed simulated reader deletion', async () => {
   authorizeSimulatedReaderDeletion();
   mockParams.userBookId = 'book'; jest.spyOn(manualNotesGateway, 'remove').mockImplementation(async () => { noteRecord = null; });
   const alert = jest.spyOn(Alert, 'alert'); render(wrap(<><NotesScreen /><NoteReaderScreen /></>)); await screen.findByText('1 note');
@@ -156,7 +156,7 @@ it('refreshes the real collection cache after confirmed simulated reader deletio
   fireEvent.press(screen.getByRole('button', { name: 'Keep note' })); expect(manualNotesGateway.remove).not.toHaveBeenCalled();
   fireEvent.press(screen.getByRole('button', { name: 'Delete note' })); fireEvent.press(screen.getAllByRole('button', { name: 'Delete note' }).slice(-1)[0]);
   await screen.findByText('0 notes'); expect(manualNotesGateway.remove).toHaveBeenCalledWith('actor', 'book', 'note');
-  expect(client.getQueryData(noteKeys.collection('actor', 'book'))).toEqual([]); expect(alert).not.toHaveBeenCalled();
+  expect(client.getQueryData(noteKeys.list('actor', 'book'))).toEqual([]); expect(alert).not.toHaveBeenCalled();
 });
 it('keeps pending submission memory on informed Leave and suppresses late reader navigation after unmount', async () => {
   delete mockParams.noteId; let confirm!: (value: ManualNote) => void; let sent!: NoteSubmission;
@@ -181,9 +181,9 @@ it('clears mounted account-scoped draft/pending memory and ignores a delayed sta
   await act(async () => statusResult({ ...original, id: submitted.noteId, content: submitted.content, tag: submitted.tag, page_number: submitted.page_number }));
   expect(noteSaves.get(submitted.id)).toBeUndefined(); expect(mockRouter.replace).not.toHaveBeenCalled();
 });
-it('invalidates and refetches the real collection cache while retaining Thought when a simulated new Question is confirmed', async () => {
+it('invalidates and refetches the real list cache while retaining Thought when a simulated new Question is confirmed', async () => {
   delete mockParams.noteId; mockParams.userBookId = 'book';
-  mockParams.contextId = registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'collection', canBack: true });
+  mockParams.contextId = registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'list', canBack: true });
   const list = manualNotesGateway.list as jest.Mock; list.mockResolvedValue([original]);
   jest.spyOn(manualNoteSaveAdapter, 'write').mockImplementation(async sent => {
     const result = { ...original, id: sent.noteId, content: sent.content, tag: sent.tag, page_number: sent.page_number };

@@ -103,7 +103,7 @@ it('keeps fields and focus context on Keep editing; confirmed discard leaves wit
 });
 it('does not overwrite a dirty edit on refetch; both conflicts preserve the draft and refresh comparison', async () => {
   mockRecord = { ...saved({ actorId: 'actor', bookId: 'book', noteId: 'note', content: 'Original', tag: 'reflect', page_number: null } as NoteSubmission), version: 1 };
-  mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'collection', canBack: true, readerReturn: true }) };
+  mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'list', canBack: true, readerReturn: true }) };
   const rendered = render(<NoteComposeScreen />); fireEvent.changeText(screen.getByLabelText('Note text'), 'My changes');
   mockRecord = { ...mockRecord, content: 'Saved V2', version: 2 }; rendered.rerender(<NoteComposeScreen />);
   expect(screen.getByLabelText('Note text').props.value).toBe('My changes');
@@ -117,14 +117,14 @@ it('does not overwrite a dirty edit on refetch; both conflicts preserve the draf
 });
 it('returns to the existing reader after a simulated successful edit without pushing another reader', async () => {
   mockRecord = saved({ actorId: 'actor', bookId: 'book', noteId: 'note', content: 'Original', tag: 'reflect', page_number: null } as NoteSubmission);
-  mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'collection', canBack: true, readerReturn: true }) };
+  mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'list', canBack: true, readerReturn: true }) };
   render(<NoteComposeScreen />); fireEvent.changeText(screen.getByLabelText('Note text'), 'Edited');
   fireEvent.press(screen.getByRole('button', { name: 'Save changes' })); await flush();
   expect(mockRouter.back).toHaveBeenCalledTimes(1); expect(mockRouter.push).not.toHaveBeenCalled(); expect(mockRouter.replace).not.toHaveBeenCalled();
 });
 it('protects Use saved version with confirmation and performs no replacement write', async () => {
   mockRecord = { ...saved({ actorId: 'actor', bookId: 'book', noteId: 'note', content: 'Original', tag: 'reflect', page_number: null } as NoteSubmission), version: 1 };
-  mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'collection', canBack: true, readerReturn: true }) };
+  mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'list', canBack: true, readerReturn: true }) };
   render(<NoteComposeScreen />); fireEvent.changeText(screen.getByLabelText('Note text'), 'My draft');
   mockRecord = { ...mockRecord, content: 'Current saved body', version: 2 };
   (manualNoteSaveAdapter.write as jest.Mock).mockRejectedValueOnce(new NoteWriteError('conflict', 'Changed', mockRecord));
@@ -210,11 +210,11 @@ it('keeps a reopened preview-origin edit and its exact reader through conflict K
   (manualNoteSaveAdapter.write as jest.Mock).mockRejectedValueOnce(new NoteWriteError('conflict', 'Changed', { ...mockRecord, content: 'Saved V2', version: 2 }));
   noteSaves.start({ id: 'reopened-edit', actorId: 'actor', bookId: 'book', noteId: 'note', sessionId: originalSession, mode: 'edit', origin: 'book', content: 'Retained draft', tag: 'reflect', page_number: 8, expectedVersion: 1 });
   await flush();
-  mockParams = { bookId: 'book', noteId: 'note', operationId: 'reopened-edit', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'collection', canBack: true }) };
+  mockParams = { bookId: 'book', noteId: 'note', operationId: 'reopened-edit', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'list', canBack: true }) };
   mockNavigationState = { index: 4, routes: [
     { name: '[bookId]', key: 'book', params: { bookId: 'book' } },
     { name: 'note', key: 'original-reader', params: { bookId: 'book', noteId: 'note' } },
-    { name: 'notes', key: 'collection', params: { userBookId: 'book' } },
+    { name: 'notes', key: 'list', params: { userBookId: 'book' } },
     { name: 'note', key: 'other-normal-reader', params: { bookId: 'book', noteId: 'note' } },
     { name: 'note-compose', key: 'editor', params: { bookId: 'book', noteId: 'note' } },
   ] };

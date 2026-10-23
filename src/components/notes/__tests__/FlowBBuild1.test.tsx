@@ -240,7 +240,7 @@ describe('notes list states', () => {
 describe('note reader layout', () => {
   beforeEach(() => {
     mockRecord = note();
-    mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'collection', canBack: true }) };
+    mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'list', canBack: true }) };
   });
 
   it('shows the native quote entry offline and opens a preview using the saved content and first author', async () => {
@@ -426,7 +426,7 @@ describe('note reader layout', () => {
     mockOffline = offline;
     mockOperations = [{ status, checking: false, submission: {
       id: 'pending', actorId: 'actor', bookId: 'book', noteId: 'note', sessionId: 'session',
-      mode: 'edit', origin: 'collection', content: 'Unconfirmed edited body', tag: null, page_number: null,
+      mode: 'edit', origin: 'list', content: 'Unconfirmed edited body', tag: null, page_number: null,
     } }];
     const set = jest.spyOn(Clipboard, 'setString').mockImplementation(() => {});
     jest.spyOn(Clipboard, 'getString').mockResolvedValue(mockRecord!.content);

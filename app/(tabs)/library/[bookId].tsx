@@ -174,7 +174,7 @@ export default function BookDetailScreen() {
 
     // Fetch notes for this book (preview: last 3)
     const { data: notes, isPending: notesLoading, isError: notesError, refetch: refetchNotes } = useQuery({
-        queryKey: noteKeys.collection(user?.id ?? '', bookId),
+        queryKey: noteKeys.list(user?.id ?? '', bookId),
         queryFn: ({ signal }) => manualNotesGateway.list(user!.id, bookId, signal),
         enabled: !!user?.id && !!bookId,
     });

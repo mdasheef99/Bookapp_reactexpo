@@ -36,14 +36,14 @@ export default function NotesScreen() {
   const anchor = useRef(0); const list = useRef<FlatList<ManualNote>>(null);
   const searchFieldRef = useRef<NoteSearchFieldRef>(null);
   const operations = useNoteOperations(actorId, userBookId);
-  const query = useQuery({ queryKey: noteKeys.collection(actorId, userBookId), queryFn: ({ signal }) => manualNotesGateway.list(actorId, userBookId, signal), enabled: !!actorId && !!book.data });
+  const query = useQuery({ queryKey: noteKeys.list(actorId, userBookId), queryFn: ({ signal }) => manualNotesGateway.list(actorId, userBookId, signal), enabled: !!actorId && !!book.data });
   const notes = query.data ?? [];
   const showSearch = (query.data?.length ?? 0) > 0;
   const isSearching = showSearch && normaliseNoteQuery(searchText).length > 0;
   const inCategory = filter ? notes.filter(note => note.tag === filter) : notes;
   const filtered = filterNotes(notes, { category: filter, query: showSearch ? searchText : '' });
   const displayQuery = searchText.trim();
-  const add = () => openNoteComposer(router, actorId, userBookId, 'collection');
+  const add = () => openNoteComposer(router, actorId, userBookId, 'list');
   const header = <View style={{ gap: LIBRARY_SPACING.sm, paddingBottom: LIBRARY_SPACING.lg }}>
     {isOffline && <BookOffline message="Offline · Showing saved content." />}
     {showSearch && <NoteSearchField ref={searchFieldRef} value={searchText} onChange={setSearchText} />}
@@ -83,7 +83,7 @@ export default function NotesScreen() {
       : book.isPending || query.isPending ? operations.length > 0 ? <View style={ui.content}>{header}<NoteLoading variant="list" /></View> : <NoteLoading variant="list" />
       : query.isError && !query.data ? <View style={ui.content}>{header}<BookError kind={isOffline ? 'offline' : 'server'} subject="your notes" onRetry={() => { void query.refetch(); }} /></View>
       : <FlatList ref={list} data={filtered} keyExtractor={note => note.id} contentContainerStyle={ui.content} keyboardShouldPersistTaps="handled"
-        ListHeaderComponent={header} renderItem={({ item }) => <NotePassageLink note={item} onPress={() => openNoteReader(router, actorId, userBookId, item.id, 'collection')} />}
+        ListHeaderComponent={header} renderItem={({ item }) => <NotePassageLink note={item} onPress={() => openNoteReader(router, actorId, userBookId, item.id, 'list')} />}
         ListEmptyComponent={<View style={{ gap: LIBRARY_SPACING.sm }}>
           {notes.length === 0 ? <>
             <BookEmpty title="No notes yet" message="Add a note for this book." />

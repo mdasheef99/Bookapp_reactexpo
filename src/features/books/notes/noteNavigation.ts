@@ -9,7 +9,7 @@ const contexts = new Map<string, NoteRouteContext>();
 useAuthStore.subscribe((state, previous) => { if (state.session?.user.id !== previous.session?.user.id) contexts.clear(); });
 export function noteRouteContext(id: string | undefined, actorId: string, bookId: string): NoteRouteContext {
   const context = id ? contexts.get(id) : undefined;
-  return context?.actorId === actorId && context.bookId === bookId ? context : { actorId, bookId, origin: 'collection', canBack: false };
+  return context?.actorId === actorId && context.bookId === bookId ? context : { actorId, bookId, origin: 'list', canBack: false };
 }
 export function registerNoteContext(context: NoteRouteContext) { const id = randomUUID(); contexts.set(id, context); return id; }
 export function composeHref(bookId: string, contextId: string, noteId?: string, operationId?: string): Href {

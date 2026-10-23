@@ -141,7 +141,7 @@ function renderScreen(availableForLending = false) {
         review: 'Another reader’s review.', created_at: '2026-03-12T09:00:00Z',
         author: { user_id: 'reader-2', display_name: 'Reader Two', username: 'reader-two' },
     }]);
-    client.setQueryData(noteKeys.collection('reader-1', 'user-book-1'), []);
+    client.setQueryData(noteKeys.list('reader-1', 'user-book-1'), []);
     // SDD-10 D10-02: seed vault-pages so the absence checks below mean something —
     // if the Saved row were restored, this page would render and fail them.
     // The row stays absent, so this seed does not change the render or fixture.
