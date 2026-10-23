@@ -380,7 +380,9 @@ it('retains named B01 destinations, management actions, and accessible Back', as
     // the cover, before the status selector and the Add note primary.
     expect(buttons.indexOf(ui.getByRole('button', { name: 'Edit your rating and review' }))).toBeLessThan(buttons.indexOf(ui.getByRole('button', { name: 'Add note' })));
     expect(ui.getByText('Saved note preview')).toBeOnTheScreen();
-    fireEvent.press(ui.getByTestId('book-row-saved')); expect(ui.getByText('Retained saved excerpt')).toBeOnTheScreen();
+    // SDD-10 D10-02: the Saved pages row is no longer shown on Book Details.
+    expect(ui.queryByTestId('book-row-saved')).toBeNull();
+    expect(ui.queryByText('Retained saved excerpt')).toBeNull();
     fireEvent.press(ui.getByTestId('book-row-ownership')); fireEvent.press(ui.getByRole('button', { name: 'Ownership' })); fireEvent.press(ui.getByRole('button', { name: 'Condition' }));
     await waitFor(() => expect(booksService.updateOwnership).toHaveBeenCalledWith('entry', 'borrowed'));
     await waitFor(() => expect(booksService.updateCondition).toHaveBeenCalledWith('entry', 'good'));

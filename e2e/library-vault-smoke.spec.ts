@@ -174,11 +174,7 @@ test.describe('SDD-03 OCR Vault Library web smoke', () => {
     await page.getByText('Cancel').click();
     await expect(page.getByText('New Note')).toBeHidden();
 
-    // VaultPagesList - saved page 1 100 words
-    await expect(page.getByText('Saved Pages')).toBeVisible();
-    await expect(page.getByText('Page 1')).toBeVisible();
-    await expect(page.getByText(/100 words/)).toBeVisible();
-    // proves getPagesForBook wired
-    await expect(page.getByText(/word word/)).toBeVisible();
+    // SDD-10 D10-02: the Saved pages row is removed from Book Details — stays absent even with vault data present.
+    await expect(page.getByText('Saved Pages')).toHaveCount(0);
   });
 });

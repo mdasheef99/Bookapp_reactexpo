@@ -260,7 +260,7 @@ describe('1. Rating block position and row order', () => {
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
-      await ui.findByTestId('book-row-saved');
+      await ui.findByTestId('book-row-info');
       const orderIds: string[] = [];
       for (const node of ui.UNSAFE_root.findAll((n: any) => typeof n.type === 'string')) {
         if (node.props.accessibilityLabel === 'Add note' && node.props.accessibilityRole === 'button') {
@@ -274,7 +274,6 @@ describe('1. Rating block position and row order', () => {
       expect(orderIds).toEqual([
         'add-note',
         'book-row-notes',
-        'book-row-saved',
         'book-row-info',
         'book-row-ownership',
         'book-row-community',
@@ -293,7 +292,7 @@ describe('1. Rating block position and row order', () => {
     }
   });
 
-  it('hides All notes at 0 notes and while loading; hides Saved pages at 0 pages and while loading; shows 1 page / 3 pages collapsed', async () => {
+  it('hides All notes at 0 notes and while loading; never shows the Saved pages row (SDD-10 D10-02)', async () => {
     (manualNotesGateway.list as jest.Mock).mockImplementation(() => new Promise(() => {}));
     (userBookPagesService.getPagesForBook as jest.Mock).mockImplementation(() => new Promise(() => {}));
     const loadingUi = renderScreen();
@@ -301,6 +300,7 @@ describe('1. Rating block position and row order', () => {
       await loadingUi.findByText('Walden');
       expect(loadingUi.queryByTestId('book-row-notes')).toBeNull();
       expect(loadingUi.queryByTestId('book-row-saved')).toBeNull();
+      expect(loadingUi.queryByRole('button', { name: /Saved pages/ })).toBeNull();
     } finally {
       loadingUi.unmount();
       loadingUi.client.clear();
@@ -314,17 +314,24 @@ describe('1. Rating block position and row order', () => {
       await emptyUi.findByText('No notes yet.');
       expect(emptyUi.queryByTestId('book-row-notes')).toBeNull();
       expect(emptyUi.queryByTestId('book-row-saved')).toBeNull();
+      expect(emptyUi.queryByRole('button', { name: /Saved pages/ })).toBeNull();
     } finally {
       emptyUi.unmount();
       emptyUi.client.clear();
     }
 
+    (manualNotesGateway.list as jest.Mock).mockResolvedValue([makeNote('n1')]);
     (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValue([makePage('p1', 10)]);
     const onePageUi = renderScreen();
     try {
       await onePageUi.findByText('Walden');
-      const savedRow = await onePageUi.findByRole('button', { name: 'Saved pages, 1 page' });
-      expect(savedRow.props.accessibilityState.expanded).toBe(false);
+      await onePageUi.findByTestId('book-row-info');
+      expect(onePageUi.queryByTestId('book-row-saved')).toBeNull();
+      expect(onePageUi.queryByRole('button', { name: 'Saved pages, 1 page' })).toBeNull();
+      expect(onePageUi.queryByRole('button', { name: /Saved pages/ })).toBeNull();
+      await flush();
+      expect(userBookPagesService.getPagesForBook as jest.Mock).not.toHaveBeenCalled();
+      expect(onePageUi.client.getQueryState(['vault-pages', 'user-book-1'])).toBeUndefined();
     } finally {
       onePageUi.unmount();
       onePageUi.client.clear();
@@ -338,8 +345,13 @@ describe('1. Rating block position and row order', () => {
     const threePagesUi = renderScreen();
     try {
       await threePagesUi.findByText('Walden');
-      const savedRow = await threePagesUi.findByRole('button', { name: 'Saved pages, 3 pages' });
-      expect(savedRow.props.accessibilityState.expanded).toBe(false);
+      await threePagesUi.findByTestId('book-row-info');
+      expect(threePagesUi.queryByTestId('book-row-saved')).toBeNull();
+      expect(threePagesUi.queryByRole('button', { name: 'Saved pages, 3 pages' })).toBeNull();
+      expect(threePagesUi.queryByRole('button', { name: /Saved pages/ })).toBeNull();
+      await flush();
+      expect(userBookPagesService.getPagesForBook as jest.Mock).not.toHaveBeenCalled();
+      expect(threePagesUi.client.getQueryState(['vault-pages', 'user-book-1'])).toBeUndefined();
     } finally {
       threePagesUi.unmount();
       threePagesUi.client.clear();
@@ -348,13 +360,13 @@ describe('1. Rating block position and row order', () => {
 });
 
 describe('2. Plain rows', () => {
-  it('has no backgroundColor on any book-row-*, minHeight >= 56, and saved/info/ownership disclose independently', async () => {
+  it('has no backgroundColor on any book-row-*, minHeight >= 56, and info/ownership disclose independently', async () => {
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
-      await ui.findByTestId('book-row-saved');
+      await ui.findByTestId('book-row-info');
       const rows = ui.getAllByTestId(/^book-row-/);
-      expect(rows.length).toBe(5);
+      expect(rows.length).toBe(4);
 
       for (const row of rows) {
         const flat = StyleSheet.flatten(row.props.style);
@@ -373,15 +385,17 @@ describe('2. Plain rows', () => {
       }
 
       // The lower review row is gone (SDD-07 §14.2b); the top block owns the review entry.
+      // SDD-10 D10-02: the Saved pages row is gone even though vault-pages data has pages.
       expect(ui.queryByTestId('book-row-review')).toBeNull();
+      expect(ui.queryByTestId('book-row-saved')).toBeNull();
       expect(ui.getByTestId('book-rating-review')).toBeTruthy();
 
-      for (const id of ['saved', 'info', 'ownership'] as const) {
+      for (const id of ['info', 'ownership'] as const) {
         expect(ui.getByTestId(`book-row-${id}`).props.accessibilityState.expanded).toBe(false);
         fireEvent.press(ui.getByTestId(`book-row-${id}`));
         expect(ui.getByTestId(`book-row-${id}`).props.accessibilityState.expanded).toBe(true);
       }
-      for (const id of ['saved', 'info', 'ownership'] as const) {
+      for (const id of ['info', 'ownership'] as const) {
         expect(ui.getByTestId(`book-row-${id}`).props.accessibilityState.expanded).toBe(true);
       }
     } finally {
@@ -864,17 +878,20 @@ describe('8. Remove from library', () => {
 });
 
 describe('9. Offline disables all row writes while keeping rows expandable', () => {
-  it('disables review navigation, ownership, condition, saved-page delete, and Remove when offline', async () => {
+  it('disables review navigation, ownership, condition, and Remove when offline (no Saved pages row)', async () => {
     mockOffline = true;
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
-      const savedRow = await ui.findByTestId('book-row-saved');
+      await ui.findByTestId('book-row-info');
+      // SDD-10 D10-02: no Saved pages row even offline with pages present.
+      expect(ui.queryByTestId('book-row-saved')).toBeNull();
+      expect(ui.queryByRole('button', { name: /Saved pages/ })).toBeNull();
+      expect(ui.queryByRole('button', { name: 'Delete page 42' })).toBeNull();
 
       const removeBtn = ui.getByRole('button', { name: 'Remove from library' });
       expect(removeBtn.props.accessibilityState.disabled).toBe(true);
 
-      fireEvent.press(savedRow);
       fireEvent.press(ui.getByTestId('book-row-ownership'));
 
       // Rating block (SDD-07 §14.2b): stars and the text button are disabled offline with the existing caption.
@@ -886,9 +903,6 @@ describe('9. Offline disables all row writes while keeping rows expandable', () 
 
       fireEvent.press(ui.getByTestId('book-rating-display'));
       expect(bookReviewService.update).not.toHaveBeenCalled();
-
-      const deletePageBtn = ui.getByRole('button', { name: 'Delete page 42' });
-      expect(deletePageBtn.props.accessibilityState.disabled).toBe(true);
 
       const touchables = ['Ownership', 'Condition'].flatMap(label =>
         within(ui.getByLabelText(label)).getAllByRole('radio'),
@@ -919,15 +933,16 @@ describe('10. DP-03 and DP-01 invariants with rows', () => {
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
-      await ui.findByTestId('book-row-saved');
+      await ui.findByTestId('book-row-info');
       await ui.findByRole('button', { name: 'Community reviews, 1 review' });
+      expect(ui.queryByTestId('book-row-saved')).toBeNull();
 
       expectSinglePrimary(ui);
       // D07-23: the top rating group, review button and quote sit before the
       // primary and may push the count past 4.
       expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'Edit your rating and review', 'Open your review, First line of review', 'radiogroup', 'Add note']);
 
-      for (const id of ['saved', 'info', 'ownership', 'community']) {
+      for (const id of ['info', 'ownership', 'community']) {
         fireEvent.press(ui.getByTestId(`book-row-${id}`));
       }
       expectSinglePrimary(ui);
@@ -973,7 +988,8 @@ describe('10. DP-03 and DP-01 invariants with rows', () => {
     try {
       await ui.findByText('Walden');
       await ui.findByTestId('library-reading-dates-text');
-      await ui.findByTestId('book-row-saved');
+      await ui.findByTestId('book-row-info');
+      expect(ui.queryByTestId('book-row-saved')).toBeNull();
       const controls = controlsUpToPrimary(ui);
       expect(controls).toEqual(['Back to Library', 'Edit your rating and review', 'Open your review, First line of review', 'radiogroup', 'Add note']);
       expect(ui.getByTestId('library-reading-dates-edit')).toBeTruthy();

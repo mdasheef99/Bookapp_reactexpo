@@ -59,7 +59,6 @@ import {
     Ownership,
     Condition
 } from '@/components/library';
-import { VaultPagesList, useVaultPages } from '@/components/library/VaultPagesList';
 import { navigateBackOrFallback } from '@/lib/navigation';
 
 const formatReviewDate = (value?: string | null) => {
@@ -83,7 +82,6 @@ const getReviewerName = (review: {
 }) => review.author.display_name?.trim() || review.author.username?.trim() || 'Community reader';
 
 type OpenRowsState = {
-    saved?: boolean;
     info?: boolean;
     ownership?: boolean;
     community?: boolean;
@@ -180,8 +178,6 @@ export default function BookDetailScreen() {
         queryFn: ({ signal }) => manualNotesGateway.list(user!.id, bookId, signal),
         enabled: !!user?.id && !!bookId,
     });
-
-    const { data: vaultPages, isLoading: vaultPagesLoading } = useVaultPages(bookId ?? '');
 
     // Mutation helpers
     const invalidateQueries = () => {
@@ -461,7 +457,6 @@ export default function BookDetailScreen() {
 
         // Skip blank lines so the row never shows an empty first line.
         const reviewFirstLine = userBook.review?.split('\n').find((line: string) => line.trim() !== '') ?? '';
-        const showSavedPages = !vaultPagesLoading && Array.isArray(vaultPages) && vaultPages.length > 0;
 
         const publishedYear = book.published_date ? String(book.published_date).slice(0, 4) : '';
         const hasBookInfo = Boolean(
@@ -746,18 +741,6 @@ export default function BookDetailScreen() {
                                     link
                                     onPress={() => router.push({ pathname: '/(tabs)/library/notes', params: { userBookId: bookId } })}
                                 />
-                            )}
-
-                            {showSavedPages && (
-                                <DetailRow
-                                    id="saved"
-                                    label="Saved pages"
-                                    secondary={`${vaultPages.length} ${vaultPages.length === 1 ? 'page' : 'pages'}`}
-                                    expanded={Boolean(openRows.saved)}
-                                    onPress={() => toggleRow('saved')}
-                                >
-                                    <VaultPagesList userBookId={bookId!} disabled={isOffline} />
-                                </DetailRow>
                             )}
 
                             <DetailRow

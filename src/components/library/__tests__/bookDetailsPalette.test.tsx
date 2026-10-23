@@ -7,6 +7,7 @@ import * as path from 'path';
 import BookDetailScreen from '../../../../app/(tabs)/library/[bookId]';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { noteKeys } from '@/features/books/notes/manualNoteContract';
+import { userBookPagesService } from '@/features/books/services/userBookPagesService';
 import { getLibraryAppearance } from '../LibraryAppearance';
 import { ConditionPicker } from '../ConditionPicker';
 import type { ThemePhase } from '@/hooks/useTheme';
@@ -141,9 +142,19 @@ function renderScreen(availableForLending = false) {
         author: { user_id: 'reader-2', display_name: 'Reader Two', username: 'reader-two' },
     }]);
     client.setQueryData(noteKeys.collection('reader-1', 'user-book-1'), []);
-    client.setQueryData(['vault-pages', 'user-book-1'], [{
-        id: 'page-1', page_number: 12, word_count: 8,
-        updated_at: '2026-03-12T09:00:00Z', content_excerpt: 'A saved excerpt.',
+    // SDD-10 D10-02: seed vault-pages so the absence checks below mean something —
+    // if the Saved row were restored, this page would render and fail them.
+    // The row stays absent, so this seed does not change the render or fixture.
+    (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValue([{
+        id: 'page-12',
+        user_id: 'reader-1',
+        user_book_id: 'user-book-1',
+        page_number: 12,
+        content_excerpt: 'A saved excerpt.',
+        full_text: 'A saved excerpt.',
+        word_count: 3,
+        created_at: '2026-03-12T09:00:00Z',
+        updated_at: '2026-03-12T09:00:00Z',
     }]);
     return { client, ...render(<QueryClientProvider client={client}><BookDetailScreen /></QueryClientProvider>) };
 }
@@ -166,11 +177,14 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
             // The top rating block (SDD-07 §14.2b) replaces the old review row:
             // stars stay visible with no inline editor; text editing lives on
             // the review page. Only the expandable rows are pressed here.
-            for (const id of ['saved', 'info', 'ownership', 'community']) {
+            // SDD-10 D10-02: the Saved pages row is gone.
+            expect(ui.queryByTestId('book-row-saved')).toBeNull();
+            for (const id of ['info', 'ownership', 'community']) {
                 fireEvent.press(ui.getByTestId(`book-row-${id}`));
             }
             await waitFor(() => expect(ui.getByTestId('book-rating-review')).toBeTruthy());
             expect(ui.queryByTestId('book-row-review')).toBeNull();
+            expect(ui.queryByTestId('book-row-saved')).toBeNull();
             expect(ui.queryByTestId('library-review-input')).toBeNull();
             const expanded = normalize(ui.toJSON());
             fireEvent.press(ui.getByRole('button', { name: 'Remove from library' }));
@@ -207,7 +221,8 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
             }
             expect(ui.queryByText('Completed')).toBeNull();
             expect(within(ui.getByLabelText('Reading status')).UNSAFE_queryAllByType('Ionicons' as any)).toHaveLength(0);
-            fireEvent.press(ui.getByTestId('book-row-saved'));
+            // SDD-10 D10-02: the Saved pages row is gone.
+            expect(ui.queryByTestId('book-row-saved')).toBeNull();
             fireEvent.press(ui.getByTestId('book-row-ownership'));
             // No lower review row (SDD-07 §14.2b); the top block shows stars, the
             // Edit button and the serif quote that opens the review page.
@@ -234,9 +249,9 @@ describe.each(PHASES)('Book Details palette: %s', phase => {
             expect(outline).toHaveLength(3);
             filled.forEach(node => expect(node.props.color).toBe(colors.textPrimary));
             outline.forEach(node => expect(node.props.color).toBe(colors.textSecondary));
-            expect(StyleSheet.flatten(ui.getByText('Page 12').props.style).color).toBe(colors.textSecondary);
-            expect(StyleSheet.flatten(ui.getByText('A saved excerpt.').props.style).color).toBe(colors.textPrimary);
-            expect(StyleSheet.flatten(ui.getByText('Delete page 12').props.style).color).toBe(colors.accent);
+            expect(ui.queryByText('Page 12')).toBeNull();
+            expect(ui.queryByText('A saved excerpt.')).toBeNull();
+            expect(ui.queryByText('Delete page 12')).toBeNull();
             expect(StyleSheet.flatten(ui.getByText('Remove from library').props.style).color).toBe(colors.accent);
             fireEvent.press(ui.getByRole('button', { name: 'Remove from library' }));
             expect(backgroundStyle(ui.getByText('Remove “Beloved” from your library?'))).toMatchObject({ backgroundColor: colors.bgRaised });

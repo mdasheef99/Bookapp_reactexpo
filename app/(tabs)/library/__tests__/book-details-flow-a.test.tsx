@@ -614,7 +614,7 @@ describe('DP-01 focus order', () => {
     }
   });
 
-  it('keeps single primary and focus order up to Add note with all rows present and expanded', async () => {
+  it('keeps single primary and focus order up to Add note with all rows present and expanded (no Saved pages row)', async () => {
     (booksService.getBookDetails as jest.Mock).mockResolvedValue(
       makeBook({ review: 'First line', book: { ...makeBook().book, isbn_13: '9780000000001' } }),
     );
@@ -645,12 +645,19 @@ describe('DP-01 focus order', () => {
     const ui = renderScreen();
     try {
       await ui.findByText('Walden');
-      await ui.findByTestId('book-row-saved');
+      await ui.findByTestId('book-row-info');
       await ui.findByRole('button', { name: 'Community reviews, 1 review' });
+      // SDD-10 D10-02: the Saved pages row stays absent even with vault-pages data present.
+      expect(ui.queryByTestId('book-row-saved')).toBeNull();
+      expect(ui.queryByRole('button', { name: /Saved pages/ })).toBeNull();
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      expect(userBookPagesService.getPagesForBook as jest.Mock).not.toHaveBeenCalled();
       expectSinglePrimary(ui);
       expect(controlsUpToPrimary(ui)).toEqual(['Back to Library', 'Edit your rating and review', 'Open your review, First line', 'radiogroup', 'Add note']);
 
-      for (const id of ['saved', 'info', 'ownership', 'community']) {
+      for (const id of ['info', 'ownership', 'community']) {
         fireEvent.press(ui.getByTestId(`book-row-${id}`));
       }
       expectSinglePrimary(ui);
