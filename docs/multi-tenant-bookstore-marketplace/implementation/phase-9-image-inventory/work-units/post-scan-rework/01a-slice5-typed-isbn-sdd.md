@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft, full design for 5a and 5b (2026-10-22). **Approved by the Owner 2026-10-22, with D5-1 to D5-6 as recommended.** Reviewed twice (Sonnet, then DeepSeek; Argon unavailable both times), all verified findings applied (§17). No code, no migration file yet. |
+| **Status** | Draft, full design for 5a and 5b (2026-10-22). **Approved by the Owner 2026-10-22, with D5-1 to D5-6 as recommended.** Reviewed twice (Sonnet, then DeepSeek; Argon unavailable both times), all verified findings applied (§17). **5a implemented locally 2026-10-23** (branch `claude/phase9-psr-slice5a-typed-isbn`; M78 file created, not applied; two code-review rounds; one Owner-approved §8 clarification; evidence in tracker 38 §27). 5b not started. |
 | **Build** | Two parts from this one SDD: 5a, then 5b; one branch and PR each (SDD-1 §8, PSR-R12). |
 | **Parent** | [SDD-1 §7](./01-review-screen-sdd.md) (design direction) under [SDD-0](./00-overview-sdd.md) |
 | **Decisions** | PSR-D06, PSR-D07, PSR-D10, PSR-D13; rules PSR-R06, R07, R09, R10, R14 |
@@ -432,6 +432,11 @@ Functions M78 replaces or adds, and nothing else:
 - **ISBN helper:** `src/features/imageInventory/review/isbn.ts`, a copy of the
   shared `normalizeIsbnClue` rules (strip spaces and hyphens; ISBN-10 with `X`;
   convert to ISBN-13; check digit). A parity test runs both on the same table.
+  **Clarification (Owner, 2026-10-23):** the ISBN box also rejects a 13-digit
+  value that does not start with 978 or 979, with the same "Check the ISBN"
+  message, before any command. This matches the column check (§5.1), the
+  command's input check (§5.5) and the wire schema (§7). The shared
+  `normalizeIsbnClue` used by the automatic scan path is unchanged.
 - **Sheet** (`CandidateEditionPicker.tsx`, above Search Books):
   - `TextInput` with `accessibilityLabel="ISBN"`, hint text, `keyboardType`
     suited to digits and `X`, max 17 characters.
@@ -760,3 +765,8 @@ and registrations (§5.5, §7, AC5a-22); F6 5b pending record, success after the
 last step, closed session (§15.3–§15.5); F7 forced reset (§5.4, AC5a-16); F8
 shape-only check (§5.1); F9 defensive label (§5.6); F10 citations (B7, §5.7, §16);
 F11 shared guard and input checks (§5.5); F12 extra checks (AC5a-14, 20, 21).
+
+Implementation review, 2026-10-23: round-2 code review (Haiku) found that the
+app helper accepted 13-digit values outside 978/979, which the column, command
+and wire schema refuse. The Owner approved the §8 clarification: the app's ISBN
+box rejects them with the "Check the ISBN" message. No other design change.

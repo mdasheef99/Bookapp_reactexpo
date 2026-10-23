@@ -175,10 +175,10 @@ describe('Task 5 review/Add HTTP compatibility (picker §§6-7, Unit 7A §§3-5)
 });
 describe('reason capability preserves authenticated RPC authority', () => {
   const headers = (authorization: string, clientInfo: string | null) => require('../_shared/imageInventory/runtime/ownerEditionPickerGateway').editionPickerRpcHeaders(authorization, clientInfo);
-  it('forwards only the exact supported standard-header value alongside caller authorization', () => {
-    expect(headers('Bearer owner-fixture', 'bookconnect/edition-reasons-v1')).toEqual({ Authorization: 'Bearer owner-fixture', 'X-Client-Info': 'bookconnect/edition-reasons-v1' });
+  it.each(['bookconnect/edition-reasons-v1', 'bookconnect/edition-reasons-v2'])('forwards the exact supported %s alongside caller authorization', clientInfo => {
+    expect(headers('Bearer owner-fixture', clientInfo)).toEqual({ Authorization: 'Bearer owner-fixture', 'X-Client-Info': clientInfo });
   });
-  it.each([null, 'supabase-js-web/2', 'bookconnect/edition-reasons-v1, other', 'bookconnect/edition-reasons-v2'])('keeps unsupported/legacy %s headers unchanged', clientInfo => {
+  it.each([null, 'supabase-js-web/2', 'bookconnect/edition-reasons-v1, other', 'bookconnect/edition-reasons-v2, other', ' bookconnect/edition-reasons-v2'])('keeps unsupported/legacy %s headers unchanged', clientInfo => {
     expect(headers('Bearer owner-fixture', clientInfo)).toEqual({ Authorization: 'Bearer owner-fixture' });
   });
   it('passes safe diagnostic reasons through the same owned read RPC, without any mutation', async () => {

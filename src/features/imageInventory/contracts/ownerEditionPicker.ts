@@ -27,6 +27,11 @@ export const editionRequestSchemas = {
     ...command, action: z.literal('request_candidate_edition_options'),
     expectedRequestGeneration: count,
   }).strict(),
+  // Slice 5 SDD §7: the Owner stores a normalized ISBN, or clears it.
+  set_candidate_isbn: z.object({
+    ...command, action: z.literal('set_candidate_isbn'), expectedCandidateVersion: version,
+    isbn13: z.string().regex(/^97[89][0-9]{10}$/u).nullable(),
+  }).strict(),
   select_candidate_edition: z.discriminatedUnion('source', [
     z.object({
       ...selectCommand, source: z.literal('edition_option'), optionsVersion: version, optionId: uuid,
@@ -48,7 +53,7 @@ const googleBooksUrl = z.string().min(1).max(2048).refine((value) => {
 }, 'book link is not approved');
 
 // Owner decision2026-10-13 / picker §3.1/§9: display-only, opt-in compatible reasons.
-export const EDITION_REASONS_CLIENT_INFO = 'bookconnect/edition-reasons-v1' as const;
+export const EDITION_REASONS_V2_CLIENT_INFO = 'bookconnect/edition-reasons-v2' as const;
 export const editionRejectionReasonSchema = z.enum([
   'title_differs', 'author_differs', 'language_unknown', 'language_differs',
   'volume_differs', 'identity_unverified', 'result_unavailable',
@@ -87,6 +92,7 @@ export const editionChoicesSchema = z.object({
   optionsExpiresAt: timestamp.nullable(), rows: z.array(editionRowSchema).max(10),
   selection: editionSelection.nullable(), lookupStatus: z.enum(['idle', 'pending', 'ready', 'failed']),
   candidateVersion: version, metadataRevision: version, reviewVersion: version.nullable(),
+  ownerIsbn13: z.string().regex(/^97[89][0-9]{10}$/u).nullable().optional(),
 }).strict().superRefine((value, context) => {
   if (value.rows.some((row, index) => row.ordinal !== index)
     || new Set(value.rows.map((row) => row.optionId)).size !== value.rows.length
@@ -98,17 +104,24 @@ export const editionLookupReceiptSchema = z.object({
   operationId: uuid.nullable(), status: z.enum(['pending', 'ready', 'failed']),
   requestGeneration: count, optionsVersion: count, available: z.boolean(),
 }).strict();
+export const setCandidateIsbnResponseSchema = z.object({
+  sessionId: uuid, candidateId: uuid, candidateVersion: version, metadataRevision: version,
+  requestGeneration: count, ownerIsbn13: z.string().regex(/^97[89][0-9]{10}$/u).nullable(),
+}).strict();
 
 export const editionResponseSchemas = {
   read_candidate_edition_choices: editionChoicesSchema,
   request_candidate_edition_options: editionLookupReceiptSchema,
   select_candidate_edition: editionChoicesSchema,
+  set_candidate_isbn: setCandidateIsbnResponseSchema,
 } as const;
 
 export type ReadEditionChoicesRequest = z.infer<typeof editionRequestSchemas.read_candidate_edition_choices>;
 export type RequestEditionOptionsRequest = z.infer<typeof editionRequestSchemas.request_candidate_edition_options>;
 export type SelectEditionRequest = z.infer<typeof editionRequestSchemas.select_candidate_edition>;
-export type OwnerEditionPickerRequest = ReadEditionChoicesRequest | RequestEditionOptionsRequest | SelectEditionRequest;
+export type SetCandidateIsbnRequest = z.infer<typeof editionRequestSchemas.set_candidate_isbn>;
+export type SetCandidateIsbnResponse = z.infer<typeof setCandidateIsbnResponseSchema>;
+export type OwnerEditionPickerRequest = ReadEditionChoicesRequest | RequestEditionOptionsRequest | SelectEditionRequest | SetCandidateIsbnRequest;
 export type OwnerEditionPickerAction = keyof typeof editionRequestSchemas;
 export type EditionDisplayMetadata = z.infer<typeof metadataSnapshotSchema>;
 export type EditionRow = z.infer<typeof editionRowSchema>;
@@ -125,7 +138,7 @@ export function parseOwnerEditionPickerRequest(value: unknown): OwnerEditionPick
 }
 export function parseOwnerEditionPickerResponse(
   action: OwnerEditionPickerAction, value: unknown,
-): EditionChoices | EditionLookupReceipt {
+): EditionChoices | EditionLookupReceipt | SetCandidateIsbnResponse {
   const result = editionResponseSchemas[action]?.safeParse(value);
   if (!result?.success) throw new Error('invalid Owner edition-picker response');
   return result.data;

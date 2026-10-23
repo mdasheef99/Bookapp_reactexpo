@@ -1183,3 +1183,74 @@ Next authorized action and gate: write the 5a Codex brief and have it reviewed
 ```
 
 Active work unit: `post_scan_rework_slice5a_typed_isbn_sheet`. Exact next authorized action: review the 5a Codex brief; then, on the Owner's approval of migration-file creation, cut the 5a branch from origin/main and send the brief.
+
+## 27. Slice 5a built, reviewed in two rounds and verified locally, 2026-10-23
+
+```text
+Date/session: 2026-10-22/23, orchestrating Claude session; Codex gpt-6.1-sol
+  (xhigh) wrote the code in worktree phase9-psr-slice5a-typed-isbn on branch
+  claude/phase9-psr-slice5a-typed-isbn (cut from dcb2178 = origin/main 5946e68
+  plus the slice 5 SDD commit).
+Authorized work unit and scope: Owner approved creating the M78 migration file
+  (local only, not applied), committing the slice 5 docs, cutting the 5a branch
+  and sending the reviewed brief; later both review-fix rounds, the 978/979
+  clarification, Haiku's independent test run, docs and a local commit (no push).
+Completed: SDD 01a §1-§14 (5a). M78 file
+  20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql. Worker ISBN
+  mode (search -> edition chosen by ISBN match -> /books/OL...M.json as stage
+  `edition` -> authors); decoder accepts edition contexts without input and
+  observation ids. Edge action `set_candidate_isbn` with its own RPC route and
+  exact v1/v2 header forwarding. App ISBN box, "Search by ISBN", "Search by
+  title instead", ISBN-mode retry, pending record per press (review save alone
+  -> set -> re-read -> exactly one request), per-code recovery (SDD §9).
+Brief review: Sonnet (15 findings) and OpenCode DeepSeek (18); all verified
+  and applied before sending (Argon unavailable at the provider).
+Code review round 1: author traced review (clean apart from one Low note); GLM
+  5.3 Flash (A clean; B one hardening note; C 2 Low), MiniMax 3.1 Flash (A 1
+  Low; C 4), Muse Spark 1.3 (B clean), DeepSeek (A and B clean; C incomplete).
+  Six confirmed fixes: stale title-mode retry hidden in ISBN mode; version-
+  conflict recovery; ISBN keyboard; discovery/readiness cache refresh; worker
+  ISBN mode from query strategy; parity test corrected, plus a real M78 case.
+Code review round 2: Codex gpt-6-luna read-only on the whole slice (1 Low),
+  GLM (2), Haiku (4), Muse (1, rejected: the iOS numbers-and-punctuation
+  keyboard can switch to letters). Five confirmed fixes: "card changed" errors
+  map to reload; async retry; app rejects ISBN-13 outside 978/979 (Owner-
+  approved SDD §8 clarification); every refusal ends "Close the sheet"; ISBN-
+  mode retry replaces the title "Search Books" button.
+Deviations: test edit by the orchestrator in phase9EditionExplicitMatching
+  L93 (the unknown-header case uses edition-reasons-v3 because v2 is now
+  supported). Open Library fixtures are synthetic provider-shaped JSON, not
+  captured responses. The app ISBN helper deliberately differs from the shared
+  one on the 978/979 prefix (test pins it).
+Files/components/migrations: M78 (new, not applied); worker metadataJobContext,
+  openLibrary adapter and transport; shared and app ownerEditionPicker
+  contracts; ownerEditionPickerGateway, ingestion, ownerUxRequests; app
+  service, commands, transport, queries, new ownerEditionPickerIsbnMutation,
+  review/isbn.ts, review/isbnSearchRecovery.ts, CandidateEditionIsbnSearch,
+  CandidateEditionPicker; new and extended tests (DB, Postgres, worker, Edge,
+  app).
+Verification actually run:
+  Codex (final): focused app Jest 65/65; full Jest 2,225 passed, 2 timeouts in
+  untouched files that pass alone; tsc 0 errors outside src/features/books/
+  export; worker build clean; M78 PGlite 28/28; structural metadata 15/15;
+  git diff --check clean.
+  Orchestrator: real-Postgres runner -IncludeEditionPicker 19/19 including two
+  ISBN lock races (Codex's sandbox cannot run initdb, error 87); edited
+  regression suite plus M78 suite 75/75; the 3 phase9MetadataFoundation
+  failures reproduced on the base without 5a code (pre-existing).
+  Haiku independent run (no new failures): tsc only the 8 known books/export
+  errors; Jest 2,227 passed, 4 skipped, 0 failed; worker build clean;
+  test:phase9:db 843/846 (the 3 known phase9MetadataFoundation failures);
+  structural metadata 15/15; Postgres -IncludeEditionPicker all PASS markers;
+  git diff --check clean.
+Supabase/external mutations: none. No migration applied, no deploy, no
+  provider call (fixtures only).
+Known pre-existing: 3 phase9MetadataFoundation failures; tsc errors in
+  src/features/books/export from missing packages in the shared node_modules.
+Next authorized action and gate: Owner approval to (1) preflight and apply M78
+  to ahntbtktjjmvfosgkmgn, (2) deploy the metadata worker, (3) deploy the
+  owner-ingestion Edge function, in that order; then the in-app check (AC5a-1,
+  AC5a-16c), sync with origin/main and the 5a PR. 5b follows 5a.
+```
+
+Active work unit: `post_scan_rework_slice5a_typed_isbn_sheet`. Exact next authorized action: on the Owner's approval, preflight and apply M78 to `ahntbtktjjmvfosgkmgn`, deploy the metadata worker and then the owner-ingestion Edge function, then run the in-app check (AC5a-1, AC5a-16c).

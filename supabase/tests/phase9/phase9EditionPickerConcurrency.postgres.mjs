@@ -1,5 +1,5 @@
 // Task 8 LOCAL proof. Picker SDD §§7/9-11, EP-AC07/09/10/12-16/18/20.
-// Invoked ONLY by run-phase9-bookstore-first-postgres.ps1 -IncludeEditionPicker after unchanged M65-M70.
+// Invoked ONLY by run-phase9-bookstore-first-postgres.ps1 -IncludeEditionPicker after unchanged M65-M78.
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { randomUUID } from 'node:crypto';
@@ -13,7 +13,7 @@ before(async () => {
   await provider();
   assert.equal(await sql('SELECT current_user', 'authenticated'), 'authenticated');
   assert.equal(await sql('SELECT current_user', 'service_role'), 'service_role');
-  console.log('EP8_STACK: unchanged Phase 9 M01-M62 (M09 excluded), M65-M70; no M63/M64');
+  console.log('EP8_STACK: unchanged Phase 9 M01-M62 (M09 excluded), M65-M78; no M63/M64');
 });
 after(verifyConnectionsClosed);
 function conflict(value, pattern = /P9_(?:VERSION_CONFLICT|CANDIDATE_VERSION_CONFLICT|STATE_CONFLICT)/) {
@@ -44,6 +44,34 @@ test('EP-AC12: parallel selections at the same candidate/version accept one choi
   assert.equal(current.metadataRevision, before.metadata_revision + 1);
   assert.deepEqual(await inventory(f), []);
 });
+
+// Slice 5a SDD §§5.5/12: hold one real command transaction, then prove the contender
+// waits on its session lock and loses at the version/generation fence after release.
+for (const contender of ['request', 'select']) {
+  test('AC5a lock order: ISBN set wins against concurrent ' + contender + ' without deadlock', async () => {
+    const f = await withOptions(), before = await choices(f);
+    const command = rpcSql('phase9_set_candidate_isbn_v1', [f.sessionId, f.candidateId,
+      randomUUID(), randomUUID(), before.candidateVersion, '9780306406157']);
+    const competing = contender === 'request' ? lookupSql(f, before.requestGeneration)
+      : selectSql(f, before, f.result.rows[0].optionId);
+    const raced = await race('isbn-' + contender, ownerAction(command, f), ownerAction(competing, f));
+    conflict(raced.contender);
+    assert.equal(raced.held.ownerIsbn13, '9780306406157');
+    const current = await choices(f);
+    assert.equal(current.candidateVersion, before.candidateVersion + 1);
+    assert.equal(current.metadataRevision, before.metadataRevision + 1);
+    assert.equal(current.selection, null);
+    assert.deepEqual(current.rows, []);
+    assert.equal(await sql("SELECT count(*) FROM public.phase9_idempotency_keys WHERE actor_or_service="
+      + q(f.ownerId) + " AND operation='EP_ISBN_V1'"), '1');
+    // The validated helper is the first lock-taking statement; its body preserves
+    // session → candidate order, followed by state insertion/update in the command.
+    const body = await sql("SELECT prosrc FROM pg_proc WHERE oid='public.phase9_set_candidate_isbn_v1(uuid,uuid,uuid,text,integer,text)'::regprocedure");
+    assert.ok(body.indexOf('phase9_edition_assert_owner_candidate') < body.indexOf('INSERT INTO public.phase9_candidate_edition_state'));
+    const guard = await sql("SELECT prosrc FROM pg_proc WHERE oid='marketplace_sec.phase9_edition_assert_owner_candidate(uuid,uuid)'::regprocedure");
+    assert.ok(guard.indexOf('phase9_owner_ux_lock_active_session') < guard.indexOf('FOR UPDATE'));
+  });
+}
 
 test('EP-AC12/13: selection wins against stale Add; only a fresh Save/Add can materialize the new edition', async () => {
   const f = await chosen(), before = await choices(f), staleAdd = await addSql(f);

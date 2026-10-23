@@ -1,3 +1,15 @@
+## 2026-10-23 - Post-scan slice 5a (typed ISBN) built and reviewed; M78 file created, not applied
+
+Phase 9 remains active. Slice 5a is implemented on branch `claude/phase9-psr-slice5a-typed-isbn` per the approved SDD 01a §1–§14. The Owner can type an ISBN in the edition sheet, and Search Books then looks up that exact edition. The slice includes migration file M78 (`20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql`), which is created and tested locally but **not applied**.
+
+It went through two code-review rounds: GLM, MiniMax, Muse, DeepSeek, Haiku and Codex gpt-6-luna. Eleven confirmed fixes were applied. The Owner approved one SDD §8 clarification: the app rejects ISBN-13 values outside 978/979.
+
+Local verification: real-Postgres lock tests 19/19 and the PGlite M78 suite. Jest and the independent Haiku run are in [tracker 38 §27](implementation/phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#27-slice-5a-built-reviewed-in-two-rounds-and-verified-locally-2026-10-23). The 3 known phase9MetadataFoundation failures predate this slice.
+
+Owner authorized local M78 creation on 2026-10-22; M78 status: CREATED_LOCAL / NOT_APPLIED. No database, Storage, provider or deploy change. Committed locally on the 5a branch; not pushed.
+
+Active work unit: `post_scan_rework_slice5a_typed_isbn_sheet`. Exact next authorized action: on the Owner's approval, preflight and apply M78 to `ahntbtktjjmvfosgkmgn`, deploy the metadata worker and then the owner-ingestion Edge function, then run the in-app check (AC5a-1, AC5a-16c); then sync with origin/main and open the 5a PR.
+
 ## 2026-10-22 - Post-scan slice 5 (typed ISBN) SDD approved; reorder recorded (docs only)
 
 Phase 9 remains active. The Owner approved the slice 5 SDD (`work-units/post-scan-rework/01a-slice5-typed-isbn-sdd.md`; 5a edition-sheet ISBN with migration M78, 5b optional ISBN in "Add a book" with no migration) and decisions D5-1 to D5-6 as recommended. D5-1 pulls slice 5 forward: it is built after 4b and before Stage 2 (slices 11 and 13); SDD-0 §7.1/§7.2a and SDD-1 §7 now point to it. Two reviews (Sonnet; OpenCode DeepSeek v4.1 Flash) found 21 issues plus one author finding, all verified and applied; OpenCode Argon was unavailable at the provider. The design also fixes a found defect: the worker refuses hand-added cards, so Search Books never worked for them. No code, no migration file, no database or Storage write; read-only SQL and public Open Library GETs only. Evidence: [tracker 38 §26](implementation/phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#26-slice-5-sdd-written-reviewed-and-approved-reorder-recorded-2026-10-22).

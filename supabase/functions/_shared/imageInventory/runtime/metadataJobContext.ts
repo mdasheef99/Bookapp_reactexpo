@@ -28,8 +28,8 @@ export type MetadataJobContext = Readonly<{
   candidateVersion: number;
   storeId: string;
   sessionId: string;
-  inputId: string;
-  observationId: string;
+  inputId: string | null;
+  observationId: string | null;
   title: string;
   authors: readonly string[];
   isbnClue: string | null;
@@ -149,8 +149,10 @@ export function decodeMetadataJobContext(value: unknown): MetadataJobContext {
     optionsAvailable: purpose === 'edition_options' && row.optionsAvailable === true,
     optionsExpiresAt: purpose === 'edition_options' ? nullableText(row.optionsExpiresAt) : null,
     candidateVersion: row.candidateVersion as number, storeId: metadataText(row.storeId),
-    sessionId: metadataText(row.sessionId), inputId: metadataText(row.inputId),
-    observationId: metadataText(row.observationId), title: metadataText(row.title),
+    sessionId: metadataText(row.sessionId),
+    inputId: purpose === 'edition_options' ? nullableText(row.inputId) : metadataText(row.inputId),
+    observationId: purpose === 'edition_options' ? nullableText(row.observationId) : metadataText(row.observationId),
+    title: purpose === 'edition_options' && row.title === '' ? '' : metadataText(row.title),
     authors: Object.freeze([...row.authors] as string[]), isbnClue: nullableText(row.isbnClue),
     publisherClue: nullableText(row.publisherClue), language: metadataText(row.language),
     script: nullableText(row.script), queryIdentity: metadataText(row.queryIdentity),

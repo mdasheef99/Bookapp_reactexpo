@@ -1652,3 +1652,15 @@ Preflight (2026-10-17, project ahntbtktjjmvfosgkmgn re-verified): latest live mi
 
 M75/M77 application (2026-10-17): APPLIED_VERIFIED. M75 live version 20261017083027, M77 live version 20261017083206, from commit 850121e; statement SHA-256 equals the files; all seven function bodies and ACLs match the expected local hashes. Functions only; no data change at application. Tracker 37 §67.
 
+
+## 2026-10-23 - M78 owner ISBN edition lookup (ledger)
+
+Owner authorized creation of the M78 file on 2026-10-22 ("I approve creating the M78 migration file (local only, not applied)"). Local file: 20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql (slice 5a, SDD 01a §5/§5.8). Effects, as designed:
+- Adds the nullable column `image_extraction_candidates.owner_isbn13` with the shape-only check `^97[89][0-9]{10}$`.
+- Replaces `marketplace_sec.phase9_edition_query_identity` (ISBN-only key first), `phase9_edition_worker_context` (M73 body; ISBN-mode title, authors, isbnClue and publisherClue), `phase9_edition_identity_change` plus its trigger (`UPDATE OF … owner_isbn13`, clear rule, forced reset), `phase9_edition_option_eligible` (ISBN-10 in the `und` exception), `phase9_register_edition_options_provider_call_v1` and `phase9_complete_candidate_edition_options_v1` (stage `edition` at sequence 1 in ISBN mode only), and `phase9_edition_choices` (v1 or v2 reasons; `ownerIsbn13` for v2).
+- Widens the constraint `phase9_edition_http_stage`.
+- Adds the private postgres-only helpers `phase9_edition_effective_title` and `phase9_edition_effective_authors` (revoked from PUBLIC, anon, authenticated and service_role) and the command `public.phase9_set_candidate_isbn_v1` (authenticated only; replay key `EP_ISBN_V1`).
+
+No data change at application: every existing row keeps `owner_isbn13` NULL.
+
+Status: CREATED / NOT_APPLIED. Local verification: PGlite M78 suite 28/28, three regression suites loading M78, real-Postgres lock tests 19/19 (two new ISBN races). Live preflight (project re-verification, md5 of the replaced bodies against the local pre-M78 stack, ACLs) and application each need separate Owner approval. Deploy order: M78, then the metadata worker, then Edge, then the app. Tracker 38 §27.

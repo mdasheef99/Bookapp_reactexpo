@@ -99,6 +99,7 @@ export function parseOwnerIngestionRequest(value: unknown): OwnerIngestionReques
       'list_scan_candidates', 'read_scan_candidate', 'update_candidate_review',
       'add_candidate_to_inventory', 'read_scan_readiness', 'close_scan_session',
       'read_candidate_edition_choices', 'request_candidate_edition_options', 'select_candidate_edition',
+      'set_candidate_isbn',
     ].includes(action)) {
       const request = parseOwnerUxRequest(value);
       return request;

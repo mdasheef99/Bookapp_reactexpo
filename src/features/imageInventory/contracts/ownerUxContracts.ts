@@ -178,7 +178,7 @@ const responseSchemas = {
 export type OwnerUxAction = keyof typeof responseSchemas;
 export type OwnerUxQueryAction = Exclude<OwnerUxAction,
     'remove_scan_input' | 'resolve_duplicate_scan_input' | 'update_candidate_review' | 'add_candidate_to_inventory' | 'close_scan_session'
-    | 'read_candidate_edition_choices' | 'request_candidate_edition_options' | 'select_candidate_edition'>;
+    | 'read_candidate_edition_choices' | 'request_candidate_edition_options' | 'select_candidate_edition' | 'set_candidate_isbn'>;
 export type OwnerDiscovery = z.infer<typeof responseSchemas.discover_scan_session>;
 export type OwnerSessionSummary = z.infer<typeof responseSchemas.read_scan_session>;
 export type OwnerInputProgress = z.infer<typeof inputProgressSchema>;

@@ -42,6 +42,7 @@ before(async () => {
     '20261016000076_marketplace_phase9_edition_explicit_matching.sql',
     '20261017000075_marketplace_phase9_edition_picker_exhausted_lookup_recovery.sql',
     '20261017000077_marketplace_phase9_edition_matching_variants.sql',
+    '20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql',
   ]) await db.exec(fs.readFileSync(migrationPath(migration), 'utf8'));
 });
 
