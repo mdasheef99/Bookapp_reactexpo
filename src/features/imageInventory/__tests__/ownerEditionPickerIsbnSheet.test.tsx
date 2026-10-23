@@ -276,9 +276,8 @@ it.each([
   set.mockResolvedValue({ sessionId: saved.sessionId, candidateId: saved.candidateId, ownerIsbn13: isbn,
     candidateVersion: saved.candidateVersion, metadataRevision: saved.metadataRevision, requestGeneration: saved.requestGeneration });
   const view = mount();
-  await waitFor(() => expect(view.getByLabelText('ISBN')).toBeTruthy());
+  await waitFor(() => expect(view.getAllByRole('button', { name: 'Retry search' })).toHaveLength(1));
   expect(view.queryByRole('button', { name: 'Search Books' })).toBeNull();
-  expect(view.getAllByRole('button', { name: 'Retry search' })).toHaveLength(1);
   expect(view.getByLabelText('ISBN').props.value).toBe('');
   fireEvent.press(view.getByRole('button', { name: 'Retry search' }));
   await waitFor(() => expect(lookup).toHaveBeenCalledTimes(1));
