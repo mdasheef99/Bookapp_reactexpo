@@ -54,7 +54,7 @@ it.each(['9780140449137', '1000000000009'])('labels the ISBN box and announces i
   const error = view.getByText("Check the ISBN; the last digit doesn't match");
   expect(error.props.accessibilityLiveRegion).toBe('assertive');
   expect(view.getByText('On the back cover, above or below the barcode')).toBeTruthy();
-  expect(view.getByLabelText('ISBN').props.maxLength).toBe(17);
+  expect(view.getByLabelText('ISBN').props.maxLength).toBe(24);
   expect(view.getByLabelText('ISBN').props.autoCapitalize).toBe('characters');
   expect(view.getByLabelText('ISBN').props.autoCorrect).toBe(false);
   expect(set).not.toHaveBeenCalled(); expect(lookup).not.toHaveBeenCalled();
@@ -147,15 +147,49 @@ it('blocks the box and search while the ISBN command is pending and notifies the
   expect(view.getByLabelText('ISBN').props.editable).toBe(false);
   await act(async () => pending.resolve({}));
 });
-it.each([[[]], [pickerChoices().rows.map(row => ({ ...row, eligibility: 'ineligible' as const }))]])
-('uses ISBN no-result text without either title-mode no-match text', async rows => {
-  read.mockResolvedValue(pickerChoices({ ownerIsbn13: isbn, rows }));
+it.each([
+  [[], `No book was found for ISBN ${isbn}`],
+  [pickerChoices().rows.map(row => ({ ...row, eligibility: 'ineligible' as const })),
+    `Books found for ISBN ${isbn} can't be used. The reasons are shown below.`],
+] as const)('uses the matching ISBN result text without title-mode no-match text: %s', async (rows, message) => {
+  read.mockResolvedValue(pickerChoices({ ownerIsbn13: isbn, rows: [...rows] }));
   const view = mount();
-  await waitFor(() => expect(view.getByText(`No book was found for ISBN ${isbn}`)).toBeTruthy());
-  expect(view.getByText(`Searching by ISBN ${isbn}`)).toBeTruthy();
+  await waitFor(() => expect(view.getByText(message)).toBeTruthy());
+  if (rows.length) expect(view.queryByText(`No book was found for ISBN ${isbn}`)).toBeNull();
   expect(view.getByRole('button', { name: 'Search by title instead' })).toBeTruthy();
   expect(view.queryByText('No book results were returned.')).toBeNull();
   expect(view.queryByText(/No result matches this book's title and author/u)).toBeNull();
+});
+it.each(['pending', 'ready', 'failed'] as const)('announces the ISBN as searching only while pending (%s)', async lookupStatus => {
+  read.mockResolvedValue(pickerChoices({ ownerIsbn13: isbn, lookupStatus }));
+  const view = mount();
+  const label = lookupStatus === 'pending' ? `Searching by ISBN ${isbn}` : `ISBN ${isbn}`;
+  await waitFor(() => expect(view.getByText(label)).toBeTruthy());
+  if (lookupStatus !== 'pending') expect(view.queryByText(`Searching by ISBN ${isbn}`)).toBeNull();
+});
+it('preserves a padded pasted ISBN in the sheet and submits its normalized value', async () => {
+  const value = ' 978-0-306-40615-7 ';
+  const view = mount();
+  await waitFor(() => expect(view.getByRole('button', { name: 'Search by ISBN' })).not.toBeDisabled());
+  const input = view.getByLabelText('ISBN');
+  fireEvent.changeText(input, value.slice(0, input.props.maxLength));
+  expect(view.getByLabelText('ISBN').props.value).toBe(value);
+  fireEvent.press(view.getByRole('button', { name: 'Search by ISBN' }));
+  await waitFor(() => expect(lookup).toHaveBeenCalledTimes(1));
+  expect(set.mock.calls[0][0].isbn13).toBe('9780306406157');
+});
+it('refuses an ISBN set echo for a different ISBN without search or retry', async () => {
+  set.mockImplementation(async () => {
+    read.mockResolvedValue(pickerChoices({ ownerIsbn13: '9780804429573', candidateVersion: 6,
+      metadataRevision: 9, requestGeneration: 2 }));
+    return { sessionId: testUuid(1), candidateId: testUuid(2), candidateVersion: 6,
+      metadataRevision: 9, requestGeneration: 2, ownerIsbn13: '9780804429573' };
+  });
+  const view = mount(); await search(view);
+  await waitFor(() => expect(view.getByText('This book changed; we reloaded it.')).toBeTruthy());
+  expect(lookup).not.toHaveBeenCalled();
+  expect(view.queryByRole('button', { name: 'Retry search' })).toBeNull();
+  expect(set).toHaveBeenCalledTimes(1);
 });
 it('clears ISBN after saving unsaved details and starts exactly one title request', async () => {
   read.mockResolvedValue(pickerChoices({ ownerIsbn13: isbn }));

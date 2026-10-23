@@ -1492,3 +1492,91 @@ Verification run: Jest src/features/imageInventory 982 passed, 4 skipped (71 of 
   two duplicate set-mismatch tests.
 Database/storage/deploy mutations: none. Nothing committed, staged or pushed.
 ```
+
+## 32. Publication, deployment, M79/M80 and combined browser check, 2026-10-23
+
+```text
+Publication: branch claude/phase9-psr-slice5b-add-isbn, commits ebfeab2 (src) and abb6a65 (docs),
+  one CI fix 779b420 (test race: the ISBN field renders before the saved choices load, so the
+  retry tests now wait for the button). PR #28 merged to main as e615893 by the Owner in the
+  GitHub UI; `gh pr merge` was blocked by the auto-mode classifier ("Merge Without Review").
+  CI: app-validation failed only on the 3 bookDetailsPalette date-format tests, which also fail
+  on main; container-smoke and snyk passed.
+Render worker: phase9-metadata-worker (srv-d9sqfdvqj5pc73dc66fg), manual deploy from main by a
+  Haiku subagent at the Owner's request: dep-dbdmmh6q1p3s739505eg, commit e615893, build ok,
+  Live after 2m08s. Runtime logs showed only invocation_denied 404 invalid_route lines (health
+  probes).
+Edge function: `supabase functions deploy phase9-owner-ingestion --project-ref ahntbtktjjmvfosgkmgn
+  --use-api` from the PR head (functions identical to main): version 18, ACTIVE, verify_jwt true,
+  OPTIONS 200, unauthenticated POST 401, set_candidate_isbn and edition-reasons-v2 present.
+Combined browser check (Haiku, dev app, localhost:8091): typed ISBN worked end to end on the server
+  (jobs resolved in about 40-45 s; Open Library returned the exact edition) but cards stayed on
+  "Finding edition..." and the sheet stayed locked. Root cause (database): phase9_owner_ux_metadata_state
+  returns 'pending' unless the latest lookup outcome is in a fixed list; the ISBN lookup records
+  'accepted_metadata_match', which the function only honoured through an already selected snapshot.
+  Manually added cards (input_id NULL) never get a metadata job and so read 'pending' forever.
+M79 (20261023000079_marketplace_phase9_isbn_match_metadata_state.sql): APPLIED_VERIFIED on
+  ahntbtktjjmvfosgkmgn via the Supabase MCP execute_sql on the Owner's explicit instruction,
+  after the Owner's own SQL-editor run did not take effect (function body unchanged on readback).
+  Reviewed by Argon (Medium: stale match after an ISBN change) and Codex sol (Medium: A->B->A;
+  Low: test creates a lookup; Low: LATERAL may not run once).
+M80 (20261023000080_marketplace_phase9_manual_card_and_current_match_state.sql): preflight showed
+  the live body was M79; applied the same way; readback: prosecdef true, provolatile s,
+  search_path "", ACL {postgres=X/postgres}, new body present. Reviewed by Argon (Medium: same-ISBN
+  search running again; Low: manual-card test did not exercise the job guard) and free GLM
+  (Medium: job status list - the live CHECK allows open, in_progress, retry_scheduled, resolved,
+  resolved_noop, cancelled, dead_letter, so the three in-flight statuses are complete; Lows: scanned
+  card with a dead automatic job stays pending; commit safety read statically). Argon was dropped
+  from later reviews on the Owner's word.
+Database tests: phase9OwnerIsbnEditionLookup.integration.test.mjs 36/36 (M79: completed match
+  ambiguous, scanned card with no lookup/job pending, ISBN change pending, selection selected;
+  M80: A->B->A pending, manual card ambiguous with a running job pending, same-ISBN re-run
+  pending). The full Phase 9 DB suite was started once for regressions but its other files do
+  not load M79/M80 and its result was not recorded.
+Live browser after M80: The Hobbit - typed ISBN in Add a book, then Select edition saved and the
+  card showed "Mariner Books - 1966 - 9780547928227"; The Origin of Species - "No edition chosen";
+  Haiku plain add - usable sheet, typed ISBN 9780451529060 returned The Origin Of Species
+  (Signet Classics) with Select edition enabled (not clicked); 12 ingestion calls all 200.
+Findings not fixed: console CORS preflight/403/500/503 noise unattributed; review list renders
+  6 cards first (FlatList initialNumToRender=6, not a defect); lost-response wording and Add-screen
+  timeouts (Owner decisions); AC5a-14c provider-call order not inspected; the combined check did
+  not cover a many-edition ISBN, a bad ISBN inside the sheet, or Remove/Add after selection.
+Database mutations: M79 and M80 (function body only). Nothing committed for M79/M80/docs yet.
+```
+
+## 33. Whole-slice PR-style review and fixes (2026-10-24)
+
+```text
+Review: slices 5a + 5b + M78-M80, four pieces (database; Edge and worker; app; contract, rollout and docs), each
+  read by Muse, free GLM and Codex gpt-6-luna (read-only). 12 reports. Verdicts: approve-with-fixes or rework; no
+  tenant-isolation, privilege, SSRF or injection defect found.
+Confirmed and fixed (Codex gpt-6.1-sol xhigh, red-first): F1 card label "No edition chosen yet" (was "Multiple
+  possible matches"); F2 5b retry uses isbnSearchRecovery; F3 closed scan after ISBN save gets a truthful message;
+  F4 set-response ISBN echo checked in 5a and 5b; F5 "No book was found" only with zero rows; F6 "Searching by ISBN"
+  only while pending; F7 ISBN input maxLength 24; F8 Open Library adapter refuses ISBN strategy without a parsed
+  ISBN before any call; F9 gateway test for a wrong check digit; F10 pending receipt shown in the choices cache.
+Docs: SDD 01a status brought up to date; validator allowlist for M78 no longer depends on a transient status.
+Verification run: Jest (src/features/imageInventory + the two ISBN edge suites) 1,058 passed / 4 skipped / 0 failed;
+  tsc: only the 8 known books/export errors; git diff --check clean; validate-phase9-continuity PASS;
+  phase9OwnerIsbnEditionLookup.integration 36/36; full test:phase9:db 851 passed / 3 failed: the three failures are in
+  phase9MetadataFoundation.integration.test.mjs (fixture inserts canonical_works without the NOT NULL primary_title
+  from migration 20260628000003; not touched by M78-M80; not caused by this slice).
+Not fixed, Owner decisions: (1) scanned card with no lookup whose automatic job is dead_letter/resolved stays
+  "pending" (needs M81; predates this slice); (2) valid ISBN whose edition is missing from Open Library's embedded
+  editions list reads "No book was found" (needs a bounded fallback, worker redeploy); (3) M78-M80 have no
+  schema_migrations rows (repair step is a live write); (4) worker has no overall per-job deadline (accepted risk);
+  (5) live paths still untested: many-edition ISBN, wrong ISBN in the sheet, Add after selection.
+Database mutations in this step: none. Nothing staged, committed, pushed or deployed.
+Follow-ups recorded (none blocks the PR; Owner direction 2026-10-24: ship, treat these as optional):
+  A. Migration history repair (housekeeping, live write, NOT run): M78 was run in the SQL editor and M79/M80 through
+     execute_sql, so supabase_migrations.schema_migrations has no rows for them. Risk: a later `supabase db push`
+     would re-run M78 and fail on the existing owner_isbn13 column. Fix, after the Owner confirms the project ref:
+     `npx supabase migration repair --status applied 20261022000078 20261023000079 20261023000080`, then
+     `npx supabase migration list` must show no pending or mismatched versions. Do this before the next db push.
+  B. Many-edition ISBN (the only item that can affect real users): run the live check first with a work that has many
+     editions (e.g. a popular title's paperback ISBN). Only if "No book was found" appears for a valid ISBN, design a
+     bounded fallback (worker change plus redeploy).
+  C. Scanned card whose automatic job died before any lookup stays "pending" (predates slice 5; not seen in use):
+     only if it appears in real use, M81 mapping that case to a recoverable state (Owner approval and review first).
+  D. Worker has no overall per-job deadline (a slow Open Library can hold the worker for minutes): accepted risk.
+```

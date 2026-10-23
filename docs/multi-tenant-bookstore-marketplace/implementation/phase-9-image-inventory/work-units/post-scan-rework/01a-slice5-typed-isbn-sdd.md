@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Draft, full design for 5a and 5b (2026-10-22). **Approved by the Owner 2026-10-22, with D5-1 to D5-6 as recommended.** Reviewed twice (Sonnet, then DeepSeek; Argon unavailable both times), all verified findings applied (§17). **5a implemented locally 2026-10-23** (branch `claude/phase9-psr-slice5a-typed-isbn`; two code-review rounds; one Owner-approved §8 clarification; evidence in tracker 38 §27). **M78 applied to the development project 2026-10-23** (SQL editor, no `schema_migrations` row; tracker 38 §28). **5b implemented locally 2026-10-23** (branch `claude/phase9-psr-slice5b-add-isbn`, uncommitted; tracker 38 §29-§31). The worker and the Edge function are **not deployed** and the combined in-app acceptance check (AC5a-1, AC5a-16c, AC5b-1, AC5b-4, AC5b-6) has **not run**. |
+| **Status** | Draft, full design for 5a and 5b (2026-10-22). **Approved by the Owner 2026-10-22, with D5-1 to D5-6 as recommended.** Reviewed twice (Sonnet, then DeepSeek; Argon unavailable both times), all verified findings applied (§17). **5a implemented locally 2026-10-23** (branch `claude/phase9-psr-slice5a-typed-isbn`; two code-review rounds; one Owner-approved §8 clarification; evidence in tracker 38 §27). **M78 applied to the development project 2026-10-23** (SQL editor, no `schema_migrations` row; tracker 38 §28). **5b implemented 2026-10-23** (tracker 38 §29-§31). **Slices 5a and 5b merged to `main` (PR #28, `e615893`), the worker (`dep-dbdmmh6q1p3s739505eg`) and Edge function v18 deployed, and the combined in-app check run on 2026-10-23**; it found the stuck-"pending" card defect fixed by M79 and M80 (applied, tracker 38 §32). Not yet covered live: many-edition ISBN, a wrong ISBN typed inside the sheet, Add after a selection. A whole-slice review follows in tracker 38 §33. |
 | **Build** | Two parts from this one SDD: 5a, then 5b; one branch and PR each (SDD-1 §8, PSR-R12). |
 | **Parent** | [SDD-1 §7](./01-review-screen-sdd.md) (design direction) under [SDD-0](./00-overview-sdd.md) |
 | **Decisions** | PSR-D06, PSR-D07, PSR-D10, PSR-D13; rules PSR-R06, R07, R09, R10, R14 |
@@ -657,7 +657,7 @@ tracker and DOC-13 updated; `CODEBASE_MAP/` updated for the new action and colum
 ## 15. Slice 5b — optional ISBN in "Add a book"
 
 Built after 5a is merged, on its own branch and PR. Scope follows the
-recommendation in D5-4 and is **pending Owner confirmation**.
+recommendation in D5-4 and was **confirmed by the Owner on 2026-10-22** (see the note below).
 
 > **Note, 2026-10-23 (Owner).** Status: the Owner approved D5-4 (title required,
 > optional ISBN) on 2026-10-22 with D5-1 to D5-6, so the scope above is

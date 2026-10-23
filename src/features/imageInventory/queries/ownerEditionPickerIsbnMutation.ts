@@ -79,8 +79,11 @@ export function useOwnerEditionPickerIsbnMutation({ identity, scope, choices, li
           if (!command.set) command.set = createCandidateIsbnCommand({ ...command.choices,
             candidateVersion: command.detail?.candidateVersion ?? command.choices.candidateVersion }, command.request.isbn13);
           if (!command.setResponse) {
-            command.setResponse = await ownerEditionPickerService.setCandidateIsbn(command.set, signal);
+            const result = await ownerEditionPickerService.setCandidateIsbn(command.set, signal);
             assertCurrent();
+            if (result.sessionId !== scope.sessionId || result.candidateId !== scope.candidateId
+              || result.ownerIsbn13 !== command.request.isbn13) throw authorityChanged();
+            command.setResponse = result;
           }
           if (!command.lookup) {
             const canonical = await reread(signal, assertCurrent);

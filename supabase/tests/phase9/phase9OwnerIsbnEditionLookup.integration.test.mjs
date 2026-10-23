@@ -5,10 +5,13 @@ import { randomUUID } from 'node:crypto';
 import { after, before, test } from 'node:test';
 import { migrationPath } from './databaseHarness.mjs';
 import { createCommitDatabase, reviewValue, saveReview } from './editionPickerCommitFixture.mjs';
+import { seedAutomaticLineage } from './editionPickerFixture.mjs';
 import { claimJob, lookupSql, metadata, readSql, resetActor, row, scalar, seedCard, selectSql, setActor } from './editionPickerFixture.mjs';
 import { complete, finalize, prepareCall, rpc, token, worker } from './editionOptionsCompletionFixture.mjs';
 
 const M78 = '20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql';
+const M79 = '20261023000079_marketplace_phase9_isbn_match_metadata_state.sql';
+const M80 = '20261023000080_marketplace_phase9_manual_card_and_current_match_state.sql';
 const isbn = '9780306406157';
 const key = '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "isbn", "9780306406157", "", [], "und", []]';
 let db;
@@ -24,6 +27,8 @@ before(async () => {
     '20261017000075_marketplace_phase9_edition_picker_exhausted_lookup_recovery.sql',
     '20261017000077_marketplace_phase9_edition_matching_variants.sql',
     M78,
+    M79,
+    M80,
   ]) {
     if (file === M78) {
       // SDD §5.5: reproduce postgres's live public-function default ACL before creation.
@@ -395,4 +400,85 @@ test('title mode refuses edition at sequence 1 in both registration and completi
   await db.query("UPDATE public.phase9_metadata_provider_calls SET edition_call_stage='edition' WHERE id=$1", [call.provider_call_id]);
   await setActor(db, f.ownerId, 'service_role');
   await assert.rejects(complete(db, f, olResult(f)), /P9_STATE_CONFLICT/);
+});
+
+// M79: a finished exact-ISBN match with no edition chosen yet is waiting for the Owner, not "pending".
+const metadataState = async f => {
+  await resetActor(db);
+  const result = (await db.query('SELECT marketplace_sec.phase9_owner_ux_metadata_state($1) AS state', [f.candidateId])).rows[0].state;
+  await setActor(db, f.ownerId);
+  return result;
+};
+const lookupCount = async f => {
+  await resetActor(db);
+  const n = Number((await db.query('SELECT count(*) AS n FROM public.phase9_metadata_lookups WHERE candidate_id=$1', [f.candidateId])).rows[0].n);
+  await setActor(db, f.ownerId);
+  return n;
+};
+test('M79: completed exact-ISBN lookup with no chosen edition reads as ambiguous, not pending', async () => {
+  const f = await olOperation(); await http(f, 0, 'search'); await http(f, 1, 'edition');
+  assert.equal((await complete(db, f, olResult(f))).status, 'completed');
+  // Live cards added after the scan have no saved review yet, so no manual metadata choice.
+  await resetActor(db);
+  await db.query('UPDATE public.image_extraction_candidates SET owner_review_snapshot=NULL WHERE id=$1', [f.candidateId]);
+  assert.equal(await metadataState(f), 'ambiguous');
+});
+test('M79: a scanned card with no lookup and no job stays pending', async () => {
+  const f = await seedCard(db);
+  await seedAutomaticLineage(db, f);
+  await mutate(f, 'DELETE FROM public.phase9_metadata_lookups WHERE candidate_id=$1', [f.candidateId]);
+  await mutate(f, "UPDATE public.image_extraction_jobs SET status='resolved' WHERE entity_id=$1", [f.candidateId]);
+  assert.notEqual((await truth(f)).input_id, null);
+  await mutate(f, 'UPDATE public.image_extraction_candidates SET owner_review_snapshot=NULL WHERE id=$1', [f.candidateId]);
+  assert.equal(await lookupCount(f), 0);
+  assert.equal(await metadataState(f), 'pending');
+});
+test('M79: changing the ISBN after a match reads pending again, with no chosen edition', async () => {
+  const f = await olOperation(); await http(f, 0, 'search'); await http(f, 1, 'edition');
+  assert.equal((await complete(db, f, olResult(f))).status, 'completed');
+  await mutate(f, 'UPDATE public.image_extraction_candidates SET owner_review_snapshot=NULL WHERE id=$1', [f.candidateId]);
+  assert.equal(await metadataState(f), 'ambiguous');
+  await setIsbn(f, '9780140449136');
+  assert.equal(await metadataState(f), 'pending');
+});
+test('M79: choosing an edition after the match reads selected', async () => {
+  const f = await seedCard(db); await setIsbn(f);
+  const saved = await seedOptions(db, f, [row()]);
+  await scalar(db, selectSql(f, saved.choices, saved.rows[0].optionId));
+  assert.equal(await metadataState(f), 'selected');
+});
+test('M80: A to B and back to A before the new search registers reads pending, not the old match', async () => {
+  const f = await olOperation(); await http(f, 0, 'search'); await http(f, 1, 'edition');
+  assert.equal((await complete(db, f, olResult(f))).status, 'completed');
+  await mutate(f, 'UPDATE public.image_extraction_candidates SET owner_review_snapshot=NULL WHERE id=$1', [f.candidateId]);
+  assert.equal(await metadataState(f), 'ambiguous');
+  await setIsbn(f, '9780140449136'); await setIsbn(f, isbn);
+  assert.equal(await metadataState(f), 'pending');
+});
+test('M80: a manually added card with no lookup and no running job reads ambiguous; a running job keeps it pending', async () => {
+  const f = await seedCard(db);
+  await mutate(f, 'UPDATE public.image_extraction_candidates SET input_id=NULL, owner_review_snapshot=NULL WHERE id=$1', [f.candidateId]);
+  assert.equal(await lookupCount(f), 0);
+  assert.equal(await metadataState(f), 'ambiguous');
+  const generation = (await setIsbn(f)).requestGeneration;
+  assert.equal(await lookupCount(f), 0);
+  assert.equal(await metadataState(f), 'ambiguous'); // ISBN saved, search not requested yet: nothing is running
+  await scalar(db, lookupSql(f, generation));
+  assert.equal(await lookupCount(f), 0); // only the job exists; the job alone keeps the card pending
+  assert.equal(await metadataState(f), 'pending');
+});
+test('M80: a same-ISBN search running again (open job, or a newer lookup row than the match) reads pending despite old options', async () => {
+  const f = await olOperation(); await http(f, 0, 'search'); await http(f, 1, 'edition');
+  assert.equal((await complete(db, f, olResult(f))).status, 'completed');
+  await mutate(f, 'UPDATE public.image_extraction_candidates SET owner_review_snapshot=NULL WHERE id=$1', [f.candidateId]);
+  assert.equal(await metadataState(f), 'ambiguous');
+  await mutate(f, "UPDATE public.image_extraction_jobs SET status='open' WHERE entity_id=$1", [f.candidateId]);
+  assert.equal(await metadataState(f), 'pending');
+  await mutate(f, "UPDATE public.image_extraction_jobs SET status='resolved' WHERE entity_id=$1", [f.candidateId]);
+  assert.equal(await metadataState(f), 'ambiguous');
+  await mutate(f, `INSERT INTO public.phase9_metadata_lookups
+    SELECT * FROM jsonb_populate_record(NULL::public.phase9_metadata_lookups,
+      to_jsonb((SELECT l FROM public.phase9_metadata_lookups l WHERE l.candidate_id=$1 LIMIT 1))
+      || jsonb_build_object('id', gen_random_uuid(), 'routing_policy_version', 'p9-metadata-routing-v-newer', 'created_at', now() + interval '1 minute'))`, [f.candidateId]);
+  assert.equal(await metadataState(f), 'pending');
 });

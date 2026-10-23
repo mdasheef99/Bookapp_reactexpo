@@ -12,6 +12,7 @@ import { cacheCorrectionCandidate, synchronizeCorrectionCandidate, useAddManualC
 import { getResolvedImageInventoryIdentity, imageInventoryKeys, type ImageInventoryIdentity } from './ownerUxQueries';
 import { ownerBatchReviewKeys } from './ownerBatchReviewKeys';
 import { acceptEditionChoices, acceptEditionLookupReceipt, choicesFollowIsbnSet } from './ownerEditionPickerCache';
+import { isbnSearchRecovery } from '../review/isbnSearchRecovery';
 
 type PendingAddition = {
   add: AddManualCandidateRequest; isbn13: string | null; fingerprint: string;
@@ -125,7 +126,8 @@ export function useOwnerMissedBookIsbnFlow({ identity, sessionId, canMutate, ref
         if (!record.isbnSaved) {
           const result = await ownerEditionPickerService.setCandidateIsbn(record.set, abort.signal);
           if (!isCurrent()) return;
-          if (result.sessionId !== sessionId || result.candidateId !== record.candidateId) throw new Error('ISBN_SET_MISMATCH');
+          if (result.sessionId !== sessionId || result.candidateId !== record.candidateId
+            || result.ownerIsbn13 !== record.isbn13) throw new Error('ISBN_SET_MISMATCH');
           record.setResponse = result; record.isbnSaved = true; setIsbnSaved(true);
         }
         if (!record.lookup) {
@@ -153,7 +155,7 @@ export function useOwnerMissedBookIsbnFlow({ identity, sessionId, canMutate, ref
         const setMismatch = error instanceof Error && error.message === 'ISBN_SET_MISMATCH';
         const readMismatch = error instanceof Error && error.message === 'ISBN_READ_MISMATCH';
         const changedElsewhere = error instanceof Error && error.message === 'ISBN_CHANGED_ELSEWHERE';
-        const retryable = !setMismatch && !readMismatch && !changedElsewhere && (!(error instanceof OwnerUxClientError) || error.code === 'P9_INTERNAL_ERROR');
+        const retryable = !setMismatch && !readMismatch && !changedElsewhere && isbnSearchRecovery(error).kind === 'retry';
         if (!record.isbnSaved || setMismatch) {
           const stateConflict = error instanceof OwnerUxClientError && error.code === 'P9_STATE_CONFLICT';
           setMessage(stateConflict
@@ -176,6 +178,14 @@ export function useOwnerMissedBookIsbnFlow({ identity, sessionId, canMutate, ref
             : retryable ? "Book added. The ISBN search didn't start."
               : "Book added. The ISBN search didn't start. Open Find or change edition to search.");
           setRetryLabel(retryable ? 'Retry search' : null);
+          if (error instanceof OwnerUxClientError && error.code === 'P9_STATE_CONFLICT') {
+            void refetchSession().then(refreshed => {
+              if (isCurrent() && !refreshed.isError && refreshed.error === null
+                && refreshed.data?.sessionId === sessionId && refreshed.data.status === 'closed') {
+                setMessage("Book added and the ISBN saved. This scan is closed, so the search can't run.");
+              }
+            }).catch(() => undefined);
+          }
         }
         // Scoped §15.4 deviation: definite version refusals are never replayed.
         if (!retryable) { record.lookup = undefined; clearPending(); setIsbnPressDone(true); invalidate(); }

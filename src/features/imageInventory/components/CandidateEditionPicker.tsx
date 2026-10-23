@@ -114,7 +114,9 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
     </> : null}
     {fresh && choices?.lookupStatus === 'failed' ? <Text accessibilityLiveRegion="polite" style={{ color: colors.error }}>Edition search failed. Your current choice and any fresh results are kept.</Text> : null}
     {isbnMode && fresh && choices?.lookupStatus === 'ready' && !choices.rows.some(row => row.eligibility === 'eligible' && row.metadata)
-      ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No book was found for ISBN {choices.ownerIsbn13}</Text> : null}
+      ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{choices.rows.length === 0
+        ? `No book was found for ISBN ${choices.ownerIsbn13}`
+        : `Books found for ISBN ${choices.ownerIsbn13} can't be used. The reasons are shown below.`}</Text> : null}
     {!isbnMode && fresh && choices?.rows.length === 0 ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No book results were returned.</Text> : null}
     {choices && fresh ? <EditionOptionList rows={choices.rows} disabled={blocked}
       selectedOptionId={choices.selection?.optionId ?? null} onSelect={select} /> : null}

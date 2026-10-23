@@ -63,6 +63,12 @@ describe('typed ISBN edition worker context (AC5a-11/17)',()=>{
 });
 
 describe('exact Open Library ISBN fetch (AC5a-7/8/16c/20/21)',()=>{
+  it('returns no acceptable match without HTTP when ISBN strategy has no parsed ISBN',async()=>{
+    const f=fixture(recorded.search,recorded.edition,{...query,normalizedIsbn13:null});
+    expect(await f.run()).toMatchObject({outcome:'no_acceptable_match',retryable:false,rows:[]});
+    expect(f.fetcher).not.toHaveBeenCalled();
+    expect(f.stages).toEqual([]);
+  });
   it('keeps an empty title with author evidence and an ISBN in bibliographic title mode',async()=>{
     const authorQuery=buildMetadataQueryIdentity({strategy:'isbn',title:'',authors:['Fixture Author'],
       isbnClue:isbn,language:'und',editionClues:[]});

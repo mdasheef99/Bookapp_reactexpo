@@ -784,12 +784,76 @@ describe('optional ISBN addition', () => {
         expect(mockRouter.replace).toHaveBeenCalledWith('/(store-owner)/inventory/scan/' + sessionId);
         expect(mockReplacePreventDefault).not.toHaveBeenCalled();
     }
+    it.each(['OWNER_CANDIDATE_AUTHORITY_CHANGED', 'OWNER_IDENTITY_CHANGED'])('does not offer a search retry after a local %s re-read error', async message => {
+        read().mockRejectedValueOnce(new Error(message));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText("Book added. The ISBN search didn't start. Open Find or change edition to search.")).toBeTruthy());
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        expect(search()).not.toHaveBeenCalled();
+        expect(set()).toHaveBeenCalledTimes(1);
+    });
+    it('keeps a search retry after a plain network re-read error', async () => {
+        read().mockRejectedValueOnce(new Error('network'));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Retry search' })).not.toBeDisabled());
+        expect(screen.getByText(searchFailed)).toBeTruthy();
+        expect(search()).not.toHaveBeenCalled();
+    });
+    it.each(['closed', 'refetch failed'] as const)('handles a search state conflict after ISBN save when the session is %s', async outcome => {
+        const sessionRead = deferred<OwnerSessionSummaryV3>();
+        search().mockImplementation(async () => {
+            jest.mocked(ownerBatchReviewService.readSessionV3).mockReturnValue(sessionRead.promise);
+            throw new OwnerUxClientError('P9_STATE_CONFLICT', false, 'state');
+        });
+        const screen = await start();
+        const generic = "Book added. The ISBN search didn't start. Open Find or change edition to search.";
+        await waitFor(() => expect(screen.getByText(generic)).toBeTruthy());
+        const readsBefore = jest.mocked(ownerBatchReviewService.readSessionV3).mock.calls.length;
+        await act(async () => {
+            if (outcome === 'closed') sessionRead.resolve({ ...session, status: 'closed' });
+            else sessionRead.reject(new Error('session unavailable'));
+        });
+        await waitFor(() => expect(screen.getByText(outcome === 'closed'
+            ? "Book added and the ISBN saved. This scan is closed, so the search can't run." : generic)).toBeTruthy());
+        expect(readsBefore).toBeGreaterThan(1);
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        expect(set()).toHaveBeenCalledTimes(1);
+    });
+    it('refuses an ISBN set echo for another ISBN without replay or search', async () => {
+        set().mockResolvedValue({ sessionId, candidateId, candidateVersion: 5, metadataRevision: 7,
+            requestGeneration: 2, ownerIsbn13: '9780140449136' });
+        read().mockResolvedValue(pickerChoices({ sessionId, candidateId, candidateVersion: 6,
+            requestGeneration: 9, ownerIsbn13: '9780140449136' }));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText("Book added, but the ISBN wasn't saved. Open Find or change edition to enter it.")).toBeTruthy());
+        expect(screen.queryByRole('button', { name: 'Retry ISBN save' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        expect(read()).not.toHaveBeenCalled();
+        expect(search()).not.toHaveBeenCalled();
+        expect(set()).toHaveBeenCalledTimes(1);
+    });
+    it('preserves a padded pasted ISBN in the Add draft and builds a valid request', async () => {
+        const value = ' 978-0-306-40615-7 ';
+        set().mockResolvedValue({ sessionId, candidateId, candidateVersion: 5, metadataRevision: 7,
+            requestGeneration: 2, ownerIsbn13: '9780306406157' });
+        read().mockResolvedValue(pickerChoices({ sessionId, candidateId, candidateVersion: 6,
+            requestGeneration: 9, ownerIsbn13: '9780306406157' }));
+        const screen = await mount();
+        const input = screen.getByLabelText('ISBN');
+        fireEvent.changeText(input, value.slice(0, input.props.maxLength));
+        expect(screen.getByLabelText('ISBN')).toHaveProp('value', value);
+        fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+        submit(screen);
+        await waitFor(() => expect(search()).toHaveBeenCalledTimes(1));
+        expect(set().mock.calls[0][0].isbn13).toBe('9780306406157');
+    });
     it('labels the active-session ISBN box and configures text entry', async () => {
         const screen = await mount();
         expect(screen.getByText('ISBN (optional)')).toBeTruthy();
         expect(screen.getByText('On the back cover, above or below the barcode')).toBeTruthy();
         expect(screen.getByLabelText('ISBN').props).toMatchObject({
-            maxLength: 17, autoCapitalize: 'characters', autoCorrect: false, editable: true,
+            maxLength: 24, autoCapitalize: 'characters', autoCorrect: false, editable: true,
         });
     });
     it.each(['9780140449137', '1000000000009'])('announces invalid %s under the box and sends nothing', async isbn => {

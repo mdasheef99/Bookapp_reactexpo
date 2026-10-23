@@ -28,6 +28,15 @@ const args = {
 };
 
 describe('typed ISBN Owner boundary (slice 5 §§7/12)', () => {
+  it('passes a shaped ISBN with a wrong check digit to RPC and bounds its rejection', async () => {
+    const invalid = { ...request, isbn13: '9780140449137' };
+    expect(parseOwnerIngestionRequest(invalid)).toEqual(invalid);
+    const client = { rpc: jest.fn().mockResolvedValue({ data: null,
+      error: { message: 'P9_REQUEST_INVALID: private checksum diagnostic' } }) };
+    await expect(executeOwnerEditionPicker(client, invalid as any)).rejects.toEqual(new Error('P9_REQUEST_INVALID'));
+    expect(client.rpc).toHaveBeenCalledTimes(1);
+    expect(client.rpc).toHaveBeenCalledWith('phase9_set_candidate_isbn_v1', { ...args, p_isbn13: invalid.isbn13 });
+  });
   it.each([request.isbn13, null])('decodes the strict set/clear request %s through ingestion', isbn13 => {
     const value = { ...request, isbn13 };
     expect(parseOwnerEditionPickerRequest(value)).toEqual(value);

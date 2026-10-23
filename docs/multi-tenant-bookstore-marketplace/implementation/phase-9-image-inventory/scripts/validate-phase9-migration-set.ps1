@@ -157,8 +157,15 @@ if ($tracker.Contains('Owner authorized M75 and M77 creation and application') -
 # Owner's 2026-10-22 slice 5a approval permits exactly M78 (owner ISBN edition lookup), local and unapplied.
 if ($tracker.Contains('Owner authorized local M78 creation') -and
     $tracker.Contains('20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql') -and
-    $tracker.Contains('CREATED_LOCAL / NOT_APPLIED')) {
+    ($tracker.Contains('CREATED_LOCAL / NOT_APPLIED') -or $tracker.Contains('M78 applied'))) {
     $draftMigrationNames += '20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql'
+}
+# Owner's 2026-10-23 instruction permits exactly M79 and M80 (card metadata state follow-ups), applied and verified.
+if ($tracker.Contains('Owner authorized M79 and M80 creation and application') -and
+    $tracker.Contains('20261023000079_marketplace_phase9_isbn_match_metadata_state.sql') -and
+    $tracker.Contains('20261023000080_marketplace_phase9_manual_card_and_current_match_state.sql')) {
+    $draftMigrationNames += '20261023000079_marketplace_phase9_isbn_match_metadata_state.sql'
+    $draftMigrationNames += '20261023000080_marketplace_phase9_manual_card_and_current_match_state.sql'
 }
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or

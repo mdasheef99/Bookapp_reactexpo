@@ -122,7 +122,7 @@ function LoadedMissedBookForm({ identity, sessionId, sessionQuery }: {
                         {draft.authors.length < 20 ? <Button title="Add another author" variant="secondary" onPress={() => setDraft((current) => ({ ...current, authors: [...current.authors, ''] }))} disabled={locked} /> : null}
                         {isbnVisible ? <>
                             <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>ISBN (optional)</Text>
-                            <TextInput accessibilityLabel="ISBN" value={draft.isbn} maxLength={17}
+                            <TextInput accessibilityLabel="ISBN" value={draft.isbn} maxLength={24}
                                 autoCapitalize="characters" autoCorrect={false}
                                 keyboardType={Platform.select({ ios: 'numbers-and-punctuation', default: 'default' })}
                                 editable={!locked} accessibilityState={{ disabled: locked }}

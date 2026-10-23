@@ -36,6 +36,7 @@ export class OpenLibraryEditionOptionsAdapter implements MetadataProviderAdapter
     };
     try {
       const isbnMode=input.query.strategy === 'isbn';
+      if (isbnMode && !input.query.normalizedIsbn13) return failed('no_acceptable_match');
       const search=new URL('https://openlibrary.org/search.json');
       search.searchParams.set('limit','1');search.searchParams.set('fields',isbnMode
         ? 'key,author_key,editions,editions.key,editions.isbn' : 'key,author_key');

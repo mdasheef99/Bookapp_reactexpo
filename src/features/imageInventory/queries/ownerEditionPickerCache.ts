@@ -33,10 +33,10 @@ export function acceptEditionChoices(
     || !!receipt && (incoming.requestGeneration < receipt.requestGeneration || incoming.optionsVersion < receipt.optionsVersion));
   const changedSelection = !!previous && incoming.metadataRevision === previous.metadataRevision
     && incoming.selection?.selectionId !== previous.selection?.selectionId;
-  const regressingLookup = origin === 'read' && incoming.lookupStatus === 'pending'
+  const regressingLookup = origin === 'read' && (incoming.lookupStatus === 'pending' || incoming.lookupStatus === 'idle')
     && [previous, receipt].some(value => value
       && value.requestGeneration === incoming.requestGeneration && value.optionsVersion === incoming.optionsVersion
-      && ('lookupStatus' in value ? value.lookupStatus : value.status) !== 'pending'
+      && (incoming.lookupStatus === 'idle' || ('lookupStatus' in value ? value.lookupStatus : value.status) !== 'pending')
       && ('lookupStatus' in value ? value.lookupStatus : value.status) !== 'idle');
   if (staleCandidate || staleOptions || changedSelection || regressingLookup) {
     if (origin === 'read' && previous) return freshEditionChoices(previous);
@@ -70,5 +70,10 @@ export function acceptEditionLookupReceipt(
   if (previous?.operationId === incoming.operationId && previous.requestGeneration === incoming.requestGeneration
     && previous.optionsVersion === incoming.optionsVersion && previous.status !== 'pending' && incoming.status === 'pending') return false;
   client.setQueryData(key, incoming);
+  if (incoming.status === 'pending' && choices) {
+    client.setQueryData(ownerEditionPickerKeys.choices(identity, scope.sessionId, scope.candidateId), {
+      ...choices, lookupStatus: 'pending', requestGeneration: incoming.requestGeneration, optionsVersion: incoming.optionsVersion,
+    });
+  }
   return true;
 }

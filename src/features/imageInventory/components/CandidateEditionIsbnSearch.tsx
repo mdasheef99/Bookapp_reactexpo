@@ -29,7 +29,7 @@ export function CandidateEditionIsbnSearch({ picker, choices, cardDraft, blocked
   };
   return <View style={{ gap: 10 }}>
     <Text style={{ color: colors.textPrimary }}>ISBN</Text>
-    <TextInput accessibilityLabel="ISBN" value={typedIsbn} maxLength={17}
+    <TextInput accessibilityLabel="ISBN" value={typedIsbn} maxLength={24}
       keyboardType={Platform.select({ ios: 'numbers-and-punctuation', default: 'default' })}
       autoCapitalize="characters" autoCorrect={false} editable={!blocked && !pending}
       style={{ color: colors.textPrimary, borderColor: colors.textSecondary, borderWidth: 1, borderRadius: 8, padding: 10 }}
@@ -45,7 +45,7 @@ export function CandidateEditionIsbnSearch({ picker, choices, cardDraft, blocked
       void run(normalized.isbn13);
     }} />
     {choices?.ownerIsbn13 ? <>
-      <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Searching by ISBN {choices.ownerIsbn13}</Text>
+      <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{pending ? 'Searching by ISBN' : 'ISBN'} {choices.ownerIsbn13}</Text>
       <Button title="Search by title instead" variant="secondary" disabled={disabled}
         onPress={() => { if (!disabled) void run(null); }} />
       {showSavedIsbnRetry && !recovery ? <Button title="Retry search" disabled={disabled}

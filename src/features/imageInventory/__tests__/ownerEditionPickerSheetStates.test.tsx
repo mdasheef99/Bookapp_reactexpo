@@ -35,6 +35,17 @@ function mount() {
     sessionId={pickerChoices().sessionId} candidateId={pickerChoices().candidateId} commandSlot={slots}
     disabled={false} onSelection={jest.fn()}>{choices => <Text>Current: {choices?.selection?.snapshot.title ?? 'held choice'}</Text>}</CandidateEditionPicker></QueryClientProvider>);
 }
+it('shows no edition chosen yet and enables ISBN search for an ambiguous card', async () => {
+  const detail = pickerDetail();
+  jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue({ ...detail,
+    metadata: { ...detail.metadata, state: 'ambiguous', selectionId: null, snapshot: null } });
+  read.mockResolvedValue(pickerChoices({ candidateVersion: detail.candidateVersion, metadataRevision: detail.metadata.revision }));
+  const view = render(<QueryClientProvider client={client}><CandidateMetadataSheet identity={pickerIdentity}
+    card={{ ...pickerCard(), metadataState: 'ambiguous', metadataSummary: null }} visible disabled={false}
+    commandSlot={slots} onSelection={jest.fn()} onClose={jest.fn()} /></QueryClientProvider>);
+  await waitFor(() => expect(view.getByRole('button', { name: 'Search by ISBN' })).not.toBeDisabled());
+  expect(view.getByText('Status: No edition chosen yet')).toBeTruthy();
+});
 it('expiry reveals explicit Search Books without searching or erasing the held selection', async () => {
   read.mockResolvedValue(selectedChoices({ optionsExpiresAt: '2026-10-08T00:00:01Z' }));
   const view = mount();
