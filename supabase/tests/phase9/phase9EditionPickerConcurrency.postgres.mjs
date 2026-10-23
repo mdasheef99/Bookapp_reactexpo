@@ -47,6 +47,23 @@ test('EP-AC12: parallel selections at the same candidate/version accept one choi
 
 // Slice 5a SDD §§5.5/12: hold one real command transaction, then prove the contender
 // waits on its session lock and loses at the version/generation fence after release.
+test('AC5a lock order: concurrent different ISBN sets accept exactly one without deadlock', async () => {
+  const f = await card(), before = await state(f);
+  const firstIsbn = '9780306406157', secondIsbn = '9780140449136';
+  const first = rpcSql('phase9_set_candidate_isbn_v1', [f.sessionId, f.candidateId,
+    randomUUID(), randomUUID(), before.version, firstIsbn]);
+  const second = rpcSql('phase9_set_candidate_isbn_v1', [f.sessionId, f.candidateId,
+    randomUUID(), randomUUID(), before.version, secondIsbn]);
+  const raced = await race('isbn-isbn', ownerAction(first, f), ownerAction(second, f));
+  conflict(raced.contender, /P9_CANDIDATE_VERSION_CONFLICT/);
+  assert.doesNotMatch(raced.contender.error.message, /deadlock|40P01/i);
+  assert.equal(raced.held.ownerIsbn13, firstIsbn);
+  assert.equal(raced.held.candidateVersion, before.version + 1);
+  const current = await state(f);
+  assert.equal(current.version, before.version + 1);
+  assert.equal(current.owner_isbn13, raced.held.ownerIsbn13);
+});
+
 for (const contender of ['request', 'select']) {
   test('AC5a lock order: ISBN set wins against concurrent ' + contender + ' without deadlock', async () => {
     const f = await withOptions(), before = await choices(f);

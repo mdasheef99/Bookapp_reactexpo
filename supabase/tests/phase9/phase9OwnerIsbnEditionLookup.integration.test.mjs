@@ -25,6 +25,12 @@ before(async () => {
     '20261017000077_marketplace_phase9_edition_matching_variants.sql',
     M78,
   ]) {
+    if (file === M78) {
+      // SDD §5.5: reproduce postgres's live public-function default ACL before creation.
+      await db.exec(`ALTER DEFAULT PRIVILEGES FOR ROLE postgres REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+        ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+        GRANT EXECUTE ON FUNCTIONS TO anon,authenticated,service_role;`);
+    }
     const sql = fs.readFileSync(migrationPath(file), 'utf8');
     try { await db.exec(sql); }
     catch (error) {
@@ -108,6 +114,8 @@ test('M78 readback: null column, shape-only check, update trigger, postgres owne
   }
   const command = 'public.phase9_set_candidate_isbn_v1(uuid,uuid,uuid,text,integer,text)';
   assert.equal((await db.query("SELECT has_function_privilege('anon',$1,'EXECUTE') AS allowed", [command])).rows[0].allowed, false);
+  assert.equal((await db.query("SELECT has_function_privilege('service_role',$1,'EXECUTE') AS allowed", [command])).rows[0].allowed, false);
+  assert.equal((await db.query("SELECT NOT EXISTS(SELECT 1 FROM pg_proc p,aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE p.oid=$1::regprocedure AND a.grantee=0 AND a.privilege_type='EXECUTE') AS private", [command])).rows[0].private, true);
   assert.equal((await db.query("SELECT has_function_privilege('authenticated',$1,'EXECUTE') AS allowed", [command])).rows[0].allowed, true);
 });
 
@@ -153,9 +161,9 @@ test('owner ISBN overrides a different observed ISBN in the exact edition-only k
   assert.equal((await state(f)).query_identity, key);
 });
 
-test('command rejects invalid checksum, raw ISBN-10, null command and invalid idempotency keys', async () => {
+test('command rejects non-ISBN prefixes, invalid checksum, raw ISBN-10, null command and invalid idempotency keys', async () => {
   const f = await seedCard(db), before = await truth(f);
-  for (const value of ['9780306406158', '0306406152', '978-0306406157', '']) {
+  for (const value of ['9780306406158', '9770306406158', '0306406152', '978-0306406157', '']) {
     await assert.rejects(setIsbn(f, value), /P9_REQUEST_INVALID/);
   }
   await assert.rejects(setIsbn(f, isbn, { command: null }), /P9_REQUEST_INVALID/);
@@ -369,6 +377,14 @@ test('ISBN edition sequence 1 registers and completion accepts it; cleanup retai
   assert.deepEqual((await state(f)).options, result.rows);
   const choices = await scalar(db, readSql(f));
   assert.equal(choices.rows.length, 1); assert.equal(choices.rows[0].metadata.isbn13, isbn);
+});
+
+test('ISBN editions sequence 1 registers and completion accepts it', async () => {
+  const f = await olOperation(); await http(f, 0, 'search'); await http(f, 1, 'editions');
+  const result = olResult(f);
+  assert.equal((await complete(db, f, result)).status, 'completed');
+  await setActor(db, f.ownerId);
+  assert.deepEqual((await state(f)).options, result.rows);
 });
 
 test('title mode refuses edition at sequence 1 in both registration and completion', async () => {

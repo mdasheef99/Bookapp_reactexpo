@@ -1663,4 +1663,10 @@ Owner authorized creation of the M78 file on 2026-10-22 ("I approve creating the
 
 No data change at application: every existing row keeps `owner_isbn13` NULL.
 
-Status: CREATED / NOT_APPLIED. Local verification: PGlite M78 suite 28/28, three regression suites loading M78, real-Postgres lock tests 19/19 (two new ISBN races). Live preflight (project re-verification, md5 of the replaced bodies against the local pre-M78 stack, ACLs) and application each need separate Owner approval. Deploy order: M78, then the metadata worker, then Edge, then the app. Tracker 38 §27.
+Status at creation: CREATED / NOT_APPLIED. Local verification: PGlite M78 suite 28/28, three regression suites loading M78, real-Postgres lock tests 19/19 (two new ISBN races). Live preflight (project re-verification, md5 of the replaced bodies against the local pre-M78 stack, ACLs) and application each need separate Owner approval. Deploy order: M78, then the metadata worker, then Edge, then the app. Tracker 38 §27.
+
+M78 application (2026-10-23): APPLIED_VERIFIED. The Owner authorized application. A dedicated pre-apply review found one Medium defect: `service_role` kept EXECUTE on `phase9_set_candidate_isbn_v1` through the live default function ACL. It was fixed before application, so the command now revokes from all four roles, then grants `authenticated`.
+- Preflight (Haiku, read-only): clean. M78 objects absent; the seven replaced bodies' md5 equals the local stack; 0 stage-check violators.
+- How applied: Supabase MCP `apply_migration` returned `declined` twice with no prompt, so the Owner ran the file in the Supabase SQL editor. No `schema_migrations` row and no live version exists for M78.
+- Readback (SDD §5.8): column, check, trigger, stage constraint and ACLs as designed (EXECUTE: authenticated only); all ten function bodies hash-match the file.
+- No data change. Tracker 38 §28.

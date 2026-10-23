@@ -460,6 +460,6 @@ REVOKE ALL ON FUNCTION marketplace_sec.phase9_edition_effective_title(public.ima
  FROM PUBLIC,anon,authenticated,service_role;
 REVOKE ALL ON FUNCTION marketplace_sec.phase9_edition_effective_authors(public.image_extraction_candidates)
  FROM PUBLIC,anon,authenticated,service_role;
-REVOKE ALL ON FUNCTION public.phase9_set_candidate_isbn_v1(uuid,uuid,uuid,text,integer,text) FROM PUBLIC,anon;
+REVOKE ALL ON FUNCTION public.phase9_set_candidate_isbn_v1(uuid,uuid,uuid,text,integer,text) FROM PUBLIC,anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.phase9_set_candidate_isbn_v1(uuid,uuid,uuid,text,integer,text) TO authenticated;
 COMMIT;

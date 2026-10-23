@@ -1,3 +1,13 @@
+## 2026-10-23 - M78 applied to the live project and verified (slice 5a)
+
+Phase 9 remains active. A dedicated pre-apply review of M78 (Haiku and Muse; the Owner cancelled the GLM and Luna runs) found one confirmed Medium defect: the new command `public.phase9_set_candidate_isbn_v1` kept EXECUTE for `service_role`, because the live default function ACL grants it and M78 revoked only from PUBLIC and anon. Codex fixed it red-first (revoke from all four roles, then grant `authenticated`, as M70 does) and added three tests (977 prefix, `editions` in ISBN mode, a two-press race). Re-verification: PGlite M78 suite 29/29, DB suite 844 with the 3 known failures, real-Postgres runner 20/20. Muse's claim that two presses could both pass the version check was rejected: the candidate row lock comes first.
+
+Haiku's read-only preflight was clean apart from one flag, the newer live library migration `20261022160000_library_reading_history`. It is on origin/main and touches only library tables, so it is not a conflict. The Supabase MCP `apply_migration` call was declined twice by the server with no prompt (it asks for confirmation on destructive statements and this client cannot show it), so the Owner ran the file in the Supabase SQL editor ("Success. No rows returned"). There is therefore no `schema_migrations` row for M78. Read-only readback matched SDD §5.8, and all ten function bodies hash-match the file. Evidence: [tracker 38 §28](implementation/phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#28-m78-dedicated-review-fix-and-live-application-2026-10-23).
+
+Owner authorized local M78 creation on 2026-10-22 and its application on 2026-10-23; M78 status: APPLIED_VERIFIED (SQL editor, no migration-history row). Database change: M78 only; no data change (every row keeps `owner_isbn13` NULL). No Storage, provider or deploy change. The M78 fix and these docs are uncommitted on the 5a branch; nothing pushed.
+
+Active work unit: `post_scan_rework_slice5a_typed_isbn_sheet`. Exact next authorized action: on the Owner's approval, commit the M78 fix and docs on the 5a branch, then deploy the metadata worker and then the owner-ingestion Edge function, then run the in-app check (AC5a-1, AC5a-16c); then sync with origin/main and open the 5a PR.
+
 ## 2026-10-23 - Post-scan slice 5a (typed ISBN) built and reviewed; M78 file created, not applied
 
 Phase 9 remains active. Slice 5a is implemented on branch `claude/phase9-psr-slice5a-typed-isbn` per the approved SDD 01a §1–§14. The Owner can type an ISBN in the edition sheet, and Search Books then looks up that exact edition. The slice includes migration file M78 (`20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql`), which is created and tested locally but **not applied**.

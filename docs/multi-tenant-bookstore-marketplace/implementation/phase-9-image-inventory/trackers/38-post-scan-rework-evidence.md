@@ -1254,3 +1254,36 @@ Next authorized action and gate: Owner approval to (1) preflight and apply M78
 ```
 
 Active work unit: `post_scan_rework_slice5a_typed_isbn_sheet`. Exact next authorized action: on the Owner's approval, preflight and apply M78 to `ahntbtktjjmvfosgkmgn`, deploy the metadata worker and then the owner-ingestion Edge function, then run the in-app check (AC5a-1, AC5a-16c).
+
+## 28. M78 dedicated review, fix and live application, 2026-10-23
+
+**Why.** M78's earlier review relied on reviewers since dropped from the lineup (MiniMax, DeepSeek), so the Owner asked for a dedicated migration review before applying it.
+
+**Review.** Same brief for Muse Spark 1.3, GLM 5.3 Flash, Haiku and Codex gpt-6-luna. The Owner cancelled GLM and Luna mid-run; Muse and Haiku completed.
+- Confirmed, Medium (Haiku; Muse saw only the missing test): `phase9_set_candidate_isbn_v1` revoked EXECUTE only from PUBLIC and anon. The live default ACL for functions `postgres` creates in `public` is `{postgres=X, anon=X, authenticated=X, service_role=X}` (read-only query, 2026-10-23), so `service_role` would keep EXECUTE, contrary to SDD §5.5.
+- Confirmed test gaps (Muse, Low): no 13-digit non-978/979 value at the command; no `(1,'editions')` completion in ISBN mode; no race between two ISBN presses.
+- Rejected (Muse): "two presses with the same expected version both pass the version fence". `phase9_edition_assert_owner_candidate` locks the candidate row before the version check, so the second press waits and then fails with `P9_CANDIDATE_VERSION_CONFLICT`. The new race test proves it.
+
+**Fix (Codex gpt-6.1-sol, red-first).** M78 L463 now revokes from PUBLIC, anon, authenticated and service_role before granting `authenticated`, as M70 does. Tests: the harness reproduces the live default ACL, and the readback asserts `service_role` and PUBLIC are refused (red 28/1, green 29/0); command rejects `9770306406158`; ISBN-mode `editions` completion succeeds; two concurrent different-ISBN presses accept exactly one, with version +1 and no deadlock. Verification: PGlite M78 suite 29/29; `npm run test:phase9:db` 844 passed with the 3 known `phase9MetadataFoundation` failures; real-Postgres runner `-IncludeEditionPicker` 20/20 (`EDITION_PICKER_REAL_POSTGRES_ACCEPTANCE_PASS`, `POSTGRES_TEARDOWN_PASS`); `git diff --check` clean.
+
+**Preflight (Haiku, read-only, project `ahntbtktjjmvfosgkmgn` re-verified).**
+- M78 absent; none of the objects it creates exist; every object it replaces, drops or alters exists with the expected signature.
+- No drift: the whitespace-stripped md5 of each of the seven live bodies equals the latest earlier local migration.
+- No `phase9_metadata_provider_calls` row violates the widened stage check. Row counts: 192 candidates, 183 provider calls, 7 edition states. No locks or long transactions.
+- `phase9_replay` refuses a NULL actor through the NOT NULL `actor_or_service` column.
+- Flag, resolved: the newest live migration is `20261022160000_library_reading_history`, absent from this branch. It is on origin/main and creates only the library reading tables, so it does not interact with M78.
+
+**Application.** The Owner approved applying. Supabase MCP `apply_migration` returned `declined` twice, with no prompt shown, including after the Owner said they would approve it. The likely cause is the server's confirmation request for destructive statements (M78 drops and re-creates a constraint and a trigger), which this client cannot display. The Owner ran the file in the Supabase SQL editor: "Success. No rows returned". There is no `supabase_migrations.schema_migrations` row for M78.
+
+**Readback (read-only, SDD §5.8).**
+- `owner_isbn13`: text, nullable, no default. The check is `owner_isbn13 IS NULL OR owner_isbn13 ~ '^97[89][0-9]{10}$'`. 0 non-null rows.
+- `phase9_edition_http_stage` now allows `(1,'editions')` and `(1,'edition')`.
+- The trigger is `BEFORE UPDATE OF … review_disposition, owner_isbn13`.
+- The command is SECURITY DEFINER, owned by `postgres`, with `search_path=""`. EXECUTE: anon false, PUBLIC false, service_role false, authenticated true.
+- Both new helpers refuse anon, authenticated and service_role.
+- All replaced functions are owned by `postgres` with `search_path=""`. SECURITY DEFINER is kept everywhere except `phase9_edition_option_eligible`, which is not SECURITY DEFINER in the file either.
+- The whitespace-stripped md5 of all ten function bodies equals the local file.
+
+**State.** M78 is APPLIED_VERIFIED. There was no data change. The metadata worker and the owner-ingestion Edge function are not deployed yet; until they are, the app does not send the v2 header and nothing calls the new command. The fix and docs are uncommitted.
+
+Active work unit: `post_scan_rework_slice5a_typed_isbn_sheet`. Exact next authorized action: on the Owner's approval, commit the M78 fix and docs on the 5a branch, deploy the metadata worker and then the owner-ingestion Edge function, then run the in-app check (AC5a-1, AC5a-16c).
