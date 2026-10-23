@@ -38,8 +38,8 @@ export function NoteOrderMenu({ visible, order, onSelect, onClose }: {
       }
     }}>
     <GestureHandlerRootView style={styles.root}>
-      <Pressable testID="note-order-backdrop" accessible={false} onPress={onClose} style={[styles.scrim, { backgroundColor: colors.overlay }]}>
-        <Pressable accessible={false} focusable={false} accessibilityViewIsModal onPress={event => event.stopPropagation()} style={[styles.dialog, { backgroundColor: colors.bgRaised }]}>
+      <Pressable testID="note-order-backdrop" accessible={false} tabIndex={-1} onPress={onClose} style={[styles.scrim, { backgroundColor: colors.overlay }]}>
+        <Pressable accessible={false} focusable={false} tabIndex={-1} accessibilityViewIsModal onPress={event => event.stopPropagation()} style={[styles.dialog, { backgroundColor: colors.bgRaised }]}>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
             <Text accessibilityRole="header" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>Order</Text>
             <View accessibilityRole="radiogroup" accessibilityLabel="Order">

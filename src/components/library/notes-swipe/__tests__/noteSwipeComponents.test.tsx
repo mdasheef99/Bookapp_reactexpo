@@ -224,6 +224,7 @@ describe('swipe stack containers, shadows and focus', () => {
     expect(top.props.accessibilityActions).toEqual([
       { name: 'next', label: 'Next' },
       { name: 'previous', label: 'Previous' },
+      { name: 'activate', label: 'Read full note' },
       { name: 'read', label: 'Read full note' },
     ]);
     top.props.onAccessibilityAction({ nativeEvent: { actionName: 'next' } });
@@ -538,6 +539,22 @@ describe('swipe keyboard gating and scope parsing', () => {
 });
 
 describe('full-note sheet and home tile structure', () => {
+  it('focuses Close when the full-note dialog shows on web', () => {
+    (Platform as { OS: string }).OS = 'web';
+    const previousWindow = (global as any).window;
+    (global as any).window = { addEventListener: jest.fn(), removeEventListener: jest.fn() };
+    const { Modal } = require('react-native');
+    const { fireEvent } = require('@testing-library/react-native');
+    const { BookFeedbackProvider } = require('../../ui');
+    const ui = render(<BookFeedbackProvider><NoteFullNoteSheet card={card()} reduced onClose={jest.fn()} onOpenNote={jest.fn()} onOpenBook={jest.fn()} /></BookFeedbackProvider>);
+    try {
+      const close = ui.getByRole('button', { name: 'Close full note' });
+      const focus = close.parent!.instance.focus;
+      focus.mockClear();
+      fireEvent(ui.UNSAFE_getAllByType(Modal).find(node => node.props.animationType === 'none')!, 'show');
+      expect(focus).toHaveBeenCalledTimes(1);
+    } finally { ui.unmount(); (global as any).window = previousWindow; }
+  });
   it('opens the note as the sheet primary with Open book secondary and toasts inside', () => {
     const { BookFeedbackProvider } = require('../../ui');
     const ui = render(
@@ -592,9 +609,9 @@ describe('full-note sheet and home tile structure', () => {
     ui.unmount();
   });
 
-  it('dismisses from the header grabber regardless of scroll position and resets the flag on reopen', async () => {
+  it('dismisses from the header grabber regardless of scroll position and resets the flag on reopen', () => {
     const { BookFeedbackProvider } = require('../../ui');
-    const { fireEvent, waitFor } = require('@testing-library/react-native');
+    const { fireEvent } = require('@testing-library/react-native');
     const onClose = jest.fn();
     const ui = render(
       <BookFeedbackProvider>
@@ -622,7 +639,6 @@ describe('full-note sheet and home tile structure', () => {
     headerPan2.onEnd!({ translationY: 500, velocityY: 900 } as any);
     expect(onClose).toHaveBeenCalledTimes(1);
     ui2.unmount();
-    await waitFor(() => expect(true).toBe(true));
   });
 
   it('bounds the home tile by line counts with a 48dp target and pluralises the count', async () => {

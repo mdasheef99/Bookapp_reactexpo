@@ -2,9 +2,10 @@ import React from 'react';
 import { PixelRatio, Platform, StyleSheet, Text, View } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { NoteSwipeCard } from '../NoteSwipeCard';
+import { NoteFullNoteSheet } from '../NoteFullNoteSheet';
 import NotesSwipeScreen from '../../../../../app/(tabs)/library/notes-swipe';
 import { BookButton } from '../../ui/BookButton';
-import { LIBRARY_TEXT_BASE, scaledLineHeight } from '../../LibraryTypography';
+import { LIBRARY_TEXT_BASE } from '../../LibraryTypography';
 import type { NoteDeckCard } from '@/features/books/notes/manualNoteContract';
 
 jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight' }) }));
@@ -138,11 +139,14 @@ it('measures converging screen/card layout with single native scaling in all fou
     const chipHeight = Math.max(flat(chip).minHeight, nativeLine(chipText, scale) + flat(chip).paddingVertical * 2 + 2);
     const chipsHeight = chipHeight + flat(ui.getByTestId('note-deck-chips-bar')).paddingVertical * 2;
     const available = height - 20 - topHeight - progressHeight - buttonHeight - flat(bar).paddingVertical * 2 - chipsHeight;
-    // Known limit (recorded in the tracker): at 200% text on the shortest windows the screen has almost no room for the
-    // card even before the category chips row (13dp at 560dp, 93dp at 640dp); the chips row costs at most 80dp more.
-    // Guards: the pre-chips budget stays positive, and the chips row never grows beyond that. Normal text keeps full room.
+    // Native Text scales the base label line height once. The shortest window
+    // can still lack space for a complete card at 200%; never invent room here.
     expect(chipsHeight).toBeLessThanOrEqual(80);
-    if (scale === 2) expect(available + chipsHeight).toBeGreaterThan(0);
+    if (scale === 2) {
+      expect({ withChips: available, withoutChips: available + chipsHeight }).toEqual(
+        height === 640 ? { withChips: 235, withoutChips: 313 } : { withChips: 155, withoutChips: 233 },
+      );
+    }
     else expect(available).toBeGreaterThan(0);
     if (available <= 0) { ui.unmount(); continue; }
     layout(ui.getByTestId('note-stack-wrap'), 360, available);
@@ -168,7 +172,7 @@ it('measures converging screen/card layout with single native scaling in all fou
   }
 });
 
-it('swipe buttons use the scaled label token while default BookButton stays on native metrics', () => {
+it('swipe buttons scale the base label line height once while default BookButton stays on native metrics', () => {
   // Default shared button (no prop) is unchanged for other Library screens.
   jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(2);
   try {
@@ -194,17 +198,18 @@ it('swipe buttons use the scaled label token while default BookButton stays on n
       return value.current;
     });
   }
-  // Swipe screen buttons receive the explicit scaled token at fontScale 1 and 2.
+  // Swipe screen buttons receive the explicit base token at fontScale 1 and 2.
   const RN = require('react-native');
   for (const scale of [1, 2]) {
     jest.spyOn(RN, 'useWindowDimensions').mockReturnValue({ width: 360, height: 640, scale: 1, fontScale: scale });
     jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(scale);
-    const expected = scaledLineHeight(LIBRARY_TEXT_BASE.label.lineHeight, scale);
+    const expected = LIBRARY_TEXT_BASE.label.lineHeight;
     try {
       const ui = render(<NotesSwipeScreen />);
       for (const label of ['Previous', 'Read full note', 'Next']) {
         const text = ui.getByText(label, hidden);
         expect(flat(text).lineHeight).toBe(expected);
+        expect(nativeLine(text, scale)).toBe(22 * scale);
         expect(text.props.numberOfLines).toBeUndefined();
       }
       const backText = ui.getByText('\u2190', hidden);
@@ -223,13 +228,13 @@ it('swipe buttons use the scaled label token while default BookButton stays on n
   }
 });
 
-it('swipe screen stops passing the scaled token fails (prop-required guard)', () => {
+it('swipe screen supplies a base line height to every button', () => {
   const RN = require('react-native');
   jest.spyOn(RN, 'useWindowDimensions').mockReturnValue({ width: 360, height: 640, scale: 1, fontScale: 2 });
   jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(2);
   try {
     const ui = render(<NotesSwipeScreen />);
-    const expected = scaledLineHeight(LIBRARY_TEXT_BASE.label.lineHeight, 2);
+    const expected = LIBRARY_TEXT_BASE.label.lineHeight;
     // Every swipe-screen button must carry the token; dropping labelLineHeight
     // from any of them (mutation) turns its lineHeight undefined and fails here.
     for (const label of ['Previous', 'Read full note', 'Next', '\u2190']) {
@@ -239,4 +244,14 @@ it('swipe screen stops passing the scaled token fails (prop-required guard)', ()
   } finally {
     jest.restoreAllMocks();
   }
+});
+
+it('scales the sheet Close line height once at 200% while keeping its touch target', () => {
+  jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(2);
+  const { BookFeedbackProvider } = require('../../ui');
+  const ui = render(<BookFeedbackProvider><NoteFullNoteSheet card={mockCard()} reduced onClose={jest.fn()} onOpenNote={jest.fn()} onOpenBook={jest.fn()} /></BookFeedbackProvider>);
+  const close = ui.getByRole('button', { name: 'Close full note' });
+  expect(nativeLine(ui.getByText('Close'), 2)).toBe(44);
+  expect(flat(close).minHeight).toBeGreaterThanOrEqual(48);
+  ui.unmount();
 });

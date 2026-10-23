@@ -4,7 +4,7 @@ import { NoteDeckCard, NoteDeckCategory, NoteDeckReturnState, NoteDeckScope, not
 import { manualNotesGateway } from './manualNotesGateway';
 import { categoryDeck, deckOrder, noteDeckCategories, reconcilePosition, rememberPosition, DeckPositions } from './noteDeck';
 import { loadDeckCards } from './noteDeckCache';
-import { noteWasDeleted } from './useManualNotes';
+import { noteWasDeleted, retainDeckCards } from './useManualNotes';
 import { NOTE_SWIPE } from './noteSwipeConstants';
 
 export function useNoteDeckIndex(actorId: string, scope: NoteDeckScope, enabled = true) {
@@ -25,32 +25,6 @@ function useDeckCardData(client: QueryClient, actorId: string, id: string): Note
   );
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
-/** Observer-free keep-alive for the displayed + next two entries: the production
- * client uses default gcTime (5 min) and these entries have no observers, so they
- * would be garbage-collected and the card (and an open full-note sheet) would
- * vanish. Setting Infinity defaults + updating the live query keeps them alive
- * without creating a fetch observer for the Home tile's key. */
-function keepDeckCardAlive(client: QueryClient, actorId: string, id: string) {
-  if (!id) return;
-  try {
-    client.setQueryDefaults(noteKeys.deckCard(actorId, id), { gcTime: Infinity } as Record<string, unknown>);
-  } catch { /* ignore */ }
-  try {
-    const found = client.getQueryCache().find({ queryKey: noteKeys.deckCard(actorId, id), exact: true }) as unknown as {
-      setOptions?: (options: Record<string, unknown>) => void;
-      updateGcTime?: (gcTime: number) => void;
-      scheduleGc?: () => void;
-      options?: Record<string, unknown>;
-    } | undefined;
-    if (found) {
-      try {
-        if (typeof found.setOptions === 'function') found.setOptions({ ...(found.options ?? {}), gcTime: Infinity });
-        else if (typeof found.updateGcTime === 'function') found.updateGcTime(Infinity);
-      } catch { /* ignore */ }
-      try { found.scheduleGc?.(); } catch { /* ignore */ }
-    }
-  } catch { /* ignore */ }
-}
 /** Fresh-mount fallback when the fallback noteId is gone (web reload → delete → return). */
 function resolveInitialFallback(ids: readonly string[], initial: NoteDeckReturnState): string | null | undefined {
   if (!ids.length) return undefined;
@@ -67,7 +41,7 @@ function resolveInitialFallback(ids: readonly string[], initial: NoteDeckReturnS
   }
   return ids[0] ?? undefined;
 }
-export function useNoteDeck(actorId: string, initial: NoteDeckReturnState, enabled = true) {
+export function useNoteDeck(actorId: string, initial: NoteDeckReturnState, enabled = true, retainCards = enabled) {
   const client = useQueryClient();
   const index = useNoteDeckIndex(actorId, initial.scope, enabled);
   const allRows = useMemo(() => (index.data ?? []).filter(row => !noteWasDeleted(client, actorId, row.user_book_id, row.id)), [index.data, index.isFetching, actorId, client]);
@@ -188,17 +162,14 @@ export function useNoteDeck(actorId: string, initial: NoteDeckReturnState, enabl
   const cardData = useDeckCardData(client, actorId, exposed ?? '');
   const underOneData = useDeckCardData(client, actorId, ids[at + 1] ?? '');
   const underTwoData = useDeckCardData(client, actorId, ids[at + 2] ?? '');
-  // Keep the displayed + next two entries alive (no observers) and reload if the
-  // cache evicts the displayed entry despite the keep-alive.
-  const visibleOne = ids[at + 1] ?? '';
-  const visibleTwo = ids[at + 2] ?? '';
+  // Keep a bounded window (including both undercards) alive without observers.
+  // Cleanup releases the previous window on movement, blur, and unmount.
+  const retainedKey = JSON.stringify(ids.slice(Math.max(0, at - 5), at + 6));
   const exposedId = exposed ?? '';
   useEffect(() => {
-    if (!enabled || !actorId) return;
-    if (exposedId) keepDeckCardAlive(client, actorId, exposedId);
-    if (visibleOne) keepDeckCardAlive(client, actorId, visibleOne);
-    if (visibleTwo) keepDeckCardAlive(client, actorId, visibleTwo);
-  }, [client, actorId, enabled, exposedId, visibleOne, visibleTwo]);
+    if (!retainCards || !actorId) return;
+    return retainDeckCards(client, actorId, JSON.parse(retainedKey) as string[]);
+  }, [client, actorId, retainCards, retainedKey]);
   useEffect(() => {
     if (!enabled || !actorId || !exposedId) return;
     const unsubscribe = client.getQueryCache().subscribe(event => {

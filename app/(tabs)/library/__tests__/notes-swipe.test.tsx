@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { act, render, fireEvent, waitFor } from '@testing-library/react-native';
 import { LIBRARY_SPACING } from '@/components/library/LibraryAppearance';
 import { countPrimaryButtons, expectSinglePrimary } from '@/test-utils/bookSection';
@@ -140,11 +140,15 @@ beforeEach(() => {
 });
 
 describe('notes-swipe screen states and primaries', () => {
-  it('loading has no primary and shows the loading line', () => {
+  it('loading has no primary and shows the loading line inside a quiet three-slot outline', () => {
     mockDeck = baseDeck({ index: { data: undefined, isError: false, isPending: true, isFetching: false, refetch: jest.fn() }, ids: [], noteId: null, card: undefined });
     const ui = renderScreen();
     expect(ui.getByText('Loading your notes…')).toBeTruthy();
     expect(countPrimaryButtons(ui as any)).toBe(0);
+    expect(ui.getByTestId('note-stack-fixed-parent', { includeHiddenElements: true })).toBeTruthy();
+    for (const slot of [0, 1, 2]) expect(ui.getByTestId(`note-card-slot-${slot}`, { includeHiddenElements: true })).toBeTruthy();
+    expect(StyleSheet.flatten(ui.getByTestId('note-card-slot-0-inner', { includeHiddenElements: true }).props.style).borderWidth).toBe(1);
+    expect(ui.queryByTestId('note-swipe-button-bar')).toBeNull();
     ui.unmount();
   });
 

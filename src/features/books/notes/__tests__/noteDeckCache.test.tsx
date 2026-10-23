@@ -13,6 +13,36 @@ let client: QueryClient;
 const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 beforeEach(() => { jest.clearAllMocks(); client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } }); (manualNotesGateway.deckCards as jest.Mock).mockImplementation(async (_actor, ids: string[]) => ids.map(id => card(id))); (noteSaves.forBook as jest.Mock).mockReturnValue([]); });
 afterEach(() => client.clear());
+it('pins only the nearby window, releases earlier batches, and releases every card on unmount', async () => {
+  jest.useFakeTimers();
+  client.setDefaultOptions({ queries: { retry: false, gcTime: 5 * 60_000, staleTime: Infinity } });
+  const scope = { kind: 'all' } as const;
+  const ids = Array.from({ length: 50 }, (_, i) => `note-${String(i).padStart(2, '0')}`);
+  client.setQueryData(noteKeys.deckIndex('actor', scope), ids.map(id => card(id).note));
+  const hook = renderHook(() => useNoteDeck('actor', { scope, category: 'all', order: 'oldest', seed: 'seed', noteId: '' }), { wrapper });
+  const query = (id: string) => client.getQueryCache().find({ queryKey: noteKeys.deckCard('actor', id), exact: true });
+  try {
+    await waitFor(() => expect(hook.result.current.card?.note.id).toBe(ids[0]));
+    expect(query(ids[0])?.gcTime).toBe(Infinity);
+    // Loading a 20-card batch must not pin all 20 cards.
+    expect(query(ids[19])?.gcTime).toBe(5 * 60_000);
+    for (let step = 0; step < 30; step++) await act(async () => { hook.result.current.move('next'); });
+    await waitFor(() => expect(hook.result.current.card?.note.id).toBe(ids[30]));
+    expect(query(ids[0])?.gcTime).toBe(5 * 60_000);
+    expect(query(ids[0])?.options.gcTime).toBe(5 * 60_000);
+    for (const id of ids.slice(25, 36)) expect(query(id)?.gcTime).toBe(Infinity);
+    await act(async () => { jest.advanceTimersByTime(6 * 60_000); });
+    expect(query(ids[0])).toBeUndefined();
+    for (const id of ids.slice(25, 36)) expect(client.getQueryData(noteKeys.deckCard('actor', id))).toBeTruthy();
+    hook.unmount();
+    for (const id of ids.slice(25, 36)) {
+      expect(query(id)?.gcTime).toBe(5 * 60_000);
+      expect(query(id)?.options.gcTime).toBe(5 * 60_000);
+    }
+    await act(async () => { jest.advanceTimersByTime(6 * 60_000); });
+    for (const id of ids) expect(query(id)).toBeUndefined();
+  } finally { hook.unmount(); client.clear(); jest.useRealTimers(); }
+});
 it('skips only existing non-invalidated entries and batches 20 at a time', async () => {
   const ids = Array.from({ length: 43 }, (_, i) => String(i));
   client.setQueryData(noteKeys.deckCard('actor', '0'), card('0'));

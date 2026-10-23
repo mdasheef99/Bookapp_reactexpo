@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookButton, BookOffline } from '@/components/library/ui';
 import { LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 // Native Text applies font scaling to numeric line heights as well as font sizes.
-import { LIBRARY_TEXT as LIBRARY_TEXT_SCALED, LIBRARY_TEXT_BASE as LIBRARY_TEXT } from '@/components/library/LibraryTypography';
+import { LIBRARY_TEXT_BASE as LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 import { NoteSwipeControls, NoteSwipeStack } from '@/components/library/notes-swipe/NoteSwipeStack';
 import { NoteFullNoteSheet } from '@/components/library/notes-swipe/NoteFullNoteSheet';
 import { NoteOrderMenu } from '@/components/library/notes-swipe/NoteOrderMenu';
@@ -70,7 +70,8 @@ export default function NotesSwipeScreen() {
     return () => { live = false; };
   }, [actorId, explicitOrder]);
   const enabled = focused && !isOffline && !invalidBook && orderLoaded && (scope.kind === 'all' || !!book.data);
-  const deck = useNoteDeck(actorId, initial, enabled);
+  // Offline pauses reads while the focused screen still retains its nearby cards.
+  const deck = useNoteDeck(actorId, initial, enabled, focused);
   const deckCategories = (deck as { categories?: readonly NoteDeckCategory[] }).categories ?? (['all'] as const);
   const deckCategory = (deck as { category?: NoteDeckCategory }).category ?? 'all';
   const deckIndexData = (deck as { index?: { data?: unknown } }).index?.data;
@@ -209,26 +210,30 @@ export default function NotesSwipeScreen() {
     closeSheet(); deck.abort(); router.push(readerHref(deck.card.note.user_book_id, deck.card.note.id, contextId));
   };
   let content: React.ReactNode;
+  let loading = false;
   if (invalidBook || !actorId) content = <><Text style={[LIBRARY_TEXT.body, { color: colors.textPrimary }]}>This book is unavailable.</Text><BookButton label="Go to library" variant="primary" onPress={() => router.replace('/(tabs)/library')} /></>;
   else if (isOffline && !deck.index.data) content = <><Text style={[LIBRARY_TEXT.body, { color: colors.textPrimary }]}>You&apos;re offline. Connect to load your notes.</Text><BookButton label="Try again" variant="primary" onPress={retry} /></>;
   else if ((deck.index.isError && !deck.index.data) || (scope.kind === 'book' && book.isError && !book.data)) content = <><Text style={[LIBRARY_TEXT.body, { color: colors.textPrimary }]}>Couldn&apos;t load your notes.</Text><BookButton label="Try again" variant="primary" onPress={retry} /></>;
-  else if (!deck.index.data || !orderLoaded || (scope.kind === 'book' && !book.data)) content = <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>Loading your notes…</Text>;
+  else if (!deck.index.data || !orderLoaded || (scope.kind === 'book' && !book.data)) {
+    loading = true;
+    content = <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>Loading your notes…</Text>;
+  }
   else if (!deck.ids.length) content = <><Text style={[LIBRARY_TEXT.body, { color: colors.textPrimary }]}>Your notes will show up here.</Text><BookButton label={scope.kind === 'book' ? 'Add a note' : 'Go to library'} variant="primary" onPress={() => scope.kind === 'book' ? openNoteComposer(router, actorId, scope.userBookId, 'list') : router.replace('/(tabs)/library')} /></>;
-  else if (end) content = <><Text accessibilityRole="header" testID="note-end-heading" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>That&apos;s all for now.</Text><BookButton ref={startAgainRef} testID="note-start-again" label="Start again" variant="primary" labelLineHeight={LIBRARY_TEXT_SCALED.label.lineHeight} onPress={() => stackRef.current?.run(deck.restart)} /></>;
+  else if (end) content = <><Text accessibilityRole="header" testID="note-end-heading" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>That&apos;s all for now.</Text><BookButton ref={startAgainRef} testID="note-start-again" label="Start again" variant="primary" labelLineHeight={LIBRARY_TEXT.label.lineHeight} onPress={() => stackRef.current?.run(deck.restart)} /></>;
   else if (isOffline) content = <><Text style={[LIBRARY_TEXT.body, { color: colors.textPrimary }]}>You&apos;re offline. Connect to load this note.</Text><BookButton label="Try again" variant="text" onPress={retry} /></>;
   else if (deck.detailError) content = <><Text style={[LIBRARY_TEXT.body, { color: colors.textPrimary }]}>Couldn&apos;t load this note.</Text><BookButton label="Try again" variant="text" onPress={deck.retryCard} /></>;
   else content = <><Text style={[LIBRARY_TEXT.body, { color: colors.textPrimary }]}>Loading note…</Text></>;
   const showCard = populated && !end && !invalidBook;
-  const showStack = showCard || (end && !invalidBook);
+  const showStack = loading || showCard || (end && !invalidBook);
   const showStateScroll = !showStack;
   const showChrome = populated;
   return <View style={[styles.page, { backgroundColor: colors.bgPrimary }]}>
     <View testID="note-swipe-content" aria-hidden={overlayOpen} importantForAccessibility={overlayOpen ? 'no-hide-descendants' : 'auto'} {...(Platform.OS === 'web' && overlayOpen ? { inert: true } as object : {})}
       style={[styles.content, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View testID="note-swipe-top-bar" style={[styles.bar, styles.top, compactBar, { backgroundColor: colors.bgPrimary }]}>
-        <BookButton label="←" accessibilityLabel="Back" variant="text" labelLineHeight={LIBRARY_TEXT_SCALED.label.lineHeight} onPress={leave} />
+        <BookButton label="←" accessibilityLabel="Back" variant="text" labelLineHeight={LIBRARY_TEXT.label.lineHeight} onPress={leave} />
         <Text accessibilityRole="header" numberOfLines={2} ellipsizeMode="tail" style={[LIBRARY_TEXT.heading, styles.title, { color: colors.textPrimary }]}>{scope.kind === 'book' ? book.data?.title ?? 'Your notes' : 'Your notes'}</Text>
-        {showChrome && <BookButton ref={orderButtonRef} testID="note-order-button" label="Order" variant="text" labelLineHeight={LIBRARY_TEXT_SCALED.label.lineHeight} expanded={orderMenuOpen} onPress={() => setOrderMenuOpen(true)} />}
+        {showChrome && <BookButton ref={orderButtonRef} testID="note-order-button" label="Order" variant="text" labelLineHeight={LIBRARY_TEXT.label.lineHeight} expanded={orderMenuOpen} onPress={() => setOrderMenuOpen(true)} />}
       </View>
       {isOffline && deck.index.data && <View style={[styles.bar, { backgroundColor: colors.bgPrimary }]}><BookOffline message="Offline · Showing saved content." /></View>}
       {populated && <View testID="note-position-bar" aria-hidden importantForAccessibility="no-hide-descendants" style={[styles.bar, compactBar, { backgroundColor: colors.bgPrimary }]}>
@@ -249,8 +254,8 @@ export default function NotesSwipeScreen() {
         </ScrollView>
       )}
       {populated && <View testID="note-swipe-button-bar" style={[styles.bar, styles.buttons, { backgroundColor: colors.bgPrimary }]}>
-        <View testID="note-swipe-button-slot-prev" style={styles.buttonSlot}><BookButton label="Previous" variant="text" labelLineHeight={LIBRARY_TEXT_SCALED.label.lineHeight} disabled={deck.at <= 0} onPress={() => move('previous')} /></View>
-        {!end && <><View testID="note-swipe-button-slot-read" style={styles.buttonSlot}><BookButton ref={readButtonRef} testID="note-read-full" label="Read full note" variant="text" labelLineHeight={LIBRARY_TEXT_SCALED.label.lineHeight} disabled={!deck.card} onPress={read} /></View><View testID="note-swipe-button-slot-next" style={styles.buttonSlot}><BookButton label="Next" variant="primary" labelLineHeight={LIBRARY_TEXT_SCALED.label.lineHeight} onPress={() => move('next')} /></View></>}
+        <View testID="note-swipe-button-slot-prev" style={styles.buttonSlot}><BookButton label="Previous" variant="text" labelLineHeight={LIBRARY_TEXT.label.lineHeight} disabled={deck.at <= 0} onPress={() => move('previous')} /></View>
+        {!end && <><View testID="note-swipe-button-slot-read" style={styles.buttonSlot}><BookButton ref={readButtonRef} testID="note-read-full" label="Read full note" variant="text" labelLineHeight={LIBRARY_TEXT.label.lineHeight} disabled={!deck.card} onPress={read} /></View><View testID="note-swipe-button-slot-next" style={styles.buttonSlot}><BookButton label="Next" variant="primary" labelLineHeight={LIBRARY_TEXT.label.lineHeight} onPress={() => move('next')} /></View></>}
       </View>}
       {Platform.OS === 'web' && <Text testID="note-move-announcement" aria-live="polite" style={[styles.live, { color: colors.textPrimary }]}>{announcement}</Text>}
     </View>

@@ -160,6 +160,16 @@ describe('C3 chips: radio semantics and layout', () => {
 });
 
 describe('C3 order menu: radio choices and overlay behaviour', () => {
+  it('keeps both web menu wrappers out of the Tab order', () => {
+    (Platform as { OS: string }).OS = 'web';
+    const previousWindow = (global as any).window;
+    (global as any).window = { addEventListener: jest.fn(), removeEventListener: jest.fn() };
+    const ui = renderMenu();
+    try {
+      expect(ui.getByTestId('note-order-backdrop', { includeHiddenElements: true }).props.tabIndex).toBe(-1);
+      expect(ui.UNSAFE_getByProps({ accessibilityViewIsModal: true }).props.tabIndex).toBe(-1);
+    } finally { ui.unmount(); (global as any).window = previousWindow; }
+  });
   it('moves focus only with wrapping arrows and selects once with Space or Enter on web', () => {
     (Platform as { OS: string }).OS = 'web';
     const previousWindow = (global as any).window;
@@ -299,6 +309,19 @@ describe('C3 stack: category flight and TalkBack action', () => {
     } as React.ComponentProps<typeof NoteSwipeStack>;
   }
 
+  it('handles standard TalkBack activation through the guarded read path', () => {
+    const props = stackProps();
+    const ui = render(<NoteSwipeStack {...props} />);
+    const top = ui.getByTestId('note-card-slot-0');
+    expect(top.props.accessibilityActions).toContainEqual({ name: 'activate', label: 'Read full note' });
+    fireEvent(top, 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });
+    expect(props.onRead).toHaveBeenCalledTimes(1);
+    ui.rerender(<NoteSwipeStack {...props} enabled={false} />);
+    fireEvent(ui.getByTestId('note-card-slot-0'), 'accessibilityAction', { nativeEvent: { actionName: 'activate' } });
+    expect(props.onRead).toHaveBeenCalledTimes(1);
+    ui.unmount();
+  });
+
   it.each([false, true].flatMap(reduced => ['category', 'next', 'leave'].map(direction => ({ reduced, direction }))))(
     'cancels $direction with reduced=$reduced, releases input, and completes the following swipe once', ({ reduced, direction }) => {
       const completions: Array<(finished: boolean) => void> = [];
@@ -414,16 +437,34 @@ describe('C3 stack: category flight and TalkBack action', () => {
 
   it('cross-fades with opacity only when reduced motion is on for category', () => {
     const Reanimated = require('react-native-reanimated');
-    const onCategory = jest.fn();
-    render(<NoteSwipeStack {...stackProps({ onCategory, canCategory: true, reduced: true })} />);
-    const pan = mockPanCallbacks[mockPanCallbacks.length - 1];
-    (Reanimated.withTiming as jest.Mock).mockClear();
-    pan.onStart!({} as any);
-    pan.onUpdate!({ translationX: 0, translationY: -60 } as any);
-    pan.onEnd!({ translationX: 0, translationY: -60, velocityX: -900, velocityY: -900 } as any);
-    expect(onCategory).toHaveBeenCalledTimes(1);
-    const timingCalls = (Reanimated.withTiming as jest.Mock).mock.calls;
-    expect(timingCalls.some((c: any[]) => c[0] === 0 && c[1]?.duration === NOTE_SWIPE.crossFadeMs)).toBe(true);
+    let complete!: (finished: boolean) => void;
+    (Reanimated.withTiming as jest.Mock).mockImplementation((value: any, _opts: any, cb: any) => { if (cb) complete = cb; return value; });
+    try {
+      const onCategory = jest.fn();
+      const props = stackProps({ onCategory, canCategory: true, reduced: true });
+      const ui = render(<NoteSwipeStack {...props} />);
+      const pan = mockPanCallbacks[mockPanCallbacks.length - 1];
+      (Reanimated.withTiming as jest.Mock).mockClear();
+      act(() => {
+        pan.onStart!({});
+        pan.onUpdate!({ translationX: 0, translationY: -60 });
+        pan.onEnd!({ translationX: 0, translationY: -60, velocityX: -900, velocityY: -900 });
+      });
+      expect(onCategory).not.toHaveBeenCalled();
+      expect(Reanimated.withTiming).toHaveBeenCalledWith(0, { duration: NOTE_SWIPE.crossFadeMs }, expect.any(Function));
+      act(() => complete(true));
+      expect(onCategory).toHaveBeenCalledTimes(1);
+      // The old card must stay transparent until the parent commits the new category.
+      const sharedOpacity = (Reanimated.useSharedValue as jest.Mock).mock.results[4].value;
+      expect(sharedOpacity.value).toBe(0);
+      (Reanimated.withTiming as jest.Mock).mockClear();
+      ui.rerender(<NoteSwipeStack {...props} categoryKey="quote" card={card({ id: 'next-category' })} />);
+      expect(Reanimated.withTiming).toHaveBeenCalledWith(1, { duration: NOTE_SWIPE.crossFadeMs });
+      expect(sharedOpacity.value).toBe(1);
+      ui.unmount();
+    } finally {
+      (Reanimated.withTiming as jest.Mock).mockImplementation((value: any, _opts: any, cb: any) => { cb?.(true); return value; });
+    }
   });
 
   it('accepts ArrowUp with overlay gating and ignores it on buttons', () => {

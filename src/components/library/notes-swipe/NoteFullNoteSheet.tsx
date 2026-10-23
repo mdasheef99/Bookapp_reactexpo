@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BookButton, BookFeedbackSlot } from '../ui';
 import { LIBRARY_RADIUS, LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } from '../LibraryAppearance';
-import { LIBRARY_TEXT } from '../LibraryTypography';
+import { LIBRARY_TEXT, LIBRARY_TEXT_BASE } from '../LibraryTypography';
 import { categoryLabel, NoteDeckCard } from '@/features/books/notes/manualNoteContract';
 import { NOTE_SWIPE } from '@/features/books/notes/noteSwipeConstants';
 
@@ -13,6 +13,7 @@ export function NoteFullNoteSheet({ card, onClose, onOpenNote, onOpenBook, reduc
   const colors = useLibraryAppearance();
   const screen = useWindowDimensions();
   const [atTop, setAtTop] = useState(true);
+  const closeRef = useRef<View>(null);
   const cardId = card?.note.id;
   // Reset the scroll flag on every opening so a reopened short note never inherits a stuck not-at-top.
   useEffect(() => { setAtTop(true); }, [cardId]);
@@ -30,13 +31,14 @@ export function NoteFullNoteSheet({ card, onClose, onOpenNote, onOpenBook, reduc
   });
   const scrollNative = Gesture.Native();
   if (!card) return null;
-  return <Modal visible transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onClose}>
+  return <Modal visible transparent animationType={reduced ? 'none' : 'slide'} onRequestClose={onClose}
+    onShow={() => { if (Platform.OS === 'web') closeRef.current?.focus(); }}>
     <GestureHandlerRootView style={styles.root}>
       <View style={[styles.scrim, { backgroundColor: colors.overlay }]}>
         <View testID="note-full-sheet" accessibilityViewIsModal aria-modal={true} role={Platform.OS === 'web' ? 'dialog' : undefined} accessibilityLabel="Full note" style={[styles.panel, { backgroundColor: colors.bgRaised }]}>
           <GestureDetector gesture={pan}><View collapsable={false} testID="note-sheet-handle" style={styles.handle}>
             <View testID="note-sheet-grabber" accessible={false} aria-hidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[styles.grabber, { backgroundColor: colors.controlBorder }]} />
-            <BookButton label="Close" accessibilityLabel="Close full note" variant="text" labelLineHeight={LIBRARY_TEXT.label.lineHeight} onPress={onClose} />
+            <BookButton ref={closeRef} label="Close" accessibilityLabel="Close full note" variant="text" labelLineHeight={LIBRARY_TEXT_BASE.label.lineHeight} onPress={onClose} />
           </View></GestureDetector>
           <GestureDetector gesture={scrollNative}><ScrollView style={styles.scroll} contentContainerStyle={styles.content} scrollEventThrottle={16}
             onScroll={event => setAtTop(event.nativeEvent.contentOffset.y <= 0)}>

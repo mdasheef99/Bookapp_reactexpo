@@ -77,6 +77,7 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
   // position effect as a visual slide-in that NEVER sets flight/jsFlightRef, so inputs
   // during the 180ms simply interrupt it by resetting x. Never blocks input.
   const prevSlideRef = useRef(false);
+  const reducedFadeInRef = useRef(false);
   // Pure-visual Category entry: set when a `category` flight finishes (or when the
   // category key changes via chips/actions), consumed the same way from below.
   const categorySlideRef = useRef(false);
@@ -87,7 +88,7 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
   // Single JS helper that keeps the two flight states in sync and always leaves the
   // card idle. Fences late worklet/JS completions: they check the JS id and the
   // shared id and are ignored once both are 0.
-  const resetFlightToIdle = useCallback((invalidate = true) => {
+  const resetFlightToIdle = useCallback((invalidate = true, preserveOpacity = false) => {
     if (safetyTimer.current) { clearTimeout(safetyTimer.current); safetyTimer.current = null; }
     if (invalidate) {
       jsEpochRef.current += 1;
@@ -96,11 +97,12 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
     jsFlightRef.current = 0;
     try { flight.value = 0; } catch { /* ignore */ }
     try { panActive.value = false; } catch { /* ignore */ }
-    try { x.value = 0; y.value = 0; opacity.value = 1; } catch { /* ignore */ }
+    try { x.value = 0; y.value = 0; if (!preserveOpacity) opacity.value = 1; } catch { /* ignore */ }
   }, [flight, flightEpoch, x, y, opacity, panActive]);
   const invalidateFlight = useCallback(() => {
     prevSlideRef.current = false;
     categorySlideRef.current = false;
+    reducedFadeInRef.current = false;
     resetFlightToIdle();
   }, [resetFlightToIdle]);
   useEffect(() => () => { activeRef.current = false; invalidateFlight(); }, [invalidateFlight]);
@@ -124,8 +126,12 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
   useEffect(() => {
     const categoryChanged = prevCategoryKeyRef.current !== categoryKey;
     prevCategoryKeyRef.current = categoryKey;
-    resetFlightToIdle();
-    if (prevSlideRef.current && !reduced) {
+    const fadeIn = reduced && reducedFadeInRef.current;
+    reducedFadeInRef.current = false;
+    resetFlightToIdle(true, fadeIn);
+    if (fadeIn) {
+      opacity.value = withTiming(1, { duration: NOTE_SWIPE.crossFadeMs });
+    } else if (prevSlideRef.current && !reduced) {
       prevSlideRef.current = false;
       categorySlideRef.current = false;
       try {
@@ -202,16 +208,19 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
   // Exactly-once completion per flight: the first call for a flight advances;
   // late/duplicate completions (done=false cancellation + timeout, double callback,
   // effect rerun, unmount) are ignored via the monotonic id. ALWAYS releases the
-  // flight and resets translation/opacity, even when the position did not change or
+  // flight and resets translation, even when the position did not change or
   // when disabled mid-flight (gesture leaves during the sheet grace are swallowed
   // here after resetting, while the Back button uses requestLeave directly).
+  // Reduced-motion success stays transparent until the new position fades in.
   const finishFlight = useCallback((direction: SwipeDirection, myFlight: number, epoch: number, finished: boolean, target?: NoteDeckCategory) => {
     if (jsFlightRef.current !== myFlight) return;
     if (epoch !== jsEpochRef.current) return;
-    resetFlightToIdle(false);
+    const fadeIn = reduced && finished && activeRef.current && !leaveOnceRef.current && direction !== 'leave';
+    reducedFadeInRef.current = fadeIn;
+    resetFlightToIdle(false, fadeIn);
     if (!finished || !activeRef.current || leaveOnceRef.current) return;
     finish(direction, target);
-  }, [finish, resetFlightToIdle]);
+  }, [finish, resetFlightToIdle, reduced]);
   // Gestures and category controls use the same UI-thread flight and completion.
   const startFlight = useCallback((direction: SwipeDirection, target?: NoteDeckCategory, requestedEpoch?: number) => {
     'worklet';
@@ -360,15 +369,15 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
   const underOuterOne = { left: LIBRARY_SPACING.lg + 7, right: LIBRARY_SPACING.lg + 7, top: LIBRARY_SPACING.lg, bottom: LIBRARY_SPACING.xl + UNDER_PEEK_STEP };
   const underOuterTwo = { left: LIBRARY_SPACING.lg + 14, right: LIBRARY_SPACING.lg + 14, top: LIBRARY_SPACING.lg, bottom: LIBRARY_SPACING.xl };
   return <GestureDetector gesture={gesture}><View testID="note-stack-fixed-parent" onLayout={event => { width.value = Math.max(1, event.nativeEvent.layout.width - LIBRARY_SPACING.xxl); }} style={[styles.stage, { minHeight: minStage, maxHeight: 640, maxWidth: 520, width: '100%', alignSelf: 'center' }]}>
-    <Animated.View collapsable={false} testID="note-book-background" pointerEvents="none" aria-hidden importantForAccessibility="no-hide-descendants" style={[StyleSheet.absoluteFill, backgroundStyle]} />
+    <Animated.View collapsable={false} testID="note-book-background" pointerEvents="none" aria-hidden importantForAccessibility="no-hide-descendants" style={[StyleSheet.absoluteFill, backgroundStyle, !card && { backgroundColor: colors.bgPrimary }]} />
     <Animated.View collapsable={false} testID="note-card-slot-0" accessible={!!card} accessibilityRole={card ? 'button' : undefined}
       accessibilityLabel={card ? noteCardName(card, at, total) : undefined}
-      accessibilityActions={card ? [...[{ name: 'next', label: 'Next' }, { name: 'previous', label: 'Previous' }], ...(canCategoryFlight ? [{ name: 'category', label: 'Next category' }] : []), { name: 'read', label: 'Read full note' }] : []}
-      onAccessibilityAction={event => { const action = event.nativeEvent.actionName; if (action === 'next') requestMove('next'); else if (action === 'previous') requestMove('previous'); else if (action === 'category') requestCategory(); else if (action === 'read') requestRead(); }}
+      accessibilityActions={card ? [...[{ name: 'next', label: 'Next' }, { name: 'previous', label: 'Previous' }], ...(canCategoryFlight ? [{ name: 'category', label: 'Next category' }] : []), { name: 'activate', label: 'Read full note' }, { name: 'read', label: 'Read full note' }] : []}
+      onAccessibilityAction={event => { const action = event.nativeEvent.actionName; if (action === 'next') requestMove('next'); else if (action === 'previous') requestMove('previous'); else if (action === 'category') requestCategory(); else if (action === 'read' || action === 'activate') requestRead(); }}
       focusable={false}
       {...(Platform.OS === 'web' ? { tabIndex: -1, 'data-note-deck-card': 'true', dataSet: { 'note-deck-card': 'true' } } as object : {})}
       style={[styles.slotOuter, topOuterInsets, { shadowColor: colors.shadow, zIndex: 3 }, topStyle, Platform.OS === 'web' ? { userSelect: 'none', touchAction: 'none' } as object : undefined]}>
-      <Animated.View collapsable={false} testID="note-card-slot-0-inner" style={[styles.slotInner, { backgroundColor: colors.bgCard }]}>
+      <Animated.View collapsable={false} testID="note-card-slot-0-inner" style={[styles.slotInner, { backgroundColor: colors.bgCard }, !card && underInner]}>
         {card ? <NoteSwipeCard card={card} lines={bodyLines} onChromeHeight={setMeasuredChrome} /> : children}
         <Animated.View collapsable={false} testID="note-shine" pointerEvents="none" aria-hidden importantForAccessibility="no-hide-descendants" style={[StyleSheet.absoluteFill, shineStyle]}>
           <LinearGradient colors={[colors.cardShineEdge, colors.cardShine, colors.cardShineEdge]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />

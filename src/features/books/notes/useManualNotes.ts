@@ -7,14 +7,14 @@ import { ManualNote, NoteDeckCard, NoteDeckIndexRow, noteKeys, NoteSubmission } 
 
 // Shared by retained screens, scoped to their QueryClient and current account lifetime.
 // Receipts remain discoverable, but their cache effects are applied only once.
-interface NoteCacheMemory { applied: WeakSet<Readonly<NoteSubmission>>; deleted: Set<string> }
+interface NoteCacheMemory { applied: WeakSet<Readonly<NoteSubmission>>; deleted: Set<string>; retained: Map<string, number> }
 let cacheMemories = new WeakMap<QueryClient, NoteCacheMemory>();
 useAuthStore.subscribe((state, previous) => {
   if (state.session?.user.id !== previous.session?.user.id) cacheMemories = new WeakMap();
 });
 function cacheMemory(client: QueryClient): NoteCacheMemory {
   let memory = cacheMemories.get(client);
-  if (!memory) { memory = { applied: new WeakSet(), deleted: new Set() }; cacheMemories.set(client, memory); }
+  if (!memory) { memory = { applied: new WeakSet(), deleted: new Set(), retained: new Map() }; cacheMemories.set(client, memory); }
   return memory;
 }
 function recordIdentity(actorId: string, bookId: string, noteId: string) {
@@ -31,33 +31,51 @@ function seedRecord(client: QueryClient, actorId: string, bookId: string, record
 export function noteWasDeleted(client: QueryClient, actorId: string, bookId: string, noteId: string) {
   return cacheMemory(client).deleted.has(recordIdentity(actorId, bookId, noteId));
 }
+/** Pin cache-only readers without adding query observers or permanent key defaults. */
+function updateDeckCardRetention(client: QueryClient, actorId: string, id: string, pinned: boolean) {
+  const key = noteKeys.deckCard(actorId, id);
+  const query = client.getQueryCache().find({ queryKey: key, exact: true });
+  if (!query) return;
+  const configured = client.getQueryDefaults(key).gcTime ?? client.getDefaultOptions().queries?.gcTime;
+  const finite = typeof configured === 'number' && Number.isFinite(configured) ? configured : 5 * 60_000;
+  const gcTime = pinned ? Infinity : finite;
+  query.setOptions({ ...query.options, gcTime });
+  // Query's updateGcTime only increases its lifetime. Explicitly restore the
+  // finite lifetime and reschedule collection when the last deck releases it.
+  query.gcTime = gcTime;
+  (query as unknown as { scheduleGc: () => void }).scheduleGc();
+}
+export function retainDeckCards(client: QueryClient, actorId: string, ids: readonly string[]) {
+  const memory = cacheMemory(client);
+  const unique = [...new Set(ids)];
+  for (const id of unique) {
+    const key = JSON.stringify(noteKeys.deckCard(actorId, id));
+    memory.retained.set(key, (memory.retained.get(key) ?? 0) + 1);
+    updateDeckCardRetention(client, actorId, id, true);
+  }
+  return () => {
+    for (const id of unique) {
+      const key = JSON.stringify(noteKeys.deckCard(actorId, id));
+      const remaining = (memory.retained.get(key) ?? 1) - 1;
+      if (remaining > 0) memory.retained.set(key, remaining);
+      else {
+        memory.retained.delete(key);
+        updateDeckCardRetention(client, actorId, id, false);
+      }
+    }
+  };
+}
 /** Shared by batch reads and saves. Tombstones and server versions also protect late detail reads. */
 export function seedDeckCard(client: QueryClient, actorId: string, card: NoteDeckCard) {
   const record = card.note;
   if (record.user_id !== actorId || noteWasDeleted(client, actorId, record.user_book_id, record.id)) return;
   const saved = client.getQueryData<ManualNote | null>(noteKeys.record(actorId, record.user_book_id, record.id));
   const latest = saved?.version !== undefined && (record.version === undefined || saved.version > record.version) ? saved : record;
-  // Observer-free keep-alive: the swipe surface reads deck cards cache-only (no
-  // observers), so the default 5-minute gcTime would collect the displayed card.
-  // Infinity keeps the seeded entry alive without creating a fetch observer.
-  try {
-    client.setQueryDefaults(noteKeys.deckCard(actorId, record.id), { gcTime: Infinity } as Record<string, unknown>);
-  } catch { /* ignore */ }
   client.setQueryData<NoteDeckCard>(noteKeys.deckCard(actorId, record.id), current => {
     if (current?.note.version !== undefined && (latest.version === undefined || current.note.version >= latest.version)) return current;
     return { ...card, note: latest };
   });
-  try {
-    const found = client.getQueryCache().find({ queryKey: noteKeys.deckCard(actorId, record.id), exact: true }) as unknown as {
-      setOptions?: (options: Record<string, unknown>) => void;
-      scheduleGc?: () => void;
-      options?: Record<string, unknown>;
-    } | undefined;
-    if (found?.setOptions) {
-      try { found.setOptions({ ...(found.options ?? {}), gcTime: Infinity }); } catch { /* ignore */ }
-      try { found.scheduleGc?.(); } catch { /* ignore */ }
-    }
-  } catch { /* ignore */ }
+  updateDeckCardRetention(client, actorId, record.id, cacheMemory(client).retained.has(JSON.stringify(noteKeys.deckCard(actorId, record.id))));
 }
 function refreshDeck(client: QueryClient, actorId: string, record?: ManualNote) {
   // Cancel Query observers before updating so their eventual return cannot replace a newer save.

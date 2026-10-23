@@ -35,7 +35,7 @@ const mockRoutes = () => [
   { key: 'reader-route', name: 'note', params: { bookId: 'book', noteId: 'note' } },
   { key: 'editor-route', name: 'note-compose', params: { bookId: 'book' } },
 ];
-const mockNavigation = { dispatch: mockDispatch, getState: () => ({ index: 2, routes: mockRoutes() }) };
+const mockNavigation = { dispatch: mockDispatch, isFocused: jest.fn(() => true), getState: () => ({ index: 2, routes: mockRoutes() }) };
 const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn(), dismiss: jest.fn(), canGoBack: () => true };
 jest.mock('expo-router', () => ({ useLocalSearchParams: () => mockParams, useRouter: () => mockRouter, useNavigation: () => mockNavigation }));
 jest.mock('@react-navigation/native', () => ({
@@ -417,6 +417,29 @@ it('keeps deleted data absent after a cancelled stale read and a late save confi
   expect(client.getQueryData(noteKeys.record('actor', 'book', 'note'))).toBeNull();
   expect(screen.queryByText(original.content)).toBeNull();
   expect(screen.queryByRole('button', { name: 'Edit note' })).toBeNull();
+});
+
+it.each([false, true])('confirms deletion without navigating after leaving the reader (unmounted=%s)', async unmounted => {
+  authorizeSimulatedReaderDeletion();
+  let finishDelete!: () => void;
+  jest.spyOn(manualNotesGateway, 'remove').mockImplementation(() => new Promise(resolve => {
+    finishDelete = () => { noteRecord = null; resolve(); };
+  }));
+  mockParams.contextId = registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'swipe', canBack: true, swipeKey: 'deck-route',
+    swipe: { scope: { kind: 'all' }, category: 'all', order: 'oldest', seed: 'visit', noteId: 'note' } });
+  const mounted = render(wrap(<NoteReaderScreen />));
+  await screen.findByText(original.content);
+  fireEvent.press(screen.getByRole('button', { name: 'Delete note' }));
+  fireEvent.press(screen.getAllByRole('button', { name: 'Delete note' }).slice(-1)[0]);
+  fireEvent.press(screen.getByRole('button', { name: 'Back to your notes' }));
+  mockNavigation.isFocused.mockReturnValue(false);
+  if (unmounted) mounted.unmount();
+  const navigationCalls = [mockRouter.back, mockRouter.dismiss, mockRouter.replace].map(fn => fn.mock.calls.length);
+  try {
+    await act(async () => { finishDelete(); });
+    expect(client.getQueryData(noteKeys.record('actor', 'book', 'note'))).toBeNull();
+    expect([mockRouter.back, mockRouter.dismiss, mockRouter.replace].map(fn => fn.mock.calls.length)).toEqual(navigationCalls);
+  } finally { mockNavigation.isFocused.mockReturnValue(true); }
 });
 
 it('preserves a newer record when an older confirmation arrives for the first time through composer refresh', async () => {

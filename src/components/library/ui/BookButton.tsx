@@ -23,9 +23,8 @@ export interface BookButtonProps {
   testID?: string;
   ref?: React.Ref<View>;
   /**
-   * Optional explicit label line height (e.g. the swipe screen passes the
-   * font-scaled label token so 200% labels never clip). Undefined keeps the
-   * label on native metrics — byte-identical for every existing caller.
+   * Optional base label line height. Native Text applies system font scaling
+   * to it once. Undefined keeps the label on native font metrics.
    */
   labelLineHeight?: number;
 }

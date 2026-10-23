@@ -75,7 +75,7 @@ export default function NoteReaderScreen() {
   const remove = () => setDialog({ title: 'Delete this note?', message: "This note will be deleted. You can't undo this.", keep: 'Keep note', confirm: 'Delete note', confirmVariant: 'destructive', action: () => {
     if (offlineRef.current) return;
     setDialog(null); setDeleting(true); setFeedback(''); setFeedbackError(false);
-    void manualNoteDeleteAdapter.remove(actorId, bookId, noteId).then(async () => { await removeFromCache(noteId); back(); AccessibilityInfo.announceForAccessibility('Note deleted.'); }).catch((error: unknown) => { setFeedback(error instanceof NoteWriteError ? error.message : 'Deletion was not confirmed. Refresh Notes before trying again.'); setFeedbackError(true); }).finally(() => setDeleting(false));
+    void manualNoteDeleteAdapter.remove(actorId, bookId, noteId).then(async () => { await removeFromCache(noteId); if (navigation.isFocused()) back(); AccessibilityInfo.announceForAccessibility('Note deleted.'); }).catch((error: unknown) => { setFeedback(error instanceof NoteWriteError ? error.message : 'Deletion was not confirmed. Refresh Notes before trying again.'); setFeedbackError(true); }).finally(() => setDeleting(false));
   } });
   const unavailable = !actorId || !bookId || !noteId || (book.isError && !book.data) || (query.isError && !query.data) || (!query.isPending && !query.data);
   const meta = query.data ? [

@@ -54,6 +54,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => mockRouter,
   useNavigation: () => ({
     dispatch: jest.fn(),
+    isFocused: () => true,
     getState: () => ({
       index: 1,
       routes: [

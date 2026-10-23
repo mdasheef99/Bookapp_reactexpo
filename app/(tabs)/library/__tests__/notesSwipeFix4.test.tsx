@@ -2,7 +2,7 @@ import React from 'react';
 import { Platform, PixelRatio, StyleSheet } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 import { MIN_TARGET } from '@/components/library/LibraryAppearance';
-import { LIBRARY_TEXT_BASE, scaledLineHeight } from '@/components/library/LibraryTypography';
+import { LIBRARY_TEXT_BASE } from '@/components/library/LibraryTypography';
 
 const mockRouter = { back: jest.fn(), replace: jest.fn(), push: jest.fn(), canGoBack: jest.fn(() => true) };
 const mockRoute = { key: 'swipe-key' };
@@ -136,7 +136,7 @@ describe('unitC2-fix4 item2 large-text layout', () => {
     }
   });
 
-  it('back button keeps a 48dp target with scaled label line height (fontScale 1 and 2)', () => {
+  it('back button keeps a 48dp target with base label line height (fontScale 1 and 2)', () => {
     const RN = require('react-native');
     for (const scale of [1, 2]) {
       const dimsSpy = jest.spyOn(RN, 'useWindowDimensions').mockReturnValue({ width: 360, height: 640, scale: 1, fontScale: scale });
@@ -147,13 +147,13 @@ describe('unitC2-fix4 item2 large-text layout', () => {
         const flat = StyleSheet.flatten(back.props.style);
         expect((flat as any).minHeight).toBeGreaterThanOrEqual(MIN_TARGET);
         expect((flat as any).minWidth).toBeGreaterThanOrEqual(MIN_TARGET);
-        // Glyph centred (existing BookButton pattern) with the scaled label token.
+        // Glyph centred (existing BookButton pattern) with the base label token.
         expect((flat as any).alignItems).toBe('center');
         expect((flat as any).justifyContent).toBe('center');
         const glyph = ui.getByText('←', { includeHiddenElements: true });
         const lflat = StyleSheet.flatten(glyph.props.style);
-        // Swipe-screen fix8: explicit scaled line height so 200% glyphs never clip.
-        expect((lflat as any).lineHeight).toBe(scaledLineHeight(LIBRARY_TEXT_BASE.label.lineHeight, scale));
+        // Swipe-screen fix8: explicit base line height so 200% glyphs never clip.
+        expect((lflat as any).lineHeight).toBe(LIBRARY_TEXT_BASE.label.lineHeight);
         expect((lflat as any).fontSize).toBe(16);
         expect(glyph.props.allowFontScaling).not.toBe(false);
         expect(glyph.props.numberOfLines).toBeUndefined();
@@ -165,7 +165,7 @@ describe('unitC2-fix4 item2 large-text layout', () => {
     }
   });
 
-  it('swipe screen passes the scaled label token to every swipe button (fails without the prop)', () => {
+  it('swipe screen passes the base label token to every swipe button (fails without the prop)', () => {
     const RN = require('react-native');
     const { BookButton } = require('@/components/library/ui/BookButton');
     for (const scale of [1, 2]) {
@@ -173,7 +173,7 @@ describe('unitC2-fix4 item2 large-text layout', () => {
       const scaleSpy = jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(scale);
       try {
         const ui = renderScreen();
-        const expected = scaledLineHeight(LIBRARY_TEXT_BASE.label.lineHeight, scale);
+        const expected = LIBRARY_TEXT_BASE.label.lineHeight;
         for (const label of ['Previous', 'Read full note', 'Next']) {
           const text = ui.getByText(label, { includeHiddenElements: true });
           expect(StyleSheet.flatten(text.props.style).lineHeight).toBe(expected);
@@ -192,7 +192,7 @@ describe('unitC2-fix4 item2 large-text layout', () => {
     }
   });
 
-  it('start-again button uses the scaled label token at fontScale 2', () => {
+  it('start-again button uses the base label token at fontScale 2', () => {
     const RN = require('react-native');
     const dimsSpy = jest.spyOn(RN, 'useWindowDimensions').mockReturnValue({ width: 360, height: 640, scale: 1, fontScale: 2 });
     const scaleSpy = jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(2);
@@ -201,7 +201,7 @@ describe('unitC2-fix4 item2 large-text layout', () => {
       const ui = renderScreen();
       const text = ui.getByText('Start again', { includeHiddenElements: true });
       expect(StyleSheet.flatten(text.props.style).lineHeight).toBe(
-        scaledLineHeight(LIBRARY_TEXT_BASE.label.lineHeight, 2),
+        LIBRARY_TEXT_BASE.label.lineHeight,
       );
       expect(text.props.numberOfLines).toBeUndefined();
       ui.unmount();

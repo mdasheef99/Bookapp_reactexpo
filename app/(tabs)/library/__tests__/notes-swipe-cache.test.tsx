@@ -6,11 +6,12 @@ import { BookFeedbackProvider } from '@/components/library/ui';
 import { manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
 import { noteKeys, NoteDeckCard } from '@/features/books/notes/manualNoteContract';
 
+let mockOffline = false;
 jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({}), useRouter: () => ({ canGoBack: () => false, replace: jest.fn() }) }));
 jest.mock('@react-navigation/native', () => ({ useIsFocused: () => true, useRoute: () => ({ key: 'swipe' }) }));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'seed' }));
 jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight' }) }));
-jest.mock('@/hooks/useNetworkStatus', () => ({ useNetworkStatus: () => ({ isOffline: false }) }));
+jest.mock('@/hooks/useNetworkStatus', () => ({ useNetworkStatus: () => ({ isOffline: mockOffline }) }));
 jest.mock('@/features/books/notes/useManualNotes', () => ({
   ...jest.requireActual('@/features/books/notes/useManualNotes'),
   useNoteContext: () => ({ actorId: 'actor', book: {} }),
@@ -36,6 +37,7 @@ const cards: NoteDeckCard[] = ['a', 'b', 'c'].map(id => ({
 }));
 
 beforeEach(() => {
+  mockOffline = false;
   jest.spyOn(require('react-native-reanimated'), 'useSharedValue').mockImplementation((initial: unknown) => {
     const ref = React.useRef<{ value: unknown } | null>(null);
     if (!ref.current) ref.current = { value: initial };
@@ -43,6 +45,26 @@ beforeEach(() => {
   });
   (manualNotesGateway.deckIndex as jest.Mock).mockResolvedValue(cards.map(c => c.note));
   (manualNotesGateway.deckCards as jest.Mock).mockImplementation(async (_actor, ids: string[]) => cards.filter(c => ids.includes(c.note.id)));
+});
+
+it('keeps the nearby cards pinned while offline and releases them when the screen unmounts', async () => {
+  jest.useFakeTimers();
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const element = <QueryClientProvider client={client}><BookFeedbackProvider><NotesSwipeScreen /></BookFeedbackProvider></QueryClientProvider>;
+  const ui = render(element);
+  try {
+    await waitFor(() => expect(ui.getByRole('button', { name: 'Read full note' })).toBeEnabled());
+    mockOffline = true;
+    ui.rerender(<QueryClientProvider client={client}><BookFeedbackProvider><NotesSwipeScreen /></BookFeedbackProvider></QueryClientProvider>);
+    await act(async () => { jest.advanceTimersByTime(6 * 60_000); });
+    for (const c of cards) {
+      expect(client.getQueryData(noteKeys.deckCard('actor', c.note.id))).toEqual(c);
+      expect(client.getQueryCache().find({ queryKey: noteKeys.deckCard('actor', c.note.id), exact: true })?.gcTime).toBe(Infinity);
+    }
+    expect(ui.getAllByTestId('note-card-paper', { includeHiddenElements: true })).toHaveLength(3);
+    ui.unmount();
+    for (const c of cards) expect(client.getQueryCache().find({ queryKey: noteKeys.deckCard('actor', c.note.id), exact: true })?.gcTime).toBe(5 * 60_000);
+  } finally { ui.unmount(); client.clear(); jest.useRealTimers(); }
 });
 
 it('keeps the displayed card, next two entries and open sheet after six minutes with DEFAULT query GC', async () => {
