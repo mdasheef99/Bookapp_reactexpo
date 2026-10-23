@@ -45,7 +45,7 @@ jest.mock('expo-linear-gradient', () => ({ LinearGradient: () => null }));
 jest.mock('expo-haptics', () => ({ impactAsync: jest.fn(() => Promise.resolve()), ImpactFeedbackStyle: { Light: 'Light' } }));
 jest.mock('react-native-worklets', () => {
   const actual = jest.requireActual('react-native-worklets');
-  return { ...actual, scheduleOnRN: (fn: any, ...args: any[]) => fn(...args) };
+  return { ...actual, scheduleOnRN: (fn: any, ...args: any[]) => fn(...args), scheduleOnUI: (fn: any, ...args: any[]) => fn(...args) };
 });
 type MockPanCallbacks = { onStart?: (e: any) => void; onUpdate?: (e: any) => void; onEnd?: (e: any) => void; onFinalize?: (e: any) => void };
 const mockPanCallbacks: MockPanCallbacks[] = [];
@@ -184,9 +184,9 @@ describe('C3-fix2 G3: chips and ArrowUp respect the flight gate', () => {
     const sharedMove = jest.fn();
     (globalThis as any).__mockDeckImpl = (actor: string, init: any) => {
       seenCategories.push(init.category);
-      const isQuote = init.category === 'quote';
+      const isQuote = init.category === 'question';
       return baseDeck({
-        categories: ['all', 'quote'],
+        categories: ['all', 'quote', 'question'],
         category: init.category,
         ids: isQuote ? ['q1'] : ['a1', 'a2'],
         at: 0,
@@ -208,7 +208,7 @@ describe('C3-fix2 G3: chips and ArrowUp respect the flight gate', () => {
       expect(sharedMove).not.toHaveBeenCalled();
       expect(lastGestureFlight()?.cb).toEqual(expect.any(Function));
       const catsBefore = seenCategories.length;
-      fireEvent.press(ui.getByRole('radio', { name: 'Quote' }));
+      fireEvent.press(ui.getByRole('radio', { name: 'Question' }));
       expect(seenCategories.length).toBe(catsBefore);
       const flight = lastGestureFlight()!;
       act(() => {
@@ -216,9 +216,25 @@ describe('C3-fix2 G3: chips and ArrowUp respect the flight gate', () => {
       });
       expect(sharedMove).toHaveBeenCalledTimes(1);
       expect(sharedMove).toHaveBeenCalledWith('next');
-      fireEvent.press(ui.getByRole('radio', { name: 'Quote' }));
-      await waitFor(() => expect(seenCategories[seenCategories.length - 1]).toBe('quote'));
-      await waitFor(() => expect(ui.getByRole('radio', { name: 'Quote' }).props.accessibilityState.checked).toBe(true));
+      // Selecting the current category does not start an animation.
+      const beforeSelected = timingCalls.length;
+      fireEvent.press(ui.getByRole('radio', { name: 'All' }));
+      expect(timingCalls).toHaveLength(beforeSelected);
+      fireEvent.press(ui.getByRole('radio', { name: 'Question' }));
+      expect(seenCategories[seenCategories.length - 1]).toBe('all');
+      const categoryFlight = lastGestureFlight()!;
+      expect(categoryFlight).not.toBe(flight);
+      expect(categoryFlight.value).toBeLessThan(0);
+      const beforeTap = timingCalls.length;
+      fireEvent.press(ui.getByRole('radio', { name: 'Question' }));
+      expect(timingCalls).toHaveLength(beforeTap);
+      act(() => categoryFlight.cb(false));
+      expect(seenCategories[seenCategories.length - 1]).toBe('all');
+      fireEvent.press(ui.getByRole('radio', { name: 'Question' }));
+      const retry = lastGestureFlight()!;
+      act(() => { categoryFlight.cb(true); retry.cb(true); retry.cb(true); });
+      await waitFor(() => expect(seenCategories[seenCategories.length - 1]).toBe('question'));
+      await waitFor(() => expect(ui.getByRole('radio', { name: 'Question' }).props.accessibilityState.checked).toBe(true));
       ui.unmount();
     } finally {
       (globalThis as any).__mockDeckImpl = undefined;
@@ -274,6 +290,14 @@ describe('C3-fix2 G3: chips and ArrowUp respect the flight gate', () => {
       });
       expect(sharedMove).toHaveBeenCalledTimes(1);
       act(() => last()({ ...neutral, preventDefault: jest.fn() }));
+      expect(seenCategories[seenCategories.length - 1]).toBe('all');
+      const categoryFlight = lastGestureFlight()!;
+      expect(categoryFlight).not.toBe(flight);
+      act(() => categoryFlight.cb(false));
+      expect(seenCategories[seenCategories.length - 1]).toBe('all');
+      act(() => last()({ ...neutral, preventDefault: jest.fn() }));
+      const retry = lastGestureFlight()!;
+      act(() => { retry.cb(true); retry.cb(true); });
       await waitFor(() => expect(seenCategories[seenCategories.length - 1]).toBe('quote'));
       ui.unmount();
     } finally {

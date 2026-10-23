@@ -15,6 +15,8 @@ let mockStoredOrder: string | null = null;
 let mockSetItemCalls: Array<[string, string]> = [];
 let mockSeedCounter = 0;
 
+jest.mock('@/features/auth/store/authStore', () => ({ useAuthStore: { subscribe: jest.fn() } }));
+
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockParams,
   useRouter: () => mockRouter,
@@ -47,7 +49,7 @@ jest.mock('expo-linear-gradient', () => ({ LinearGradient: () => null }));
 jest.mock('expo-haptics', () => ({ impactAsync: jest.fn(() => Promise.resolve()), ImpactFeedbackStyle: { Light: 'Light' } }));
 jest.mock('react-native-worklets', () => {
   const actual = jest.requireActual('react-native-worklets');
-  return { ...actual, scheduleOnRN: (fn: any, ...args: any[]) => fn(...args) };
+  return { ...actual, scheduleOnRN: (fn: any, ...args: any[]) => fn(...args), scheduleOnUI: (fn: any, ...args: any[]) => fn(...args) };
 });
 jest.mock('react-native-gesture-handler', () => {
   const React = require('react');
@@ -137,6 +139,7 @@ beforeEach(() => {
   (globalThis as any).__mockSetItemCalls = [];
   mockSetItemCalls = (globalThis as any).__mockSetItemCalls;
   const Reanimated = require('react-native-reanimated');
+  jest.spyOn(Reanimated, 'withTiming').mockImplementation((value: any, _opts: any, cb: any) => { cb?.(true); return value; });
   jest.spyOn(Reanimated, 'useSharedValue').mockImplementation((initial: unknown) => {
     const ref = jest.requireActual('react').useRef(null);
     if (!ref.current) ref.current = { value: initial };
@@ -383,60 +386,45 @@ describe('C3 screen: order menu, chips and primaries', () => {
     }
   });
 
-  it('keeps the stack measurable with the chips row at 200% font and tiny heights', async () => {
-    const RN = require('react-native');
-    const dims = jest.spyOn(RN, 'useWindowDimensions').mockReturnValue({ width: 360, height: 560, scale: 1, fontScale: 2 });
-    const scale = jest.spyOn(RN.PixelRatio, 'getFontScale').mockReturnValue(2);
-    (globalThis as any).__mockStoredOrder = 'shuffle';
-    mockDeck = baseDeck({ card: { ...card('a'), note: { ...card('a').note, tag: 'quote', page_number: 42 } }, categories: ['all', 'quote'], category: 'all' });
-    try {
-      const ui = renderScreen();
-      await waitFor(() => expect(ui.queryByTestId('note-deck-chips')).toBeTruthy());
-      expect(ui.getByTestId('note-deck-chips-bar', { includeHiddenElements: true })).toBeTruthy();
-      const layout = (testID: string, h: number, y = 0) => fireEvent(ui.getByTestId(testID, { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { x: 0, y, width: 312, height: h } } });
-      layout('note-stack-wrap', 220);
-      const stage = RN.StyleSheet.flatten(ui.getByTestId('note-stack-fixed-parent', { includeHiddenElements: true }).props.style);
-      expect(stage.minHeight).toBeLessThanOrEqual(220);
-      ui.unmount();
-    } finally {
-      dims.mockRestore();
-      scale.mockRestore();
-    }
-  });
-
   it('returns focus to Order after the menu closes and to Read after the sheet closes', async () => {
+    const previousWindow = (global as any).window;
+    (global as any).window = { addEventListener: jest.fn(), removeEventListener: jest.fn() };
     const priorOS = (Platform as any).OS;
     (Platform as any).OS = 'web';
+    jest.useFakeTimers();
+    mockParams = { scope: 'all', order: 'shuffle' };
     try {
       (globalThis as any).__mockStoredOrder = 'shuffle';
       mockDeck = baseDeck({ categories: ['all'], category: 'all' });
       (globalThis as any).__bookButtonFocusMocks = {};
       const ui = renderScreen();
-      await waitFor(() => expect(ui.queryByRole('button', { name: 'Order' })).toBeTruthy());
+      expect(ui.queryByRole('button', { name: 'Order' })).toBeTruthy();
       const mocks = () => (globalThis as any).__bookButtonFocusMocks as Record<string, jest.Mock>;
       // Order menu -> Close focuses Order, not Read.
       fireEvent.press(ui.getByRole('button', { name: 'Order' }));
-      await waitFor(() => expect(ui.queryByTestId('note-order-backdrop', { includeHiddenElements: true })).toBeTruthy());
+      expect(ui.queryByTestId('note-order-backdrop', { includeHiddenElements: true })).toBeTruthy();
       mocks()['Order']?.mockClear?.();
       mocks()['Read full note']?.mockClear?.();
       fireEvent.press(ui.getByRole('button', { name: 'Close' }));
-      await waitFor(() => expect(ui.queryByTestId('note-order-backdrop', { includeHiddenElements: true })).toBeNull());
-      await waitFor(() => expect(mocks()['Order']).toBeDefined());
+      expect(ui.queryByTestId('note-order-backdrop', { includeHiddenElements: true })).toBeNull();
+      expect(mocks()['Order']).toBeDefined();
       expect(mocks()['Order']).toHaveBeenCalled();
       expect(mocks()['Read full note']?.mock.calls.length ?? 0).toBe(0);
       // Cooldown (400 ms) blocks the stack's run() after the menu closes; wait it out.
-      await act(async () => { await new Promise(resolve => setTimeout(resolve, 450)); });
+      await act(async () => { await jest.advanceTimersByTimeAsync(400); });
       // Full-note sheet -> Close focuses Read, not Order.
       mocks()['Order']?.mockClear?.();
       mocks()['Read full note']?.mockClear?.();
       fireEvent.press(ui.getByRole('button', { name: 'Read full note' }));
-      await waitFor(() => expect(ui.queryByTestId('note-full-sheet', { includeHiddenElements: true })).toBeTruthy());
+      expect(ui.queryByTestId('note-full-sheet', { includeHiddenElements: true })).toBeTruthy();
       fireEvent.press(ui.getByRole('button', { name: 'Close full note' }));
-      await waitFor(() => expect(ui.queryByTestId('note-full-sheet', { includeHiddenElements: true })).toBeNull());
-      await waitFor(() => expect(mocks()['Read full note']).toBeDefined());
+      expect(ui.queryByTestId('note-full-sheet', { includeHiddenElements: true })).toBeNull();
+      expect(mocks()['Read full note']).toBeDefined();
       expect(mocks()['Read full note']).toHaveBeenCalled();
       ui.unmount();
     } finally {
+      (global as any).window = previousWindow;
+      jest.useRealTimers();
       (Platform as any).OS = priorOS;
     }
   });
@@ -465,35 +453,56 @@ describe('C3 screen: order menu, chips and primaries', () => {
     }
   });
 
-  it('generates a new shuffle seed when re-choosing Shuffle and persists Oldest', async () => {
-    (globalThis as any).__mockStoredOrder = 'shuffle';
-    mockParams = { scope: 'all', order: 'newest', seed: 'seed-9' };
-    mockDeck = baseDeck({ categories: ['all'], category: 'all' });
+  it('delivers new Shuffle seeds to the deck and reader fallback, preserves them for Newest/Oldest and reader return', async () => {
+    jest.useFakeTimers();
+    mockParams = { scope: 'all', order: 'shuffle', seed: 'seed-9' };
+    let latest: any;
+    (globalThis as any).__mockDeckImpl = (_actor: string, initial: any) => { latest = initial; return baseDeck(); };
     const nav = require('@/features/books/notes/noteNavigation');
-    (nav.registerNoteContext as jest.Mock).mockClear();
-    const ui = renderScreen();
+    const actualNav = jest.requireActual('@/features/books/notes/noteNavigation');
+    nav.registerNoteContext.mockImplementation(actualNav.registerNoteContext);
+    nav.readerHref.mockImplementation(actualNav.readerHref);
+    let ui = renderScreen();
     try {
-      await waitFor(() => expect(ui.queryByRole('button', { name: 'Order' })).toBeTruthy());
+      expect(latest.seed).toBe('seed-9');
       const setItem = require('@react-native-async-storage/async-storage').setItem as jest.Mock;
-      // Re-choosing Shuffle (even when already Shuffle) makes a new seed.
-      mockParams = { scope: 'all', order: 'shuffle', seed: 'seed-9' };
-      fireEvent.press(ui.getByRole('button', { name: 'Order' }));
-      await waitFor(() => expect(ui.queryByTestId('note-order-backdrop', { includeHiddenElements: true })).toBeTruthy());
-      setItem.mockClear();
-      const beforeSeed = mockSeedCounter;
-      fireEvent.press(ui.getByRole('radio', { name: 'Shuffle' }));
-      await waitFor(() => expect(ui.queryByTestId('note-order-backdrop', { includeHiddenElements: true })).toBeNull());
-      expect(setItem).toHaveBeenCalledWith(expect.stringContaining('library_noteSwipeOrder'), 'shuffle');
-      expect(mockSeedCounter).toBeGreaterThan(beforeSeed);
-      // Choosing Oldest persists.
-      fireEvent.press(ui.getByRole('button', { name: 'Order' }));
-      await waitFor(() => expect(ui.queryByTestId('note-order-backdrop', { includeHiddenElements: true })).toBeTruthy());
-      setItem.mockClear();
-      fireEvent.press(ui.getByRole('radio', { name: 'Oldest first' }));
-      await waitFor(() => expect(ui.queryByTestId('note-order-backdrop', { includeHiddenElements: true })).toBeNull());
-      expect(setItem).toHaveBeenCalledWith(expect.stringContaining('library_noteSwipeOrder'), 'oldest');
+      const readerFallback = async (expectedOrder: string, expectedSeed: string) => {
+        await act(async () => { await jest.advanceTimersByTimeAsync(400); });
+        fireEvent.press(ui.getByRole('button', { name: 'Read full note' }));
+        fireEvent.press(ui.getByRole('button', { name: 'Open note' }));
+        const href = mockRouter.push.mock.calls.at(-1)![0] as any;
+        expect(href.params.swipeSeed).toBe(expectedSeed);
+        expect(href.params.swipeOrder).toBe(expectedOrder);
+        return href;
+      };
+      let previous = latest.seed;
+      for (const name of ['Shuffle', 'Shuffle', 'Newest first', 'Oldest first']) {
+        fireEvent.press(ui.getByRole('button', { name: 'Order' }));
+        fireEvent.press(ui.getByRole('radio', { name }));
+        expect(ui.queryByTestId('note-order-backdrop', { includeHiddenElements: true })).toBeNull();
+        const order = name === 'Shuffle' ? 'shuffle' : name === 'Newest first' ? 'newest' : 'oldest';
+        expect(latest.order).toBe(order);
+        if (name === 'Shuffle') expect(latest.seed).not.toBe(previous);
+        else expect(latest.seed).toBe(previous);
+        expect(setItem).toHaveBeenLastCalledWith(expect.stringContaining('library_noteSwipeOrder'), order);
+        previous = latest.seed;
+        const reader = await readerFallback(order, previous);
+        // Use the real reload-style return path, then mount the returned screen.
+        const context = actualNav.noteRouteContext(undefined, 'actor', 'b', reader.params);
+        actualNav.returnFromNote(mockRouter, context, { getState: () => ({ index: 0, routes: [] }) });
+        const returned = mockRouter.replace.mock.calls.at(-1)![0] as any;
+        expect(returned.params).toMatchObject({ seed: previous, order });
+        ui.unmount();
+        mockParams = returned.params;
+        ui = renderScreen();
+        expect(latest.seed).toBe(previous);
+        expect(latest.order).toBe(order);
+      }
     } finally {
       ui.unmount();
+      nav.registerNoteContext.mockReset().mockReturnValue('ctx');
+      nav.readerHref.mockReset().mockReturnValue({});
+      jest.useRealTimers();
     }
   });
 

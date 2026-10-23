@@ -35,6 +35,30 @@ beforeEach(() => {
 });
 
 describe('C3 chips scroll (G5 behavioural)', () => {
+  it('scrolls an initially selected Question when its delayed layout arrives and on container resize', () => {
+    const scrollTo = (globalThis as any).__mockChipScrollTo as jest.Mock;
+    const onSelect = jest.fn();
+    const categories = ['all', 'quote', 'question'] as const;
+    const ui = render(<NoteDeckChips categories={categories} selected="question" onSelect={onSelect} />);
+    const layout = (node: any, x: number, width: number) => fireEvent(node, 'layout', { nativeEvent: { layout: { x, y: 0, width, height: 48 } } });
+    layout(ui.getByTestId('note-deck-chips'), 0, 180);
+    layout(ui.getByRole('radio', { name: 'All' }), 0, 80);
+    expect(scrollTo).not.toHaveBeenCalled();
+    layout(ui.getByRole('radio', { name: 'Question' }), 320, 100);
+    expect(scrollTo).toHaveBeenLastCalledWith({ x: 304, animated: false });
+    scrollTo.mockClear();
+    layout(ui.getByRole('radio', { name: 'Quote' }), 160, 80);
+    layout(ui.getByRole('radio', { name: 'Question' }), 320, 100);
+    layout(ui.getByTestId('note-deck-chips'), 0, 180);
+    expect(scrollTo).not.toHaveBeenCalled();
+    layout(ui.getByTestId('note-deck-chips'), 0, 240);
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    scrollTo.mockClear();
+    ui.rerender(<NoteDeckChips categories={categories} selected="quote" onSelect={onSelect} />);
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(scrollTo).toHaveBeenLastCalledWith({ x: 144, animated: false });
+    ui.unmount();
+  });
   it('scrolls the selected chip into view via scrollTo', () => {
     const { LIBRARY_SPACING } = require('../../LibraryAppearance');
     const scrollTo = (globalThis as any).__mockChipScrollTo as jest.Mock;

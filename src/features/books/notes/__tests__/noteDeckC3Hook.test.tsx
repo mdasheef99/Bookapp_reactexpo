@@ -59,6 +59,25 @@ describe('C3 hook: per-category positions', () => {
     hook.unmount();
   });
 
+  it('restores All at its remembered END card after visiting Quote', async () => {
+    const scope = { kind: 'all' } as const;
+    client.setQueryDefaults(noteKeys.deckIndex('actor', scope), { staleTime: Infinity });
+    client.setQueryData(noteKeys.deckIndex('actor', scope), rows());
+    const hook = renderHook(({ category }: { category: 'all' | 'quote' }) => useNoteDeck('actor', { scope, category, order: 'oldest', seed: 's', noteId: '' }, true), {
+      wrapper, initialProps: { category: 'all' as 'all' | 'quote' },
+    });
+    expect(hook.result.current.ids).toEqual(['a', 'b', 'c']);
+    for (let i = 0; i < 3; i += 1) act(() => hook.result.current.move('next'));
+    expect(hook.result.current.noteId).toBeNull();
+    expect(hook.result.current.at).toBe(3);
+    hook.rerender({ category: 'quote' });
+    expect(hook.result.current.noteId).toBe('a');
+    hook.rerender({ category: 'all' });
+    expect(hook.result.current.noteId).toBeNull();
+    expect(hook.result.current.at).toBe(3);
+    hook.unmount();
+  });
+
   it('restores the successor when the stored note was deleted, else the end card', async () => {
     const scope = { kind: 'all' } as const;
     client.setQueryDefaults(noteKeys.deckIndex('actor', scope), { staleTime: Infinity });

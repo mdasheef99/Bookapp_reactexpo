@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { NoteDeckChips, chipLabel } from '../NoteDeckChips';
 import { NoteOrderMenu } from '../NoteOrderMenu';
 import { NoteSwipeStack } from '../NoteSwipeStack';
@@ -87,6 +87,20 @@ beforeEach(() => {
 });
 
 describe('C3 chips: radio semantics and layout', () => {
+  it('scales the chip label once at 200% and reserves only its native height plus padding', () => {
+    const RN = require('react-native');
+    const scale = jest.spyOn(RN.PixelRatio, 'getFontScale').mockReturnValue(2);
+    try {
+      const ui = render(<NoteDeckChips categories={['all', 'question']} selected="question" onSelect={jest.fn()} />);
+      const chip = ui.getByRole('radio', { name: 'Question' });
+      const label = chip.findByType(RN.Text);
+      expect(StyleSheet.flatten(label.props.style).lineHeight).toBe(22);
+      expect(label.props.allowFontScaling).not.toBe(false);
+      expect(StyleSheet.flatten(chip.props.style).minHeight).toBe(62);
+      ui.unmount();
+    } finally { scale.mockRestore(); }
+  });
+
   it('renders a radiogroup with only non-empty categories and marks the selected chip', () => {
     const onSelect = jest.fn();
     const ui = render(<NoteDeckChips categories={['all', 'quote', 'reflect']} selected="quote" onSelect={onSelect} />);
@@ -146,6 +160,53 @@ describe('C3 chips: radio semantics and layout', () => {
 });
 
 describe('C3 order menu: radio choices and overlay behaviour', () => {
+  it('moves focus only with wrapping arrows and selects once with Space or Enter on web', () => {
+    (Platform as { OS: string }).OS = 'web';
+    const previousWindow = (global as any).window;
+    (global as any).window = { addEventListener: jest.fn(), removeEventListener: jest.fn() };
+    const nodes: Record<string, { tabIndex?: number; focus: jest.Mock }> = {};
+    const onSelect = jest.fn();
+    const { BookFeedbackProvider } = require('../../ui');
+    function Menu() {
+      const [visible, setVisible] = React.useState(true);
+      return <BookFeedbackProvider><NoteOrderMenu visible={visible} order="newest" onSelect={value => { onSelect(value); setVisible(false); }} onClose={() => setVisible(false)} /></BookFeedbackProvider>;
+    }
+    const ui = render(<Menu />);
+    for (const name of ['Shuffle', 'Newest first', 'Oldest first']) nodes[name] = ui.getByRole('radio', { name }).parent!.instance;
+    expect(nodes['Newest first'].tabIndex).toBe(0);
+    expect(nodes.Shuffle.tabIndex).toBe(-1);
+    const key = (name: string, value: string) => {
+      const event = { key: value, preventDefault: jest.fn(), stopPropagation: jest.fn() };
+      fireEvent(ui.getByRole('radio', { name }), 'keyDownCapture', event);
+      expect(event.preventDefault).toHaveBeenCalledTimes(1);
+      return event;
+    };
+    for (const [from, arrow, to] of [
+      ['Newest first', 'ArrowUp', 'Shuffle'], ['Shuffle', 'ArrowLeft', 'Oldest first'],
+      ['Oldest first', 'ArrowDown', 'Shuffle'], ['Shuffle', 'ArrowRight', 'Newest first'],
+    ]) {
+      key(from, arrow);
+      expect(nodes[to].focus).toHaveBeenCalled();
+      expect(nodes[to].tabIndex).toBe(0);
+      expect(nodes[from].tabIndex).toBe(-1);
+      expect(onSelect).not.toHaveBeenCalled();
+    }
+    key('Newest first', 'ArrowRight');
+    key('Oldest first', ' ');
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith('oldest');
+    expect(ui.queryByRole('radio', { name: 'Oldest first' })).toBeNull();
+    ui.unmount();
+    onSelect.mockClear();
+    const ui2 = render(<Menu />);
+    fireEvent(ui2.getByRole('radio', { name: 'Shuffle' }), 'keyDownCapture', { key: 'Enter', preventDefault: jest.fn(), stopPropagation: jest.fn() });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith('shuffle');
+    expect(ui2.queryByRole('radio', { name: 'Shuffle' })).toBeNull();
+    ui2.unmount();
+    (global as any).window = previousWindow;
+  });
+
   function renderMenu(over: Partial<React.ComponentProps<typeof NoteOrderMenu>> = {}) {
     const { BookFeedbackProvider } = require('../../ui');
     return render(
@@ -215,6 +276,12 @@ describe('C3 order menu: radio choices and overlay behaviour', () => {
     try {
       const ui2 = renderMenu({ onClose });
       expect((global as any).window.addEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
+      const escape = (global as any).window.addEventListener.mock.calls.find(([type]: any[]) => type === 'keydown')[1];
+      const event = { key: 'Escape', preventDefault: jest.fn(), stopPropagation: jest.fn() };
+      act(() => escape(event));
+      expect(onClose).toHaveBeenCalledTimes(2);
+      expect(event.preventDefault).toHaveBeenCalledTimes(1);
+      expect(event.stopPropagation).toHaveBeenCalledTimes(1);
       ui2.unmount();
     } finally {
       delete (global as any).window;
@@ -232,6 +299,46 @@ describe('C3 stack: category flight and TalkBack action', () => {
     } as React.ComponentProps<typeof NoteSwipeStack>;
   }
 
+  it.each([false, true].flatMap(reduced => ['category', 'next', 'leave'].map(direction => ({ reduced, direction }))))(
+    'cancels $direction with reduced=$reduced, releases input, and completes the following swipe once', ({ reduced, direction }) => {
+      const completions: Array<(finished: boolean) => void> = [];
+      (MockReanimated.withTiming as jest.Mock).mockImplementation((value: any, _opts: any, cb: any) => {
+        if (cb) completions.push(cb);
+        return value;
+      });
+      try {
+        const props = stackProps({ reduced });
+        const ref = React.createRef<import('../NoteSwipeStack').NoteSwipeControls>();
+        const ui = render(<NoteSwipeStack {...props} ref={ref} />);
+        const swipe = () => {
+          const pan = mockPanCallbacks[mockPanCallbacks.length - 1];
+          const event = { translationX: direction === 'next' ? -100 : 0, translationY: direction === 'category' ? -100 : direction === 'leave' ? 100 : 0, velocityX: direction === 'next' ? -900 : 0, velocityY: direction === 'category' ? -900 : 900 };
+          act(() => { pan.onStart!({}); pan.onEnd!(event); });
+        };
+        swipe();
+        const cancelled = completions.pop()!;
+        expect(cancelled).toEqual(expect.any(Function));
+        act(() => cancelled(false));
+        expect(props.onCategory).not.toHaveBeenCalled();
+        expect(props.onMove).not.toHaveBeenCalled();
+        expect(props.onLeave).not.toHaveBeenCalled();
+        expect(mockImpact).not.toHaveBeenCalled();
+        const released = jest.fn();
+        act(() => ref.current!.run(released));
+        expect(released).toHaveBeenCalledTimes(1);
+        swipe();
+        const completed = completions.pop()!;
+        act(() => { cancelled(true); completed(true); completed(true); });
+        expect(props.onCategory).toHaveBeenCalledTimes(direction === 'category' ? 1 : 0);
+        expect(props.onMove).toHaveBeenCalledTimes(direction === 'next' ? 1 : 0);
+        expect(props.onLeave).toHaveBeenCalledTimes(direction === 'leave' ? 1 : 0);
+        ui.unmount();
+      } finally {
+        (MockReanimated.withTiming as jest.Mock).mockImplementation((value: any, _opts: any, cb: any) => { cb?.(true); return value; });
+      }
+    },
+  );
+
   it('offers Next category only when at least two categories exist', () => {
     const ui = render(<NoteSwipeStack {...stackProps({ canCategory: true })} />);
     const top = ui.getByTestId('note-card-slot-0', { includeHiddenElements: true });
@@ -241,6 +348,34 @@ describe('C3 stack: category flight and TalkBack action', () => {
     const top2 = ui2.getByTestId('note-card-slot-0', { includeHiddenElements: true });
     expect(top2.props.accessibilityActions).not.toContainEqual({ name: 'category', label: 'Next category' });
     ui2.unmount();
+  });
+
+  it.each([false, true])('TalkBack uses a cancellable category flight and one haptic (reduced=%s)', reduced => {
+    const completions: Array<(finished: boolean) => void> = [];
+    (MockReanimated.withTiming as jest.Mock).mockImplementation((value: any, _opts: any, cb: any) => { if (cb) completions.push(cb); return value; });
+    try {
+      const onCategory = jest.fn();
+      const ui = render(<NoteSwipeStack {...stackProps({ reduced, onCategory })} />);
+      const nextCategory = () => fireEvent(ui.getByTestId('note-card-slot-0'), 'accessibilityAction', { nativeEvent: { actionName: 'category' } });
+      nextCategory();
+      expect(onCategory).not.toHaveBeenCalled();
+      expect(mockImpact).not.toHaveBeenCalled();
+      const cancelled = completions.pop()!;
+      expect(cancelled).toEqual(expect.any(Function));
+      nextCategory();
+      expect(completions).toHaveLength(0);
+      act(() => cancelled(false));
+      expect(onCategory).not.toHaveBeenCalled();
+      nextCategory();
+      const complete = completions.pop()!;
+      act(() => { complete(true); complete(true); });
+      expect(onCategory).toHaveBeenCalledTimes(1);
+      expect(mockImpact).toHaveBeenCalledTimes(1);
+      expect((MockReanimated.withTiming as jest.Mock).mock.calls.some(([value, options]: any[]) => value === (reduced ? 0 : -require('react-native').Dimensions.get('window').height) && options.duration === (reduced ? NOTE_SWIPE.crossFadeMs : NOTE_SWIPE.exitMs))).toBe(true);
+      ui.unmount();
+    } finally {
+      (MockReanimated.withTiming as jest.Mock).mockImplementation((value: any, _opts: any, cb: any) => { cb?.(true); return value; });
+    }
   });
 
   it('swipe-up flight calls onCategory exactly once and haptics once', () => {

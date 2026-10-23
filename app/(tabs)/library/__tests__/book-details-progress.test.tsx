@@ -362,11 +362,17 @@ describe('Unit 3a progress on Book Details', () => {
   });
 
   it('hides the estimate when a step moves back even with net gain', async () => {
+    // Relative to now so the 14-day pace window never ages out of the fixture.
+    const daysAgo = (days: number, hour: number) => {
+      const day = new Date(Date.now() - days * 86400000);
+      day.setUTCHours(hour, 0, 0, 0);
+      return day.toISOString();
+    };
     const backward = [
-      progressEntry({ id: 'a', page: 10, recorded_at: '2026-10-08T12:00:00.000Z' }),
-      progressEntry({ id: 'b', page: 30, recorded_at: '2026-10-09T12:00:00.000Z' }),
-      progressEntry({ id: 'c', page: 20, recorded_at: '2026-10-10T08:00:00.000Z' }),
-      progressEntry({ id: 'd', page: 40, recorded_at: '2026-10-10T12:00:00.000Z' }),
+      progressEntry({ id: 'a', page: 10, recorded_at: daysAgo(3, 12) }),
+      progressEntry({ id: 'b', page: 30, recorded_at: daysAgo(2, 12) }),
+      progressEntry({ id: 'c', page: 20, recorded_at: daysAgo(1, 8) }),
+      progressEntry({ id: 'd', page: 40, recorded_at: daysAgo(1, 12) }),
     ];
     mockProgress.mockReturnValue({
       progress: { data: backward, isPending: false, isError: false, refetch: jest.fn() },

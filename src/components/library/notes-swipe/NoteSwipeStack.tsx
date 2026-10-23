@@ -5,7 +5,7 @@ import Animated, { interpolateColor, useAnimatedStyle, useSharedValue, withSeque
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import { NoteDeckCard } from '@/features/books/notes/manualNoteContract';
+import { NoteDeckCard, NoteDeckCategory } from '@/features/books/notes/manualNoteContract';
 import { NOTE_SWIPE, swipeDirection, SwipeDirection } from '@/features/books/notes/noteSwipeConstants';
 import { spineColorFromTitle } from '@/features/books/utils/shelfLayout';
 import { LIBRARY_RADIUS, LIBRARY_SPACING, useLibraryAppearance } from '../LibraryAppearance';
@@ -15,6 +15,7 @@ import { NoteSwipeCard, noteCardName } from './NoteSwipeCard';
 export interface NoteSwipeControls {
   run: (action: () => void) => void;
   leave: () => void;
+  category: (target: NoteDeckCategory) => void;
 }
 export interface NoteSwipeStackProps {
   ref?: React.Ref<NoteSwipeControls>;
@@ -29,7 +30,7 @@ export interface NoteSwipeStackProps {
   onMove: (direction: 'next' | 'previous') => void;
   onRead: () => void;
   onLeave: () => void;
-  onCategory?: () => void;
+  onCategory?: (target?: NoteDeckCategory) => void;
   canCategory?: boolean;
   categoryKey?: string;
   children?: React.ReactNode;
@@ -50,7 +51,8 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
   // the JS helpers below clear it) and in the single JS helper `resetFlightToIdle`.
   // JS buttons/keys/actions NEVER read this value; they gate on `jsFlightRef` below.
   const flight = useSharedValue(0);
-  // JS-owned mirror for gating: 0 idle, else the active flight id. Set/cleared only on
+  // JS-owned mirror for gating: 0 idle, -1 while a category start crosses the
+  // bridge, else the active flight id. Set/cleared only on
   // the JS thread (onFlightStart / finishFlight / resetFlightToIdle). `run` gates on
   // this ref alone so a stale worklet read on the JS thread can never deadlock input.
   const jsFlightRef = useRef(0);
@@ -164,7 +166,7 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
       x.value = withSequence(withTiming(-NOTE_SWIPE.axisLock, { duration: NOTE_SWIPE.hintMs }), withTiming(NOTE_SWIPE.axisLock, { duration: NOTE_SWIPE.hintMs }), withTiming(0, { duration: NOTE_SWIPE.hintMs }));
     });
   }, [hint, reduced, enabled, card, x, flight, panActive]);
-  const finish = useCallback((direction: SwipeDirection) => {
+  const finish = useCallback((direction: SwipeDirection, target?: NoteDeckCategory) => {
     if (direction === 'leave') {
       requestLeave();
       return;
@@ -178,7 +180,7 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
     if (direction === 'category') {
       if (Platform.OS !== 'web') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       if (!reduced) categorySlideRef.current = true;
-      onCategory?.();
+      onCategory?.(target);
     }
   }, [onMove, onCategory, requestLeave, reduced]);
   // Safety net: if a flight's completion never arrives, release the flight and reset
@@ -203,13 +205,44 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
   // flight and resets translation/opacity, even when the position did not change or
   // when disabled mid-flight (gesture leaves during the sheet grace are swallowed
   // here after resetting, while the Back button uses requestLeave directly).
-  const finishFlight = useCallback((direction: SwipeDirection, myFlight: number, epoch: number) => {
+  const finishFlight = useCallback((direction: SwipeDirection, myFlight: number, epoch: number, finished: boolean, target?: NoteDeckCategory) => {
     if (jsFlightRef.current !== myFlight) return;
     if (epoch !== jsEpochRef.current) return;
     resetFlightToIdle(false);
-    if (!activeRef.current || leaveOnceRef.current) return;
-    finish(direction);
+    if (!finished || !activeRef.current || leaveOnceRef.current) return;
+    finish(direction, target);
   }, [finish, resetFlightToIdle]);
+  // Gestures and category controls use the same UI-thread flight and completion.
+  const startFlight = useCallback((direction: SwipeDirection, target?: NoteDeckCategory, requestedEpoch?: number) => {
+    'worklet';
+    if (flight.value !== 0 || (requestedEpoch !== undefined && requestedEpoch !== flightEpoch.value)) return;
+    generation.value += 1;
+    const myFlight = generation.value;
+    const epoch = flightEpoch.value;
+    flight.value = myFlight;
+    scheduleOnRN(onFlightStart, myFlight, epoch);
+    if (reduced) {
+      x.value = 0; y.value = 0;
+      opacity.value = withTiming(0, { duration: NOTE_SWIPE.crossFadeMs }, finished => {
+        if (flight.value === myFlight) scheduleOnRN(finishFlight, direction, myFlight, epoch, finished === true, target);
+      });
+    } else if (direction === 'leave') {
+      y.value = withTiming(screen.height, { duration: NOTE_SWIPE.exitMs }, finished => {
+        if (flight.value === myFlight) scheduleOnRN(finishFlight, direction, myFlight, epoch, finished === true, target);
+      });
+    } else if (direction === 'previous') {
+      scheduleOnRN(finishFlight, direction, myFlight, epoch, true, target);
+    } else if (direction === 'category') {
+      y.value = withTiming(-screen.height, { duration: NOTE_SWIPE.exitMs }, finished => {
+        if (flight.value === myFlight) scheduleOnRN(finishFlight, direction, myFlight, epoch, finished === true, target);
+      });
+      opacity.value = withTiming(0, { duration: NOTE_SWIPE.exitMs });
+    } else {
+      x.value = withTiming(-screen.width, { duration: NOTE_SWIPE.exitMs }, finished => {
+        if (flight.value === myFlight) scheduleOnRN(finishFlight, direction, myFlight, epoch, finished === true, target);
+      });
+    }
+  }, [generation, flightEpoch, flight, onFlightStart, reduced, x, y, opacity, screen.height, screen.width, finishFlight]);
   const canPrevious = at > 0; const canNext = at < total;
   const canCategoryFlight = canCategory && !!onCategory;
   // Single flight-aware path for non-gesture inputs: a button/key/action pressed
@@ -220,16 +253,22 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
     if (!activeRef.current || leaveOnceRef.current || jsFlightRef.current !== 0) return;
     action();
   }, []);
-  useImperativeHandle(ref, () => ({ run, leave: requestLeave }), [run, requestLeave]);
+
   const requestMove = useCallback((direction: 'next' | 'previous') => {
     if (direction === 'next' && !canNext) return;
     if (direction === 'previous' && !canPrevious) return;
     run(() => onMove(direction));
   }, [run, canNext, canPrevious, onMove]);
-  const requestCategory = useCallback(() => {
-    if (!canCategoryFlight) return;
-    run(() => onCategory?.());
-  }, [run, canCategoryFlight, onCategory]);
+  const requestCategory = useCallback((target?: NoteDeckCategory) => {
+    if (!canCategoryFlight || target === categoryKey) return;
+    run(() => {
+      // Gate JS inputs while the UI-thread start is crossing the bridge.
+      jsFlightRef.current = -1;
+      safetyTimer.current = setTimeout(resetFlightToIdle, NOTE_SWIPE.exitMs * 2 + NOTE_SWIPE.safetyMarginMs);
+      scheduleOnUI(startFlight, 'category', target, jsEpochRef.current);
+    });
+  }, [run, canCategoryFlight, categoryKey, startFlight, resetFlightToIdle]);
+  useImperativeHandle(ref, () => ({ run, leave: requestLeave, category: requestCategory }), [run, requestLeave, requestCategory]);
   const requestRead = useCallback(() => {
     if (card) run(onRead);
   }, [run, card, onRead]);
@@ -260,32 +299,7 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
         if (direction === 'cancel' || (direction === 'next' && !canNext) || (direction === 'previous' && !canPrevious) || (direction === 'category' && !canCategoryFlight)) {
           x.value = reduced ? 0 : withSpring(0); y.value = reduced ? 0 : withSpring(0); return;
         }
-        generation.value += 1;
-        const myFlight = generation.value;
-        const epoch = flightEpoch.value;
-        flight.value = myFlight;
-        scheduleOnRN(onFlightStart, myFlight, epoch);
-        if (reduced) {
-          x.value = 0; y.value = 0;
-          opacity.value = withTiming(0, { duration: NOTE_SWIPE.crossFadeMs }, () => {
-            if (flight.value === myFlight) scheduleOnRN(finishFlight, direction, myFlight, epoch);
-          });
-        } else if (direction === 'leave') {
-          y.value = withTiming(screen.height, { duration: NOTE_SWIPE.exitMs }, () => {
-            if (flight.value === myFlight) scheduleOnRN(finishFlight, direction, myFlight, epoch);
-          });
-        } else if (direction === 'previous') {
-          scheduleOnRN(finishFlight, direction, myFlight, epoch);
-        } else if (direction === 'category') {
-          y.value = withTiming(-screen.height, { duration: NOTE_SWIPE.exitMs }, () => {
-            if (flight.value === myFlight) scheduleOnRN(finishFlight, direction, myFlight, epoch);
-          });
-          opacity.value = withTiming(0, { duration: NOTE_SWIPE.exitMs });
-        } else {
-          x.value = withTiming(-screen.width, { duration: NOTE_SWIPE.exitMs }, () => {
-            if (flight.value === myFlight) scheduleOnRN(finishFlight, direction, myFlight, epoch);
-          });
-        }
+        startFlight(direction);
       }).onFinalize(() => {
         try { panActive.value = false; } catch { /* ignore */ }
         if (flight.value === 0) { x.value = reduced ? 0 : withSpring(0); y.value = reduced ? 0 : withSpring(0); }
@@ -302,7 +316,7 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
         panActive.value = false;
       });
     return Gesture.Exclusive(pan, tap);
-  }, [enabled, reduced, canNext, canPrevious, canCategoryFlight, screen.width, screen.height, axis, flight, generation, flightEpoch, panActive, x, y, width, opacity, onFlightStart, finishFlight, requestRead]);
+  }, [enabled, reduced, canNext, canPrevious, canCategoryFlight, screen.height, axis, flight, panActive, x, y, width, startFlight, requestRead]);
   const topStyle = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ translateX: reduced ? 0 : x.value }, { translateY: reduced ? 0 : y.value }, { rotate: `${reduced ? 0 : Math.max(-NOTE_SWIPE.maxTilt, Math.min(NOTE_SWIPE.maxTilt, x.value / width.value * NOTE_SWIPE.maxTilt))}deg` }] }));
   const underStyle = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ rotate: reduced ? '0deg' : '-3deg' }, { scale: reduced ? 0.97 : 0.96 + Math.min(Math.abs(x.value) / width.value, 1) * 0.04 }, { translateY: (reduced ? 0 : y.value) + LIBRARY_SPACING.xs }] }));
   const backStyle = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ rotate: reduced ? '0deg' : '2deg' }, { scale: 0.92 }, { translateY: (reduced ? 0 : y.value) + LIBRARY_SPACING.md }] }));

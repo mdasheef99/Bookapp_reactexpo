@@ -149,10 +149,10 @@ export default function NotesSwipeScreen() {
     if (deckCategories.length <= 1) return;
     const at = deckCategories.indexOf(deckCategory);
     const next = deckCategories[(at + 1) % deckCategories.length];
-    stackRef.current?.run(() => setCategory(next));
+    stackRef.current?.category(next);
   }, [deckCategories, deckCategory]);
   const chooseCategory = useCallback((next: NoteDeckCategory) => {
-    stackRef.current?.run(() => setCategory(next));
+    stackRef.current?.category(next);
   }, []);
   const chooseOrder = useCallback((next: NoteDeckOrder) => {
     if (next === order && next !== 'shuffle') {
@@ -238,7 +238,10 @@ export default function NotesSwipeScreen() {
       {showStack ? (
         <View testID="note-stack-wrap" onLayout={event => setStackHeight(event.nativeEvent.layout.height)} style={styles.stackWrap}>
           <NoteSwipeStack ref={stackRef} availableHeight={stackHeight} card={showCard ? deck.card : undefined} undercards={showCard ? deck.undercards : []} at={deck.at} total={deck.ids.length} reduced={reduced} hint={hint} enabled={focused && !overlayOpen && !sheetCooldown && populated}
-            onMove={deck.move} onRead={openSheet} onLeave={depart} onCategory={goToNextCategory} canCategory={deckCategories.length > 1} categoryKey={deckCategory}><View style={styles.state}>{content}</View></NoteSwipeStack>
+            onMove={deck.move} onRead={openSheet} onLeave={depart} onCategory={target => {
+              if (target !== undefined) setCategory(target);
+              else { const at = deckCategories.indexOf(deckCategory); setCategory(deckCategories[(at + 1) % deckCategories.length]); }
+            }} canCategory={deckCategories.length > 1} categoryKey={deckCategory}><View style={styles.state}>{content}</View></NoteSwipeStack>
         </View>
       ) : (
         <ScrollView testID="note-state-scroll" style={styles.stateScroll} contentContainerStyle={styles.stateScrollContent}>

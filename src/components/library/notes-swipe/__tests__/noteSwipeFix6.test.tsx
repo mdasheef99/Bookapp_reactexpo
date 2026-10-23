@@ -195,16 +195,16 @@ describe('round 7 deferred UI-to-JS flight delivery', () => {
     act(() => { first.cb(false); first.cb(true); });
     expect(mockBridgeQueue).toHaveLength(2);
     deliver(mockBridgeQueue.shift()!);
-    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove).not.toHaveBeenCalled();
     const duplicate = mockBridgeQueue.shift()!;
     swipeNext(pan); drainBridge();
     deliver(duplicate);
-    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove).not.toHaveBeenCalled();
     completeLastFlight(); drainBridge();
-    expect(onMove).toHaveBeenCalledTimes(2);
+    expect(onMove).toHaveBeenCalledTimes(1);
     swipeNext(pan); completeLastFlight(); drainBridge();
     pressNext(ui); pressRead(ui);
-    expect(onMove).toHaveBeenCalledTimes(4);
+    expect(onMove).toHaveBeenCalledTimes(3);
     expect(onRead).toHaveBeenCalledTimes(1);
     expectIdleShared();
   });
@@ -421,6 +421,9 @@ describe('unitC2-fix6 flight simulator: no deadlock across orderings', () => {
       rerenderAt(at - 1);
       swipeNext(pan());
       completeLastFlight(false);
+      expect(onMove).toHaveBeenCalledTimes(2);
+      swipeNext(pan());
+      completeLastFlight(true);
       expect(onMove).toHaveBeenCalledTimes(3);
       rerenderAt(at + 1);
     } else if (key === 'end-prev-swipes') {
@@ -464,9 +467,12 @@ describe('unitC2-fix6 flight simulator: no deadlock across orderings', () => {
       swipeNext(pan());
       const flight = lastGestureFlight();
       act(() => { flight!.cb(false); });
-      expect(onMove).toHaveBeenCalledTimes(1);
+      expect(onMove).not.toHaveBeenCalled();
       // Late duplicate completions (done=false cancellation + timeout + double call).
       act(() => { flight!.cb(false); flight!.cb(true); });
+      expect(onMove).not.toHaveBeenCalled();
+      swipeNext(pan());
+      completeLastFlight(true);
       expect(onMove).toHaveBeenCalledTimes(1);
       rerenderAt(at + 1);
     } else {

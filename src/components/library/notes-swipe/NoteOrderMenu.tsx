@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, findNodeHandle, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { LIBRARY_RADIUS, LIBRARY_SPACING, useLibraryAppearance } from '../LibraryAppearance';
@@ -18,6 +18,9 @@ export function NoteOrderMenu({ visible, order, onSelect, onClose }: {
 }) {
   const colors = useLibraryAppearance();
   const closeRef = useRef<View>(null);
+  const choicesRef = useRef<(View | null)[]>([]);
+  const [tabStop, setTabStop] = useState(order);
+  useEffect(() => { setTabStop(order); }, [order, visible]);
   useEffect(() => {
     if (!visible || Platform.OS !== 'web' || typeof window === 'undefined') return;
     const key = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); onClose(); } };
@@ -40,11 +43,32 @@ export function NoteOrderMenu({ visible, order, onSelect, onClose }: {
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
             <Text accessibilityRole="header" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>Order</Text>
             <View accessibilityRole="radiogroup" accessibilityLabel="Order">
-              {ORDER_CHOICES.map(choice => {
+              {ORDER_CHOICES.map((choice, index) => {
                 const checked = order === choice.value;
-                return <BookButton key={choice.value} testID={`note-order-${choice.value}`} label={`${checked ? '✓ ' : ''}${choice.label}`}
+                // Capture activation before RN Web's Enter responder, so it cannot
+                // select a radio a second time on keyup. Keep BookButton's primary.
+                const onKeyDownCapture = (event: { key: string; repeat?: boolean; preventDefault: () => void; stopPropagation: () => void }) => {
+                  const key = event.key;
+                  if (key === ' ' || key === 'Enter') {
+                    event.preventDefault(); event.stopPropagation();
+                    if (!event.repeat) onSelect(choice.value);
+                  } else if (['ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'].includes(key)) {
+                    event.preventDefault(); event.stopPropagation();
+                    const next = (index + (key === 'ArrowDown' || key === 'ArrowRight' ? 1 : ORDER_CHOICES.length - 1)) % ORDER_CHOICES.length;
+                    setTabStop(ORDER_CHOICES[next].value);
+                    choicesRef.current[next]?.focus();
+                  }
+                };
+                return <View key={choice.value} {...(Platform.OS === 'web' ? { onKeyDownCapture, onFocus: () => setTabStop(choice.value) } : {})}>
+                  <BookButton ref={node => {
+                    choicesRef.current[index] = node;
+                    // On web the native ref is the radio's DOM node. Scope its tab
+                    // stop here without changing the shared BookButton contract.
+                    if (Platform.OS === 'web' && node) (node as unknown as { tabIndex: number }).tabIndex = tabStop === choice.value ? 0 : -1;
+                  }} testID={`note-order-${choice.value}`} label={`${checked ? '✓ ' : ''}${choice.label}`}
                   accessibilityLabel={choice.label} accessibilityRole="radio" checked={checked} selected={checked}
-                  variant={checked ? 'primary' : 'secondary'} onPress={() => onSelect(choice.value)} />;
+                  variant={checked ? 'primary' : 'secondary'} onPress={() => onSelect(choice.value)} />
+                </View>;
               })}
             </View>
             <BookButton ref={closeRef} testID="note-order-close" label="Close" variant="text" onPress={onClose} />

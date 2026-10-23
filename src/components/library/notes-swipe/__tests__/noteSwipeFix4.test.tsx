@@ -153,13 +153,16 @@ describe('unitC2-fix4 item1 swipe reliability', () => {
     // Mid-flight the card data ARRIVES (same position, changed card prop).
     ui.rerender(<NoteSwipeStack {...stackProps({ card: card('note-1'), onMove, at: 0, total: 2 })} />);
     expect(onMove).not.toHaveBeenCalled();
-    // The exit animation was cancelled by the re-render: done === false.
-    lastFlightCall().cb(false);
-    expect(onMove).toHaveBeenCalledTimes(1);
-    expect(onMove).toHaveBeenCalledWith('next');
-    // Duplicate completion for the same flight must not double-advance.
+    // A cancelled completion never advances, including a late successful duplicate.
+    const cancelled = lastFlightCall();
+    cancelled.cb(false);
+    expect(onMove).not.toHaveBeenCalled();
+    cancelled.cb(true);
+    expect(onMove).not.toHaveBeenCalled();
+    swipeNext(mockPanCallbacks[mockPanCallbacks.length - 1]);
     lastFlightCall().cb(true);
     expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove).toHaveBeenCalledWith('next');
     ui.unmount();
   });
 
@@ -170,6 +173,9 @@ describe('unitC2-fix4 item1 swipe reliability', () => {
     swipeNext(mockPanCallbacks[mockPanCallbacks.length - 1]);
     ui.rerender(<NoteSwipeStack {...stackProps({ card: card('a'), onMove, at: 0, total: 3 })} />);
     lastFlightCall().cb(false);
+    expect(onMove).not.toHaveBeenCalled();
+    swipeNext(mockPanCallbacks[mockPanCallbacks.length - 1]);
+    lastFlightCall().cb(true);
     expect(onMove).toHaveBeenCalledTimes(1);
     // Parent advances the deck: new position, new card.
     ui.rerender(<NoteSwipeStack {...stackProps({ card: card('b'), onMove, at: 1, total: 3 })} />);
@@ -191,16 +197,19 @@ describe('unitC2-fix4 item1 swipe reliability', () => {
     ui.unmount();
   });
 
-  it('(3) done=false still advances once and the flight id prevents double-advance', () => {
+  it('(3) done=false releases input without advancing and late duplicates stay fenced', () => {
     const onMove = jest.fn();
     render(<NoteSwipeStack {...stackProps({ onMove, at: 0, total: 2 })} />);
     swipeNext(mockPanCallbacks[mockPanCallbacks.length - 1]);
     const flight = lastFlightCall();
     expect(typeof flight?.cb).toBe('function');
     flight.cb(false);
-    expect(onMove).toHaveBeenCalledTimes(1);
+    expect(onMove).not.toHaveBeenCalled();
     flight.cb(false);
     flight.cb(true);
+    expect(onMove).not.toHaveBeenCalled();
+    swipeNext(mockPanCallbacks[mockPanCallbacks.length - 1]);
+    lastFlightCall().cb(true);
     expect(onMove).toHaveBeenCalledTimes(1);
   });
 
