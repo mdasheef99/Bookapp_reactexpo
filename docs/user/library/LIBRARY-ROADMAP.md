@@ -13,7 +13,8 @@
 | [SDD-07](./SDD-07-book-section-ui-overhaul.md) | Book section UI/UX overhaul | Main track | No (UI only) | Flows A (Book Details), B (notes), C (capture) and D (home/search) plus follow-ups built, reviewed, verified and merged to `main` (Flow D 2026-10-21 as `e252513`; follow-ups 2026-10-21 as `29fd8b8`; records: SDD-07 §10, §11, §12, §13 and §13.7); next: the owner decides on a fresh tab-bar unit from `main` (icons, theme colours, contrast, 200% zoom; [TB-1](./SDD-07-TAB-BAR-UNIT.md) is superseded on `main`) — see [SDD-07](./SDD-07-book-section-ui-overhaul.md) and [TRACKER](./TRACKER.md) |
 | [SDD-08](./SDD-08-export-and-share.md) | Export & share | Feature | No | Draft reviewed 2026-10-21; awaiting owner decisions D08-01–D08-11. Owner narrowed CSV to books only (notes → Markdown/PDF) |
 | [SDD-09](./SDD-09-reading-history.md) | Reading history | Feature | Yes — one migration in Unit 1 (four tables, a trigger on `user_books`, back-fill) | Approved 2026-10-22 (lean list: 18 items, 5 units; four reviews; D09-05 simplified to no automatic undo). Unit 1 migration file drafted and checked on local Postgres (22/22), not applied; next: owner review of the file. Reading rhythm (opt-in streaks/reminders) moved to its own future SDD; "On this day" moved to SDD-10 |
-| SDD-10 | Notes retrieval & organising | Feature | Yes (collections, shelves/tags) | Not started |
+| [SDD-10](./SDD-10-notes-retrieval.md) | Notes retrieval | Feature | No (app only) | Approved 2026-10-23 (owner chat decisions D10-01–D10-14, lead defaults accepted); building Unit A. Units: A per-book note search, B hide Saved Pages, C swipe section, D "On this day" |
+| [SDD-11](./SDD-11-organising.md) | Notes and books organising | Feature | Yes — two migrations (E labels, F collections) | Design direction approved 2026-10-23 (D11-01–D11-10, lead defaults); migrations not authorized. Split out of SDD-10 by the owner on 2026-10-23; Unit F follows SDD-10 Unit C |
 
 ### SDD-07 — Book section UI/UX overhaul (main track)
 
@@ -44,6 +45,8 @@ Ordered so history starts accumulating early:
 Engagement mechanics stay out (no streaks, badges or reminders) — see SDD-07 DP-04.
 
 ### SDD-10 — Notes retrieval & organising
+
+*Superseded in detail by [SDD-10](./SDD-10-notes-retrieval.md) and [SDD-11](./SDD-11-organising.md). Owner decisions 2026-10-23: search is per book; the all-notes view and "Today's note" are replaced by a swipe section with a Home tile; "On this day" is kept; Saved Pages are hidden, not deleted; labels for books and collections of any notes (not only Quotes) move to SDD-11. The original list is kept below for history.*
 
 - **All-notes view** across books (today notes are listed per book only, newest first).
 - **Note search** — start with a simple per-user text match; add full-text search only if measured to be necessary. Must work for non-English text (the OCR is English-only, but typed notes need not be).
@@ -89,6 +92,6 @@ Engagement mechanics stay out (no streaks, badges or reminders) — see SDD-07 D
 | SDD-07 tab-bar unit TB-1 (D07-01) | Owner | **Approved 2026-10-18; built and parked 2026-10-19 on the old 9-tab layout.** Checked 2026-10-21: `main` already shows exactly five tabs (My Library, Exchange, Marketplace, Clubs, Profile), so its tab-count and label goal is met on `main` and the "Marketplace" label question is settled by `main`. Still open: tab icons, theme colours and label contrast (RA-W01), and a 200%-zoom check. The parked branch is not to be revived; a fresh small unit from `main` (app-wide, clubs heads-up) is the option (see [TB-1](./SDD-07-TAB-BAR-UNIT.md)). **2026-10-21: TB-2 built on `sdd07/tab-bar-main` from `main`** with labels Library / Exchange / Market (owner chose "Market") / Clubs / Profile, icons, theme colours, contrast and the 200% check. It passes on web and is **uncommitted, awaiting owner commit approval** (TB-1 §14) |
 | Each SDD-07 flow design | Owner | All four flow designs (A–D) finalized and built; Flows A–D merged to `main` |
 | Each flow build | Owner acceptance | The next flow's build; that flow's feature slots |
-| SDD-08 / 09 / 10 drafts | Owner | Their implementation |
+| SDD-08 / 09 / 10 / 11 drafts | Owner | Their implementation |
 | Each migration file | Owner | Creating the file only |
 | Each migration application | Owner | Applying it to `ahntbtktjjmvfosgkmgn` |
