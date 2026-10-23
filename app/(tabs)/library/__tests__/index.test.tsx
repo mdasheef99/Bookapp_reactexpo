@@ -447,6 +447,8 @@ describe('LibraryScreen', () => {
 
     it.each(['web', 'ios'] as const)('announces offline and refresh-failure captions politely on %s', async platform => {
         const previousOS = Platform.OS;
+        const previousWindow = global.window;
+        if (platform === 'web') Object.assign(global, { window: { addEventListener: jest.fn(), removeEventListener: jest.fn() } });
         Platform.OS = platform;
         mockOffline = true;
         const entry = { id: 'saved', book: { title: 'Saved book' } };
@@ -463,6 +465,7 @@ describe('LibraryScreen', () => {
         } finally {
             ui.unmount(); ui.queryClient.clear();
             Platform.OS = previousOS;
+            global.window = previousWindow;
         }
     });
 });

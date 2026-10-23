@@ -12,16 +12,17 @@ import { NoteProgressPrompt } from '@/components/library/history/NoteProgressPro
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { categoryLabel, noteKeys, NoteWriteError } from '@/features/books/notes/manualNoteContract';
 import { isManualNoteDeleteAuthorized, manualNoteDeleteAdapter, manualNotesGateway } from '@/features/books/notes/manualNotesGateway';
-import { composeHref, noteRouteContext, registerNoteContext, retainedReaderKey, returnFromNote } from '@/features/books/notes/noteNavigation';
+import { composeHref, noteRouteContext, registerNoteContext, retainedReaderKey, returnFromNote, SwipeRouteParams } from '@/features/books/notes/noteNavigation';
 import { useNoteContext, useNoteOperations, useNoteRemovalRefresh } from '@/features/books/notes/useManualNotes';
 
 export default function NoteReaderScreen() {
-  const { bookId = '', noteId = '', contextId, justSaved } = useLocalSearchParams<{
+  const params = useLocalSearchParams() as unknown as SwipeRouteParams & {
     bookId: string;
     noteId: string;
     contextId?: string;
     justSaved?: string;
-  }>();
+  };
+  const { bookId = '', noteId = '', contextId, justSaved } = params;
   const router = useRouter(); const navigation = useNavigation(); const colors = useLibraryAppearance(); const { actorId, book } = useNoteContext(bookId);
   const justSavedFlag = justSaved === '1';
   const [promptArmed, setPromptArmed] = useState(false);
@@ -47,7 +48,7 @@ export default function NoteReaderScreen() {
   const { isOffline } = useNetworkStatus();
   const offlineRef = useRef(isOffline);
   offlineRef.current = isOffline;
-  const context = noteRouteContext(contextId, actorId, bookId); const removeFromCache = useNoteRemovalRefresh(actorId, bookId);
+  const context = noteRouteContext(contextId, actorId, bookId, params); const removeFromCache = useNoteRemovalRefresh(actorId, bookId);
   const query = useQuery({ queryKey: noteKeys.record(actorId, bookId, noteId), queryFn: ({ signal }) => manualNotesGateway.record(actorId, bookId, noteId, signal), enabled: !!actorId && !!book.data && !!noteId });
   const operations = useNoteOperations(actorId, bookId);
   const pending = operations.find(op => op.submission.mode === 'edit' && op.submission.noteId === noteId && ['saving', 'unknown'].includes(op.status));
@@ -82,7 +83,7 @@ export default function NoteReaderScreen() {
     query.data.page_number == null ? null : `Page ${query.data.page_number}`,
     bookNoteDate(query.data.created_at),
   ].filter(Boolean).join(' · ') : '';
-  return <NoteScreen backLabel={context.origin === 'book' ? 'Book details' : 'Notes'} backAccessibilityLabel={context.origin === 'book' ? 'Back to Book details' : 'Back to Notes'} onBack={back}
+  return <NoteScreen backLabel={context.origin === 'swipe' ? 'Back to your notes' : context.origin === 'book' ? 'Book details' : 'Notes'} backAccessibilityLabel={context.origin === 'swipe' ? 'Back to your notes' : context.origin === 'book' ? 'Back to Book details' : 'Back to Notes'} onBack={back}
     footer={!unavailable && query.data ? <>
       {pending ? <><NoteMessage message="A previous save for this note is not confirmed. Check it before editing again." /><NoteButton label="Open pending submission" secondary onPress={() => router.push(composeHref(bookId, editorContext(), noteId, pending.submission.id))} /></>
         : <><NoteButton label="Edit note" disabled={isOffline || deleting} onPress={() => router.push(composeHref(bookId, editorContext(), noteId))} /></>}

@@ -8,7 +8,24 @@ export const NOTE_CATEGORIES = [
   { value: 'question', label: 'Question' },
 ] as const;
 export type NoteCategory = typeof NOTE_CATEGORIES[number]['value'];
-export type NoteOrigin = 'book' | 'list';
+export type NoteOrigin = 'book' | 'list' | 'swipe';
+export type NoteDeckScope = { kind: 'all' } | { kind: 'book'; userBookId: string };
+export type NoteDeckOrder = 'shuffle' | 'newest' | 'oldest';
+export type NoteDeckCategory = NoteCategory | 'all';
+export type NoteDeckIndexRow = Pick<ManualNote, 'id' | 'tag' | 'created_at' | 'user_book_id' | 'user_id'>;
+export interface NoteDeckBook { id: string; title: string; authors: string[]; cover_url: string | null }
+export interface NoteDeckCard { note: ManualNote; book: NoteDeckBook }
+export interface NoteDeckReturnState {
+  scope: NoteDeckScope;
+  category: NoteDeckCategory;
+  order: NoteDeckOrder;
+  seed: string;
+  noteId: string | null;
+  /** Deletion cursor: position of noteId when the fallback was built, for reload → delete → return. */
+  at?: number;
+  /** Successor id after noteId when the fallback was built (null when noteId was last). */
+  nextId?: string | null;
+}
 export interface ManualNote {
   id: string;
   user_id: string;
@@ -60,6 +77,9 @@ export function fieldsChanged(fields: NoteFields, baseline?: ManualNote): boolea
   return fields.text !== original.text || fields.category !== original.category || fields.page !== original.page;
 }
 export const noteKeys = {
+  deck: (actor: string) => ['library-note-deck', actor] as const,
+  deckIndex: (actor: string, scope: NoteDeckScope) => ['library-note-deck', actor, 'index', scope] as const,
+  deckCard: (actor: string, note: string) => ['library-note-deck', actor, 'card', note] as const,
   book: (actor: string, book: string) => ['library-note-book', actor, book] as const,
   list: (actor: string, book: string) => ['notes', actor, book] as const,
   record: (actor: string, book: string, note: string) => ['library-note', actor, book, note] as const,

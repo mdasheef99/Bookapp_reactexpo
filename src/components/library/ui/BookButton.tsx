@@ -18,9 +18,15 @@ export interface BookButtonProps {
   selected?: boolean;
   testID?: string;
   ref?: React.Ref<View>;
+  /**
+   * Optional explicit label line height (e.g. the swipe screen passes the
+   * font-scaled label token so 200% labels never clip). Undefined keeps the
+   * label on native metrics — byte-identical for every existing caller.
+   */
+  labelLineHeight?: number;
 }
 
-export function BookButton({ label, accessibilityLabel, variant, onPress, disabled = false, expanded, selected, testID, ref }: BookButtonProps) {
+export function BookButton({ label, accessibilityLabel, variant, onPress, disabled = false, expanded, selected, testID, ref, labelLineHeight }: BookButtonProps) {
   const colors = useLibraryAppearance();
   const variants = {
     primary: { backgroundColor: colors.accent, borderColor: colors.controlBorder, color: colors.textOnAccent },
@@ -40,7 +46,7 @@ export function BookButton({ label, accessibilityLabel, variant, onPress, disabl
   return <Pressable ref={ref} accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={accessibilityState}
     aria-expanded={expanded} disabled={disabled} onPress={onPress} testID={testID}
     style={({ pressed }) => [styles.button, surface, { opacity: disabled ? 0.55 : pressed ? 0.8 : 1 }]}>
-    <Text style={[styles.label, { color }]}>{label}</Text>
+    <Text style={[styles.label, { color }, labelLineHeight === undefined ? null : { lineHeight: labelLineHeight }]}>{label}</Text>
   </Pressable>;
 }
 

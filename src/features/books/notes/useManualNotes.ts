@@ -3,7 +3,7 @@ import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { manualNotesGateway, noteSaves } from './manualNotesGateway';
-import { ManualNote, noteKeys, NoteSubmission } from './manualNoteContract';
+import { ManualNote, NoteDeckCard, NoteDeckIndexRow, noteKeys, NoteSubmission } from './manualNoteContract';
 
 // Shared by retained screens, scoped to their QueryClient and current account lifetime.
 // Receipts remain discoverable, but their cache effects are applied only once.
@@ -28,6 +28,47 @@ function seedRecord(client: QueryClient, actorId: string, bookId: string, record
     return record;
   });
 }
+export function noteWasDeleted(client: QueryClient, actorId: string, bookId: string, noteId: string) {
+  return cacheMemory(client).deleted.has(recordIdentity(actorId, bookId, noteId));
+}
+/** Shared by batch reads and saves. Tombstones and server versions also protect late detail reads. */
+export function seedDeckCard(client: QueryClient, actorId: string, card: NoteDeckCard) {
+  const record = card.note;
+  if (record.user_id !== actorId || noteWasDeleted(client, actorId, record.user_book_id, record.id)) return;
+  const saved = client.getQueryData<ManualNote | null>(noteKeys.record(actorId, record.user_book_id, record.id));
+  const latest = saved?.version !== undefined && (record.version === undefined || saved.version > record.version) ? saved : record;
+  // Observer-free keep-alive: the swipe surface reads deck cards cache-only (no
+  // observers), so the default 5-minute gcTime would collect the displayed card.
+  // Infinity keeps the seeded entry alive without creating a fetch observer.
+  try {
+    client.setQueryDefaults(noteKeys.deckCard(actorId, record.id), { gcTime: Infinity } as Record<string, unknown>);
+  } catch { /* ignore */ }
+  client.setQueryData<NoteDeckCard>(noteKeys.deckCard(actorId, record.id), current => {
+    if (current?.note.version !== undefined && (latest.version === undefined || current.note.version >= latest.version)) return current;
+    return { ...card, note: latest };
+  });
+  try {
+    const found = client.getQueryCache().find({ queryKey: noteKeys.deckCard(actorId, record.id), exact: true }) as unknown as {
+      setOptions?: (options: Record<string, unknown>) => void;
+      scheduleGc?: () => void;
+      options?: Record<string, unknown>;
+    } | undefined;
+    if (found?.setOptions) {
+      try { found.setOptions({ ...(found.options ?? {}), gcTime: Infinity }); } catch { /* ignore */ }
+      try { found.scheduleGc?.(); } catch { /* ignore */ }
+    }
+  } catch { /* ignore */ }
+}
+function refreshDeck(client: QueryClient, actorId: string, record?: ManualNote) {
+  // Cancel Query observers before updating so their eventual return cannot replace a newer save.
+  void client.cancelQueries({ queryKey: noteKeys.deck(actorId) });
+  if (record) {
+    const key = noteKeys.deckCard(actorId, record.id);
+    const card = client.getQueryData<NoteDeckCard>(key);
+    if (card) seedDeckCard(client, actorId, { ...card, note: record });
+  }
+  void client.invalidateQueries({ queryKey: noteKeys.deck(actorId) });
+}
 
 export function useNoteContext(bookId: string) {
   const { user } = useAuth(); const actorId = user?.id ?? '';
@@ -44,6 +85,7 @@ export function useNoteOperations(actorId: string, bookId: string) {
       memory.applied.add(operation.submission);
       if (memory.deleted.has(recordIdentity(actorId, bookId, operation.record.id))) continue;
       seedRecord(client, actorId, bookId, operation.record);
+      refreshDeck(client, actorId, operation.record);
       void client.invalidateQueries({ queryKey: noteKeys.list(actorId, bookId) });
     }
   }, [revision, client, actorId, bookId]);
@@ -53,6 +95,7 @@ export function useNoteRefresh(actorId: string, bookId: string) {
   const client = useQueryClient();
   return useCallback((record?: ManualNote) => {
     if (record) seedRecord(client, actorId, bookId, record);
+    refreshDeck(client, actorId, record);
     void client.invalidateQueries({ queryKey: noteKeys.list(actorId, bookId) });
     if (record) void client.invalidateQueries({ queryKey: noteKeys.record(actorId, bookId, record.id) });
   }, [client, actorId, bookId]);
@@ -64,13 +107,19 @@ export function useNoteRemovalRefresh(actorId: string, bookId: string) {
   return useCallback(async (noteId: string) => {
     const memory = cacheMemory(client);
     memory.deleted.add(recordIdentity(actorId, bookId, noteId));
+    await client.cancelQueries({ queryKey: noteKeys.deck(actorId) });
+    client.removeQueries({ queryKey: noteKeys.deckCard(actorId, noteId), exact: true });
     const key = noteKeys.record(actorId, bookId, noteId);
     await client.cancelQueries({ queryKey: key, exact: true });
     if (memory !== cacheMemory(client)) return; // Account changed during cancellation.
     client.setQueryData(key, null);
+    // Retained decks must reconcile immediately, even while an index refetch is paused offline.
+    client.setQueriesData<NoteDeckIndexRow[]>({ queryKey: [...noteKeys.deck(actorId), 'index'] }, rows =>
+      rows?.filter(row => row.id !== noteId || row.user_book_id !== bookId));
     for (const operation of noteSaves.forBook(actorId, bookId)) {
       if (operation.submission.noteId === noteId && operation.status === 'confirmed') noteSaves.forget(operation.submission.id);
     }
     void client.invalidateQueries({ queryKey: noteKeys.list(actorId, bookId) });
+    void client.invalidateQueries({ queryKey: noteKeys.deck(actorId) });
   }, [client, actorId, bookId]);
 }

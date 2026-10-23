@@ -242,6 +242,7 @@ export default function BookDetailScreen() {
         mutationFn: () => booksService.removeFromLibrary(bookId!),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['library'] });
+            void queryClient.invalidateQueries({ queryKey: ['library-note-deck', user?.id ?? ''] });
             handleBackPress();
         },
         onError: (err: any) => {

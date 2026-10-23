@@ -121,6 +121,16 @@ describe('book-section flat config', () => {
             'src/components/notes/NotePassageLink.tsx',
             'src/features/books/notes/noteSearch.ts',
             'src/components/notes/NoteSearchField.tsx',
+            'app/(tabs)/library/notes-swipe.tsx',
+            'src/features/books/notes/noteDeck.ts',
+            'src/features/books/notes/noteSwipeConstants.ts',
+            'src/features/books/notes/noteDeckCache.ts',
+            'src/features/books/notes/useNoteDeck.ts',
+            'src/components/library/notes-swipe/useNoteSwipeMotion.ts',
+            'src/components/library/notes-swipe/NoteSwipeCard.tsx',
+            'src/components/library/notes-swipe/NoteSwipeStack.tsx',
+            'src/components/library/notes-swipe/NoteFullNoteSheet.tsx',
+            'src/components/library/notes-swipe/NoteSwipeHomeTile.tsx',
         ]);
     });
 

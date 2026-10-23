@@ -11,7 +11,7 @@ import { BookButton } from '@/components/library/ui';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { categoryLabel, fieldsChanged, ManualNote, noteFields, NoteFields, noteKeys, validateNote } from '@/features/books/notes/manualNoteContract';
 import { manualNotesGateway, noteSaves } from '@/features/books/notes/manualNotesGateway';
-import { noteRouteContext, readerHref, registerNoteContext, returnFromNote, returnToSavedReader } from '@/features/books/notes/noteNavigation';
+import { noteRouteContext, readerHref, registerNoteContext, returnFromNote, returnToSavedReader, SwipeRouteParams } from '@/features/books/notes/noteNavigation';
 import { useNoteContext, useNoteOperations, useNoteRefresh } from '@/features/books/notes/useManualNotes';
 import { ComposerHistoryGuard, guardComposerHistory } from '@/features/books/notes/composerBrowserHistory';
 import { NoteCrop } from '@/components/notes/NoteCrop';
@@ -19,10 +19,11 @@ import { createCaptureAdapter, onDeviceAvailability } from '@/features/books/not
 import { NoteCaptureSession } from '@/features/books/notes/captureSession';
 
 export default function NoteComposeScreen() {
-  const { bookId = '', noteId, contextId, operationId } = useLocalSearchParams<{ bookId: string; noteId?: string; contextId?: string; operationId?: string }>();
+  const params = useLocalSearchParams() as unknown as SwipeRouteParams & { bookId: string; noteId?: string; contextId?: string; operationId?: string };
+  const { bookId = '', noteId, contextId, operationId } = params;
   const router = useRouter(); const navigation = useNavigation(); const colors = useLibraryAppearance();
   const { actorId, book } = useNoteContext(bookId); const refresh = useNoteRefresh(actorId, bookId);
-  const context = noteRouteContext(contextId, actorId, bookId);
+  const context = noteRouteContext(contextId, actorId, bookId, params);
   const operations = useNoteOperations(actorId, bookId);
   const [activeOperation, setActiveOperation] = useState<string | undefined>(operationId);
   const operation = operations.find(op => op.submission.id === activeOperation);

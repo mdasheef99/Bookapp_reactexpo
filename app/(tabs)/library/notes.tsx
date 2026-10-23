@@ -50,6 +50,7 @@ export default function NotesScreen() {
     {query.data && <Text accessibilityLiveRegion="polite" style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{isSearching ? searchCountLabel(filtered.length, inCategory.length) : `${notes.length} ${notes.length === 1 ? 'note' : 'notes'}`}</Text>}
     <CategoryPicker selected={filter} includeAll onChange={value => { setFilter(value); anchor.current = 0; list.current?.scrollToOffset({ offset: 0, animated: false }); }} />
     {filter && <NoteMessage caption message={`Showing ${categoryLabel(filter)} notes.`} />}
+    {showSearch && <BookButton label="Swipe through" variant="text" onPress={() => router.push({ pathname: '/(tabs)/library/notes-swipe', params: { scope: 'book', userBookId } })} />}
     {exportDeliveryAvailable() && query.data && <View style={{ gap: LIBRARY_SPACING.xxs }}>
       <ExportButton label={exports.busy ? 'Exporting…' : 'Export'} accessibilityLabel={`Export notes for ${book.data?.title ?? 'Selected book'}`} variant="text"
         busy={exports.busy} disabled={isOffline || exports.busy} onPress={() => setExportOpen(true)} />

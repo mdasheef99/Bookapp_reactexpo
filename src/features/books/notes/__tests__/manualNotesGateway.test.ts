@@ -29,8 +29,8 @@ it.each([
 ])('maps joined book authors from %j', async (related, title, authors) => {
   const owner = chain({ data: { id: 'book', user_id: 'actor', book: related }, error: null });
   (supabase.from as jest.Mock).mockReturnValueOnce(owner);
-  await expect(manualNotesGateway.book('actor', 'book')).resolves.toEqual({ id: 'book', title, authors });
-  expect(owner.select).toHaveBeenCalledWith('id,user_id,book:books(title,authors)');
+  await expect(manualNotesGateway.book('actor', 'book')).resolves.toEqual({ id: 'book', title, authors, cover_url: null });
+  expect(owner.select).toHaveBeenCalledWith('id,user_id,book:books(title,authors,cover_url)');
   expect(owner.eq.mock.calls).toEqual([['id', 'book'], ['user_id', 'actor']]);
 });
 it('enables the reviewed manual-note capabilities for the application', () => {

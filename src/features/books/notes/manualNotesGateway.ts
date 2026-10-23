@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { ManualNote, NoteSubmission, NoteWriteError, NOTE_CATEGORIES } from './manualNoteContract';
+import { ManualNote, NoteDeckBook, NoteDeckCard, NoteDeckIndexRow, NoteDeckScope, NoteSubmission, NoteWriteError, NOTE_CATEGORIES } from './manualNoteContract';
+import { NOTE_SWIPE } from './noteSwipeConstants';
 import { matchesSubmission, NoteSaveAdapter, NoteSaveCoordinator } from './noteSaveCoordinator';
 
 /** Enabled after reviewed schema correction and connected acceptance on 2026-10-18.
@@ -14,6 +15,18 @@ export const MANUAL_NOTE_WRITE_GATES = Object.freeze({
 
 function currentActor(actorId: string) {
   if (useAuthStore.getState().session?.user.id !== actorId) throw new NoteWriteError('definite', 'Sign in again to continue.');
+}
+const DECK_BOOK_SELECT = 'id,user_id,book:books(title,authors,cover_url)';
+function deckBook(row: { id: string; book: unknown }): NoteDeckBook {
+  const related = row.book as { title?: string; authors?: unknown; cover_url?: string | null } | { title?: string; authors?: unknown; cover_url?: string | null }[] | null;
+  const book = Array.isArray(related) ? related[0] : related;
+  return { id: row.id, title: book?.title ?? 'Selected book',
+    authors: Array.isArray(book?.authors) ? book.authors.filter((a): a is string => typeof a === 'string').map(a => a.trim()).filter(Boolean) : [],
+    cover_url: book?.cover_url ?? null };
+}
+function checkDeckRequest(actorId: string, signal?: AbortSignal) {
+  currentActor(actorId);
+  if (signal?.aborted) throw new Error('Note request cancelled.');
 }
 function throwDatabaseError(error: { code?: string; message?: string }) {
   const definite = ['23502', '23503', '23514', '42501', 'PGRST202'].includes(error.code ?? '');
@@ -36,18 +49,51 @@ function confirmsEdit(note: unknown, submission: Readonly<NoteSubmission>): note
     note.version === submission.expectedVersion! + 1 && note.last_operation_id === submission.id;
 }
 export const manualNotesGateway = {
-  async book(actorId: string, bookId: string, signal?: AbortSignal): Promise<{ id: string; title: string; authors: string[] }> {
+  async book(actorId: string, bookId: string, signal?: AbortSignal): Promise<NoteDeckBook> {
     currentActor(actorId);
-    let query = supabase.from('user_books').select('id,user_id,book:books(title,authors)').eq('id', bookId).eq('user_id', actorId);
+    let query = supabase.from('user_books').select(DECK_BOOK_SELECT).eq('id', bookId).eq('user_id', actorId);
     if (signal) query = query.abortSignal(signal);
     const { data, error } = await query.maybeSingle(); currentActor(actorId);
     if (error) throwDatabaseError(error);
     if (!data || data.user_id !== actorId || data.id !== bookId) throw new Error('This book is unavailable.');
-    const related = data.book as unknown as { title: string; authors?: unknown } | { title: string; authors?: unknown }[] | null;
-    const book = Array.isArray(related) ? related[0] : related;
-    const authors = Array.isArray(book?.authors)
-      ? book.authors.filter((author): author is string => typeof author === 'string').map(author => author.trim()).filter(Boolean) : [];
-    return { id: data.id, title: book?.title ?? 'Selected book', authors };
+    return deckBook(data);
+  },
+  async deckIndex(actorId: string, scope: NoteDeckScope, signal?: AbortSignal): Promise<NoteDeckIndexRow[]> {
+    if (scope.kind === 'book' && !scope.userBookId) throw new Error('This book is unavailable.');
+    const rows: NoteDeckIndexRow[] = [];
+    for (let offset = 0; ; offset += NOTE_SWIPE.pageSize) {
+      checkDeckRequest(actorId, signal);
+      let query = supabase.from('reading_notes').select('id,tag,created_at,user_book_id,user_id').eq('user_id', actorId);
+      if (scope.kind === 'book') query = query.eq('user_book_id', scope.userBookId);
+      query = query.order('created_at', { ascending: true }).order('id', { ascending: true }).range(offset, offset + NOTE_SWIPE.pageSize - 1);
+      if (signal) query = query.abortSignal(signal);
+      const { data, error } = await query; checkDeckRequest(actorId, signal);
+      if (error) throwDatabaseError(error);
+      const page = (data ?? []) as NoteDeckIndexRow[];
+      rows.push(...page.filter(row => row.user_id === actorId && (scope.kind === 'all' || row.user_book_id === scope.userBookId)));
+      if (page.length < NOTE_SWIPE.pageSize) return rows;
+    }
+  },
+  async deckCards(actorId: string, ids: readonly string[], signal?: AbortSignal): Promise<NoteDeckCard[]> {
+    const unique = [...new Set(ids)]; const cards: NoteDeckCard[] = [];
+    for (let start = 0; start < unique.length; start += NOTE_SWIPE.batchSize) {
+      checkDeckRequest(actorId, signal);
+      const batch = unique.slice(start, start + NOTE_SWIPE.batchSize);
+      let query = supabase.from('reading_notes').select('*').eq('user_id', actorId).in('id', batch);
+      if (signal) query = query.abortSignal(signal);
+      const { data, error } = await query; checkDeckRequest(actorId, signal);
+      if (error) throwDatabaseError(error);
+      const notes = ((data ?? []) as ManualNote[]).filter(n => n.user_id === actorId && batch.includes(n.id));
+      const bookIds = [...new Set(notes.map(n => n.user_book_id))];
+      if (!bookIds.length) continue;
+      let booksQuery = supabase.from('user_books').select(DECK_BOOK_SELECT).eq('user_id', actorId).in('id', bookIds);
+      if (signal) booksQuery = booksQuery.abortSignal(signal);
+      const result = await booksQuery; checkDeckRequest(actorId, signal);
+      if (result.error) throwDatabaseError(result.error);
+      const books = new Map((result.data ?? []).filter(b => b.user_id === actorId && bookIds.includes(b.id)).map(b => [b.id, deckBook(b)]));
+      for (const note of notes) { const book = books.get(note.user_book_id); if (book) cards.push({ note, book }); }
+    }
+    return cards;
   },
   async list(actorId: string, bookId: string, signal?: AbortSignal): Promise<ManualNote[]> {
     await this.book(actorId, bookId, signal);

@@ -140,6 +140,12 @@ async function reachState(page: Page, state: string, hour: number) {
     await page.goto(`/library/notes?userBookId=${UB.manyNotes}`);
     await expect(page.getByText(/^\d+ notes?$/).first()).toBeVisible({ timeout: 20000 });
     await page.waitForTimeout(1000);
+  } else if (state === 'notes-swipe') {
+    await startLibrarySession(page, {}, hour);
+    await page.goto(`/library/notes-swipe?scope=book&userBookId=${UB.manyNotes}`);
+    await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId('note-card-slot-0')).toContainText('Many Notes Fixture Book', { timeout: 20000 });
+    await page.waitForTimeout(800);
   } else if (state === 'reader') {
     await startLibrarySession(page, {}, hour);
     await page.goto(`/library/note?bookId=${UB.manyNotes}&noteId=${NOTE_IDS.quote}`);
@@ -169,6 +175,7 @@ const STATES = [
   'details-populated',
   'details-no-cover',
   'notes-list',
+  'notes-swipe',
   'reader',
   'composer-choose',
   'composer-write',

@@ -26,6 +26,7 @@ import {
     LibraryShelf,
     LibrarySummary,
 } from '@/components/library';
+import { NoteSwipeHomeTile } from '@/components/library/notes-swipe/NoteSwipeHomeTile';
 import { ContinueReadingCard } from '@/components/library/history/ContinueReadingCard';
 import { GoalSummary } from '@/components/library/history/GoalSummary';
 import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
@@ -173,6 +174,7 @@ function LibraryHome() {
                     <View style={styles.content}>
                         {collectionHeader}
                         {continueReadingCard}
+                        {!arrangement.active && <NoteSwipeHomeTile actorId={session?.user?.id ?? ''} onPress={() => router.push({ pathname: '/(tabs)/library/notes-swipe', params: { scope: 'all' } })} />}
                         <LibraryShelfStyleControl value={shelfStyle} onChange={handleShelfStyleChange}
                             disabled={arrangement.saving || shelfDragging} />
                         <LibraryArrangeControls arrangement={arrangement} bookCount={books.length} dragging={shelfDragging}
@@ -191,7 +193,8 @@ function LibraryHome() {
                 <View style={[styles.content, styles.listViewport]}>
                     <LibraryBookList books={filteredBooks} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel}
                         isRefetching={isRefetching} onRefresh={refetch} onBookPress={openBook} onShowAll={() => setActiveFilter('all')}
-                        header={<>{collectionHeader}{continueReadingCard}</>} />
+                        header={<>{collectionHeader}{continueReadingCard}
+                        {!arrangement.active && <NoteSwipeHomeTile actorId={session?.user?.id ?? ''} onPress={() => router.push({ pathname: '/(tabs)/library/notes-swipe', params: { scope: 'all' } })} />}</>} />
                 </View>
             )}
         </LibraryPageBackground>

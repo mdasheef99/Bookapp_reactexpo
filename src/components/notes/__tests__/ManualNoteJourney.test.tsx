@@ -80,7 +80,7 @@ beforeEach(() => {
   jest.clearAllMocks(); client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false, gcTime: Infinity } } });
   useAuthStore.setState({ session: { user: { id: 'actor' } } as any, status: 'authenticated' }); noteRecord = { ...original };
   mockParams = { bookId: 'book', noteId: 'note', contextId: registerNoteContext({ actorId: 'actor', bookId: 'book', origin: 'book', canBack: true, readerReturn: true }) };
-  jest.spyOn(manualNotesGateway, 'book').mockResolvedValue({ id: 'book', title: 'Selected book', authors: [] });
+  jest.spyOn(manualNotesGateway, 'book').mockResolvedValue({ id: 'book', title: 'Selected book', authors: [], cover_url: null });
   jest.spyOn(manualNotesGateway, 'record').mockImplementation(async () => noteRecord);
   jest.spyOn(manualNotesGateway, 'list').mockImplementation(async () => noteRecord ? [noteRecord] : []);
   (userBookPagesService.getPagesForBook as jest.Mock).mockResolvedValue([]);

@@ -18,6 +18,9 @@ export interface BookSectionColors {
     bgRaised: string;
     /** PROPOSED - scrim behind modals; the phase's shadow hue at partial alpha. */
     overlay: string;
+    /** Decorative light band on the note card; contrast tested at full strength. */
+    cardShine: string;
+    cardShineEdge: string;
     // Text
     textPrimary: string;
     textSecondary: string;
@@ -80,6 +83,7 @@ type PaletteBase = Omit<BookSectionColors, PaletteAliasKey>;
 const daylightPalette: PaletteBase = {
     bgPrimary: '#faf6ee', bgSecondary: '#eee5d6', bgCard: '#fffdf8', bgRaised: '#fffaf0',
     overlay: 'rgba(39, 28, 19, 0.55)',
+    cardShine: 'rgba(232, 200, 140, 0.16)', cardShineEdge: 'rgba(232, 200, 140, 0.06)',
     textPrimary: '#30291f', textSecondary: '#685d4d', textTertiary: '#6f6350', textDisabled: '#a4987f',
     accent: '#3e3225', accentPressed: '#2b2219', focusRing: '#7a5c33', readingOutline: '#a8d5c8', readingOutlineInner: '#0f2420', onAccent: '#fffaf1',
     border: '#ded3c1', controlBorder: '#8a7c60',
@@ -93,6 +97,7 @@ const daylightPalette: PaletteBase = {
 const goldenPalette: PaletteBase = {
     bgPrimary: '#fbf2e4', bgSecondary: '#f0e0c8', bgCard: '#fff9ed', bgRaised: '#fff8e8',
     overlay: 'rgba(51, 35, 21, 0.55)',
+    cardShine: 'rgba(232, 195, 130, 0.16)', cardShineEdge: 'rgba(232, 195, 130, 0.06)',
     textPrimary: '#33271d', textSecondary: '#6a5845', textTertiary: '#755c48', textDisabled: '#a68f70',
     accent: '#493627', accentPressed: '#34261b', focusRing: '#86632f', readingOutline: '#e6d3a8', readingOutlineInner: '#3d2c14', onAccent: '#fff8ec',
     border: '#deceb6', controlBorder: '#93794f',
@@ -106,6 +111,7 @@ const goldenPalette: PaletteBase = {
 const midnightPalette: PaletteBase = {
     bgPrimary: '#211e1a', bgSecondary: '#383229', bgCard: '#2d2923', bgRaised: '#37312a',
     overlay: 'rgba(5, 4, 2, 0.62)',
+    cardShine: 'rgba(255, 240, 210, 0.10)', cardShineEdge: 'rgba(255, 240, 210, 0.04)',
     textPrimary: '#f3eada', textSecondary: '#c4b8a4', textTertiary: '#b4a58c', textDisabled: '#6e6252',
     accent: '#dfc496', accentPressed: '#c9ab77', focusRing: '#f0d9ae', readingOutline: '#c2dde3', readingOutlineInner: '#10222b', onAccent: '#2c2318',
     border: '#504638', controlBorder: '#8d7f66',

@@ -89,6 +89,8 @@ const BOOK_TOKEN_PAIRS: readonly TokenPair[] = [
     { token: 'successSurface', background: 'bgPrimary', role: 'decorative' },
     { token: 'infoSurface', background: 'bgPrimary', role: 'decorative' },
     { token: 'overlay', background: 'bgPrimary', role: 'decorative' },
+    { token: 'cardShine', background: 'bgCard', role: 'decorative' },
+    { token: 'cardShineEdge', background: 'bgCard', role: 'decorative' },
     { token: 'coverPlaceholder', background: 'bgPrimary', role: 'decorative' },
     { token: 'coverPlaceholder', background: 'bgCard', role: 'decorative' },
     { token: 'shadow', background: 'bgCard', role: 'decorative' },

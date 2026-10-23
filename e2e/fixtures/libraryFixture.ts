@@ -136,6 +136,7 @@ function applyFilters(rows: any[], sp: URLSearchParams) {
   for (const [key, raw] of sp.entries()) {
     if (['select', 'order', 'limit', 'offset', 'columns', 'and', 'or'].includes(key)) continue;
     if (raw.startsWith('eq.')) { const v = raw.slice(3); out = out.filter(r => String(r[key]) === v); }
+    else if (raw.startsWith('in.(')) { const values = raw.slice(4, -1).split(',').map(v => v.replace(/^"|"$/g, '')); out = out.filter(r => values.includes(String(r[key]))); }
     else if (raw === 'is.null') out = out.filter(r => r[key] == null);
   }
   return out;
@@ -207,6 +208,15 @@ async function installRoutes(page: Page) {
     else if (resource === 'user_reading_settings') rows = [];
     else { fx.unhandledReads.push(`${method} ${p}`); rows = []; }
 
+    const orders = (sp.get('order') ?? '').split(',').filter(Boolean);
+    if (orders.length) rows = [...rows].sort((a, b) => {
+      for (const order of orders) { const [column, direction] = order.split('.'); const difference = String(a[column]).localeCompare(String(b[column])); if (difference) return difference * (direction === 'desc' ? -1 : 1); }
+      return 0;
+    });
+    const range = req.headers()['range']?.split('-').map(Number);
+    const offset = Number(sp.get('offset') ?? range?.[0] ?? 0);
+    const limit = Number(sp.get('limit') ?? (range ? range[1] - range[0] + 1 : 1000));
+    rows = rows.slice(offset, offset + limit);
     if (isSingle) {
       if (rows.length === 1) return json(200, rows[0]);
       return json(406, errBody(406));

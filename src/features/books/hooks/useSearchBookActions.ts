@@ -93,6 +93,7 @@ export function useSearchBookActions(args: {
             }
 
             await queryClient.invalidateQueries({ queryKey: ['library'] });
+            await queryClient.invalidateQueries({ queryKey: ['library-note-deck', userId] });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error) {
             if (__DEV__) console.warn('Wishlist update failed', error);
