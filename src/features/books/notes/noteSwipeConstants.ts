@@ -14,11 +14,12 @@ export const NOTE_SWIPE = Object.freeze({
   batchSize: 20,
   pageSize: 1000,
 });
-export type SwipeDirection = 'next' | 'previous' | 'leave' | 'cancel';
-/** Called inside the UI worklet; a fling must agree with the drag's sign. Up is reserved for C3. */
+export type SwipeDirection = 'next' | 'previous' | 'leave' | 'category' | 'cancel';
+/** Called inside the UI worklet; a fling must agree with the drag's sign. */
 export function swipeDirection(axis: number, x: number, y: number, vx: number, vy: number, width: number, height: number): SwipeDirection {
   'worklet';
   if (axis === 1 && (Math.abs(x) >= width * NOTE_SWIPE.horizontalFraction || (Math.abs(vx) > NOTE_SWIPE.velocity && vx * x > 0))) return x < 0 ? 'next' : 'previous';
   if (axis === 2 && y > 0 && (y >= height * NOTE_SWIPE.verticalFraction || (vy > NOTE_SWIPE.velocity && vy * y > 0))) return 'leave';
+  if (axis === 2 && y < 0 && (Math.abs(y) >= height * NOTE_SWIPE.verticalFraction || (vy < -NOTE_SWIPE.velocity && vy * y > 0))) return 'category';
   return 'cancel';
 }

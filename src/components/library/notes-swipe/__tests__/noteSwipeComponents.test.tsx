@@ -293,11 +293,15 @@ describe('swipe gesture runs pan callbacks with constants, spring-back, busy gua
     expect(lastPan.enabled).toHaveBeenCalled();
   });
 
-  it('maps drags to next/previous/leave from the thresholds and never maps swipe-up in C2', () => {
+  it('maps drags to next/previous/leave/category from the thresholds (C3 swipe-up)', () => {
     expect(swipeDirection(1, -40, 0, -900, 0, 100, 800)).toBe('next');
     expect(swipeDirection(1, 40, 0, 900, 0, 100, 800)).toBe('previous');
     expect(swipeDirection(2, 0, 200, 0, 900, 100, 800)).toBe('leave');
-    expect(swipeDirection(2, 0, -200, 0, -900, 100, 800)).toBe('cancel');
+    expect(swipeDirection(2, 0, -200, 0, -900, 100, 800)).toBe('category');
+    expect(swipeDirection(2, 0, -10, 0, -900, 100, 800)).toBe('category');
+    expect(swipeDirection(2, 0, -10, 0, 900, 100, 800)).toBe('cancel');
+    expect(swipeDirection(2, 0, -5, 0, 0, 100, 800)).toBe('cancel');
+    expect(swipeDirection(1, 0, -200, 0, -900, 100, 800)).toBe('cancel');
     expect(swipeDirection(1, -5, 0, 0, 0, 100, 800)).toBe('cancel');
     expect(swipeDirection(1, 10, 0, -900, 0, 100, 800)).toBe('cancel');
     expect(swipeDirection(1, 10, 0, 900, 0, 100, 800)).toBe('previous');

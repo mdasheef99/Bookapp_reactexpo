@@ -13,7 +13,7 @@ jest.mock('expo-linear-gradient', () => ({ LinearGradient: () => null }));
 const mockBack = jest.fn();
 const mockMove = jest.fn();
 const mockRouter = { back: mockBack, canGoBack: () => true, replace: jest.fn() };
-jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({}), useRouter: () => mockRouter }));
+jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ order: 'shuffle' }), useRouter: () => mockRouter }));
 jest.mock('@react-navigation/native', () => ({ useRoute: () => ({ key: 'swipe' }), useIsFocused: () => true }));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'seed' }));
 jest.mock('@/hooks/useNetworkStatus', () => ({ useNetworkStatus: () => ({ isOffline: false }) }));

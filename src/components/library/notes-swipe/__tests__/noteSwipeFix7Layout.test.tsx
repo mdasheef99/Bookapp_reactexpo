@@ -9,7 +9,7 @@ import type { NoteDeckCard } from '@/features/books/notes/manualNoteContract';
 
 jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight' }) }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: () => null }));
-jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({}), useRouter: () => ({ canGoBack: () => true, back: jest.fn(), replace: jest.fn() }) }));
+jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ order: 'shuffle' }), useRouter: () => ({ canGoBack: () => true, back: jest.fn(), replace: jest.fn() }) }));
 jest.mock('@react-navigation/native', () => ({ useRoute: () => ({ key: 'swipe' }), useIsFocused: () => true }));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'seed' }));
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 10, bottom: 10, left: 0, right: 0 }) }));

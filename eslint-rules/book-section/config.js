@@ -62,6 +62,8 @@ const STRICT_FILES = [
     'src/components/library/notes-swipe/NoteSwipeStack.tsx',
     'src/components/library/notes-swipe/NoteFullNoteSheet.tsx',
     'src/components/library/notes-swipe/NoteSwipeHomeTile.tsx',
+    'src/components/library/notes-swipe/NoteDeckChips.tsx',
+    'src/components/library/notes-swipe/NoteOrderMenu.tsx',
 ];
 
 const RAW_VALUE_ALLOW_LIST = [

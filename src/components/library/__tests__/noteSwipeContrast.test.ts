@@ -12,7 +12,7 @@ import { BookFeedbackProvider } from '../ui';
 
 let mockDeck: ReturnType<typeof makeDeck>;
 jest.mock('expo-router', () => ({
-  useLocalSearchParams: () => ({ scope: 'all', seed: 'contrast' }),
+  useLocalSearchParams: () => ({ scope: 'all', seed: 'contrast', order: 'shuffle' }),
   useRouter: () => ({ back: jest.fn(), replace: jest.fn(), push: jest.fn(), canGoBack: () => true }),
 }));
 jest.mock('@react-navigation/native', () => ({ useIsFocused: () => true, useRoute: () => ({ key: 'contrast' }) }));

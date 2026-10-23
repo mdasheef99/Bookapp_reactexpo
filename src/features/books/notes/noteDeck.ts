@@ -23,9 +23,16 @@ export function deckOrder<T extends NoteDeckIndexRow>(rows: readonly T[], order:
 export function categoryDeck<T extends NoteDeckIndexRow>(rows: readonly T[], category: NoteDeckCategory): T[] {
   return rows.filter(row => category === 'all' || row.tag === category);
 }
+export function noteDeckCategories(rows: readonly NoteDeckIndexRow[]): NoteDeckCategory[] {
+  return ['all', ...NOTE_CATEGORIES.filter(c => rows.some(row => row.tag === c.value)).map(c => c.value)];
+}
 export function cycleCategory(rows: readonly NoteDeckIndexRow[], current: NoteDeckCategory): NoteDeckCategory {
-  const categories: NoteDeckCategory[] = ['all', ...NOTE_CATEGORIES.filter(c => rows.some(row => row.tag === c.value)).map(c => c.value)];
+  const categories = noteDeckCategories(rows);
   return categories[(categories.indexOf(current) + 1) % categories.length];
+}
+export const noteSwipeOrderKey = (actorId: string) => `library_noteSwipeOrder:v1:${actorId}`;
+export function parseStoredOrder(raw: unknown): NoteDeckOrder {
+  return raw === 'shuffle' || raw === 'newest' || raw === 'oldest' ? raw : 'shuffle';
 }
 export type DeckPositions = Partial<Record<NoteDeckCategory, string | null>>;
 export const rememberPosition = (positions: DeckPositions, category: NoteDeckCategory, noteId: string | null): DeckPositions => ({ ...positions, [category]: noteId });
@@ -39,7 +46,7 @@ export function reconcilePosition(previous: readonly string[], next: readonly st
 }
 export const dailyNoteSeed = (zone: string, now: Date) => todayDay(zone, now);
 
-const DECK_INTERACTIVE_SELECTOR = 'input,textarea,select,button,a,[href],[role="button"],[role="link"],[role="textbox"],[contenteditable="true"]';
+const DECK_INTERACTIVE_SELECTOR = 'input,textarea,select,button,a,[href],[role="button"],[role="link"],[role="radio"],[role="radiogroup"],[role="textbox"],[contenteditable="true"]';
 function safeClosest(target: unknown, selector: string): unknown {
   try {
     const closest = (target as { closest?: (selector: string) => unknown } | null)?.closest;
@@ -48,7 +55,7 @@ function safeClosest(target: unknown, selector: string): unknown {
   } catch { return null; }
 }
 export function acceptsDeckKey(event: { key: string; target?: unknown; defaultPrevented?: boolean; altKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }, overlayOpen: boolean): boolean {
-  if (overlayOpen || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || !['ArrowRight', 'ArrowLeft', 'Enter', 'Escape'].includes(event.key)) return false;
+  if (overlayOpen || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || !['ArrowRight', 'ArrowLeft', 'ArrowUp', 'Enter', 'Escape'].includes(event.key)) return false;
   const target = event.target as { closest?: (selector: string) => unknown; isContentEditable?: boolean } | null;
   if (target?.isContentEditable) return false;
   if (target && typeof target.closest === 'function') {

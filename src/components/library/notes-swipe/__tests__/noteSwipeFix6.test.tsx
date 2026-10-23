@@ -10,7 +10,7 @@ jest.mock('expo-linear-gradient', () => ({ LinearGradient: () => null }));
 let mockScreenDeck: any = null;
 let mockScreenRouter: any = { back: jest.fn(), canGoBack: () => true, replace: jest.fn(), push: jest.fn() };
 jest.mock('expo-router', () => ({
-  useLocalSearchParams: () => ({}),
+  useLocalSearchParams: () => ({ order: 'shuffle' }),
   useRouter: () => (globalThis as any).__mockScreenRouter ?? { back: jest.fn(), canGoBack: () => true, replace: jest.fn(), push: jest.fn() },
   useRoute: () => ({ key: 'swipe' }),
 }));
@@ -333,6 +333,17 @@ function pressRead(ui: ReturnType<typeof render>) {
   (top.props.onAccessibilityAction as any)({ nativeEvent: { actionName: 'read' } });
 }
 
+function swipeCategory(pan: MockPanCallbacks, translation = -60, velocity = -900, withUpdate = true) {
+  pan.onStart!({} as any);
+  if (withUpdate) pan.onUpdate!({ translationX: 0, translationY: translation } as any);
+  pan.onEnd!({ translationX: 0, translationY: translation, velocityX: 0, velocityY: velocity } as any);
+}
+
+function pressCategory(ui: ReturnType<typeof render>) {
+  const top = ui.getByTestId('note-card-slot-0', { includeHiddenElements: true });
+  (top.props.onAccessibilityAction as any)({ nativeEvent: { actionName: 'category' } });
+}
+
 // Order (fix6 single-flight): x, y, axis, width, opacity, flight, panActive, ...
 function expectIdleShared() {
   expect(stableSV[0].value).toBe(0);
@@ -586,6 +597,88 @@ describe('unitC2-fix6 flight simulator: no deadlock across orderings', () => {
       }
       advanceAll();
       expectIdleShared();
+      ui.unmount();
+      timingCalls.length = 0;
+    }
+  });
+
+  it('covers category flights in a seeded permutation run without deadlock (C3)', () => {
+    jest.useFakeTimers();
+    let seed = 0xC3CA7E;
+    const rand = () => {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    for (let iter = 0; iter < 20; iter++) {
+      const onMove = jest.fn();
+      const onCategory = jest.fn();
+      const onRead = jest.fn();
+      const total = 4;
+      let at = 1 + Math.floor(rand() * 3);
+      let cat = 'all';
+      const propsFor = () => stackProps({ onMove, onRead, onCategory, canCategory: true, categoryKey: cat, at, total, card: mockCard(`s-${at}-${cat}`) });
+      const ui = render(<NoteSwipeStack {...propsFor()} />);
+      const pan = () => mockPanCallbacks[mockPanCallbacks.length - 1];
+      const steps = 2 + Math.floor(rand() * 4);
+      for (let s = 0; s < steps; s++) {
+        const choice = rand();
+        if (choice < 0.3) {
+          swipeCategory(pan());
+          const mode = rand();
+          if (mode < 0.6) completeLastFlight(mode < 0.3 ? false : true);
+          else if (mode < 0.75) { const f = lastGestureFlight(); act(() => { f!.cb(true); f!.cb(false); }); }
+          else { act(() => { jest.advanceTimersByTime(NOTE_SWIPE.exitMs * 2 + NOTE_SWIPE.safetyMarginMs + 10); }); }
+          if (onCategory.mock.calls.length > 0) {
+            cat = cat === 'all' ? 'quote' : 'all';
+            ui.rerender(<NoteSwipeStack {...propsFor()} />);
+          }
+        } else if (choice < 0.55 && at < total) {
+          swipeNext(pan());
+          completeLastFlight(true);
+          if (onMove.mock.calls.length) {
+            const lastDir = onMove.mock.calls[onMove.mock.calls.length - 1][0];
+            if (lastDir === 'next') at = Math.min(total, at + 1);
+            else if (lastDir === 'previous') at = Math.max(0, at - 1);
+            ui.rerender(<NoteSwipeStack {...propsFor()} />);
+          }
+        } else if (choice < 0.7) {
+          pressCategory(ui);
+          if (onCategory.mock.calls.length) {
+            cat = cat === 'all' ? 'quote' : 'all';
+            ui.rerender(<NoteSwipeStack {...propsFor()} />);
+          }
+        } else if (choice < 0.85) {
+          pressNext(ui);
+          if (onMove.mock.calls.length) {
+            const lastDir = onMove.mock.calls[onMove.mock.calls.length - 1][0];
+            if (lastDir === 'next') at = Math.min(total, at + 1);
+            else if (lastDir === 'previous') at = Math.max(0, at - 1);
+            ui.rerender(<NoteSwipeStack {...propsFor()} />);
+          }
+        } else {
+          swipeCategory(pan());
+          const before = onCategory.mock.calls.length;
+          cat = cat === 'all' ? 'quote' : 'all';
+          ui.rerender(<NoteSwipeStack {...propsFor()} />);
+          for (const c of [...timingCalls]) {
+            if (typeof c.cb === 'function') act(() => { try { c.cb(true); } catch { /* ignore */ } });
+          }
+          expect(onCategory.mock.calls.length).toBe(before);
+        }
+        act(() => { jest.advanceTimersByTime(50); });
+      }
+      advanceAll();
+      expectIdleShared();
+      // Inputs during a category flight are ignored then recover.
+      const movesBefore = onMove.mock.calls.length;
+      const catsBefore = onCategory.mock.calls.length;
+      swipeCategory(pan());
+      pressNext(ui);
+      expect(onMove.mock.calls.length).toBe(movesBefore);
+      completeLastFlight(true);
+      expect(onCategory.mock.calls.length).toBe(catsBefore + 1);
       ui.unmount();
       timingCalls.length = 0;
     }

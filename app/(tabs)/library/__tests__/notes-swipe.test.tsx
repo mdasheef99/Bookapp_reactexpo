@@ -6,7 +6,7 @@ import { countPrimaryButtons, expectSinglePrimary } from '@/test-utils/bookSecti
 
 const mockRouter = { back: jest.fn(), replace: jest.fn(), push: jest.fn(), canGoBack: jest.fn(() => true) };
 const mockRoute = { key: 'swipe-key' };
-let mockParams: Record<string, string> = { scope: 'all' };
+let mockParams: Record<string, string> = { scope: 'all', order: 'shuffle' };
 let mockBook: any = { data: undefined, isError: false, isPending: false, error: null, refetch: jest.fn() };
 let mockDeck: any = null;
 let mockNetwork: any = { isOffline: false };
@@ -130,7 +130,7 @@ beforeEach(() => {
     if (!ref.current) ref.current = { value: initial };
     return ref.current;
   });
-  mockParams = { scope: 'all' };
+  mockParams = { scope: 'all', order: 'shuffle' };
   mockBook = { data: undefined, isError: false, isPending: false, error: null, refetch: jest.fn() };
   mockNetwork = { isOffline: false };
   mockReduced = false;
@@ -158,7 +158,7 @@ describe('notes-swipe screen states and primaries', () => {
   });
 
   it('empty book scope offers Add a note as its single primary', () => {
-    mockParams = { scope: 'book', userBookId: 'b' };
+    mockParams = { scope: 'book', userBookId: 'b', order: 'shuffle' };
     mockBook = { data: { id: 'b', title: 'B' }, isError: false, isPending: false, error: null, refetch: jest.fn() };
     mockDeck = baseDeck({ index: { data: [], isError: false, isPending: false, isFetching: false, refetch: jest.fn() }, ids: [], noteId: null, card: undefined });
     const ui = renderScreen();
@@ -168,7 +168,7 @@ describe('notes-swipe screen states and primaries', () => {
   });
 
   it('unavailable book shows Go to library as its single primary', () => {
-    mockParams = { scope: 'book', userBookId: '' };
+    mockParams = { scope: 'book', userBookId: '', order: 'shuffle' };
     mockBook = { data: undefined, isError: false, isPending: false, error: null, refetch: jest.fn() };
     mockDeck = baseDeck({ index: { data: undefined, isError: false, isPending: false, isFetching: false, refetch: jest.fn() }, ids: [], noteId: null, card: undefined });
     const ui = renderScreen();
@@ -178,7 +178,7 @@ describe('notes-swipe screen states and primaries', () => {
   });
 
   it('definite not-found shows unavailable while transient book failure shows the error state with Try again', () => {
-    mockParams = { scope: 'book', userBookId: 'b' };
+    mockParams = { scope: 'book', userBookId: 'b', order: 'shuffle' };
     mockBook = { data: undefined, isError: true, isPending: false, error: new Error('This book is unavailable.'), refetch: jest.fn() };
     mockDeck = baseDeck({ index: { data: undefined, isError: false, isPending: false, isFetching: false, refetch: jest.fn() }, ids: [], noteId: null, card: undefined });
     let ui = renderScreen();
@@ -404,7 +404,7 @@ describe('notes-swipe background, keyboard, announcements and focus', () => {
     const RN = require('react-native');
     const dimsSpy = jest.spyOn(RN, 'useWindowDimensions').mockReturnValue({ width: 360, height: 400, scale: 1, fontScale: 2 });
     try {
-      mockParams = { scope: 'book', userBookId: 'b' };
+      mockParams = { scope: 'book', userBookId: 'b', order: 'shuffle' };
       mockBook = { data: { id: 'b', title: 'A very long book title that would otherwise push the controls out of view on a narrow screen' }, isError: false, isPending: false, error: null, refetch: jest.fn() };
       mockDeck = baseDeck({ card: card('a'), ids: ['a'], at: 0, noteId: 'a' });
       const ui = renderScreen();
@@ -425,7 +425,7 @@ describe('notes-swipe background, keyboard, announcements and focus', () => {
       ui.unmount();
     } finally {
       dimsSpy.mockRestore();
-      mockParams = { scope: 'all' };
+      mockParams = { scope: 'all', order: 'shuffle' };
       mockBook = { data: undefined, isError: false, isPending: false, error: null, refetch: jest.fn() };
     }
   });

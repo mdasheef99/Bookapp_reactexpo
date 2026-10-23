@@ -6,7 +6,7 @@ import { LIBRARY_TEXT_BASE, scaledLineHeight } from '@/components/library/Librar
 
 const mockRouter = { back: jest.fn(), replace: jest.fn(), push: jest.fn(), canGoBack: jest.fn(() => true) };
 const mockRoute = { key: 'swipe-key' };
-let mockParams: Record<string, string> = { scope: 'all' };
+let mockParams: Record<string, string> = { scope: 'all', order: 'shuffle' };
 let mockBook: any = { data: undefined, isError: false, isPending: false, error: null, refetch: jest.fn() };
 let mockDeck: any = null;
 let mockNetwork: any = { isOffline: false };
@@ -94,7 +94,7 @@ function renderScreen() {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockParams = { scope: 'all' };
+  mockParams = { scope: 'all', order: 'shuffle' };
   mockBook = { data: undefined, isError: false, isPending: false, error: null, refetch: jest.fn() };
   mockNetwork = { isOffline: false };
   (Platform as any).OS = 'ios';

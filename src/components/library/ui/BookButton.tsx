@@ -16,6 +16,10 @@ export interface BookButtonProps {
   expanded?: boolean;
   /** Toggle-like triggers report an active state (e.g. Filter with filters applied). */
   selected?: boolean;
+  /** Radio-style choices (e.g. the Order menu) report the button as a radio. */
+  accessibilityRole?: 'button' | 'radio';
+  /** Checked state for radio-style choices; reported alongside selected. */
+  checked?: boolean;
   testID?: string;
   ref?: React.Ref<View>;
   /**
@@ -26,7 +30,7 @@ export interface BookButtonProps {
   labelLineHeight?: number;
 }
 
-export function BookButton({ label, accessibilityLabel, variant, onPress, disabled = false, expanded, selected, testID, ref, labelLineHeight }: BookButtonProps) {
+export function BookButton({ label, accessibilityLabel, variant, onPress, disabled = false, expanded, selected, accessibilityRole = 'button', checked, testID, ref, labelLineHeight }: BookButtonProps) {
   const colors = useLibraryAppearance();
   const variants = {
     primary: { backgroundColor: colors.accent, borderColor: colors.controlBorder, color: colors.textOnAccent },
@@ -39,12 +43,14 @@ export function BookButton({ label, accessibilityLabel, variant, onPress, disabl
     disabled,
     ...(expanded === undefined ? {} : { expanded }),
     ...(selected === undefined ? {} : { selected }),
+    ...(checked === undefined ? {} : { checked, selected: checked }),
   };
 
   // RN Web ignores accessibilityState, so the open state also goes out as aria-expanded.
   // `selected` stays native-only: aria-selected is not valid on a web button.
-  return <Pressable ref={ref} accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={accessibilityState}
-    aria-expanded={expanded} disabled={disabled} onPress={onPress} testID={testID}
+  // Radio choices also report aria-checked for web.
+  return <Pressable ref={ref} accessibilityRole={accessibilityRole} accessibilityLabel={accessibilityLabel ?? label} accessibilityState={accessibilityState}
+    aria-expanded={expanded} {...(checked === undefined ? {} : { 'aria-checked': checked })} disabled={disabled} onPress={onPress} testID={testID}
     style={({ pressed }) => [styles.button, surface, { opacity: disabled ? 0.55 : pressed ? 0.8 : 1 }]}>
     <Text style={[styles.label, { color }, labelLineHeight === undefined ? null : { lineHeight: labelLineHeight }]}>{label}</Text>
   </Pressable>;
