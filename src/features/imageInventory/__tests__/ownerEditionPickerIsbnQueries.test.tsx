@@ -19,7 +19,7 @@ const read = ownerEditionPickerService.readEditionChoices as jest.Mock;
 const set = ownerEditionPickerService.setCandidateIsbn as jest.Mock;
 const lookup = ownerEditionPickerService.requestEditionOptions as jest.Mock;
 const initial = pickerChoices();
-const canonical = () => pickerChoices({ ownerIsbn13: '9780140449136', candidateVersion: 6,
+const canonical = (ownerIsbn13: string | null = '9780140449136') => pickerChoices({ ownerIsbn13, candidateVersion: 6,
   metadataRevision: 9, reviewVersion: 1, requestGeneration: 3, rows: [], optionsExpiresAt: null, lookupStatus: 'idle' });
 const receipt = { operationId: testUuid(40), status: 'pending', requestGeneration: 3, optionsVersion: 1, available: false };
 const reviewSave = { review: pickerReview, expectedCandidateVersion: 4, expectedMetadataRevision: 7 };
@@ -42,9 +42,9 @@ beforeEach(() => {
   save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockImplementation(async () => {
     sequence.push('save'); return pickerDetail(selectedChoices({ candidateVersion: 5, reviewVersion: 1 }), pickerReview);
   });
-  set.mockImplementation(async request => { sequence.push('set'); read.mockImplementation(async () => { sequence.push('read'); return canonical(); });
+  set.mockImplementation(async request => { sequence.push('set'); read.mockImplementation(async () => { sequence.push('read'); return canonical(request.isbn13); });
     return { sessionId: initial.sessionId, candidateId: initial.candidateId, candidateVersion: 6,
-      metadataRevision: 9, requestGeneration: 99, ownerIsbn13: request.isbn13 }; });
+      metadataRevision: 9, requestGeneration: 2, ownerIsbn13: request.isbn13 }; });
   lookup.mockImplementation(async () => { sequence.push('lookup'); return receipt; });
 });
 afterEach(async () => { await cleanupAsync(); client.getMutationCache().getAll().forEach(m => m.destroy()); client.clear(); jest.restoreAllMocks(); });
@@ -65,7 +65,7 @@ it.each(['9780140449136', null])('saves edits then sets %j and requests once fro
   expect(save).toHaveBeenCalledTimes(1); expect(set).toHaveBeenCalledTimes(1); expect(lookup).toHaveBeenCalledTimes(1);
   expect(set.mock.calls[0][0]).toMatchObject({ isbn13, expectedCandidateVersion: 5 });
   expect(lookup.mock.calls[0][0]).toMatchObject({ expectedRequestGeneration: 3 });
-  expect(onIdentitySaved).toHaveBeenCalledTimes(1); expect(onAuthority).toHaveBeenCalledWith(canonical());
+  expect(onIdentitySaved).toHaveBeenCalledTimes(1); expect(onAuthority).toHaveBeenCalledWith(canonical(isbn13));
   for (const key of [imageInventoryKeys.candidate(pickerIdentity, initial.sessionId, initial.candidateId),
     ownerBatchReviewKeys.batchReview(pickerIdentity, initial.sessionId), ownerBatchReviewKeys.sessionV3(pickerIdentity, initial.sessionId),
     ownerBatchReviewKeys.readinessV3(pickerIdentity, initial.sessionId)]) expect(invalidate).toHaveBeenCalledWith({ queryKey: key });
@@ -142,6 +142,8 @@ it('claims the card command slot and exposes ISBN pending until the workflow end
   act(() => { work = hook.result.current.setIsbnAndSearch.mutateAsync({ isbn13: '9780140449136' }); });
   await waitFor(() => expect(hook.result.current.isbnPending).toBe(true));
   expect(registry.isClaimed(initial.candidateId)).toBe(true);
-  await act(async () => { pending.resolve({}); await work; });
+  read.mockImplementation(async () => canonical());
+  await act(async () => { pending.resolve({ sessionId: initial.sessionId, candidateId: initial.candidateId, candidateVersion: 6,
+    metadataRevision: 9, requestGeneration: 2, ownerIsbn13: '9780140449136' }); await work; });
   expect(registry.isClaimed(initial.candidateId)).toBe(false);
 });

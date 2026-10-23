@@ -66,6 +66,53 @@ it('uses the iOS numbers-and-punctuation keyboard so ISBN-10 X remains available
   await waitFor(() => expect(view.getByLabelText('ISBN')).toBeTruthy());
   expect(view.getByLabelText('ISBN').props.keyboardType).toBe('numbers-and-punctuation');
 });
+// Whole-feature review, 2026-10-23: a cache refetch that never settles (offline) must not hold the sheet.
+it.each(['success', 'refused set', 'unsaved edits'] as const)
+('settles %s and releases the pending state while every invalidation stays pending', async outcome => {
+  jest.spyOn(client, 'invalidateQueries').mockImplementation(() => new Promise(() => {}));
+  const save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockResolvedValue(
+    pickerDetail(selectedChoices({ candidateVersion: 5, reviewVersion: 1 }), pickerReview));
+  if (outcome === 'refused set') set.mockRejectedValue(new OwnerUxClientError('P9_STATE_CONFLICT', false, 'state'));
+  const onPendingChange = jest.fn();
+  const view = mount(outcome === 'unsaved edits' ? { identityChanged: true, request: { review: pickerReview,
+    expectedCandidateVersion: 4, expectedMetadataRevision: 7 } } : undefined, onPendingChange);
+  await search(view);
+  if (outcome === 'refused set') {
+    await waitFor(() => expect(view.getByText("This book can't be changed now.")).toBeTruthy());
+    expect(lookup).not.toHaveBeenCalled();
+  } else {
+    await waitFor(() => expect(lookup).toHaveBeenCalledTimes(1));
+    expect(read.mock.calls.length).toBeGreaterThan(1);
+  }
+  await waitFor(() => expect(onPendingChange).toHaveBeenLastCalledWith(false));
+  expect(set).toHaveBeenCalledTimes(1);
+  if (outcome === 'unsaved edits') expect(save).toHaveBeenCalledTimes(1);
+});
+// Whole-feature review, 2026-10-23: the re-read must still describe this press before the one search.
+function setThenReread(reread: Parameters<typeof pickerChoices>[0]) {
+  set.mockImplementation(async request => {
+    read.mockResolvedValue(pickerChoices(reread));
+    return { sessionId: testUuid(1), candidateId: testUuid(2), candidateVersion: 6,
+      metadataRevision: 9, requestGeneration: 2, ownerIsbn13: request.isbn13 };
+  });
+}
+it.each([
+  ['another ISBN', { ownerIsbn13: '9780804429573' }],
+  ['no ISBN', { ownerIsbn13: null }],
+] as const)('stops without a search when another device changed the ISBN before the re-read (%s)', async (_label, other) => {
+  setThenReread({ ...other, candidateVersion: 7, metadataRevision: 10, reviewVersion: 1, requestGeneration: 3 });
+  const view = mount(); await search(view);
+  await waitFor(() => expect(view.getByText('This book changed; we reloaded it.')).toBeTruthy());
+  expect(lookup).not.toHaveBeenCalled();
+  expect(set).toHaveBeenCalledTimes(1);
+  expect(view.queryByRole('button', { name: 'Retry search' })).toBeNull();
+});
+it('still searches from the re-read generation when a benign change raised it but the ISBN is unchanged', async () => {
+  setThenReread({ ownerIsbn13: isbn, candidateVersion: 7, metadataRevision: 10, reviewVersion: 1, requestGeneration: 4 });
+  const view = mount(); await search(view);
+  await waitFor(() => expect(lookup).toHaveBeenCalledTimes(1));
+  expect(lookup.mock.calls[0][0].expectedRequestGeneration).toBe(4);
+});
 it('converts ISBN-10 X to ISBN-13 before saving and requests once after the set', async () => {
   const view = mount(); await search(view, '0-8044-2957-X');
   await waitFor(() => expect(lookup).toHaveBeenCalledTimes(1));

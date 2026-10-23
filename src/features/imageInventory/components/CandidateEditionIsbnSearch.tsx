@@ -5,7 +5,7 @@ import { useTheme } from '@/hooks/useTheme';
 import type { EditionChoices } from '../contracts/ownerEditionPicker';
 import type { useOwnerEditionPicker } from '../queries/ownerEditionPickerQueries';
 import type { CompactEditionSearchDraft } from './CandidateEditionPicker';
-import { normalizeIsbnClue } from '../review/isbn';
+import { ISBN_CHECK_ERROR_TEXT, normalizeIsbnClue } from '../review/isbn';
 import { isbnSearchRecovery } from '../review/isbnSearchRecovery';
 
 // Slice 5 SDD §§1,8–9: typed ISBN stays local across authoritative rereads and conflicts.
@@ -36,7 +36,7 @@ export function CandidateEditionIsbnSearch({ picker, choices, cardDraft, blocked
       onChangeText={value => { setTypedIsbn(value); setValidationError(false); setRecovery(null); }} />
     <Text style={{ color: colors.textSecondary }}>On the back cover, above or below the barcode</Text>
     {validationError ? <Text accessibilityLiveRegion="assertive" style={{ color: colors.error }}>
-      Check the ISBN; the last digit doesn't match
+      {ISBN_CHECK_ERROR_TEXT}
     </Text> : null}
     <Button title="Search by ISBN" disabled={disabled} onPress={() => {
       if (disabled) return;

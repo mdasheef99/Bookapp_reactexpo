@@ -7,6 +7,7 @@ const productionFiles = [
     'identity/ownerRequestFence.ts', 'queries/ownerCorrectionQueries.ts',
     'review/missedBookForm.ts', 'screens/MissedBookScreen.tsx',
     'review/compactReviewDraft.ts', 'components/BatchReviewCard.tsx',
+    'queries/ownerMissedBookIsbnFlow.ts',
 ];
 const sources = Object.fromEntries(productionFiles.map(relative => [relative,
     fs.readFileSync(path.join(__dirname, '..', relative), 'utf8'),

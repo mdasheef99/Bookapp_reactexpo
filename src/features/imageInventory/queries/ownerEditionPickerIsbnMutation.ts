@@ -11,8 +11,8 @@ import { isbnSearchRecovery } from '../review/isbnSearchRecovery';
 import { imageInventoryKeys, type ImageInventoryIdentity } from './ownerUxQueries';
 import { ownerBatchReviewKeys } from './ownerBatchReviewKeys';
 import { authorityChanged, candidateAuthorityIsCurrent, type OwnerCardScope } from './ownerCandidateAuthority';
-import { synchronizeCandidateReviewSuccess } from './ownerUxReviewQueries';
-import { acceptEditionLookupReceipt } from './ownerEditionPickerCache';
+import { cacheCandidateReviewSuccess } from './ownerUxReviewQueries';
+import { acceptEditionLookupReceipt, choicesFollowIsbnSet } from './ownerEditionPickerCache';
 import type { IdentitySearchRequest } from './ownerEditionPickerQueries';
 
 export type IsbnSearchRequest = Readonly<{ isbn13: string | null; reviewSave?: IdentitySearchRequest }>;
@@ -34,16 +34,17 @@ export function useOwnerEditionPickerIsbnMutation({ identity, scope, choices, li
 }) {
   const client = useQueryClient();
   const pending = useRef<PendingIsbnSearch | null>(null);
-  const invalidate = async (assertCurrent: () => void) => {
-    await Promise.all([
-      client.invalidateQueries({ queryKey: imageInventoryKeys.discovery(identity) }),
-      client.invalidateQueries({ queryKey: imageInventoryKeys.readiness(identity, scope.sessionId) }),
-      client.invalidateQueries({ queryKey: imageInventoryKeys.candidate(identity, scope.sessionId, scope.candidateId) }),
-      client.invalidateQueries({ queryKey: ownerBatchReviewKeys.batchReview(identity, scope.sessionId) }),
-      client.invalidateQueries({ queryKey: ownerBatchReviewKeys.sessionV3(identity, scope.sessionId) }),
-      client.invalidateQueries({ queryKey: ownerBatchReviewKeys.readinessV3(identity, scope.sessionId) }),
-    ]);
-    assertCurrent();
+  // Best-effort: an offline (paused) refetch never settles, so the search and the outcome never wait for it.
+  const invalidate = () => {
+    const keys = [
+      imageInventoryKeys.discovery(identity),
+      imageInventoryKeys.readiness(identity, scope.sessionId),
+      imageInventoryKeys.candidate(identity, scope.sessionId, scope.candidateId),
+      ownerBatchReviewKeys.batchReview(identity, scope.sessionId),
+      ownerBatchReviewKeys.sessionV3(identity, scope.sessionId),
+      ownerBatchReviewKeys.readinessV3(identity, scope.sessionId),
+    ];
+    for (const queryKey of keys) void client.invalidateQueries({ queryKey }).catch(() => undefined);
   };
   const mutation = useMutation({
     networkMode: 'always', retry: false,
@@ -69,7 +70,7 @@ export function useOwnerEditionPickerIsbnMutation({ identity, scope, choices, li
             command.detail = detail;
           }
           if (command.detail && !command.synchronized) {
-            await synchronizeCandidateReviewSuccess(client, identity, scope.sessionId, scope.candidateId, command.detail);
+            cacheCandidateReviewSuccess(client, identity, scope.sessionId, scope.candidateId, command.detail);
             assertCurrent();
             onIdentitySaved(command.detail);
             command.synchronized = true;
@@ -83,7 +84,8 @@ export function useOwnerEditionPickerIsbnMutation({ identity, scope, choices, li
           }
           if (!command.lookup) {
             const canonical = await reread(signal, assertCurrent);
-            await invalidate(assertCurrent);
+            invalidate();
+            if (!command.setResponse || !choicesFollowIsbnSet(canonical, command.setResponse)) throw authorityChanged();
             command.lookup = createEditionLookupCommand(canonical);
           }
           const receipt = await ownerEditionPickerService.requestEditionOptions(command.lookup, signal);
@@ -97,8 +99,9 @@ export function useOwnerEditionPickerIsbnMutation({ identity, scope, choices, li
           assertCurrent();
           const refused = isbnSearchRecovery(error).kind !== 'retry';
           if (refused) pending.current = null;
-          await reconcile(signal, assertCurrent);
-          if (refused || command.setResponse) await invalidate(assertCurrent);
+          await reconcile(signal, assertCurrent).catch(() => null);
+          assertCurrent();
+          if (refused || command.setResponse) invalidate();
           throw error;
         }
       }, undefined, 'isbn-search');

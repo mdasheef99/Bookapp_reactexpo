@@ -4,7 +4,8 @@ import type { EditionChoices, RequestEditionOptionsRequest, SelectEditionRequest
 
 type SelectionTarget = Readonly<{ source: 'edition_option'; optionId: string }>
   | Readonly<{ source: 'current_suggestion'; selectionId: string }>;
-const scope = (choices: EditionChoices) => ({ contractVersion: OWNER_UX_CONTRACT_VERSION,
+type IsbnTarget = Pick<EditionChoices, 'sessionId' | 'candidateId' | 'candidateVersion'>;
+const scope = (choices: Pick<EditionChoices, 'sessionId' | 'candidateId'>) => ({ contractVersion: OWNER_UX_CONTRACT_VERSION,
   sessionId: choices.sessionId, candidateId: choices.candidateId });
 const commandIdentity = (prefix: string) => {
   const attempt = createCaptureAttempt(prefix);
@@ -16,7 +17,7 @@ export function createEditionLookupCommand(choices: EditionChoices): RequestEdit
     action: 'request_candidate_edition_options', expectedRequestGeneration: choices.requestGeneration };
 }
 // Slice 5 SDD §8: freeze the authoritative candidate version when the set step starts.
-export function createCandidateIsbnCommand(choices: EditionChoices, isbn13: string | null): SetCandidateIsbnRequest {
+export function createCandidateIsbnCommand(choices: IsbnTarget, isbn13: string | null): SetCandidateIsbnRequest {
   return { ...scope(choices), ...commandIdentity('edition-isbn'), action: 'set_candidate_isbn',
     expectedCandidateVersion: choices.candidateVersion, isbn13 };
 }

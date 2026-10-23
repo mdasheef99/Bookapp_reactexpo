@@ -1,4 +1,5 @@
 // Slice 5 SDD §8: shared normalization/check digits, plus the ISBN box's 978/979 prefix rule.
+export const ISBN_CHECK_ERROR_TEXT = "Check the ISBN; the last digit doesn't match";
 const compact = (value: string) => value.replace(/[\s-]/gu, '').toUpperCase();
 
 function isValidIsbn10(value: string): boolean {
