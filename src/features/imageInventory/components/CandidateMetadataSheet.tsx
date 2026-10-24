@@ -15,7 +15,7 @@ import { CurrentMetadataSummary } from './CurrentMetadataSummary';
 
 const stateLabels = {
   selected: 'Provider metadata selected', manual: 'Manual metadata', no_match: 'No provider match',
-  ambiguous: 'Multiple possible matches', pending: 'Metadata processing',
+  ambiguous: 'No edition chosen yet', pending: 'Metadata processing',
   temporarily_unavailable: 'Metadata temporarily unavailable', failed: 'Metadata failed',
 } as const;
 function focus(target: View | null | undefined) {

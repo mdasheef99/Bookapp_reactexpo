@@ -21,7 +21,7 @@ it('reads strictly through the existing authenticated Owner Edge with abort', as
   invoke.mockResolvedValue(response(pickerChoices()));
   const signal = new AbortController().signal;
   await expect(ownerEditionPickerService.readEditionChoices(read, signal)).resolves.toEqual(pickerChoices());
-  expect(invoke).toHaveBeenCalledWith('phase9-owner-ingestion', { body: read, signal, headers: { 'X-Client-Info': 'bookconnect/edition-reasons-v1' } });
+  expect(invoke).toHaveBeenCalledWith('phase9-owner-ingestion', { body: read, signal, headers: { 'X-Client-Info': 'bookconnect/edition-reasons-v2' } });
 });
 it('retains identical logical command identity across lookup retries and parses a slim receipt', async () => {
   const receipt = { operationId: testUuid(40), status: 'pending', requestGeneration: 1, optionsVersion: 1, available: false };
@@ -42,6 +42,20 @@ it.each([
   invoke.mockResolvedValue(response(selectedChoices({ selection: selection as never, rows: [], optionsExpiresAt: null })));
   await expect(ownerEditionPickerService.selectEdition(request, new AbortController().signal))
     .resolves.toMatchObject({ reviewVersion: null, rows: [] });
+  expect(invoke.mock.calls[0][1].headers).toEqual({ 'X-Client-Info': 'bookconnect/edition-reasons-v2' });
+});
+
+it('sets an ISBN through the registered authenticated Owner action and checks response scope', async () => {
+  const request = { ...read, action: 'set_candidate_isbn' as const, commandId: testUuid(10),
+    idempotencyKey: 'isbn:fixed-command-0001', expectedCandidateVersion: 4, isbn13: '9780140449136' };
+  const data = { sessionId: read.sessionId, candidateId: read.candidateId, candidateVersion: 5,
+    metadataRevision: 8, requestGeneration: 2, ownerIsbn13: request.isbn13 };
+  invoke.mockResolvedValue(response(data));
+  const signal = new AbortController().signal;
+  await expect(ownerEditionPickerService.setCandidateIsbn(request, signal)).resolves.toEqual(data);
+  expect(invoke).toHaveBeenCalledWith('phase9-owner-ingestion', { body: request, signal });
+  invoke.mockResolvedValue(response({ ...data, candidateId: testUuid(50) }));
+  await expect(ownerEditionPickerService.setCandidateIsbn(request, signal)).rejects.toMatchObject({ code: 'P9_INTERNAL_ERROR' });
 });
 it.each([
   { ...read, storeId: testUuid(50) },

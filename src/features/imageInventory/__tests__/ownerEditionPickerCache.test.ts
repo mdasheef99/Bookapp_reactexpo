@@ -50,7 +50,21 @@ it('lookup receipts never replace selection, review authority or rows', () => {
   acceptEditionChoices(client, pickerIdentity, request, choices, 'read');
   acceptEditionLookupReceipt(client, pickerIdentity, request, { operationId: testUuid(40),
     status: 'pending', requestGeneration: 2, optionsVersion: 1, available: false });
-  expect(client.getQueryData(ownerEditionPickerKeys.choices(pickerIdentity, request.sessionId, request.candidateId))).toEqual(choices);
+  expect(client.getQueryData(ownerEditionPickerKeys.choices(pickerIdentity, request.sessionId, request.candidateId)))
+    .toEqual({ ...choices, lookupStatus: 'pending', requestGeneration: 2 });
+});
+it('reflects a pending receipt immediately and keeps it through a later idle read for the same request', () => {
+  const choices = pickerChoices({ lookupStatus: 'idle', optionsExpiresAt: null, rows: [] });
+  const key = ownerEditionPickerKeys.choices(pickerIdentity, request.sessionId, request.candidateId);
+  acceptEditionChoices(client, pickerIdentity, request, choices, 'read');
+  const pending = { operationId: testUuid(40), status: 'pending' as const,
+    requestGeneration: 2, optionsVersion: 1, available: false };
+  expect(acceptEditionLookupReceipt(client, pickerIdentity, request, pending)).toBe(true);
+  expect(client.getQueryData(key)).toMatchObject({ ...request, lookupStatus: 'pending', requestGeneration: 2 });
+  expect(client.getQueryData(ownerEditionPickerKeys.lookup(pickerIdentity, request.sessionId, request.candidateId)))
+    .toEqual(pending);
+  expect(acceptEditionChoices(client, pickerIdentity, request,
+    { ...choices, requestGeneration: 2 }, 'read')).toMatchObject({ lookupStatus: 'pending', requestGeneration: 2 });
 });
 it('older Save success cannot overwrite a newer confirmed selection or review cache', async () => {
   const latest = selectedChoices({ candidateVersion: 8, metadataRevision: 10, reviewVersion: 3 });

@@ -16,7 +16,7 @@ export class OpenLibraryFailure extends Error {
 export async function getOpenLibraryJson(url:URL,configuration:OpenLibraryConfiguration,
   call:EditionHttpCall,hooks?:EditionHttpHooks):Promise<{raw:unknown;headers:Headers}> {
   if (url.origin !== 'https://openlibrary.org' || url.username || url.password
-    || !/^(?:\/search\.json|\/works\/OL[1-9][0-9]*W\/editions\.json|\/authors\/OL[1-9][0-9]*A\.json)$/u.test(url.pathname)) {
+    || !/^(?:\/search\.json|\/works\/OL[1-9][0-9]*W\/editions\.json|\/books\/OL[1-9][0-9]*M\.json|\/authors\/OL[1-9][0-9]*A\.json)$/u.test(url.pathname)) {
     throw new OpenLibraryFailure('insufficient_query');
   }
   const release=await configuration.waitForRequest?.(call.signal);

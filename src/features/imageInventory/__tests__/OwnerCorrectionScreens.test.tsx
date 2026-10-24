@@ -1,7 +1,7 @@
 // Post-scan SDD-1 §§2/6 (4a), AC4-2/3/6/9. Real screen, access, queries and guard.
 import { QueryClient, QueryClientProvider, QueryObserver } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react-native';
-import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import { setAuthState, resetAuthStoreForTests } from '@/features/auth/store/authStore';
 import { storeOwnerService } from '@/features/stores/services/storeOwnerService';
@@ -15,7 +15,10 @@ import { ownerBatchReviewKeys } from '../queries/ownerBatchReviewQueries';
 import * as ownerCorrectionQueries from '../queries/ownerCorrectionQueries';
 import { candidateDetailFixture, sessionSummaryFixture, testUuid } from '../testing/ownerUxTestFixtures';
 import { blockerCodes } from '../contracts/ownerUxCommonSchemas';
-import { deferred } from '../testing/editionPickerClientFixtures';
+import { deferred, pickerChoices } from '../testing/editionPickerClientFixtures';
+import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
+import { OwnerUxClientError } from '../api/ownerUxTransport';
+import { ownerEditionPickerKeys } from '../queries/ownerEditionPickerKeys';
 
 // Load Jest's lazy native component mocks during suite setup, before timed async renders.
 void [ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View];
@@ -77,6 +80,16 @@ beforeEach(() => {
         candidateId, authenticatedUserId: identity.userId,
     });
     jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(candidateDetailFixture({ candidateId }));
+    jest.spyOn(ownerEditionPickerService, 'setCandidateIsbn').mockResolvedValue({
+        sessionId, candidateId, candidateVersion: 5, metadataRevision: 7,
+        requestGeneration: 2, ownerIsbn13: '9780804429573',
+    });
+    jest.spyOn(ownerEditionPickerService, 'readEditionChoices').mockResolvedValue(pickerChoices({
+        sessionId, candidateId, candidateVersion: 6, requestGeneration: 9, ownerIsbn13: '9780804429573',
+    }));
+    jest.spyOn(ownerEditionPickerService, 'requestEditionOptions').mockResolvedValue({
+        operationId: testUuid(40), status: 'pending', requestGeneration: 10, optionsVersion: 1, available: false,
+    });
 });
 afterEach(async () => {
     cleanup();
@@ -743,4 +756,576 @@ it('announces invalid fields assertively', async () => {
     fireEvent.changeText(screen.getByTestId('missed-title'), ' ');
     expect(screen.getByText('Enter a title between 1 and 512 characters.')).toHaveProp('accessibilityLiveRegion', 'assertive');
     expect(screen.getByRole('button', { name: 'Add book' })).toBeDisabled();
+});
+
+// SDD 01a §15, dated Owner note and AC5b-1–8. The real screen owns navigation/guard.
+describe('optional ISBN addition', () => {
+    const saved = 'Book added. Open Find or change edition to choose its edition.';
+    const saveFailed = "Book added, but the ISBN wasn't saved.";
+    const searchFailed = "Book added. The ISBN search didn't start.";
+    const set = () => jest.mocked(ownerEditionPickerService.setCandidateIsbn);
+    const read = () => jest.mocked(ownerEditionPickerService.readEditionChoices);
+    const search = () => jest.mocked(ownerEditionPickerService.requestEditionOptions);
+    async function start(isbn = '0-8044-2957-X') {
+        const screen = await mount();
+        fireEvent.changeText(screen.getByLabelText('ISBN'), isbn);
+        fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+        submit(screen);
+        return screen;
+    }
+    function noAddRetry(screen: Awaited<ReturnType<typeof mount>>) {
+        expect(screen.queryByRole('button', { name: 'Retry same addition' })).toBeNull();
+        expect(mockRouter.replace).not.toHaveBeenCalled();
+    }
+    function finishLeaving(screen: Awaited<ReturnType<typeof mount>>, title: string) {
+        fireEvent.press(screen.getByRole('button', { name: title }));
+        expect(mockRouter.replace).toHaveBeenCalledTimes(1);
+        expect(mockRouter.replace).toHaveBeenCalledWith('/(store-owner)/inventory/scan/' + sessionId);
+        expect(mockReplacePreventDefault).not.toHaveBeenCalled();
+    }
+    it.each(['OWNER_CANDIDATE_AUTHORITY_CHANGED', 'OWNER_IDENTITY_CHANGED'])('does not offer a search retry after a local %s re-read error', async message => {
+        read().mockRejectedValueOnce(new Error(message));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText("Book added. The ISBN search didn't start. Open Find or change edition to search.")).toBeTruthy());
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        expect(search()).not.toHaveBeenCalled();
+        expect(set()).toHaveBeenCalledTimes(1);
+    });
+    it('keeps a search retry after a plain network re-read error', async () => {
+        read().mockRejectedValueOnce(new Error('network'));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Retry search' })).not.toBeDisabled());
+        expect(screen.getByText(searchFailed)).toBeTruthy();
+        expect(search()).not.toHaveBeenCalled();
+    });
+    it.each(['closed', 'refetch failed'] as const)('handles a search state conflict after ISBN save when the session is %s', async outcome => {
+        const sessionRead = deferred<OwnerSessionSummaryV3>();
+        search().mockImplementation(async () => {
+            jest.mocked(ownerBatchReviewService.readSessionV3).mockReturnValue(sessionRead.promise);
+            throw new OwnerUxClientError('P9_STATE_CONFLICT', false, 'state');
+        });
+        const screen = await start();
+        const generic = "Book added. The ISBN search didn't start. Open Find or change edition to search.";
+        await waitFor(() => expect(screen.getByText(generic)).toBeTruthy());
+        const readsBefore = jest.mocked(ownerBatchReviewService.readSessionV3).mock.calls.length;
+        await act(async () => {
+            if (outcome === 'closed') sessionRead.resolve({ ...session, status: 'closed' });
+            else sessionRead.reject(new Error('session unavailable'));
+        });
+        await waitFor(() => expect(screen.getByText(outcome === 'closed'
+            ? "Book added and the ISBN saved. This scan is closed, so the search can't run." : generic)).toBeTruthy());
+        expect(readsBefore).toBeGreaterThan(1);
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        expect(set()).toHaveBeenCalledTimes(1);
+    });
+    it('refuses an ISBN set echo for another ISBN without replay or search', async () => {
+        set().mockResolvedValue({ sessionId, candidateId, candidateVersion: 5, metadataRevision: 7,
+            requestGeneration: 2, ownerIsbn13: '9780140449136' });
+        read().mockResolvedValue(pickerChoices({ sessionId, candidateId, candidateVersion: 6,
+            requestGeneration: 9, ownerIsbn13: '9780140449136' }));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText("Book added, but the ISBN wasn't saved. Open Find or change edition to enter it.")).toBeTruthy());
+        expect(screen.queryByRole('button', { name: 'Retry ISBN save' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        expect(read()).not.toHaveBeenCalled();
+        expect(search()).not.toHaveBeenCalled();
+        expect(set()).toHaveBeenCalledTimes(1);
+    });
+    it('preserves a padded pasted ISBN in the Add draft and builds a valid request', async () => {
+        const value = ' 978-0-306-40615-7 ';
+        set().mockResolvedValue({ sessionId, candidateId, candidateVersion: 5, metadataRevision: 7,
+            requestGeneration: 2, ownerIsbn13: '9780306406157' });
+        read().mockResolvedValue(pickerChoices({ sessionId, candidateId, candidateVersion: 6,
+            requestGeneration: 9, ownerIsbn13: '9780306406157' }));
+        const screen = await mount();
+        const input = screen.getByLabelText('ISBN');
+        fireEvent.changeText(input, value.slice(0, input.props.maxLength));
+        expect(screen.getByLabelText('ISBN')).toHaveProp('value', value);
+        fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+        submit(screen);
+        await waitFor(() => expect(search()).toHaveBeenCalledTimes(1));
+        expect(set().mock.calls[0][0].isbn13).toBe('9780306406157');
+    });
+    it('labels the active-session ISBN box and configures text entry', async () => {
+        const screen = await mount();
+        expect(screen.getByText('ISBN (optional)')).toBeTruthy();
+        expect(screen.getByText('On the back cover, above or below the barcode')).toBeTruthy();
+        expect(screen.getByLabelText('ISBN').props).toMatchObject({
+            maxLength: 24, autoCapitalize: 'characters', autoCorrect: false, editable: true,
+        });
+    });
+    it.each(['9780140449137', '1000000000009'])('announces invalid %s under the box and sends nothing', async isbn => {
+        const screen = await mount();
+        fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+        fireEvent.changeText(screen.getByLabelText('ISBN'), isbn);
+        expect(screen.getByText("Check the ISBN; the last digit doesn't match")).toHaveProp('accessibilityLiveRegion', 'assertive');
+        expect(screen.UNSAFE_getAllByType(Text).filter(node => node.props.accessibilityLiveRegion === 'assertive')).toHaveLength(1);
+        expect(screen.getByRole('button', { name: 'Add book' })).toBeDisabled();
+        submit(screen);
+        expect(ownerCorrectionService.addManualCandidate).not.toHaveBeenCalled();
+        expect(set()).not.toHaveBeenCalled(); expect(search()).not.toHaveBeenCalled();
+    });
+    it.each(['', '   '])('runs the unchanged add-only path for %j', async isbn => {
+        const screen = await start(isbn);
+        await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledTimes(1));
+        expect(set()).not.toHaveBeenCalled(); expect(read()).not.toHaveBeenCalled(); expect(search()).not.toHaveBeenCalled();
+        expect(jest.mocked(ownerCorrectionService.addManualCandidate).mock.calls[0][0]).not.toHaveProperty('isbn');
+        expect(jest.mocked(ownerCorrectionService.addManualCandidate).mock.calls[0][0]).not.toHaveProperty('isbn13');
+        expect(screen.queryByText(saved)).toBeNull();
+    });
+    it('adds, reads, saves the normalized ISBN, then caches/reuses re-read generation before search', async () => {
+        stallBatchReviewRefresh();
+        read().mockResolvedValueOnce(pickerChoices({ candidateId, candidateVersion: 6, requestGeneration: 9 , ownerIsbn13: '9780804429573' }))
+            .mockResolvedValue(pickerChoices({ candidateId, candidateVersion: 7, requestGeneration: 21 , ownerIsbn13: '9780804429573' }));
+        search().mockImplementationOnce(async () => {
+            expect(client.getQueryData(ownerEditionPickerKeys.choices(identity, sessionId, candidateId)))
+                .toMatchObject({ requestGeneration: 9 });
+            return { operationId: testUuid(40), status: 'pending', requestGeneration: 10, optionsVersion: 1, available: false };
+        });
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        const add = jest.mocked(ownerCorrectionService.addManualCandidate);
+        const candidateRead = jest.mocked(ownerUxService.readCandidate);
+        expect(add.mock.invocationCallOrder[0]).toBeLessThan(candidateRead.mock.invocationCallOrder[0]);
+        expect(candidateRead.mock.invocationCallOrder[0]).toBeLessThan(set().mock.invocationCallOrder[0]);
+        expect(set().mock.invocationCallOrder[0]).toBeLessThan(read().mock.invocationCallOrder[0]);
+        expect(read().mock.invocationCallOrder[0]).toBeLessThan(search().mock.invocationCallOrder[0]);
+        expect(set()).toHaveBeenCalledWith(expect.objectContaining({
+            sessionId, candidateId, isbn13: '9780804429573',
+            expectedCandidateVersion: candidateDetailFixture().candidateVersion,
+        }), expect.any(AbortSignal));
+        expect(search()).toHaveBeenCalledTimes(1);
+        expect(search()).toHaveBeenCalledWith(expect.objectContaining({ expectedRequestGeneration: 9 }), expect.any(AbortSignal));
+        await waitFor(() => expect(client.getQueryData(ownerEditionPickerKeys.choices(identity, sessionId, candidateId)))
+            .toMatchObject({ requestGeneration: 21 }));
+        expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey: ownerBatchReviewKeys.batchReview(identity, sessionId) });
+        noAddRetry(screen);
+        expect(screen.getByText(saved)).toHaveProp('accessibilityLiveRegion', 'polite');
+        for (const label of ['Title required', 'Author 1', 'ISBN']) expect(screen.getByLabelText(label)).toHaveProp('editable', false);
+        for (const name of ['Add another author', 'Choose language', 'Add book']) expect(screen.getByRole('button', { name })).toBeDisabled();
+        expect(leave().preventDefault).not.toHaveBeenCalled();
+        expect(screen.queryByRole('alertdialog')).toBeNull();
+        finishLeaving(screen, 'Back to review');
+    });
+    it('finishes the ISBN path while every invalidation stays pending', async () => {
+        jest.spyOn(client, 'invalidateQueries').mockImplementation(() => new Promise(() => {}));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        expect(set()).toHaveBeenCalledTimes(1);
+        expect(search()).toHaveBeenCalledTimes(1);
+        expect(client.getQueryData(imageInventoryKeys.candidate(identity, sessionId, candidateId)))
+            .toMatchObject({ candidateId, sessionId });
+        for (const queryKey of [imageInventoryKeys.discovery(identity), imageInventoryKeys.session(identity, sessionId),
+            imageInventoryKeys.readiness(identity, sessionId)]) {
+            expect(client.invalidateQueries).toHaveBeenCalledWith({ queryKey });
+        }
+        expect(screen.getByRole('button', { name: 'Back to review' })).not.toBeDisabled();
+    });
+    it('keeps Retry search after a failed session refetch and resumes when authority recovers', async () => {
+        const screen = await mount();
+        fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+        fireEvent.changeText(screen.getByLabelText('ISBN'), '0-8044-2957-X');
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+        jest.mocked(ownerBatchReviewService.readSessionV3).mockRejectedValue(new Error('session refetch failed'));
+        search().mockRejectedValueOnce(new Error('search failed'));
+        submit(screen);
+        await waitFor(() => expect(client.getQueryState(ownerBatchReviewKeys.sessionV3(identity, sessionId))?.status).toBe('error'));
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Retry search' })).toBeDisabled());
+        expect(screen.getByText(searchFailed)).toBeTruthy();
+        expect(screen.queryByText('This scan cannot accept another book.')).toBeNull();
+        jest.mocked(ownerBatchReviewService.readSessionV3).mockResolvedValue(session);
+        await act(async () => { await client.refetchQueries({ queryKey: ownerBatchReviewKeys.sessionV3(identity, sessionId) }); });
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Retry search' })).not.toBeDisabled());
+        fireEvent.press(screen.getByRole('button', { name: 'Retry search' }));
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        expect(search()).toHaveBeenCalledTimes(2);
+        expect(set()).toHaveBeenCalledTimes(1);
+        expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(1);
+    });
+    it('keeps the successful Back to review title and message style after a session refetch fails', async () => {
+        const screen = await mount();
+        const messageColor = screen.getByText('Adds one book to this scan for you to check.').props.style.color;
+        fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+        fireEvent.changeText(screen.getByLabelText('ISBN'), '0-8044-2957-X');
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+        jest.mocked(ownerBatchReviewService.readSessionV3).mockRejectedValue(new Error('session refetch failed'));
+        submit(screen);
+        await waitFor(() => expect(client.getQueryState(ownerBatchReviewKeys.sessionV3(identity, sessionId))?.status).toBe('error'));
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Back to review' })).not.toBeDisabled());
+        expect(screen.getByText(saved)).toHaveStyle({ color: messageColor });
+        finishLeaving(screen, 'Back to review');
+    });
+    it('finishes a confirmed search when receipt cache acceptance throws after a confirmed card outcome', async () => {
+        search().mockImplementationOnce(async () => {
+            client.setQueryData(imageInventoryKeys.candidate(identity, sessionId, candidateId),
+                candidateDetailFixture({ candidateId, candidateState: 'committed' }));
+            return { operationId: testUuid(40), status: 'pending', requestGeneration: 10, optionsVersion: 1, available: false };
+        });
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        expect(search()).toHaveBeenCalledTimes(1);
+        finishLeaving(screen, 'Back to review');
+    });
+    it('replays a lost add response with the same add command before running ISBN steps', async () => {
+        jest.mocked(ownerCorrectionService.addManualCandidate).mockRejectedValueOnce(new Error('lost add'));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Retry same addition' })).not.toBeDisabled());
+        expect(set()).not.toHaveBeenCalled(); expect(read()).not.toHaveBeenCalled(); expect(search()).not.toHaveBeenCalled();
+        fireEvent.press(screen.getByRole('button', { name: 'Retry same addition' }));
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        const calls = jest.mocked(ownerCorrectionService.addManualCandidate).mock.calls;
+        expect(calls[1][0]).toBe(calls[0][0]);
+        expect(calls[1][0]).toEqual(calls[0][0]);
+    });
+    it.each(['network', 'internal'])('retries a %s ISBN save with the frozen command/version after the card moves', async kind => {
+        stallBatchReviewRefresh();
+        set().mockRejectedValueOnce(kind === 'internal' ? new OwnerUxClientError('P9_INTERNAL_ERROR', true, 'internal') : new Error('lost'));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(saveFailed)).toBeTruthy());
+        noAddRetry(screen);
+        expect(screen.getByText(saveFailed)).toHaveProp('accessibilityLiveRegion', 'polite');
+        expect(read()).not.toHaveBeenCalled(); expect(search()).not.toHaveBeenCalled();
+        const frozen = set().mock.calls[0][0];
+        jest.mocked(ownerUxService.readCandidate).mockResolvedValue(candidateDetailFixture({ candidateId, candidateVersion: 30 }));
+        read().mockResolvedValue(pickerChoices({ candidateId, candidateVersion: 31, requestGeneration: 11 , ownerIsbn13: '9780804429573' }));
+        leave();
+        expect(screen.getByRole('alertdialog', { name: 'Leave this screen?' })).toBeTruthy();
+        expect(screen.getByText("This book is added, but its ISBN isn't saved.")).toBeTruthy();
+        fireEvent.press(screen.getByRole('button', { name: 'Stay' }));
+        fireEvent.press(screen.getByRole('button', { name: 'Retry ISBN save' }));
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        expect(set()).toHaveBeenCalledTimes(2);
+        expect(set().mock.calls[1][0]).toBe(frozen); expect(set().mock.calls[1][0]).toEqual(frozen);
+        expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(1);
+        expect(ownerUxService.readCandidate).toHaveBeenCalledTimes(1);
+        expect(search().mock.calls[0][0].expectedRequestGeneration).toBe(11);
+    });
+    it.each([
+        ['P9_STATE_CONFLICT', 'active', "Book added, but the ISBN wasn't saved. This book can't be changed now."],
+        ['P9_STATE_CONFLICT', 'closed', "Book added. This scan is closed, so the ISBN can't be saved."],
+        ...(['P9_CANDIDATE_VERSION_CONFLICT', 'P9_VERSION_CONFLICT', 'P9_REQUEST_INVALID', 'P9_IDEMPOTENCY_MISMATCH',
+            'P9_NOT_FOUND', 'P9_OWNER_NOT_AUTHORIZED'] as const).map(code =>
+            [code, 'active', "Book added, but the ISBN wasn't saved. Open Find or change edition to enter it."] as const),
+    ] as const)('does not replay set refusal %s with an %s session and Leave navigates once', async (code, status, message) => {
+        set().mockImplementation(async () => {
+            session = { ...session, status };
+            throw new OwnerUxClientError(code, true, 'refused');
+        });
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(message)).toBeTruthy());
+        noAddRetry(screen);
+        expect(screen.queryByRole('button', { name: 'Retry ISBN save' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        expect(read()).not.toHaveBeenCalled(); expect(search()).not.toHaveBeenCalled();
+        submit(screen); submit(screen);
+        finishLeaving(screen, 'Leave');
+        expect(set()).toHaveBeenCalledTimes(1);
+        expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(1);
+    });
+    it.each(['active', 'closed'] as const)('publishes the set conflict before a pending session refetch reports %s', async status => {
+        const refreshed = deferred<OwnerSessionSummaryV3>();
+        set().mockImplementationOnce(async () => {
+            jest.mocked(ownerBatchReviewService.readSessionV3).mockReturnValue(refreshed.promise);
+            throw new OwnerUxClientError('P9_STATE_CONFLICT', true, 'refused');
+        });
+        const screen = await start();
+        const generic = "Book added, but the ISBN wasn't saved. This book can't be changed now.";
+        await waitFor(() => expect(screen.getByText(generic)).toBeTruthy());
+        expect(screen.queryByRole('button', { name: 'Retry ISBN save' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'Leave' })).not.toBeDisabled();
+        await act(async () => refreshed.resolve({ ...session, status }));
+        await waitFor(() => expect(screen.getByText(status === 'closed'
+            ? "Book added. This scan is closed, so the ISBN can't be saved." : generic)).toBeTruthy());
+        expect(set()).toHaveBeenCalledTimes(1);
+    });
+    it.each(['read', 'search'])('retries the first unfinished %s step without repeating the set or add', async step => {
+        if (step === 'read') read().mockRejectedValueOnce(new Error('lost read'));
+        else search().mockRejectedValueOnce(new Error('lost search'));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(searchFailed)).toBeTruthy());
+        noAddRetry(screen);
+        if (step === 'read') expect(search()).not.toHaveBeenCalled();
+        const frozen = search().mock.calls[0]?.[0];
+        read().mockResolvedValue(pickerChoices({ candidateId, candidateVersion: 40, requestGeneration: 20 , ownerIsbn13: '9780804429573' }));
+        leave();
+        expect(screen.getByText("This book is added and its ISBN is saved, but the search didn't start.")).toBeTruthy();
+        fireEvent.press(screen.getByRole('button', { name: 'Stay' }));
+        fireEvent.press(screen.getByRole('button', { name: 'Retry search' }));
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(1);
+        expect(set()).toHaveBeenCalledTimes(1);
+        if (step === 'search') {
+            expect(search()).toHaveBeenCalledTimes(2);
+            expect(search().mock.calls[1][0]).toBe(frozen); expect(search().mock.calls[1][0]).toEqual(frozen);
+            expect(frozen.expectedRequestGeneration).toBe(9);
+        } else expect(search().mock.calls[0][0].expectedRequestGeneration).toBe(20);
+    });
+    it.each(['read', 'search'].flatMap(step =>
+        (['P9_VERSION_CONFLICT', 'P9_STATE_CONFLICT', 'P9_REQUEST_INVALID'] as const).map(code => [step, code] as const)))
+    ('does not retry a refused %s with %s and offers Leave', async (step, code) => {
+        (step === 'read' ? read() : search()).mockRejectedValue(new OwnerUxClientError(code, true, 'refused'));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(searchFailed + ' Open Find or change edition to search.')).toBeTruthy());
+        noAddRetry(screen);
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        if (step === 'read') {
+            expect(read()).toHaveBeenCalledTimes(1);
+            expect(search()).not.toHaveBeenCalled();
+        }
+        submit(screen); submit(screen);
+        finishLeaving(screen, 'Leave');
+        expect(step === 'read' ? read() : search()).toHaveBeenCalledTimes(1);
+    });
+    it.each(['set', 'read', 'search'])('blocks leaving/double presses while %s is pending and stays until search ends', async step => {
+        const done = deferred<any>();
+        const operation = step === 'set' ? set() : step === 'read' ? read() : search();
+        operation.mockReturnValueOnce(done.promise);
+        const screen = await start();
+        await waitFor(() => expect(operation).toHaveBeenCalledTimes(1));
+        expect(mockRouter.replace).not.toHaveBeenCalled();
+        submit(screen); submit(screen);
+        expect(screen.getByLabelText('ISBN')).toHaveProp('editable', false);
+        leave();
+        expect(screen.getByRole('alertdialog', { name: 'Adding this book' })).toBeTruthy();
+        expect(screen.queryByRole('button', { name: 'Leave' })).toBeNull();
+        fireEvent.press(screen.getByRole('button', { name: 'Stay' }));
+        await act(async () => done.resolve(step === 'set' ? { sessionId, candidateId, candidateVersion: 5, metadataRevision: 7,
+            requestGeneration: 2, ownerIsbn13: '9780804429573' } : step === 'read'
+            ? pickerChoices({ candidateId, candidateVersion: 6, requestGeneration: 9 , ownerIsbn13: '9780804429573' })
+            : { operationId: testUuid(40), status: 'pending', requestGeneration: 10, optionsVersion: 1, available: false }));
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(1);
+        expect(set()).toHaveBeenCalledTimes(1); expect(search()).toHaveBeenCalledTimes(1);
+        noAddRetry(screen);
+    });
+    it.each(['initially closed', 'closed after typing'])('ignores ISBN when %s', async when => {
+        if (when === 'initially closed') session = { ...session, status: 'closed' };
+        const screen = await mount();
+        if (when === 'closed after typing') {
+            fireEvent.changeText(screen.getByTestId('missed-title'), 'Book');
+            await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+            fireEvent.changeText(screen.getByLabelText('ISBN'), 'bad ISBN');
+            session = { ...session, status: 'closed' };
+            await act(async () => { await client.invalidateQueries({ queryKey: ownerBatchReviewKeys.sessionV3(identity, sessionId) }); });
+            expect(client.getQueryData(ownerBatchReviewKeys.sessionV3(identity, sessionId))).toMatchObject({ status: 'closed' });
+        }
+        await waitFor(() => expect(screen.queryByLabelText('ISBN') === null).toBe(true));
+        await addBook(screen);
+        await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledTimes(1));
+        expect(set()).not.toHaveBeenCalled(); expect(read()).not.toHaveBeenCalled(); expect(search()).not.toHaveBeenCalled();
+    });
+    it.each(['set', 'read', 'search'])('ignores a late %s result after unmount', async step => {
+        const done = deferred<any>();
+        (step === 'set' ? set() : step === 'read' ? read() : search()).mockReturnValueOnce(done.promise);
+        const screen = await start();
+        const operation = step === 'set' ? set() : step === 'read' ? read() : search();
+        await waitFor(() => expect(operation).toHaveBeenCalledTimes(1));
+        const signal = operation.mock.calls[0][1];
+        screen.unmount();
+        expect(signal.aborted).toBe(true);
+        await act(async () => done.resolve({ sessionId, candidateId }));
+        expect(mockRouter.replace).not.toHaveBeenCalled();
+        if (step === 'set') expect(read()).not.toHaveBeenCalled();
+        if (step !== 'search') expect(search()).not.toHaveBeenCalled();
+    });
+    it.each(['set', 'read', 'search'])('aborts and ignores late %s results when the store changes', async step => {
+        const done = deferred<any>();
+        const operation = step === 'set' ? set() : step === 'read' ? read() : search();
+        operation.mockReturnValueOnce(done.promise);
+        const screen = await start();
+        await waitFor(() => expect(operation).toHaveBeenCalledTimes(1));
+        const signal = operation.mock.calls[0][1];
+        await act(async () => {
+            (storeOwnerService.getGateState as jest.Mock).mockResolvedValue({ state: 'active_owner', storeId: otherStoreId, storeName: 'Other' });
+            client.setQueryData(storeOwnerKeys.gate(identity.userId), { state: 'active_owner', storeId: otherStoreId, storeName: 'Other' });
+        });
+        await waitFor(() => expect(screen.getByTestId('missed-title').props.value).toBe(''));
+        expect(signal.aborted).toBe(true);
+        await act(async () => done.resolve({ sessionId, candidateId }));
+        expect(mockRouter.replace).not.toHaveBeenCalled();
+        expect(screen.queryByText(saved)).toBeNull();
+        if (step === 'set') expect(read()).not.toHaveBeenCalled();
+        if (step !== 'search') expect(search()).not.toHaveBeenCalled();
+    });
+    it.each(['set', 'read', 'search'])('aborts and ignores late %s results when the session changes', async step => {
+        const done = deferred<any>();
+        const operation = step === 'set' ? set() : step === 'read' ? read() : search();
+        operation.mockReturnValueOnce(done.promise);
+        const screen = await start();
+        await waitFor(() => expect(operation).toHaveBeenCalledTimes(1));
+        const signal = operation.mock.calls[0][1];
+        const nextSessionId = testUuid(93);
+        const calls = [set().mock.calls.length, read().mock.calls.length, search().mock.calls.length];
+        const invalidate = jest.spyOn(client, 'invalidateQueries');
+        session = { ...session, sessionId: nextSessionId };
+        screen.rerender(<QueryClientProvider client={client}>
+            <InventoryMissedBookScreen sessionId={nextSessionId} />
+        </QueryClientProvider>);
+        await waitFor(() => expect(screen.getByTestId('missed-title').props.value).toBe(''));
+        expect(signal.aborted).toBe(true);
+        fireEvent.changeText(screen.getByTestId('missed-title'), 'Session B draft');
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Add book' })).not.toBeDisabled());
+        const nextScreen = screen.toJSON();
+        await act(async () => done.resolve(step === 'set'
+            ? { sessionId, candidateId, candidateVersion: 5, metadataRevision: 7, requestGeneration: 2, ownerIsbn13: '9780804429573' }
+            : step === 'read' ? pickerChoices({ candidateId, candidateVersion: 6, requestGeneration: 9 , ownerIsbn13: '9780804429573' })
+                : { operationId: testUuid(40), status: 'pending', requestGeneration: 10, optionsVersion: 1, available: false }));
+        expect([set().mock.calls.length, read().mock.calls.length, search().mock.calls.length]).toEqual(calls);
+        expect(invalidate).not.toHaveBeenCalled();
+        expect(screen.toJSON()).toEqual(nextScreen);
+        expect(screen.queryByText(saved)).toBeNull();
+        expect(mockRouter.replace).not.toHaveBeenCalled();
+        expect(mockNavigation.dispatch).not.toHaveBeenCalled();
+    });
+    it('checks the ISBN set response scope before proceeding', async () => {
+        set().mockResolvedValueOnce({ sessionId, candidateId: testUuid(99), candidateVersion: 5,
+            metadataRevision: 7, requestGeneration: 2, ownerIsbn13: '9780804429573' });
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(saveFailed + ' Open Find or change edition to enter it.')).toBeTruthy());
+        expect(screen.queryByRole('button', { name: 'Retry ISBN save' })).toBeNull();
+        noAddRetry(screen);
+        expect(read()).not.toHaveBeenCalled(); expect(search()).not.toHaveBeenCalled();
+        submit(screen);
+        expect(set()).toHaveBeenCalledTimes(1);
+        finishLeaving(screen, 'Leave');
+    });
+    it('reports an unretryable save when the ISBN set response has a different candidate', async () => {
+        set().mockResolvedValueOnce({ sessionId, candidateId: testUuid(99), candidateVersion: 5,
+            metadataRevision: 7, requestGeneration: 2, ownerIsbn13: '9780804429573' });
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText("Book added, but the ISBN wasn't saved. Open Find or change edition to enter it.")).toBeTruthy());
+        expect(screen.queryByRole('button', { name: 'Retry ISBN save' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        noAddRetry(screen);
+        expect(jest.mocked(ownerCorrectionService.addManualCandidate)).toHaveBeenCalledTimes(1);
+        expect(set()).toHaveBeenCalledTimes(1);
+        expect(read()).not.toHaveBeenCalled(); expect(search()).not.toHaveBeenCalled();
+        finishLeaving(screen, 'Leave');
+    });
+    it('refreshes lists when the ISBN save is refused with P9_STATE_CONFLICT', async () => {
+        const invalidate = jest.spyOn(client, 'invalidateQueries');
+        set().mockRejectedValueOnce(new OwnerUxClientError('P9_STATE_CONFLICT', true, 'refused'));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText("Book added, but the ISBN wasn't saved. This book can't be changed now.")).toBeTruthy());
+        expect(set()).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole('button', { name: 'Retry ISBN save' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        noAddRetry(screen);
+        expect(read()).not.toHaveBeenCalled(); expect(search()).not.toHaveBeenCalled();
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: ownerBatchReviewKeys.batchReview(identity, sessionId) });
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: imageInventoryKeys.candidate(identity, sessionId, candidateId) });
+        finishLeaving(screen, 'Leave');
+    });
+    it('does not retry a mismatching ISBN choices re-read', async () => {
+        read().mockResolvedValueOnce(pickerChoices({ candidateId: testUuid(99), candidateVersion: 6 }));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(searchFailed + ' Open Find or change edition to search.')).toBeTruthy());
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Retry ISBN save' })).toBeNull();
+        noAddRetry(screen);
+        expect(search()).not.toHaveBeenCalled();
+        expect(set()).toHaveBeenCalledTimes(1);
+        expect(jest.mocked(ownerCorrectionService.addManualCandidate)).toHaveBeenCalledTimes(1);
+        expect(jest.mocked(ownerUxService.readCandidate)).toHaveBeenCalledTimes(1);
+        expect(read()).toHaveBeenCalledTimes(1);
+        submit(screen);
+        expect(search()).not.toHaveBeenCalled();
+        finishLeaving(screen, 'Leave');
+    });
+    it.each([['another ISBN', '9780140449136'], ['no ISBN', null]])(
+        'stops without a search when another device changed the ISBN before the re-read (%s)', async (_label, other) => {
+        read().mockResolvedValueOnce(pickerChoices({ candidateId, candidateVersion: 7, metadataRevision: 8,
+            requestGeneration: 10, ownerIsbn13: other }));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText('Book added. The ISBN was saved, but this book changed before the search could start. Open Find or change edition to search.')).toBeTruthy());
+        expect(screen.queryByRole('button', { name: 'Retry search' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Retry ISBN save' })).toBeNull();
+        noAddRetry(screen);
+        expect(search()).not.toHaveBeenCalled();
+        expect(set()).toHaveBeenCalledTimes(1);
+        expect(jest.mocked(ownerCorrectionService.addManualCandidate)).toHaveBeenCalledTimes(1);
+        expect(read()).toHaveBeenCalledTimes(1);
+        submit(screen);
+        expect(search()).not.toHaveBeenCalled();
+        finishLeaving(screen, 'Leave');
+    });
+    it('still searches from the re-read generation when only a benign change raised it', async () => {
+        read().mockResolvedValueOnce(pickerChoices({ candidateId, candidateVersion: 8, metadataRevision: 9,
+            requestGeneration: 12, ownerIsbn13: '9780804429573' }));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        expect(search()).toHaveBeenCalledTimes(1);
+        expect(search().mock.calls[0][0]).toMatchObject({ expectedRequestGeneration: 12 });
+        finishLeaving(screen, 'Back to review');
+    });
+    it('publishes search success before a best-effort reconciliation stalls', async () => {
+        read().mockResolvedValueOnce(pickerChoices({ candidateId, candidateVersion: 6, requestGeneration: 9 , ownerIsbn13: '9780804429573' }))
+            .mockReturnValueOnce(new Promise(() => {}));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        await waitFor(() => expect(read()).toHaveBeenCalledTimes(2));
+        expect(screen.getByRole('button', { name: 'Back to review' })).not.toBeDisabled();
+        finishLeaving(screen, 'Back to review');
+    });
+    it('uses the ISBN keyboard with X available on iOS', async () => {
+        const select = Platform.select;
+        jest.spyOn(Platform, 'select').mockImplementation(options => options.ios === 'numbers-and-punctuation' ? options.ios : select(options));
+        const screen = await mount();
+        expect(screen.getByLabelText('ISBN')).toHaveProp('keyboardType', 'numbers-and-punctuation');
+    });
+    it('resumes a failed candidate read without repeating a confirmed ISBN add', async () => {
+        const invalidate = jest.spyOn(client, 'invalidateQueries');
+        jest.mocked(ownerUxService.readCandidate).mockRejectedValueOnce(new Error('lost read'));
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(saveFailed)).toBeTruthy());
+        expect(invalidate.mock.calls.filter(([filters]) =>
+            JSON.stringify(filters?.queryKey) === JSON.stringify(ownerBatchReviewKeys.batchReview(identity, sessionId)))).toHaveLength(1);
+        noAddRetry(screen);
+        expect(set()).not.toHaveBeenCalled(); expect(read()).not.toHaveBeenCalled(); expect(search()).not.toHaveBeenCalled();
+        fireEvent.press(screen.getByRole('button', { name: 'Retry ISBN save' }));
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(1);
+        expect(ownerUxService.readCandidate).toHaveBeenCalledTimes(2);
+    });
+    it('refreshes the review list when synchronization declines and retries only the unfinished synchronization', async () => {
+        const synchronize = jest.spyOn(ownerCorrectionQueries, 'cacheCorrectionCandidate').mockReturnValueOnce(false);
+        const invalidate = jest.spyOn(client, 'invalidateQueries');
+        const screen = await start();
+        await waitFor(() => expect(screen.getByText(saveFailed)).toBeTruthy());
+        expect(invalidate.mock.calls.filter(([filters]) =>
+            JSON.stringify(filters?.queryKey) === JSON.stringify(ownerBatchReviewKeys.batchReview(identity, sessionId)))).toHaveLength(1);
+        expect(screen.getByRole('button', { name: 'Retry ISBN save' })).not.toBeDisabled();
+        expect(set()).not.toHaveBeenCalled();
+        fireEvent.press(screen.getByRole('button', { name: 'Retry ISBN save' }));
+        await waitFor(() => expect(screen.getByText(saved)).toBeTruthy());
+        expect(synchronize).toHaveBeenCalledTimes(2);
+        expect(ownerUxService.readCandidate).toHaveBeenCalledTimes(1);
+        expect(ownerCorrectionService.addManualCandidate).toHaveBeenCalledTimes(1);
+    });
+    it.each(['set', 'read', 'search'])('ignores late %s results after switching account', async step => {
+        const done = deferred<any>();
+        const operation = step === 'set' ? set() : step === 'read' ? read() : search();
+        operation.mockReturnValueOnce(done.promise);
+        const screen = await start();
+        await waitFor(() => expect(operation).toHaveBeenCalledTimes(1));
+        const signal = operation.mock.calls[0][1];
+        const otherUserId = testUuid(92);
+        await act(async () => {
+            setAuthState({ status: 'authenticated', initializationError: null, session: {
+                access_token: 'test', refresh_token: 'test', expires_in: 3600, token_type: 'bearer',
+                user: { id: otherUserId, aud: 'authenticated', app_metadata: {}, user_metadata: {}, created_at: '2026-10-20T00:00:00Z' },
+            } });
+            client.setQueryData(storeOwnerKeys.gate(otherUserId), { state: 'active_owner', storeId: identity.storeId, storeName: 'Test' });
+        });
+        await waitFor(() => expect(screen.getByTestId('missed-title').props.value).toBe(''));
+        expect(signal.aborted).toBe(true);
+        await act(async () => done.resolve({ sessionId, candidateId }));
+        expect(mockRouter.replace).not.toHaveBeenCalled();
+        expect(screen.queryByText(saved)).toBeNull();
+        if (step === 'set') expect(read()).not.toHaveBeenCalled();
+        if (step !== 'search') expect(search()).not.toHaveBeenCalled();
+    });
 });

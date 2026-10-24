@@ -6,6 +6,7 @@ import { OPEN_LIBRARY_HOST_POLICY, normalizeOpenLibraryRows, object, hasSafeOpen
   openLibraryRowAuthorKeys } from './normalizer';
 import { getOpenLibraryJson, OpenLibraryFailure } from './transport';
 import type { OpenLibraryConfiguration, EditionHttpHooks } from './transport';
+import { normalizeIsbnClue } from '../../domain/isbn';
 
 // Picker §§4/8/13.2: basic bibliographic facts only; no raw payload/prose/image retention.
 export class OpenLibraryEditionOptionsAdapter implements MetadataProviderAdapter {
@@ -34,8 +35,11 @@ export class OpenLibraryEditionOptionsAdapter implements MetadataProviderAdapter
       retention=bounded; return object(envelope.raw);
     };
     try {
+      const isbnMode=input.query.strategy === 'isbn';
+      if (isbnMode && !input.query.normalizedIsbn13) return failed('no_acceptable_match');
       const search=new URL('https://openlibrary.org/search.json');
-      search.searchParams.set('limit','1');search.searchParams.set('fields','key,author_key');
+      search.searchParams.set('limit','1');search.searchParams.set('fields',isbnMode
+        ? 'key,author_key,editions,editions.key,editions.isbn' : 'key,author_key');
       if (input.query.normalizedTitle) search.searchParams.set('title',input.query.normalizedTitle);
       if (input.query.normalizedAuthors.length) search.searchParams.set('author',input.query.normalizedAuthors.join(' '));
       if (!input.query.normalizedTitle && input.query.normalizedIsbn13) search.searchParams.set('isbn',input.query.normalizedIsbn13);
@@ -50,9 +54,23 @@ export class OpenLibraryEditionOptionsAdapter implements MetadataProviderAdapter
       const workAuthors=Array.isArray(workKeys) && workKeys.length<=20
         && workKeys.every(value=>typeof value==='string' && /^OL[1-9][0-9]*A$/u.test(value))
         ? workKeys.map(value=>'/authors/'+value) : [];
-      const editions=new URL('https://openlibrary.org'+key+'/editions.json');
-      editions.searchParams.set('limit','10');
-      const page=await get(editions,'editions');
+      let page:Record<string,unknown> | null;
+      if (isbnMode) {
+        const matches=object(object(found.docs[0])?.editions)?.docs;
+        const matching=Array.isArray(matches) ? matches.find(value=>{
+          const entry=object(value);
+          return typeof entry?.key === 'string' && /^\/books\/OL[1-9][0-9]*M$/u.test(entry.key)
+            && Array.isArray(entry.isbn) && entry.isbn.some(value=>typeof value === 'string'
+              && normalizeIsbnClue(value).isbn13 === input.query.normalizedIsbn13);
+        }) : null;
+        if (!matching) return {outcome:'no_acceptable_match',retryable:false,rows:[],fetchedAt,
+          retentionEvidence:retention,providerRequestId:null};
+        page={entries:[await get(new URL('https://openlibrary.org'+matching.key+'.json'),'edition')]};
+      } else {
+        const editions=new URL('https://openlibrary.org'+key+'/editions.json');
+        editions.searchParams.set('limit','10');
+        page=await get(editions,'editions');
+      }
       if (!page || !Array.isArray(page.entries) || page.entries.length>10) throw new OpenLibraryFailure('malformed_response');
       const authors=new Map<string,string>();
       const keys=new Set<string>();

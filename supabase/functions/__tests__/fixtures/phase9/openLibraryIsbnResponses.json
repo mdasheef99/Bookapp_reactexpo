@@ -1,0 +1,17 @@
+{
+  "search": {"docs": [{
+    "key": "/works/OL1W", "author_key": ["OL1A"],
+    "editions": {"docs": [
+      {"key": "/books/OL101M", "isbn": ["9780131103627"]},
+      {"key": "/books/OL100M", "isbn": ["0-306-40615-2"]}
+    ]}
+  }]},
+  "edition": {
+    "key": "/books/OL100M", "title": "The Fixture Book",
+    "authors": [{"key": "/authors/OL1A"}],
+    "languages": [{"key": "/languages/fre"}],
+    "isbn_10": ["0306406152"], "isbn_13": ["9780306406157"],
+    "publishers": ["Fixture Press"], "publish_date": "2024", "covers": [123]
+  },
+  "author": {"key": "/authors/OL1A", "name": "Fixture Author"}
+}

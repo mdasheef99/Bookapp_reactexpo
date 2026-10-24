@@ -1,5 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
-import type { EditionChoices, EditionLookupReceipt } from '../contracts/ownerEditionPicker';
+import type { EditionChoices, EditionLookupReceipt, SetCandidateIsbnResponse } from '../contracts/ownerEditionPicker';
 import type { ImageInventoryIdentity } from './ownerUxQueries';
 import { ownerEditionPickerKeys } from './ownerEditionPickerKeys';
 import { assertOwnerCardCurrent, authorityChanged, knownCandidateVersions, versionsRegress,
@@ -9,6 +9,13 @@ export function freshEditionChoices(value: EditionChoices): EditionChoices {
   return value.optionsExpiresAt && Date.parse(value.optionsExpiresAt) > Date.now()
     ? value : { ...value, rows: [], optionsExpiresAt: null };
 }
+// Whole-feature review, 2026-10-23: the one search after an ISBN set must be built from choices that
+// still describe that set (same ISBN, nothing older); otherwise another device changed the book.
+export const choicesFollowIsbnSet = (choices: EditionChoices, set: SetCandidateIsbnResponse): boolean =>
+  (choices.ownerIsbn13 ?? null) === set.ownerIsbn13
+  && choices.candidateVersion >= set.candidateVersion
+  && choices.metadataRevision >= set.metadataRevision
+  && choices.requestGeneration >= set.requestGeneration;
 export function acceptEditionChoices(
   client: QueryClient, identity: ImageInventoryIdentity, scope: OwnerCardScope,
   incoming: EditionChoices, origin: 'read' | 'selection',
@@ -26,10 +33,10 @@ export function acceptEditionChoices(
     || !!receipt && (incoming.requestGeneration < receipt.requestGeneration || incoming.optionsVersion < receipt.optionsVersion));
   const changedSelection = !!previous && incoming.metadataRevision === previous.metadataRevision
     && incoming.selection?.selectionId !== previous.selection?.selectionId;
-  const regressingLookup = origin === 'read' && incoming.lookupStatus === 'pending'
+  const regressingLookup = origin === 'read' && (incoming.lookupStatus === 'pending' || incoming.lookupStatus === 'idle')
     && [previous, receipt].some(value => value
       && value.requestGeneration === incoming.requestGeneration && value.optionsVersion === incoming.optionsVersion
-      && ('lookupStatus' in value ? value.lookupStatus : value.status) !== 'pending'
+      && (incoming.lookupStatus === 'idle' || ('lookupStatus' in value ? value.lookupStatus : value.status) !== 'pending')
       && ('lookupStatus' in value ? value.lookupStatus : value.status) !== 'idle');
   if (staleCandidate || staleOptions || changedSelection || regressingLookup) {
     if (origin === 'read' && previous) return freshEditionChoices(previous);
@@ -63,5 +70,10 @@ export function acceptEditionLookupReceipt(
   if (previous?.operationId === incoming.operationId && previous.requestGeneration === incoming.requestGeneration
     && previous.optionsVersion === incoming.optionsVersion && previous.status !== 'pending' && incoming.status === 'pending') return false;
   client.setQueryData(key, incoming);
+  if (incoming.status === 'pending' && choices) {
+    client.setQueryData(ownerEditionPickerKeys.choices(identity, scope.sessionId, scope.candidateId), {
+      ...choices, lookupStatus: 'pending', requestGeneration: incoming.requestGeneration, optionsVersion: incoming.optionsVersion,
+    });
+  }
   return true;
 }

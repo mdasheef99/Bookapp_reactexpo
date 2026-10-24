@@ -277,7 +277,7 @@ deploy.
 | 2 | Declutter: one edition button, simplified sheet, edition line, cleaner card and header, "Leave without saving?" | 1 | 1 | None | App | M / low | D05, D07, D09, D10, D47 |
 | 3 | Remove the after-Add buttons and the Inventory tab's duplicate list | 1 | 2 | None | App | S / low | D04, D12 |
 | 4 | Remove full correction; keep and simplify "Add a book" (title and author) | 1 | 2 | None (Q9 deferred to Unit 5C; Q1 needs none) | App | 4a M / med (deletions, "Add a book", summary); 4b S / med (script recompute, three languages, removal of the unused variant client; Owner, 2026-10-21) | D11, D13 |
-| 5 | Typed ISBN in the edition sheet and in "Add a book" | 1 | 2, 4 | One per part (no Owner ISBN path exists, F29; §14 Q2) | App + Owner API + database + worker | L / high (split expected: 5a sheet ISBN lookup, 5b ISBN in "Add a book") | D06, D13 |
+| 5 | Typed ISBN in the edition sheet and in "Add a book" ([slice 5 SDD](./01a-slice5-typed-isbn-sdd.md), approved 2026-10-22) | 1 | 2, 4 | 5a: one (M78); 5b: none (Owner, D5-4, D5-6) | App + Owner API + database + worker | 5a L / high; 5b S–M / med | D06, D13 |
 | 6 | Catalogue link fix: every Add finds or creates the catalogue edition and links it | 2 | — | One | Database | M / med | D34, D35, D40 |
 | 7 | Lean catalogue writes from Open Library, stats table, shared cache | 2 | 6 | One | Database + worker | L / med | D33, D35–D37, D39, D40 |
 | 8 | Open Library first in the automatic match, ISBN and publisher clues, Google off, protection | 2 | 7 | Maybe (registry and SQL predicates) | Worker + database | L / med (F34: Open Library has no automatic adapter yet; pass 2 may split) | D22, D25, D27, D28 (clue), D29, D31, D32 |
@@ -329,6 +329,14 @@ Those slices stay designed, but none is approved for building yet. Slice 11's
 and 13's own dependencies are checked again in their pass 2. Anything they
 need from a deferred slice is either pulled forward as a minimal part or
 brought back to the Owner.
+
+**Reorder (Owner, 2026-10-22, decision D5-1):** slice 5 (typed ISBN) is pulled
+forward and built **after slice 4b and before Stage 2** (slices 11 and 13). Its
+design is the approved [slice 5 SDD](./01a-slice5-typed-isbn-sdd.md); it is
+built as 5a, then 5b. Slice 5 does not touch Add or session close, so slices 11
+and 13 keep their scope; their pass 2 must account for the new
+`owner_isbn13` column and the `phase9_edition_query_identity` change. Every
+other Stage 3 slice stays deferred.
 
 ### 7.3 Guardrails
 

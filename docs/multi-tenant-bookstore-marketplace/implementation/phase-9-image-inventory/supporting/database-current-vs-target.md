@@ -1652,3 +1652,32 @@ Preflight (2026-10-17, project ahntbtktjjmvfosgkmgn re-verified): latest live mi
 
 M75/M77 application (2026-10-17): APPLIED_VERIFIED. M75 live version 20261017083027, M77 live version 20261017083206, from commit 850121e; statement SHA-256 equals the files; all seven function bodies and ACLs match the expected local hashes. Functions only; no data change at application. Tracker 37 §67.
 
+
+## 2026-10-23 - M78 owner ISBN edition lookup (ledger)
+
+Owner authorized creation of the M78 file on 2026-10-22 ("I approve creating the M78 migration file (local only, not applied)"). Local file: 20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql (slice 5a, SDD 01a §5/§5.8). Effects, as designed:
+- Adds the nullable column `image_extraction_candidates.owner_isbn13` with the shape-only check `^97[89][0-9]{10}$`.
+- Replaces `marketplace_sec.phase9_edition_query_identity` (ISBN-only key first), `phase9_edition_worker_context` (M73 body; ISBN-mode title, authors, isbnClue and publisherClue), `phase9_edition_identity_change` plus its trigger (`UPDATE OF … owner_isbn13`, clear rule, forced reset), `phase9_edition_option_eligible` (ISBN-10 in the `und` exception), `phase9_register_edition_options_provider_call_v1` and `phase9_complete_candidate_edition_options_v1` (stage `edition` at sequence 1 in ISBN mode only), and `phase9_edition_choices` (v1 or v2 reasons; `ownerIsbn13` for v2).
+- Widens the constraint `phase9_edition_http_stage`.
+- Adds the private postgres-only helpers `phase9_edition_effective_title` and `phase9_edition_effective_authors` (revoked from PUBLIC, anon, authenticated and service_role) and the command `public.phase9_set_candidate_isbn_v1` (authenticated only; replay key `EP_ISBN_V1`).
+
+No data change at application: every existing row keeps `owner_isbn13` NULL.
+
+Status at creation: CREATED / NOT_APPLIED. Local verification: PGlite M78 suite 28/28, three regression suites loading M78, real-Postgres lock tests 19/19 (two new ISBN races). Live preflight (project re-verification, md5 of the replaced bodies against the local pre-M78 stack, ACLs) and application each need separate Owner approval. Deploy order: M78, then the metadata worker, then Edge, then the app. Tracker 38 §27.
+
+M78 application (2026-10-23): APPLIED_VERIFIED. The Owner authorized application. A dedicated pre-apply review found one Medium defect: `service_role` kept EXECUTE on `phase9_set_candidate_isbn_v1` through the live default function ACL. It was fixed before application, so the command now revokes from all four roles, then grants `authenticated`.
+- Preflight (Haiku, read-only): clean. M78 objects absent; the seven replaced bodies' md5 equals the local stack; 0 stage-check violators.
+- How applied: Supabase MCP `apply_migration` returned `declined` twice with no prompt, so the Owner ran the file in the Supabase SQL editor. No `schema_migrations` row and no live version exists for M78.
+- Readback (SDD §5.8): column, check, trigger, stage constraint and ACLs as designed (EXECUTE: authenticated only); all ten function bodies hash-match the file.
+- No data change. Tracker 38 §28.
+
+
+## 2026-10-23 - M79 and M80 card metadata state (ledger)
+
+Owner authorization: the Owner asked for the fixes after the combined browser check found the stuck-"pending" defect ("go ahead" on writing the fix), then "you try applying it" (M79) and "review it, do a pre-write and apply it" (M80). Local files: `20261023000079_marketplace_phase9_isbn_match_metadata_state.sql` and `20261023000080_marketplace_phase9_manual_card_and_current_match_state.sql` (slice 5a follow-ups).
+
+Effects: both replace only the body of `marketplace_sec.phase9_owner_ux_metadata_state(uuid)` with `CREATE OR REPLACE` (same signature, STABLE, SECURITY DEFINER, `search_path=''`; owner and ACL kept). No table, column, grant, trigger, bucket or data change. M79: a finished exact-ISBN match (`accepted_metadata_match`) with no chosen edition reads `ambiguous` instead of `pending`. M80 (supersedes M79's body): that rule applies only while the edition state's `source_lookup_id` is that match for the card's current query identity, it is the newest lookup row, and no open/in_progress/retry_scheduled job exists; a manually added card (`input_id IS NULL`) with no lookup row and no running job also reads `ambiguous`.
+
+Status: M79 APPLIED_VERIFIED, M80 APPLIED_VERIFIED on project `ahntbtktjjmvfosgkmgn` (re-verified with `get_project_url` before applying). Applied with the Supabase MCP `execute_sql` (the Owner's own SQL-editor run of M79 did not change the function on readback; `apply_migration` stays declined); no `schema_migrations` row and no live version, same as M78. Preflight: read-only SELECT of the live function body (M79 present, M80 absent) and of the `image_extraction_jobs.status` CHECK constraint. Readback after M80: prosecdef true, provolatile `s`, `search_path=""`, ACL `{postgres=X/postgres}`, new body present; the card states in the test scan read as designed (manual cards and the finished-ISBN card `ambiguous`, a card with a chosen edition `selected`).
+
+Verification: `supabase/tests/phase9/phase9OwnerIsbnEditionLookup.integration.test.mjs` 36/36 (red-first for both). Reviews: M79 by Argon and Codex sol; M80 by Argon and free GLM; findings and fixes in tracker 38 section 32. Rollback: re-create the M69 body (select `selected` when the projection selection exists, else the legacy function) with `CREATE OR REPLACE`; no data to restore. Residual risk: commit safety of `ambiguous` was read statically from M69 (the saved-choice gate), not run against the deployed commit function. Migration history: M78, M79 and M80 are applied but have no `schema_migrations` rows; the repair command and its precondition are in tracker 38 section 33, follow-up A (not run).

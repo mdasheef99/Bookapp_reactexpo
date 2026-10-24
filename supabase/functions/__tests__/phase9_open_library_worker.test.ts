@@ -3,9 +3,15 @@ import {OpenLibraryEditionOptionsAdapter} from '../_shared/imageInventory/metada
 import {GoogleBooksAdapter} from '../_shared/imageInventory/metadata/googleBooks';
 import {runMetadataWorkerBatch} from '../../../workers/phase9-metadata-worker';
 import {editionWorkerFixture} from './fixtures/phase9/editionOptionsWorker';
+import {buildMetadataQueryIdentity} from '../_shared/imageInventory/metadata/queryIdentity';
+import recordedIsbn from './fixtures/phase9/openLibraryIsbnResponses.json';
 
-function setup(verifiedGoogle=true) {
+function setup(verifiedGoogle=true,isbnMode=false) {
  const fixture=editionWorkerFixture();
+ if(isbnMode)Object.assign(fixture.current(),{title:'',authors:[],language:'und',
+  isbnClue:'9780306406157',inputId:null,observationId:null,
+  queryIdentity:buildMetadataQueryIdentity({strategy:'isbn',title:'',authors:[],
+   isbnClue:'9780306406157',language:'und',editionClues:[]}).key});
  fixture.current().providerPolicies=[...(fixture.current().providerPolicies as unknown[]),{
   adapterKey:'open_library',adapterVersion:'1.0.0',enabled:true,matchingAllowed:true,
   storageAllowed:true,reuseAllowed:true,policyVersion:1,
@@ -14,6 +20,9 @@ function setup(verifiedGoogle=true) {
  const adapter=new OpenLibraryEditionOptionsAdapter({
   timeoutMs:1000,maxResponseBytes:64000,fetcher:async address=>{
    const url=new URL(String(address));urls.push(url);
+   if(isbnMode)return new Response(JSON.stringify(url.pathname==='/search.json'?recordedIsbn.search
+    :url.pathname==='/books/OL100M.json'?recordedIsbn.edition:recordedIsbn.author),
+    {headers:{'content-type':'application/json'}});
    const raw=url.pathname==='/search.json'?{docs:[{key:'/works/OL1W'}]}
     :url.pathname.endsWith('/editions.json')?{entries:[{key:'/books/OL100M',title:'The Fixture Book',
      authors:[{key:'/authors/OL1A'}],languages:[{key:'/languages/eng'}],isbn_13:['9780306406157'],
@@ -48,6 +57,27 @@ it('routes directly to independently permitted OL when Google retention is uncon
  expect(f.fixture.calls.filter(call=>call.name==='phase9_register_edition_options_provider_call_v1')
   .map(call=>[call.parameters.p_call_sequence,call.parameters.p_call_stage])).toEqual([[0,'search'],[1,'editions'],[2,'author:OL1A']]);
  expect(f.fixture.saved.get('candidate-1')?.rows[0].metadata?.adapterKey).toBe('open_library');
+});
+it('runs a hand-added ISBN card through worker fencing and direct-edition HTTP stages (slice 5 §6)',async()=>{
+ const f=setup(false,true);
+ expect((await f.run()).results).toEqual([{outcome:'edition_options_available'}]);
+ expect(f.urls.map(url=>url.pathname)).toEqual(['/search.json','/books/OL100M.json','/authors/OL1A.json']);
+ expect(f.fixture.calls.filter(call=>call.name==='phase9_register_edition_options_provider_call_v1')
+  .map(call=>[call.parameters.p_call_sequence,call.parameters.p_call_stage]))
+  .toEqual([[0,'search'],[1,'edition'],[2,'author:OL1A']]);
+ expect(f.fixture.saved.get('candidate-1')?.rows[0]).toMatchObject({ordinal:0,
+  eligibility:'eligible',metadata:{isbn13:'9780306406157',language:'fr'}});
+});
+it('runs a hand-added title card through existing worker context and author stages (slice 5 AC5a-17)',async()=>{
+ const f=setup(false);Object.assign(f.fixture.current(),{inputId:null,observationId:null});
+ expect((await f.run()).results).toEqual([{outcome:'edition_options_available'}]);
+ expect(f.urls.map(url=>url.pathname)).toEqual(['/search.json','/works/OL1W/editions.json','/authors/OL1A.json']);
+});
+it('fetches the exact edition for a scanned card with only an ISBN clue (slice 5 AC5a-20)',async()=>{
+ const f=setup(false,true);Object.assign(f.fixture.current(),{inputId:'input-1',observationId:'observation-1'});
+ expect((await f.run()).results).toEqual([{outcome:'edition_options_available'}]);
+ expect(f.urls[1].pathname).toBe('/books/OL100M.json');
+ expect(f.fixture.saved.get('candidate-1')?.rows).toHaveLength(1);
 });
 it('keeps verified Google results preferred and makes no OL GET',async()=>{
  const f=setup();expect((await f.run()).results[0].outcome).toBe('edition_options_available');

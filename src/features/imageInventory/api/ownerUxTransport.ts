@@ -64,6 +64,7 @@ const operationErrors: Record<OwnerUxAction, ReadonlySet<OwnerUxErrorCode>> = {
     read_candidate_edition_choices: new Set(['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_REQUEST_INVALID', 'P9_NOT_FOUND', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT', 'P9_CANDIDATE_VERSION_CONFLICT', 'P9_IDEMPOTENCY_MISMATCH', 'P9_INTERNAL_ERROR']),
     request_candidate_edition_options: new Set(['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_REQUEST_INVALID', 'P9_NOT_FOUND', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT', 'P9_CANDIDATE_VERSION_CONFLICT', 'P9_IDEMPOTENCY_MISMATCH', 'P9_INTERNAL_ERROR']),
     select_candidate_edition: new Set(['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_REQUEST_INVALID', 'P9_NOT_FOUND', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT', 'P9_CANDIDATE_VERSION_CONFLICT', 'P9_IDEMPOTENCY_MISMATCH', 'P9_INTERNAL_ERROR']),
+    set_candidate_isbn: new Set(['P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_REQUEST_INVALID', 'P9_NOT_FOUND', 'P9_STATE_CONFLICT', 'P9_VERSION_CONFLICT', 'P9_CANDIDATE_VERSION_CONFLICT', 'P9_IDEMPOTENCY_MISMATCH', 'P9_INTERNAL_ERROR']),
     discover_scan_session: new Set([
         'P9_AUTH_REQUIRED',
         'P9_OWNER_NOT_AUTHORIZED',
@@ -208,7 +209,7 @@ export async function invokeOwnerUx<Action extends OwnerUxAction>(
                 (data as OwnerCandidatePage).sessionVersion !== null
             ))
         ) throw internalError();
-        if ((action === 'read_candidate_edition_choices' || action === 'select_candidate_edition')
+        if ((action === 'read_candidate_edition_choices' || action === 'select_candidate_edition' || action === 'set_candidate_isbn')
             && 'candidateId' in request && 'sessionId' in data && 'candidateId' in data
             && (data.sessionId !== request.sessionId || data.candidateId !== request.candidateId)) throw internalError();
         return data;

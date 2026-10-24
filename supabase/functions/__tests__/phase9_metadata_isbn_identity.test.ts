@@ -3,8 +3,17 @@ import {
   buildProviderCacheIdentity,
   normalizeIsbnClue,
 } from '../_shared/imageInventory/contracts';
+import { decodeMetadataJobContext } from '../_shared/imageInventory/runtime/metadataJobContext';
+import { requestFromMetadataContext } from '../_shared/imageInventory/runtime/metadataProductionGateway';
+import { explicitContext } from './fixtures/phase9/editionOptionsWorker';
 
 describe('Phase 9 Unit 5A ISBN and query identity', () => {
+  it('rebuilds the ISBN-only key from an edition context with empty identity text (slice 5 §6)', () => {
+    const key = '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "isbn", "9780306406157", "", [], "und", []]';
+    const context = decodeMetadataJobContext({...explicitContext,title:'',authors:[],
+      isbnClue:'9780306406157',language:'und',publisherClue:null,inputId:null,observationId:null,queryIdentity:key});
+    expect(requestFromMetadataContext(context).query.key).toBe(key);
+  });
   test.each([
     ['0-306-40615-2', '0306406152', '9780306406157'],
     ['0 8044 2957 X', '080442957X', '9780804429573'],

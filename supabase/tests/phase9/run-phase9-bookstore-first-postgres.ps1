@@ -114,17 +114,15 @@ if ($IncludeEditionPicker) {
     '20261007000067_marketplace_phase9_edition_picker_operation_fences.sql',
     '20261007000068_marketplace_phase9_edition_picker_worker_completion.sql',
     '20261008000069_marketplace_phase9_edition_picker_commit_cleanup.sql',
-    '20261008000070_marketplace_phase9_edition_picker_confirmation.sql'
-  )
-}
-
-if ($IncludeOpenLibrary) {
-  # Owner-authorized native proof only; shared application and activation remain separate.
-  $migrations += @(
+    '20261008000070_marketplace_phase9_edition_picker_confirmation.sql',
     '20261010000071_marketplace_phase9_edition_picker_selection_eligibility.sql',
     '20261010000072_marketplace_phase9_edition_picker_superseded_jobs.sql',
     '20261011000073_marketplace_phase9_open_library_edition_options.sql',
-    '20261012000074_marketplace_phase9_open_library_author_isolation.sql'
+    '20261012000074_marketplace_phase9_open_library_author_isolation.sql',
+    '20261016000076_marketplace_phase9_edition_explicit_matching.sql',
+    '20261017000075_marketplace_phase9_edition_picker_exhausted_lookup_recovery.sql',
+    '20261017000077_marketplace_phase9_edition_matching_variants.sql',
+    '20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql'
   )
 }
 
@@ -221,9 +219,9 @@ try {
     Invoke-PsqlFile $dbName (Join-Path $root "supabase\migrations\$migration") | Out-Null
   }
   if ($IncludeOpenLibrary) {
-    Write-Output 'Open Library native proof uses M01-M62 + M65-M74; M09 and M63/M64 excluded'
+    Write-Output 'Open Library native proof uses M01-M62 + M65-M78; M09 and M63/M64 excluded'
   } elseif ($IncludeEditionPicker) {
-    Write-Output 'Edition picker unchanged prerequisite chain M01-M62 + M65-M70 applied; M63/M64 excluded'
+    Write-Output 'Edition picker unchanged prerequisite chain M01-M62 + M65-M78 applied; M63/M64 excluded'
   } elseif ($IncludeUnit6gBaseline) {
     Write-Output 'Unit 6G migration chain through M56 applied in the disposable database'
   } elseif ($IncludeU8C) {

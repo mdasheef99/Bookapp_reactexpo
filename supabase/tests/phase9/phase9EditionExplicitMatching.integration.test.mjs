@@ -46,6 +46,7 @@ before(async () => {
     '20261011000073_marketplace_phase9_open_library_edition_options.sql',
     '20261012000074_marketplace_phase9_open_library_author_isolation.sql',
     ...(baseline ? [] : [M76]), ...(m77Baseline ? [] : [M77]),
+    '20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql',
   ]) await db.exec(fs.readFileSync(migrationPath(file), 'utf8'));
 });
 after(async () => { await db?.close(); });
@@ -89,7 +90,7 @@ test('opt-in reads add reasons; legacy reads keep the exact legacy shape', { ski
   await headers();
   const value = await scalar(readSql(f));
   assert.deepEqual(value.rows.map(entry => entry.rejectionReason), [null, 'author_differs']);
-  await headers('bookconnect/edition-reasons-v2');
+  await headers('bookconnect/edition-reasons-v3');
   assert.deepEqual(await scalar(readSql(f)), legacy);
   await headers(null);
 });
