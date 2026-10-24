@@ -57,6 +57,17 @@ Root specifications:
 Clubs has its own `TRACKER.md` (current handoff), `DECISIONS.md`,
 `PAGE-REFINEMENT-PROCESS.md`, `SDD-01-ui-overhaul.md` and review records.
 
+## `docs/user/library/` — Library
+
+- [Library roadmap](../docs/user/library/LIBRARY-ROADMAP.md) — Library tracks;
+  [Library tracker](../docs/user/library/TRACKER.md) — work records and handoff.
+- [SDD-10 — Notes retrieval](../docs/user/library/SDD-10-notes-retrieval.md) —
+  per-book note search, swipe browsing, On this day and the Saved Pages UI removal.
+- [SDD-11 — Notes and books organising](../docs/user/library/SDD-11-organising.md)
+  — book labels and note collections.
+- [Library build and review process](../docs/user/library/REVIEW-PROCESS.md) —
+  unit briefs, whole-branch reviews and review-check guidance.
+
 ## Other `docs/` folders
 
 | Folder | Contents | Treat as |

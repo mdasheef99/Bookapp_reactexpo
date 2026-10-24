@@ -62,6 +62,28 @@ Zustand store, module-level cache or AsyncStorage key holding per-user data must
 add its own step to `cleanPreviousUserState`.** Known gap: recent library
 searches (`src/hooks/useRecentSearches.ts`, AsyncStorage) are not cleared.
 
+## Library note state
+
+- `src/features/books/notes/noteDeck.ts` defines the AsyncStorage key
+  `library_noteSwipeOrder:v1:<userId>`; `app/(tabs)/library/notes-swipe.tsx`
+  reads and writes the user's `shuffle`, `newest` or `oldest` preference.
+- `src/components/library/notes-swipe/useNoteSwipeMotion.ts` stores the
+  first-visit hint marker at `library_noteSwipeHint:v1:<userId>`.
+  These keys are scoped by user ID; `cleanPreviousUserState` does not remove them.
+- `src/features/books/notes/manualNoteContract.ts` defines actor-scoped
+  `library-note-deck` query keys for the index and individual cards.
+  `noteDeckCache.ts` shares in-flight card requests through a `WeakMap` keyed
+  by QueryClient, with user/note IDs identifying each request; entries are
+  removed when requests settle.
+- `src/features/books/notes/useManualNotes.ts` keeps save-receipt deduplication,
+  deletion tombstones and card-retention counts per QueryClient, resetting its
+  module memory on auth user-ID changes. `useNoteDeck.ts` retains a bounded
+  window of cards and releases it on movement, blur or unmount.
+- `src/features/books/notes/noteNavigation.ts` stores reader/composer return
+  contexts (including swipe scope, category, order, seed and position) in a
+  module Map; contexts are checked against actor/book IDs and cleared on auth
+  user-ID changes.
+
 ## Logout
 
 Profile and Settings both call `useAuth().signOut`, which delegates to

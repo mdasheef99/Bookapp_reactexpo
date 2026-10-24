@@ -14,6 +14,7 @@ relevant tracker.
 | Phase 9 database tests (real Postgres) | PowerShell runner with a disposable local Postgres; needs `initdb`, `pg_ctl` and `psql` on PATH | `supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1` |
 | Phase 6 database tests | SQL integration scripts and PowerShell concurrency scripts | `supabase/tests/phase6_*` |
 | Clubs database tests | Node runner that needs **Docker** (starts a disposable PostGIS 17 container) | `supabase/tests/clubs/` |
+| Library organising database tests | Node test runner with an existing PostgreSQL runtime and Node `pg` module; creates a disposable loopback cluster | `supabase/tests/library/libraryOrganising.postgres.test.mjs` |
 | Migration static tests | Jest | `supabase/migrations/__tests__/` |
 | Web end-to-end | Playwright (web export served on `127.0.0.1:8081`) | `e2e/` |
 
@@ -87,7 +88,24 @@ lists of the suites that need it, or they silently run without it.
 The real-Postgres runner accepts the switches `-IncludeU8C`,
 `-IncludeUnit6gBaseline`, `-IncludeMediaCorrection`,
 `-IncludeDuplicateConfirmation`, `-IncludeEditionPicker` and
-`-IncludeOpenLibrary`; read the script header before use.
+`-IncludeOpenLibrary`; read the script header before use. `-IncludeOpenLibrary`
+implies `-IncludeEditionPicker`, whose migration list also includes the Open
+Library and typed-ISBN lookup SQL files.
+
+Library organising verification has no npm wrapper; run it directly with an
+existing runtime configured:
+
+```powershell
+$env:LIBRARY_PG_BIN = '<existing PostgreSQL 17 bin directory>'
+$env:LIBRARY_PG_TOOLS_NODE_MODULES = '<existing node_modules directory containing pg>'
+node --test supabase/tests/library/libraryOrganising.postgres.test.mjs
+```
+
+The harness loads `supabase/tests/library/libraryOrganisingBaseline.sql` and
+the book-label and note-collection migration files named in 03. Optional
+`LIBRARY_LABELS_MIGRATION` and `LIBRARY_COLLECTIONS_MIGRATION` override those
+SQL paths. It starts `initdb`/`postgres` on `127.0.0.1` at an ephemeral port,
+then stops the cluster with `pg_ctl` and removes its temporary directory.
 
 `phase9CompactReviewScript.integration.test.mjs` loads the production compact
 review validator and shared app fixtures directly from TypeScript, then checks
@@ -125,6 +143,15 @@ patterns. Read them before adding code to these modules:
   symbols and RPC names, and checks that their server functions remain in SQL.
 - `src/features/marketplace/services/__tests__/consumerDiscoveryService.test.ts`
   asserts consumer discovery never reads `store_inventory`.
+
+`npm.cmd run lint:library` uses `eslint.config.js` and
+`eslint-rules/book-section/config.js`. The `STRICT_FILES` list includes note
+search, the swipe route/deck components and hooks, and the On-this-day helper
+and component. In strict files, `no-raw-style-values`,
+`require-accessible-name` and `no-fabricated-ratings` are errors; other scoped
+files receive warnings, with raw-style checks disabled for `RAW_VALUE_ALLOW_LIST`.
+`eslint-rules/book-section/__tests__/config.test.js` checks the exact ordered
+strict list, path existence and resolved rule severity.
 
 ## CI (GitHub Actions)
 

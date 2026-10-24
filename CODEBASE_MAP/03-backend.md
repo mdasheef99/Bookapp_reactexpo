@@ -132,6 +132,11 @@ then `npm run start:phase9:<same>-worker`. Helpers: `npm run invoke:phase9:worke
   in `docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/supporting/database-current-vs-target.md`.
 - Applied migrations are never edited. Corrections are new, additive migrations.
 - Static tests for migrations live in `supabase/migrations/__tests__/`.
+- Library organising SQL files are
+  `supabase/migrations/20261023190000_library_book_labels.sql` (label and
+  book-label tables) and
+  `supabase/migrations/20261023190100_library_note_collections.sql`
+  (collection/item tables and the composite owner key on `reading_notes`).
 - `LIVE_MIGRATION_HISTORY_2026-03-06.md` is a historical snapshot only.
 
 ## Storage buckets
