@@ -1,6 +1,6 @@
 # 01 — App Structure
 
-**Last checked:** 2026-10-18, against the code and the documents it cites.
+**Last checked:** 2026-10-24, against the code and the documents it cites.
 
 ## Stack
 
@@ -20,8 +20,9 @@ The `@/` import alias maps to `src/`. The app entry point is `expo-router/entry`
 3. Sign in with phone OTP. `app/(auth)/verify-otp.tsx` hard-codes a development
    test phone and shows its code hint on screen; that number only works if it is
    also enabled in Supabase Auth settings (see `.env.example`).
-4. Playwright tests need a built `dist/` (served by `_serve.js` on port 8081)
-   and Microsoft Edge at the path hard-coded in `playwright.config.ts`.
+4. The default Playwright suite needs a built `dist/` (served by `_serve.js` on
+   port 8084) and Microsoft Edge at the path hard-coded in `playwright.config.ts`.
+   Library accessibility tests use a separate dev-server config (see 06).
 
 ## Top-level layout
 
@@ -75,11 +76,14 @@ Tabs, in order: **My Library**, **Exchange**, **Marketplace**, **Clubs**, **Prof
 
 | Area | Routes |
 | --- | --- |
-| Library | `library/index`, `library/search`, `library/[bookId]`, `library/notes`, `library/note` (note reader), `library/note-compose` (write or scan a note), `library/notes-swipe` (all-notes or per-book deck) |
+| Library | `library/index`, `library/search`, `library/stats`, `library/[bookId]`, `library/review`, `library/notes`, `library/note` (note reader), `library/note-compose` (write or scan a note), `library/notes-swipe` (all-notes or per-book deck) |
 | Exchange (P2P) | `exchange/index`, `exchange/create`, `exchange/[listingId]`, `exchange/my-transactions`, `exchange/transaction/[transactionId]` |
 | Marketplace (stack) | `marketplace/index` (search), `marketplace/book/[listingId]` (one public listing's detail), `marketplace/store/[storeId]` (public store page), `marketplace/cart`, `marketplace/requests/index`, `marketplace/requests/[requestId]` |
 | Clubs | `clubs/index`, `create`, `authors`, `invitations`, `venues`, `venues/[venueId]`, and per club `clubs/[clubId]/`: `index`, `manage`, `events`, `events/create`, `events/[eventId]/edit`, `discussion`, `discussion/[topicId]`, `reading`, `nominate`, `invite`, `applications`, `venues` |
 | Profile | `profile/index`, `edit`, `settings`, `addresses`, `credit-history`, `notifications`, `notification-settings` |
+
+The Library stack wraps its screens in `LibraryTypographyProvider` and
+`BookFeedbackProvider`; the Clubs stack uses `ClubsFontProvider`.
 
 ### `app/(store-owner)/` — Store Owner console
 
@@ -99,6 +103,8 @@ Visible tabs: **Dashboard**, **Inventory**, **Store View**, **Orders**, **Subscr
 
 Inventory is where books are scanned, reviewed and added. Store View is where
 already-added stock is managed and published. They are deliberately separate.
+The scan stack owns `CaptureWorkflowProvider`, shared by capture, preview and
+session screens (`app/(store-owner)/inventory/scan/_layout.tsx`).
 
 ### Other
 

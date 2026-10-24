@@ -1,6 +1,6 @@
 # 04 — Feature Modules
 
-**Last checked:** 2026-10-18, against the code and the documents it cites.
+**Last checked:** 2026-10-24, against the code and the documents it cites.
 
 Each module lives in `src/features/<name>/`. Typical subfolders are `services/`
 or `api/` (backend calls), `hooks/` or `queries/` (TanStack Query), `screens/`,
@@ -29,8 +29,8 @@ Store Owner gate, onboarding and console basics.
   `setup_status = incomplete` and `selling_status = not_allowed`. Selling becomes
   `allowed` only when the Owner completes setup through `store-profile`, which
   checks profile, hours, fulfillment, return policy, payout, agreements and an
-  active subscription. Rejection keeps `not_allowed`; suspend and restrict set
-  `restricted`.
+  trialing, active or grace-period subscription. Rejection keeps `not_allowed`;
+  suspend and restrict set `restricted`.
 - Screens: `StoreOwnerGateScreen`, `StoreOnboardingScreen`,
   `StoreReviewStatusScreen`, `StoreSetupChecklistScreen`, `StoreDashboardScreen`,
   `StoreProfileScreen`, `SubscriptionStatusScreen`.
@@ -39,8 +39,8 @@ Store Owner gate, onboarding and console basics.
   `InventoryBulkActions`. These are the old Phase 3/4 manual inventory UI. No
   route mounts them; they are reachable only from their own tests. Do not extend
   them; inventory work belongs in Image inventory and Store View.
-- **Still live despite living here:** `components/InventoryFilterPanel.tsx` is
-  imported by the legacy `StoreInventoryScreen` only, so change it carefully.
+- `components/InventoryFilterPanel.tsx` also belongs to the legacy UI; its only
+  caller is `StoreInventoryScreen`.
 
 ### Image inventory (Phase 9) — `src/features/imageInventory/`
 
@@ -50,7 +50,7 @@ let the server read spines and look up metadata, review each detected book
 
 | Folder | Contents |
 | --- | --- |
-| `api/` | Backend calls. Through the `phase9-owner-ingestion` Edge Function: `captureService`, `ownerUxService`/`ownerUxTransport`, `ownerBatchReviewService`, `ownerEditionPickerService`/`Commands`, `publicationService`. Direct SQL RPCs instead: `ownerCorrectionService` (see 03); `ownerInventoryReadService` now holds only the owner-inventory cache contract version and filter types |
+| `api/` | Backend calls. Through the `phase9-owner-ingestion` Edge Function: `captureService`, `ownerUxService`/`ownerUxTransport`, `ownerBatchReviewService`, `ownerEditionPickerService`/`ownerEditionPickerCommands`, `publicationService`. Direct SQL RPCs instead: `ownerCorrectionService` (see 03); `ownerInventoryReadService` now holds only the owner-inventory cache contract version and filter types |
 | `contracts/` | Client-side Zod contracts mirroring the server contracts |
 | `capture/` | Capture workflow context, upload transport, cancellation, duplicate-image confirmation, input removal |
 | `review/` | Compact drafts, edition-selection drafts, missed-book form, leave guard |
@@ -112,7 +112,7 @@ Customer-facing search and store pages.
 ### Commerce (Phase 6) — `src/features/marketplace/commerce/`
 
 Single-store cart, unpaid order requests, Owner decisions, holds and expiry, up
-to `payment_ready`. No payment, pickup or settlement.
+to `payment_ready`. No payment, pickup fulfillment or settlement.
 
 - Domain: `vocabulary.ts`, `schemas.ts`, `eligibility.ts`, `timeEngine.ts`.
 - Services: `customerCommerceService`, `ownerCommerceService`, `commandIdentity`,
@@ -128,7 +128,8 @@ to `payment_ready`. No payment, pickup or settlement.
 
 Personal library, book search and reading notes. `booksService` searches Google
 Books and Open Library and reads/writes `books` and `user_books`;
-`notesService` handles notes; `hooks/useSearchBookActions.ts` holds the
+`notesService` defines note types and category presentation; `notes/manualNotesGateway.ts`
+handles note reads/writes. `hooks/useSearchBookActions.ts` holds the
 search result actions; `utils/libraryShelf.ts` supplies the shelf
 filters and counts, and `src/components/library/LibraryShelf.tsx` renders the
 shelf.
@@ -156,6 +157,18 @@ Library note retrieval entry points:
   calendar day. `src/components/library/history/OnThisDayLine.tsx` uses it
   with the reading-history query and Library Home's book titles, and refreshes
   its calendar on local midnight and app/window focus.
+
+Other Library entry points:
+
+- `history/readingHistoryGateway.ts` and its hooks own reads, progress, reading
+  goals and statistics; `app/(tabs)/library/stats.tsx` renders the statistics.
+- `services/bookReviewService.ts` and `reviews/useReviewWrite.ts` serve
+  `app/(tabs)/library/review.tsx`.
+- `notes/captureSession.ts`, `notes/captureAdapter.ts` and
+  `services/ocrService.ts` serve page capture and reviewed OCR in the note
+  composer; cloud OCR calls `ocr-fallback` (see 03).
+- `export/` loads and formats Library CSV, notes Markdown/PDF and passage cards;
+  `src/components/library/export/` holds the export UI.
 
 `books` can be reference data for the marketplace, but it is **not** the
 marketplace's canonical book catalogue.

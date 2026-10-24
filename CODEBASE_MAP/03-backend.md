@@ -1,6 +1,6 @@
 # 03 — Backend: Supabase, Edge Functions and Workers
 
-**Last checked:** 2026-10-18, against the code and the documents it cites.
+**Last checked:** 2026-10-24, against the code and the documents it cites.
 
 There is **one** development Supabase project, shared by every checkout and
 branch: `ahntbtktjjmvfosgkmgn`. Read 07 before any migration work.
@@ -28,8 +28,9 @@ missing methods there when a new test needs them.
 | RPCs (`supabase.rpc`) | Clubs commands, Phase 6 commerce commands and safe reads, public discovery, and one Phase 9 exception: `ownerCorrectionService.ts` (add a manual candidate) |
 | Edge Function `phase9-owner-ingestion` | Most Phase 9 Owner actions (scan sessions, review, Add to Inventory, edition picker, publication) and all Store View management, called from `src/features/imageInventory/api/*` and `src/features/storeView/api/*` |
 | Direct Storage upload | The client uploads scan images straight to Storage with a signed upload URL issued by the function (`capture/uploadTransport.ts`). On upload completion the function downloads the object once, checks its size and records its SHA-256 hash; the media worker later checks the stored bytes against that hash. |
-| Realtime (`supabase.channel`) | Credit balance and credit events (`src/features/credits/services/creditService.ts`) and the commerce notification inbox (`notificationsService.ts`) |
+| Realtime (`supabase.channel`) | `credit_balance:<userId>` and `credit_events:<userId>` (`src/features/credits/services/creditService.ts`); `commerce-inbox:<userId>` (`src/features/notifications/services/notificationsService.ts`) |
 | Edge Functions `store-application`, `store-profile` | Store onboarding and store profile updates. `store-review` (platform review) has no in-app caller; review happens outside the app. |
+| Edge Function `ocr-fallback` | Library page-text recognition through `src/features/books/services/ocrService.ts`, after explicit upload consent; separate from Phase 9 spine analysis |
 
 Inside the Edge Function, `_shared/imageInventory/runtime/ownerIngestion.ts`
 dispatches each request. Batch review, Store View and publication requests have
@@ -54,7 +55,8 @@ checks are separate from the gateway setting.
 | `store-profile` | Owner storefront/profile updates | default |
 | `commerce-scheduler` | Phase 6 timed-deadline scheduler, invoked by cron with its own secret | **not** JWT (`verify_jwt = false`) |
 | `commerce-task-worker` | Phase 6 task execution; service-role authorization | required |
-| `send-notification` | Push delivery for legacy (non-marketplace) notifications; commerce notifications are delivered by `commerce-task-worker` | required |
+| `send-notification` | Push delivery for legacy (non-marketplace) notifications; optionally checks `x-cron-secret` when `SEND_NOTIFICATION_CRON_SECRET` is configured; commerce notifications are delivered by `commerce-task-worker` | required |
+| `ocr-fallback` | Library cloud page OCR; authenticates the user and requires a durable quota adapter. The checked-in entry point supplies none, so valid authenticated requests return `CLOUD_DISABLED`. | default |
 | `wishlist-notify` | Queues wishlist-match notification deliveries (RPC `notify_wishlist_matches`); the handler also requires the `x-cron-secret` header (`WISHLIST_NOTIFY_CRON_SECRET`) | default |
 | `check-membership-limits` | Clubs entitlements | default |
 | `handle-club-downgrade-grace-period` | Clubs downgrade grace period; the handler requires `x-cron-secret` (`CLUB_DOWNGRADE_CRON_SECRET`) | default |
@@ -157,7 +159,8 @@ Supabase MCP.
 | `profile-avatars` | public | User avatars |
 | `club-banners` | public | Club banners |
 
-Older docs may say `store_verification-docs`; the real bucket is
+Older docs may say `store_verification-docs`; the foundation Storage migration
+(`20260619000004_marketplace_foundation_storage.sql`) names it
 `seller-verification-docs`.
 
 ## Security patterns to keep

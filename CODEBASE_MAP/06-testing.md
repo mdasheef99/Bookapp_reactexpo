@@ -1,6 +1,6 @@
 # 06 — Testing
 
-**Last checked:** 2026-10-18, against the code and the documents it cites.
+**Last checked:** 2026-10-24, against the code and the documents it cites.
 
 This file says how to test, not what passed. Results are recorded in the
 relevant tracker.
@@ -16,16 +16,16 @@ relevant tracker.
 | Clubs database tests | Node runner that needs **Docker** (starts a disposable PostGIS 17 container) | `supabase/tests/clubs/` |
 | Library organising database tests | Node test runner with an existing PostgreSQL runtime and Node `pg` module; creates a disposable loopback cluster | `supabase/tests/library/libraryOrganising.postgres.test.mjs` |
 | Migration static tests | Jest | `supabase/migrations/__tests__/` |
-| Web end-to-end | Playwright (web export served on `127.0.0.1:8081`) | `e2e/` |
+| Web end-to-end | Playwright (default suite: web export served on `127.0.0.1:8084`; Library accessibility suite: Expo dev server) | `e2e/` |
 
 ## Jest setup
 
 - Config is in `package.json` (`jest` key): `jest-expo` preset, `@/` alias,
-  `e2e/` and `.worktrees` ignored, Deno imports stubbed through
+  `e2e/`, `.worktrees` and `.wt` ignored, legacy Deno URL imports stubbed through
   `supabase/functions/__tests__/support/edgeFunctionHttpStubs.ts`.
 - `jest.setup.ts` mocks Reanimated, the URL polyfill and Sentry, and sets test
   env vars (Supabase test URL/key, `EXPO_PUBLIC_DEV_SKIP_AUTH=false`,
-  `EXPO_PUBLIC_APP_ENV=development`).
+  `EXPO_PUBLIC_APP_ENV=development`), and pins the ambient font scale to 1.
 - Module mocks: root `__mocks__/` (Expo modules, AsyncStorage, MMKV, router,
   gesture handler, safe area) and `src/lib/__mocks__/supabase.ts`.
 
@@ -39,6 +39,7 @@ npm.cmd test -- --runInBand <path-or-folder>      # focused
 npx.cmd tsc --noEmit                              # type check (not Edge Function entry points; see below)
 npm.cmd run export:web                            # production web export
 npm.cmd run test:e2e:web                          # build web + Playwright
+npm.cmd run e2e:library-a11y                      # separate Library accessibility suite
 npm.cmd run validate:auth-config                  # bypass policy for preview/production
 ```
 
@@ -51,6 +52,11 @@ worker's own `tsconfig.json` includes the shared folders it uses.
 
 `test:e2e:web` first runs `npm run e2e:build:web` (`scripts/e2e-build-web.js`),
 which produces the `dist/` that Playwright serves.
+
+`e2e:library-a11y` uses `playwright.library-a11y.config.ts` and only
+`e2e/library-a11y.spec.ts` (excluded by the default config). It starts or reuses
+an Expo web dev server on port 8083 (`LIBRARY_A11Y_PORT` overrides it); the
+fixture host and placeholder-key prerequisites are in that config.
 
 **Route folders contain brackets** (`(store-owner)`, `[sessionId]`), which break
 Jest's regex path matching. Use `--runTestsByPath`:
@@ -88,9 +94,9 @@ lists of the suites that need it, or they silently run without it.
 The real-Postgres runner accepts the switches `-IncludeU8C`,
 `-IncludeUnit6gBaseline`, `-IncludeMediaCorrection`,
 `-IncludeDuplicateConfirmation`, `-IncludeEditionPicker` and
-`-IncludeOpenLibrary`; read the script header before use. `-IncludeOpenLibrary`
-implies `-IncludeEditionPicker`, whose migration list also includes the Open
-Library and typed-ISBN lookup SQL files.
+`-IncludeOpenLibrary`; read the parameter block and migration branches before
+use. `-IncludeOpenLibrary` implies `-IncludeEditionPicker`, whose migration list
+also includes the Open Library and typed-ISBN lookup SQL files.
 
 Library organising verification has no npm wrapper; run it directly with an
 existing runtime configured:
@@ -139,7 +145,7 @@ patterns. Read them before adding code to these modules:
 - `ownerCorrectionArchitecture.test.ts`, `ownerInventoryReadArchitecture.test.ts`,
   `unit6fArchitecture.test.ts` (same folder) and
   `src/features/storeView/__tests__/storeViewManagementArchitecture.test.ts`.
-  The correction guard scans all non-test `src/` files for removed variant-client
+  The correction guard scans non-test, non-mock `src/` files for removed variant-client
   symbols and RPC names, and checks that their server functions remain in SQL.
 - `src/features/marketplace/services/__tests__/consumerDiscoveryService.test.ts`
   asserts consumer discovery never reads `store_inventory`.
@@ -173,7 +179,7 @@ Read the workflow file for exact triggers before relying on CI coverage.
 | Stores | `src/features/stores/**/__tests__/` |
 | Image inventory (client) | `src/features/imageInventory/__tests__/` |
 | Image inventory (server/workers) | `supabase/functions/__tests__/phase9_*.test.ts`; DB suites in `supabase/tests/phase9/` |
-| Other Edge Functions | `supabase/functions/__tests__/` (store application/profile/review, wishlist notify, Clubs membership limits and downgrade grace period, commerce task worker auth) |
+| Other Edge Functions | `supabase/functions/__tests__/` (store application/profile/review, wishlist notify, Clubs membership limits and downgrade grace period, commerce task worker auth); OCR fallback in `supabase/functions/ocr-fallback/__tests__/` |
 | Store View | `src/features/storeView/__tests__/`, `e2e/store-view-*.spec.ts` |
 | Marketplace + commerce | `src/features/marketplace/*/__tests__/`, `supabase/functions/__tests__/commerce_task_worker_auth.test.ts` |
 | Clubs | `src/features/clubs/**/__tests__/`, `app/(tabs)/clubs/__tests__/`, `supabase/tests/clubs/` |

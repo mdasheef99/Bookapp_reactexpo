@@ -1,6 +1,6 @@
 # Codebase Map
 
-**Last checked:** 2026-10-18, against the code and the documents it cites.
+**Last checked:** 2026-10-24, against the local code and cited documents at `bfd02ef` (`git rev-parse --short HEAD`).
 
 This folder is an orientation guide for anyone (human or AI session) starting work
 on BookConnect. It answers "where does this live, how does it fit together, what

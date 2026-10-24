@@ -1,6 +1,6 @@
 # 09 — Docs Map
 
-**Last checked:** 2026-10-18, against the code and the documents it cites.
+**Last checked:** 2026-10-24, against the code and the documents it cites.
 
 Where the project's documents live and which ones are authoritative.
 
@@ -46,7 +46,7 @@ Root specifications:
 - `phase-9-image-inventory/` — the Phase 9 folder (check `ACTIVE.md` for which phase is active):
   - `SESSION-START.md` (start protocol), `TRACKER.md` (current state and next action), `README.md`;
   - `00`–`06` SDDs (master, data/metadata, extraction pipeline, Owner review/commit, media security, marketplace display, customer photo requests);
-  - `work-units/` — per-unit SDDs and plans (06g batch review, 06h duplicates, 07a commit, 07b publication, 07c Store View, 08 bookstore-first, owner edition picker, …);
+  - `work-units/` — per-unit SDDs and plans (06g batch review, 06h duplicates, 07a commit, 07b publication, 07c Store View, 08 bookstore-first, owner edition picker, …); `post-scan-rework/` holds its overview/decision register and domain SDDs;
   - `trackers/` — numbered evidence logs;
   - `supporting/` — data dictionary, current-vs-target database audit, requirements traceability, scope register;
   - `scripts/` — documentation validators.
@@ -61,6 +61,10 @@ Clubs has its own `TRACKER.md` (current handoff), `DECISIONS.md`,
 
 - [Library roadmap](../docs/user/library/LIBRARY-ROADMAP.md) — Library tracks;
   [Library tracker](../docs/user/library/TRACKER.md) — work records and handoff.
+- [SDD-07 — Book section UI](../docs/user/library/SDD-07-book-section-ui-overhaul.md),
+  [SDD-08 — Export and share](../docs/user/library/SDD-08-export-and-share.md) and
+  [SDD-09 — Reading history](../docs/user/library/SDD-09-reading-history.md) —
+  Library screens, portable exports, reading dates, progress, goals and statistics.
 - [SDD-10 — Notes retrieval](../docs/user/library/SDD-10-notes-retrieval.md) —
   per-book note search, swipe browsing, On this day and the Saved Pages UI removal.
 - [SDD-11 — Notes and books organising](../docs/user/library/SDD-11-organising.md)

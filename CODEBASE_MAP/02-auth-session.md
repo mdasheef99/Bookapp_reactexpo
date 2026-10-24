@@ -1,6 +1,6 @@
 # 02 — Auth and Session
 
-**Last checked:** 2026-10-18, against the code and the documents it cites.
+**Last checked:** 2026-10-24, against the code and the documents it cites.
 
 Sign-in is phone OTP (Indian `+91` numbers) through Supabase Auth. The session lifecycle is
 centralised so that one place owns startup, account switching and logout.
@@ -60,7 +60,23 @@ previous user is only forgotten after cleanup succeeds.
 TanStack Query data in `appQueryClient` is cleared automatically. **Any new
 Zustand store, module-level cache or AsyncStorage key holding per-user data must
 add its own step to `cleanPreviousUserState`.** Known gap: recent library
-searches (`src/hooks/useRecentSearches.ts`, AsyncStorage) are not cleared.
+searches (`src/hooks/useRecentSearches.ts`, AsyncStorage key
+`booktalks_recent_searches` from `src/lib/constants.ts`) are not user-scoped or
+cleared.
+
+Library shelf order (`src/features/books/hooks/useShelfArrangement.ts`) uses
+`library_shelfOrder:v2:<userId>`, with a read fallback to the `v1` key. Reading
+history prompts in `src/components/library/history/FinishPanel.tsx`,
+`NoteProgressPrompt.tsx` and `ReadingDatesSlot.tsx` use
+`library_finishPanel:v1:<actorId>:<readId>`,
+`library_noteProgressPrompt:v1:<actorId>:<readId>` and
+`library_noDatesPrompt:v1:<actorId>:<readId>`. These user-scoped keys survive logout.
+
+`src/store/themeStore.ts` holds device UI state. The module cache in
+`src/features/books/services/booksSearchCache.ts` holds catalogue search pages
+keyed by query, filters and pagination, without user IDs; session cleanup does
+not clear it. `src/features/books/services/bookReviewService.ts` fences review
+writes with an identity revision that changes on user/authentication changes.
 
 ## Library note state
 
@@ -83,6 +99,9 @@ searches (`src/hooks/useRecentSearches.ts`, AsyncStorage) are not cleared.
   contexts (including swipe scope, category, order, seed and position) in a
   module Map; contexts are checked against actor/book IDs and cleared on auth
   user-ID changes.
+- `manualNotesGateway.ts` owns the module-level `noteSaves` coordinator
+  (`noteSaveCoordinator.ts`); auth user-ID changes clear operations and timers
+  and abort reconciliation reads through `setActor`.
 
 ## Logout
 
