@@ -24,6 +24,8 @@ $serverLog = Join-Path $DataDir 'server.log'
 $dataDirCreated = $false
 $serverStarted = $false
 $databaseCreated = $false
+$catalogueDbName = "bookconnect_u8b_${PID}81"
+$catalogueDatabaseCreated = $false
 $exitCode = 1
 
 $initdb = (Get-Command initdb -ErrorAction Stop).Source
@@ -258,6 +260,45 @@ try {
     $u8cAcceptance | ForEach-Object { Write-Output $_ }
     Write-Output 'U8C_REAL_POSTGRES_ACCEPTANCE_PASS'
   }
+
+  # 02a §§7.1/10: keep ALL existing native suites on their exact M78-tail
+  # database. Only the catalogue-link clone receives M79/M80, alignment and M81/M82.
+  # M09/M63/M64 exclusions and the default target remain unchanged.
+  if ($IncludeOpenLibrary) {
+    Invoke-PsqlCommand 'postgres' "CREATE DATABASE $catalogueDbName TEMPLATE $dbName" | Out-Null
+    $catalogueDatabaseCreated = $true
+    foreach ($migration in @(
+      '20261023000079_marketplace_phase9_isbn_match_metadata_state.sql',
+      '20261023000080_marketplace_phase9_manual_card_and_current_match_state.sql'
+    )) {
+      Invoke-PsqlFile $catalogueDbName (Join-Path $root "supabase\migrations\$migration") | Out-Null
+    }
+    $catalogueSetup = & node (Join-Path $PSScriptRoot 'catalogueLinkFixture.mjs') '--native-setup-sql'
+    if ($LASTEXITCODE -ne 0) { throw 'catalogue-link test-schema alignment emission failed' }
+    Invoke-PsqlCommand $catalogueDbName ($catalogueSetup -join [Environment]::NewLine) | Out-Null
+    # §11: date + 000081 is fourteen digits TOTAL; absent M81 is a red test baseline.
+    $catalogueM81 = @(Get-ChildItem -LiteralPath (Join-Path $root 'supabase\migrations') -File |
+      Where-Object { $_.Name -match '^[0-9]{8}000081_marketplace_phase9_catalogue_link_at_add\.sql$' })
+    if ($catalogueM81.Count -gt 1) { throw 'multiple catalogue-link M81 files found' }
+    if ($catalogueM81.Count -eq 1) { Invoke-PsqlFile $catalogueDbName $catalogueM81[0].FullName | Out-Null }
+    Invoke-PsqlFile $catalogueDbName (Join-Path $root 'supabase\migrations\20261026000082_marketplace_phase9_edition_choice_survives_first_save.sql') | Out-Null
+    & node (Join-Path $PSScriptRoot 'phase9CatalogueLinkConcurrency.postgres.mjs') $Port $catalogueDbName $psql
+    if ($LASTEXITCODE -ne 0) { throw 'Catalogue-link native PostgreSQL acceptance failed' }
+    Write-Output 'CATALOGUE_LINK_REAL_POSTGRES_ACCEPTANCE_PASS'
+    # Owner M82 brief: run the same first-save assertions on the disposable clone.
+    $savedFirstSavePort = $env:PHASE9_FIRST_SAVE_NATIVE_PORT
+    $savedFirstSaveDatabase = $env:PHASE9_FIRST_SAVE_NATIVE_DATABASE
+    try {
+      $env:PHASE9_FIRST_SAVE_NATIVE_PORT = "$Port"
+      $env:PHASE9_FIRST_SAVE_NATIVE_DATABASE = $catalogueDbName
+      & node --test (Join-Path $PSScriptRoot 'phase9EditionChoiceFirstSave.integration.test.mjs')
+      if ($LASTEXITCODE -ne 0) { throw 'Edition first-save native PostgreSQL acceptance failed' }
+      Write-Output 'EDITION_FIRST_SAVE_REAL_POSTGRES_ACCEPTANCE_PASS'
+    } finally {
+      $env:PHASE9_FIRST_SAVE_NATIVE_PORT = $savedFirstSavePort
+      $env:PHASE9_FIRST_SAVE_NATIVE_DATABASE = $savedFirstSaveDatabase
+    }
+  }
   $exitCode = 0
 }
 catch {
@@ -267,6 +308,15 @@ finally {
   # Task 8 / EP-AC12: cleanup failures are failures, with evidence retained in command output.
   $cleanupErrors = [Collections.Generic.List[string]]::new()
   $stopVerified = -not $serverStarted
+  if ($catalogueDatabaseCreated -and $serverStarted) {
+    try {
+      Invoke-PsqlCommand 'postgres' "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$catalogueDbName'" | Out-Null
+      Invoke-PsqlCommand 'postgres' "DROP DATABASE IF EXISTS $catalogueDbName" | Out-Null
+      $catalogueExists = Invoke-PsqlCommand 'postgres' "SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname='$catalogueDbName')"
+      if (-not @($catalogueExists | ForEach-Object { "$_".Trim() }).Contains('f')) { throw 'catalogue database removal readback failed' }
+      Write-Output "POSTGRES_TEARDOWN_DATABASE_REMOVED=$catalogueDbName"
+    } catch { $cleanupErrors.Add("catalogue database cleanup: $_") }
+  }
   if ($databaseCreated -and $serverStarted) {
     try {
       $sessions = Invoke-PsqlCommand 'postgres' "SELECT count(*) FROM pg_stat_activity WHERE datname='$dbName'"

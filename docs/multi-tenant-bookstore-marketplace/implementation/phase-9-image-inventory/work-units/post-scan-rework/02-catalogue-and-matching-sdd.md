@@ -37,6 +37,16 @@ slice 8 (Open Library automatic provider, clues, Google off) → slice 9
 
 ## Slice 6 — Catalogue link at Add
 
+**Pass-2 status (2026-10-25, revision 3):** detailed design drafted for review in
+[02a - Slice 6 Catalogue Link at Add](./02a-slice6-catalogue-link-sdd.md). The Owner
+decided its open questions on 2026-10-25 (02a section 14): no catalogue reset in
+slice 6, blocklist deferred to slice 7, canonical-table write revocation in M81, and
+Add tolerating a disappeared saved catalogue ID (AC6-20 to AC6-28). A read-only Argon review was applied. The SDD-2 wording
+these decisions change (slice 7 blocklist, AC7-8 scope, slice 6 migration line, OQ3
+clarification) is listed in 02a section 13 and not yet edited here. No build or migration approval. The ACs below
+retain their approved wording; 02a section 10 refines the test contracts and
+section 14 records the existing-ID/AC6-4 decision (OQ3).
+
 **Goal:** every added book points at its catalogue edition when one can be
 identified (D34).
 
@@ -115,6 +125,9 @@ for AC6-0 to AC6-7; existing commit suites stay green
 ---
 
 ## Slice 7 — Lean catalogue writes, stats and shared cache
+
+**Pass-2 status (2026-10-26):** detailed draft in [02b - Slice 7 Lean Catalogue Writes](./02b-slice7-lean-catalogue-writes-sdd.md); Owner questions/review pending, no build authority; M83 PROPOSED / NOT_CREATED / NOT_APPLIED (M82 belongs to the separate first-save fix).
+02b section 11 lists proposed AC wording refinements: AC7-1/2e activation, AC7-2c translation conflicts, AC7-3 blocklist in Slice 7, AC7-4/5 count semantics/readers, AC7-7 typed shared cache, AC7-8 canonical revocation already in M81 plus MAINTAIN/service denials; additional AC7-11 to AC7-20. Approved AC text below is preserved; unresolved choices are in 02b section 14.
 
 **Goal:** Open Library editions found by any store are kept, so the next store
 needs no call (D33, D39); usage counts guide ordering (D36).

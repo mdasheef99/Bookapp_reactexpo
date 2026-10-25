@@ -882,3 +882,15 @@ and the [verification report](./post-scan-slice4b-verification.md) own counts an
 | AC4-7 / D2-3 | Manual-only recompute in `validateCompactReview`, after the existing choice decision; shared language map and server mirror in `ownerUxValidation`; `compactReviewDraft`, real card dirty-state/Add, coordinator and current-migration SQL parity tests. Covers saved stability, both edition modes including null, input normalization, mixed scripts, blocked ranges and tag subtags. |
 | AC4-10 / D2-6 | Shared `LANGUAGE_OPTIONS` adds kn/te/ml; scan-setup and searchable card chooser selection/accessible-name tests plus script/Add coverage for all three. Customer search filters are unchanged. |
 | AC4-11 / D2-5 / R06 | Variant service/schema/type/constants/cases removed; all non-test `src/` architecture scan, server-definition preservation checks and no-importer search. Manual Add's one offline-disabled mutation remains. |
+
+
+## Post-scan rework slice 6 - pass-2 design mapping (not implementation evidence)
+
+[02a](../work-units/post-scan-rework/02a-slice6-catalogue-link-sdd.md) refines SDD-2 slice 6; [tracker 38 section 35](../trackers/38-post-scan-rework-evidence.md#35-slice-6-pass-2-detailed-design-2026-10-25) records this documentation-only pass. No acceptance is claimed passed; OQ1-OQ4 and OQ6-OQ7 were decided by the Owner on 2026-10-25 (02a section 14); build is not approved. DOC-3 sections 5.1/5.2/17 amendments ship at implementation, not here.
+
+| Authority / checks | Proposed contract and proof |
+|---|---|
+| D34/D35/F5/F17/F46; AC6-0 through AC6-3/8/13 | 02a sections 3-7: scoped private helper, exact ISBN identity, normalized work key, provider-only fields, same-ISBN convergence and two-ISBN/one-work race; proposed catalogue-link SQL/native suites in section 10. |
+| D35/D37/R05/R09/Q18/Q20; AC6-4/5/9-12/14/17-19 | 02a sections 5-7/9: Open Library allow-list, registry/lineage/version admission, no Google creation, conflict savepoint, incumbent/cover/hidden boundaries; the blocklist is deferred to slice 7 (AC6-19 has no slice-6 check). |
+| D40/R01/R04/R06/R10; AC6-6/7/15/16/18/24 | 02a sections 4/7-12: client execution denial, tenant fences, no store data in shared rows, replay/rollback, unchanged Add contracts and old app/worker compatibility; existing commit/M78-M80/architecture suites remain required. |
+| Q15/Q21 and public-read/write privilege boundary | 02a sections 8-9/14: unknown Hobbit provenance, no reset in slice 6, real canonical grants versus RLS, OQ6 revocation in M81 (AC6-24); no provider-ID table or anonymous provider-ID permission introduced. |
