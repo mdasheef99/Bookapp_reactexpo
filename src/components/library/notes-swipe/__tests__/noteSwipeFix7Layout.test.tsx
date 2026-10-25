@@ -4,6 +4,7 @@ import React from 'react';
 import { PixelRatio, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { NoteSwipeCard } from '../NoteSwipeCard';
+import { NoteSwipeStack } from '../NoteSwipeStack';
 import { NoteFullNoteSheet } from '../NoteFullNoteSheet';
 import NotesSwipeScreen from '../../../../../app/(tabs)/library/notes-swipe';
 import { BookButton } from '../../ui/BookButton';
@@ -127,15 +128,25 @@ it('converges at the compact-cover boundary instead of alternating 40/46dp foote
   expect(nativeLine(body, 1)).toBe(26);
 });
 
-it('initializes the Android rounded clipping boundary without adding a visible border', () => {
-  const ui = render(<NotesSwipeScreen />);
-  // Native regression: the uninitialized border inset on the rounded Android
-  // viewport clipped every child, despite nonzero paper/text onLayout bounds.
-  // Device proof covers drawing; Jest protects the explicit native prop boundary.
-  const viewport = flat(ui.getByTestId('note-card-slot-0-inner', hidden));
-  expect(viewport.overflow).toBe('hidden');
-  expect(viewport.borderWidth).toBe(0);
-  expect(viewport.borderRadius).toBeGreaterThan(0);
+it('resets the Android rounded clip border to zero when a loading slot becomes a note', () => {
+  const props = { undercards: [], at: 0, total: 1, reduced: false, hint: false,
+    enabled: true, onMove: jest.fn(), onRead: jest.fn(), onLeave: jest.fn() };
+  const ui = render(<NoteSwipeStack {...props} />);
+  const viewport = () => flat(ui.getByTestId('note-card-slot-0-inner', hidden));
+  // Loading supplies a 1dp border. Removing that native prop on data arrival
+  // leaves Android's rounded padding-box clip invalid: text has layout and
+  // accessibility bounds but does not paint. Explicit zero resets the insets.
+  // Round-4 device probes reproduce this transition with bfd02ef's stack.
+  expect(viewport().borderWidth).toBe(1);
+  for (const reduced of [false, true]) {
+    ui.rerender(<NoteSwipeStack {...props} reduced={reduced} card={mockCard()} />);
+    expect(viewport().overflow).toBe('hidden');
+    expect(viewport().borderWidth).toBe(0);
+    expect(viewport().borderRadius).toBeGreaterThan(0);
+    expect(ui.getByText(mockCard().note.content, hidden)).toBeTruthy();
+    ui.rerender(<NoteSwipeStack {...props} reduced={reduced} />);
+    expect(viewport().borderWidth).toBe(1);
+  }
 });
 
 it('measures converging E/F chrome, four controls and a complete note line in small windows', () => {
