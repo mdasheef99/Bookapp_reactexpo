@@ -96,9 +96,9 @@ writes with an identity revision that changes on user/authentication changes.
   module memory on auth user-ID changes. `useNoteDeck.ts` retains a bounded
   window of cards and releases it on movement, blur or unmount.
 - `src/features/books/notes/noteNavigation.ts` stores reader/composer return
-  contexts (including swipe scope, category, order, seed and position) in a
-  module Map; contexts are checked against actor/book IDs and cleared on auth
-  user-ID changes.
+  contexts (including swipe scope, category, collection filter, order, seed and
+  position) in a module Map; contexts are checked against actor/book IDs and
+  cleared on auth user-ID changes.
 - `manualNotesGateway.ts` owns the module-level `noteSaves` coordinator
   (`noteSaveCoordinator.ts`); auth user-ID changes clear operations and timers
   and abort reconciliation reads through `setActor`.

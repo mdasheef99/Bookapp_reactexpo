@@ -151,7 +151,8 @@ Library note retrieval entry points:
 - `src/components/library/notes-swipe/` holds `NoteSwipeHomeTile`,
   `NoteSwipeCard`, `NoteSwipeStack`, `NoteFullNoteSheet`, `NoteOrderMenu`,
   `NoteDeckChips` and `useNoteSwipeMotion`. Library Home opens the all-notes
-  deck; the per-book Notes screen opens a book-scoped deck at
+  deck; the per-book Notes screen opens a book-scoped deck and a collection's
+  screen opens a collection-scoped deck, all at
   `app/(tabs)/library/notes-swipe.tsx`.
 - `history/onThisDay.ts` matches finished reads from earlier years to a
   calendar day. `src/components/library/history/OnThisDayLine.tsx` uses it
