@@ -18,6 +18,14 @@ export function useCollectionCards(actor: string, id: string, ids: readonly stri
   // is fetched and prepended in live (newest-added-first) order without
   // resetting pages. Returned pages are deduped by note id.
   const key = useMemo(() => ['library-note-deck', actor, 'collection-cards', id] as const, [actor, id]);
+  // The screen builds a fresh array on every render, so the effect must depend
+  // on a stable content signature, not the array identity: depending on `ids`
+  // re-ran this effect after every render, and the unconditional cache write
+  // below notified the observer (TanStack setQueryData dispatches even when the
+  // updater returns the identical data), re-rendering the screen with another
+  // fresh array — a render -> effect -> cache-write -> render loop that crashed
+  // the phone with "Maximum update depth exceeded".
+  const idsKey = JSON.stringify(ids);
   const idsRef = useRef(ids);
   idsRef.current = ids;
   const prevIdsRef = useRef<readonly string[]>(ids);
@@ -25,27 +33,46 @@ export function useCollectionCards(actor: string, id: string, ids: readonly stri
   if (initialBatchRef.current === null) initialBatchRef.current = ids.slice(0, NOTE_SWIPE.batchSize);
   useEffect(() => {
     if (!actor || !id) return;
-    const wanted = new Set(ids);
-    const prev = new Set(prevIdsRef.current);
-    const addedIds = ids.filter(noteId => !prev.has(noteId));
-    prevIdsRef.current = ids;
-    client.setQueryData<{ pages: NoteDeckCard[][]; pageParams: readonly string[][] }>(key, previous => {
-      if (!previous) return previous;
+    const live = idsRef.current;
+    const prevSet = new Set(prevIdsRef.current);
+    prevIdsRef.current = live;
+    const wanted = new Set(live);
+    const addedIds = live.filter(noteId => !prevSet.has(noteId));
+    // Read-only cache inspection never notifies observers, so this check
+    // cannot start a loop. Skip the write entirely when the cached pages
+    // already match the live memberships: the old code called setQueryData on
+    // every run, and even a no-op updater return still dispatches.
+    const cached = client.getQueryData<{ pages: NoteDeckCard[][]; pageParams: readonly string[][] }>(key);
+    let needsPrune = false;
+    if (cached) {
       const seen = new Set<string>();
-      let changed = false;
-      const pages = previous.pages.map(page => {
-        const next = page.filter(card => {
-          if (!wanted.has(card.note.id)) { changed = true; return false; }
-          if (seen.has(card.note.id)) { changed = true; return false; }
+      outer: for (const page of cached.pages) {
+        for (const card of page) {
+          if (!wanted.has(card.note.id) || seen.has(card.note.id)) { needsPrune = true; break outer; }
           seen.add(card.note.id);
-          return true;
+        }
+      }
+    }
+    if (!needsPrune && addedIds.length === 0) return;
+    if (needsPrune) {
+      client.setQueryData<{ pages: NoteDeckCard[][]; pageParams: readonly string[][] }>(key, previous => {
+        if (!previous) return previous;
+        const seen = new Set<string>();
+        let changed = false;
+        const pages = previous.pages.map(page => {
+          const next = page.filter(card => {
+            if (!wanted.has(card.note.id)) { changed = true; return false; }
+            if (seen.has(card.note.id)) { changed = true; return false; }
+            seen.add(card.note.id);
+            return true;
+          });
+          if (next.length !== page.length) changed = true;
+          return next;
         });
-        if (next.length !== page.length) changed = true;
-        return next;
+        if (!changed) return previous;
+        return { ...previous, pages };
       });
-      if (!changed) return previous;
-      return { ...previous, pages };
-    });
+    }
     // A newly added membership id (e.g. another device) is not in the loaded
     // pages. Fetch it and prepend in live order with the stable key: cached
     // cards stay on screen while fetching (no "Loading…" reset).
@@ -82,7 +109,7 @@ export function useCollectionCards(actor: string, id: string, ids: readonly stri
         })();
       }
     }
-  }, [client, key, ids, actor, id, enabled]);
+  }, [client, key, idsKey, actor, id, enabled]);
   const query = useInfiniteQuery({ queryKey: key, initialPageParam: initialBatchRef.current,
     queryFn: async ({ pageParam, signal }) => {
       const guard = captureOrganisingActor(actor); guard();

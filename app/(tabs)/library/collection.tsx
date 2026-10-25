@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useRoute } from '@react-navigation/native';
@@ -20,7 +20,10 @@ export default function CollectionScreen() {
   const { user } = useAuth(), actor = user?.id ?? '', api = useOrganising(actor, 'collections');
   const router = useRouter(), route = useRoute(), colors = useLibraryAppearance(), { notify } = useBookFeedback();
   const group = api.entities.data?.find(row => row.id === collectionId);
-  const ids = collectionIds(api.members.data ?? [], collectionId);
+  // Memoized: collectionIds allocates a new array, and passing a fresh array
+  // identity into useCollectionCards on every render re-ran its effect and
+  // cache write each time (phone crash C4: Maximum update depth exceeded).
+  const ids = useMemo(() => collectionIds(api.members.data ?? [], collectionId), [api.members.data, collectionId]);
   const ready = api.entities.data !== undefined && api.members.data !== undefined;
   const cards = useCollectionCards(actor, collectionId, ids, ready && !!group && !api.isOffline);
   const [pending, setPending] = useState<string[]>([]), live = useRef(''); live.current = `${actor}:${collectionId}`;
