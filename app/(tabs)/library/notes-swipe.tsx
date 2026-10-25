@@ -131,11 +131,17 @@ export default function NotesSwipeScreen() {
   useEffect(() => () => { if (cooldownTimer.current) clearTimeout(cooldownTimer.current); }, []);
   const stackRef = useRef<NoteSwipeControls>(null);
   const [stackHeight, setStackHeight] = useState<number>();
+  const [contentHeight, setContentHeight] = useState<number>();
+  const [stackMinimumHeight, setStackMinimumHeight] = useState(0);
   const { fontScale, height } = useWindowDimensions();
   const constrained = fontScale >= 2 || height <= 640;
   const Chrome = constrained ? ScrollView : View;
-  const chromeBudget = Math.max(MIN_TARGET, (height - insets.top - insets.bottom) * 0.22);
-  const controlsBudget = Math.max(MIN_TARGET, (height - insets.top - insets.bottom) * 0.28);
+  const usableHeight = (contentHeight ?? height) - insets.top - insets.bottom;
+  // Retain the 22:28 chrome/control split, but reserve the stack's measured
+  // minimum first. Window dimensions also include the tab bar on native.
+  const scrollBudget = Math.max(MIN_TARGET * 2, Math.min(usableHeight / 2, usableHeight - stackMinimumHeight));
+  const chromeBudget = Math.max(MIN_TARGET, scrollBudget * 0.44);
+  const controlsBudget = Math.max(MIN_TARGET, scrollBudget - chromeBudget);
   const compactBar = fontScale >= 2 ? { paddingVertical: LIBRARY_SPACING.xxs } : undefined;
   useEffect(() => {
     const previous = previousCollection.current;
@@ -260,7 +266,7 @@ export default function NotesSwipeScreen() {
   const showStateScroll = !showStack;
   const showChrome = populated && !missingCollection;
   return <View style={[styles.page, { backgroundColor: colors.bgPrimary }]}>
-    <View testID="note-swipe-content" aria-hidden={overlayOpen} importantForAccessibility={overlayOpen ? 'no-hide-descendants' : 'auto'} {...(Platform.OS === 'web' && overlayOpen ? { inert: true } as object : {})}
+    <View testID="note-swipe-content" onLayout={event => setContentHeight(event.nativeEvent.layout.height)} aria-hidden={overlayOpen} importantForAccessibility={overlayOpen ? 'no-hide-descendants' : 'auto'} {...(Platform.OS === 'web' && overlayOpen ? { inert: true } as object : {})}
       style={[styles.content, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <Chrome testID="note-swipe-chrome-scroll" style={constrained ? { maxHeight: chromeBudget, flexShrink: 0 } : undefined}>
       <View testID="note-swipe-top-bar" style={[styles.bar, styles.top, compactBar, { backgroundColor: colors.bgPrimary }]}>
@@ -277,7 +283,7 @@ export default function NotesSwipeScreen() {
       </Chrome>
       {showStack ? (
         <View testID="note-stack-wrap" onLayout={event => setStackHeight(event.nativeEvent.layout.height)} style={styles.stackWrap}>
-          <NoteSwipeStack ref={stackRef} availableHeight={stackHeight} card={showCard ? deck.card : undefined} undercards={showCard ? deck.undercards : []} at={deck.at} total={deck.ids.length} reduced={reduced} hint={hint} enabled={focused && !overlayOpen && !sheetCooldown && populated}
+          <NoteSwipeStack ref={stackRef} availableHeight={stackHeight} onMinimumHeight={setStackMinimumHeight} card={showCard ? deck.card : undefined} undercards={showCard ? deck.undercards : []} at={deck.at} total={deck.ids.length} reduced={reduced} hint={hint} enabled={focused && !overlayOpen && !sheetCooldown && populated}
             onMove={deck.move} onRead={openSheet} onCollections={openCollections} onLeave={depart} onCategory={target => {
               if (target !== undefined) applyFilter(target === 'all' ? { kind: 'all' } : { kind: 'category', tag: target }); else cycleFilter();
             }} canCategory={filters.length > 1} categoryKey={selectedFilter.kind === 'collection' ? filterKey(selectedFilter) : deckCategory}><View style={styles.state}>{content}</View></NoteSwipeStack>

@@ -21,6 +21,7 @@ export interface NoteSwipeControls {
 export interface NoteSwipeStackProps {
   ref?: React.Ref<NoteSwipeControls>;
   availableHeight?: number;
+  onMinimumHeight?: (height: number) => void;
   card?: NoteDeckCard;
   undercards: (NoteDeckCard | undefined)[];
   at: number;
@@ -42,7 +43,7 @@ export interface NoteSwipeStackProps {
 // flight ref is non-zero is dropped by `run`). A flight always ends via its own
 // completion, via the position effect, via unmount/enabled-false, or via the safety
 // timer, so an input ~300ms after the previous flight finishes always works.
-export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, total, reduced, hint, enabled, onMove, onRead, onCollections, onLeave, onCategory, canCategory = false, categoryKey = '', children }: NoteSwipeStackProps) {
+export function NoteSwipeStack({ ref, availableHeight, onMinimumHeight, card, undercards, at, total, reduced, hint, enabled, onMove, onRead, onCollections, onLeave, onCategory, canCategory = false, categoryKey = '', children }: NoteSwipeStackProps) {
   const colors = useLibraryAppearance(); const screen = useWindowDimensions();
   const [measuredChrome, setMeasuredChrome] = useState<number>();
   const x = useSharedValue(0); const y = useSharedValue(0); const axis = useSharedValue(0);
@@ -370,7 +371,9 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
   const estimatedChrome = paddingVertical * 2 + (hasMeta ? scaledCaptionLine : 0) + LIBRARY_SPACING.sm * (hasMeta ? 2 : 1) + footerEstimate;
   const cardNeededOneLine = (measuredChrome ?? estimatedChrome) + scaledBodyLine;
   const stageChrome = LIBRARY_SPACING.lg + (LIBRARY_SPACING.xl + UNDER_PEEK_RESERVE);
-  const minStage = Math.min(availableHeight ?? Infinity, Math.max(160, Math.ceil(cardNeededOneLine + stageChrome)));
+  const minimumHeight = Math.max(160, Math.ceil(cardNeededOneLine + stageChrome));
+  useEffect(() => { onMinimumHeight?.(minimumHeight); }, [onMinimumHeight, minimumHeight]);
+  const minStage = Math.min(availableHeight ?? Infinity, minimumHeight);
   const underInner = { backgroundColor: colors.bgSecondary, borderWidth: 1, borderColor: colors.controlBorder };
   // Undercards sit 7dp/14dp inside the top card horizontally so each edge reads as a
   // separate stacked card; the bottom insets reserve a visible strip below the top
@@ -411,6 +414,8 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
 const styles = StyleSheet.create({
   stage: { position: 'relative', overflow: 'hidden', flex: 1, justifyContent: 'center' },
   slotOuter: { position: 'absolute', top: LIBRARY_SPACING.lg, bottom: LIBRARY_SPACING.xl, left: LIBRARY_SPACING.lg, right: LIBRARY_SPACING.lg, borderRadius: LIBRARY_RADIUS.card, shadowOpacity: 0.16, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
-  slotInner: { flex: 1, borderRadius: LIBRARY_RADIUS.card, overflow: 'hidden' },
+  // Initialize Android's rounded clip border insets even on the borderless top
+  // card; an omitted border width can clip all descendants on native Android.
+  slotInner: { flex: 1, borderRadius: LIBRARY_RADIUS.card, borderWidth: 0, overflow: 'hidden' },
   dragHint: { position: 'absolute', bottom: LIBRARY_SPACING.xs, right: LIBRARY_SPACING.md },
 });
