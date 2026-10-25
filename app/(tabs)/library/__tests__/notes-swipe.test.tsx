@@ -144,6 +144,46 @@ beforeEach(() => {
 });
 
 describe('notes-swipe screen states and primaries', () => {
+  it('announces the category inside a dedicated collection', () => {
+    const announce = jest.spyOn(require('react-native').AccessibilityInfo, 'announceForAccessibility');
+    mockParams = { scope: 'collection', collectionId: 'group', order: 'oldest' };
+    mockCollections.entities.data = [{ id: 'group', name: 'Ideas' }];
+    mockDeck = baseDeck({ category: 'quote', categories: ['all', 'quote'], selectedFilter: { kind: 'category', tag: 'quote' } });
+    const ui = renderScreen();
+    expect(announce).toHaveBeenCalledWith('Collection Ideas. Quote. Note 1 of 1.');
+    ui.unmount();
+  });
+  it.each(['refreshing', 'failed'])('does not call a cached missing collection deleted while %s', state => {
+    mockParams = { scope: 'collection', collectionId: 'new-elsewhere', order: 'oldest' };
+    Object.assign(mockCollections.entities, { isFetching: state === 'refreshing', isError: state === 'failed' });
+    const ui = renderScreen();
+    expect(ui.queryByText('This collection no longer exists.')).toBeNull();
+    expect(ui.getByText(state === 'failed' ? "Couldn't load your collections." : 'Loading collection…')).toBeTruthy();
+    fireEvent.press(ui.getByRole('button', { name: 'Try again' }));
+    expect(mockCollections.refresh).toHaveBeenCalledTimes(1);
+    ui.unmount();
+  });
+  it('does not advertise an unavailable collections action offline', () => {
+    mockNetwork.isOffline = true;
+    const ui = renderScreen();
+    const actionCard = ui.UNSAFE_getAllByType(require('react-native').View).find(node => node.props.onAccessibilityAction);
+    expect(actionCard).toBeDefined();
+    expect(actionCard!.props.accessibilityActions.map((action: any) => action.name)).not.toContain('collections');
+    expect(ui.getByRole('button', { name: 'Add to collection' })).toBeDisabled();
+    ui.unmount();
+  });
+  it('lets the collections sheet restore focus without first focusing Read full note', () => {
+    (Platform as any).OS = 'web';
+    (global as any).window = { addEventListener: jest.fn(), removeEventListener: jest.fn() };
+    const ui = renderScreen();
+    fireEvent.press(ui.getByRole('button', { name: 'Add to collection' }));
+    expect(ui.getByText('No collections yet.')).toBeTruthy();
+    fireEvent.press(ui.getByRole('button', { name: 'Done' }));
+    expect((globalThis as any).__bookButtonFocusMocks['Read full note']).not.toHaveBeenCalled();
+    ui.unmount();
+    delete (global as any).window;
+    (Platform as any).OS = 'ios';
+  });
   it('passes the selected category in the Stack guard format so selecting it again is a no-op', () => {
     mockDeck = baseDeck({ category: 'quote', categories: ['all', 'quote'], selectedFilter: { kind: 'category', tag: 'quote' } });
     const ui = renderScreen();
@@ -190,6 +230,9 @@ describe('notes-swipe screen states and primaries', () => {
     mockCollections.entities.isError = true;
     const ui = renderScreen();
     expect(ui.getByTestId('note-card-slot-0', { includeHiddenElements: true })).toBeTruthy();
+    // The slot alone proves nothing (the loading state renders it too): the
+    // cached card's content must be on screen.
+    expect(ui.getByText('body', { includeHiddenElements: true })).toBeTruthy();
     expect(ui.getByText("Couldn't refresh collections.")).toBeTruthy(); ui.unmount();
   });
   it('loading has no primary and shows the loading line inside a quiet three-slot outline', () => {
@@ -246,7 +289,6 @@ describe('notes-swipe screen states and primaries', () => {
     ui = renderScreen();
     expect(ui.getByText('Couldn\'t load your notes.')).toBeTruthy();
     expectSinglePrimary(ui as any);
-    expect(mockBook.refetch).toBeDefined();
     fireEvent.press(ui.getByRole('button', { name: 'Try again' }));
     expect(mockBook.refetch).toHaveBeenCalled();
     ui.unmount();

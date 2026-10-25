@@ -83,6 +83,10 @@ export default function NoteReaderScreen() {
     void manualNoteDeleteAdapter.remove(actorId, bookId, noteId).then(async () => { await removeFromCache(noteId); if (navigation.isFocused()) back(); AccessibilityInfo.announceForAccessibility('Note deleted.'); }).catch((error: unknown) => { setFeedback(error instanceof NoteWriteError ? error.message : 'Deletion was not confirmed. Refresh Notes before trying again.'); setFeedbackError(true); }).finally(() => setDeleting(false));
   } });
   const unavailable = !actorId || !bookId || !noteId || (book.isError && !book.data) || (query.isError && !query.data) || (!query.isPending && !query.data);
+  // If the note becomes unavailable while the collections sheet is open, close
+  // the sheet: otherwise the background stays hidden from assistive tech with
+  // no dialog on screen.
+  useEffect(() => { if (unavailable) setCollectionsOpen(false); }, [unavailable]);
   const meta = query.data ? [
     query.data.tag ? categoryLabel(query.data.tag) : null,
     query.data.page_number == null ? null : `Page ${query.data.page_number}`,

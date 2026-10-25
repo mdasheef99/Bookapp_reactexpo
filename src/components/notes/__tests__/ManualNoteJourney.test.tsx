@@ -21,6 +21,11 @@ import { bookReviewService } from '@/features/books/services/bookReviewService';
 import { supabase } from '@/lib/supabase';
 
 jest.mock('@/features/books/export/captureCard', () => ({ captureCardPng: jest.fn(), releaseCardCapture: jest.fn() }));
+jest.mock('@/components/library/organising/OrganisingSheet', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return { OrganisingSheet: () => React.createElement(View, { testID: 'collections-sheet' }) };
+});
 
 // RN exports are lazy getters. Load the family's primitives during suite initialization,
 // so cold Babel/native-module compilation does not consume the first interaction's timeout.
@@ -70,6 +75,15 @@ let client: QueryClient;
 let noteRecord: ManualNote | null;
 const wrap = (element: React.ReactElement) => <QueryClientProvider client={client}><BookFeedbackProvider>{element}</BookFeedbackProvider></QueryClientProvider>;
 async function settle() { await act(async () => { for (let n = 0; n < 8; n++) await Promise.resolve(); }); }
+it('keeps reader recovery accessible when its note disappears with collections open', async () => {
+  render(wrap(<NoteReaderScreen />));
+  fireEvent.press(await screen.findByRole('button', { name: 'Add to collection' }));
+  expect(screen.getByTestId('collections-sheet')).toBeTruthy();
+  act(() => { client.setQueryData(noteKeys.record('actor', 'book', 'note'), null); });
+  await waitFor(() => expect(screen.queryByTestId('collections-sheet')).toBeNull());
+  expect(screen.getByRole('button', { name: 'Try again' })).toBeEnabled();
+  expect(screen.getByText("This note is missing or couldn't be opened.")).toBeTruthy();
+});
 /** Route simulated deletion through the production adapter with mocked transport. */
 function authorizeSimulatedReaderDeletion() {
   const adapter = createManualNoteDeleteAdapter({ ...MANUAL_NOTE_WRITE_GATES, ownedBookWrites: true });

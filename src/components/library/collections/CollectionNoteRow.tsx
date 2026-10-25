@@ -11,7 +11,7 @@ export function CollectionNoteRow({ card, pending, offline, onOpen, onRemove }: 
   return <View style={styles.row}>
     <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{card.book.title}</Text>
     <NotePassageLink note={card.note} onPress={onOpen} testID={`collection-note-${card.note.id}`} />
-    <BookButton label={pending ? 'Removing…' : 'Remove'} accessibilityLabel={`Remove note from ${card.book.title} from collection`} variant="text" disabled={pending || offline} onPress={onRemove} />
+    <BookButton label={pending ? 'Removing…' : 'Remove'} accessibilityLabel={`Remove from collection: ${card.book.title}. ${card.note.content}`} variant="text" disabled={pending || offline} onPress={onRemove} />
   </View>;
 }
 const styles = StyleSheet.create({ row: { gap: LIBRARY_SPACING.xs, paddingBottom: LIBRARY_SPACING.md } });

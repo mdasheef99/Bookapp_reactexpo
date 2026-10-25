@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, findNodeHandle, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AccessibilityInfo, findNodeHandle, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import { LIBRARY_RADIUS, LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } from '../LibraryAppearance';
@@ -38,11 +38,24 @@ function OrganisingSheetSession({ actor, kind, mode, target, selectedId, onSelec
   const resume = useRef<Step>('pick'), discardAction = useRef<() => void>(() => {});
   const mounted = useRef(true), submitted = useRef(false), inFlight = useRef(false);
   const closeRef = useRef<View>(null), fieldRef = useRef<TextInput>(null);
+  const [keyboardPad, setKeyboardPad] = useState(0);
+  const panelLayout = useRef({ y: 0, height: 0 });
+  useEffect(() => {
+    // iOS only: lift the centered dialog's content above the software keyboard
+    // so the name field stays visible. KeyboardAvoidingView's own offset is
+    // disabled below to avoid shifting twice.
+    if (Platform.OS !== 'ios') return;
+    const subscription = Keyboard.addListener('keyboardWillChangeFrame', event => {
+      setKeyboardPad(Math.max(0, event.endCoordinates.height));
+    });
+    return () => subscription.remove();
+  }, []);
   const identity = `${actor}:${kind}:${target ?? ''}`, currentIdentity = useRef(identity);
   currentIdentity.current = identity;
   const entities = [...(api.entities.data ?? [])].sort(kind === 'labels'
     ? (a, b) => a.name.localeCompare(b.name) : (a, b) => b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id));
   const capped = entities.length >= ORGANISING_LIMIT;
+  const deleteCount = editing && api.members.data ? api.members.data.filter(row => row.entity_id === editing.id).length : undefined;
   const dataReady = api.entities.data !== undefined && (mode !== 'membership' || api.members.data !== undefined);
   const dirty = (step === 'new' || step === 'rename') && draft !== (step === 'rename' ? editing?.name ?? '' : '');
   const close = useCallback(() => onClose(), [onClose]);
@@ -55,7 +68,6 @@ function OrganisingSheetSession({ actor, kind, mode, target, selectedId, onSelec
     if (initialStep || step === 'pick' || (mode === 'manage' && step === 'manage')) close();
     else { setStep(step === 'rename' || step === 'delete' ? 'manage' : 'pick'); setFieldError(''); setMessage(''); }
   });
-  const backRef = useRef(back); backRef.current = back;
   useEffect(() => {
     mounted.current = true;
     const native = Platform.OS !== 'web';
@@ -74,12 +86,6 @@ function OrganisingSheetSession({ actor, kind, mode, target, selectedId, onSelec
       });
     };
   }, [returnFocusRef, fallbackFocusRef]);
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-    const handler = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); backRef.current(); } };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
   useEffect(() => { if (step === 'new' || step === 'rename') fieldRef.current?.focus(); }, [step]);
   const alive = (guard: () => void) => {
     try { guard(); return mounted.current && currentIdentity.current === identity; } catch { return false; }
@@ -203,6 +209,7 @@ function OrganisingSheetSession({ actor, kind, mode, target, selectedId, onSelec
             }
           } } : {})}
           style={[styles.dialog, { backgroundColor: colors.bgRaised }]}>
+          <KeyboardAvoidingView enabled={false} onLayout={event => { panelLayout.current = { y: event.nativeEvent.layout.y, height: event.nativeEvent.layout.height }; }} style={{ paddingBottom: keyboardPad }}>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
             <BookButton ref={closeRef} label="Back" accessibilityLabel={`Back in ${kind}`} variant="text" onPress={back} />
             <Text accessibilityRole="header" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>{title}</Text>
@@ -224,7 +231,7 @@ function OrganisingSheetSession({ actor, kind, mode, target, selectedId, onSelec
               <BookButton label={step === 'rename' ? 'Save name' : target ? kind === 'labels' ? 'Add label' : 'Create and add' : 'Create collection'} variant="primary" disabled={busy || deleted || api.isOffline || (step === 'new' && capped)} onPress={() => save()} />
             </> : step === 'delete' && editing ? <>
               <Text style={textStyle}>Delete “{editing.name}”?</Text>
-              <Text style={textStyle}>{kind === 'collections' ? 'Only the collection is deleted. Your notes will be kept.' : api.members.data ? `It will be removed from ${api.members.data.filter(row => row.entity_id === editing.id).length} books.` : 'It will be removed from every book using it.'}</Text>
+              <Text style={textStyle}>{kind === 'collections' ? 'Only the collection is deleted. Your notes will be kept.' : deleteCount === undefined ? 'It will be removed from every book using it.' : `It will be removed from ${deleteCount} ${deleteCount === 1 ? 'book' : 'books'}.`}</Text>
               <BookButton label="Cancel" variant="text" onPress={back} />
               <BookButton label="Delete" variant="destructive" disabled={busy || api.isOffline} onPress={() => { void perform(async () => {
                 await api.remove(editing.id); announce(`${kind === 'labels' ? 'Label' : 'Collection'} deleted`);
@@ -248,11 +255,12 @@ function OrganisingSheetSession({ actor, kind, mode, target, selectedId, onSelec
                   <BookButton label="Delete" accessibilityLabel={`Delete ${item.name}`} variant="text" disabled={busy || api.isOffline} onPress={() => start('delete', item)} />
                 </View>)}
               </> : picker}
-              {capped && <Text style={textStyle}>You have 25 {kind}. Delete one to create another.</Text>}
+              {capped && <Text style={textStyle}>You have {ORGANISING_LIMIT} {kind}. Delete one to create another.</Text>}
               <BookButton label="Done" variant="primary" onPress={close} />
             </>}
           </ScrollView>
           <BookFeedbackSlot />
+          </KeyboardAvoidingView>
         </Pressable>
       </Pressable>
     </GestureHandlerRootView>

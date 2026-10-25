@@ -57,8 +57,11 @@ export default function NotesSwipeScreen() {
   const dedicatedCollection = scope.kind === 'collection' ? collections.entities.data?.find(row => row.id === scope.collectionId) : undefined;
   const collectionReady = collections.entities.data !== undefined && collections.members.data !== undefined;
   const collectionReadError = collections.entities.isError || collections.members.isError;
-  const coldCollection = (scope.kind === 'collection' || !!collectionId) && !collectionReady;
-  const missingCollection = scope.kind === 'collection' && collections.entities.data !== undefined && !dedicatedCollection;
+  // While the entities read is in flight or failed, a missing collection cannot
+  // be confirmed deleted: show the loading/error recovery instead.
+  const unconfirmedCollection = scope.kind === 'collection' && collections.entities.data !== undefined && !dedicatedCollection && (collections.entities.isFetching || collections.entities.isError);
+  const coldCollection = (scope.kind === 'collection' || !!collectionId) && (!collectionReady || unconfirmedCollection);
+  const missingCollection = scope.kind === 'collection' && collections.entities.data !== undefined && !dedicatedCollection && !unconfirmedCollection;
   const bookNotFound = book.error instanceof Error && book.error.message === 'This book is unavailable.';
   const invalidBook = scope.kind === 'book' && (!scope.userBookId || (book.isError && !book.data && bookNotFound));
   useEffect(() => {
@@ -107,7 +110,7 @@ export default function NotesSwipeScreen() {
   const readButtonRef = useRef<RNView>(null);
   const orderButtonRef = useRef<RNView>(null);
   const wasOverlayOpen = useRef(false);
-  const lastOverlayRef = useRef<'sheet' | 'order' | null>(null);
+  const lastOverlayRef = useRef<'sheet' | 'order' | 'collections' | null>(null);
   // Sheet/menu-dismiss grace (fix6-3): after either overlay closes, keep the deck
   // pan disabled until the close animation finishes plus a short grace, so the same
   // finger that swiped the sheet header down cannot finish a `leave` gesture on the
@@ -161,14 +164,16 @@ export default function NotesSwipeScreen() {
   useEffect(() => {
     if (sheetOpen) lastOverlayRef.current = 'sheet';
     else if (orderMenuOpen) lastOverlayRef.current = 'order';
-  }, [sheetOpen, orderMenuOpen]);
+    else if (collectionNote) lastOverlayRef.current = 'collections';
+  }, [sheetOpen, orderMenuOpen, collectionNote]);
   useEffect(() => {
     if (wasOverlayOpen.current && !overlayOpen && Platform.OS === 'web') {
       if (lastOverlayRef.current === 'order') {
         (orderButtonRef.current as unknown as { focus?: () => void } | null)?.focus?.();
-      } else {
+      } else if (lastOverlayRef.current === 'sheet') {
         (readButtonRef.current as unknown as { focus?: () => void } | null)?.focus?.();
       }
+      // 'collections' restores focus itself via OrganisingSheet's returnFocusRef.
       lastOverlayRef.current = null;
     }
     wasOverlayOpen.current = overlayOpen;
@@ -219,7 +224,8 @@ export default function NotesSwipeScreen() {
     if (announced.current === identity) return;
     announced.current = identity;
     const collectionName = scope.kind === 'collection' ? dedicatedCollection?.name : deck.collectionId ? collections.entities.data?.find(row => row.id === deck.collectionId)?.name : undefined;
-    const text = end ? "That's all for now." : collectionName ? `Collection ${collectionName}. Note ${deck.at + 1} of ${deck.ids.length}.` : deckCategory === 'all'
+    const categorySuffix = deckCategory === 'all' ? '' : ` ${categoryLabel(deckCategory)}.`;
+    const text = end ? "That's all for now." : collectionName ? `Collection ${collectionName}.${categorySuffix} Note ${deck.at + 1} of ${deck.ids.length}.` : deckCategory === 'all'
       ? `All notes. Note ${deck.at + 1} of ${deck.ids.length}.`
       : `${categoryLabel(deckCategory)}. Note ${deck.at + 1} of ${deck.ids.length}.`;
     if (Platform.OS === 'web') setAnnouncement(text); else AccessibilityInfo.announceForAccessibility(text);
@@ -284,7 +290,7 @@ export default function NotesSwipeScreen() {
       {showStack ? (
         <View testID="note-stack-wrap" onLayout={event => setStackHeight(event.nativeEvent.layout.height)} style={styles.stackWrap}>
           <NoteSwipeStack ref={stackRef} availableHeight={stackHeight} onMinimumHeight={setStackMinimumHeight} card={showCard ? deck.card : undefined} undercards={showCard ? deck.undercards : []} at={deck.at} total={deck.ids.length} reduced={reduced} hint={hint} enabled={focused && !overlayOpen && !sheetCooldown && populated}
-            onMove={deck.move} onRead={openSheet} onCollections={openCollections} onLeave={depart} onCategory={target => {
+            onMove={deck.move} onRead={openSheet} onCollections={isOffline ? undefined : openCollections} onLeave={depart} onCategory={target => {
               if (target !== undefined) applyFilter(target === 'all' ? { kind: 'all' } : { kind: 'category', tag: target }); else cycleFilter();
             }} canCategory={filters.length > 1} categoryKey={selectedFilter.kind === 'collection' ? filterKey(selectedFilter) : deckCategory}><View style={styles.state}>{content}</View></NoteSwipeStack>
         </View>

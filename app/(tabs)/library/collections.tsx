@@ -11,11 +11,11 @@ import { BookButton } from '@/components/library/ui';
 import { LIBRARY_SPACING, useLibraryAppearance } from '@/components/library/LibraryAppearance';
 import { LIBRARY_TEXT } from '@/components/library/LibraryTypography';
 
-function CollectionListRow({ group, count, offline, onOpen, onManage }: { group: OrganisingEntity; count?: number; offline: boolean; onOpen: () => void; onManage: (step: 'rename' | 'delete', ref: React.RefObject<View | null>) => void }) {
+function CollectionListRow({ group, count, unknown, offline, onOpen, onManage }: { group: OrganisingEntity; count?: number; unknown: boolean; offline: boolean; onOpen: () => void; onManage: (step: 'rename' | 'delete', ref: React.RefObject<View | null>) => void }) {
   const colors = useLibraryAppearance(), rename = useRef<View>(null), remove = useRef<View>(null);
   return <View style={[styles.group, { borderColor: colors.divider }]}>
     <BookButton label={group.name} accessibilityLabel={`Open collection ${group.name}`} variant="text" onPress={onOpen} />
-    <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{count === undefined ? 'Loading notes…' : `${count} ${count === 1 ? 'note' : 'notes'}`}</Text>
+    <Text style={[LIBRARY_TEXT.caption, { color: colors.textSecondary }]}>{unknown ? 'Notes unavailable' : count === undefined ? 'Loading notes…' : `${count} ${count === 1 ? 'note' : 'notes'}`}</Text>
     <View style={styles.actions}>
       <BookButton ref={rename} label="Rename" accessibilityLabel={`Rename ${group.name}`} variant="text" disabled={offline} onPress={() => onManage('rename', rename)} />
       <BookButton ref={remove} label="Delete" accessibilityLabel={`Delete ${group.name}`} variant="text" disabled={offline} onPress={() => onManage('delete', remove)} />
@@ -38,8 +38,8 @@ export default function CollectionsScreen() {
         {(api.entities.isError || api.members.isError) && <><Text accessibilityRole="alert" style={[LIBRARY_TEXT.body, { color: colors.error }]}>Couldn&apos;t refresh collections.</Text><BookButton label="Try again" variant="text" onPress={api.refresh} /></>}
         {ready && !groups.length && <Text style={[LIBRARY_TEXT.body, { color: colors.textPrimary }]}>No collections yet.</Text>}
         <BookButton ref={opener} label="New collection" variant="primary" disabled={!ready || api.isOffline || groups.length >= ORGANISING_LIMIT} onPress={() => setSheet({ step: 'new' })} />
-        {groups.length >= ORGANISING_LIMIT && <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>You have 25 collections. Delete one to create another.</Text>}
-        {groups.map(group => <CollectionListRow key={group.id} group={group} count={api.members.data?.filter(row => row.entity_id === group.id).length} offline={api.isOffline}
+        {groups.length >= ORGANISING_LIMIT && <Text style={[LIBRARY_TEXT.body, { color: colors.textSecondary }]}>You have {ORGANISING_LIMIT} collections. Delete one to create another.</Text>}
+        {groups.map(group => <CollectionListRow key={group.id} group={group} count={api.members.data?.filter(row => row.entity_id === group.id).length} unknown={api.members.data === undefined && api.members.isError} offline={api.isOffline}
           onOpen={() => router.push({ pathname: '/(tabs)/library/collection', params: { collectionId: group.id } })}
           onManage={(step, ref) => setSheet({ step, original: group, opener: ref })} />)}
       </ScrollView>

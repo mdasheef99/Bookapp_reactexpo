@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { OrganisingSheet } from '../../organising/OrganisingSheet';
 import { OrganisingError } from '@/features/books/organising/organisingGateway';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -13,6 +13,38 @@ jest.mock('@/components/library/ui', () => ({
   ...jest.requireActual('@/components/library/ui'), useBookFeedback: () => ({ notify: mockNotify }), BookFeedbackSlot: () => null,
 }));
 const label = { id: 'borrowed', user_id: 'actor', name: 'Borrowed', created_at: '2026-10-25', updated_at: '2026-10-25' };
+it('moves the iOS sheet content above the keyboard', async () => {
+  const view = render(<OrganisingSheet actor="actor" kind="collections" mode="manage" initialStep="new" onClose={jest.fn()} />);
+  const avoider = view.UNSAFE_getByType(Native.KeyboardAvoidingView);
+  fireEvent(avoider, 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 800 } } });
+  await act(async () => { Native.DeviceEventEmitter.emit('keyboardWillChangeFrame', { duration: 0, easing: 'keyboard', endCoordinates: { screenX: 0, screenY: 500, width: 400, height: 300 } }); });
+  await waitFor(() => expect(Native.StyleSheet.flatten(view.UNSAFE_getByType(Native.KeyboardAvoidingView).props.style).paddingBottom).toBe(300));
+});
+it('uses singular book copy in a label deletion confirmation', () => {
+  mockApi.members.data = [{ entity_id: label.id, target_id: 'book' }];
+  const view = render(<OrganisingSheet actor="actor" kind="labels" mode="manage" initialStep="delete" original={label} onClose={jest.fn()} />);
+  expect(view.getByText('It will be removed from 1 book.')).toBeTruthy();
+});
+it('answers Escape once per press on web instead of entering then reverting the discard step', () => {
+  (Native.Platform as any).OS = 'web';
+  (global as any).window = { addEventListener: jest.fn(), removeEventListener: jest.fn() };
+  const onClose = jest.fn();
+  const view = render(<OrganisingSheet actor="actor" kind="labels" mode="manage" initialStep="new" onClose={onClose} />);
+  fireEvent.changeText(view.getByLabelText('Label name'), 'Draft');
+  // RNW Modal answers keyup Escape via onRequestClose; the sheet must not add
+  // its own keydown answer or one press would enter the discard step (keydown)
+  // and instantly revert it (keyup).
+  expect((global as any).window.addEventListener.mock.calls.filter(([type]: string[]) => type === 'keydown')).toHaveLength(0);
+  act(() => { view.UNSAFE_getByType(Native.Modal).props.onRequestClose(); });
+  expect(view.getByText('Discard changes?')).toBeTruthy();
+  act(() => { view.UNSAFE_getByType(Native.Modal).props.onRequestClose(); });
+  expect(view.queryByText('Discard changes?')).toBeNull();
+  expect(view.getByDisplayValue('Draft')).toBeTruthy();
+  expect(onClose).not.toHaveBeenCalled();
+  view.unmount();
+  delete (global as any).window;
+  (Native.Platform as any).OS = 'ios';
+});
 beforeEach(() => {
   jest.clearAllMocks();
   useAuthStore.setState({ session: { user: { id: 'actor' } } as any });
@@ -78,7 +110,10 @@ it('starts a fresh sheet when its target changes while an earlier write is pendi
   expect(view.getByText('Saving…')).toBeTruthy();
   view.rerender(<OrganisingSheet actor="actor" kind="labels" target="another-book" mode="membership" onChanged={changed} onClose={jest.fn()} />);
   expect(view.queryByText('Saving…')).toBeNull();
-  finish(); await waitFor(() => expect(changed).not.toHaveBeenCalled());
+  // Flush the late write so the fence assertion runs after it settles instead
+  // of passing immediately on the still-pending write.
+  finish(); await act(async () => {});
+  await waitFor(() => expect(changed).not.toHaveBeenCalled());
 });
 it('does not replay creation after an uncertain reply, and offers explicit existing-entity attachment', async () => {
   mockApi.create.mockRejectedValue(new OrganisingError('unknown', 'Creation not confirmed'));

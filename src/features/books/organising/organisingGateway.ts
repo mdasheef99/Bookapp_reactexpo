@@ -40,7 +40,7 @@ function entity(value: unknown, actor: string): value is OrganisingEntity {
 function databaseError(error: { code?: string; message?: string }, kind: OrganisingKind, name?: string) {
   const domain = domains[kind], message = error.message ?? '';
   if (error.code === '23505') return new OrganisingError('duplicate', name ? `You already have a ${domain.noun} called “${name}”.` : `You already have a ${domain.noun} with that name.`);
-  if (error.code === '23514' && message.includes(domain.cap)) return new OrganisingError('limit', `You have 25 ${kind}. Delete one to create another.`);
+  if (error.code === '23514' && message.includes(domain.cap)) return new OrganisingError('limit', `You have ${ORGANISING_LIMIT} ${kind}. Delete one to create another.`);
   if (error.code === '23514') return new OrganisingError('invalid', `This ${domain.noun} wasn't saved. Check the name and try again.`);
   if (error.code === '23503') return new OrganisingError('missing', `This ${domain.noun}, book or note is no longer available. Refresh and try again.`);
   if (['42501', '23502', '55000'].includes(error.code ?? '')) return new OrganisingError('denied', `Couldn't save this ${domain.noun}. Refresh and try again.`);
@@ -84,16 +84,18 @@ export const organisingGateway = {
   },
   async memberships(actor: string, kind: OrganisingKind, signal?: AbortSignal): Promise<OrganisingMembership[]> {
     const domain = domains[kind], rows: OrganisingMembership[] = [], guard = captureOrganisingActor(actor);
-    for (let offset = 0; ; offset += 1000) {
+    // PostgREST caps each response at PAGE_SIZE rows; the raw length is the stop condition.
+    const PAGE_SIZE = 1000;
+    for (let offset = 0; ; offset += PAGE_SIZE) {
       guard();
       const { data, error } = await request(actor, s => supabase.from(domain.links).select('*').eq('user_id', actor)
-        .order(domain.time, { ascending: true }).order(domain.target, { ascending: true }).order(domain.entity, { ascending: true }).range(offset, offset + 999).abortSignal(s), signal);
+        .order(domain.time, { ascending: true }).order(domain.target, { ascending: true }).order(domain.entity, { ascending: true }).range(offset, offset + PAGE_SIZE - 1).abortSignal(s), signal);
       if (error) throw databaseError(error, kind);
       const page = data ?? [];
       for (const row of page) if (row.user_id === actor && typeof row[domain.entity] === 'string' && typeof row[domain.target] === 'string') {
         rows.push({ user_id: actor, entity_id: row[domain.entity], target_id: row[domain.target], added_at: row[domain.time] });
       }
-      if (page.length < 1000) return rows;
+      if (page.length < PAGE_SIZE) return rows;
     }
   },
   async suggestions(actor: string, signal?: AbortSignal): Promise<string[]> {

@@ -45,9 +45,9 @@ export default function CollectionScreen() {
   </View>;
   const data = (cards.data?.pages.flat() ?? []).filter(card => ids.includes(card.note.id));
   return <NoteScreen title={group?.name ?? 'Collection'} backLabel="Back to Collections" onBack={back}>
-    {api.entities.data !== undefined && !group ? <View style={styles.header}>{text('This collection no longer exists.')}<BookButton label="Back to Collections" variant="primary" onPress={back} /></View>
+    {api.entities.data !== undefined && !group && !api.entities.isFetching && !api.entities.isError ? <View style={styles.header}>{text('This collection no longer exists.')}<BookButton label="Back to Collections" variant="primary" onPress={back} /></View>
       : <FlatList<NoteDeckCard> data={data} keyExtractor={card => card.note.id} contentContainerStyle={styles.content} ListHeaderComponent={header}
-        refreshControl={<RefreshControl refreshing={api.entities.isRefetching || api.members.isRefetching} onRefresh={retry} tintColor={colors.accent} />}
+        refreshControl={<RefreshControl refreshing={api.entities.isRefetching || api.members.isRefetching || cards.isRefetching} onRefresh={retry} tintColor={colors.accent} />}
         renderItem={({ item }) => <CollectionNoteRow card={item} offline={api.isOffline} pending={pending.includes(item.note.id)} onRemove={() => { void remove(item.note.id); }} onOpen={() => {
           router.push(readerHref(item.note.user_book_id, item.note.id, registerNoteContext({ actorId: actor, bookId: item.note.user_book_id, origin: 'collection', canBack: true, collectionId, collectionKey: route.key })));
         }} />}

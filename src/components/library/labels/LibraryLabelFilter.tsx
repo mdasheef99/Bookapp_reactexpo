@@ -11,6 +11,7 @@ export function LibraryLabelFilter({ name, visible, disabled, error, onOpen, onC
   return <View style={styles.row}>
     <BookButton ref={triggerRef} label={name ?? 'Labels'} accessibilityLabel={name ? `Labels: ${name}` : 'Filter books by label'} variant="text" selected={!!name} disabled={disabled} onPress={onOpen} />
     {!!name && <BookButton label="×" accessibilityLabel="Clear label filter" variant="text" disabled={disabled} onPress={onClear} />}
+    {error && <BookButton label="Try labels again" variant="text" onPress={onRetry} />}
   </View>;
 }
 const styles = StyleSheet.create({ row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: LIBRARY_SPACING.xs } });

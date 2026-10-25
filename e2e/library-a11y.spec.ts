@@ -282,6 +282,7 @@ for (const height of [560, 640]) {
     await expect(page.getByTestId('note-card-slot-0')).toContainText('Many Notes Fixture Book');
     await page.evaluate(() => {
       const sizes = [...document.querySelectorAll<HTMLElement>('[class*="css-text"]')].map(node => ({ node, size: parseFloat(getComputedStyle(node).fontSize), line: parseFloat(getComputedStyle(node).lineHeight) }));
+      if (sizes.length === 0) throw new Error('expected css-text nodes to double for the 200% check');
       for (const { node, size, line } of sizes) { node.style.fontSize = `${size * 2}px`; if (Number.isFinite(line)) node.style.lineHeight = `${line * 2}px`; }
     });
     for (const label of ['Previous', 'Read full note', 'Add to collection', 'Next']) {
