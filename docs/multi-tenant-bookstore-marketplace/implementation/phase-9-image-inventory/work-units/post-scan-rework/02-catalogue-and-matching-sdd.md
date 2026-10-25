@@ -1,7 +1,11 @@
 # Post-Scan Rework — SDD-2 Catalogue and Matching (slices 6–9)
 
-**Status:** `pass_1_outline_approved` (2026-10-19). Owner approved the SDD set with the §14 defaults on 2026-10-19. Pass 2 is written immediately
-before slice 6 starts.
+**Status:** `pass_1_outline_approved` (2026-10-19). Provider-neutral amendment
+to slices 6–8 drafted 2026-10-24 on Owner direction; whole-review corrections
+and the Owner's 2026-10-25 decisions are recorded in tracker 38 §34 and
+SDD-0 §14. The approved 10-19 baseline is distinct from this draft amendment;
+remaining pass-2 questions retain their stated gates. Pass 2 is written
+immediately before slice 6 starts; no implementation is authorized here.
 **Overview and decisions:** [SDD-0](./00-overview-sdd.md)
 
 ## Context
@@ -25,7 +29,7 @@ read-only code map; their verified conclusions are summarized in SDD-0 §10 and
 below. Pass 2 re-verifies every pointer.
 
 **Order and reasoning:** slice 6 (link at Add, ISBN identity only, no new
-columns) → slice 7 (new columns, catalogue writes, stats, shared cache) →
+columns) → slice 7 (provider-ID list, columns, catalogue writes, stats, cache) →
 slice 8 (Open Library automatic provider, clues, Google off) → slice 9
 (relaxed match, tie pick, saved results) behind the benchmark.
 
@@ -43,15 +47,26 @@ identified (D34).
   catalogue work and edition for the chosen edition and returns their IDs.
 - Identity: normalized, checksum-valid ISBN-13 (ISBN-10 converted). If the
   chosen edition has both and they disagree, no link. Without an ISBN, no link
-  in this slice (the Open Library edition-ID column arrives in slice 7).
-- **Only Open Library-sourced choices may create shared rows** (D35, R05);
-  a choice whose snapshot already carries a catalogue ID just links; Google and
-  manual choices never create.
+  in this slice (the provider-ID list and provider edition-ID identity arrive in slice 7).
+- **Only `open_library` choices may create shared rows in this slice** (D35,
+  R05). This explicit allow-list also requires the existing registry row's
+  metadata kind, enabled/matching/storage/public-display permissions and
+  current version checks. `storage_allowed` alone is not shared-catalogue
+  permission: it is already true for Google as well (SDD-0 F34). A choice
+  whose snapshot already carries a valid catalogue ID just links; Google and
+  manual choices never create. Slice 7 retains this allow-list; slice 8
+  replaces it with a distinct reviewed shared-catalogue capability (Q18).
+  Adding that column now is the rejected alternative: it broadens slice 6's
+  schema scope without being needed for its Open Library-only behaviour.
 - Shared rows take bibliographic facts from the provider snapshot only, never
   from the Owner's review (D40, R04).
 - Concurrency: `INSERT … ON CONFLICT DO NOTHING` on the existing unique keys
   (`isbn_13`; works `title_normalized, primary_authors`), then re-select, so two
-  stores adding the same edition at once converge on one row.
+  stores adding the same edition at once converge on one row and both inventory
+  rows link to it (Q20). A uniqueness race alone is not an identity conflict.
+  If the re-selected row has a conflicting work/title identity, or ISBN-10
+  and ISBN-13 resolve to different rows, keep the first row, create no second
+  conflicting row and perform no merge; Add succeeds without a catalogue link.
 - Immutable snapshots are never updated (F9); the link is written only on the
   new inventory row.
 - Work identity: author names in the work key are normalized (trimmed,
@@ -63,9 +78,10 @@ identified (D34).
 **Migration:** one — new helper plus `CREATE OR REPLACE` of the Add function
 (M69 body + the call). No column change, no backfill; old app and worker keep
 working (R06).
-**Amends:** DOC-3 §5.2 picker sentence ("does not promote canonical truth")
-and §17 ("automated canonical merge without review" — allowed only on exact
-ISBN-13 / Open Library edition ID).
+**Amends:** DOC-3 §5.1 matching description, §5.2 picker sentence ("does not
+promote canonical truth") and §17 ("automated canonical merge without
+review"). Slice 6 permits only exact validated ISBN-13 identity; provider
+edition-ID identity and the §14 provider-ID data model arrive in slice 7.
 
 **Acceptance checks:**
 - AC6-0: Given the same book added with authors in a different order or
@@ -76,18 +92,23 @@ ISBN-13 / Open Library edition ID).
 - AC6-2: Given a second store adds the same ISBN, then it links to the same
   catalogue edition and no new edition row is created (D35).
 - AC6-3: Given two stores add it at the same moment, then exactly one edition
-  row exists (D35).
+  row exists and both inventory rows link to it; the concurrent writes are
+  not an identity conflict (D35, Q20).
 - AC6-4: Given a Google-sourced or manual choice, then no catalogue row is
-  created and the Add succeeds with no link (D35, R05, R10).
+  created and the Add succeeds with no link, even if Google's registry row
+  has `storage_allowed=true` (D35, R05, R10).
 - AC6-5: Given ISBN-10 and ISBN-13 that disagree, then no link and the Add
   succeeds (D37).
-- AC6-6: Given the Owner edited the title, then the catalogue row has the
-  provider's title and the inventory row has the Owner's (D40, R04).
+- AC6-6: Given a pre-existing catalogue row and the Owner edits the chosen
+  edition's title, then the choice becomes manual under slice 2's identity
+  rules. The unmatched manual Add creates no catalogue row or link, leaves
+  the pre-existing row unchanged and saves the edited title on the store's
+  inventory row (AC6-4, D40, R04).
 - AC6-7: Given a replayed Add, then the original inventory ID is returned and
   nothing new is created (R01).
 
 **Tests first:** Database (`supabase/tests/phase9/`, new catalogue-link suite)
-for AC6-1 to AC6-7; existing commit suites stay green
+for AC6-0 to AC6-7; existing commit suites stay green
 (`phase9Unit7aCreateOnlyCommit`, `phase9EditionPickerCommit`).
 **Size / risk:** M / med.
 
@@ -99,14 +120,108 @@ for AC6-1 to AC6-7; existing commit suites stay green
 needs no call (D33, D39); usage counts guide ordering (D36).
 
 **Scope:**
-- Additive columns: on `canonical_editions` — Open Library edition ID (unique),
-  Open Library work ID, Open Library cover ID, OCLC and LCCN, hidden flag,
-  one source-and-retention note, normalizer version; on `canonical_works` —
-  Open Library work ID (unique) and author IDs. Existing columns are reused
-  for bibliographic facts and `categories`.
-- One `book_metadata_sources` row per provider record (`open_library`, edition
-  ID), slim normalized payload only (Open Library raw retention is 0), with
-  `expires_at` / retention note.
+- **Provider-ID list (PSR-D35, amended 2026-10-24):** one new table, one row per
+  provider ID: `canonical_edition_id` or `canonical_work_id` (exactly one set),
+  `adapter_key` (non-null FK to `phase9_provider_registry`), `id_kind`
+  (non-null, `edition` or `work`; other kinds later), `external_id` (non-null,
+  safe nonblank text, 1–256 characters), `created_at` (non-null); unique on
+  (`adapter_key`, `id_kind`, `external_id`); indexes on both links. Canonical
+  target FKs use `ON DELETE CASCADE`; require
+  `CHECK ((canonical_edition_id IS NOT NULL) <> (canonical_work_id IS NOT NULL))`
+  and kind/link coherence (`edition` requires the edition link, `work` the
+  work link). `SET NULL` would orphan an ID and violate these checks. Validate
+  adapter-key format against the current metadata contract
+  (`^[a-z][a-z0-9_-]{1,63}$`); M15's SQL accepts a wider dotted namespace, so
+  pass 2 must preserve worker/SQL parity rather than assume dotted keys work.
+  Open Library's edition and work IDs are the first rows. No provider-specific
+  columns are added to canonical works/editions; new providers add rows, not
+  columns. Multiple source IDs/redirect aliases may target one canonical row;
+  one complete tuple cannot target two. No store column (D35, R04).
+- **Write/read boundary:** enable RLS on the new table; revoke ALL from
+  PUBLIC, anon, authenticated and service_role, then grant SELECT only to
+  approved readers. Owner decision Q21 (2026-10-25): authenticated SELECT
+  policy and necessary server SELECT only, no anon grant/policy. No direct
+  INSERT/UPDATE/DELETE/TRUNCATE grants, including to service_role. Writes use
+  the private `SECURITY DEFINER` helper with empty search_path; revoke direct
+  EXECUTE from PUBLIC/anon/authenticated/service_role and invoke it only
+  through the scoped Add/worker commands. Definer status alone is insufficient;
+  preserve the outer commands' tenant, claim and lineage fences (R04, R07).
+- **Identity convergence:** valid ISBN-13 first, else the namespaced provider
+  edition-ID tuple. Same ISBN from two providers means one edition with two
+  ID rows; without ISBN each provider's edition remains separate (Q16).
+  Identical ID text under different providers or kinds is valid. A tuple
+  targeting a second record is refused by the unique constraint. **Decided
+  conflict rule (Q20, Owner 2026-10-25):** concurrent writes for the same ISBN-13
+  with consistent edition identity converge, including both inventory links
+  (AC6-3). Real conflicts mean identifiers disagree: the ISBN-13's existing
+  edition has a different work or title, a provider ID targets another record,
+  or ISBN-10 and ISBN-13 point to different rows. Different ISBNs alone are
+  never a conflict; they may identify two editions of one work. Keep the first
+  row, create no second conflicting row and skip that edition's catalogue
+  sub-operation atomically (work, edition, IDs and source rows), with no partial
+  writes. At Add, this means a successful unmatched, store-private Add.
+  This includes translations grouped by a provider work ID despite different
+  title/author work keys (DOC-3 §4.2). No silent merge/reassignment or fuzzy
+  work reconciliation. Lookup-time behaviour is specified under Write timing.
+- **Identifier transport:** carry validated provider edition/work references
+  from the adapter to the catalogue helper through a provider-neutral,
+  versioned catalogue-write companion payload, bound to the edition and its
+  lookup/attempt/provider lineage. The current adapter obtains a work key but
+  drops it before normalization; `MetadataEdition` has only `providerRecordId`,
+  and M73 rejects unknown metadata keys. Pass 2 defines the companion schema,
+  worker/RPC transport and SQL validation together; do not add unrecognized
+  snapshot keys or rewrite immutable snapshots. Missing work references remain
+  valid for older workers (R06, R09; AC7-2d).
+  Extract edition-level `oclc_numbers` and `lccn` from the same Open Library
+  edition JSON already fetched by the adapter, through the normalizer into
+  nullable provider-neutral `oclc`/`lccn` companion fields. No extra request or
+  cross-edition/work inference. Bound each input array to at most 16 strings
+  and each trimmed value to 1–64 characters; reject controls/active content,
+  require decimal digits for OCLC and a bounded alphanumeric LCCN with only
+  spaces/hyphens as separators. Do not coerce numbers or guess missing digits.
+  Deduplicate identical trimmed values; populate the column only for one
+  distinct valid value. Missing, malformed, oversize or multiple distinct
+  values yield null for that field without dropping the edition option.
+  Companion scalar bounds/shape have matching worker/SQL checks; bind the
+  fields to the same edition/lookup/attempt/provider as its work references,
+  and persist them in
+  the source's normalized facts and the coherent canonical edition's columns
+  only after admission/identity checks. They are facts, not new merge keys.
+  An absent companion or fields from an older worker mean null on new rows,
+  never clearing existing populated facts; reject unknown
+  companion keys, without adding keys to M73's immutable metadata snapshot
+  contract. Pass 2 names the companion version, RPC and matching SQL validators
+  together; positive extraction-to-storage fixtures are required (AC7-2f).
+- Additive columns on `canonical_editions`: OCLC and LCCN (provider-independent),
+  hidden flag, one source-and-retention note, normalizer version. These columns
+  are publicly readable under the existing anon/authenticated SELECT policies
+  (P3 L154–157): hidden suppresses search, not direct row access. Keep the note
+  bibliographic/policy-only, with no private licensing notes or store data
+  (D37, R04); changing public canonical access is outside this amendment.
+- **Sources and covers:** one `book_metadata_sources` row per provider record,
+  using slice 6's Open Library allow-list until slice 8. New rows set both
+  legacy `provider` and nullable-schema `adapter_key` to the same registry key,
+  and set non-null `provider_book_id` to the edition ID. Existing
+  `UNIQUE(provider, provider_book_id)` remains the source-row key; the new
+  provider-ID tuple is the identity key. Store slim normalized facts only
+  (Open Library raw retention is 0), with record-level source provenance and
+  `expires_at` on the source row, not on canonical works/editions. Retain one
+  coherent source's canonical facts; no field stitching or overwrite policy
+  is introduced (Q15). Existing development catalogue data may be reset or
+  rebuilt only with separate Owner approval; this edit authorizes no reset.
+  Ordinary writes retain Q20's first-row rule while second-provider overwrite
+  policy stays deferred. Cover IDs stay in the source's normalized payload;
+  derive its permitted URL there and retain existing
+  `canonical_editions.cover_url` as the coherent, publicly reusable projection.
+  M65's catalogue snapshot reads that column, so cache hits keep their cover
+  without another call (AC7-9, AC8-1). No image-file persistence is implied.
+  Q18's licensing/retention details are deferred to the Owner while Open Library
+  is the only provider; no second provider enters shared storage before the
+  Owner records its permanent/public reuse, cover, attribution and retention
+  permission. Existing Open Library policy checks remain in force. Do not
+  enable a source requiring expiry until every canonical reuse/display path
+  enforces it or withdraws its facts/covers (Q17, AC7-10). Source deadlines do
+  not automatically hide canonical projections; bulk refresh stays deferred.
 - Stats table(s) with no store column: times searched (work), times chosen and
   times added (edition), incremented without locking catalogue rows (D36).
 - ISBN check digit and a small blocklist (placeholder and known-reused ISBNs)
@@ -116,21 +231,43 @@ needs no call (D33, D39); usage counts guide ordering (D36).
   selection; "added" counts on Add. Design study 1 argued for writing only at
   Add; pass 2 measures expected growth and keeps D39 unless it finds a
   technical blocker (SDD-0 §14 Q3), in which case it returns to the Owner.
+  A Q20 identity conflict skips only that edition's catalogue sub-operation;
+  it never discards or changes its otherwise valid edition option or the other
+  options. Save the complete bounded option list with its original order and
+  eligibility, show all options to the Owner, resolve the job/lookup using the
+  normal option-derived outcome and consume/account the existing reservation
+  and physical calls exactly once. No retry or new provider request is caused
+  by the conflict. Catalogue stats attach only to successfully resolved
+  catalogue targets (times searched per Q4); no count is assigned to an
+  unrelated incumbent, and lookup completion changes no chosen/added count.
+  Completion replay/lost-response recovery returns the saved result without
+  repeating writes, option-version increments, counts or usage accounting.
 - Hidden records are excluded from lookups but existing links stay.
 - Shared cache: the worker writes `public_bibliographic` cache entries (no
   store) only when both the query key and the payload are provider or scan
   facts. A query built from Owner-confirmed text (F43) stays in the
   store-private cache, so no Owner edit reaches a shared key (D40, R04).
   Tests compare keys and payloads across two stores (F18, F35).
-- Slice 6's helper extends to Open Library edition-ID identity and source rows.
+- Slice 6's helper extends to provider edition-ID identity (Open Library
+  first), work references and source rows, with the conflict fallback above.
 **Not in scope:** per-field provenance, change log, fuzzy (`pg_trgm`) search
 (SDD-0 §5); admin tooling beyond the hidden flag.
 
 **Depends on:** slice 6.
-**Migration:** one. Pass 2 may split into 7a (columns, stats, link by Open
-Library ID) and 7b (lookup-time writes and shared cache) if one session is not
-enough.
-**Code pointers:** `metadata/openLibrary/normalizer.ts` (IDs, cover),
+**Migration:** one — provider-ID list table, FKs/checks/indexes, RLS/grants,
+columns, stats and helper changes. Pass 2 may split into 7a (provider-ID list
+with its security boundary, columns, stats, link by provider edition ID) and
+7b (lookup-time writes, identifier transport including OCLC/LCCN, and shared cache) if one
+session is not enough; at most one migration per resulting slice (R12).
+**Amends:** DOC-3 §§5.1 (provider-ID matching), 5.2 (coherent source and picker
+promotion), 14 (canonical/source/provider-ID data model) and 17 (exact identity
+only). Source-spec edits ship with implementation; this docs-only amendment
+does not edit DOC-3 or authorize that implementation.
+**Code pointers:** the new provider-ID list table and helper;
+`metadata/openLibrary/adapter.ts` (work key), `normalizer.ts` (IDs, cover),
+`contracts/metadata.ts`, catalogue-write companion contract/RPC validation
+(new), M73 `phase9_edition_valid_metadata` (strict existing snapshot keys),
+M65 `phase9_edition_canonical_snapshot` / `phase9_edition_current_snapshot`,
 `runtime/metadataEditionOptions.ts`, `runtime/metadataTerminalPersistence.ts`,
 `runtime/metadataProductionGateway.ts` (cache scope), `phase9_store_metadata_cache`
 (M15), `phase9_edition_local_match` (M67), `domain/isbn.ts`.
@@ -139,8 +276,57 @@ enough.
 - AC7-1: Given a lookup returns 6 Open Library editions of which 4 pass the
   relaxed match, then 4 editions (and their work) are in the catalogue with one
   source row each (D35, D39).
-- AC7-2: Given an edition without ISBN but with an Open Library edition ID,
+- AC7-2: Given an edition without ISBN but with a provider edition ID,
   then it is stored once and a second store reuses it (D35).
+- AC7-2b: Given two provider fixtures (second registry row inserted with
+  `provider_kind='metadata'`, as M73 does), exercise the private generic
+  identity/source-write helper as its privileged test owner, below the
+  production admission check. When both report the same validated ISBN-13,
+  then one edition has separate provider-ID/source rows and existing canonical
+  facts are preserved. Without
+  ISBN they create separate editions (Q16). Identical external-ID text under
+  different providers or kinds is allowed; the same complete
+  (`adapter_key`, `id_kind`, `external_id`) tuple targeting another record is
+  refused by its unique constraint. This helper-level fixture neither bypasses
+  nor widens the production Open Library admission check; AC8-9 proves full
+  synthetic-provider admission/convergence after slice 8 (D35, Q15).
+- AC7-2c: Given ISBN points to edition A but the provider tuple points to B,
+  an ISBN-13 already belongs to an edition with a different work/title,
+  ISBN-10 and ISBN-13 resolve to different rows, or a provider work ID conflicts
+  with the normalized work key (including a translated edition), then the
+  first row stays: no second conflicting row, merge, overwrite or reassignment.
+  The conflicting catalogue writes/links are skipped atomically and Add
+  succeeds unmatched, including concurrent conflicts and replay. Different
+  ISBNs alone permit separate editions under one work; consistent same-ISBN
+  writes converge as in AC6-3 (D35, Q20, R01, R10).
+- AC7-2d: Given an adapter's validated edition/work references, then they
+  reach the helper with unchanged provider/lookup/attempt binding and create
+  kind-correct ID rows. Invalid/oversize IDs, null keys, wrong target kind,
+  two/no targets, nonexistent FKs or mismatched lineage are refused; deleting
+  a target cascades only its ID rows. An old worker with no work reference
+  still works and immutable snapshot bytes stay unchanged (D35, R06, R09).
+- AC7-2e: Given lookup completion with N valid options, M passing the relaxed
+  match and C real Q20 conflicts among them, then all N options are saved and
+  shown in the same order/eligibility; only the M−C nonconflicting editions
+  are written or reused. Each conflicting edition has no partial work/edition/
+  ID/source write, no second conflicting row and no change to the first row.
+  The job resolves with the normal option-derived outcome, the existing usage
+  reservation is consumed and physical calls accounted once, and no retry is
+  scheduled. Times searched follows Q4 for resolved catalogue targets only;
+  chosen/added counts stay unchanged. Prove concurrent completion for a real
+  conflict and for consistent same-ISBN convergence, then replay/lost-response
+  recovery: the same options/receipt return, with no extra provider call,
+  write, options-version increment, count or accounting effect (D35, D36, D39,
+  Q20, R01, R10).
+- AC7-2f: Given a recorded positive Open Library edition fixture with
+  `oclc_numbers` and `lccn`, then the normalizer, companion contract, worker/RPC
+  and SQL preserve the validated values and edition/lookup/attempt/provider
+  binding into its source facts and canonical `oclc`/`lccn` columns. Missing,
+  malformed, oversize or conflicting values become null without losing the
+  option; forged lineage/unknown companion keys are refused. An older worker
+  omitting the companion or fields completes with null columns on new rows,
+  preserves populated existing facts and leaves immutable snapshot bytes
+  unchanged; replay creates no new write (D35, R06, R09).
 - AC7-3: Given a placeholder or blocklisted ISBN, then it is never used as an
   identity (D37).
 - AC7-4: Given an Owner picks and adds an edition, then its chosen and added
@@ -152,10 +338,33 @@ enough.
 - AC7-7: Given store A cached a bibliographic search, then store B's same
   search uses it without a provider call; a store-private entry never crosses
   stores (D33, R04).
+- AC7-8: Given anon and authenticated roles, then direct
+  INSERT/UPDATE/DELETE/TRUNCATE on the provider-ID table and direct helper
+  execution are denied. Under decided Q21 authenticated may
+  SELECT, anon may not; required server reads work and service_role has no
+  direct table writes. Exercise actual grants/RLS, not just policy text
+  (D35, R04, R07).
+- AC7-9: Given store A populated an approved Open Library edition with its
+  own cover, then store B's catalogue hit exposes the same permitted cover
+  through the canonical snapshot with zero provider calls; no cover gives the
+  placeholder, never a different source's cover (D29, D33, R05).
+- AC7-10: Given storage permission alone, a proposed second provider without
+  the Owner's recorded permanent/public reuse, cover, attribution and retention
+  permission (Q18), or an expiry-requiring source without verified
+  canonical/display enforcement, then shared-catalogue admission is denied;
+  Google and manual choices remain excluded. Temporary snapshot retention is
+  not permission to populate publicly readable canonical rows. Q18's deferred
+  details do not block the Open Library-only path under D35 and its existing
+  policy checks (D35, R05, Q18).
 
-**Tests first:** Database — catalogue writes, ON CONFLICT convergence,
-blocklist, stats, hidden, cache scope. Server — normalizer IDs, cache-scope
-choice (faked HTTP).
+**Tests first:** Database — catalogue writes, identity collisions/convergence,
+FK/check/cascade and role-denial cases, source keys/provenance, canonical
+cover reuse, policy admission, blocklist, stats, hidden, cache scope;
+concurrent/replayed lookup conflicts, complete options and exactly-once usage
+accounting (AC7-2e); positive OCLC/LCCN persistence and null compatibility
+(AC7-2f). Server — identifier companion transport and SQL parity, positive
+Open Library OCLC/LCCN fixtures, malformed/bounded fields, old-worker
+compatibility, normalizer IDs, cache-scope choice (faked HTTP).
 **Size / risk:** L / med.
 
 ---
@@ -166,7 +375,7 @@ choice (faked HTTP).
 and publisher Gemini already reads (D25, D27).
 
 **Scope:**
-- Automatic order: catalogue (local match on ISBN, Open Library ID or exact
+- Automatic order: catalogue (local match on ISBN, a provider edition ID or exact
   normalized title, authors and language; hidden excluded) → Open Library →
   nothing (D25). Today Open Library has no automatic adapter (F34); this slice
   adds an automatic Open Library lookup that returns a ranked outcome through
@@ -190,27 +399,125 @@ and publisher Gemini already reads (D25, D27).
   edition and one automatic retry. Identify with a User-Agent that includes a
   contact email (F16). Pacing across worker instances (SDD-0 §14 Q5).
 - Times searched counted per completed lookup on the chosen work (§14 Q4).
+- **Registry capabilities instead of provider-name eligibility lists (Owner
+  2026-10-24, D32/D35):** add separate default-false explicit-search,
+  automatic-lookup and `shared_catalogue_allowed` capabilities. Shared use also
+  requires existing registry enabled/metadata-kind/matching/storage/public-display/
+  version checks and applicable retention; any additional provider also needs
+  Q18's Owner-recorded permission before shared admission. Open Library uses
+  D35's existing authorization while Q18's details remain deferred;
+  it is separate from permission for a temporary private lookup. Keep shared
+  use false for Google and exclude manual choices (R05). Replace slices 6–7's
+  shared-create allow-list only here, after parity/negative tests.
+- **Forward SQL scope:** pass 2 inventories the current definitions, not
+  every superseded occurrence in applied M73/M74. The eight functions with
+  provider lists are `phase9_edition_valid_metadata`,
+  `phase9_edition_source_policy`, `phase9_edition_worker_context`,
+  `phase9_register_structural_metadata_lookup`,
+  `phase9_register_structural_metadata_attempt`, `phase9_reserve_metadata_usage`,
+  `phase9_recover_candidate_edition_options_v1` and
+  `phase9_complete_candidate_edition_options_v1` (M73; context/completion now
+  replaced by M78). Cover all four areas: eligibility lists; primary/secondary
+  role and predecessor pairing; own-record ID/book-link/cover validation; and
+  provider-specific completion/physical-call branching. Also audit
+  `phase9_edition_valid_rows` (M73 URL rules),
+  `phase9_register_metadata_provider_call` (M68 Google-only registration),
+  `phase9_register_edition_options_provider_call_v1` (M78 Open Library-only),
+  `phase9_finish_edition_primary_for_fallback_v1` and
+  `phase9_finalize_edition_options_provider_call_v1` (M73), plus wrappers and
+  automatic-purpose dispatch. Existing bounded routing and no fallback on
+  policy/quota/auth denial remain (DOC-3 §5.2).
+- **Validation and accounting:** a capability never replaces own-record,
+  approved-host, lineage, retention or physical-egress proof. Separate generic
+  workflow/policy checks from registry-keyed, reviewed server-owned provider
+  validation contracts for identifiers, book/cover URLs and receipt shape.
+  Provider-specific validators remain code and may need forward SQL when a
+  new provider uses a new format; no promise that enabling a flag alone makes
+  an arbitrary adapter usable. No untrusted registry value may select arbitrary
+  SQL. Keep pure shape checks IMMUTABLE; registry policy reads live in a
+  STABLE boundary, with caller volatility audited (M73's metadata/row validators
+  are currently IMMUTABLE). Replace `instanceof OpenLibraryEditionOptionsAdapter`
+  routing/accounting in `runtime/metadataEditionOptions.ts` with the declared
+  provider contract; preserve per-request receipts, budgets and recovery.
 **Not in scope:** relaxed rules and tie pick for the automatic path (slice 9);
 paid providers.
 
 **Depends on:** slice 7.
-**Migration:** maybe (registry rows and any Google-specific SQL predicate
-still in the edition-completion function, F34). Pass 2 may split into 8a
-(Open Library automatic adapter and order) and 8b (clues and protection).
+**Migration:** required — registry capabilities and forward replacements for
+the functions/policy and validation boundaries above, including completion
+and physical-call paths (F34). Applied migrations stay unchanged (R06). If
+this exceeds one session/migration, pass 2 splits before building into 8a
+(registry and SQL generalization/validation/accounting) and 8b (Open Library
+automatic adapter/order, clues and protection; no further migration expected).
+Each resulting slice has at most one migration and must work independently
+(SDD-0 §7.3); revise the map before approval if that split needs more SQL.
+
+**Required pass-2 activation and rollback plan (R06, D25):** pass 2 must name
+the compatible worker revisions, forward migration, registry values and
+readback checks for every stage below before approval. This is a required
+deliverable even if 8a and 8b ship separately; it is no deployment or service
+mutation authority.
+
+1. Capture the existing registry/worker and in-flight lookup state. New
+   registry rows keep all three capabilities default false. In the forward
+   migration, explicitly seed the existing Google row with explicit/automatic
+   capabilities true and shared false, and the existing Open Library row with
+   explicit true, automatic false and shared true under D35. This preserves
+   their current routes during transition, subject to every existing enabled,
+   version, retention and reuse check; it grants no new Google retention or
+   shared permission. Other rows stay false. Preserve old RPC signatures and
+   omitted-field handling so the current Google-primary worker still works
+   between migration and worker deployment. If 8a ships alone, it stays in
+   this compatible state until 8b is ready.
+2. Deploy and verify the capability-aware worker in that transition state
+   before switching routes. Stop admitting new external lookups for the
+   switch, drain already authorized Google/Open Library attempts and recover
+   committed completions before their policy is disabled. Account finalized
+   physical calls and reservations once; an expired or lost claim follows
+   existing fenced recovery, never duplicate egress. If an in-flight attempt
+   cannot drain, the plan must prove a terminal safe/manual outcome with its
+   existing spend retained before proceeding. Do not strand a lookup or spend
+   reservation across the switch.
+3. With no old worker claiming new jobs, disable Google in the registry and
+   set its explicit/automatic capabilities false (shared remains false);
+   enable Open Library automatic capability while retaining its explicit/shared
+   values and all policy checks. Verify catalogue → Open Library automatic
+   order, explicit search and zero Google egress, then resume admission.
+   Existing chosen snapshots/inventory links remain intact; unselected lists
+   from a disabled source may clear under the existing source policy (F42).
+4. Roll back runtime through a separately approved deployment only after
+   pausing admission and draining/recovering the new worker's attempts with
+   the same accounting fences. Keep the additive schema, catalogue rows,
+   inventory links and chosen snapshots. Prefer a compatible worker revision;
+   if returning to the current Google-primary worker after Google is off,
+   keep Google disabled and do not claim automatic Open Library support.
+   Automatic provider misses degrade safely to no edition/manual Add; the
+   still-permitted explicit Open Library route works. Do not re-enable Google
+   as a rollback shortcut; that requires its own Owner decision (R05).
+
+| Compatibility case | Required result / pass-2 proof |
+|---|---|
+| Existing registry rows, selections and inventory | Assert the explicit seed values above and default-false behaviour for any other/new row. Preserve canonical/inventory IDs and chosen snapshot bytes; saved-choice Add still works. Only unselected disabled/expired options follow normal cleanup. |
+| Migration before new worker (including 8a alone) | The current worker's Google automatic and Open Library explicit routes retain their prior policy eligibility, old RPC/omitted companion calls work, Google shared writes remain denied and no route fails solely because new columns default false. |
+| In-flight lookup at migration or activation | Exercise reserved, registered, egress-started, finalized and committed-with-lost-response cases. Drain or fenced recovery reaches a terminal options/manual result with actual spend/reservation accounting once, no duplicate call and no stranded job; completed options stay recoverable under permitted source policy. |
+| Worker rollback after Google is switched off | Against the migrated database, both the compatible rollback revision and the old Google-primary worker make zero Google calls. The old worker offers safe no-edition/manual automatic outcomes and permitted explicit Open Library search; saved choices/Add and recovery survive without schema rollback or silently re-enabling Google. |
+
 **Code pointers:** `workers/phase9-metadata-worker/bootstrap.ts`, `index.ts`,
 `editionProviderRoute.ts`; `runtime/metadataGatewayContext.ts`,
 `runtime/metadataProductionComposition.ts`, `runtime/metadataProductionGateway.ts`;
 `metadata/openLibrary/adapter.ts`, `transport.ts`, `normalizer.ts`;
 `metadata/googleBooks/ranking.ts`; `phase9_metadata_job_context` (M32/M38);
-`phase9_provider_registry`.
+`phase9_provider_registry`; the SQL inventory above;
+`runtime/metadataEditionOptions.ts`, provider contracts and physical-call ports.
 
 **Acceptance checks:**
 - AC8-1: Given a book already in the catalogue, then no provider call is made
   and the card shows the catalogue edition (D25, D33).
 - AC8-2: Given a new book, then exactly one Open Library lookup runs (within
   its request budget) and no Google request is made (D25, R05). Given a faked
-  second adapter registered and enabled in the registry instead, then the
-  automatic path uses it with no change to storage, review or Add (D32).
+  second adapter and its validation contract prepared as in AC8-9, then the
+  automatic path uses it with no change to canonical/candidate storage, review
+  or Add (D32).
 - AC8-3: Given a valid ISBN clue, then the ISBN lookup runs first and its
   edition is selected when it matches (D27).
 - AC8-4: Given two equal editions and a publisher clue matching one, then that
@@ -220,14 +527,46 @@ still in the edition-completion function, F34). Pass 2 may split into 8a
   edition, retries once, and manual search still works (D31, R10).
 - AC8-6: Given the per-store search cap is reached, then lookups for that store
   pause with a clear reason and other stores are unaffected (D31).
-- AC8-8: Given an Open Library work with subjects, then the normalized
-  edition carries them as categories (F40, D43).
 - AC8-7: Given an edition with no Open Library cover, then the card shows the
   placeholder and no Google cover; the scan photo is never used (D22, D29).
+- AC8-8: Given an Open Library work with subjects, then the normalized
+  edition carries them as categories (F40, D43).
+- AC8-9: Given a synthetic metadata provider with its own non-Google/non-OL
+  edition ID and approved book/cover hosts, first install its test adapter,
+  route and reviewed provider validation/receipt contract (provider-specific
+  SQL may be needed). Freeze the generic workflow functions, insert/enable
+  its registry row with the appropriate capabilities and verified policy,
+  then register the explicit lookup, reserve usage, register attempts and
+  physical calls, complete and persist a valid edition, recover after a lost
+  completion response, read it and select it. Assert success without a new
+  provider-name eligibility list, generic workflow function change or storage
+  schema change; AC8-2 repeats the automatic route. Separately exercise an
+  allowed primary/secondary pairing and reject an invalid pairing, disabled
+  or capability-denied provider, wrong tenant/claim, invalid lineage,
+  mismatched record ID/URL/cover and denied/expired retention. Shared creation
+  for this additional-provider fixture requires `shared_catalogue_allowed`
+  and a test-only recorded Q18 approval; Google
+  remains denied even with `storage_allowed=true`. Repeat AC7-2b's ISBN
+  convergence and no-ISBN separation through this full admitted path.
+  All existing authority,
+  receipt and bounded-routing checks survive (D32, D35, R04, R05, R07, R09).
+- AC8-10: Given the pass-2 activation/rollback sequence and compatibility
+  matrix above, then fixture-backed database/worker tests prove every row for
+  old and new workers, including existing-row seed values, current selections,
+  migration before worker, in-flight/lost-response completion and a rollback
+  after Google is off. No capability default silently breaks the running
+  route, no duplicate physical call/accounting occurs, no job stays stranded,
+  and rollback makes no Google call or implicit Google reactivation. If split,
+  8a passes its migration/old-worker cases before it ships; 8b passes switch
+  and rollback cases before activation (D25, D32, R05, R06).
 
 **Tests first:** Server — Open Library automatic adapter, order, clues, retry,
-switches (faked HTTP; no live calls). Database — local match with hidden rows,
-registry switch. Worker build.
+switches and recorded subjects → categories fixture (AC8-8; faked HTTP, no
+live calls). Database — local match with hidden rows,
+registry capabilities, full synthetic-provider cycle and negative fences
+(AC8-9), shape/policy volatility separation and contract parity; database/worker
+compatibility matrix, in-flight recovery and rollback fixtures (AC8-10).
+Worker build.
 **Size / risk:** L / med. Main risk: Open Library quality and rate limits;
 deploying the worker is a separate Owner approval.
 
@@ -293,20 +632,21 @@ options.
 
 | Decision | Slice | Acceptance checks |
 |---|---|---|
-| PSR-D25 | 8 | AC8-1, AC8-2 |
+| PSR-D25 | 8 | AC8-1, AC8-2, AC8-10 (planned: activation/rollback matrix fixtures) |
 | PSR-D26 | 9 | AC9-6 |
 | PSR-D27 | 8 | AC8-3, AC8-4 |
 | PSR-D28 | 8, 9 | AC8-4, AC9-2, AC9-3 |
 | PSR-D22 | 8 | AC8-7 |
-| PSR-D29 | 8 | AC8-7 |
+| PSR-D29 | 7, 8 | AC7-9, AC8-7 |
 | PSR-D30 | 9 | AC9-3 to AC9-5 |
 | PSR-D31 | 8 | AC8-5, AC8-6 |
-| PSR-D32 | 8 | AC8-2 (faked second adapter) |
-| PSR-D33 | 7, 8 | AC7-7, AC8-1 |
+| PSR-D32 | 8 | AC8-2, AC8-9 (full synthetic-provider cycle), AC8-10 |
+| PSR-D33 | 7, 8 | AC7-7, AC7-9, AC8-1 |
 | PSR-D34 | 6 | AC6-1 |
-| PSR-D35 | 6, 7 | AC6-1 to AC6-4, AC7-1, AC7-2 |
-| PSR-D36 | 7 | AC7-4, AC7-5 |
+| PSR-D35 | 6, 7, 8 | AC6-1 to AC6-4, AC7-1, AC7-2/2b/2c/2d/2e/2f, AC7-8, AC7-10, AC8-9 |
+| PSR-D36 | 7 | AC7-4, AC7-5, AC7-2e |
 | PSR-D37 | 6, 7 | AC6-5, AC7-3, AC7-6 |
 | PSR-D38 | 9 | AC9-1 |
-| PSR-D39 | 7 | AC7-1 |
-| PSR-D40 | 6 | AC6-6 |
+| PSR-D39 | 7 | AC7-1, AC7-2e |
+| PSR-D40 | 6, 7 | AC6-6, AC7-2b/2c, AC7-7 |
+| PSR-D43 | 8 | AC8-8 (planned server test: recorded Open Library work-subjects fixture normalizes to categories) |

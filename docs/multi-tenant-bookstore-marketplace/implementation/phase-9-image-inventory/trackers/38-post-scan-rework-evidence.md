@@ -1568,15 +1568,78 @@ Not fixed, Owner decisions: (1) scanned card with no lookup whose automatic job 
   (5) live paths still untested: many-edition ISBN, wrong ISBN in the sheet, Add after selection.
 Database mutations in this step: none. Nothing staged, committed, pushed or deployed.
 Follow-ups recorded (none blocks the PR; Owner direction 2026-10-24: ship, treat these as optional):
-  A. Migration history repair (housekeeping, live write, NOT run): M78 was run in the SQL editor and M79/M80 through
-     execute_sql, so supabase_migrations.schema_migrations has no rows for them. Risk: a later `supabase db push`
-     would re-run M78 and fail on the existing owner_isbn13 column. Fix, after the Owner confirms the project ref:
-     `npx supabase migration repair --status applied 20261022000078 20261023000079 20261023000080`, then
-     `npx supabase migration list` must show no pending or mismatched versions. Do this before the next db push.
-  B. Many-edition ISBN (the only item that can affect real users): run the live check first with a work that has many
+  A. Migration history repair: DONE 2026-10-24 on the Owner's explicit instruction. The CLI could not be used (this worktree
+     is not linked), so the same effect was written with the Supabase MCP: project ahntbtktjjmvfosgkmgn (verified by
+     get_project_url); before: 74 phase9 rows against 77 local phase9 files; inserted versions 20261022000078,
+     20261023000079, 20261023000080 (local file versions, names as in the files, ON CONFLICT DO NOTHING, 3 rows returned).
+     Only supabase_migrations.schema_migrations changed; no schema or data change. Note: earlier migrations applied with
+     apply_migration carry apply-time versions, not the local file versions, so history and file names already differ
+     for those; this repair does not change that.
+  B. Many-edition ISBN (the only item that can affect real users). Owner decision 2026-10-24: run this live check in the NEXT slice (slice 6) browser check, not now. Run the live check with a work that has many
      editions (e.g. a popular title's paperback ISBN). Only if "No book was found" appears for a valid ISBN, design a
      bounded fallback (worker change plus redeploy).
   C. Scanned card whose automatic job died before any lookup stays "pending" (predates slice 5; not seen in use):
      only if it appears in real use, M81 mapping that case to a recoverable state (Owner approval and review first).
   D. Worker has no overall per-job deadline (a slow Open Library can hold the worker for minutes): accepted risk.
 ```
+
+## 34. Provider-neutral SDD amendment review
+
+Date/session: 2026-10-24. Owner's `psrslice5-review/sdd-neutral-fix-brief.md`:
+consolidate Codex findings 1–7 and Sonnet S1–S8, verify locally, correct only
+SDD-0/SDD-2 and append this entry. Repository reads only; no fresh live-state
+or ACL claim. Duplicates are grouped below; no substantive gap was rejected.
+
+| Finding IDs (duplicates grouped) | Verification and resolution |
+|---|---|
+| Codex 1 / S1 | Confirmed eligibility gap; S1's seed attribution adjusted: M01 copies existing source providers, M73 seeds Open Library, SDD-0 F34 records both storage flags true. D35 and slice 6 now use an explicit Open Library allow-list plus existing policy checks through slice 7; slice 8 adds a separate reviewed shared capability. New-column-in-slice-6 alternative recorded and not selected; no column change or non-ISBN identity added to slice 6. Q18 names permanent/public reuse permission. |
+| Codex 2 / S2 / S4 (workflow) | Confirmed; historical/live wording adjusted to repository evidence. M73's eight provider-list functions now have a named current-definition inventory (M78 supersedes context/completion), plus M68 physical registration and M73/M78 call/fallback/finalization and URL validators. Slice 8 covers lists, role/predecessor pairing, own-record validation and completion/accounting branches; reviewed provider validators may still need SQL. IMMUTABLE shape vs STABLE policy and worker instanceof routing are explicit. AC8-9 proves register/reserve/complete/persist/recover/read/select and negative fences, cross-references AC8-2; ordering, D32 traceability and mandatory migration/split wording corrected. |
+| Codex 3 / S4 (identity) / S6 | Confirmed identity/constraint gaps; S6's key-pattern suggestion adjusted to the stricter current metadata contract (M15 SQL also permits dots). P3 ISBN/work uniqueness and DOC-3 §4.2 support explicit convergence/no-ISBN/translation cases. Slice 7 adds non-null tuple keys, canonical FKs, XOR/kind checks, bounded IDs and cascade deletion. AC7-2b tests namespaces and duplicate-target rejection below production admission; AC8-9 repeats full admitted convergence. Q20/AC7-2c recommend atomic conflict skip with successful unmatched Add, never silent merge/reassignment. |
+| Codex 4 | Confirmed: Open Library adapter reads a work key but normalizer/MetadataEdition carry no work ID; M73 rejects unknown metadata keys. Slice 7 now scopes a versioned neutral companion payload, worker/RPC/SQL validation, lineage and old-worker/immutable-snapshot tests (AC7-2d), with code pointers. |
+| Codex 5 / S8 (cover) | Confirmed: P3 has canonical cover_url and M65 catalogue snapshots read it. Slice 7 retains the coherent permitted canonical URL projection; cover ID/URL derivation stays with source normalized facts. AC7-9 proves another store reuses that cover without a call; expiry/public reuse gated by Q17/Q18 and AC7-10. |
+| Codex 6 / S8 (references) | Confirmed: SDD-0 approved baseline separated from amendment; §9 matching/data-model references, slice 8 migration row, generic provider edition-ID wording and 7a/new-table/RLS/grants scope synchronized. DOC-3 §§5.1/5.2/14/17 named as later implementation amendments; DOC-3 remains untouched. |
+| Codex 7 / S8 (questions) | Confirmed: source-row provenance is record-level, not per-field; provider/adapter_key/expires_at are source fields, not canonical fields. Q15–Q19 each name AC coverage or deferred/no AC. Overwrite/bulk refresh/per-store choice stay deferred; expiry-dependent providers cannot be enabled without canonical/public enforcement. |
+| S3 | Adjusted: public canonical RLS and M01's explicit registry revocations are locally verified; current live default grants were not re-queried. Regardless of defaults, slice 7 now requires explicit revocations, SELECT-only grants/RLS, restricted helper execution and actual anon/authenticated DML/TRUNCATE denials (AC7-8); no direct service-role table writes. Anonymous read choice is recommended only, in Q21. |
+| S5 | Confirmed by P3/M01: adapter_key is nullable and UNIQUE(provider, provider_book_id) remains. New writes populate both provider fields with the registry key; source-row key distinguished from provider-ID identity key. |
+| S7 | Confirmed by P3 SELECT policies: hidden flag and source/retention note on canonical_editions are public. Slice 7 explicitly documents visibility and excludes private/store content; hidden is lookup suppression, not row secrecy. |
+
+Completed/files: SDD-0 status, D35, §7.1, §9, §10 and §14; SDD-2 slices 6–8,
+ACs/tests and traceability; this append-only evidence section. Source authority:
+Owner amendment/brief, PSR-D32–D40, R04–R10, DOC-3 §§4.2/5.1/5.2/14/17.
+Verification actually run: Phase 9 continuity validator PASS (106 Markdown
+files; 195 requirement definitions, zero duplicates/missing traceability);
+`git diff --check` PASS. Runtime/Python/database/browser tests not run (docs only).
+Size assessment: SDD-0 remains the cohesive decision/overview authority and
+SDD-2 the slices 6–9 design; size advisories do not justify fragmenting either.
+Supabase/external mutations: none; no code/migration edits or service calls.
+Decisions/risks: Q20 conflict fallback and Q21 authenticated-only ID reads are
+new recommended defaults awaiting Owner confirmation; Q15–Q19 retain their
+stated gates/deferrals. No second provider, expiry engine or overwrite policy
+is enabled. No global phase/handoff change; other dirty documents preserved.
+Next authorized action and gate: Owner review of the corrected amendment and
+open defaults before affected pass-2 approval; slice 6 remains planning-only.
+Nothing staged, committed, pushed, deployed or applied.
+
+**Whole review resolution (2026-10-25):** Verified whole-review issues 1–5
+against `compactReviewDraft.ts`, M69's saved-choice gate, `MetadataEdition`,
+the Open Library normalizer, M73/M78 completion/validation, worker bootstrap
+and SDD-5's current checks; all confirmed. Corrected SDD-0 status/D35/§10/§14
+and SDD-2 slices 6–8/traceability: unmatched manual title edit; Q20 identity
+conflicts versus same-ISBN convergence, with concurrent/replayed lookup options
+and exactly-once accounting; bounded OCLC/LCCN companion transport/persistence
+and old-worker null compatibility; required activation/rollback matrix; AC6-0,
+D43 → AC8-8 → planned fixture, and the stale AC15-9 wording. Owner decisions
+applied: Q15 development data may be reset/rebuilt only on separate approval
+(adjusting the review's interim-preservation proposal), second-provider overwrite
+policy deferred; Q18 details deferred to the Owner while Open Library alone,
+second-provider admission gate retained; Q20 first row stays/no merge, unmatched
+Add or per-edition lookup skip without retry; Q21 authenticated/server reads
+only, removed from open questions. Authority: Owner's resolve brief, SDD-0
+§§4/6/14, DOC-3 §§4.2/5.1/5.2/14/17. Continuity validator PASS (106 Markdown
+files, 195 definitions, zero duplicates/missing traces); `git diff --check`
+PASS. No runtime tests, code/migration edits, reset, database/Storage/service
+calls or external mutation; other dirty files preserved. Both SDDs remain
+cohesive despite size advisories. No new Owner decision requested. Next
+authorized action: Owner review of this corrected draft before slice 6 pass-2
+approval; implementation remains unapproved. Nothing staged, committed,
+pushed, deployed or applied.

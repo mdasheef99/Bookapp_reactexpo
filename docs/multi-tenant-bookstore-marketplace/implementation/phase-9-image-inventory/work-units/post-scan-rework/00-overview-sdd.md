@@ -3,10 +3,16 @@
 **Status:** `approved` (written and reviewed 2026-10-19; Owner approved the
 SDD set with the §14 defaults on 2026-10-19; approval of the documents does not
 authorize code, migrations or deployment, which each slice requests separately)
+**Amendment:** provider-neutral slices 6–8 drafted on Owner direction
+2026-10-24; whole-review corrections and the Owner's 2026-10-25 decisions on
+Q15, Q18, Q20 and Q21 are recorded in tracker 38 §34 and §14 below. This draft
+amendment is distinct from the approved 10-19 baseline; remaining pass-2
+questions retain their stated gates. No implementation is authorized here.
 **Branch:** `claude/phase9-post-scan-rework-sdd` from `main` `8863885`
 **Phase:** Phase 9 (image inventory). Part 1 of this rework stays inside Phase 9.
 **Authority:** the Owner's decisions of 2026-10-17 to 2026-10-19, recorded
-below as `PSR-D*`. They rank above the Phase 9 master SDD and the domain SDDs
+below as `PSR-D*`, and the amendment decisions of 2026-10-24/25 (§14). They
+rank above the Phase 9 master SDD and the domain SDDs
 (AGENTS.md authority hierarchy, item 1). Where an existing rule disagrees, §9
 names it and the slice that amends it.
 **Evidence tracker:** [tracker 38](../../trackers/38-post-scan-rework-evidence.md)
@@ -190,7 +196,7 @@ umbrella decision.
 |---|---|---|---|
 | PSR-D33 | Build a **lean catalogue on the existing tables** (`canonical_works`, `canonical_editions`, `book_metadata_sources`) and share the search cache across stores through its existing `public_bibliographic` mode. The Owner approved changing the source specs for this ("you can change this"). | Popular books are scanned again and again; each repeat should need no API call. | 10-18 |
 | PSR-D34 | **Every Add finds or creates the catalogue edition** (and work) for the chosen edition and links `store_inventory.canonical_edition_id` / `canonical_work_id`. | Today picker choices are added with no link (§8 F5), so counts and reuse cannot work. | 10-18 |
-| PSR-D35 | The catalogue holds **Open Library records only** (never Google). Stored IDs: our own IDs, ISBN-13 and ISBN-10, Open Library work, edition, author and cover IDs, OCLC and LCCN when present. Identity: **ISBN-13**, else the Open Library edition ID. Our own IDs are what inventory points to; provider IDs are cross-references. | Google's terms; provider independence. | 10-18 |
+| PSR-D35 | The catalogue holds records permitted for permanent shared storage and public reuse (Open Library first; never Google or manual choices). Slices 6–7 use an explicit `open_library` allow-list plus existing registry policy checks; slice 8 replaces that list with a distinct `shared_catalogue_allowed` capability. The Owner's licensing details are deferred while Open Library is the only provider; no second provider enters shared storage before the Owner records its permission (Q18). Existing `storage_allowed` alone is insufficient. Our own IDs are what inventory points to. Identity: **ISBN-13**, else a provider edition ID. Provider IDs are cross-references held in a **provider-ID list** (one row per provider, ID kind and external ID, for editions and works), never in provider-specific columns. ISBN-13, ISBN-10, OCLC and LCCN are provider-independent and stay as columns. *Amended 2026-10-24 (Owner): provider-neutral structure; Open Library is the first provider, not a built-in assumption. Q18 deferral confirmed 2026-10-25.* | Google's terms; provider independence; a later provider or a per-store provider must need no schema change. | 10-18, 10-24/25 |
 | PSR-D36 | **Counts** live in a small separate stats table with **no store identity**: times searched (work), times chosen and times added (edition). Counts only order results and break ties; they never mean "verified". | Avoids locking a shared row on every Add; "times chosen" is a popularity signal, not truth. | 10-18 |
 | PSR-D37 | Record quality: a **hidden flag** for bad records; **one source-and-retention note per record**; an ISBN **check-digit test and a small blocklist** of placeholder or reused ISBNs; the **normalizer (rule) version** stored with each key. | One bad ISBN would otherwise merge unrelated books for every store. | 10-18 |
 | PSR-D38 | The **real scanned titles** (called the 84-title set in planning; the saved file [`data/benchmark-spine-readings-2026-10-18.json`](./data/benchmark-spine-readings-2026-10-18.json) holds 85 unique spine readings, misreadings included) become a fixed benchmark that measures **wrong-edition picks**, not just the match rate. Relaxed automatic matching and tie picks are switched on only after it passes. | A higher match rate is worthless if it picks wrong editions. | 10-18 |
@@ -280,7 +286,7 @@ deploy.
 | 5 | Typed ISBN in the edition sheet and in "Add a book" ([slice 5 SDD](./01a-slice5-typed-isbn-sdd.md), approved 2026-10-22) | 1 | 2, 4 | 5a: one (M78); 5b: none (Owner, D5-4, D5-6) | App + Owner API + database + worker | 5a L / high; 5b S–M / med | D06, D13 |
 | 6 | Catalogue link fix: every Add finds or creates the catalogue edition and links it | 2 | — | One | Database | M / med | D34, D35, D40 |
 | 7 | Lean catalogue writes from Open Library, stats table, shared cache | 2 | 6 | One | Database + worker | L / med | D33, D35–D37, D39, D40 |
-| 8 | Open Library first in the automatic match, ISBN and publisher clues, Google off, protection | 2 | 7 | Maybe (registry and SQL predicates) | Worker + database | L / med (F34: Open Library has no automatic adapter yet; pass 2 may split) | D22, D25, D27, D28 (clue), D29, D31, D32 |
+| 8 | Open Library first in the automatic match, ISBN and publisher clues, Google off, protection | 2 | 7 | One (registry capabilities and forward SQL replacements; split 8a/8b before build if needed, §7.3) | Worker + database | L / med (F34: Open Library has no automatic adapter yet; pass 2 may split) | D22, D25, D27, D28 (clue), D29, D31, D32 |
 | 9 | Relaxed automatic match and tie pick, saved results for the sheet; switched on only after the benchmark passes | 2 | 8 | Maybe | Worker + database | M / med | D26, D28, D30, D38 |
 | 10 | Remove all remaining; no restore; content-free audit | 3 | — | None expected (removal audit is already ID-only, F33) | App (+ database tests) | S–M / low–med | D18, D19, D20 |
 | 11 | Server auto-close when every card is Added or Removed | 3 | 10 | One | Database (+ app) | L / high (lock graph, F39) | D01, D09, D21 |
@@ -430,8 +436,9 @@ is not built. Until then, readers follow this table.
 | P9-D87 Store View confirms before Publish (today before every Publish, F21) | Still applies in Store View; the pre-scan choice is the confirmation for Add-time publication. | 14 |
 | P9-D81 and today's review rule: ₹0 allowed for a private Add | Cards need a price above ₹0 before Add (PSR-D47); the pre-scan default may still be blank or ₹0. | 2 (app), 13 (server) |
 | P9-D88 and Unit 6G full correction | Full correction removed. | 4 |
-| DOC-3 §5.1 (fuzzy title+author = suggest only) and §5.2 (picker choice "does not promote canonical truth") | Relaxed automatic match and tie picks auto-select an edition shown on the card; Add is the Owner's confirmation; Add links (and may create) the catalogue edition. Exact ISBN-13 / Open Library ID identity is the only automatic merge key. | 6, 9 |
-| DOC-3 §17 deferred "automated canonical merge without review" | Allowed only on exact ISBN-13 or Open Library edition ID; fuzzy merges remain deferred. | 6, 7 |
+| DOC-3 §5.1 (provider ID is source trace; fuzzy title+author = suggest only) and §5.2 (picker choice "does not promote canonical truth") | Relaxed automatic match and tie picks auto-select an edition shown on the card; Add is the Owner's confirmation; Add links (and may create) the catalogue edition. Exact validated ISBN-13 (slice 6 onward) or a provider edition-ID tuple (slice 7 onward) is the only automatic edition merge key; conflicting identities never silently merge (Q20). | 6, 7, 9 |
+| DOC-3 §17 deferred "automated canonical merge without review" | Allowed only on exact ISBN-13 or a provider edition ID; fuzzy merges remain deferred. | 6, 7 |
+| DOC-3 §14 canonical/source data model | Add the provider-ID list and its constrained canonical links; distinguish source-row keys from canonical identity and keep canonical cover projection/provenance coherent (SDD-2 slice 7). | 7 |
 | DOC-3 INV-18 (removal keeps scan evidence) | Unchanged in Part 1; physical deletion amends it in slice 18. | 18 |
 | P9-D84 (Remove has no Undo or Restore) | Kept; Remove all added. | 10 |
 | P9-D86 representative Google cover | Inactive while Google is off; Google cover fallback cut. | 8 |
@@ -450,8 +457,9 @@ is not built. Until then, readers follow this table.
   its own unit. All were accepted by the Owner (§4).
 - **Design study 1 (slices 6–7, Muse Spark 1.3 xhigh, 10-19):** find-or-create
   inside the Add function, before the inventory insert; ISBN-13 first (ISBN-10
-  converted, conflicting pair → no link), then Open Library edition ID; only
-  Open Library-sourced choices may create shared rows; `ON CONFLICT DO NOTHING`
+  converted, conflicting pair → no link), then a provider edition ID (slice 7);
+  Open Library only in slices 6–7, then the reviewed shared-catalogue capability
+  in slice 8, may create shared rows (D35); `ON CONFLICT DO NOTHING`
   + re-select for concurrent stores; stats in separate tables; shared cache
   through the existing `public_bibliographic` scope. It flagged: ISBN-13 is a
   lossy identity (accepted), `times_searched` is ill-defined for no-match or
@@ -470,8 +478,9 @@ is not built. Until then, readers follow this table.
 - **Pass-1 review of this SDD set (10-19, Muse Spark 1.3 xhigh, read-only):**
   verdict approve with fixes; 18 facts confirmed against migrations and code,
   none found wrong. Fixed in this pass: older-app sessions must never
-  auto-publish (§9, SDD-4 AC14-8, Q12); per-work category counts belong to
-  slice 15b, not slice 7 (SDD-5 AC15-9) (later dropped by the Owner, Q14); PSR-D01 and PSR-D22 gained
+  auto-publish (§9, SDD-4 AC14-8, Q12); per-work category counts were assigned
+  to slice 15b rather than slice 7, then dropped by the Owner (Q14; no current
+  acceptance check); PSR-D01 and PSR-D22 gained
   acceptance checks; AC12-1 has one outcome (Q11); accessibility checks for
   every slice that adds UI; evidence added to F27 and F28; glossary terms
   for fresh sessions. Left to pass 2 as recorded notes: trigger call sites for
@@ -591,6 +600,20 @@ plus the in-app click-through and read-only SQL readback for AC17-2 to AC17-5.
 | Q12 | How a session is marked as started on the new pre-scan, so Add may publish it (§9). | A value written only by the new session-start contract, atomically when the new session row is inserted — never on resume or replay. Absent or default means **unmarked** (no auto-publish). The old `phase9_start_session_v2` signature stays callable. Pass 2 picks the smallest safe form (a new column or contract marker). | SDD-4 slice 14 |
 | Q13 | ₹0 price under Publish now. | **Decided 10-19 (PSR-D47):** price above ₹0, condition and quantity are required before Add; the pre-scan default may be ₹0, and cards then show Needs details until a price is entered. Price and condition are never publication blockers. | SDD-1 slice 2, SDD-4 slices 13–14 |
 | Q14 | Catalogue category tier versus PSR-D40. | **Decided 10-19 (PSR-D42 amended):** Auto-detect is Gemini only; no category counts are kept. | SDD-5 slice 15 |
+| Q15 | When two providers disagree about a book's facts (title, authors, publisher, cover), which wins, and when may a newer record overwrite an older one? | **Deferral decided 2026-10-25 (Owner):** this is development data; existing catalogue data need not be preserved and may be reset or rebuilt. A reset needs its own Owner approval and is not authorized by this documentation edit. The overwrite policy for facts from a second provider stays deferred until one is proposed. Keep coherent record-level source provenance, with no per-field provenance or cross-provider stitching. Q20's first-row rule governs ordinary identity conflicts; reset permission is not an overwrite policy. | SDD-2 slice 7; AC7-2b/2c cover ordinary identity handling; second-provider overwrite/reset implementation: no AC, deferred |
+| Q16 | Matching the same book across providers when it has no ISBN. | Treat each provider's edition as its own edition (provider edition-ID tuple identity); no fuzzy merge (DOC-3 §17 stays). Revisit with the first second provider. | SDD-2 slice 7; AC7-2b |
+| Q17 | Refreshing rows written from a provider that is later replaced or supplemented. | `adapter_key`/`provider` and `expires_at` belong to `book_metadata_sources`, not canonical works/editions. No bulk refresh now. Do not enable a provider requiring expiring canonical facts/covers until all reuse and public-display paths enforce expiry or withdraw those projections; unconditional canonical reads cannot enforce a source-row deadline. Decide refresh with the first second provider. | SDD-2 slice 7; refresh/expiry implementation: no AC, deferred; AC7-10 covers the enablement gate |
+| Q18 | Licensing and retention review for each new provider before its data enters the shared catalogue (the Google exclusion is the precedent). | **Deferred, owned by the Owner (2026-10-25):** the Owner will supply licensing and retention details later; these details are not needed while Open Library is the only provider under D35. Before any second provider enters shared storage, the Owner must record permission for permanent normalized facts, public display, cover reuse, attribution and retention. Slices 6–7 retain the Open Library allow-list; slice 8 adds default-false `shared_catalogue_allowed`, false for Google and separate from temporary lookup/storage permission. Existing enabled/matching/storage/display/version/retention checks remain; the flag is not a licence grant. | SDD-2 slices 6–8; AC6-4, AC7-10, AC8-9; licensing details deferred, admission gate retained |
+| Q19 | Per-store provider choice: may a store use a different provider for its own searches? | Not built now. If added, the choice sets which provider a store searches, never which shared rows it can read; each source keeps its provider's licence limits. | SDD-2 slice 8; no AC, deferred |
+
+### 14.1 Decided amendment questions (Owner, 2026-10-25)
+
+These decisions are retained for traceability; Q20 and Q21 are not open.
+
+| # | Decision | Area / acceptance checks |
+|---|---|---|
+| Q20 | Two writes for the same validated ISBN-13 with consistent edition identity converge on one row and both inventory rows link to it (AC6-3). A real conflict is disagreement between identifiers or their edition/work identity: an ISBN-13 already belongs to an edition with a different work or title, a provider ID is attached to another record, or ISBN-10 and ISBN-13 resolve to different rows. Different ISBNs alone are never a conflict: they may be two editions of one work. The first row stays; no second conflicting row, merge, reassignment or partial catalogue write. At Add, skip the conflicting catalogue sub-operation and let Add succeed without a catalogue link. At lookup completion, skip only that edition's catalogue sub-operation; save and show every edition option, complete the lookup with its normal options/accounting result and schedule no retry for the conflict. Concurrent and replayed completion must preserve those outcomes. | SDD-2 slices 6–7; AC6-3/5, AC7-2b/2c/2e |
+| Q21 | Anonymous (logged-out) clients may not read provider-ID rows. Authenticated and required server SELECT only; no anonymous grant or SELECT policy. Canonical bibliographic rows remain public under existing policies; this does not hide those rows or their new columns. | SDD-2 slice 7; AC7-8 |
 
 ## 15. Process rules for every slice
 
