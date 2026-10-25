@@ -20,6 +20,16 @@ it('moves the iOS sheet content above the keyboard', async () => {
   await act(async () => { Native.DeviceEventEmitter.emit('keyboardWillChangeFrame', { duration: 0, easing: 'keyboard', endCoordinates: { screenX: 0, screenY: 500, width: 400, height: 300 } }); });
   await waitFor(() => expect(Native.StyleSheet.flatten(view.UNSAFE_getByType(Native.KeyboardAvoidingView).props.style).paddingBottom).toBe(300));
 });
+it('keeps long sheet content inside the dialog so it can scroll', () => {
+  mockApi.entities.data = Array.from({ length: 25 }, (_, index) => ({ ...label, id: `label-${index}`, name: `Label ${index}` }));
+  const view = render(<OrganisingSheet actor="actor" kind="labels" mode="manage" onClose={jest.fn()} />);
+  const dialog = view.UNSAFE_getByProps({ accessibilityViewIsModal: true });
+  expect(Native.StyleSheet.flatten(dialog.props.style).maxHeight).toBe('90%');
+  const avoider = view.UNSAFE_getByType(Native.KeyboardAvoidingView);
+  expect(Native.StyleSheet.flatten(avoider.props.style).flexShrink).toBe(1);
+  expect(avoider.findAllByType(Native.ScrollView).length).toBeGreaterThan(0);
+  view.unmount();
+});
 it('uses singular book copy in a label deletion confirmation', () => {
   mockApi.members.data = [{ entity_id: label.id, target_id: 'book' }];
   const view = render(<OrganisingSheet actor="actor" kind="labels" mode="manage" initialStep="delete" original={label} onClose={jest.fn()} />);
@@ -50,6 +60,10 @@ beforeEach(() => {
   useAuthStore.setState({ session: { user: { id: 'actor' } } as any });
   Object.assign(mockApi, { isOffline: false, entities: { data: [label], isPending: false, isError: false, refetch: jest.fn() }, members: { data: [], isPending: false, isError: false },
     suggestions: { data: [], isPending: false, isError: false }, refresh: jest.fn(), create: jest.fn(async () => label), membership: jest.fn(async () => undefined), rename: jest.fn(async () => label), remove: jest.fn(async () => undefined) });
+});
+afterEach(() => {
+  (Native.Platform as any).OS = 'ios';
+  delete (global as any).window;
 });
 it('exposes Manage in the Home filter and applies a selection immediately', () => {
   const select = jest.fn(), close = jest.fn();

@@ -209,7 +209,7 @@ function OrganisingSheetSession({ actor, kind, mode, target, selectedId, onSelec
             }
           } } : {})}
           style={[styles.dialog, { backgroundColor: colors.bgRaised }]}>
-          <KeyboardAvoidingView enabled={false} onLayout={event => { panelLayout.current = { y: event.nativeEvent.layout.y, height: event.nativeEvent.layout.height }; }} style={{ paddingBottom: keyboardPad }}>
+          <KeyboardAvoidingView enabled={false} onLayout={event => { panelLayout.current = { y: event.nativeEvent.layout.y, height: event.nativeEvent.layout.height }; }} style={{ flexShrink: 1, paddingBottom: keyboardPad }}>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
             <BookButton ref={closeRef} label="Back" accessibilityLabel={`Back in ${kind}`} variant="text" onPress={back} />
             <Text accessibilityRole="header" style={[LIBRARY_TEXT.heading, { color: colors.textPrimary }]}>{title}</Text>

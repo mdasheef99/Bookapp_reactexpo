@@ -57,9 +57,13 @@ export default function NotesSwipeScreen() {
   const dedicatedCollection = scope.kind === 'collection' ? collections.entities.data?.find(row => row.id === scope.collectionId) : undefined;
   const collectionReady = collections.entities.data !== undefined && collections.members.data !== undefined;
   const collectionReadError = collections.entities.isError || collections.members.isError;
-  // While the entities read is in flight or failed, a missing collection cannot
-  // be confirmed deleted: show the loading/error recovery instead.
-  const unconfirmedCollection = scope.kind === 'collection' && collections.entities.data !== undefined && !dedicatedCollection && (collections.entities.isFetching || collections.entities.isError);
+  // While the entities read is in flight, failed, paused or offline, a missing
+  // collection cannot be confirmed deleted: show the loading/error/offline
+  // recovery instead. A populated deck stays mounted during a background
+  // refetch (dedicated exists, so unconfirmed stays false and the stack keeps
+  // its position instead of remounting).
+  const unconfirmedCollection = scope.kind === 'collection' && collections.entities.data !== undefined && !dedicatedCollection && (collections.entities.isFetching || collections.entities.isError
+    || collections.isOffline || isOffline || collections.entities.isPaused || collections.entities.fetchStatus === 'paused');
   const coldCollection = (scope.kind === 'collection' || !!collectionId) && (!collectionReady || unconfirmedCollection);
   const missingCollection = scope.kind === 'collection' && collections.entities.data !== undefined && !dedicatedCollection && !unconfirmedCollection;
   const bookNotFound = book.error instanceof Error && book.error.message === 'This book is unavailable.';

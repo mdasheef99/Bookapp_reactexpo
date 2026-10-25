@@ -36,6 +36,66 @@ it('retains loaded collection pages and one query when a membership is removed',
   expect(client.getQueryCache().findAll({ queryKey: ['library-note-deck', 'actor', 'collection-cards', 'group'] })).toHaveLength(1);
   view.unmount();
 });
+it('includes a new front id in order without resetting pages', async () => {
+  const ids = Array.from({ length: 45 }, (_, i) => `note-${i}`);
+  const view = renderHook(({ links }: { links: string[] }) => useCollectionCards('actor', 'group', links, true), { wrapper, initialProps: { links: ids } });
+  await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+  await act(async () => { await view.result.current.fetchNextPage(); });
+  const cardsInCache = () => client.getQueryCache()
+    .findAll({ queryKey: ['library-note-deck', 'actor', 'collection-cards', 'group'] })
+    .flatMap(query => (query.state.data as { pages: NoteDeckCard[][] } | undefined)?.pages.flat() ?? []);
+  await waitFor(() => expect(cardsInCache().length).toBeGreaterThan(20));
+  view.rerender({ links: ['note-new', ...ids] });
+  await waitFor(() => expect(view.result.current.data!.pages.flat().map(row => row.note.id)[0]).toBe('note-new'));
+  expect(view.result.current.data!.pages.flat().some(row => row.note.id === 'note-20')).toBe(true);
+  const flat = view.result.current.data!.pages.flat().map(row => row.note.id);
+  expect(new Set(flat).size).toBe(flat.length);
+  await act(async () => { await view.result.current.fetchNextPage(); });
+  await waitFor(() => expect(view.result.current.data!.pages.flat().some(row => row.note.id === 'note-44')).toBe(true));
+  const all = view.result.current.data!.pages.flat().map(row => row.note.id);
+  expect(new Set(all).size).toBe(all.length);
+  expect(all).toContain('note-new');
+  expect(all.length).toBe(46);
+  expect(client.getQueryCache().findAll({ queryKey: ['library-note-deck', 'actor', 'collection-cards', 'group'] })).toHaveLength(1);
+  view.unmount();
+});
+it('does not re-request ids when a page comes back short', async () => {
+  const ids = Array.from({ length: 45 }, (_, i) => `note-${i}`);
+  (manualNotesGateway.deckCards as jest.Mock).mockClear();
+  (manualNotesGateway.deckCards as jest.Mock).mockImplementation(async (_actor: string, batch: string[]) =>
+    batch.filter(noteId => noteId !== 'note-5' && noteId !== 'note-6').map(noteId => card(noteId)));
+  const view = renderHook(({ links }: { links: string[] }) => useCollectionCards('actor', 'group', links, true), { wrapper, initialProps: { links: ids } });
+  await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+  await waitFor(() => expect(view.result.current.data!.pages[0].length).toBe(18));
+  await act(async () => { await view.result.current.fetchNextPage(); });
+  await waitFor(() => expect(view.result.current.data!.pages.length).toBe(2));
+  const pageBatches = (manualNotesGateway.deckCards as jest.Mock).mock.calls.map(call => call[1] as string[]).filter(batch => batch.length === 20);
+  const requested = pageBatches.flat();
+  expect(pageBatches.length).toBeGreaterThanOrEqual(2);
+  expect(new Set(requested).size).toBe(requested.length);
+  const flat = view.result.current.data!.pages.flat().map(row => row.note.id);
+  expect(new Set(flat).size).toBe(flat.length);
+  expect(flat).toContain('note-18');
+  expect(flat).not.toContain('note-5');
+  view.unmount();
+});
+it('keeps every flattened id unique across all pages', async () => {
+  const ids = Array.from({ length: 45 }, (_, i) => `note-${i}`);
+  const view = renderHook(({ links }: { links: string[] }) => useCollectionCards('actor', 'group', links, true), { wrapper, initialProps: { links: ids } });
+  await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+  const cardsInCache = () => client.getQueryCache()
+    .findAll({ queryKey: ['library-note-deck', 'actor', 'collection-cards', 'group'] })
+    .flatMap(query => (query.state.data as { pages: NoteDeckCard[][] } | undefined)?.pages.flat() ?? []);
+  await act(async () => { await view.result.current.fetchNextPage(); });
+  await waitFor(() => expect(cardsInCache().length).toBeGreaterThan(20));
+  await act(async () => { await view.result.current.fetchNextPage(); });
+  await waitFor(() => expect(cardsInCache().length).toBe(45));
+  // The observer snapshot can lag the cache (see the first test), so assert
+  // uniqueness on the cache pages which the fetch writes synchronously.
+  const cachedFlat = cardsInCache().map(row => row.note.id);
+  expect(new Set(cachedFlat).size).toBe(cachedFlat.length);
+  view.unmount();
+});
 it('keeps a restored collection filter while a cold note index is still loading', async () => {
   let resolve!: (rows: unknown) => void;
   (manualNotesGateway.deckIndex as jest.Mock).mockReturnValue(new Promise(done => { resolve = done; }));

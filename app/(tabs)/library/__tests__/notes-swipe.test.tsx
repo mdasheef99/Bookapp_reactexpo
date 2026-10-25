@@ -163,6 +163,15 @@ describe('notes-swipe screen states and primaries', () => {
     expect(mockCollections.refresh).toHaveBeenCalledTimes(1);
     ui.unmount();
   });
+  it.each(['offline', 'paused'])('hides a cached missing collection while %s', state => {
+    mockParams = { scope: 'collection', collectionId: 'new-elsewhere', order: 'oldest' };
+    Object.assign(mockCollections.entities, { isFetching: false, isError: false, isPaused: state === 'paused', fetchStatus: state === 'paused' ? 'paused' : 'idle' });
+    if (state === 'offline') mockNetwork.isOffline = true;
+    const ui = renderScreen();
+    expect(ui.getByText(state === 'offline' ? "You're offline. Connect to load this collection." : 'Loading collection…')).toBeTruthy();
+    expect(ui.queryByText('This collection no longer exists.')).toBeNull();
+    ui.unmount();
+  });
   it('does not advertise an unavailable collections action offline', () => {
     mockNetwork.isOffline = true;
     const ui = renderScreen();

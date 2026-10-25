@@ -166,7 +166,7 @@ function LibraryHome() {
             <View testID="library-collection-controls">
                 <LibraryFilterBar chips={filterChips} activeFilter={activeFilter} onChange={setActiveFilter} disabled={arrangement.active} />
                 <LibraryLabelFilter triggerRef={labelsTrigger} name={activeLabel?.name} visible={!!labels.entities.data?.length}
-                    disabled={arrangement.active || labels.members.data === undefined} error={labels.entities.isError || labels.members.isError}
+                    disabled={arrangement.active || labels.members.data === undefined} error={labels.entities.isError || labels.members.isError} isOffline={labels.isOffline}
                     onOpen={() => setLabelsOpen(true)} onClear={clearLabel} onRetry={labels.refresh} />
                 <LibrarySummary count={filteredBooks.length} />
                 <GoalSummary actorId={session?.user?.id ?? ''} />
