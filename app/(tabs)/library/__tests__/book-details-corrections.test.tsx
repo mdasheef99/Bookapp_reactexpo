@@ -26,7 +26,8 @@ jest.mock('@/components/library/ui/BookFeedback', () => ({
 }));
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
-jest.mock('expo-router', () => ({ useLocalSearchParams: () => ({ bookId: mockEntryId }), useRouter: () => ({ back: mockBack, push: mockPush, replace: mockReplace, dismiss: jest.fn(), canGoBack: () => true }), useNavigation: () => ({ dispatch: jest.fn(), canGoBack: () => true, getState: () => undefined, isFocused: () => true }) }));
+jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(), useLocalSearchParams: () => ({ bookId: mockEntryId }), useRouter: () => ({ back: mockBack, push: mockPush, replace: mockReplace, dismiss: jest.fn(), canGoBack: () => true }), useNavigation: () => ({ dispatch: jest.fn(), canGoBack: () => true, getState: () => undefined, isFocused: () => true }) }));
 jest.mock('@react-navigation/native', () => ({ usePreventRemove: jest.fn() }));
 jest.mock('@/hooks/useTheme', () => ({ useTheme: () => ({ phase: 'daylight' }) }));
 jest.mock('@/features/auth/hooks/useAuth', () => ({ useAuth: () => {

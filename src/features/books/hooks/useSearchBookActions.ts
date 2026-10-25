@@ -1,3 +1,4 @@
+import { invalidateOrganising } from '@/features/books/organising/useOrganising';
 import { useCallback, useState } from 'react';
 import { Linking, Share } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
@@ -94,6 +95,7 @@ export function useSearchBookActions(args: {
 
             await queryClient.invalidateQueries({ queryKey: ['library'] });
             await queryClient.invalidateQueries({ queryKey: ['library-note-deck', userId] });
+            invalidateOrganising(queryClient, userId);
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (error) {
             if (__DEV__) console.warn('Wishlist update failed', error);

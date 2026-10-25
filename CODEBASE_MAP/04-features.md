@@ -158,6 +158,25 @@ Library note retrieval entry points:
   with the reading-history query and Library Home's book titles, and refreshes
   its calendar on local midnight and app/window focus.
 
+Library organising entry points:
+
+- `organising/organisingGateway.ts` and `useOrganising.ts` own fixed label/collection
+  tables, owner-bound requests, conditional renames, paged memberships and cache
+  updates. `src/components/library/organising/OrganisingSheet.tsx` uses one Modal
+  with validation, draft confirmation and confirmed/uncertain creation recovery.
+- `labels/labelsContract.ts`, `utils/libraryShelf.ts` and
+  `src/components/library/labels/` serve Book Details labels and the separate Home
+  label filter; status counts are computed after the label subset.
+- `collections/collectionsContract.ts` defines tagged swipe filters and membership
+  list ordering. `collections/useCollectionCards.ts` reuses the note card loader
+  and cache. `app/(tabs)/library/collections.tsx` manages groups;
+  `collection.tsx` lists their notes through `CollectionNoteRow`.
+- The reader footer and swipe card/button/custom action open the same collections
+  sheet. `noteNavigation.ts` carries the collection origin and swipe fallback
+  filter. `useNoteDeck.ts` intersects collection membership with its original
+  scope and retains per-filter positions. Swipe chrome and controls scroll
+  separately from the card in constrained windows.
+
 Other Library entry points:
 
 - `history/readingHistoryGateway.ts` and its hooks own reads, progress, reading

@@ -37,7 +37,7 @@ const mockRoutes = () => [
 ];
 const mockNavigation = { dispatch: mockDispatch, isFocused: jest.fn(() => true), getState: () => ({ index: 2, routes: mockRoutes() }) };
 const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn(), dismiss: jest.fn(), canGoBack: () => true };
-jest.mock('expo-router', () => ({ useLocalSearchParams: () => mockParams, useRouter: () => mockRouter, useNavigation: () => mockNavigation }));
+jest.mock('expo-router', () => ({ useFocusEffect: jest.fn(), useLocalSearchParams: () => mockParams, useRouter: () => mockRouter, useNavigation: () => mockNavigation }));
 jest.mock('@react-navigation/native', () => ({
   ...jest.requireActual('@react-navigation/native'),
   usePreventRemove: (prevent: boolean, callback: (event: any) => void) => { mockRemoval = { prevent, callback }; },

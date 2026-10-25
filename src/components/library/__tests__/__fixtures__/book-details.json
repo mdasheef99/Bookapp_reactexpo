@@ -881,6 +881,105 @@
                                 "children": [
                                   {
                                     "children": [
+                                      "Labels"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "Add labels"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
+                                  }
+                                ],
+                                "props": {
+                                  "style": {
+                                    "alignItems": "center",
+                                    "flex": 1,
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-labels"
+                                },
+                                "type": "View"
+                              },
+                              {
+                                "children": null,
+                                "props": {
+                                  "accessible": false,
+                                  "aria-hidden": true,
+                                  "color": "<colour>",
+                                  "name": "chevron-forward",
+                                  "size": 20
+                                },
+                                "type": "Ionicons"
+                              }
+                            ],
+                            "props": {
+                              "accessibilityLabel": "Labels, Add labels",
+                              "accessibilityRole": "button",
+                              "accessibilityState": {},
+                              "accessibilityValue": {},
+                              "accessible": true,
+                              "collapsable": false,
+                              "focusable": true,
+                              "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
+                              "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
+                              "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
+                              "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
+                              "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
+                              "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
+                              "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
+                              "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
+                              "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
+                              "style": {
+                                "alignItems": "center",
+                                "borderColor": "<colour>",
+                                "borderTopWidth": 0.5,
+                                "flexDirection": "row",
+                                "gap": 8,
+                                "minHeight": 56,
+                                "minWidth": 48,
+                                "paddingVertical": 16
+                              },
+                              "testID": "book-row-labels"
+                            },
+                            "type": "View"
+                          }
+                        ],
+                        "props": {},
+                        "type": "View"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "children": [
                                       "Book information"
                                     ],
                                     "props": {
@@ -2147,6 +2246,105 @@
                   },
                   {
                     "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "children": [
+                                      "Labels"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "Add labels"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
+                                  }
+                                ],
+                                "props": {
+                                  "style": {
+                                    "alignItems": "center",
+                                    "flex": 1,
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-labels"
+                                },
+                                "type": "View"
+                              },
+                              {
+                                "children": null,
+                                "props": {
+                                  "accessible": false,
+                                  "aria-hidden": true,
+                                  "color": "<colour>",
+                                  "name": "chevron-forward",
+                                  "size": 20
+                                },
+                                "type": "Ionicons"
+                              }
+                            ],
+                            "props": {
+                              "accessibilityLabel": "Labels, Add labels",
+                              "accessibilityRole": "button",
+                              "accessibilityState": {},
+                              "accessibilityValue": {},
+                              "accessible": true,
+                              "collapsable": false,
+                              "focusable": true,
+                              "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
+                              "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
+                              "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
+                              "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
+                              "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
+                              "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
+                              "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
+                              "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
+                              "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
+                              "style": {
+                                "alignItems": "center",
+                                "borderColor": "<colour>",
+                                "borderTopWidth": 0.5,
+                                "flexDirection": "row",
+                                "gap": 8,
+                                "minHeight": 56,
+                                "minWidth": 48,
+                                "paddingVertical": 16
+                              },
+                              "testID": "book-row-labels"
+                            },
+                            "type": "View"
+                          }
+                        ],
+                        "props": {},
+                        "type": "View"
+                      },
                       {
                         "children": [
                           {
@@ -4212,6 +4410,105 @@
                   },
                   {
                     "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "children": [
+                                      "Labels"
+                                    ],
+                                    "props": {
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flexShrink": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24
+                                      }
+                                    },
+                                    "type": "Text"
+                                  },
+                                  {
+                                    "children": [
+                                      "Add labels"
+                                    ],
+                                    "props": {
+                                      "ellipsizeMode": "tail",
+                                      "numberOfLines": 2,
+                                      "style": {
+                                        "color": "<colour>",
+                                        "flex": 1,
+                                        "fontFamily": "LibraryManrope",
+                                        "fontSize": 16,
+                                        "lineHeight": 24,
+                                        "minWidth": 0,
+                                        "textAlign": "right"
+                                      }
+                                    },
+                                    "type": "Text"
+                                  }
+                                ],
+                                "props": {
+                                  "style": {
+                                    "alignItems": "center",
+                                    "flex": 1,
+                                    "flexDirection": "row",
+                                    "gap": 8
+                                  },
+                                  "testID": "detail-row-text-labels"
+                                },
+                                "type": "View"
+                              },
+                              {
+                                "children": null,
+                                "props": {
+                                  "accessible": false,
+                                  "aria-hidden": true,
+                                  "color": "<colour>",
+                                  "name": "chevron-forward",
+                                  "size": 20
+                                },
+                                "type": "Ionicons"
+                              }
+                            ],
+                            "props": {
+                              "accessibilityLabel": "Labels, Add labels",
+                              "accessibilityRole": "button",
+                              "accessibilityState": {},
+                              "accessibilityValue": {},
+                              "accessible": true,
+                              "collapsable": false,
+                              "focusable": true,
+                              "onBlur": "function onBlur(event) {\n          var onBlur = _this2._config.onBlur;\n          if (onBlur != null) {\n            onBlur(event);\n          }\n        }",
+                              "onClick": "function onClick(event) {\n          var _event$nativeEvent;\n          if (event != null && (_event$nativeEvent = event.nativeEvent) != null && _event$nativeEvent.hasOwnProperty != null && _event$nativeEvent.hasOwnProperty('pointerType')) {\n            return;\n          }\n          if ((event == null ? void 0 : event.currentTarget) !== (event == null ? void 0 : event.target)) {\n            event == null || event.stopPropagation();\n            return;\n          }\n          var _this2$_config = _this2._config,\n            onPress = _this2$_config.onPress,\n            disabled = _this2$_config.disabled;\n          if (onPress != null && disabled !== true) {\n            onPress(event);\n          }\n        }",
+                              "onFocus": "function onFocus(event) {\n          var onFocus = _this2._config.onFocus;\n          if (onFocus != null) {\n            onFocus(event);\n          }\n        }",
+                              "onResponderGrant": "function onResponderGrant(event) {\n          event.persist();\n          _this2._cancelPressOutDelayTimeout();\n          _this2._responderID = event.currentTarget;\n          _this2._touchState = 'NOT_RESPONDER';\n          _this2._receiveSignal('RESPONDER_GRANT', event);\n          var delayPressIn = normalizeDelay(_this2._config.delayPressIn);\n          if (delayPressIn > 0) {\n            _this2._pressDelayTimeout = setTimeout(function () {\n              _this2._receiveSignal('DELAY', event);\n            }, delayPressIn);\n          } else {\n            _this2._receiveSignal('DELAY', event);\n          }\n          var delayLongPress = normalizeDelay(_this2._config.delayLongPress, 10, DEFAULT_LONG_PRESS_DELAY_MS - delayPressIn);\n          _this2._longPressDelayTimeout = setTimeout(function () {\n            _this2._handleLongPress(event);\n          }, delayLongPress + delayPressIn);\n          return _this2._config.blockNativeResponder === true;\n        }",
+                              "onResponderMove": "function onResponderMove(event) {\n          var onPressMove = _this2._config.onPressMove;\n          if (onPressMove != null) {\n            onPressMove(event);\n          }\n          var responderRegion = _this2._responderRegion;\n          if (responderRegion == null) {\n            return;\n          }\n          var touch = getTouchFromPressEvent(event);\n          if (touch == null) {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n            return;\n          }\n          if (_this2._touchActivatePosition != null) {\n            var deltaX = _this2._touchActivatePosition.pageX - touch.pageX;\n            var deltaY = _this2._touchActivatePosition.pageY - touch.pageY;\n            if (Math.hypot(deltaX, deltaY) > longPressDeactivationDistance) {\n              _this2._cancelLongPressDelayTimeout();\n            }\n          }\n          if (_this2._isTouchWithinResponderRegion(touch, responderRegion)) {\n            _this2._receiveSignal('ENTER_PRESS_RECT', event);\n          } else {\n            _this2._cancelLongPressDelayTimeout();\n            _this2._receiveSignal('LEAVE_PRESS_RECT', event);\n          }\n        }",
+                              "onResponderRelease": "function onResponderRelease(event) {\n          _this2._receiveSignal('RESPONDER_RELEASE', event);\n        }",
+                              "onResponderTerminate": "function onResponderTerminate(event) {\n          _this2._receiveSignal('RESPONDER_TERMINATED', event);\n        }",
+                              "onResponderTerminationRequest": "function onResponderTerminationRequest() {\n          var cancelable = _this2._config.cancelable;\n          return cancelable != null ? cancelable : true;\n        }",
+                              "onStartShouldSetResponder": "function onStartShouldSetResponder() {\n          var _disabled;\n          var disabled = _this2._config.disabled;\n          return (_disabled = !disabled) != null ? _disabled : true;\n        }",
+                              "style": {
+                                "alignItems": "center",
+                                "borderColor": "<colour>",
+                                "borderTopWidth": 0.5,
+                                "flexDirection": "row",
+                                "gap": 8,
+                                "minHeight": 56,
+                                "minWidth": 48,
+                                "paddingVertical": 16
+                              },
+                              "testID": "book-row-labels"
+                            },
+                            "type": "View"
+                          }
+                        ],
+                        "props": {},
+                        "type": "View"
+                      },
                       {
                         "children": [
                           {

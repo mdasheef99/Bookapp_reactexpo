@@ -2,8 +2,9 @@ import { todayDay } from '../history/estimateDay';
 import { NOTE_CATEGORIES, NoteDeckCategory, NoteDeckIndexRow, NoteDeckOrder, NoteDeckScope } from './manualNoteContract';
 
 const compareId = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
-export function parseDeckScope(params: { scope?: string | string[]; userBookId?: string | string[] }): NoteDeckScope {
+export function parseDeckScope(params: { scope?: string | string[]; userBookId?: string | string[]; collectionId?: string | string[] }): NoteDeckScope {
   const first = (value?: string | string[]) => Array.isArray(value) ? value[0] : value;
+  if (first(params.scope) === 'collection') return { kind: 'collection', collectionId: first(params.collectionId)?.trim() ?? '' };
   return first(params.scope) === 'book' ? { kind: 'book', userBookId: first(params.userBookId)?.trim() ?? '' } : { kind: 'all' };
 }
 function seededHash(seed: string, id: string) {
@@ -34,8 +35,8 @@ export const noteSwipeOrderKey = (actorId: string) => `library_noteSwipeOrder:v1
 export function parseStoredOrder(raw: unknown): NoteDeckOrder {
   return raw === 'shuffle' || raw === 'newest' || raw === 'oldest' ? raw : 'shuffle';
 }
-export type DeckPositions = Partial<Record<NoteDeckCategory, string | null>>;
-export const rememberPosition = (positions: DeckPositions, category: NoteDeckCategory, noteId: string | null): DeckPositions => ({ ...positions, [category]: noteId });
+export type DeckPositions = Partial<Record<string, string | null>>;
+export const rememberPosition = (positions: DeckPositions, category: string, noteId: string | null): DeckPositions => ({ ...positions, [category]: noteId });
 /** null is the end card. undefined is the unset state (no selection recorded while ids is empty). Missing selection follows the old successor, never an array index. */
 export function reconcilePosition(previous: readonly string[], next: readonly string[], selected: string | null | undefined): string | null | undefined {
   if (selected === undefined) return next[0] ?? undefined;

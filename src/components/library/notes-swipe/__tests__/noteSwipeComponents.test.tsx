@@ -46,7 +46,7 @@ jest.mock('react-native-gesture-handler', () => {
       Pan: jest.fn(() => { const store: any = {}; mockPanCallbacks.push(store); const g = makeChainable(store); mockPanInstances.push(g); return g; }),
       Tap: jest.fn(() => {
         const gesture: Record<string, jest.Mock> = {};
-        for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'runOnJS']) gesture[name] = jest.fn(() => gesture);
+        for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'numberOfTaps', 'maxDelay', 'runOnJS']) gesture[name] = jest.fn(() => gesture);
         gesture.onEnd = jest.fn((cb: any) => { mockTapCallbacks.push(cb); return gesture; });
         return gesture;
       }),
@@ -259,6 +259,20 @@ describe('swipe stack containers, shadows and focus', () => {
 });
 
 describe('swipe gesture runs pan callbacks with constants, spring-back, busy guard and Exclusive', () => {
+  it('prioritizes double tap collection selection and retains the accessible read and collection actions', () => {
+    const onRead = jest.fn(), onCollections = jest.fn();
+    const view = render(<NoteSwipeStack card={card()} undercards={[]} at={0} total={3} reduced={false} hint={false} enabled onMove={jest.fn()} onRead={onRead} onCollections={onCollections} onLeave={jest.fn()} />);
+    const composition = mockExclusiveCalls[mockExclusiveCalls.length - 1] as any[];
+    expect(composition).toHaveLength(3);
+    expect(composition[1].numberOfTaps).toHaveBeenCalledWith(2);
+    expect(composition[1].maxDelay).toHaveBeenCalledWith(250);
+    mockTapCallbacks[mockTapCallbacks.length - 1]({}, true);
+    expect(onCollections).toHaveBeenCalledTimes(1); expect(onRead).not.toHaveBeenCalled();
+    const surface = view.getByTestId('note-card-slot-0', { includeHiddenElements: true });
+    expect(surface.props.accessibilityActions).toContainEqual({ name: 'collections', label: 'Add to collection' });
+    surface.props.onAccessibilityAction({ nativeEvent: { actionName: 'activate' } });
+    expect(onRead).toHaveBeenCalledTimes(1);
+  });
   function stackProps(over: Partial<React.ComponentProps<typeof NoteSwipeStack>> = {}) {
     return {
       card: card(),

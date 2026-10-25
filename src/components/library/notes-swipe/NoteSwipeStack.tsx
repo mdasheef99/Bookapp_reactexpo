@@ -15,7 +15,8 @@ import { NoteSwipeCard, noteCardName } from './NoteSwipeCard';
 export interface NoteSwipeControls {
   run: (action: () => void) => void;
   leave: () => void;
-  category: (target: NoteDeckCategory) => void;
+  category: (target?: NoteDeckCategory) => void;
+  pulse: (noteId: string) => void;
 }
 export interface NoteSwipeStackProps {
   ref?: React.Ref<NoteSwipeControls>;
@@ -29,6 +30,7 @@ export interface NoteSwipeStackProps {
   enabled: boolean;
   onMove: (direction: 'next' | 'previous') => void;
   onRead: () => void;
+  onCollections?: () => void;
   onLeave: () => void;
   onCategory?: (target?: NoteDeckCategory) => void;
   canCategory?: boolean;
@@ -40,7 +42,7 @@ export interface NoteSwipeStackProps {
 // flight ref is non-zero is dropped by `run`). A flight always ends via its own
 // completion, via the position effect, via unmount/enabled-false, or via the safety
 // timer, so an input ~300ms after the previous flight finishes always works.
-export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, total, reduced, hint, enabled, onMove, onRead, onLeave, onCategory, canCategory = false, categoryKey = '', children }: NoteSwipeStackProps) {
+export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, total, reduced, hint, enabled, onMove, onRead, onCollections, onLeave, onCategory, canCategory = false, categoryKey = '', children }: NoteSwipeStackProps) {
   const colors = useLibraryAppearance(); const screen = useWindowDimensions();
   const [measuredChrome, setMeasuredChrome] = useState<number>();
   const x = useSharedValue(0); const y = useSharedValue(0); const axis = useSharedValue(0);
@@ -68,6 +70,8 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
   const safetyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const background = spineColorFromTitle(card?.book.title ?? '');
   const fromColor = useSharedValue(background); const toColor = useSharedValue(background); const fade = useSharedValue(1);
+  const pulseScale = useSharedValue(1);
+  useEffect(() => { pulseScale.value = 1; }, [card?.note.id, reduced, pulseScale]);
   useEffect(() => {
     fromColor.value = toColor.value; toColor.value = background;
     fade.value = reduced ? 1 : 0;
@@ -277,10 +281,14 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
       scheduleOnUI(startFlight, 'category', target, jsEpochRef.current);
     });
   }, [run, canCategoryFlight, categoryKey, startFlight, resetFlightToIdle]);
-  useImperativeHandle(ref, () => ({ run, leave: requestLeave, category: requestCategory }), [run, requestLeave, requestCategory]);
+  const pulse = useCallback((id: string) => {
+    if (!reduced && card?.note.id === id) pulseScale.value = withSequence(withTiming(NOTE_SWIPE.pulseScale, { duration: NOTE_SWIPE.pulseMs }), withTiming(1, { duration: NOTE_SWIPE.pulseMs }));
+  }, [card?.note.id, reduced, pulseScale]);
+  useImperativeHandle(ref, () => ({ run, leave: requestLeave, category: requestCategory, pulse }), [run, requestLeave, requestCategory, pulse]);
   const requestRead = useCallback(() => {
     if (card) run(onRead);
   }, [run, card, onRead]);
+  const requestCollections = useCallback(() => { if (card && onCollections) run(onCollections); }, [run, card, onCollections]);
   // Rebuilt whenever the position/availability changes so a swipe right after a move
   // uses the new `at`/`total` (no stale closures). Data arrival alone (same `at`)
   // does not change these deps, so it never rebuilds/cancels a flight in progress.
@@ -324,9 +332,13 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
         if (success && flight.value === 0) scheduleOnRN(requestRead);
         panActive.value = false;
       });
-    return Gesture.Exclusive(pan, tap);
-  }, [enabled, reduced, canNext, canPrevious, canCategoryFlight, screen.height, axis, flight, panActive, x, y, width, startFlight, requestRead]);
-  const topStyle = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ translateX: reduced ? 0 : x.value }, { translateY: reduced ? 0 : y.value }, { rotate: `${reduced ? 0 : Math.max(-NOTE_SWIPE.maxTilt, Math.min(NOTE_SWIPE.maxTilt, x.value / width.value * NOTE_SWIPE.maxTilt))}deg` }] }));
+    if (!onCollections) return Gesture.Exclusive(pan, tap);
+    const doubleTap = Gesture.Tap().enabled(enabled).numberOfTaps(2).maxDelay(NOTE_SWIPE.doubleTapDelay)
+      .maxDistance(NOTE_SWIPE.tapMaxDistance).maxDuration(NOTE_SWIPE.tapMaxDuration)
+      .onEnd((_event, success) => { if (success && !panActive.value && flight.value === 0) scheduleOnRN(requestCollections); });
+    return Gesture.Exclusive(pan, doubleTap, tap);
+  }, [enabled, reduced, canNext, canPrevious, canCategoryFlight, screen.height, axis, flight, panActive, x, y, width, startFlight, requestRead, requestCollections, onCollections]);
+  const topStyle = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ translateX: reduced ? 0 : x.value }, { translateY: reduced ? 0 : y.value }, { scale: reduced ? 1 : pulseScale.value }, { rotate: `${reduced ? 0 : Math.max(-NOTE_SWIPE.maxTilt, Math.min(NOTE_SWIPE.maxTilt, x.value / width.value * NOTE_SWIPE.maxTilt))}deg` }] }));
   const underStyle = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ rotate: reduced ? '0deg' : '-3deg' }, { scale: reduced ? 0.97 : 0.96 + Math.min(Math.abs(x.value) / width.value, 1) * 0.04 }, { translateY: (reduced ? 0 : y.value) + LIBRARY_SPACING.xs }] }));
   const backStyle = useAnimatedStyle(() => ({ opacity: opacity.value, transform: [{ rotate: reduced ? '0deg' : '2deg' }, { scale: 0.92 }, { translateY: (reduced ? 0 : y.value) + LIBRARY_SPACING.md }] }));
   const backgroundStyle = useAnimatedStyle(() => ({ backgroundColor: reduced ? toColor.value : interpolateColor(fade.value, [0, 1], [fromColor.value, toColor.value]) }));
@@ -372,8 +384,8 @@ export function NoteSwipeStack({ ref, availableHeight, card, undercards, at, tot
     <Animated.View collapsable={false} testID="note-book-background" pointerEvents="none" aria-hidden importantForAccessibility="no-hide-descendants" style={[StyleSheet.absoluteFill, backgroundStyle, !card && { backgroundColor: colors.bgPrimary }]} />
     <Animated.View collapsable={false} testID="note-card-slot-0" accessible={!!card} accessibilityRole={card ? 'button' : undefined}
       accessibilityLabel={card ? noteCardName(card, at, total) : undefined}
-      accessibilityActions={card ? [...[{ name: 'next', label: 'Next' }, { name: 'previous', label: 'Previous' }], ...(canCategoryFlight ? [{ name: 'category', label: 'Next category' }] : []), { name: 'activate', label: 'Read full note' }, { name: 'read', label: 'Read full note' }] : []}
-      onAccessibilityAction={event => { const action = event.nativeEvent.actionName; if (action === 'next') requestMove('next'); else if (action === 'previous') requestMove('previous'); else if (action === 'category') requestCategory(); else if (action === 'read' || action === 'activate') requestRead(); }}
+      accessibilityActions={card ? [...[{ name: 'next', label: 'Next' }, { name: 'previous', label: 'Previous' }], ...(canCategoryFlight ? [{ name: 'category', label: 'Next category' }] : []), { name: 'activate', label: 'Read full note' }, { name: 'read', label: 'Read full note' }, ...(onCollections ? [{ name: 'collections', label: 'Add to collection' }] : [])] : []}
+      onAccessibilityAction={event => { const action = event.nativeEvent.actionName; if (action === 'next') requestMove('next'); else if (action === 'previous') requestMove('previous'); else if (action === 'category') requestCategory(); else if (action === 'read' || action === 'activate') requestRead(); else if (action === 'collections') requestCollections(); }}
       focusable={false}
       {...(Platform.OS === 'web' ? { tabIndex: -1, 'data-note-deck-card': 'true', dataSet: { 'note-deck-card': 'true' } } as object : {})}
       style={[styles.slotOuter, topOuterInsets, { shadowColor: colors.shadow, zIndex: 3 }, topStyle, Platform.OS === 'web' ? { userSelect: 'none', touchAction: 'none' } as object : undefined]}>

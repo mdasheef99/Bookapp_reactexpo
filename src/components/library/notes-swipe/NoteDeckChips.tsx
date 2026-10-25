@@ -4,6 +4,8 @@ import { LIBRARY_RADIUS, LIBRARY_SPACING, MIN_TARGET, useLibraryAppearance } fro
 import { LIBRARY_TEXT, LIBRARY_TEXT_BASE } from '../LibraryTypography';
 import { CONTROL_DISABLED_OPACITY, CONTROL_FOCUS_RING } from '../bookDetails/bookDetailsTokens';
 import { NOTE_CATEGORIES, NoteDeckCategory, categoryLabel } from '@/features/books/notes/manualNoteContract';
+import { filterKey, NoteDeckFilter } from '@/features/books/collections/collectionsContract';
+import type { OrganisingEntity } from '@/features/books/organising/organisingGateway';
 
 export function chipLabel(category: NoteDeckCategory): string {
   if (category === 'all') return 'All';
@@ -11,15 +13,18 @@ export function chipLabel(category: NoteDeckCategory): string {
   return found?.label ?? categoryLabel(category);
 }
 
-export function NoteDeckChips({ categories, selected, onSelect, disabled = false }: {
+export function NoteDeckChips({ categories, selected, onSelect, disabled = false, collections = [], selectedCollectionId, onSelectCollection }: {
   categories: readonly NoteDeckCategory[]; selected: NoteDeckCategory; onSelect: (category: NoteDeckCategory) => void; disabled?: boolean;
+  collections?: readonly OrganisingEntity[]; selectedCollectionId?: string; onSelectCollection?: (id: string) => void;
 }) {
   const colors = useLibraryAppearance();
   const [focused, setFocused] = useState<number | null>(null);
   const refs = useRef<(View | null)[]>([]);
   const scrollRef = useRef<ScrollView>(null);
   const xByIndex = useRef<Record<number, number>>({});
-  const checkedIndex = categories.findIndex(choice => choice === selected);
+  const choices: { filter: NoteDeckFilter; label: string }[] = [...categories.map(category => ({ filter: category === 'all' ? { kind: 'all' as const } : { kind: 'category' as const, tag: category }, label: chipLabel(category) })),
+    ...collections.map(group => ({ filter: { kind: 'collection' as const, collectionId: group.id }, label: group.name }))];
+  const checkedIndex = choices.findIndex(({ filter }) => selectedCollectionId ? filter.kind === 'collection' && filter.collectionId === selectedCollectionId : filter.kind === 'all' ? selected === 'all' : filter.kind === 'category' && filter.tag === selected);
   const tabStop = checkedIndex < 0 ? 0 : checkedIndex;
   const containerWidth = useRef<number | undefined>(undefined);
   const scrollToSelected = useCallback(() => {
@@ -27,7 +32,7 @@ export function NoteDeckChips({ categories, selected, onSelect, disabled = false
     if (x !== undefined) scrollRef.current?.scrollTo({ x: Math.max(0, x - LIBRARY_SPACING.md), animated: false });
   }, [tabStop]);
   useEffect(scrollToSelected, [scrollToSelected]);
-  const choose = (value: NoteDeckCategory) => { if (!disabled) onSelect(value); };
+  const choose = (value: NoteDeckFilter) => { if (!disabled) { if (value.kind === 'collection') onSelectCollection?.(value.collectionId); else onSelect(value.kind === 'all' ? 'all' : value.tag); } };
   return <View testID="note-deck-chips-bar" accessibilityRole="radiogroup" accessibilityLabel="Filter notes"
       accessibilityState={{ disabled }} style={[styles.bar, { backgroundColor: colors.bgPrimary }, disabled && { opacity: CONTROL_DISABLED_OPACITY }]}>
     <ScrollView ref={scrollRef} testID="note-deck-chips" horizontal showsHorizontalScrollIndicator={false}
@@ -37,26 +42,25 @@ export function NoteDeckChips({ categories, selected, onSelect, disabled = false
         containerWidth.current = width;
         scrollToSelected();
       }} contentContainerStyle={styles.row}>
-      {categories.map((category, index) => {
-        const checked = selected === category;
-        const label = chipLabel(category);
+      {choices.map(({ filter, label }, index) => {
+        const checked = index === checkedIndex;
         const onKeyDown = (event: { key?: string; nativeEvent?: { key: string }; target?: unknown; currentTarget?: unknown; repeat?: boolean; preventDefault: () => void }) => {
           const key = event.nativeEvent?.key ?? event.key;
           if (disabled) return;
           if (key === ' ' && event.target === event.currentTarget) {
             event.preventDefault();
-            if (!event.repeat) choose(category);
+            if (!event.repeat) choose(filter);
             return;
           }
           if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key ?? '')) return;
           event.preventDefault();
-          const next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : categories.length - 1)) % categories.length;
-          choose(categories[next]);
+          const next = (index + (key === 'ArrowRight' || key === 'ArrowDown' ? 1 : choices.length - 1)) % choices.length;
+          choose(choices[next].filter);
           refs.current[next]?.focus();
         };
-        return <Pressable key={category} ref={node => { refs.current[index] = node; }} accessibilityRole="radio" accessibilityLabel={label}
+        return <Pressable key={filterKey(filter)} ref={node => { refs.current[index] = node; }} accessibilityRole="radio" accessibilityLabel={filter.kind === 'collection' ? `Collection: ${label}` : label}
           aria-checked={checked} {...(disabled ? { 'aria-disabled': true } : {})} accessibilityState={{ selected: checked, checked, ...(disabled ? { disabled } : {}) }} {...(disabled ? { disabled } : {})}
-          tabIndex={!disabled && index === tabStop ? 0 : -1} onPress={() => choose(category)}
+          tabIndex={!disabled && index === tabStop ? 0 : -1} onPress={() => choose(filter)}
           onFocus={() => setFocused(index)} onBlur={() => setFocused(null)}
           onLayout={event => {
             const x = event.nativeEvent.layout.x;

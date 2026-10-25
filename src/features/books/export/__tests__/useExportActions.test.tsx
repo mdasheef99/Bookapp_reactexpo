@@ -1,3 +1,5 @@
+jest.mock('@/features/books/organising/useOrganising', () => ({ useOrganising: () => ({ entities: { data: [] }, members: { data: [] }, refresh: jest.fn() }), invalidateOrganising: jest.fn() }));
+jest.mock('@/components/library/collections/HomeCollectionsLink', () => ({ HomeCollectionsLink: () => null }));
 import React from 'react';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';

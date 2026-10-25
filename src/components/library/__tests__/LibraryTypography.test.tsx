@@ -35,6 +35,7 @@ jest.mock('expo-router', () => {
     (StackComp as any).Screen = () => null;
     return {
         Stack: StackComp,
+        useFocusEffect: jest.fn(),
         useLocalSearchParams: () => (globalThis as any).__FU2_PARAMS__ ?? { bookId: 'book', noteId: 'note' },
         useRouter: () => ({
             push: jest.fn(),

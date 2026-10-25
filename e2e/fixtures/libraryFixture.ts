@@ -113,12 +113,14 @@ const OPENLIB = { numFound: 1, docs: [{ key: '/works/OL1W', title: 'Fixture Sear
 
 export type Fx = {
   userBooks: any[]; notes: any[]; pages: any[]; books: any[];
+  labels: any[]; bookLabels: any[]; collections: any[]; collectionItems: any[];
   status: Record<string, number>; holds: Record<string, Promise<void>>;
   provider: 'ok' | 'empty' | 'error' | 'hold'; providerHold?: Promise<void>;
   writes: string[]; rpcReads: string[]; authCalls: string[]; externalReads: string[]; unhandledReads: string[];
 };
 const freshFx = (over: Partial<Fx> = {}): Fx => ({
   userBooks: USER_BOOKS, notes: NOTES, pages: PAGES, books: BOOKS,
+  labels: [], bookLabels: [], collections: [], collectionItems: [],
   status: {}, holds: {}, provider: 'ok', writes: [], rpcReads: [], authCalls: [], externalReads: [], unhandledReads: [],
   ...over,
 });
@@ -137,6 +139,7 @@ function applyFilters(rows: any[], sp: URLSearchParams) {
     if (['select', 'order', 'limit', 'offset', 'columns', 'and', 'or'].includes(key)) continue;
     if (raw.startsWith('eq.')) { const v = raw.slice(3); out = out.filter(r => String(r[key]) === v); }
     else if (raw.startsWith('in.(')) { const values = raw.slice(4, -1).split(',').map(v => v.replace(/^"|"$/g, '')); out = out.filter(r => values.includes(String(r[key]))); }
+    else if (raw.startsWith('ilike.')) { const v = raw.slice(6); out = out.filter(r => String(r[key]).toLocaleLowerCase() === v.toLocaleLowerCase()); }
     else if (raw === 'is.null') out = out.filter(r => r[key] == null);
   }
   return out;
@@ -206,6 +209,10 @@ async function installRoutes(page: Page) {
     else if (resource === 'user_book_reads') rows = [];
     else if (resource === 'user_reading_goals') rows = [];
     else if (resource === 'user_reading_settings') rows = [];
+    else if (resource === 'user_library_labels') rows = applyFilters(fx.labels, sp);
+    else if (resource === 'user_book_labels') rows = applyFilters(fx.bookLabels, sp);
+    else if (resource === 'user_note_collections') rows = applyFilters(fx.collections, sp);
+    else if (resource === 'user_note_collection_items') rows = applyFilters(fx.collectionItems, sp);
     else { fx.unhandledReads.push(`${method} ${p}`); rows = []; }
 
     const orders = (sp.get('order') ?? '').split(',').filter(Boolean);

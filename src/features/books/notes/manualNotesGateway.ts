@@ -58,7 +58,7 @@ export const manualNotesGateway = {
     if (!data || data.user_id !== actorId || data.id !== bookId) throw new Error('This book is unavailable.');
     return deckBook(data);
   },
-  async deckIndex(actorId: string, scope: NoteDeckScope, signal?: AbortSignal): Promise<NoteDeckIndexRow[]> {
+  async deckIndex(actorId: string, scope: Exclude<NoteDeckScope, { kind: 'collection' }>, signal?: AbortSignal): Promise<NoteDeckIndexRow[]> {
     if (scope.kind === 'book' && !scope.userBookId) throw new Error('This book is unavailable.');
     const rows: NoteDeckIndexRow[] = [];
     for (let offset = 0; ; offset += NOTE_SWIPE.pageSize) {

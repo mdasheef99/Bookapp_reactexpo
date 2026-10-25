@@ -1,3 +1,4 @@
+jest.mock('@/features/books/organising/useOrganising', () => ({ useOrganising: () => ({ entities: { data: [] }, members: { data: [] }, refresh: jest.fn() }) }));
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
@@ -23,7 +24,7 @@ jest.mock('expo-haptics', () => ({ impactAsync: jest.fn(() => Promise.resolve())
 jest.mock('react-native-gesture-handler', () => {
   const chain = () => {
     const g: Record<string, unknown> = {};
-    for (const key of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'runOnJS', 'onStart', 'onUpdate', 'onEnd', 'onFinalize']) g[key] = () => g;
+    for (const key of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'numberOfTaps', 'maxDelay', 'runOnJS', 'onStart', 'onUpdate', 'onEnd', 'onFinalize']) g[key] = () => g;
     return g;
   };
   return { Gesture: { Pan: chain, Tap: chain, Native: chain, Exclusive: () => ({}), Simultaneous: () => ({}) },

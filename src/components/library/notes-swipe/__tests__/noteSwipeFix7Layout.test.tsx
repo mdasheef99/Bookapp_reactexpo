@@ -1,5 +1,6 @@
+jest.mock('@/features/books/organising/useOrganising', () => ({ useOrganising: () => ({ entities: { data: [] }, members: { data: [] }, refresh: jest.fn() }) }));
 import React from 'react';
-import { PixelRatio, Platform, StyleSheet, Text, View } from 'react-native';
+import { PixelRatio, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { NoteSwipeCard } from '../NoteSwipeCard';
 import { NoteFullNoteSheet } from '../NoteFullNoteSheet';
@@ -27,7 +28,7 @@ jest.mock('react-native-worklets', () => ({ ...jest.requireActual('react-native-
 jest.mock('react-native-gesture-handler', () => {
   const chain = () => {
     const gesture: Record<string, any> = {};
-    for (const key of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'runOnJS', 'onStart', 'onUpdate', 'onEnd', 'onFinalize']) gesture[key] = () => gesture;
+    for (const key of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'numberOfTaps', 'maxDelay', 'runOnJS', 'onStart', 'onUpdate', 'onEnd', 'onFinalize']) gesture[key] = () => gesture;
     return gesture;
   };
   return { Gesture: { Pan: chain, Tap: chain, Native: chain, Exclusive: (pan: unknown) => pan, Simultaneous: (pan: unknown) => pan }, GestureDetector: ({ children }: any) => children, GestureHandlerRootView: ({ children }: any) => children };
@@ -90,6 +91,24 @@ beforeEach(() => {
   });
 });
 afterEach(() => jest.restoreAllMocks());
+
+it.each([560, 640])('keeps four controls and chips in separate scroll areas at 200%% text in a %idp window', height => {
+  const RN = require('react-native');
+  jest.spyOn(RN, 'useWindowDimensions').mockReturnValue({ width: 360, height, scale: 1, fontScale: 2 });
+  jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(2);
+  const ui = render(<NotesSwipeScreen />);
+  for (const label of ['Previous', 'Read full note', 'Add to collection', 'Next']) expect(ui.getByRole('button', { name: label })).toBeTruthy();
+  const chrome = ui.getByTestId('note-swipe-chrome-scroll'), controls = ui.getByTestId('note-swipe-controls-scroll');
+  const scrolls = ui.UNSAFE_getAllByType(ScrollView);
+  expect(scrolls.filter((node: { props: { testID?: string } }) => node.props.testID === 'note-swipe-chrome-scroll')).toHaveLength(1);
+  expect(scrolls.filter((node: { props: { testID?: string } }) => node.props.testID === 'note-swipe-controls-scroll')).toHaveLength(1);
+  expect(flat(chrome).maxHeight + flat(controls).maxHeight).toBeLessThanOrEqual((height - 20) / 2);
+  // Vertical scrolling is confined to chrome/control siblings, outside the pan surface.
+  expect(chrome.findAll((node: { props: { testID?: string } }) => node.props.testID === 'note-card-slot-0')).toHaveLength(0);
+  expect(controls.findAll((node: { props: { testID?: string } }) => node.props.testID === 'note-card-slot-0')).toHaveLength(0);
+  expect(flat(ui.getByTestId('note-swipe-button-bar')).flexWrap).toBe('wrap');
+  ui.unmount();
+});
 
 it('converges at the compact-cover boundary instead of alternating 40/46dp footers', () => {
   const RN = require('react-native');

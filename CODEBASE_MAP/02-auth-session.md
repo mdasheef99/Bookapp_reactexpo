@@ -103,6 +103,19 @@ writes with an identity revision that changes on user/authentication changes.
   (`noteSaveCoordinator.ts`); auth user-ID changes clear operations and timers
   and abort reconciliation reads through `setActor`.
 
+## Library organising state
+
+- `organising/organisingGateway.ts` captures the actor, token and auth epoch for
+  each request; membership writes serialize per actor/kind/target/group pair.
+- `useOrganising.ts` keys entities, memberships and suggestions under
+  `['library-organising', actor, kind]`. Reads refresh on focus, foreground,
+  reconnect and explicit refresh. Collection changes invalidate the note deck;
+  note/book deletion also invalidates organising data.
+- Home's label selection lives in screen memory and clears on account changes.
+  Sheet sessions are keyed to actor, kind, mode and target; drafts and pending
+  feedback cannot carry to another sheet session. Collection navigation contexts
+  share the existing actor-checked note context Map.
+
 ## Logout
 
 Profile and Settings both call `useAuth().signOut`, which delegates to

@@ -1,3 +1,4 @@
+jest.mock('@/features/books/organising/useOrganising', () => ({ useOrganising: () => ({ entities: { data: [] }, members: { data: [] }, refresh: jest.fn() }) }));
 import React from 'react';
 import { Platform } from 'react-native';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
@@ -56,7 +57,7 @@ jest.mock('react-native-gesture-handler', () => {
     const store: MockPanCallbacks = {};
     mockPanCallbacks.push(store);
     const g: Record<string, jest.Mock> = {};
-    for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'runOnJS']) g[name] = jest.fn(() => g);
+    for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'numberOfTaps', 'maxDelay', 'runOnJS']) g[name] = jest.fn(() => g);
     g.onStart = jest.fn((cb: any) => { store.onStart = cb; return g; });
     g.onUpdate = jest.fn((cb: any) => { store.onUpdate = cb; return g; });
     g.onEnd = jest.fn((cb: any) => { store.onEnd = cb; return g; });
@@ -65,7 +66,7 @@ jest.mock('react-native-gesture-handler', () => {
   };
   const chainable = () => {
     const g: Record<string, jest.Mock> = {};
-    for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'runOnJS']) g[name] = jest.fn(() => g);
+    for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'numberOfTaps', 'maxDelay', 'runOnJS']) g[name] = jest.fn(() => g);
     for (const name of ['onStart', 'onUpdate', 'onEnd', 'onFinalize']) g[name] = jest.fn(() => g);
     return g;
   };

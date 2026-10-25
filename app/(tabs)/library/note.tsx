@@ -1,3 +1,5 @@
+import { OrganisingSheet } from '@/components/library/organising/OrganisingSheet';
+import { OrganisingBackground } from '@/components/library/organising/OrganisingBackground';
 import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Clipboard, Platform, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
@@ -24,6 +26,9 @@ export default function NoteReaderScreen() {
   };
   const { bookId = '', noteId = '', contextId, justSaved } = params;
   const router = useRouter(); const navigation = useNavigation(); const colors = useLibraryAppearance(); const { actorId, book } = useNoteContext(bookId);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const collectionTrigger = useRef<View>(null);
+  useEffect(() => { setCollectionsOpen(false); }, [actorId, noteId, bookId]);
   const justSavedFlag = justSaved === '1';
   const [promptArmed, setPromptArmed] = useState(false);
   const armedForNote = useRef<string | null>(null);
@@ -83,10 +88,11 @@ export default function NoteReaderScreen() {
     query.data.page_number == null ? null : `Page ${query.data.page_number}`,
     bookNoteDate(query.data.created_at),
   ].filter(Boolean).join(' · ') : '';
-  return <NoteScreen backLabel={context.origin === 'swipe' ? 'Back to your notes' : context.origin === 'book' ? 'Book details' : 'Notes'} backAccessibilityLabel={context.origin === 'swipe' ? 'Back to your notes' : context.origin === 'book' ? 'Back to Book details' : 'Back to Notes'} onBack={back}
+  return <><OrganisingBackground hidden={collectionsOpen}><NoteScreen backLabel={context.origin === 'collection' ? 'Back to collection' : context.origin === 'swipe' ? 'Back to your notes' : context.origin === 'book' ? 'Book details' : 'Notes'} backAccessibilityLabel={context.origin === 'collection' ? 'Back to collection' : context.origin === 'swipe' ? 'Back to your notes' : context.origin === 'book' ? 'Back to Book details' : 'Back to Notes'} onBack={back}
     footer={!unavailable && query.data ? <>
       {pending ? <><NoteMessage message="A previous save for this note is not confirmed. Check it before editing again." /><NoteButton label="Open pending submission" secondary onPress={() => router.push(composeHref(bookId, editorContext(), noteId, pending.submission.id))} /></>
         : <><NoteButton label="Edit note" disabled={isOffline || deleting} onPress={() => router.push(composeHref(bookId, editorContext(), noteId))} /></>}
+      <BookButton ref={collectionTrigger} label="Add to collection" variant="text" disabled={deleting || isOffline} onPress={() => setCollectionsOpen(true)} />
       <BookButton label="Copy text" variant="text" disabled={deleting} onPress={() => { void copy(); }} />
       {Platform.OS !== 'web' && query.data.tag === 'quote' && <ExportButton label="Share as image" variant="text"
         accessibilityLabel="Share quote as image" disabled={deleting} onPress={() => setPassagePreview(true)} />}
@@ -116,7 +122,9 @@ export default function NoteReaderScreen() {
     <NoteDialog spec={dialog} confirmDisabled={isOffline} onKeep={() => setDialog(null)} />
     {passagePreview && Platform.OS !== 'web' && query.data?.tag === 'quote' && book.data && <PassageCardPreview visible onClose={() => setPassagePreview(false)}
       quote={query.data.content} title={book.data.title} author={book.data.authors[0] ?? null} page={query.data.page_number ?? null} />}
-  </NoteScreen>;
+  </NoteScreen></OrganisingBackground>
+  {collectionsOpen && !unavailable && <OrganisingSheet key={`${actorId}:${noteId}`} actor={actorId} kind="collections" target={noteId} mode="membership" returnFocusRef={collectionTrigger} onClose={() => setCollectionsOpen(false)} />}
+  </>;
 }
 
 const styles = StyleSheet.create({

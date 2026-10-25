@@ -40,7 +40,7 @@
     "test:clubs:l4:f04": "node supabase/tests/clubs/clubsL4Runner.mjs f04",
     "test:clubs:l4:wave2": "node supabase/tests/clubs/clubsL4Runner.mjs wave2",
     "test:clubs:l4:rls": "node supabase/tests/clubs/clubsL4Runner.mjs rls",
-    "lint:library": "eslint \"app/(tabs)/library\" src/components/library src/components/notes src/features/books/notes src/features/books/history src/features/books/export",
+    "lint:library": "eslint \"app/(tabs)/library\" src/components/library src/components/notes src/features/books/notes src/features/books/history src/features/books/export src/features/books/organising src/features/books/labels src/features/books/utils/libraryShelf.ts src/features/books/collections",
     "e2e:library-a11y": "playwright test -c playwright.library-a11y.config.ts"
   },
   "dependencies": {
@@ -121,13 +121,15 @@
     ],
     "modulePathIgnorePatterns": [
       "<rootDir>/.worktrees",
-      "<rootDir>/.wt"
+      "<rootDir>/.wt",
+      "<rootDir>/.spec/"
     ],
     "testPathIgnorePatterns": [
       "\\\\node_modules\\\\",
       "<rootDir>/.worktrees",
       "<rootDir>/.wt",
-      "[\\\\/]e2e[\\\\/]"
+      "[\\\\/]e2e[\\\\/]",
+      "<rootDir>/.spec/"
     ],
     "testMatch": [
       "**/?(*.)+(spec|test).[jt]s?(x)"

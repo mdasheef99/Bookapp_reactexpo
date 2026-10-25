@@ -9,7 +9,7 @@ relevant tracker.
 
 | Layer | Tool | Where |
 | --- | --- | --- |
-| App and Edge-function unit tests | Jest (`jest-expo` preset) + React Native Testing Library | Any `*.test.*` / `*.spec.*` JS or TS file (Jest `testMatch`), excluding `e2e/` |
+| App and Edge-function unit tests | Jest (`jest-expo` preset) + React Native Testing Library | Any `*.test.*` / `*.spec.*` JS or TS file (Jest `testMatch`), excluding `e2e/` and `.spec/` scratch copies |
 | Phase 9 database tests (in-memory) | Node test runner + PGlite (Postgres in WASM) | `supabase/tests/phase9/*.integration.test.mjs` |
 | Phase 9 database tests (real Postgres) | PowerShell runner with a disposable local Postgres; needs `initdb`, `pg_ctl` and `psql` on PATH | `supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1` |
 | Phase 6 database tests | SQL integration scripts and PowerShell concurrency scripts | `supabase/tests/phase6_*` |
@@ -21,7 +21,7 @@ relevant tracker.
 ## Jest setup
 
 - Config is in `package.json` (`jest` key): `jest-expo` preset, `@/` alias,
-  `e2e/`, `.worktrees` and `.wt` ignored, legacy Deno URL imports stubbed through
+  `e2e/`, `.spec/`, `.worktrees` and `.wt` ignored, legacy Deno URL imports stubbed through
   `supabase/functions/__tests__/support/edgeFunctionHttpStubs.ts`.
 - `jest.setup.ts` mocks Reanimated, the URL polyfill and Sentry, and sets test
   env vars (Supabase test URL/key, `EXPO_PUBLIC_DEV_SKIP_AUTH=false`,
@@ -56,7 +56,12 @@ which produces the `dist/` that Playwright serves.
 `e2e:library-a11y` uses `playwright.library-a11y.config.ts` and only
 `e2e/library-a11y.spec.ts` (excluded by the default config). It starts or reuses
 an Expo web dev server on port 8083 (`LIBRARY_A11Y_PORT` overrides it); the
-fixture host and placeholder-key prerequisites are in that config.
+fixture host and placeholder-key prerequisites are in that config. The suite
+includes labels/collections, modal focus, chip identity/scope, double tap and
+doubled web text in 560/640 px windows. HTTP fixtures intercept external reads
+and refuse writes; these checks do not replace native TalkBack/VoiceOver and
+gesture acceptance. Native-scale layout simulations live in
+`notes-swipe/__tests__/noteSwipeFix7Layout.test.tsx`.
 
 **Route folders contain brackets** (`(store-owner)`, `[sessionId]`), which break
 Jest's regex path matching. Use `--runTestsByPath`:
@@ -112,6 +117,9 @@ the book-label and note-collection migration files named in 03. Optional
 `LIBRARY_LABELS_MIGRATION` and `LIBRARY_COLLECTIONS_MIGRATION` override those
 SQL paths. It starts `initdb`/`postgres` on `127.0.0.1` at an ephemeral port,
 then stops the cluster with `pg_ctl` and removes its temporary directory.
+The baseline includes the existing `reading_notes_manage_revision` binding and
+`library_manage_note_revision` function; the organising suite verifies that note
+edits still advance the server version after both migrations.
 
 `phase9CompactReviewScript.integration.test.mjs` loads the production compact
 review validator and shared app fixtures directly from TypeScript, then checks

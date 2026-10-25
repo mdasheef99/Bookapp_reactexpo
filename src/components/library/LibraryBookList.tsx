@@ -35,14 +35,15 @@ export function LibraryBookRow({ item, onPress }: LibraryBookRowProps) {
 type LibraryEmptyStateProps = {
     activeFilter: LibraryFilter;
     activeFilterLabel: string;
+    labelName?: string;
     onShowAll: () => void;
 };
 
-export function LibraryEmptyState({ activeFilter, activeFilterLabel, onShowAll }: LibraryEmptyStateProps) {
+export function LibraryEmptyState({ activeFilter, activeFilterLabel, labelName, onShowAll }: LibraryEmptyStateProps) {
     return <View style={styles.state}>
-        <BookEmpty title={activeFilter === 'all' ? 'Your library is empty' : `No ${activeFilterLabel.toLowerCase()} books`}
-            message={activeFilter === 'all' ? 'Add a book to start your shelf.' : undefined} />
-        {activeFilter !== 'all' && <BookButton label="Show all books" variant="text" onPress={onShowAll} />}
+        <BookEmpty title={labelName ? `No ${labelName} books` : activeFilter === 'all' ? 'Your library is empty' : `No ${activeFilterLabel.toLowerCase()} books`}
+            message={!labelName && activeFilter === 'all' ? 'Add a book to start your shelf.' : undefined} />
+        {(!!labelName || activeFilter !== 'all') && <BookButton label="Show all books" variant="text" onPress={onShowAll} />}
     </View>;
 }
 
@@ -67,6 +68,7 @@ type LibraryBookListProps = {
     books: LibraryBookEntry[];
     activeFilter: LibraryFilter;
     activeFilterLabel: string;
+    labelName?: string;
     isRefetching: boolean;
     onRefresh: () => void;
     onBookPress: (item: LibraryBookEntry) => void;
@@ -74,14 +76,14 @@ type LibraryBookListProps = {
     header?: React.ReactElement;
 };
 
-export function LibraryBookList({ books, activeFilter, activeFilterLabel, isRefetching, onRefresh, onBookPress, onShowAll, header }: LibraryBookListProps) {
+export function LibraryBookList({ books, activeFilter, activeFilterLabel, labelName, isRefetching, onRefresh, onBookPress, onShowAll, header }: LibraryBookListProps) {
     const colors = useLibraryAppearance();
 
     return <FlatList testID="library-book-list" style={styles.list} data={books} ListHeaderComponent={header}
         keyExtractor={(item) => item.id}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} tintColor={colors.accent} />}
         renderItem={({ item }) => <LibraryBookRow item={item} onPress={onBookPress} />}
-        ListEmptyComponent={<LibraryEmptyState activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} onShowAll={onShowAll} />}
+        ListEmptyComponent={<LibraryEmptyState activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} labelName={labelName} onShowAll={onShowAll} />}
         contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} />;
 }
 

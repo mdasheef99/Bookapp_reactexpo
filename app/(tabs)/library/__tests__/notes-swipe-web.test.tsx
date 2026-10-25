@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+jest.mock('@/features/books/organising/useOrganising', () => ({ useOrganising: () => ({ entities: { data: [] }, members: { data: [] }, refresh: jest.fn() }) }));
 import React, { act } from 'react';
 import NotesSwipeScreen from '../notes-swipe';
 import { BookFeedbackProvider } from '@/components/library/ui';
@@ -22,7 +23,7 @@ jest.mock('react-native-reanimated', () => {
 jest.mock('react-native-gesture-handler', () => {
   const chain = () => {
     const g: Record<string, unknown> = {};
-    for (const key of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'runOnJS', 'onStart', 'onUpdate', 'onEnd', 'onFinalize']) g[key] = () => g;
+    for (const key of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'numberOfTaps', 'maxDelay', 'runOnJS', 'onStart', 'onUpdate', 'onEnd', 'onFinalize']) g[key] = () => g;
     return g;
   };
   return { Gesture: { Pan: chain, Tap: chain, Native: chain, Exclusive: () => ({}), Simultaneous: () => ({}) },
