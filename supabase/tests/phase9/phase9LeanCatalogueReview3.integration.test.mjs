@@ -107,7 +107,9 @@ test('[baseline] AC7-18/19/OQ1: an unplanned ISBN winner on a legacy work keeps 
 });
 
 for (const kind of ['source exact work', 'source translated work', 'supplied translated work']) test(
-  'AC7-2c/OQ3: resolver persists a missing provider-work tuple from ' + kind, async () => {
+  kind === 'supplied translated work'
+    ? 'AC7-2c/OQ3: 7a refuses a supplied translated-work companion without shared writes'
+    : 'AC7-2c/OQ3: resolver persists a missing provider-work tuple from ' + kind, async () => {
     await requireLean(db);
     const m = facts({ correlationId: randomUUID(), attemptId: randomUUID() }), target = await seedIncumbent(db, m);
     if (kind !== 'source exact work') await db.query(`UPDATE public.canonical_works

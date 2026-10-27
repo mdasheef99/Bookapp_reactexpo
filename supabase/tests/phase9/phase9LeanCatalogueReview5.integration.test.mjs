@@ -112,11 +112,13 @@ for (const conflict of ['isbn', 'provider', 'source']) test('saved target refuse
 
 test('no saved hint and no provider record cannot count an ISBN target', async () => {
   const m = facts(), t = await seedIncumbent(db, m);
+  const target = (await db.query('SELECT * FROM marketplace_sec.phase9_catalogue_choice_target_v1($1,NULL,$2,$3)',
+    [m, m.adapterKey, m.providerRecordId ?? null])).rows[0];
+  assert.deepEqual(target, { canonical_work_id: t.workId, canonical_edition_id: t.editionId });
   delete m.providerRecordId;
-  const pair = (await db.query('SELECT * FROM marketplace_sec.phase9_catalogue_choice_target_v1($1,NULL,$2,NULL)',
-    [m, m.adapterKey])).rows[0];
+  const pair = (await db.query('SELECT * FROM marketplace_sec.phase9_catalogue_choice_target_v1($1,NULL,$2,$3)',
+    [m, m.adapterKey, m.providerRecordId ?? null])).rows[0];
   assert.deepEqual(pair, { canonical_work_id: null, canonical_edition_id: null });
-  assert.ok(t.editionId);
 });
 
 test('7a refuses a valid companion without shared writes', async () => {

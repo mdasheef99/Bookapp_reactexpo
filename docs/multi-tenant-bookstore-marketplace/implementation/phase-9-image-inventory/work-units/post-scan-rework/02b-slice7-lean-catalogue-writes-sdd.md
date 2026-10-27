@@ -1258,9 +1258,9 @@ direct writer, **stop and report to the Owner**; do not break it.
 | `phase9_catalogue_valid_cache_v1`, `phase9_catalogue_cache_receipt_guard`, `phase9_catalogue_query_scope_v1`, `phase9_catalogue_store_cache_v1`, `phase9_catalogue_reuse_cache_core_v1` | 7b; cache helpers consume the trusted admission hand-off (§5). |
 | Private/public v2 completion/reuse entries; M78 v1 delegate; M73 recovery; M15 local-completion count/effect hook; M68 automatic-payload guard; M73 cache-source policy; legacy cache readers/writer discrimination | 7b; existing production definitions remain in place throughout 7a. |
 
-7a is **M83**, proposed local file
+7a is **M83**, local file
 `supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`,
-**PROPOSED / NOT_CREATED / NOT_APPLIED**. 7b has one migration, number decided at
+**APPLIED** as live version 20261026223715 (2026-10-27); read-back PASS; browser check PASS (tracker 38). 7b has one migration, number decided at
 7b start after 7a is applied and verified. The §1 provider-neutrality rule applies
 across both artifacts. Each slice needs its own red-first proof and separate
 build/creation/application authority; 7a build/local creation are authorized,
@@ -1373,6 +1373,15 @@ Deviations and residuals (each recorded for Owner review, not as newly approved)
 - Pre-existing UX findings from the browser check, not M83: a refusal persists until reload. Reason: pre-existing. Recorded for Owner review, not as newly approved.
 - Pre-existing UX findings from the browser check, not M83: price and condition edits are lost on reload. Reason: pre-existing. Recorded for Owner review, not as newly approved.
 - Pre-existing UX findings from the browser check, not M83: automatic edition lookup stays at "Finding edition…" until an explicit search. Reason: pre-existing. Recorded for Owner review, not as newly approved.
+
+Review findings carried to 7b (recorded for Owner review; M84 not authorized):
+
+- No-hint Select counts an option whose normalizer version differs from the lookup/attempt; Add rejects the lineage — LATENT (not reachable via current production paths). Impact: chosen count. Fix size M.
+- Admission is read without FOR SHARE in `phase9_catalogue_choice_target_v1`; an operator/service-role provider policy change concurrent with an Owner Select can let chosen count after revocation — CONFIRMED (reachable only with a concurrent manual registry change; no app code writes the registry). Impact: chosen count only, inventory unlinked, no tenant exposure. Fix size S: use the locked source-policy builder for no-hint Select admission.
+- Saved-ID Add ignores an existing conflicting provider-work tuple when title/authors match — LATENT (needs a postgres/seeded or retained combined snapshot). Impact: could link to the wrong canonical work. Fix size M.
+- Select checks the canonical display cover against the scoped provider's cover rules — LATENT. Impact: chosen count late or missing. Fix size S.
+- Select requires an existing provider-work tuple that Add could create — LATENT. Impact: chosen count late or missing. Fix size S.
+- Owner decision 2026-10-27: carry all five to 7b (fix red-first before or with 7b); no separate M84 now. M84 is not authorized.
 
 ## 14. Owner questions and conflicts
 

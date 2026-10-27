@@ -1,5 +1,6 @@
 import { synchronizeCandidateReviewSuccess } from '../queries/ownerUxReviewQueries';
-import { acceptCandidateRead } from '../queries/ownerCandidateAuthority';
+import { acceptCandidateRead, candidateVersions, knownCandidateVersions, versionsRegress,
+    type CandidateVersions } from '../queries/ownerCandidateAuthority';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ownerUxService } from '../api/ownerUxService';
@@ -29,6 +30,8 @@ export function useInventoryCommitCoordinator(
     }), [identity.storeId, identity.userId]);
     const activeScope = useRef(scope);
     const controllers = useRef(new Set<AbortController>());
+    const outcomeAuthorities = useRef(new Map<string, CandidateVersions>());
+    const checkedAuthorities = useRef(new Map<string, CandidateVersions>());
     const [inFlight, setInFlight] = useState<InFlightState>(new Set());
     const [outcomes, setOutcomes] = useState<Map<string, CandidateCommitOutcome>>(new Map());
     const [bulkResult, setBulkResult] = useState<AddAllResult | null>(null);
@@ -61,6 +64,7 @@ export function useInventoryCommitCoordinator(
             if (activeScope.current !== scope) throw new Error('OWNER_COMMIT_AUTHORITY_CHANGED');
             const current = acceptCandidateRead(client, ownerIdentity, canonical);
             if (current !== canonical) throw new Error('OWNER_CANDIDATE_AUTHORITY_CHANGED');
+            checkedAuthorities.current.set(request.candidateId, candidateVersions(canonical));
             await synchronizeCandidateReviewSuccess(client, ownerIdentity, request.sessionId, request.candidateId, canonical);
             return canonical;
         },
@@ -69,13 +73,20 @@ export function useInventoryCommitCoordinator(
                 signal => ownerUxService.readCandidate(readSessionId, candidateId, signal),
             );
             if (activeScope.current !== scope) throw new Error('OWNER_COMMIT_AUTHORITY_CHANGED');
-            return acceptCandidateRead(client, ownerIdentity, canonical);
+            const current = acceptCandidateRead(client, ownerIdentity, canonical);
+            checkedAuthorities.current.set(candidateId, candidateVersions(current));
+            return current;
         },
         // Retained Unit 7A/M39 mobile client seam. This sends only IDs,
         // canonical versions, and idempotency identities.
-        commitCandidate: (request) => executeFenced(
-            (signal) => ownerUxService.addCandidateToInventory(request, signal),
-        ),
+        commitCandidate: (request) => {
+            checkedAuthorities.current.set(request.candidateId, {
+                candidateVersion: request.expectedCandidateVersion,
+                metadataRevision: request.expectedMetadataRevision,
+                reviewVersion: request.expectedReviewVersion,
+            });
+            return executeFenced(signal => ownerUxService.addCandidateToInventory(request, signal));
+        },
         synchronizeSuccess: (results: readonly OwnerCandidateCommitResult[]) => (
             synchronizeInventoryCommitSuccess(client, ownerIdentity, sessionId, results)
                 .then(() => undefined)
@@ -93,6 +104,8 @@ export function useInventoryCommitCoordinator(
         activeScope.current = scope;
         setInFlight(new Set());
         setOutcomes(new Map());
+        outcomeAuthorities.current.clear();
+        checkedAuthorities.current.clear();
         setBulkResult(null);
         setBulkPending(false);
         return () => {
@@ -103,6 +116,29 @@ export function useInventoryCommitCoordinator(
         };
     }, [scope, coordinator]);
 
+    useEffect(() => {
+        // SDD-1 §2/D2-3: a refusal belongs to the authority that was checked.
+        const clearStaleRefusals = () => {
+            if (activeScope.current !== scope) return;
+            setOutcomes((current) => {
+                const stale = [...current].filter(([candidateId, outcome]) => {
+                    const authority = outcomeAuthorities.current.get(candidateId);
+                    return outcome.status === 'no_longer_eligible' && authority
+                        && knownCandidateVersions(client, ownerIdentity, { sessionId, candidateId })
+                            .some(latest => versionsRegress(authority, latest));
+                });
+                if (stale.length === 0) return current;
+                const updated = new Map(current);
+                stale.forEach(([candidateId]) => updated.delete(candidateId));
+                return updated;
+            });
+        };
+        clearStaleRefusals();
+        return client.getQueryCache().subscribe((event) => {
+            if (event.type === 'updated' && event.action.type === 'success') clearStaleRefusals();
+        });
+    }, [client, outcomes, ownerIdentity, scope, sessionId]);
+
     const markInFlight = (candidateIds: readonly string[], pending: boolean) => {
         setInFlight((current) => {
             const next = new Set(current);
@@ -112,7 +148,22 @@ export function useInventoryCommitCoordinator(
             return next;
         });
     };
-    const record = (next: readonly CandidateCommitOutcome[]) => {
+    const record = (
+        next: readonly CandidateCommitOutcome[],
+        authorities: readonly (CandidateVersions & { candidateId: string })[],
+    ) => {
+        const byId = new Map(authorities.map(authority => [authority.candidateId, authority]));
+        next.forEach((outcome) => {
+            const authority = checkedAuthorities.current.get(outcome.candidateId)
+                ?? byId.get(outcome.candidateId);
+            if (outcome.status === 'no_longer_eligible' && authority) {
+                outcomeAuthorities.current.set(outcome.candidateId, {
+                    candidateVersion: authority.candidateVersion,
+                    metadataRevision: authority.metadataRevision,
+                    reviewVersion: authority.reviewVersion,
+                });
+            } else outcomeAuthorities.current.delete(outcome.candidateId);
+        });
         setOutcomes((current) => {
             const updated = new Map(current);
             next.forEach((outcome) => updated.set(outcome.candidateId, outcome));
@@ -122,6 +173,7 @@ export function useInventoryCommitCoordinator(
 
     const addCandidate = async (value: CandidateCommitDraft) => {
         const candidateId = value.card.candidateId;
+        checkedAuthorities.current.delete(candidateId);
         markInFlight([candidateId], true);
         try {
             const previous = outcomes.get(candidateId);
@@ -132,7 +184,7 @@ export function useInventoryCommitCoordinator(
                 || previous?.status === 'still_pending'
                 ? await coordinator.retryCandidate(candidateId, value)
                 : await coordinator.addCandidate(value);
-            record([outcome]);
+            record([outcome], [value.card]);
             return outcome;
         } finally {
             markInFlight([candidateId], false);
@@ -141,12 +193,13 @@ export function useInventoryCommitCoordinator(
 
     const addAll = async (values: readonly CandidateCommitDraft[]) => {
         const command = coordinator.freezeAddAll(values);
+        command.candidateIds.forEach(candidateId => checkedAuthorities.current.delete(candidateId));
         markInFlight(command.candidateIds, true);
         setBulkResult(null);
         setBulkPending(true);
         try {
             const result = await coordinator.runAddAll(command);
-            record(result.outcomes);
+            record(result.outcomes, command.commands);
             setBulkResult(result);
             return { command, result };
         } finally {
@@ -164,11 +217,12 @@ export function useInventoryCommitCoordinator(
             return status === 'failed_retryable' || status === 'still_pending'
                 || status === 'needs_attention';
         });
+        retryIds.forEach(candidateId => checkedAuthorities.current.delete(candidateId));
         markInFlight(retryIds, true);
         setBulkPending(true);
         try {
             const result = await coordinator.retryAddAll(command, currentDrafts);
-            record(result.outcomes);
+            record(result.outcomes, [...command.commands, ...currentDrafts.map(value => value.card)]);
             setBulkResult(result);
             return result;
         } finally {

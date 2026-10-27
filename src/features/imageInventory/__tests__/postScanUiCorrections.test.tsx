@@ -1,8 +1,25 @@
-import { act, fireEvent, render, within } from '@testing-library/react-native';
+jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, cleanupAsync, fireEvent, render, renderHook, waitFor, within } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
+import { OwnerUxClientError, ownerUxService } from '../api/ownerUxService';
+import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
+import { ownerBatchReviewService } from '../api/ownerBatchReviewService';
+import { useOwnerBatchReview } from '../queries/ownerBatchReviewReads';
+import { pickerChoices, pickerCard, pickerDetail, pickerDefaults, deferred } from '../testing/editionPickerClientFixtures';
+import { formatInrFromMinor } from '../scanSetup/scanSetupForm';
+import { InventoryCommitCoordinator } from '../commit/inventoryCommitCoordinator';
+import { useInventoryCommitCoordinator } from '../commit/useInventoryCommitCoordinator';
+import { candidateCommitAuthorityKey } from '../commit/inventoryCommitPolicy';
+import { resetOwnerRequestFence } from '../identity/ownerRequestFence';
+import { acceptEditionChoices } from '../queries/ownerEditionPickerCache';
+import { ownerEditionPickerKeys } from '../queries/ownerEditionPickerKeys';
+import { imageInventoryKeys, resetImageInventoryIdentityForTests } from '../queries/ownerUxQueries';
+import { editionChoices, editionMetadata } from '../../../../supabase/functions/__tests__/fixtures/phase9/editionPickerContracts';
 import { BatchReviewCard } from '../components/BatchReviewCard';
 import { AddCandidateToInventoryAction } from '../components/AddCandidateToInventoryAction';
-import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
-import { testUuid } from '../testing/ownerUxTestFixtures';
+import type { OwnerBatchReview, OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
+import { candidateDetailFixture, testUuid } from '../testing/ownerUxTestFixtures';
 
 jest.mock('expo-image', () => ({
     Image: (props: Record<string, unknown>) => {
@@ -571,15 +588,15 @@ describe('card Ready badge uses the add-now rule', () => {
         expect(screen.queryByText('This book changed. Check it and press Add again.')).toBeNull();
     });
 
-    it('names the unconfirmed automatic suggestion when its first save is refused', () => {
-        const card = reviewCard({ review: null, metadataState: 'selected' });
+    it('keeps a different first-save conflict generic without confirmation evidence', () => {
+        const card = reviewCard({ review: null, reviewVersion: null, metadataState: 'selected' });
         const outcome = { candidateId: card.candidateId, status: 'no_longer_eligible' as const,
             stage: 'save' as const, code: 'P9_STATE_CONFLICT' };
         const props = { card, disabled: false, isOffline: false, pending: false, onAdd: jest.fn(), outcome };
         const screen = render(<AddCandidateToInventoryAction {...props} />);
-        expect(screen.getByText('Confirm the suggested edition first: open Find or change edition and tap Confirm current suggestion.')).toBeTruthy();
-        expect(screen.queryByText('This book is no longer eligible. Review the latest saved details.')).toBeNull();
-        // A saved review or a non-automatic state keeps the generic message.
+        expect(screen.queryByText(/Confirm the suggested edition first/)).toBeNull();
+        expect(screen.getByText('This book is no longer eligible. Review the latest saved details.')).toBeTruthy();
+        // Selected metadata alone cannot identify the reason for a Save conflict.
         screen.rerender(<AddCandidateToInventoryAction {...props} card={reviewCard({ metadataState: 'selected' })} />);
         expect(screen.getByText('This book is no longer eligible. Review the latest saved details.')).toBeTruthy();
         screen.rerender(<AddCandidateToInventoryAction {...props}
@@ -587,12 +604,12 @@ describe('card Ready badge uses the add-now rule', () => {
         expect(screen.getByText('This book is no longer eligible. Review the latest saved details.')).toBeTruthy();
     });
 
-    it('tells the Owner to reload after a refusal before any request', () => {
+    it('asks the Owner to check the latest details after a refusal before any request', () => {
         const card = reviewCard();
         const screen = render(<AddCandidateToInventoryAction card={card} disabled={false} isOffline={false}
             pending={false} onAdd={jest.fn()}
             outcome={{ candidateId: card.candidateId, status: 'no_longer_eligible', stage: 'claim' }} />);
-        expect(screen.getByText('This book changed after your edits. Reload the page, check it, and press Add again.')).toBeTruthy();
+        expect(screen.getByText('This book changed after your edits. Check the latest details and press Add again.')).toBeTruthy();
     });
 
     it('keeps Add enabled after review_changed and disabled after a version conflict', () => {
@@ -668,4 +685,277 @@ it.each([
     expect(screen.getByText('Add to inventory')).toBeDisabled();
     fireEvent.press(screen.getByText('Add to inventory'));
     expect(screen.onAdd).not.toHaveBeenCalled();
+});
+
+
+describe('Add refusal authority recovery', () => {
+    const identity = { userId: testUuid(90), storeId: testUuid(91) };
+    let client: QueryClient;
+    beforeEach(() => {
+        client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { gcTime: Infinity } } });
+        resetOwnerRequestFence(identity);
+        resetImageInventoryIdentityForTests(identity);
+    });
+    afterEach(async () => { await cleanupAsync(); client.clear(); jest.restoreAllMocks(); });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+
+    it.each(['individual', 'bulk'])('retires the %s hook refusal after accepted confirmation and forwards supplied selling edits', async (mode) => {
+        const base = reviewCard();
+        const card = reviewCard({ review: null, reviewVersion: null, reviewReady: false,
+            allowedActions: ['save_review'] });
+        const review = { ...base.review!, priceMinor: 31_000, baseCondition: 'acceptable' as const };
+        const value = { card, review, edits: { priceMinor: review.priceMinor, baseCondition: review.baseCondition },
+            acceptedAuthorityKey: candidateCommitAuthorityKey(card) };
+        const save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockRejectedValueOnce(
+            new OwnerUxClientError('P9_STATE_CONFLICT', false, 'Session state blocks this Save.'),
+        );
+        const hook = renderHook(() => useInventoryCommitCoordinator(identity, card.sessionId), { wrapper });
+        await act(async () => {
+            if (mode === 'bulk') await hook.result.current.addAll([value]);
+            else await hook.result.current.addCandidate(value);
+        });
+        const refused = hook.result.current.outcomes.get(card.candidateId);
+        expect(refused).toMatchObject({ status: 'no_longer_eligible', stage: 'save' });
+        const screen = render(<AddCandidateToInventoryAction card={card} disabled={false}
+            isOffline={false} pending={false} outcome={refused} onAdd={jest.fn()} />);
+        expect(screen.getByText('Add to inventory')).toBeDisabled();
+        const choices = { ...editionChoices, sessionId: card.sessionId, candidateId: card.candidateId,
+            candidateVersion: card.candidateVersion, metadataRevision: card.metadataRevision, reviewVersion: null };
+        // Same-authority reads and other candidates cannot retire this refusal.
+        await act(async () => {
+            client.setQueryData(ownerEditionPickerKeys.choices(identity, card.sessionId, card.candidateId), choices);
+            client.setQueryData(imageInventoryKeys.candidate(identity, card.sessionId, card.candidateId),
+                candidateDetailFixture({ candidateVersion: 1, metadata: { ...candidateDetailFixture().metadata, revision: 1 } }));
+            client.setQueryData(ownerEditionPickerKeys.choices(identity, card.sessionId, testUuid(22)),
+                { ...choices, candidateId: testUuid(22), candidateVersion: 99 });
+        });
+        expect(hook.result.current.outcomes.get(card.candidateId)).toBe(refused);
+        const confirmed = { ...choices, candidateVersion: card.candidateVersion + 1,
+            metadataRevision: card.metadataRevision + 1, selection: {
+                selectionId: testUuid(99), source: 'current_suggestion' as const,
+                optionId: null, snapshot: editionMetadata, confirmedByOwner: true,
+            } };
+        await act(async () => {
+            acceptEditionChoices(client, identity, card, confirmed, 'selection');
+        });
+        await waitFor(() => expect(hook.result.current.outcomes.has(card.candidateId)).toBe(false));
+        screen.rerender(<AddCandidateToInventoryAction card={card} disabled={false}
+            isOffline={false} pending={false} outcome={hook.result.current.outcomes.get(card.candidateId)} onAdd={jest.fn()} />);
+        expect(screen.getByText('Add to inventory')).not.toBeDisabled();
+        const latest = { ...card, candidateVersion: confirmed.candidateVersion, metadataRevision: confirmed.metadataRevision };
+        const detail = candidateDetailFixture({ sessionId: card.sessionId, candidateId: card.candidateId,
+            candidateState: 'ready', candidateVersion: latest.candidateVersion + 1,
+            metadata: { ...candidateDetailFixture().metadata, state: 'selected', revision: latest.metadataRevision,
+                selectionId: testUuid(99) }, review: { value: review, reviewVersion: 1 },
+            readiness: { reviewReady: true, blockers: [], derivedFromCandidateVersion: latest.candidateVersion + 1,
+                derivedFromMetadataRevision: latest.metadataRevision, derivedFromDuplicateAdviceVersion: null },
+            allowedActions: ['save_review', 'add_to_inventory'] });
+        save.mockResolvedValue(detail);
+        jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(detail);
+        const commit = jest.spyOn(ownerUxService, 'addCandidateToInventory').mockResolvedValue({
+            sessionId: card.sessionId, candidateId: card.candidateId, candidateVersion: detail.candidateVersion + 1,
+            inventoryId: testUuid(80), inventoryVersion: 1, outcome: 'committed_private',
+        });
+        await act(async () => {
+            await hook.result.current.addCandidate({ ...value, card: latest,
+                acceptedAuthorityKey: candidateCommitAuthorityKey(latest) });
+        });
+        expect(hook.result.current.outcomes.get(card.candidateId)?.status).toBe('succeeded');
+        expect(save).toHaveBeenLastCalledWith(expect.objectContaining({ review: expect.objectContaining({
+            priceMinor: 31_000, baseCondition: 'acceptable',
+        }) }), expect.anything());
+        expect(commit).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['individual revalidate', 'individual commit', 'bulk revalidate', 'bulk commit'])(
+        'keeps the %s refusal at the authority saved by that same Add', async (scenario) => {
+            const card = reviewCard();
+            const review = { ...card.review!, priceMinor: 31_000 };
+            const detail = candidateDetailFixture({ sessionId: card.sessionId, candidateId: card.candidateId,
+                candidateState: 'ready', candidateVersion: card.candidateVersion + 1,
+                metadata: { ...candidateDetailFixture().metadata, state: 'selected', revision: card.metadataRevision,
+                    selectionId: testUuid(99) }, review: { value: review, reviewVersion: card.reviewVersion! + 1 },
+                readiness: { reviewReady: true, blockers: [], derivedFromCandidateVersion: card.candidateVersion + 1,
+                    derivedFromMetadataRevision: card.metadataRevision, derivedFromDuplicateAdviceVersion: null },
+                allowedActions: ['save_review', 'add_to_inventory'] });
+            const save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockResolvedValue(detail);
+            jest.spyOn(ownerUxService, 'readCandidate').mockResolvedValue(scenario.endsWith('revalidate')
+                ? { ...detail, allowedActions: ['save_review'] } : detail);
+            const commit = jest.spyOn(ownerUxService, 'addCandidateToInventory').mockRejectedValue(
+                new OwnerUxClientError('P9_STATE_CONFLICT', false, 'Refused at saved authority.'),
+            );
+            const hook = renderHook(() => useInventoryCommitCoordinator(identity, card.sessionId), { wrapper });
+            await act(async () => {
+                const value = { card, edits: { priceMinor: review.priceMinor }, review,
+                    acceptedAuthorityKey: candidateCommitAuthorityKey(card) };
+                if (scenario.startsWith('bulk')) await hook.result.current.addAll([value]);
+                else await hook.result.current.addCandidate(value);
+            });
+            expect(save).toHaveBeenCalledTimes(1);
+            expect(commit).toHaveBeenCalledTimes(scenario.endsWith('commit') ? 1 : 0);
+            const refusal = hook.result.current.outcomes.get(card.candidateId);
+            expect(refusal).toMatchObject({ status: 'no_longer_eligible',
+                stage: scenario.endsWith('commit') ? 'commit' : 'revalidate' });
+            await act(async () => {
+                client.setQueryData(imageInventoryKeys.candidate(identity, card.sessionId, card.candidateId), detail);
+            });
+            expect(hook.result.current.outcomes.get(card.candidateId)).toBe(refusal);
+            await act(async () => {
+                client.setQueryData(imageInventoryKeys.candidate(identity, card.sessionId, card.candidateId),
+                    { ...detail, candidateVersion: detail.candidateVersion + 1 });
+            });
+            await waitFor(() => expect(hook.result.current.outcomes.has(card.candidateId)).toBe(false));
+        });
+
+    it.each(['current', 'missing', 'confirmed', 'old candidate', 'old metadata', 'old review',
+        'other candidate', 'other session', 'other selection', 'other conflict'])(
+        'uses conditional suggestion guidance only with current scoped evidence: %s', async (kind) => {
+            const card = reviewCard();
+            const choices = pickerChoices({ sessionId: card.sessionId, candidateId: card.candidateId,
+                candidateVersion: card.candidateVersion, metadataRevision: card.metadataRevision,
+                reviewVersion: card.reviewVersion, selection: { source: 'current_suggestion', optionId: null,
+                    selectionId: testUuid(99), confirmedByOwner: kind === 'confirmed', snapshot: editionMetadata } });
+            if (kind === 'missing') choices.selection = null;
+            if (kind === 'old candidate') choices.candidateVersion -= 1;
+            if (kind === 'old metadata') choices.metadataRevision -= 1;
+            if (kind === 'old review') choices.reviewVersion = null;
+            if (kind === 'other candidate') choices.candidateId = testUuid(22);
+            if (kind === 'other session') choices.sessionId = testUuid(11);
+            if (kind === 'other selection') choices.selection!.selectionId = testUuid(100);
+            jest.spyOn(ownerEditionPickerService, 'readEditionChoices').mockResolvedValue(choices);
+            const commandSlot = { claimSlot: jest.fn(() => 'slot'), releaseSlot: jest.fn(), isCommandActive: () => false };
+            const screen = render(<BatchReviewCard identity={identity} card={card} defaults={defaults}
+                isOffline={false} canMutate removePending={false} addPending={false} commandSlot={commandSlot}
+                onAdd={jest.fn()} onRemove={jest.fn()} onDraftChange={jest.fn()}
+                addOutcome={{ candidateId: card.candidateId, status: 'no_longer_eligible', stage: 'save',
+                    code: kind === 'other conflict' ? 'P9_CANDIDATE_VERSION_CONFLICT' : 'P9_STATE_CONFLICT' }} />, { wrapper });
+            await waitFor(() => expect(client.getQueryState(
+                ownerEditionPickerKeys.choices(identity, card.sessionId, card.candidateId))?.fetchStatus).toBe('idle'));
+            const guidance = 'Check the latest details. If this is the suggested edition, open Find or change edition and tap Confirm current suggestion.';
+            if (kind === 'current') expect(screen.getByText(guidance)).toBeTruthy();
+            else {
+                expect(screen.queryByText(guidance)).toBeNull();
+                expect(screen.getByText('This book is no longer eligible. Review the latest saved details.')).toBeTruthy();
+            }
+        });
+
+    it('confirms through the mounted picker, waits for batch authority, and adds the preserved price and condition', async () => {
+        let choices = pickerChoices({ selection: { selectionId: testUuid(30), source: 'current_suggestion',
+            optionId: null, snapshot: { ...editionMetadata, title: 'Chosen edition', authors: ['Chosen author'] },
+            confirmedByOwner: false } });
+        let card = pickerCard(choices), detail = pickerDetail(choices);
+        const cardDefaults = { ...pickerDefaults, priceMinor: 25_000, quantity: 1 as const };
+        const batch = (): OwnerBatchReview => ({ sessionId: card.sessionId, status: 'active', sessionVersion: 1,
+            presentationRevision: card.candidateVersion, defaults: cardDefaults, batchLabel: null,
+            counts: { detected: 1, processing: 0, needsAttention: 0, reviewReadySaved: 0,
+                committed: 0, ownerRemoved: 0, falseDetections: 0 }, items: [card], updatedAt: card.updatedAt });
+        const confirmedRead = deferred<OwnerBatchReview>();
+        let holdConfirmedRead = true;
+        jest.spyOn(ownerBatchReviewService, 'readBatchReview').mockImplementation(async () =>
+            choices.selection?.confirmedByOwner && holdConfirmedRead ? confirmedRead.promise : batch());
+        jest.spyOn(ownerEditionPickerService, 'readEditionChoices').mockImplementation(async () => choices);
+        jest.spyOn(ownerUxService, 'readCandidate').mockImplementation(async () => detail);
+        const select = jest.spyOn(ownerEditionPickerService, 'selectEdition').mockImplementation(async () => {
+            choices = { ...choices, candidateVersion: choices.candidateVersion + 1,
+                metadataRevision: choices.metadataRevision + 1, selection: { ...choices.selection!, confirmedByOwner: true } };
+            card = pickerCard(choices); detail = pickerDetail(choices);
+            return choices;
+        });
+        const save = jest.spyOn(ownerUxService, 'updateCandidateReview').mockRejectedValueOnce(
+            new OwnerUxClientError('P9_STATE_CONFLICT', false, 'Automatic suggestion needs confirmation.'),
+        ).mockImplementation(async (request) => {
+            choices = { ...choices, candidateVersion: choices.candidateVersion + 1, reviewVersion: 1 };
+            card = pickerCard(choices, request.review); detail = pickerDetail(choices, request.review);
+            return detail;
+        });
+        const commit = jest.spyOn(ownerUxService, 'addCandidateToInventory').mockImplementation(async (request) => ({
+            sessionId: request.sessionId, candidateId: request.candidateId, candidateVersion: request.expectedCandidateVersion + 1,
+            inventoryId: testUuid(80), inventoryVersion: 1, outcome: 'committed_private',
+        }));
+        const draftChange = jest.fn();
+        function MountedCard() {
+            const batchReview = useOwnerBatchReview(identity, choices.sessionId);
+            const coordinator = useInventoryCommitCoordinator(identity, choices.sessionId);
+            const current = batchReview.data?.items[0];
+            return current ? <BatchReviewCard identity={identity} card={current} defaults={cardDefaults}
+                isOffline={false} canMutate={!coordinator.inFlight.has(current.candidateId)} removePending={false}
+                addPending={coordinator.inFlight.has(current.candidateId)} addOutcome={coordinator.outcomes.get(current.candidateId)}
+                commandSlot={coordinator} onRemove={jest.fn()} onDraftChange={draftChange}
+                onEditionSelection={() => { void batchReview.refetch(); }}
+                onAdd={(card, edits, review) => coordinator.addCandidate({ card, edits, review,
+                    acceptedAuthorityKey: candidateCommitAuthorityKey(card) })} /> : null;
+        }
+        const screen = render(<MountedCard />, { wrapper });
+        await waitFor(() => expect(screen.getByText('Add to inventory')).not.toBeDisabled());
+        fireEvent.press(screen.getByTestId('card-price-field'));
+        fireEvent.press(screen.getByLabelText(formatInrFromMinor(50_000)));
+        fireEvent.press(screen.getByTestId('card-condition-field'));
+        fireEvent.press(screen.getByLabelText('Acceptable'));
+        await act(async () => { fireEvent.press(screen.getByText('Add to inventory')); });
+        await screen.findByText('Check the latest details. If this is the suggested edition, open Find or change edition and tap Confirm current suggestion.');
+        expect(screen.getByText('Add to inventory')).toBeDisabled();
+        fireEvent.press(screen.getByText('Find or change edition'));
+        await screen.findByText('Confirm current suggestion');
+        await act(async () => { fireEvent.press(screen.getByText('Confirm current suggestion')); });
+        await screen.findByText('Edition saved.');
+        expect(select).toHaveBeenCalledWith(expect.objectContaining({ source: 'current_suggestion',
+            selectionId: testUuid(30), expectedCandidateVersion: 4, expectedMetadataRevision: 7 }), expect.anything());
+        expect(draftChange).toHaveBeenLastCalledWith(card.candidateId, expect.objectContaining({
+            priceMinor: 50_000, baseCondition: 'acceptable', metadataChoice: { mode: 'edition_option', selectionId: testUuid(30) },
+        }), candidateCommitAuthorityKey(card));
+        fireEvent.press(screen.getByText('Close metadata'));
+        // Choice adoption alone cannot bypass the batch card's current-authority gate.
+        expect(screen.getByText('Add to inventory')).toBeDisabled();
+        await act(async () => { holdConfirmedRead = false; confirmedRead.resolve(batch()); });
+        await waitFor(() => expect(screen.getByText('Add to inventory')).not.toBeDisabled());
+        expect(screen.queryByTestId('compact-authority-changed')).toBeNull();
+        expect(screen.getByTestId('card-price-overlay')).toBeTruthy();
+        expect(screen.getByTestId('card-condition-overlay')).toBeTruthy();
+        expect(within(screen.getByTestId('card-price-field')).getByText(formatInrFromMinor(50_000))).toBeTruthy();
+        expect(within(screen.getByTestId('card-condition-field')).getByText('Acceptable')).toBeTruthy();
+        await act(async () => { fireEvent.press(screen.getByText('Add to inventory')); });
+        await screen.findByText('Added to Inventory');
+        expect(save).toHaveBeenCalledTimes(2);
+        expect(save).toHaveBeenLastCalledWith(expect.objectContaining({ review: expect.objectContaining({
+            priceMinor: 50_000, baseCondition: 'acceptable',
+            metadataChoice: { mode: 'edition_option', selectionId: testUuid(30) },
+        }) }), expect.anything());
+        expect(commit).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['succeeded', 'still_pending', 'failed_retryable'] as const)(
+        'keeps a %s outcome when authority advances', async (status) => {
+            const card = reviewCard();
+            const outcome = { candidateId: card.candidateId, status, stage: 'commit' as const };
+            jest.spyOn(InventoryCommitCoordinator.prototype, 'addCandidate').mockResolvedValue(outcome);
+            const hook = renderHook(() => useInventoryCommitCoordinator(identity, card.sessionId), { wrapper });
+            await act(async () => { await hook.result.current.addCandidate({ card, edits: {},
+                acceptedAuthorityKey: candidateCommitAuthorityKey(card) }); });
+            await act(async () => {
+                client.setQueryData(ownerEditionPickerKeys.choices(identity, card.sessionId, card.candidateId), {
+                    ...editionChoices, sessionId: card.sessionId, candidateId: card.candidateId,
+                    candidateVersion: card.candidateVersion + 1, metadataRevision: card.metadataRevision + 1,
+                    reviewVersion: card.reviewVersion! + 1,
+                });
+            });
+            expect(hook.result.current.outcomes.get(card.candidateId)).toBe(outcome);
+        });
+
+    it.each(['candidateVersion', 'metadataRevision', 'reviewVersion'] as const)(
+        'retires a claim refusal when only %s advances', async (field) => {
+            const card = reviewCard();
+            const hook = renderHook(() => useInventoryCommitCoordinator(identity, card.sessionId), { wrapper });
+            await act(async () => { await hook.result.current.addCandidate({ card, edits: {}, acceptedAuthorityKey: 'stale' }); });
+            expect(hook.result.current.outcomes.get(card.candidateId)?.stage).toBe('claim');
+            await act(async () => {
+                client.setQueryData(ownerEditionPickerKeys.choices(identity, card.sessionId, card.candidateId), {
+                    ...editionChoices, sessionId: card.sessionId, candidateId: card.candidateId,
+                    candidateVersion: card.candidateVersion, metadataRevision: card.metadataRevision,
+                    reviewVersion: card.reviewVersion, [field]: card[field]! + 1,
+                });
+            });
+            await waitFor(() => expect(hook.result.current.outcomes.has(card.candidateId)).toBe(false));
+        });
 });

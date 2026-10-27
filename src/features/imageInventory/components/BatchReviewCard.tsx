@@ -318,7 +318,7 @@ export function BatchReviewCard({
                     <AddCandidateToInventoryAction card={card}
                         disabled={!canMutate || authorityChanged || authorityMismatch
                             || selectionPending || hasBufferedIdentity || !review || !canStartCommit}
-                        isOffline={isOffline} pending={addPending} outcome={addOutcome}
+                        isOffline={isOffline} pending={addPending} outcome={addOutcome} editionChoices={trustedChoices}
                         onAdd={async () => {
                             if (!review || authorityChanged || acceptedAuthority.current !== authorityKey
                                 || hasBufferedIdentity || bufferedIdentityRef.current.titleActive
