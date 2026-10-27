@@ -126,8 +126,8 @@ for AC6-0 to AC6-7; existing commit suites stay green
 
 ## Slice 7 — Lean catalogue writes, stats and shared cache
 
-**Pass-2 status (2026-10-26):** detailed draft in [02b - Slice 7 Lean Catalogue Writes](./02b-slice7-lean-catalogue-writes-sdd.md); Owner questions/review pending, no build authority; M83 PROPOSED / NOT_CREATED / NOT_APPLIED (M82 belongs to the separate first-save fix).
-02b section 11 lists proposed AC wording refinements: AC7-1/2e activation, AC7-2c translation conflicts, AC7-3 blocklist in Slice 7, AC7-4/5 count semantics/readers, AC7-7 typed shared cache, AC7-8 canonical revocation already in M81 plus MAINTAIN/service denials; additional AC7-11 to AC7-20. Approved AC text below is preserved; unresolved choices are in 02b section 14.
+**Pass-2 status (Owner 2026-10-26):** [02b - Slice 7 Lean Catalogue Writes](./02b-slice7-lean-catalogue-writes-sdd.md) approved as the Slice 7 design; split decided as 7a (M83, local `supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`, PROPOSED / NOT_CREATED / NOT_APPLIED) and 7b (one migration, number undecided). 7a build and local migration creation authorized; application requires separate Owner approval. 7b is not authorized. M82's separate first-save fix is applied as live version 20261025220839.
+02b §11 records the approved detailed AC wording refinements: AC7-1/2e activation, AC7-2c translation conflicts, AC7-3 blocklist in Slice 7, AC7-4/5 count semantics/readers, AC7-7 typed shared cache, AC7-8 canonical revocation already in M81 plus MAINTAIN/service denials; additional **AC7-11–AC7-28**, including provider neutrality AC7-21 and 7a source-write denial/preserved reads AC7-28 (Owner 2026-10-26, decision 6 closed). Approved AC text below is preserved; Owner answers and approval-round decisions are in 02b §14, object ownership and acceptance subsets in §12.
 
 **Goal:** Open Library editions found by any store are kept, so the next store
 needs no call (D33, D39); usage counts guide ordering (D36).
@@ -211,6 +211,14 @@ needs no call (D33, D39); usage counts guide ordering (D36).
   (P3 L154–157): hidden suppresses search, not direct row access. Keep the note
   bibliographic/policy-only, with no private licensing notes or store data
   (D37, R04); changing public canonical access is outside this amendment.
+- **Provider-neutral attribution (Owner 2026-10-26; 02b §§4.2/11, AC7-21):**
+  add nullable `phase9_provider_registry.shared_source_note text` (1–1024 safe
+  characters when set; no grant change). Copy new source-and-retention notes
+  from the admitted provider's registry row, never a generic-code literal;
+  a null note is not admitted. 7a sets the Open Library registry note only;
+  later providers require their own Q18 approval and row. Raw retention and
+  revalidation remain registry-derived. The exact provider-neutral SQL/worker
+  boundaries and synthetic-provider proof are in 02b §11 AC7-21.
 - **Sources and covers:** one `book_metadata_sources` row per provider record,
   using slice 6's Open Library allow-list until slice 8. New rows set both
   legacy `provider` and nullable-schema `adapter_key` to the same registry key,
@@ -267,11 +275,17 @@ needs no call (D33, D39); usage counts guide ordering (D36).
 (SDD-0 §5); admin tooling beyond the hidden flag.
 
 **Depends on:** slice 6.
-**Migration:** one — provider-ID list table, FKs/checks/indexes, RLS/grants,
-columns, stats and helper changes. Pass 2 may split into 7a (provider-ID list
-with its security boundary, columns, stats, link by provider edition ID) and
-7b (lookup-time writes, identifier transport including OCLC/LCCN, and shared cache) if one
-session is not enough; at most one migration per resulting slice (R12).
+**Migration (Owner 2026-10-26, OQ8):** decided split, **one migration per slice
+(R12)**. 7a = M83, proposed local
+`supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`
+(PROPOSED / NOT_CREATED / NOT_APPLIED): provider-ID list, FKs/checks/indexes,
+RLS/grants, canonical/registry columns, empty private blocklist/STABLE ISBN
+reader, stats, Add/Select/identity helpers and source direct-write audit/revoke.
+7b = one migration, number decided at 7b start after 7a is applied and verified:
+lookup-time writes, identifier transport including OCLC/LCCN, accounting-mode
+provider validation, companion validation and shared cache. 02b §12 owns the
+exact object/acceptance split; searched stays 0 in 7a. 7a build/local creation
+are authorized; application is separate and 7b is not authorized.
 **Amends:** DOC-3 §§5.1 (provider-ID matching), 5.2 (coherent source and picker
 promotion), 14 (canonical/source/provider-ID data model) and 17 (exact identity
 only). Source-spec edits ship with implementation; this docs-only amendment
@@ -369,6 +383,12 @@ M65 `phase9_edition_canonical_snapshot` / `phase9_edition_current_snapshot`,
   not permission to populate publicly readable canonical rows. Q18's deferred
   details do not block the Open Library-only path under D35 and its existing
   policy checks (D35, R05, Q18).
+- AC7-21: Provider neutrality: enforce the exhaustive per-artifact allowed
+  `open_library` homes, registry-derived attribution/retention/revalidation,
+  generic schema/worker rules, synthetic-provider core proof and unchanged
+  production admission denial specified in **02b §11 AC7-21** (D32, D35).
+  02b §12 assigns its 7a/7b acceptance portions; AC7-11–AC7-28 are defined in
+  02b §11 without deleting or relaxing the approved AC text above.
 
 **Tests first:** Database — catalogue writes, identity collisions/convergence,
 FK/check/cascade and role-denial cases, source keys/provenance, canonical

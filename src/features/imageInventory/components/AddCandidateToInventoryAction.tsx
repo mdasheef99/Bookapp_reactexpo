@@ -36,13 +36,22 @@ export function AddCandidateToInventoryAction({
         );
     }
     const retry = outcome?.status === 'failed_retryable' || outcome?.status === 'still_pending';
+    // M69 save blocker metadata_choice_missing: an automatic suggestion with no
+    // matching spine ISBN needs the Owner's confirmation before its first save.
+    const unconfirmedSuggestion = outcome?.status === 'no_longer_eligible' && outcome.stage === 'save'
+        && outcome.code === 'P9_STATE_CONFLICT' && card.metadataState === 'selected' && card.review === null;
+    const ineligibleMessage = outcome?.code === 'review_changed'
+        ? 'This book changed. Check it and press Add again.'
+        : unconfirmedSuggestion
+            ? 'Confirm the suggested edition first: open Find or change edition and tap Confirm current suggestion.'
+            : outcome?.stage === 'claim'
+                ? 'This book changed after your edits. Reload the page, check it, and press Add again.'
+                : 'This book is no longer eligible. Review the latest saved details.';
     return (
         <View style={{ gap: 6 }}>
             {outcome?.status === 'no_longer_eligible' ? (
                 <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>
-                    {outcome.code === 'review_changed'
-                        ? 'This book changed. Check it and press Add again.'
-                        : 'This book is no longer eligible. Review the latest saved details.'}
+                    {ineligibleMessage}
                 </Text>
             ) : outcome?.status === 'still_pending' ? (
                 <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.error }}>

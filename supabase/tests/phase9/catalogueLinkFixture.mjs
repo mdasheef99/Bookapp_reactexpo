@@ -134,7 +134,7 @@ export async function completeOL(db, f) {
     const call = await rpc(db, 'phase9_register_edition_options_provider_call_v1', [f.attemptId, f.jobId, worker, token, 1, randomUUID(), sequence, stage]);
     await rpc(db, 'phase9_finalize_edition_options_provider_call_v1', [call.provider_call_id, f.jobId, worker, token, 1, 'finalized', 'no_acceptable_match', false, true]);
   }
-  const selectedRow = row(0, { googleBooksUrl: 'https://openlibrary.org/books/OL100M', metadata: f.facts });
+  const selectedRow = row(0, { googleBooksUrl: 'https://openlibrary.org/books/' + f.facts.providerRecordId, metadata: f.facts });
   assert.equal((await complete(db, f, { rows: [selectedRow], fetched: f.facts.fetchedAt,
     deadline: new Date(Date.parse(f.facts.fetchedAt) + 3600000).toISOString() })).status, 'completed');
   return selectedRow;

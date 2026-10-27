@@ -1681,3 +1681,186 @@ Effects: both replace only the body of `marketplace_sec.phase9_owner_ux_metadata
 Status: M79 APPLIED_VERIFIED, M80 APPLIED_VERIFIED on project `ahntbtktjjmvfosgkmgn` (re-verified with `get_project_url` before applying). Applied with the Supabase MCP `execute_sql` (the Owner's own SQL-editor run of M79 did not change the function on readback; `apply_migration` stays declined); no `schema_migrations` row and no live version, same as M78. Preflight: read-only SELECT of the live function body (M79 present, M80 absent) and of the `image_extraction_jobs.status` CHECK constraint. Readback after M80: prosecdef true, provolatile `s`, `search_path=""`, ACL `{postgres=X/postgres}`, new body present; the card states in the test scan read as designed (manual cards and the finished-ISBN card `ambiguous`, a card with a chosen edition `selected`).
 
 Verification: `supabase/tests/phase9/phase9OwnerIsbnEditionLookup.integration.test.mjs` 36/36 (red-first for both). Reviews: M79 by Argon and Codex sol; M80 by Argon and free GLM; findings and fixes in tracker 38 section 32. Rollback: re-create the M69 body (select `selected` when the projection selection exists, else the legacy function) with `CREATE OR REPLACE`; no data to restore. Residual risk: commit safety of `ambiguous` was read statically from M69 (the saved-choice gate), not run against the deployed commit function. Migration history: M78, M79 and M80 were missing from `schema_migrations`; rows were added on 2026-10-24 on the Owner's instruction (tracker 38 section 33, follow-up A).
+
+## 2026-10-26 slice 7a read-only preflight
+
+**Read-only evidence; no mutation.** Source: Haiku's
+[preflight-1.md](../../../../../.claude/psr-slice7a/preflight-1.md), 2026-10-26,
+steps 1–8. The orchestrator independently verified the source policy/grant rows
+and canonical-reader list with its own same-day read-only query (Owner brief).
+Only SELECT statements ran through Supabase MCP in the supplied audit; no DDL,
+DML, migration application or Storage write. This documentation follow-up makes
+no network/database call and does not claim a new live verification.
+Authority for targets: [02b §§4.2/5/9/11–14](../work-units/post-scan-rework/02b-slice7-lean-catalogue-writes-sdd.md),
+Owner 2026-10-26. M83 remains PROPOSED / NOT_CREATED / NOT_APPLIED.
+
+### Project, migrations, counts and registry
+
+Project check PASS: `get_project_url` returned
+`https://ahntbtktjjmvfosgkmgn.supabase.co`. Last three `list_migrations` entries:
+
+| Live version | Exact name |
+| --- | --- |
+| 20261024171149 | library_note_collections |
+| 20261025171647 | marketplace_phase9_catalogue_link_at_add (M81) |
+| 20261025220839 | marketplace_phase9_edition_choice_survives_first_save (M82) |
+
+Counts: `canonical_works` **3**, `canonical_editions` **3**,
+`book_metadata_sources` **0**, `store_inventory` with nonnull
+`canonical_edition_id` **2**. Grouping sources by adapter returned no rows.
+Exactly two registry rows were reported:
+
+| adapter_key | kind / adapter_version / policy_version | enabled | matching_allowed | storage_allowed | public_display_allowed | image_cache_allowed | attribution_required |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| google_books | metadata / 1.0.0 / 1 | true | true | true | false | false | false |
+| open_library | metadata / 1.0.0 / 1 | true | true | true | true | false | true |
+
+Open Library additionally has `revalidation_seconds=86400` and
+`raw_retention_seconds=0`. Flags are independent permissions; this records no
+new admission or provider activation.
+
+### Live function fingerprints and reader correction
+
+Hashes/lengths below are `md5(prosrc)` / `length(prosrc)` from the report, not
+local-file comparisons. SECURITY DEFINER and owner are live facts only where
+the report supplied them.
+
+| Function | Migration | md5(prosrc) | Length | SECURITY DEFINER | Owner |
+| --- | --- | --- | --- | --- | --- |
+| `marketplace_sec.phase9_catalogue_link_for_add_v1(uuid,uuid,uuid)` | M81 | 69bd9b40c54a119a61e2782f19c55afb | 21038 | true | postgres |
+| `public.phase9_add_candidate_to_inventory_v1(uuid,uuid,integer,integer,integer,text,uuid)` | M81 | 9fe42381cf406d81018417dfc541217a | 11538 | true | postgres |
+| `marketplace_sec.phase9_edition_legacy_select_candidate(uuid,uuid,integer,integer,integer,text,integer,uuid,uuid,text,uuid)` | M73 | 717cd8e5edb5c04424d189bc8d5f39d8 | 4930 | true | postgres |
+| `marketplace_sec.phase9_edition_local_match(image_extraction_candidates)` | M67 | dfe6db5a7c1021db06988d9010a9f7ff | 1321 | true | postgres |
+| `marketplace_sec.phase9_complete_local_metadata_match(uuid,text,text,integer,text,text,text,text,text,text,text,uuid,text,text,jsonb)` | M15 | 4c1f67b8df59dad2972975ab82e3dd9a | 5412 | Not reported | Not reported |
+
+The first four have empty `search_path`; M67 is STABLE, the other three VOLATILE.
+Helper/M73/M67 EXECUTE ACL is postgres only; Add permits postgres/authenticated.
+The catalogue-name search found only `phase9_catalogue_link_for_add_v1` among
+live `phase9_catalogue%` functions. M73 Select has no direct canonical-table read.
+**Evidence gap:** the preflight's M15 reader scan reports body hash/length but
+omits live owner/secdef/ACL/config. Local M15 declares SECURITY DEFINER; that is
+not live proof. Read-only live confirmation is deferred to a separately authorized
+preflight; no value is inferred here. M73/M67 live hashes were not compared to
+local file bodies by the supplied preflight.
+
+M32's old canonical queries in `marketplace_sec.phase9_metadata_job_context`
+are superseded by M67 L108; M38's `_v2` and public wrapper have no canonical
+reads either. M67 job context calls `phase9_edition_local_match` and derives
+the worker's `localCanonicalEditionId` from it. **7a replaces this one discovery
+reader for picker-local and automatic-local hidden/blocklist filtering**;
+M15's local-completion re-check and searched-count/effect hook remain **7b**.
+The other live canonical readers are the M81 helper/Add, M15 completion,
+`phase9_edition_current_snapshot` and `phase9_edition_legacy_candidate_detail`;
+the last two display selected/saved editions rather than discovery, so hidden
+does not hide existing choices (02b AC7-6).
+
+### Canonical/source constraints and indexes
+
+Names and delete actions copied from preflight steps 2b–2c:
+
+- `canonical_works_pkey`: PK `(id)`;
+  `canonical_works_title_normalized_primary_authors_key`: UNIQUE
+  `(title_normalized,primary_authors)`; both have same-named unique indexes.
+- `canonical_editions_pkey`: PK `(id)`; `canonical_editions_isbn_10_unique` and
+  `canonical_editions_isbn_13_unique`: UNIQUE ISBN constraints/indexes;
+  `canonical_editions_work_id_fkey`: work FK ON DELETE SET NULL.
+  Other indexes: `canonical_editions_work_id_idx`, `idx_canonical_editions_title_authors`.
+- `book_metadata_sources_pkey`: PK `(id)`;
+  `book_metadata_sources_provider_provider_book_id_key`: UNIQUE
+  `(provider,provider_book_id)`; both have same-named indexes.
+  `book_metadata_sources_adapter_fk`: registry adapter FK;
+  `book_metadata_sources_canonical_edition_id_fkey` and
+  `book_metadata_sources_source_book_id_fkey`: ON DELETE SET NULL.
+  `book_metadata_sources_match_strength_check`: NULL or 0..1;
+  `book_metadata_sources_reuse_policy_version_check`: NULL or >0.
+  The old `book_metadata_sources_provider_check` is absent.
+  Other indexes: `idx_metadata_sources_provider_book`,
+  `book_metadata_sources_canonical_edition_idx`.
+- Registry constraints: `phase9_provider_registry_pkey` (also unique index),
+  `phase9_provider_registry_policy_version_check` (>0),
+  `phase9_provider_registry_provider_kind_check` (vision/metadata/alias),
+  `phase9_provider_registry_raw_retention_seconds_check` (>=0),
+  `phase9_provider_registry_revalidation_seconds_check` (NULL or >0).
+- Inventory catalogue FKs: `store_inventory_canonical_edition_id_fkey` and
+  `store_inventory_canonical_work_id_fkey`, both ON DELETE SET NULL;
+  `store_inventory_canonical_edition_idx` supports the edition link.
+
+### Policies, grants, writer audit and approved target
+
+All four canonical/source/registry tables have RLS enabled, not forced; no
+non-internal trigger exists on them. Policies `canonical works readable` and
+`canonical editions readable` allow authenticated/anon SELECT USING true.
+Registry has no policy. The sole source policy is `metadata sources platform write`,
+FOR ALL TO authenticated with USING and WITH CHECK
+`marketplace_sec.is_platform_operator()`; it is also the only client SELECT path.
+
+Table-level `relacl` report: anon/authenticated have SELECT only on both canonical
+tables; service_role has DELETE, INSERT, MAINTAIN, REFERENCES, SELECT, TRIGGER,
+TRUNCATE, UPDATE there and on the registry. On `book_metadata_sources`, **all
+three roles** have that full privilege list. PUBLIC has no table-level grant row
+on any of the five queried tables. Column ACLs were not inspected; these facts
+do not establish inventory column-grant behavior. RLS does not guard TRUNCATE.
+
+Writer audit (step 6): no live non-system function references
+`book_metadata_sources`, with or without the INSERT/UPDATE/DELETE filter; no
+non-internal trigger references it. No runtime reader/writer found in `src/`,
+`app/`, `supabase/functions/`, `workers/`, `scripts/`. The lone migration-test
+assertion is `supabase/migrations/__tests__/marketplacePhase3InventoryCanonicalListings.test.ts:19`.
+`supabase/tests/phase9/phase6_baseline.sql:70` is fixture DDL; historical M03
+creation and M01 expansion/adapter backfill are not live runtime writers.
+Write exposure remains through the unused operator ALL policy and broad direct
+role grants; there are zero live source rows.
+
+**Owner 2026-10-26, deliberate change (decision 6 closed):** 7a revokes INSERT,
+UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER and MAINTAIN from PUBLIC, anon,
+authenticated and service_role; service_role retains SELECT only. DROP
+`metadata sources platform write`; CREATE SELECT-only `metadata sources platform read`
+FOR SELECT TO authenticated USING `(marketplace_sec.is_platform_operator())`.
+Existing anon/authenticated SELECT grants remain: operators still read,
+non-operator authenticated/anon see no rows; service_role SELECT works through
+its grant/RLS bypass; postgres routines read. Writes only through the
+postgres-owned shared core; operator corrections use privileged SQL under
+separate authority, like hidden. This is the **target**, not applied state.
+02b AC7-28 specifies disposable role-switched denial/read proof.
+
+### Hobbit references and duplicate-key check
+
+One work: `23e7dacc-6ff4-41d8-9109-85d7df1755aa`, stored key `the hobbit`,
+primary title `The Hobbit`, authors `{"J.R.R. Tolkien"}`. One edition:
+`a24d4d70-a207-41e9-8060-fe8d9fc9f6be`, ISBN-13 `9780547928227`, ISBN-10 NULL,
+pointing to that work. Exactly one referencing row in each of
+`image_extraction_candidates`, `phase9_metadata_lookups` and
+`phase9_selected_metadata_snapshots`; zero in `store_inventory`,
+`book_metadata_sources`, `book_demand_signals`, `book_search_aliases`,
+`marketplace_book_listings`, `phase9_public_listing_projection`,
+`phase9_search_variant_proposals` and `store_order_request_items`.
+The stored `title_normalized` duplicate query returned no rows among three works:
+no duplicate stored work keys were observed. No reset, relink, repair or backfill
+is authorized by this evidence; existing rows/references remain intact.
+
+## M83 applied and read back (2026-10-27)
+
+Earlier dated evidence above is a historical snapshot and is unchanged.
+
+Live application: local file `supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`, 1,359 lines, SHA-256 `6538d7c79b8e2352e70374b96c5f8db1a1152fe9bb9ab86ade94eadd14b00616`. Applied 2026-10-27 through Supabase MCP `apply_migration` (second connector), project `ahntbtktjjmvfosgkmgn` (https://ahntbtktjjmvfosgkmgn.supabase.co), name `marketplace_phase9_lean_catalogue_identity`, result success. Live version **20261026223715** (local 20261026000083 maps to it). Earlier attempts through the first connector returned "declined" before reaching the database (no effect). Owner authorization: "ok after the verification apply the migrations please", "Yes, try applying M83 through the second connector for ahntbtktjjmvfosgkmgn."
+
+Read-back (PASS, 2026-10-27): `list_migrations` shows 20261026223715 `marketplace_phase9_lean_catalogue_identity` as the latest. All 18 new or replaced functions: md5(prosrc) equals the local LF bodies; owner postgres; search_path ""; EXECUTE postgres only, except `phase9_add_candidate_to_inventory_v1` (authenticated as well). The 13 data-touching functions are SECURITY DEFINER; the 5 pure helpers (safe_text, normalized_authors, source_policy_valid, provider_ids_valid, identity_lock_key) are not. All 5 new tables: owner postgres, RLS on, empty. `canonical_provider_ids`: SELECT for authenticated and service_role, with policy "canonical provider ids readable" (authenticated, true). The two stats tables: SELECT for service_role only. The two marketplace_sec tables: postgres only. `book_metadata_sources` ACL: postgres full; anon, authenticated and service_role SELECT only. The only policy is "metadata sources platform read". `canonical_works` and `canonical_editions` ACL: anon and authenticated SELECT only; service_role keeps full privileges. Counts at read-back: works 3, editions 3, sources 0, linked inventory 2.
+
+Counts after browser check: works 5, editions 5, sources 2, provider IDs 2, edition-stats rows 2, store_inventory 44 (5 linked).
+
+### M83 objects now CURRENT (live)
+
+| Object | Observed current state (live from M83 version 20261026223715) |
+| --- | --- |
+| `public.canonical_provider_ids` | CURRENT live. PK (adapter_key, id_kind, external_id); edition XOR work target; FKs to phase9_provider_registry, canonical_editions, canonical_works. Owner postgres, RLS on, empty at read-back. |
+| `public.canonical_work_stats` | CURRENT live. Holds times_searched. Owner postgres, RLS on, empty at read-back; SELECT for service_role only. |
+| `public.canonical_edition_stats` | CURRENT live. Holds times_chosen, times_added. Owner postgres, RLS on, empty at read-back; SELECT for service_role only. |
+| `marketplace_sec.phase9_catalogue_isbn_blocklist` | CURRENT live. Empty at read-back; postgres only. |
+| `marketplace_sec.phase9_catalogue_choice_effects` | CURRENT live. One private pending effect per selection; postgres only. |
+| `canonical_editions` columns oclc, lccn, hidden (default false), source_retention_note, normalizer_version | CURRENT live from M83. |
+| `canonical_works` column normalizer_version | CURRENT live from M83. |
+| `phase9_provider_registry` column shared_source_note | CURRENT live from M83. Data change: the `open_library` registry row gets shared_source_note "Open Library; normalized bibliographic facts retained for shared public reuse; attribution: Open Library; no raw response or image file retained." The `google_books` note stays null. |
+| New functions in marketplace_sec (each with the `phase9_catalogue_` prefix): safe_text_v1, normalized_authors_v1, source_policy_valid_v1, shared_admitted_v1, source_policy_v1, provider_ids_valid_v1, identity_lock_key_v1, isbn_v1, work_proof_v1, pair_matches_v1, resolve_v1, increment_v1, count_choice_v1, choice_target_v1 | CURRENT live from M83; read-back hash-matched. |
+| Replaced functions: `marketplace_sec.phase9_catalogue_link_for_add_v1`, `public.phase9_add_candidate_to_inventory_v1`, `marketplace_sec.phase9_edition_legacy_select_candidate`, `marketplace_sec.phase9_edition_local_match` | CURRENT live from M83; read-back hash-matched. |
+| `book_metadata_sources` ACL/policy | CURRENT live from M83. Writes revoked from anon, authenticated and service_role; service_role keeps SELECT. Policy "metadata sources platform write" replaced by "metadata sources platform read" (SELECT, authenticated, `is_platform_operator()`). |
+| `canonical_works` and `canonical_editions` ACL | CURRENT live from M83. Anon and authenticated lose all write grants (SELECT only). |

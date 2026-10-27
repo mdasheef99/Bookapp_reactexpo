@@ -571,6 +571,30 @@ describe('card Ready badge uses the add-now rule', () => {
         expect(screen.queryByText('This book changed. Check it and press Add again.')).toBeNull();
     });
 
+    it('names the unconfirmed automatic suggestion when its first save is refused', () => {
+        const card = reviewCard({ review: null, metadataState: 'selected' });
+        const outcome = { candidateId: card.candidateId, status: 'no_longer_eligible' as const,
+            stage: 'save' as const, code: 'P9_STATE_CONFLICT' };
+        const props = { card, disabled: false, isOffline: false, pending: false, onAdd: jest.fn(), outcome };
+        const screen = render(<AddCandidateToInventoryAction {...props} />);
+        expect(screen.getByText('Confirm the suggested edition first: open Find or change edition and tap Confirm current suggestion.')).toBeTruthy();
+        expect(screen.queryByText('This book is no longer eligible. Review the latest saved details.')).toBeNull();
+        // A saved review or a non-automatic state keeps the generic message.
+        screen.rerender(<AddCandidateToInventoryAction {...props} card={reviewCard({ metadataState: 'selected' })} />);
+        expect(screen.getByText('This book is no longer eligible. Review the latest saved details.')).toBeTruthy();
+        screen.rerender(<AddCandidateToInventoryAction {...props}
+            outcome={{ ...outcome, code: 'P9_CANDIDATE_VERSION_CONFLICT' }} />);
+        expect(screen.getByText('This book is no longer eligible. Review the latest saved details.')).toBeTruthy();
+    });
+
+    it('tells the Owner to reload after a refusal before any request', () => {
+        const card = reviewCard();
+        const screen = render(<AddCandidateToInventoryAction card={card} disabled={false} isOffline={false}
+            pending={false} onAdd={jest.fn()}
+            outcome={{ candidateId: card.candidateId, status: 'no_longer_eligible', stage: 'claim' }} />);
+        expect(screen.getByText('This book changed after your edits. Reload the page, check it, and press Add again.')).toBeTruthy();
+    });
+
     it('keeps Add enabled after review_changed and disabled after a version conflict', () => {
         const card = reviewCard();
         const props = { card, disabled: false, isOffline: false, pending: false, onAdd: jest.fn(),

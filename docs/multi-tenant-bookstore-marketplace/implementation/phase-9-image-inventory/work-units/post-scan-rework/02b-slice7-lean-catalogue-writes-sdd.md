@@ -2,21 +2,21 @@
 
 | | |
 |---|---|
-| **Status** | Pass-2 detailed design, revision 1, 2026-10-26. **DRAFT FOR REVIEW / NOT APPROVED FOR BUILD**. Owner answers OQ1–OQ8 are fixed in §14, including the 7a/7b split; design review/approval and the SDD-0/SDD-2 split-map update remain pending. |
+| **Status** | **Approved by Owner 2026-10-26 as the Slice 7 design.** 7a build and local migration-file creation are authorized; applying it requires separate Owner approval. 7b is not authorized. Owner answers and approval-round decisions are recorded in §14; the 7a/7b split is recorded in SDD-0/SDD-2. |
 | **Parent** | [SDD-2, Slice 7](./02-catalogue-and-matching-sdd.md#slice-7--lean-catalogue-writes-stats-and-shared-cache), under [SDD-0](./00-overview-sdd.md). Pattern and inherited Add contract: [02a](./02a-slice6-catalogue-link-sdd.md), especially §§3–7, 9, 12–14. |
 | **Authority** | PSR-D33–D40; R01/R04–R10/R12; Q15–Q21; DOC-3 §§4.2/5.1/5.2/14/17. SDD-0 §15 controls tests, review and separate permissions. |
-| **Baseline** | Selected worktree `phase9-psr-slice5b-add-isbn`, branch `claude/phase9-psr-slice6-catalogue-link`. Existing uncommitted M81/M82 artifacts and documentation are preserved. No implementation is performed by this document. |
+| **Baseline** | Selected worktree `phase9-psr-slice5b-add-isbn`, branch `claude/phase9-psr-slice7a-lean-catalogue-identity`, created from `87db21c` under R12 (own branch per slice). That commit records M81/M82 and the Slice 7 design locally on `claude/phase9-psr-slice6-catalogue-link`; nothing pushed. No implementation is performed by this documentation step. |
 | **Database evidence** | Supplied [read-only snapshot, 2026-10-25](../../../../../../.claude/psr-slice6/db-evidence.md#L1); [tracker 38, M81 read-back, 2026-10-25](../../trackers/38-post-scan-rework-evidence.md#L1804); [browser evidence, 2026-10-26](../../trackers/38-post-scan-rework-evidence.md#L1806); 02a. These are dated observations, not fresh live verification. |
-| **Migration** | Phase 9 **7a and 7b: PROPOSED / NOT_CREATED / NOT_APPLIED**. Migration numbers/filenames are decided with the SDD-0/SDD-2 split-map update; no number is reserved and no creation/application decision is made. M81 is applied as live version **20261025171647**. M82 is reserved for the separate `phase9_edition_identity_change` first-save fix, local file `20261026000082_marketplace_phase9_edition_choice_survives_first_save.sql`; its review/application are outside this task. |
-| **Size / risk** | Large / high for implementation: shared identity, completion replay, cache lineage and privileges. §12 assigns each package to the Owner's accepted 7a/7b split (§14 OQ8); the split map must be updated before build. |
+| **Migration** | **7a = M83**, proposed local file `supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`: **APPLIED as live version 20261026223715 (2026-10-27); read-back PASS; browser check PASS (tracker 38)**. Local creation authorized by Owner 2026-10-26; application separate. 7b: one migration, number undecided, not authorized. M81 is applied as live version **20261025171647**. M82's separate `phase9_edition_identity_change` first-save fix, local file `20261026000082_marketplace_phase9_edition_choice_survives_first_save.sql`, is applied as live version **20261025220839** (orchestrator read-only verification, 2026-10-26; not re-queried in this step). |
+| **Size / risk** | Large / high for implementation: shared identity, completion replay, cache lineage and privileges. §12 assigns each package to the Owner's accepted 7a/7b split (§14 OQ8); SDD-0/SDD-2 record the split map. |
 
-This document specifies the settled behavior and a concrete proposed implementation,
-and isolates the choices the sources do not settle. **Do not implement an OQ-dependent
-branch until its answer is recorded here.** Once those answers and the live preflight
-are recorded, the contracts below supply the inputs for red tests, SQL and worker
-briefs. Design approval, build authority, migration-file creation, application,
-deployment and publication remain separate. No reset, backfill or second provider is
-authorized. No database/network access or tests were performed for this draft.
+This document specifies the approved Slice 7 design and records the Owner's answers
+and approval-round decisions (§14). **Owner 2026-10-26:** 7a build and local M83
+creation are authorized; begin with §12 package 1 red-first tests and a fresh
+read-only preflight before local SQL creation. Applying M83, browser checking and
+committing each require separate Owner approval; 7b is not authorized. Deployment
+and publication remain separate. No reset, backfill or second provider is authorized.
+This step changes documentation only: no database/network access or tests performed.
 
 ## Contents
 
@@ -67,7 +67,7 @@ private Add and complete edition-option results when catalogue identity conflict
   worker add is keyed by `adapter_key`; Open Library is data, not code shape:
   1. The D35 allow-list lives in **one** function,
      `marketplace_sec.phase9_catalogue_shared_admitted_v1` (§5). It is the only
-     new SQL that names `open_library`; Slice 8a replaces its body alone.
+     new SQL that names `open_library` for admission; Slice 8a replaces its body alone.
   2. Provider-specific rules (external-ID grammar, work-reference grammar,
      cover-reference derivation, book/cover URL host) sit in one registry-keyed,
      server-owned validator per provider (SDD-2 Slice 8 "Validation and
@@ -84,8 +84,10 @@ private Add and complete edition-option results when catalogue identity conflict
 - M81's surviving saved-ID path, disappeared-ID fallback, sparse-field hydration,
   manual path and replay-before-helper ordering remain. Manual Adds continue to
   pay the helper's scoped reads; no unapproved optimization bypasses authority.
-- D37's blocklist belongs to **Slice 7**, per the Owner's 2026-10-25 decision.
-  The set of actual entries and blocked-value fallback are OQ2, not invented here.
+- D37's blocklist belongs to **Slice 7a**. Owner 2026-10-26 fixes OQ2: create
+  §4.6's private versioned table empty, read it through the STABLE ISBN helper,
+  and skip the whole catalogue record on a blocked ISBN. Entries are added later
+  only by privileged operator SQL under separate authority; none are invented here.
 
 **Included:** provider-ID list; OCLC/LCCN companion; hidden/source-note/key-version
 columns; source rows; lookup-time catalogue write boundary; work/edition counters;
@@ -208,7 +210,7 @@ OQ3 gates how lookup-time relaxed admission is exercised before Slices 8/9.
 All names in this section are proposed SQL objects for 7a or 7b, assigned in §12.
 Before review, the
 build brief must explicitly name every new or replacement constraint/index in
-§§4.1–4.5, including PKs, FKs, CHECKs, UNIQUEs and partial indexes. No store identifiers
+§§4.1–4.6, including PKs, FKs, CHECKs, UNIQUEs and partial indexes. No store identifiers
 occur in shared tables; private effect/companion tables are separate (D36/R04).
 
 ### 4.1 `public.canonical_provider_ids`
@@ -269,6 +271,17 @@ confidence/match_strength/match_rationale NULL (no popularity-as-truth);
 `expires_at=fetched_at+registry.revalidation_seconds` when nonnull. This deadline
 governs source/cache reuse, **not** expiration of admitted permanent canonical facts.
 
+**Owner 2026-10-26 — source grants after 7a (§9, AC7-28).** Revoke INSERT,
+UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER and MAINTAIN from PUBLIC, anon,
+authenticated and service_role. Keep existing anon/authenticated SELECT grants
+and service_role SELECT only; replace the sole `metadata sources platform write`
+ALL policy with SELECT-only `metadata sources platform read` for authenticated,
+`USING (marketplace_sec.is_platform_operator())`. Operator reads are unchanged;
+non-operator authenticated/anon reads return no rows. The unused direct-write
+path is deliberately removed after the read-only writer audit found no live
+function/trigger or repo writer. Only the postgres-owned shared core writes;
+operator corrections use privileged SQL under separate authority, like hidden.
+
 `normalized_payload` is a strict `psr-catalogue-facts-v1` object: version;
 adapterKey/adapterVersion/schemaVersion/normalizerVersion; providerRecordId;
 workExternalId; fetchedAt; title/subtitle/authors/publisher/publishedDate/language/
@@ -317,7 +330,7 @@ source time, request/query identity and contract version, excluding lease secret
 Keep original accepted payload digest/receipt durable even if ordinary options
 cleanup has removed the temporary list. No effect row is a shared usage log.
 
-### 4.5 Cache schema (conditional OQ4 design)
+### 4.5 Cache schema (Owner-approved OQ4 design; 7b)
 
 Recommendation: extend existing `phase9_metadata_cache_entries`, not a new shared
 cache. Add `payload_kind text NOT NULL DEFAULT 'selected_snapshot_v1' CHECK IN
@@ -340,10 +353,10 @@ provider-cache unique key plus expiry index; new key namespace in §8 prevents c
 A new-kind row has **no private provenance pointer**. A private lookup-effects
 receipt authorizes publication and binds cache content; a future consumer records
 its own private cache receipt. Legacy rows/pointers are not rewritten or promoted.
-OQ4 asks approval for the explicit guard/reuse extension; this is not silently
+Owner 2026-10-26 approved OQ4's explicit guard/reuse design extension; this is not silently
 claiming the existing positive-cache RPC accepts options.
 
-The conditional cache design also requires a forward change to M15's two lookup
+The approved 7b cache design also requires a forward change to M15's two lookup
 CHECKs ([mode and shape, L16/L48](../../../../../../supabase/migrations/20260728000015_marketplace_phase9_metadata_foundation.sql#L16)):
 retain local/external branches byte-for-byte in meaning; add `cache_hit` with all
 external version/cache-identity fields required, leader_lookup_id and
@@ -352,6 +365,27 @@ outcome_source_attempt_id. Private scope remains mandatory for explicit lookup
 rows, even when the cache entry itself is public. No provider-spend event is
 created by adding an execution mode. Capture actual constraint names read-only
 before generating DROP/ADD statements; do not guess live generated names.
+
+### 4.6 `marketplace_sec.phase9_catalogue_isbn_blocklist` (7a)
+
+**Owner 2026-10-26 (OQ2 follow-up):** create this private table with **zero rows**.
+
+| Column | Definition |
+|---|---|
+| isbn13 | `text PRIMARY KEY CHECK (isbn13 ~ '^97[89][0-9]{10}$')`; compact validated ISBN-13 form (§6.1). |
+| list_version | `text NOT NULL`; 1–128 nonblank characters. |
+| reason | `text NOT NULL`; 1–1024 safe characters, the same safe-text rule as §4.2. |
+| created_at | `timestamptz NOT NULL DEFAULT transaction_timestamp()`. |
+
+Enable RLS with no policy. REVOKE ALL, including MAINTAIN, from PUBLIC, anon,
+authenticated and service_role; no client or service_role write grant. Writes are
+postgres-only privileged operator SQL under separate authority. The private STABLE
+`phase9_catalogue_isbn_v1` policy reader (§5) reads this table; its signature is
+unchanged. Convert ISBN-10 to validated compact ISBN-13 before checking the table.
+An entry affects future identity checks only: it never changes existing links,
+rows or snapshots. No migration seed, heuristic entry, backfill or retrospective
+unlink is authorized. This replaces the earlier IMMUTABLE ISBN-helper design
+because entries are added later as data (§14 conflict register).
 
 ## 5. Proposed functions and call inventory
 
@@ -367,14 +401,15 @@ writer RPC. Signature lists below are complete, not overload proposals.
 
 | Proposed function | Signature/result, caller and responsibility |
 |---|---|
-| `marketplace_sec.phase9_catalogue_valid_companion_v1` | `(p_companion jsonb,p_metadata jsonb,p_option_id uuid) RETURNS boolean`; IMMUTABLE pure shape/binding check; core completion calls. Scope/registry checks remain outside. |
+| `marketplace_sec.phase9_catalogue_valid_companion_v1` | **7b only.** `(p_companion jsonb,p_metadata jsonb,p_option_id uuid) RETURNS boolean`; IMMUTABLE pure shape/binding check; core completion calls. Scope/registry checks remain outside. 7a passes NULL companion and does not reference this function. |
 | `marketplace_sec.phase9_catalogue_valid_cache_v1` | `(p_payload jsonb) RETURNS boolean`; IMMUTABLE strict version/keys/row/bounds/own-cover validation for the new cache-kind CHECK and reuse. No relation reads; admission remains in the scoped caller. |
 | `marketplace_sec.phase9_catalogue_cache_receipt_guard` | `() RETURNS trigger`; VOLATILE SECURITY DEFINER empty search_path, postgres only; new DEFERRABLE INITIALLY DEFERRED constraint trigger on inserted/changed cache-hit lookups. At commit require a same-store/candidate/job/generation completed effect receipt, matching digest/cache provenance and logical attempt, with zero reservation/physical calls. The BEFORE guard checks row shape; deferred proof avoids requiring an FK-dependent effect before its lookup exists. External/local rows retain existing behavior. |
-| `marketplace_sec.phase9_catalogue_isbn_v1` | `(p_isbn10 text,p_isbn13 text) RETURNS TABLE(isbn10 text,isbn13 text,admitted boolean)`; IMMUTABLE, M81 checks plus versioned blocklist OQ2. All catalogue identity consumers call it; no client execution. |
+| `marketplace_sec.phase9_catalogue_isbn_v1` | `(p_isbn10 text,p_isbn13 text) RETURNS TABLE(isbn10 text,isbn13 text,admitted boolean)`; **STABLE SECURITY DEFINER**, owner postgres, empty search_path; M81 checks plus reads of §4.6's versioned blocklist table (Owner 2026-10-26, OQ2). All catalogue identity consumers call it; no client EXECUTE (PUBLIC/anon/authenticated/service_role revoked). Signature unchanged; future checks only. |
 | `marketplace_sec.phase9_catalogue_identity_lock_key_v1` | `(p_kind text,p_key jsonb) RETURNS bigint`; IMMUTABLE pure shape function, postgres only. Shared by Add (7a) and completion/cache (7b); validates canonical identity tuples and computes exactly §6.2's signed advisory key. No caller duplicates lock-key derivation. |
 | `marketplace_sec.phase9_catalogue_resolve_v1` | `(p_metadata jsonb,p_companion jsonb,p_source_policy jsonb) RETURNS TABLE(canonical_work_id uuid,canonical_edition_id uuid)`; VOLATILE definer, postgres only. p_source_policy carries the already-evaluated sharedAdmitted decision, built by a trusted caller after the registry SHARE lock (§5 admission hand-off); never a service/user payload. Generic identity/write core consumes that decision below production admission, allowing direct postgres synthetic-provider tests without rerunning the allow-list. False means NULL/NULL with no writes. Contains no provider name. Owns §6 subtransaction; exactly one pair/NULL pair. |
 | `marketplace_sec.phase9_catalogue_shared_admitted_v1` | `(p_adapter_key text) RETURNS boolean`; STABLE definer postgres only; caller holds the registry SHARE lock. True only when the registry row is an enabled metadata provider passing the existing matching/storage/public-display/version/retention checks, has a nonnull `shared_source_note`, **and** the key is in D35's temporary allow-list (`open_library`). The only new SQL naming a provider for admission; Slice 8a replaces the allow-list clause with `shared_catalogue_allowed`. Every production Add/completion/cache-publication/cache-reuse entry point calls it and passes its decision to the private generic identity/cache helpers; those helpers do not rerun the allow-list. |
-| `marketplace_sec.phase9_catalogue_provider_ids_valid_v1` | `(p_adapter_key text,p_record_id text,p_work_id text,p_book_url text,p_cover_url text,p_completion jsonb) RETURNS TABLE(valid boolean,cover_ref text,logical_outcome text)`; IMMUTABLE. One registry-keyed `CASE p_adapter_key` dispatch owns provider ID/work grammar, book/cover URL checks and completion receipt/routing/accounting shape below. Unknown key refuses. Adding a provider adds one reviewed branch (SDD-2 Slice 8); no generic function changes. |
+| `marketplace_sec.phase9_catalogue_source_policy_v1` | **7a.** `(p_adapter_key text) RETURNS jsonb`; VOLATILE SECURITY DEFINER, owner postgres, empty search_path, postgres-only EXECUTE. Locks the registry row FOR SHARE, calls `phase9_catalogue_shared_admitted_v1`, and builds the strict policy below from that same locked row. Unknown key returns NULL, never a fabricated denied object. Contains no provider literal. Production entry points obtain policy only from this builder. |
+| `marketplace_sec.phase9_catalogue_provider_ids_valid_v1` | `(p_adapter_key text,p_record_id text,p_work_id text,p_book_url text,p_cover_url text,p_completion jsonb) RETURNS TABLE(valid boolean,cover_ref text,logical_outcome text)`; IMMUTABLE. **7a facts mode only:** one registry-keyed `CASE p_adapter_key` dispatch owns ID/work grammar and book/cover URL checks; every nonnull p_completion returns valid=false (refuse). **7b forward-replaces the same signature** to add M78-equivalent receipt/routing/logical-outcome accounting. Unknown key refuses. Adding a provider adds one reviewed branch (SDD-2 Slice 8); no generic function changes. |
 | `marketplace_sec.phase9_catalogue_link_for_add_v1` | Existing `(p_candidate_id uuid,p_session_id uuid,p_store_id uuid)` signature/result unchanged. Replace body forward, preserve M81 scope/saved-ID/hydration contract; 7a passes a null companion without reading any 7b object; 7b adds chosen private-companion resolution. Check `phase9_catalogue_shared_admitted_v1`, call shared core. M81's inline provider checks ([L125–127, L144](../../../../../../supabase/migrations/20261025000081_marketplace_phase9_catalogue_link_at_add.sql#L125): metadata and attempt `adapter_key='open_library'`, OL cover-URL regex) move out of the body: the key checks into the admission function, the cover regex into the provider validator. The replacement body keeps the metadata/attempt adapter-key equality, generically. No network/queue/stats inside its conflict subtransaction. |
 | `marketplace_sec.phase9_catalogue_increment_v1` | `(p_work_id uuid,p_edition_id uuid,p_searched integer,p_chosen integer,p_added integer) RETURNS void`; VOLATILE definer postgres only. Each delta 0/1; searched requires work, chosen/added require coherent edition/work. Upserts stats in work-then-edition order, called only inside fenced completion/Select/Add. |
 | `marketplace_sec.phase9_catalogue_count_choice_v1` | `(p_candidate_id uuid,p_selection_id uuid,p_metadata_digest text,p_work_id uuid,p_edition_id uuid) RETURNS void`; VOLATILE definer postgres only. Caller already holds the scoped private choice-effect row lock before shared locks. Verify exact current selection/digest and coherent target; if uncounted, increment chosen and mark counted in the same transaction. Called by Select or Add; absent pre-7a effect means no historical count. |
@@ -384,9 +419,34 @@ writer RPC. Signature lists below are complete, not overload proposals.
 | `marketplace_sec.phase9_reuse_candidate_edition_cache_v1` and `public.phase9_reuse_candidate_edition_cache_v1` | `(p_job_id uuid,p_worker text,p_lease_token text,p_attempt_count integer,p_candidate_id uuid,p_store_id uuid,p_session_id uuid,p_request_id uuid,p_request_generation integer,p_query_identity text,p_cache_versions jsonb) RETURNS jsonb`; private definer/public invoker service-only. Accepts the strict worker-version object in §8.1; SQL validates it against persisted versions/current registry policy and derives key/scope itself; returns `{status:'miss'}` or the existing completion receipt. Evaluates production admission under the registry SHARE lock, then calls the postgres-only generic cache-reuse core below. No admission decision is accepted from service arguments; no HTTP or usage reservation. |
 | `marketplace_sec.phase9_catalogue_reuse_cache_core_v1` | `(p_job_id uuid,p_worker text,p_lease_token text,p_attempt_count integer,p_candidate_id uuid,p_store_id uuid,p_session_id uuid,p_request_id uuid,p_request_generation integer,p_query_identity text,p_cache_versions jsonb,p_source_policy jsonb) RETURNS jsonb`; VOLATILE definer, postgres only. Implements §8's cache-only completion with the entry point's already-evaluated admission decision; false returns `{status:'miss'}`. Retains all claim/scope, registry/version/retention, payload and private-receipt checks; never reruns the allow-list. Only the service entry enforces auth.role(); API roles cannot call this core. |
 
-**Admission hand-off (D35, AC7-21).** Only trusted postgres callers build
-p_source_policy, binding adapter/version/retention values from the locked registry
-row and sharedAdmitted from `phase9_catalogue_shared_admitted_v1`. Production Add,
+**Source-policy contract (Owner 2026-10-26; D35, AC7-20/21).** `p_source_policy`
+is a strict jsonb object with exactly the following eight keys. Missing/extra keys,
+wrong JSON types or values outside these bounds are programming errors and RAISE.
+
+| Key | Required JSON type and value |
+|---|---|
+| version | String exactly `psr-catalogue-source-policy-v1`. |
+| adapterKey | String equal to the locked registry row's adapter_key. |
+| adapterVersion | String equal to the locked registry row's adapter_version. |
+| policyVersion | Integer > 0, from registry policy_version. |
+| rawRetentionSeconds | Integer >= 0, from registry raw_retention_seconds. |
+| revalidationSeconds | Integer > 0 or JSON null, from registry revalidation_seconds. |
+| sharedSourceNote | Text of length 1–1024 or JSON null, from registry shared_source_note. |
+| sharedAdmitted | Boolean from the admission function; true requires nonnull sharedSourceNote. |
+
+The generic resolver (7a), and generic cache consumers later (7b), validate this
+shape and require adapterKey/adapterVersion to equal the metadata's corresponding
+values. Malformed or mismatched policy RAISEs and propagates, never becomes a
+catalogue skip. A valid policy with sharedAdmitted=false returns exactly one
+NULL/NULL pair from the resolver and causes zero writes. Source rows use
+policyVersion as reuse_policy_version; rawRetentionSeconds/revalidationSeconds
+derive the deadlines in §4.2; sharedSourceNote supplies source_retention_note and
+normalized_payload.sourceRetentionNote.
+
+**Admission hand-off (D35, AC7-21).** Production callers obtain p_source_policy
+only from `phase9_catalogue_source_policy_v1`, binding adapter/version/retention
+values from its locked registry row and sharedAdmitted from
+`phase9_catalogue_shared_admitted_v1`. Production Add,
 completion, cache publication and cache reuse cannot accept that decision from a
 worker, RPC argument or cache payload. The generic resolver, cache writer and
 cache-reuse core consume it while retaining every other validation/fence; they do
@@ -396,10 +456,14 @@ policy for a synthetic provider. The fixture changes no generic function, grant
 or production allow-list. Separate production-entry assertions prove denial: no
 production widening.
 
-**Provider validation modes (R07/R09, C09).** Facts mode has p_completion=NULL
+**Provider validation modes (Owner 2026-10-26; R07/R09, C09).** 7a ships **facts
+mode only**: every nonnull p_completion returns valid=false (refuse), including
+otherwise valid accounting input. 7b forward-replaces the function with the same
+signature to add accounting mode and the M78 routing/receipt/logical-outcome rules.
+Facts mode has p_completion=NULL
 and a nonnull record ID; validate ID/work/cover and any supplied book URL. Every
 available completion/cache row must supply its book URL; Add may omit that URL
-because its immutable source was already validated. Accounting-only mode has all
+because its immutable source was already validated. In 7b, accounting-only mode has all
 four fact/URL arguments NULL and a nonnull p_completion; reject any other mode.
 The completion builds this strict object from locked persisted routing/receipt
 rows and already validated p_rows; workers cannot assert receipts/routing:
@@ -413,13 +477,13 @@ The validator reads no relations.
 
 | M78 provider-specific checks | New home and retained strength |
 |---|---|
-| L303–317 primary/secondary provider combinations and predecessor outcome allow-list | Same validator's provider branch validates the routing shape. The generic caller still proves attempt/lookup/predecessor IDs, versions and disposition against locked rows. No provider-key allow-list remains inline in completion. |
-| L332–347 record grammar, own book URL and cover URL | Facts mode: retain Google's ID/query-parameter binding and cover checks; OL requires exact `https://openlibrary.org/books/` + edition ID and its existing own-cover grammar. Work grammar/coverRef extraction remain in the same provider branch. |
-| L361–385 provider-specific logical-outcome and physical-call rules | Accounting mode: retain OL's 1–6 sequenced calls, finalized/nonretryable/egress/empty evidence and null normalized-candidate requirements, search sequence 0, editions sequence 1 when rows exist (single `edition` only for an ISBN query), and only the existing author-stage failure exceptions at sequences 2–5. Derive OL's logical outcome from validated rows exactly as M78. Other providers retain their current terminal-outcome validation, including material_conflict. Return that logical_outcome to the generic caller. |
+| L303–317 primary/secondary provider combinations and predecessor outcome allow-list | **7b accounting mode:** the replaced validator's provider branch validates routing shape. The generic caller still proves attempt/lookup/predecessor IDs, versions and disposition against locked rows. No provider-key allow-list remains inline in the 7b completion replacement; M78 stays unchanged in 7a. |
+| L332–347 record grammar, own book URL and cover URL | **7a facts mode:** retain Google's ID/query-parameter binding and cover checks; OL requires exact `https://openlibrary.org/books/` + edition ID and its existing own-cover grammar. Work grammar/coverRef extraction remain in the same provider branch; retained by 7b. |
+| L361–385 provider-specific logical-outcome and physical-call rules | **7b accounting mode:** retain OL's 1–6 sequenced calls, finalized/nonretryable/egress/empty evidence and null normalized-candidate requirements, search sequence 0, editions sequence 1 when rows exist (single `edition` only for an ISBN query), and only the existing author-stage failure exceptions at sequences 2–5. Derive OL's logical outcome from validated rows exactly as M78. Other providers retain their current terminal-outcome validation, including material_conflict. Return that logical_outcome to the generic caller. |
 
 The caller retains every generic fence, registry/storage/version check, receipt
 scope/claim lock, reservation check and row eligibility check. Both v1 and v2
-require accounting-mode success for new external completion, including zero rows;
+in 7b require accounting-mode success for new external completion, including zero rows;
 cache/local paths use their separate zero-egress proof and cannot invoke an
 external-completion exception. AC7-21/23 enforce this single provider-rule home.
 
@@ -444,8 +508,9 @@ hook only, preserving all its other behavior); M73 private selection (chosen and
 possibly deferred searched-count hook); M78 private v1 completion (delegate);
 M68 `phase9_edition_guard_automatic_payload()` (narrow cache-kind/cache-hit exception);
 M73 `phase9_edition_source_policy(phase9_candidate_edition_state)` (accept validated
-cache-only lineage); M67 local matcher and M32 automatic local catalogue queries
-(hidden/blocklist filter); **M15** private `phase9_complete_local_metadata_match`
+cache-only lineage); **M67** `marketplace_sec.phase9_edition_local_match(image_extraction_candidates)`
+(7a hidden/blocklist filter for both picker-local and automatic-local discovery);
+**M15** private `phase9_complete_local_metadata_match`
 (the existing M32 structural wrapper delegates to it, M32 L174–192), with its
 unchanged signature below and the searched-count/effect hook in §7.2. Legacy cache
 readers/writer must explicitly require
@@ -465,6 +530,18 @@ marketplace_sec.phase9_complete_local_metadata_match(
 
 Its existing M32 private/public structural wrappers remain unchanged; there is no
 worker-side count call. Preserve M15's validated replay return before the new hook.
+The M15 re-check and searched-count/effect hook stay in **7b**.
+
+**Owner-approved reader correction (2026-10-26).** M32's original canonical
+queries inside `marketplace_sec.phase9_metadata_job_context` are no longer live:
+M67 L108 replaces that body, and M38's `_v2`/public wrapper contains no canonical
+read. The live M67 job context calls `phase9_edition_local_match` and supplies its
+result as the worker's `localCanonicalEditionId`; 7a replaces that one discovery
+function, STABLE, live md5 `dfe6db5a7c1021db06988d9010a9f7ff`
+([read-only preflight](../../supporting/database-current-vs-target.md#2026-10-26-slice-7a-read-only-preflight)).
+Other live canonical readers `phase9_edition_current_snapshot` and
+`phase9_edition_legacy_candidate_detail` display selected/saved editions rather
+than discovery; hidden does not hide existing choices (AC7-6).
 
 Also forward-replace **M73** private
 `phase9_recover_candidate_edition_options_v1(p_job_id uuid,p_worker text,
@@ -494,7 +571,9 @@ call to the Add helper, and no out-of-transaction post-completion catalogue call
 Validate metadata/companion/admission before writes; helper-local ISBN validation
 precedes **any** ISBN probe, including local/cache paths. A malformed/disagreeing
 supplied ISBN pair still causes a complete catalogue skip as M81 does. Handling
-a valid but blocklisted ISBN with a provider tuple is OQ2; no weakening is assumed.
+a valid but blocklisted ISBN causes a whole-record catalogue skip even with a
+valid provider tuple (Owner 2026-10-26, OQ2); Add still succeeds unlinked. §4.6's
+table is created empty and affects only future identity checks; no weakening is assumed.
 
 **Compact validated ISBN form (M81 L157–177, D35/D37).** For each supplied ISBN,
 use `pg_catalog.upper(pg_catalog.regexp_replace(value,'[[:space:]-]+','','g'))`.
@@ -766,7 +845,7 @@ completed lookups. New-request version changes miss the old key (AC7-24).
 Legacy key algorithm/rows are left private and untouched. Query identity keeps
 author order; it does not borrow sorted catalogue authors as a new search rule.
 
-### 8.2 Typed safe payload and write/reuse protocol (conditional OQ4)
+### 8.2 Typed safe payload and write/reuse protocol (Owner-approved OQ4; 7b)
 
 `bibliographic_payload` has exactly version `psr-edition-cache-v1`, an ordered
 `rows` array (at most ten), and sourceFetchedAt. Each row contains exactly ordinal,
@@ -898,9 +977,10 @@ No cache hit returns another store's receipt, attempt, candidate or ownership.
 | canonical works/editions | Existing canonical SELECT remains for anon; PUBLIC ACL is not broadened | SELECT only | Preserve audited existing privileges; no new grant from 7a/7b | Shared core inserts new rows only; privileged hidden administration separate |
 | canonical_provider_ids | No privileges/policy | SELECT + RLS USING(true) | SELECT only; BYPASSRLS is not a table grant | Insert via private core only |
 | work/edition stats | None (proposed OQ6) | None (proposed OQ6) | SELECT only | Increment helper only |
-| book_metadata_sources | No new reader; revoke direct writes after audit | No direct writes; retain only audited permitted reads | Proposed SELECT only; current write callers must be audited before revoke | Private core inserts; no unrestricted service writer |
+| book_metadata_sources | PUBLIC: no privileges. Anon: existing SELECT grant, no matching policy, no rows; no direct writes | Existing SELECT grant; replace sole ALL policy with `metadata sources platform read`, SELECT only USING `marketplace_sec.is_platform_operator()`; operator reads unchanged, non-operators see no rows; no direct writes | SELECT only (RLS bypass); all direct writes revoked | Postgres-owned shared core writes; privileged operator SQL corrections under separate authority, like hidden |
 | cache entries | No privileges | No privileges | SELECT only, including no MAINTAIN/TRUNCATE | Existing legacy writer or new private typed writer only |
 | private companions/effects | No privileges/schema exposure | None | No table privileges | Scoped routines only |
+| private ISBN blocklist (§4.6) | No privileges/policy | None | None, including no MAINTAIN or write grant | STABLE helper reads; postgres operator SQL writes only under separate authority |
 | new shape/identity/Add-helper/stats/cache helpers | No EXECUTE | None | None | Owning postgres only |
 | new public completion/reuse wrappers + private service entries | No EXECUTE | None | EXECUTE only, full service+claim fence | Controlled calls |
 | existing Add/Select RPCs | No EXECUTE | Existing EXECUTE only | No new EXECUTE | Keep owner/search_path/signatures |
@@ -915,21 +995,46 @@ M81 already revoked canonical client writes including MAINTAIN. Reassert those
 revocations in the forward artifact without broadening PUBLIC/service grants.
 They cover current relations only: any recreation must repeat the revoke and
 reader policies. No global ALTER DEFAULT PRIVILEGES change is introduced.
-Audit source writers/policies before narrowing source grants; an undiscovered
-legitimate direct writer is a stop-and-report implementation finding, not licence
-to break it. No broad SECURITY DEFINER catch-all, unqualified object resolution,
+**Owner 2026-10-26 — decision 6 closed: revoke the unused source-write path in
+7a.** The [read-only preflight](../../supporting/database-current-vs-target.md#2026-10-26-slice-7a-read-only-preflight)
+and the orchestrator's independent same-day policy/grant query found the sole
+policy `metadata sources platform write`: FOR ALL TO authenticated, USING and
+WITH CHECK `marketplace_sec.is_platform_operator()`. It is also the only client
+SELECT path. Anon, authenticated and service_role currently hold DELETE, INSERT,
+REFERENCES, SELECT, TRIGGER, TRUNCATE and UPDATE; the preflight's table-level ACL
+report also lists MAINTAIN. No live function or trigger references the table,
+and no repo writer exists in src/, app/, supabase/functions/, workers/ or scripts/;
+the only test assertion is
+`supabase/migrations/__tests__/marketplacePhase3InventoryCanonicalListings.test.ts:19`.
+Live source rows: **0**. This is a deliberate removal of an unused operator path,
+not a claim that live grants are already narrowed.
+
+7a REVOKEs **INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN** on
+`public.book_metadata_sources` from **PUBLIC, anon, authenticated and service_role**.
+Service_role keeps **SELECT only**. DROP `metadata sources platform write` and
+CREATE its SELECT-only replacement `metadata sources platform read` FOR SELECT
+TO authenticated USING `(marketplace_sec.is_platform_operator())`. Keep existing
+anon/authenticated SELECT grants: platform operators still read via the new
+policy, non-operator authenticated users and anon see no rows, unchanged from
+today; service_role SELECT uses its grant/RLS bypass; postgres routines read.
+Writes are only through the postgres-owned shared core; operator corrections
+require privileged SQL under separate authority, like the hidden flag.
+If new evidence reveals a legitimate direct writer, stop and report to Owner
+rather than break it. No broad SECURITY DEFINER catch-all, unqualified object resolution,
 user-controlled SQL, service DML shortcut or function overload retaining PUBLIC
 EXECUTE. `has_function_privilege`, `has_table_privilege`, aclexplode and actual
 role-switched operations are required (AC7-8); never destructive probes live.
 
 ## 10. Rollout, rollback and compatibility (R06/R09/R10)
 
-**DB before worker.** Only after Owner answers/review, build/creation permission,
-red/green/native proof, read-only preflight and separate application permission:
+**DB before worker.** Owner 2026-10-26 approved the design and authorized 7a
+build/local creation. Red/green/native proof, read-only reviews, a fresh read-only
+preflight and separate application permission remain required; 7b authority is separate:
 
-1. Verify M81 definition hashes/ACLs and independently record M82's actual status;
-   neither 7a nor 7b carries M82's trigger fix. Complete the accepted split map
-   and decide migration numbers with SDD-0/SDD-2; recheck availability then.
+1. Verify M81 definition hashes/ACLs and independently re-verify M82's applied
+   live version 20261025220839; neither 7a nor 7b carries M82's trigger fix.
+   SDD-0/SDD-2 record the accepted split, M83 for 7a and 7b's undecided number;
+   recheck numbering availability before local creation.
 2. Apply only the separately approved 7a transaction and read back its schema/
    ACL/functions/constraints. Prove provider-ID Add, Select/Add counters, legacy
    workers and replay work with all 7b objects absent. Then, under separate 7b
@@ -994,10 +1099,10 @@ postgres calls below admission (§5/AC7-21); production entry points still deny 
 | AC7-2d R06/R09 | Valid companion survives every hop; forged lineage, unknown keys, >256 ID, wrong kind/two targets/FK failure refused; target deletion cascades IDs only; old worker omits companion successfully. | Identity suite; `supabase/functions/__tests__/phase9_catalogue_write_companion.test.ts`; bound/unbound fixture; red: no companion/table/transport. |
 | AC7-2e Q20/D36/D39 | N options, M qualifying, C real conflicts; complete N options with original order/eligibility and normal accounting/outcome, M−C catalogue targets, no retry; concurrent completion/replay unchanged. | Completion suite + `supabase/tests/phase9/phase9LeanCatalogueConcurrency.postgres.mjs`; forced conflict and lost-response fixtures; red: no effect receipt/writes. Assert options_version, calls, reservation, spend and each count independently. |
 | AC7-2f D35/R06/R09 | Own edition has OCLC/LCCN; normalizer→companion→SQL stores exact valid values in source/new edition; malformed/multiple become null without losing option; old worker doesn't clear existing values. | Companion edge suite + identity suite; positive edition JSON and malformed bounds; red: fields discarded before migration, columns absent. |
-| AC7-3 D37 | Placeholder/reused/blocked ISBN and bad pair appear at Add/lookup/local/cache; blocked ISBN never identifies a record; fallback only per OQ2. | Identity + cache suites; Owner-approved list/version plus checksum-valid fixture; red: no blocklist. A fake unapproved production entry is not a test solution. |
+| AC7-3 D37 | Placeholder/reused/blocked ISBN and bad pair appear at Add/lookup/local/cache; 7a filters picker-local and automatic-local discovery through M67 `phase9_edition_local_match`; blocked ISBN never identifies a record; fallback only per OQ2. M15 completion re-check and cache checks stay 7b. | Identity + local-match + cache suites; Owner-approved list/version plus checksum-valid fixture; red: no blocklist/M67 filter. A fake unapproved production entry is not a test solution. |
 | AC7-4 D36/R01 | Successful chosen linked edition/Add, concurrent stores and lost responses; +1 chosen/+1 added per approved semantic event, replay +0. | `supabase/tests/phase9/phase9LeanCatalogueStats.integration.test.mjs`; Select/Add receipts; red: stats tables/hooks absent. OQ6 covers fresh-key reselection. |
 | AC7-5 D36/R04 | Inspect stats schema/data/ACL; no store/user/inventory/query/receipt identity; quantity q still +1 added; popularity never stamps verified. | Stats suite; schema/privacy fixture; red: missing table; explicit column/data scans prevent vacuous absence pass. |
-| AC7-6 D37 | Hide an edition after publication to cache/local matching; future lookups/cache ignore it, old inventory IDs/selected bytes remain. | `supabase/tests/phase9/phase9LeanCatalogueCache.integration.test.mjs`; hidden fixture; red: hidden column/filter absent. Direct canonical SELECT remains possible by design. |
+| AC7-6 D37 | Hide an edition after publication to cache/local matching; 7a's M67 `phase9_edition_local_match` excludes it from picker-local and automatic-local discovery; 7b cache publication/reuse ignores it, old inventory IDs/selected bytes remain. Selected/saved-edition display remains visible through current_snapshot/legacy_candidate_detail (§5). | Existing `phase9EditionPickerLocalMatch.integration.test.mjs` + `supabase/tests/phase9/phase9LeanCatalogueCache.integration.test.mjs`; hidden fixture; red: hidden column/M67 filter absent. Direct canonical SELECT remains possible by design. |
 | AC7-7 D33/R04 | A safely shared search then B's same query; zero GETs, own private IDs/receipt, same bibliographic choices. Private A search cannot hit in B. | Cache suite + `supabase/functions/__tests__/phase9_catalogue_cache_scope.test.ts`; two stores, identical edits and original scan variants; red: hardcoded private scope/no typed reuse. OQ4/5 gates activation. |
 | AC7-8 D35/R04/R07/Q21 | SET ROLE anon/auth/service, actual effective ACL/RLS; provider IDs auth SELECT yes/anon no, all direct writes denied incl TRUNCATE/MAINTAIN; no private helper EXECUTE; canonical clients remain SELECT-only. | `supabase/tests/phase9/phase9LeanCatalogueSecurity.integration.test.mjs`; schema-aligned real role fixture; red: new table/functions missing. Destructive denial probes only disposable DB. |
 | AC7-9 D29/D33/R05 | A stores admitted own OL cover; B local/cache snapshot has same URL without HTTP; missing cover stays null/placeholder, no alternate/Google cover. | Cache suite + existing `phase9_open_library_edition_options.test.ts`; own-cover fixture; red: no lookup-time canonical source/cache write (existing M65 cover projection already passes). |
@@ -1012,13 +1117,14 @@ postgres calls below admission (§5/AC7-21); production entry points still deny 
 | AC7-18 Q20/R01 | Two stores reverse batch order, batch vs Add, same-ISBN commit/rollback, no-ISBN tuple race, work tuple/source collision; actual waits then coherent convergence or atomic skip. | Native concurrency suite; two independent connections and pg_locks/pg_stat_activity barrier; red: owning 7a/7b functions/lock protocol absent. |
 | AC7-19 D37/Q15/Owner OQ7 | New canonical/source/version/note values are safe and coherent: ISBN-based new editions stamp `psr-catalogue-isbn-v1`, provider-ID-only new editions stamp `psr-catalogue-provider-id-v1`, both use provider fetchedAt; existing M81/Hobbit row hashes unchanged; no refresh/reset/backfill. | Identity suite; both new-row identity modes, legacy raw-case incumbent, sparse M81 and source fixtures; red: provider-ID stamp/additive columns/source writer absent. |
 | AC7-20 R07 | Catalog helper/core return exactly one pair/NULL pair; kind/coherence/role failures cannot leak or create work-only/inventory FK. | Security/identity suites; direct postgres and denied API calls; red: generic core absent. Do not silently alter M81's accepted lack of row-count assertion in the outer Add. |
-| AC7-21 D32/D35 provider neutrality | (a) Static: across 7a/7b SQL artifacts the literal `open_library` occurs only inside `phase9_catalogue_shared_admitted_v1`'s allow-list, the `open_library` branch of `phase9_catalogue_provider_ids_valid_v1` (ID/work grammar, book/cover URLs, routing/predecessor shape, receipt stages/budgets/failure exceptions and logical-outcome derivation) and the `shared_source_note` registry update; this is the exhaustive list of allowed new SQL homes. No provider-specific branch remains in v1/v2 completion, Add, identity or cache functions; no new table/column/JSON key names a provider. In the worker, no generic catalogue/companion/cache module imports an OL module or tests `adapterKey==='open_library'`. (b) Dynamic: on a disposable test database only, postgres seeds a synthetic provider's registry row/test-only validator branch and calls the generic resolver, increment helper, cache writer and cache-reuse core directly with a fixture-built admitted p_source_policy. Provider-ID rows, counters, publication and reuse run with zero generic-function changes and all other fences/checks intact. Separately assert the unchanged admission function returns false and production Add/completion/cache entry points deny shared writes/publication/reuse for that provider, with zero shared/count/cache effects; no production widening, allow-list replacement, grant change or worker-supplied admission flag. (c) Source note, raw retention and revalidation come from the registry row: changing the OL row's note changes the next new source's note. | GUARD `supabase/migrations/__tests__/marketplacePhase9LeanCatalogue.test.ts` (static scan of 7a/7b and worker paths) + identity suite with synthetic provider fixture; red: owning 7a/7b helpers and admission function absent. |
+| AC7-21 D32/D35 provider neutrality | (a) Static: in the **7a artifact** the literal `open_library` occurs only in (i) `phase9_catalogue_shared_admitted_v1`'s admission allow-list, (ii) the facts-mode `open_library` branch of `phase9_catalogue_provider_ids_valid_v1` (ID/work grammar, book/cover URL), and (iii) the `shared_source_note` registry update. The **7b artifact** may add only the accounting-mode `open_library` branch of the replaced validator (routing/predecessor shape, receipt stages/budgets/failure exceptions, logical-outcome derivation). This is the exhaustive list of allowed new SQL homes. No provider-specific branch remains in v1/v2 completion, Add, identity or cache functions; no new table/column/JSON key names a provider. In the worker, no generic catalogue/companion/cache module imports an OL module or tests `adapterKey==='open_library'`. (b) Dynamic: on a disposable test database only, postgres seeds a synthetic provider's registry row/test-only validator branch and calls the generic resolver, increment helper, cache writer and cache-reuse core directly with a fixture-built admitted p_source_policy. Provider-ID rows, counters, publication and reuse run with zero generic-function changes and all other fences/checks intact. Separately assert the unchanged admission function returns false and production Add/completion/cache entry points deny shared writes/publication/reuse for that provider, with zero shared/count/cache effects; no production widening, allow-list replacement, grant change or worker-supplied admission flag. (c) Source note, raw retention and revalidation come from the registry row: changing the OL row's note changes the next new source's note. | GUARD `supabase/migrations/__tests__/marketplacePhase9LeanCatalogue.test.ts` (static scan of 7a/7b and worker paths) + identity suite with synthetic provider fixture; red: owning 7a/7b helpers and admission function absent. |
 | AC7-22 Q20/R07 lock parity | Add (7a) and completion/cache (7b) produce identical signed keys for the same normalized work/ISBN/provider tuples through `phase9_catalogue_identity_lock_key_v1` using built-in `pg_catalog.sha256(bytea)` with no extension dependency; reordered/case/spacing work inputs normalize identically, author duplicates remain significant, high-bit hashes produce the same negative bigint and locks are acquired in sorted deduplicated order. | Identity + native concurrency suites and GUARD; fixed SQL tuple/hash fixtures, saved-ID/batch-vs-Add paths; red: shared function absent. Static guard rejects a second caller-local identity hash expression. |
-| AC7-23 R07/R09 provider validation | M78's valid Google/OL rows and receipts still pass the registry-keyed validator; wrong book/cover binding, missing search/edition receipt, unfinalized/retryable call or missing egress, bad author stage/outcome/sequence or forged routing fails; valid ISBN single-edition stage and existing bounded author failures pass. Empty options still require external accounting; catalogue conflicts preserve outcome/spend. | Completion/security suites + GUARD; M78-equivalent positive/negative recorded receipt fixtures through v1/v2, facts-only Add/cache and synthetic-provider branch; red: extended validator absent. |
+| AC7-23 R07/R09 provider validation | **7a facts mode:** valid Google/OL ID/work grammar and book/cover bindings pass; wrong ID/book/cover binding and unknown provider fail. Every nonnull p_completion returns valid=false, including otherwise valid accounting input. **7b accounting mode (same-signature forward replacement):** M78's valid Google/OL rows and receipts still pass; missing search/edition receipt, unfinalized/retryable call or missing egress, bad author stage/outcome/sequence or forged routing fails; valid ISBN single-edition stage and existing bounded author failures pass. Empty options still require external accounting; catalogue conflicts preserve outcome/spend. 7b retains facts validation for Add/cache. | 7a identity/security suites + GUARD: facts-only Add, synthetic-provider branch and explicit accounting refusal. 7b completion/security suites + GUARD: M78-equivalent positive/negative recorded receipts through v1/v2 plus cache facts; red: owning validator/replacement absent. |
 | AC7-24 D33/R06 cache versions | Publish from recorded lookup versions, then reuse with the same worker tuple/current registry: hit with the same receiving versions. Change each capability/schema/routing/cache-policy/adapter/normalizer/reuse/companion version independently: miss (malformed/unsupported contract refuses); completed same-request replay returns its original receipt/counts regardless of later worker config. | Cache + cache-scope edge suites; persisted original-version matrix, legacy NULL routing row and config-upgrade fixture; red: RPC version input/routing column/equality checks absent. |
 | AC7-25 D36/Owner OQ6 local searched count | Automatic local match through the existing M32 wrapper creates one M15 lookup/snapshot, one private effect and searched +1 for its resolved work, chosen/added +0 and spend/reservations/attempts +0; lost-response replay adds zero; local replay completed before 7b creates no marker/count. Failed outer completion rolls everything back. | Stats + existing local-match suites; actual structural wrapper call, server-scoped local receipt and rollback fixture; red: M15 count/effect hook absent. |
 | AC7-26 R04/Owner OQ5 scan-only scope | Immutable scan-text origin plus matching query identity can be public; provider-facts-only, typed/edited/confirmed/equal-looking or unknown-origin queries stay private and cannot supply a cross-store cache hit. | Cache + cache-scope edge suites; scan/provider-only/Owner provenance matrix; red: provider-origin public branch remains. |
 | AC7-27 R06 cache attempt scope | More than ten distinct completed cache-hit requests on one candidate/adapter use fresh lookups, each with one sequence-1 primary attempt and zero provider spend; same-request replay adds no attempt. Same-lookup sequence/role duplicates still fail; legacy NULL-lookup uniqueness is unchanged. | Cache suite; repeated-generation fixture with M67 partial indexes and identity/role constraints; red: reuse RPC absent; assert no candidate-wide capacity failure. |
+| AC7-28 Owner 2026-10-26 / §9 (7a) | SET ROLE anon, authenticated (non-operator), authenticated platform operator and service_role: direct INSERT/UPDATE/DELETE/TRUNCATE on book_metadata_sources are each denied; operator SELECT still returns rows; non-operator authenticated/anon SELECT returns none; service_role SELECT works. | `supabase/tests/phase9/phase9LeanCatalogueSecurity.integration.test.mjs` (NEW); seeded source/operator fixture on disposable DB only. Red: current grants/policy allow operator and service_role writes. |
 
 Keep these **existing** suites green at implementation time; reported historical
 counts are tracker evidence, not results rerun here:
@@ -1062,25 +1168,34 @@ alone is not the full red proof. Relevant future commands include `npm.cmd run
 test:phase9:db`, targeted Jest/edge suites and metadata worker build/typecheck;
 none is run in this documentation task.
 
-**Parent AC wording refinements proposed here, not silently approved:** AC7-2c
+**Parent AC wording refinements approved in 02b by Owner 2026-10-26:** AC7-2c
 distinguishes differing translation keys from two competing existing work targets;
-AC7-3 needs approved list/fallback; AC7-4/5 need precise count attribution/readers;
-AC7-7 needs typed cache/provenance/reuse proof; AC7-8 includes canonical-table
-revocations already in M81, MAINTAIN and service denial; AC7-1/2e need the owned
+AC7-3 uses §4.6's approved empty table/fallback; AC7-4/5 specify precise count attribution/readers;
+AC7-7 specifies typed cache/provenance/reuse proof; AC7-8 includes canonical-table
+revocations already in M81, MAINTAIN and service denial; AC7-1/2e specify the owned
 match activation boundary. AC7-11–27 add missing compatibility/security/native
-proof without relaxing existing AC7-1–10. Parent approved AC text is preserved.
+proof without relaxing existing AC7-1–10; AC7-28 records the Owner's 2026-10-26
+source-write closure and preserved reads (§9). Parent approved AC text is preserved.
 
 ## 12. Build packages, size and review points
 
-No package is authorized now. SDD-0 §15 assigns product code and tests to Codex
-`gpt-6.1-sol` (xhigh) from verified strict briefs; orchestrator reviews all diffs.
-This is a risky SQL/identity/replay slice and needs the full review loop, not a
-routine documentation-only approval presented as permission to build.
+**Owner 2026-10-26:** 02b is approved as the Slice 7 design; **7a build and local
+M83 creation are authorized** (Owner chose "Yes, create it" for steps up to review).
+Application, browser check and commit each require separate Owner approval;
+**7b is not authorized**. This documentation step implements no package.
+
+For 7a the Owner overrides SDD-0 §15's agent list only: code by Codex
+`gpt-6.1-sol` (xhigh); read-only reviews by OpenCode Muse
+(`opencode-go/muse-spark-1.3-contributor`), OpenCode free GLM
+(`opencode/glm-5.3-flash-free`, with timeout), OpenCode DeepSeek
+(`opencode/deepseek-v4.1-flash-free`), Codex Luna (`gpt-6-luna`, read-only) and
+Codex Sol (read-only); Haiku runs preflights/tests. Orchestrator reviews all diffs;
+the remaining §15 test/review/separate-permission gates stay in force.
 
 | Order | Slice | Proposed package / size | Red proof and review stop |
 |---|---|---|---|
-| 0 | 7a | Accepted OQ1–OQ8, split-map update and fresh read-only preflight / small | Record the accepted 7a/7b boundary in SDD-0/SDD-2 and decide migration numbering there before any build brief. Verify M82 status and record separate authority; no number reserved here. |
-| 1 | 7a | SQL identity/Add/Select/stats/ACL/native tests only / medium | Meaningful feature assertions fail before the 7a artifact exists; schema fidelity checked. Fixture excludes every 7b object and worker change. Record red reasons before production SQL; creation needs separate permission. |
+| 0 | 7a | Accepted OQ1–OQ8, split-map update and fresh read-only preflight / small | Split map recorded in SDD-0/SDD-2; M83 assigned to 7a, 7b number undecided. Fresh read-only preflight must re-verify project, M82 and numbering before build/local creation; supplied dated evidence does not replace it. |
+| 1 | 7a | SQL identity/Add/Select/stats/ACL/native tests only / medium | Meaningful feature assertions fail before the 7a artifact exists; schema fidelity checked. Fixture excludes every 7b object and worker change. Record red reasons before production SQL; Owner 2026-10-26 has authorized local creation after this red proof and fresh read-only preflight. |
 | 2 | 7a | Identity/model/Add/security SQL / large | Schema→pure validators/admission/lock key→identity core→Add/Select choice+added hooks→hidden/blocklist readers→grants in one transaction. Review M81 body diff, identity/locks and security separately. No 7b relation/function reference, M78 completion change or edit to applied M81/M82. |
 | 3 | 7a | Independent integration/native/security closeout / medium | Prove legacy and no-ISBN Add, source/ID writes, chosen/added counts and replay with all 7b objects absent. Run relevant regression/ACL/native proof and record exact residuals/docs. Application/read-back need separate permission; 7a requires no worker deploy. |
 | 4 | 7b | Completion/cache SQL and companion/transport fixture tests only / medium | On proven 7a, meaningful 7b assertions fail before its artifact/worker exists. Red extraction/binding/bounds/v1/recovery/cache/privacy/zero-spend tests; review every field from original edition JSON, no new HTTP. |
@@ -1101,21 +1216,55 @@ forward-replaces the affected Add/Select bodies to add companion/lookup-effect
 reads, pending searched attribution and cache-source support; it preserves 7a's
 identity/counter/replay behavior.
 
+**7a/7b ACCEPTANCE subset (Owner 2026-10-26; checked against §11).** Mixed
+checks retain their full acceptance contract across the two slices; a 7a pass
+claims only its listed part. Searched stays **0 in 7a**.
+
+| AC | 7a acceptance | 7b acceptance |
+|---|---|---|
+| AC7-2, AC7-2b, AC7-2c | Provider-tuple/no-ISBN reuse, synthetic-provider identity/source convergence and atomic Add conflict handling. | Retain 7a proof; completion conflicts additionally follow AC7-2e. |
+| AC7-2d | Provider-ID table, ID bounds/null keys, FK/kind/XOR/coherence and target-deletion cascade; legacy Add with NULL companion. | Companion validation/transport, every-hop lineage and immutable-snapshot compatibility. |
+| AC7-3 | Add and M67 `phase9_edition_local_match` ISBN checks for picker-local/automatic-local discovery, including compact form, bad-pair refusal and blocklist whole-record skip. | M15 completion re-check and lookup-completion/cache checks. |
+| AC7-4, AC7-5 | Chosen/added hooks, exact replay/concurrency semantics, quantity independence and private-identity-free server-read-only stats. | Retain 7a proof; searched hooks are AC7-12/25. |
+| AC7-6 | M67 `phase9_edition_local_match` hidden filter for picker-local/automatic-local discovery; preserve existing inventory links and selected/saved-edition display/bytes. | Cache publication/reuse hidden filtering. |
+| AC7-8 | ACL/RLS and effective role operations for every 7a object, including source-write revocation and private blocklist. | Equivalent proof for 7b objects and service entries. |
+| AC7-10 | Admission/license/retention/version/provider denial matrix. | Retain admission checks on completion/cache entry points. |
+| AC7-14 | Add oversized-key skip and propagation/outer rollback for unrelated errors. | Options-completion equivalent. |
+| AC7-17 | First case only: 7a alone plus old worker with no 7b objects. | Remaining DB/worker/in-flight/recovery/rollback rollout matrix. |
+| AC7-18 | Add-vs-Add, no-ISBN tuple, same-ISBN commit/rollback and Add work-tuple/source races with actual waits. | Reverse batch order, batch-vs-Add and completion/cache races. |
+| AC7-19, AC7-20 | Provenance/stamps/no-update incumbents and one coherent pair/NULL-pair helper/security contract. | Retain 7a proof on new callers. |
+| AC7-21 | 7a artifact static homes, generic resolver/increment synthetic-provider proof, production Add denial, registry-derived note/retention/revalidation. | 7b artifact/worker static rules and completion/cache publication/reuse portions of dynamic/denial proof. |
+| AC7-22 | Add-side fixed tuple/hash/key fixtures, lock order and no duplicate hash derivation. | Completion/cache-to-Add key parity and cross-path races. |
+| AC7-23 | Facts mode and refusal of every nonnull p_completion; no accounting implementation. | Same-signature accounting replacement, M78 routing/receipt/outcome equivalence and cache facts. |
+| AC7-28 | Source direct-write denials for anon, non-operator/operator authenticated and service_role; operator/service SELECT preserved, non-operator/anon SELECT returns none (§9). | Retain 7a proof; no new source-write path. |
+| AC7-1, AC7-2e, AC7-2f, AC7-7, AC7-9, AC7-11, AC7-12, AC7-13, AC7-15, AC7-16, AC7-24, AC7-25, AC7-26, AC7-27 | No completion/transport/cache implementation or acceptance claim in 7a. | Full checks: lookup-time writes/conflicts, OCLC/LCCN transport, cover/cache reuse, compatibility/recovery, searched attribution, privacy/versions/scope/zero-spend/attempt uniqueness. |
+
+The `book_metadata_sources` direct-write audit **and revoke are in 7a** (§9).
+**Owner 2026-10-26 closes decision 6:** no live/repo writer found; revoke all
+direct writes and replace the sole operator ALL policy with SELECT-only,
+preserving operator/service reads (AC7-28). If later evidence finds a legitimate
+direct writer, **stop and report to the Owner**; do not break it.
+
 | §4–§5 object / replacement | Owning slice and dependency rule |
 |---|---|
 | §4.1 provider-ID table; §4.2 canonical/registry columns and source rows; §4.3 stats | 7a, including constraints/indexes/RLS/ACL; no new companion needed to write from admitted existing metadata. |
 | §4.4 `phase9_catalogue_choice_effects` | 7a; its lookup/attempt FKs target existing tables, never 7b lookup effects. |
+| §4.6 `phase9_catalogue_isbn_blocklist`; §9 source direct-write audit/revoke | 7a; blocklist created empty, STABLE ISBN reader; source audit found no writer, Owner-approved write revoke and SELECT-only policy replacement, AC7-28. Newly discovered legitimate writer is stop-and-report. |
 | §4.4 `phase9_catalogue_companions`, `phase9_catalogue_lookup_effects`; §4.5 cache/lookup alterations | 7b only. |
-| `phase9_catalogue_isbn_v1`, `phase9_catalogue_identity_lock_key_v1`, `phase9_catalogue_shared_admitted_v1`, `phase9_catalogue_provider_ids_valid_v1`, `phase9_catalogue_valid_companion_v1`, `phase9_catalogue_resolve_v1` | 7a; Add needs the lock-key and provider validator now. Pure companion/facts/accounting validation has no 7b relation dependency; absent companion is NULL. 7b reuses these functions. |
-| `phase9_catalogue_increment_v1`, `phase9_catalogue_count_choice_v1`; M81 Add/helper and M73 Select replacements; M67/M32 hidden/blocklist read filters | 7a for choice/added and existing-source identity. 7b adds only its companion/cache/lookup-effect and searched-attribution hooks to Add/helper/Select. |
+| `phase9_catalogue_isbn_v1`, `phase9_catalogue_identity_lock_key_v1`, `phase9_catalogue_shared_admitted_v1`, `phase9_catalogue_provider_ids_valid_v1`, `phase9_catalogue_resolve_v1` | 7a; ISBN reader is STABLE, provider validator facts-only and every nonnull p_completion refuses. Add needs the lock-key/facts validator now; companion is NULL. 7b retains the core and forward-replaces the provider validator with the same signature to add accounting. |
+| `phase9_catalogue_source_policy_v1(text)` | 7a; postgres-only VOLATILE definer builder locks the registry row FOR SHARE and returns the strict §5 policy from that row plus admission, or NULL for an unknown key. Production Add uses this builder; 7b entry points retain it. |
+| `phase9_catalogue_valid_companion_v1` | 7b only; 7a has no reference to it. |
+| `phase9_catalogue_increment_v1`, `phase9_catalogue_count_choice_v1`; M81 Add/helper and M73 Select replacements; M67 `phase9_edition_local_match` hidden/blocklist discovery filter | 7a for choice/added and existing-source identity; one M67 discovery reader serves picker-local and automatic-local matching. M32's old job-context canonical queries are superseded. 7b adds only its companion/cache/lookup-effect and searched-attribution hooks to Add/helper/Select; M15 completion re-check/hook stays 7b. |
 | `phase9_catalogue_valid_cache_v1`, `phase9_catalogue_cache_receipt_guard`, `phase9_catalogue_query_scope_v1`, `phase9_catalogue_store_cache_v1`, `phase9_catalogue_reuse_cache_core_v1` | 7b; cache helpers consume the trusted admission hand-off (§5). |
 | Private/public v2 completion/reuse entries; M78 v1 delegate; M73 recovery; M15 local-completion count/effect hook; M68 automatic-payload guard; M73 cache-source policy; legacy cache readers/writer discrimination | 7b; existing production definitions remain in place throughout 7a. |
 
-Migration numbering for 7a/7b is decided when SDD-0/SDD-2's map is updated; no
-number is reserved here. The fixed §1 provider-neutrality rule's `M83` label is
-the original Slice 7 proposal, not a number reservation; its rule applies across
-both artifacts. Each slice needs its own red-first proof and separate build/
-creation/application authority. Review SQL by semantic sections; do not split an
+7a is **M83**, proposed local file
+`supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`,
+**PROPOSED / NOT_CREATED / NOT_APPLIED**. 7b has one migration, number decided at
+7b start after 7a is applied and verified. The §1 provider-neutrality rule applies
+across both artifacts. Each slice needs its own red-first proof and separate
+build/creation/application authority; 7a build/local creation are authorized,
+application is separate and 7b is not authorized. Review SQL by semantic sections; do not split an
 applied migration to satisfy line counts. Stop after the authorized package and
 its proof; no broad cleanup or later matcher implementation.
 
@@ -1133,8 +1282,9 @@ folder and needs no map edit; only the brief's allowed documentation is changed.
   **§14**: tables/columns/ACL/public note/source deadlines; **§17**: exact bounded
   identity does not authorize automated merge/reassignment. Preserve its explicit
   search/HTTP-budget/confirmation rules. Source edits ship with implementation.
-- SDD-0 D37, slice map and Q4/OQ decisions; SDD-2 Slice 7 final status/AC wording
-  and the accepted 7a/7b split map before build; Slice 8a's SQL inventory must name all new generic
+- SDD-0 D37 and Q4/OQ decisions; SDD-2 Slice 7 implementation status/AC evidence.
+  The accepted 7a/7b split map is recorded before build in this step;
+  Slice 8a's SQL inventory must name all new generic
   core/admission/cache readers and M81 helper/Add (02a §6.1). Slice 9 owns relaxed
   predicate/benchmark activation. No matching rule is originated in a tracker.
 - `supporting/data-dictionary.md`: provider IDs/key version, source payload,
@@ -1155,21 +1305,34 @@ folder and needs no map edit; only the brief's allowed documentation is changed.
   live count, machine path, branch or secret in map files. 01/02/07/09 only when
   their README triggers apply, not automatically for a new SDD in an existing folder.
 - Migration allowlist update is owned by its authorized migration step: M82's
-  separate step must add M82; each 7a/7b step may add only its own approved file
-  after numbering is decided with the split map.
+  separate step added M82 (tracker 38 §35); 7a may add only its approved M83 file,
+  and 7b only its own approved file after its number is decided at 7b start.
   No validator edit is authorized by this documentation task.
 
 ### 13.2 Live facts to collect (read-only) before build
 
-The 2026-10-25 snapshot and 2026-10-25/26 M81 records are the only DB facts used.
+The 2026-10-25 snapshot, 2026-10-25/26 M81/M82 records and the orchestrator's
+supplied 2026-10-26 read-only verification are dated DB evidence: project
+`https://ahntbtktjjmvfosgkmgn.supabase.co`, latest live M81 `20261025171647`
+and M82 `20261025220839`, nothing later. No DB query is run in this step.
+The [2026-10-26 slice 7a read-only preflight](../../supporting/database-current-vs-target.md#2026-10-26-slice-7a-read-only-preflight)
+records the supplied same-day Haiku evidence and independently corroborated
+source policy/grants and canonical-reader list; its M15 owner/secdef omission
+remains explicit, not inferred from local SQL.
 Do not infer current live state from local migration files. Collect through fresh
 read-only MCP only when separately authorized for the build/preflight session:
 
-- Exact project identity; migration history M81 mapping and separately recorded
-  M82 application/version/read-back; availability of both migration numbers only
-  when the SDD-0/SDD-2 split map decides them, across active branches/history.
+- Exact project identity; migration history M81/M82 mapping and read-back;
+  re-verify M83 availability across active branches/history before its local
+  creation. 7b's number is undecided and must be checked at its own start.
 - Current M81 helper/Add bodies/hashes/security/ACL/overloads; M78 completion,
   M73 Select/source policy, cache/guard bodies and every function to replace.
+- M67 `marketplace_sec.phase9_edition_local_match(image_extraction_candidates)`:
+  the one live picker-local/automatic-local discovery reader (STABLE; supplied
+  md5 `dfe6db5a7c1021db06988d9010a9f7ff`), replaced in 7a for hidden/blocklist.
+  Its result feeds `localCanonicalEditionId` through M67's job context and M38
+  `_v2`; no M32 job-context canonical query remains live. M15 completion's
+  re-check/hook stays 7b; snapshot/detail readers preserve selected/saved choices.
 - Canonical/source/registry/cache/attempt/lookup/receipt tables: defaults, all
   constraints/index names/collations/limits, FKs/delete actions, triggers, grants,
   RLS policies, MAINTAIN privileges, PUBLIC/default/inherited privileges. Source
@@ -1188,6 +1351,29 @@ read-only MCP only when separately authorized for the build/preflight session:
   new public facts remain within D35, no expiry-requiring second provider. No
   provider HTTP/licence investigation is performed by this task.
 
+### 13.3 7a implementation record (2026-10-27)
+
+Live version: M83 applied as live version 20261026223715 (2026-10-27); local file `supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`, 1,359 lines, SHA-256 `6538d7c79b8e2352e70374b96c5f8db1a1152fe9bb9ab86ade94eadd14b00616`; applied through Supabase MCP `apply_migration` (second connector), project `ahntbtktjjmvfosgkmgn`.
+
+Read-back summary (PASS, 2026-10-27): `list_migrations` shows 20261026223715 as the latest; all 18 new or replaced functions hash-match the local LF bodies (owner postgres, search_path "", EXECUTE postgres only except `phase9_add_candidate_to_inventory_v1` with authenticated as well); all 5 new tables owner postgres, RLS on, empty; `book_metadata_sources` postgres full with anon/authenticated/service_role SELECT only and sole policy "metadata sources platform read"; `canonical_works`/`canonical_editions` anon/authenticated SELECT only; counts at read-back works 3, editions 3, sources 0, linked inventory 2.
+
+Browser results (PASS, 2026-10-27; detail in tracker 38): Case A new ISBN 9780743273565 (Open Library, Scribner 2004) created one new work and edition (`psr-catalogue-isbn-v1`), source row with raw_payload {}, provider-ID row, chosen 1 / added 1, inventory linked; Case B same book reused the edition with no new rows, chosen 2 / added 2, inventory linked; Case C manual card unlinked with catalogue unchanged; Case E scanned "Individuals" (Open Library, Routledge 1990, 9780415051859) new linked edition; Case D scanned "Thinking, Fast and Slow" refused until the Owner pressed "Confirm current suggestion" per pre-existing M69 rule `phase9_edition_saved_choice_valid`, then after reload Add succeeded with the inventory row UNLINKED and catalogue unchanged per the Google non-admission path (02b §5/§7.2). Counts after: works 5, editions 5, sources 2, provider IDs 2, edition-stats rows 2, store_inventory 44 (5 linked). Client message correction (written by the orchestrator, recorded in tracker 38): it is NOT browser-verified.
+
+Verification counts (record as already run): Lean PGlite 269/269; CatalogueLink PGlite 79/79; Jest 1,464 passed; native Postgres suites 20/12/25/16/11; 3 pre-existing MetadataFoundation failures, not caused by 7a; continuity validator after apply PHASE9_CONTINUITY_CHECK=PASS with an M83 clause added to the migration-set validator.
+
+Deviations and residuals (each recorded for Owner review, not as newly approved):
+
+- The chosen-source index moved to 7b. Reason: not recorded.
+- The saved-ID (link-only) path in `link_for_add_v1` skips the shared-admission check. Reason: intentional M81 behaviour — it links to an existing edition and writes nothing shared. Recorded for Owner review, not as newly approved.
+- 7a refuses a non-null companion (NULL pair, zero writes). Reason: companion validation and transport are 7b (§12). Recorded for Owner review, not as newly approved.
+- service_role keeps direct write privileges on canonical_works and canonical_editions; only anon and authenticated writes were revoked. Reason: not recorded. Recorded for Owner review, not as newly approved.
+- Normalized probe scans (title/author normalization at query time) have no expression index yet. Reason: not recorded. Recorded for Owner review, not as newly approved.
+- 3 pre-existing MetadataFoundation test failures, not caused by 7a. Reason: pre-existing. Recorded for Owner review, not as newly approved.
+- Pre-existing UX findings from the browser check, not M83: an unconfirmed automatic suggestion is shown as Ready and has no Confirm on the card. Reason: pre-existing. Recorded for Owner review, not as newly approved.
+- Pre-existing UX findings from the browser check, not M83: a refusal persists until reload. Reason: pre-existing. Recorded for Owner review, not as newly approved.
+- Pre-existing UX findings from the browser check, not M83: price and condition edits are lost on reload. Reason: pre-existing. Recorded for Owner review, not as newly approved.
+- Pre-existing UX findings from the browser check, not M83: automatic edition lookup stays at "Finding edition…" until an explicit search. Reason: pre-existing. Recorded for Owner review, not as newly approved.
+
 ## 14. Owner questions and conflicts
 
 This is the single numbered Owner-question list. Recommendations/costs are design
@@ -1195,7 +1381,7 @@ proposals; no choice below was made by the author. Settled Q15/Q18/Q20/Q21 are n
 reopened. A build brief must name the recorded answer wherever conditional.
 
 **Owner answers (chat, 2026-10-26).** These are decisions; they replace the
-recommendations below where they differ (they do not).
+recommendations below; the approval-round follow-ups take precedence where more specific.
 
 | OQ | Answer |
 |---|---|
@@ -1206,10 +1392,26 @@ recommendations below where they differ (they do not).
 | OQ5 | Public scope only for searches proven to come from scan text; anything Owner-typed, edited or confirmed stays private. |
 | OQ6 | Recommendation accepted (Owner: "go with your recommendation for the rest"): every new committed selection counts once; one added per linked Add; searched once per completed lookup on its sole/first-resolved work; stats server-read-only. |
 | OQ7 | Recommendation accepted: provider-ID-only rows stamp `psr-catalogue-provider-id-v1`; M81's ISBN stamp unchanged; registry `shared_source_note`; first source row kept, no refresh. |
-| OQ8 | Recommendation accepted: split before build — 7a identity/model/Add/security, 7b completion/transport/cache — each working on its own with red-first proof. Migration numbers and SDD-0/SDD-2 map changes are decided at the split, not here. |
+| OQ8 | Recommendation accepted: split before build — 7a identity/model/Add/security, 7b completion/transport/cache — each working on its own with red-first proof. Owner 2026-10-26 approval round records the split in SDD-0/SDD-2: 7a=M83; 7b number decided at its start. |
 
-Design status after answers: decisions recorded; independent review and design
-approval still pending; no build, migration creation or application authorized.
+Design status after approval round: **approved by Owner 2026-10-26**, after the
+independent design reviews/fixes recorded in tracker 38 §35. 7a build and local
+migration creation are authorized; application requires separate approval.
+7b is not authorized.
+
+**Owner decisions, 2026-10-26 (approval round)**
+
+| # | Decision (Owner 2026-10-26) |
+|---|---|
+| 1 | 02b approved as Slice 7 design; 7a build and local migration creation authorized ("Yes, create it", steps up to review). Applying to Supabase needs separate approval; 7b not authorized. |
+| 2 | R12: own branch `claude/phase9-psr-slice7a-lean-catalogue-identity` from `87db21c` in worktree `phase9-psr-slice5b-add-isbn`. |
+| 3 | 7a overrides §15's agent list only: code Codex gpt-6.1-sol xhigh; read-only Muse (`opencode-go/muse-spark-1.3-contributor`), free GLM (`opencode/glm-5.3-flash-free`, timeout), DeepSeek (`opencode/deepseek-v4.1-flash-free`, corrected in step 1b for the free model), Codex Luna (`gpt-6-luna`) and Codex Sol; Haiku preflights/tests. Do not edit SDD-0 §15. |
+| 4 | OQ2: private versioned blocklist table (§4.6), created empty; STABLE ISBN policy reader; postgres operator SQL writes only under separate authority, no client/service_role writes. Future identity checks only, never changes to existing links/rows/snapshots; IMMUTABLE→STABLE deviation recorded below. |
+| 5 | 7a provider validator facts mode only; every nonnull p_completion returns valid=false. 7b forward-replaces the same signature for M78 accounting; companion validator moves to 7b. |
+| 6 | Closed by Owner 2026-10-26 after the read-only audit: unused operator path, no live function/trigger or repo writer, zero source rows. 7a revokes INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER/MAINTAIN from PUBLIC/anon/authenticated/service_role; service_role SELECT only. Replace sole `metadata sources platform write` ALL policy with SELECT-only `metadata sources platform read` for authenticated USING `marketplace_sec.is_platform_operator()`; preserve operator/service reads, non-operator/anon no rows. Postgres-owned shared core writes; operator privileged SQL corrections need separate authority. AC7-28. |
+| 7 | M82 GLM closure: "not obtained: free GLM hung three times; covered by Muse (no finding), two Haiku preflights (READY) and the browser re-check PASS". |
+| 8 | Browser proof: if no real Open Library edition without ISBN can be selected through the app, report to Owner, prove provider-ID link in DB and native tests, browser-check ISBN path plus chosen/added counts. This records the proof plan; application/browser check still need separate approval. |
+| 9 | Source-policy contract: §5's exact eight-key `psr-catalogue-source-policy-v1` object and postgres-only `phase9_catalogue_source_policy_v1(text)` builder are approved. Builder locks the registry row FOR SHARE, evaluates admission and uses that same row; unknown key returns NULL. Production entry points use only this builder. Generic consumers RAISE malformed/mismatched policy; valid false returns one NULL pair with zero writes. Disposable postgres synthetic-provider tests may build the exact admitted object directly below the unchanged production allow-list. Record new tests red before M83 creation. |
 
 1. **OQ1 — Legacy raw-case work and skipped-link race.** Recommend retain the
    no-update incumbent/accepted safe skip in this slice, with explicit native
@@ -1227,8 +1429,11 @@ approval still pending; no build, migration creation or application authorized.
    Cost: some valid provider-ID options stay private/unlinked. Alternative: strip
    blocked ISBNs and retain tuple-only canonical identity; cost: explicit policy
    for canonical/source ISBN projection and reused-ISBN safety tests. Empty list
-   or heuristic repeated-digit detection alone does not satisfy D37; Owner must
-   supply/approve actual entries/reasons, not authorize invented reused ISBNs.
+   or heuristic repeated-digit detection alone was not the original D37
+   recommendation. Owner 2026-10-26 deliberately approves a zero-row start and
+   §4.6's data-backed versioned table/STABLE reader instead; the Owner later
+   supplies/approves actual entries/reasons under separate operator authority.
+   No constant list or invented reused ISBN is authorized.
 3. **OQ3 — Lookup predicate activation and translation interpretation.** Recommend
    build the fenced D39 writer against the currently approved explicit predicate
    until Slice 9's benchmark-approved relaxed predicate replaces it, without
@@ -1278,23 +1483,25 @@ approval still pending; no build, migration creation or application authorized.
 8. **OQ8 — Scope/session split before build.** Accepted in the Owner answers
    table: 7a identity/model/Add/security first, 7b completion/transport/cache
    second, each independently working with red-first proof (§12). The split is
-   decided; SDD-0/SDD-2 map updates and migration numbering/authority remain to be
-   recorded before build. No migration number is reserved here.
+   decided and recorded in SDD-0/SDD-2. Owner 2026-10-26 assigns M83 to 7a,
+   authorizes its build/local creation, and leaves 7b's number undecided and
+   its build unauthorized. Application remains a separate gate.
 
 **Conflict register (evidence, not new product decisions):**
 
 | Sources | Conflict/gap and disposition |
 |---|---|
 | SDD-0 D39/Q3; SDD-2 AC7-1; current OL adapter C02; Slices 8/9 | Lookup writes demand a relaxed predicate unavailable in the current automatic route. OQ3 gates activation; no automatic matcher invented. |
-| SDD-0 D32/D35; SDD-2 Slices 7–8; this draft before 2026-10-26 | The first draft wrote OL's ID grammar, cover ID, attribution text and raw retention into generic rules. Owner reaffirmed provider neutrality (2026-10-26): §1 rule, §4.2 registry `shared_source_note`, §5 admission/validator functions and AC7-21 now confine OL to registry data, one admission allow-list and one validator branch. SDD-2 Slice 7 gains AC7-21 and the new registry column when this design is approved. |
+| SDD-0 D32/D35; SDD-2 Slices 7–8; this draft before 2026-10-26 | The first draft wrote OL's ID grammar, cover ID, attribution text and raw retention into generic rules. Owner reaffirmed provider neutrality (2026-10-26): §1 rule, §4.2 registry `shared_source_note`, §5 admission/validator functions and AC7-21 now confine OL to registry data, one admission allow-list and one validator branch split by facts/accounting artifact. SDD-2 Slice 7 now records AC7-21 and the new registry column under Owner 2026-10-26 design approval. |
 | SDD-2 work grouping and AC7-2c; DOC-3 §4.2; M81 equality checks | Translated work title may differ without two competing targets; literal M81 work-title equality would reject grouping. OQ3 distinguishes that from genuine conflicting IDs. |
 | D33/F18/F35 versus M68 guard/M78 attempt semantics/M15 positive cache | Public mode exists, explicit options reuse does not. OQ4's new typed boundary is required; changing scope literal alone is incorrect. |
 | R04/D40/F43 versus current key builder/context | Owner-confirmed text enters query identity and key lacks scope/store. OQ5 plus new key namespace, no promotion of old rows. |
 | D36/Q4 versus Select/completion code | No shared stats today; replay alone does not decide reselections, unselected multi-work attribution or reader grants. OQ6. |
 | D37 versus M81, registry/source rows | No blocklist contents approved; key/note columns absent. OQ2/OQ7; canonical hidden is new, not an existing registry flag. |
+| Owner 2026-10-26: IMMUTABLE→STABLE deviation | Reason: entries are added later as data. §4.6's private versioned blocklist table is created empty; `phase9_catalogue_isbn_v1` is a STABLE SECURITY DEFINER policy reader with unchanged signature, postgres owner/empty search_path and no client EXECUTE. Postgres operator SQL writes under separate authority; future identity checks only, never existing links/rows/snapshots. |
 | DOC-3 §§5.1/5.2/14/17 versus Owner D35/D39/Q20 | Old provider-ID-as-trace/picker-not-promoting wording is superseded only within the approved amendment; implementation-time source edits are listed in §13. No fuzzy merge or provider-as-universal-ID claim. |
 | 02a OQ4 versus new no-ISBN write path | M81 fixes fetchedAt/ISBN stamp, not provider-ID stamp/source refresh. OQ7; no retroactive canonical UPDATE. |
-| SDD-0 one-session guardrail versus SDD-2 optional 7a/7b | Owner OQ8 accepted the 7a/7b split; §12 assigns objects/packages. Update SDD-0/SDD-2's map and decide migration numbers before build; this design grants no migration creation authority or number reservation. |
+| SDD-0 one-session guardrail versus earlier SDD-2 optional 7a/7b | Owner OQ8 accepted the 7a/7b split; §12 assigns objects/packages/acceptance. SDD-0/SDD-2 now record 7a=M83 and 7b's undecided number; Owner 2026-10-26 authorizes 7a build/local creation only, application separate and 7b not authorized. |
 | E01 old grants/counts/history versus E02/E03 and this brief | Dated snapshot comments are historical. M81 read-back and one browser proof supersede them; M82 is separate and its actual live status is a preflight fact, not guessed from its local file. |
 
 All BookConnect pointers in §2 were checked locally (orchestrator spot-check

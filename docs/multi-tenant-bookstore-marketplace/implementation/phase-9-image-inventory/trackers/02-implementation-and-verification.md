@@ -6367,3 +6367,17 @@ User authorized a focused plan and implementation. LibraryShelf adds noninteract
 ## 2026-10-04 — Library local commit authorization
 
 The user accepted and explicitly authorized committing the reviewed Arrange, corrected drop/save paths and shelf-contact/depth checkpoint. The scoped commit containing this handoff includes application/test source and Library shelf documentation/evidence; OCR/vault/notes/dependencies/services/migrations remain excluded. Prior app verification is recorded in the Library tracker; this commit transaction checks staged scope, whitespace and documentation continuity. No additional app/native validation is claimed. No push, external deployment, database/Storage/preference write or migration/application. Current Library unit: library_arrange_shelf_local_commit_checkpoint; next action: user selects the next Library unit. Marketplace Phase 9/M46, DOC-13/ACTIVE and authority remain unchanged.
+
+## 2026-10-27 - M83 lean catalogue identity applied, read back and browser-checked
+
+Migration: local file `supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`, 1,359 lines, SHA-256 `6538d7c79b8e2352e70374b96c5f8db1a1152fe9bb9ab86ade94eadd14b00616`. Applied 2026-10-27 through Supabase MCP `apply_migration` (second connector), project `ahntbtktjjmvfosgkmgn` (https://ahntbtktjjmvfosgkmgn.supabase.co), name `marketplace_phase9_lean_catalogue_identity`, result success. Live version **20261026223715** (local 20261026000083 maps to it). Earlier attempts through the first connector returned "declined" before reaching the database (no effect).
+
+Read-back (PASS, 2026-10-27): `list_migrations` shows 20261026223715 as the latest. All 18 new or replaced functions hash-match the local LF bodies (owner postgres, search_path "", EXECUTE postgres only except `phase9_add_candidate_to_inventory_v1` with authenticated as well). All 5 new tables owner postgres, RLS on, empty. `book_metadata_sources` postgres full with anon/authenticated/service_role SELECT only and sole policy "metadata sources platform read". `canonical_works`/`canonical_editions` anon/authenticated SELECT only. Counts at read-back: works 3, editions 3, sources 0, linked inventory 2.
+
+Tests (record as already run): Lean PGlite 269/269; CatalogueLink PGlite 79/79; Jest 1,464 passed; native Postgres suites 20/12/25/16/11; 3 pre-existing MetadataFoundation failures, not caused by 7a; continuity validator after apply PHASE9_CONTINUITY_CHECK=PASS with an M83 clause added to the migration-set validator.
+
+Browser evidence (PASS, 2026-10-27; detail in tracker 38): Case A new ISBN 9780743273565 one new work/edition, chosen 1 / added 1, inventory linked; Case B reuse with chosen 2 / added 2; Case C manual card unlinked; Case E scanned "Individuals" new linked edition; Case D scanned "Thinking, Fast and Slow" refused until Owner Confirm per M69, then UNLINKED Add per the Google non-admission path. Counts after: works 5, editions 5, sources 2, provider IDs 2, edition-stats rows 2, store_inventory 44 (5 linked). Client message correction (written by the orchestrator, recorded in tracker 38): it is NOT browser-verified.
+
+Next authorized action: Owner review of these docs and the uncommitted slice 7a change set; commit only on the Owner's instruction. Nothing is staged, committed or pushed.
+
+Database mutations: M83 only; dev test data through the app.

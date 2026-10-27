@@ -21,6 +21,7 @@ $defaultDataDir = Join-Path ([IO.Path]::GetTempPath()) "bookconnect-u8b-pg-$PID"
 if ([string]::IsNullOrWhiteSpace($DataDir)) { $DataDir = $defaultDataDir }
 $DataDir = [IO.Path]::GetFullPath($DataDir)
 $serverLog = Join-Path $DataDir 'server.log'
+$leanSetupFile = Join-Path $DataDir 'lean-catalogue-setup.sql'
 $dataDirCreated = $false
 $serverStarted = $false
 $databaseCreated = $false
@@ -282,9 +283,25 @@ try {
     if ($catalogueM81.Count -gt 1) { throw 'multiple catalogue-link M81 files found' }
     if ($catalogueM81.Count -eq 1) { Invoke-PsqlFile $catalogueDbName $catalogueM81[0].FullName | Out-Null }
     Invoke-PsqlFile $catalogueDbName (Join-Path $root 'supabase\migrations\20261026000082_marketplace_phase9_edition_choice_survives_first_save.sql') | Out-Null
+    # 02b §§9/11/12: live source ACL baseline, then optional 7a artifact only.
+    $leanSetup = & node (Join-Path $PSScriptRoot 'leanCatalogueFixture.mjs') '--native-lean-setup-sql'
+    if ($LASTEXITCODE -ne 0) { throw 'lean-catalogue test-schema alignment emission failed' }
+    if ([string]::IsNullOrWhiteSpace(($leanSetup -join [Environment]::NewLine))) {
+      throw 'lean-catalogue test-schema alignment emission returned no SQL'
+    }
+    # Windows PowerShell 5.1 native arguments do not preserve quoted SQL identifiers.
+    [IO.File]::WriteAllText($leanSetupFile, ($leanSetup -join [Environment]::NewLine), [Text.UTF8Encoding]::new($false))
+    Invoke-PsqlFile $catalogueDbName $leanSetupFile | Out-Null
+    $catalogueM83 = @(Get-ChildItem -LiteralPath (Join-Path $root 'supabase\migrations') -File |
+      Where-Object { $_.Name -match '^[0-9]{8}000083_marketplace_phase9_lean_catalogue_identity\.sql$' })
+    if ($catalogueM83.Count -gt 1) { throw 'multiple lean-catalogue M83 files found' }
+    if ($catalogueM83.Count -eq 1) { Invoke-PsqlFile $catalogueDbName $catalogueM83[0].FullName | Out-Null }
     & node (Join-Path $PSScriptRoot 'phase9CatalogueLinkConcurrency.postgres.mjs') $Port $catalogueDbName $psql
     if ($LASTEXITCODE -ne 0) { throw 'Catalogue-link native PostgreSQL acceptance failed' }
     Write-Output 'CATALOGUE_LINK_REAL_POSTGRES_ACCEPTANCE_PASS'
+    & node (Join-Path $PSScriptRoot 'phase9LeanCatalogueConcurrency.postgres.mjs') $Port $catalogueDbName $psql
+    if ($LASTEXITCODE -ne 0) { throw 'Lean-catalogue identity native PostgreSQL acceptance failed' }
+    Write-Output 'LEAN_CATALOGUE_IDENTITY_REAL_POSTGRES_ACCEPTANCE_PASS'
     # Owner M82 brief: run the same first-save assertions on the disposable clone.
     $savedFirstSavePort = $env:PHASE9_FIRST_SAVE_NATIVE_PORT
     $savedFirstSaveDatabase = $env:PHASE9_FIRST_SAVE_NATIVE_DATABASE
@@ -307,6 +324,11 @@ catch {
 finally {
   # Task 8 / EP-AC12: cleanup failures are failures, with evidence retained in command output.
   $cleanupErrors = [Collections.Generic.List[string]]::new()
+  try {
+    if ($dataDirCreated -and (Test-Path -LiteralPath $leanSetupFile)) {
+      Remove-Item -LiteralPath $leanSetupFile -Force
+    }
+  } catch { $cleanupErrors.Add("lean setup SQL cleanup: $_") }
   $stopVerified = -not $serverStarted
   if ($catalogueDatabaseCreated -and $serverStarted) {
     try {

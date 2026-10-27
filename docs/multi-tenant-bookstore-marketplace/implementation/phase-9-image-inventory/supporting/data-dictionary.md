@@ -327,6 +327,29 @@ input/session/Owner lineage and store isolation remain authoritative.
 
 Existing `title`, `subtitle`, `authors`, `isbn_10`, `isbn_13`, `publisher`, `published_date`, `language`, `cover_url`, `page_count`, and `categories` remain. Both ISBN values are stored when the selected validated metadata provides them; otherwise one may remain null.
 
+## `book_metadata_sources` (live baseline and target after 7a)
+
+Authority: [02b §§4.2/9/11–12/14](../work-units/post-scan-rework/02b-slice7-lean-catalogue-writes-sdd.md),
+Owner 2026-10-26 decision 6 and AC7-28. Evidence:
+[2026-10-26 read-only preflight](./database-current-vs-target.md#2026-10-26-slice-7a-read-only-preflight),
+with source policy/grant rows independently corroborated by the orchestrator.
+The target is approved design; M83 is not created/applied by this documentation step.
+
+| Aspect | Observed baseline, 2026-10-26 | Target after 7a |
+| --- | --- | --- |
+| Identity/links | UUID PK; `UNIQUE(provider,provider_book_id)`; nullable canonical-edition and source-book FKs use ON DELETE SET NULL; `adapter_key` FK to provider registry. Zero live rows. | Preserve keys/FKs; admitted new source rows follow 02b §4.2; no reset/backfill or incumbent rewrite. |
+| Grants | Anon/authenticated/service_role each have DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE; preflight table-level ACLs also list MAINTAIN. No PUBLIC table-level grant row. | REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN from PUBLIC, anon, authenticated and service_role. Existing anon/authenticated SELECT grants remain; service_role keeps SELECT only. |
+| RLS/policy | RLS enabled, not forced. Sole policy `metadata sources platform write`: FOR ALL TO authenticated, USING and WITH CHECK `marketplace_sec.is_platform_operator()`; this is also the only client SELECT path. | DROP that ALL policy; CREATE `metadata sources platform read`, FOR SELECT TO authenticated USING `(marketplace_sec.is_platform_operator())`. No write policy. |
+| Readers | Platform operators via the sole policy; service_role via SELECT/RLS bypass; postgres routines. Non-operator authenticated and anon have no matching policy. No repo reader found in the audited runtime directories. | Operator SELECT remains available via the replacement policy; service_role SELECT and postgres routines remain available; non-operator authenticated/anon SELECT returns no rows, unchanged. |
+| Writers | No live function or non-internal trigger references the table; no repo writer in src/, app/, supabase/functions/, workers/ or scripts/. Write exposure remains through the unused operator ALL policy and broad direct role grants. | Writes only through the postgres-owned shared core. Operator corrections require privileged SQL under separate authority, like hidden-flag administration. No direct API/service_role write path. |
+
+This deliberately removes an unused operator write path after the writer audit,
+rather than narrowing an active writer. The lone migration-test reference is
+`supabase/migrations/__tests__/marketplacePhase3InventoryCanonicalListings.test.ts:19`
+(CREATE TABLE assertion); test-fixture DDL and historical migrations are not
+runtime writers. AC7-28 requires role-switched write denials and preserved read
+behavior on a seeded disposable database; no destructive live probe is authorized.
+
 ## `book_search_aliases` (live current representation)
 
 M01 created this table and it is live. The last recorded audit found zero rows.
@@ -825,3 +848,22 @@ Authority: DOC-3 §5.2.1 / picker §3.1. Optional rejectionReason belongs only t
 | marketplace_sec.phase9_edition_job_exhausted(image_extraction_jobs) | STABLE, postgres-only. True for an edition-options job (p9-owner-edition-options-v1) in open/in_progress/retry_scheduled with attempt_count >= max_attempts and no live lease. Read paths report it as failed; the Owner's explicit Search Books closes it (dead_letter, P9_METADATA_ATTEMPTS_EXHAUSTED). |
 | marketplace_sec.phase9_edition_author_middle_match(text,text) | IMMUTABLE, postgres-only. Same first/last author words and word count (>= 3), each middle word equal or a one-letter initial of the other; explicit edition options only. |
 | marketplace_sec.phase9_edition_title_key(text,boolean) (M77 body) | Adds joining (hyphens/dashes/apostrophes removed) and separating (listed punctuation to spaces) rules for all languages, and en/en æ->ae, ae->e, to the M76 key. |
+
+## 2026-10-27 - M83 lean catalogue identity (live version 20261026223715)
+
+All entries below are live from M83 version 20261026223715.
+
+| Relation / field | Live contract |
+| --- | --- |
+| public.canonical_provider_ids | New table, live from M83. PK (adapter_key, id_kind, external_id); edition XOR work target; FKs to phase9_provider_registry, canonical_editions, canonical_works. |
+| public.canonical_work_stats | New table, live from M83. Holds times_searched. |
+| public.canonical_edition_stats | New table, live from M83. Holds times_chosen, times_added. |
+| marketplace_sec.phase9_catalogue_isbn_blocklist | New table, live from M83. Empty at read-back. |
+| marketplace_sec.phase9_catalogue_choice_effects | New table, live from M83. One private pending effect per selection. |
+| canonical_editions.oclc | New column, live from M83. |
+| canonical_editions.lccn | New column, live from M83. |
+| canonical_editions.hidden | New column, live from M83. Default false. |
+| canonical_editions.source_retention_note | New column, live from M83. |
+| canonical_editions.normalizer_version | New column, live from M83. |
+| canonical_works.normalizer_version | New column, live from M83. |
+| phase9_provider_registry.shared_source_note | New column, live from M83. |

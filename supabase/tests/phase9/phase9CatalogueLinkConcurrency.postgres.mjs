@@ -52,6 +52,8 @@ async function ol(overrides = {}) {
     + ',observed_language=' + q(m.language) + ',owner_review_snapshot=jsonb_set(owner_review_snapshot,\'{value}\',(owner_review_snapshot->\'value\')||' + literal(review) + ') WHERE id=' + q(f.candidateId));
   const p = await olOperation(f); await successfulReads(p);
   const result = olResult(p, m); result.rows = [result.rows[0]];
+  result.rows[0].metadata.providerRecordId = m.providerRecordId;
+  result.rows[0].googleBooksUrl = 'https://openlibrary.org/books/' + m.providerRecordId;
   assert.equal((await service(completeSql(p, result))).status, 'completed');
   f.selected = await owner(selectSql(f, await choices(f), result.rows[0].optionId), f);
   await save(f); return { ...f, ...p, facts: result.rows[0].metadata };
@@ -121,7 +123,7 @@ async function held(name, statement, contender, { rollback = false, afterWait = 
 
 // AC6-0 RED: helper absent/no work-key wait. Reversed case/order uses one exact key.
 test('AC6-0: key-order race shares one work across distinct ISBNs', async () => {
-  const a = await ol(), b = await ol({ authors: ['a. author', 'B. AUTHOR'], isbn10: null, isbn13: '9780547928227' });
+  const a = await ol(), b = await ol({ authors: ['a. author', 'B. AUTHOR'], providerRecordId: 'OL101M', isbn10: null, isbn13: '9780547928227' });
   const r = await overlap('cat-key-order', ownerAction(await addSql(a), a), ownerAction(await addSql(b), b));
   accepted(r.contender); const x = await item(a), y = await item(b); linked(x); linked(y);
   assert.equal(x.canonical_work_id, y.canonical_work_id); assert.deepEqual(await totals(), { works: 1, editions: 2, inventory: 2 });
@@ -217,7 +219,7 @@ for (const key of ['isbn_10', 'isbn_13']) test('AC6-12: native ' + key + ' uniqu
 
 // AC6-13 RED: helper absent; work-key race must not be mistaken for ISBN conflict.
 test('AC6-13: distinct ISBNs race one work and persist two editions', async () => {
-  const a = await ol(), b = await ol({ isbn10: null, isbn13: '9791090636071' });
+  const a = await ol(), b = await ol({ providerRecordId: 'OL101M', isbn10: null, isbn13: '9791090636071' });
   const r = await overlap('cat-two-isbns', ownerAction(await addSql(a), a), ownerAction(await addSql(b), b));
   accepted(r.contender); linked(await item(a)); linked(await item(b));
   assert.equal((await item(a)).canonical_work_id, (await item(b)).canonical_work_id);

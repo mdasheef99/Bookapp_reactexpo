@@ -52,7 +52,7 @@ test('AC6-0: reordered, duplicated and Unicode author keys converge to one work'
   // NFC full-width spellings pass that validator but collide under §5.2 NFKC;
   // both real request/select/save paths still contain duplicate NORMALIZED keys.
   const a = await olCard(db, { title: 'Ｔhe Café, தமிழ்', authors: ['B. Author', 'a. author', 'ａ. author'] });
-  const b = await olCard(db, { title: 'the café, தமிழ்', authors: ['A. Author', 'b. author', 'Ａ. Author'], isbn10: null, isbn13: '9780547928227' });
+  const b = await olCard(db, { title: 'the café, தமிழ்', authors: ['A. Author', 'b. author', 'Ａ. Author'], providerRecordId: 'OL101M', isbn10: null, isbn13: '9780547928227' });
   const first = (await add(db, a)).item, second = (await add(db, b)).item;
   linked(first); linked(second); assert.equal(first.canonical_work_id, second.canonical_work_id);
   assert.equal(await count('canonical_works'), 1); assert.equal(await count('canonical_editions'), 2);
