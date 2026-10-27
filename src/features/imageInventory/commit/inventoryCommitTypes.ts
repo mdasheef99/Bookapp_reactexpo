@@ -43,6 +43,7 @@ export type FrozenCandidateCommand = Readonly<{
     saveRequest?: UpdateCandidateReviewRequest;
     resaveRequest?: UpdateCandidateReviewRequest;
     saveCompleted?: boolean;
+    savedAuthority?: OwnerCandidateDetail;
     commitIdempotencyKey: string;
     commitCommandId: string;
     claimToken: string;
@@ -106,3 +107,8 @@ export class CandidateCommandRegistry {
         return this.claims.has(candidateId);
     }
 }
+
+// SDD-1 section 2/D2-3: these are actual command responses, never inferred reads.
+export type CandidateCommitAuthority =
+    | Readonly<{ kind: 'save'; commandId: string; detail: OwnerCandidateDetail }>
+    | Readonly<{ kind: 'commit'; commandId: string; request: AddCandidateToInventoryRequest; result: OwnerCandidateCommitResult }>;

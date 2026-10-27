@@ -129,3 +129,14 @@ it('an old pending receipt cannot regress choices already read as ready for the 
     operationId: testUuid(40), status: 'pending', requestGeneration: 1, optionsVersion: 1, available: false,
   })).toBe(false);
 });
+
+// SDD-1 section 5/AC3-1: a confirmed commit allows only a current committed read.
+it.each(['ready', 'committed', 'older committed'])('fences a receipt-backed batch read: %s', async state => {
+  await synchronizeInventoryCommitSuccess(client, pickerIdentity, request.sessionId, [{
+    ...request, candidateVersion: 6, inventoryId: testUuid(90), inventoryVersion: 1, outcome: 'committed_private',
+  }]);
+  const card = pickerCard(selectedChoices({ candidateVersion: state === 'older committed' ? 5 : 6 }));
+  const page = { items: [{ ...card, candidateState: state === 'ready' ? 'ready' : 'committed' }] } as never;
+  if (state === 'committed') expect(assertBatchAuthority(client, pickerIdentity, page)).toBe(page);
+  else expect(() => assertBatchAuthority(client, pickerIdentity, page)).toThrow('AUTHORITY_CHANGED');
+});

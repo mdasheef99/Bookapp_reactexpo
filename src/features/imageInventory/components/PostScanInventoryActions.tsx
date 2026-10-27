@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
@@ -5,6 +6,10 @@ import { Button } from '@/components/ui/Button';
 import { BatchInventoryCommitControls } from './BatchInventoryCommitControls';
 import type { useInventoryCommitCoordinator } from '../commit/useInventoryCommitCoordinator';
 import type { CandidateCommitDraft } from '../commit/inventoryCommitCoordinator';
+import type { CandidateCommitAuthority } from '../commit/inventoryCommitTypes';
+import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
+import type { CompactReviewEdits } from '../review/compactReviewDraft';
+import { adoptSavedDraftAuthorities } from '../commit/inventoryCommitPolicy';
 import { inventoryRoutes } from '../navigation/inventoryRoutes';
 
 export function PostScanFooter({ sessionId, isOffline, active, inputCount, detectedCount, overflow }: {
@@ -39,4 +44,54 @@ export function PostScanBulkAction({ candidates, inventoryCommit, disabled, rema
       inFlightCandidateIds={inventoryCommit.inFlight} outcomes={inventoryCommit.outcomes}
       onAddAll={inventoryCommit.addAll} onRetry={inventoryCommit.retryAddAll} />
   </View>;
+}
+export function usePostScanDraftState(scope: string, cards: readonly OwnerBatchReviewCard[],
+    authorities: ReadonlyMap<string, readonly CandidateCommitAuthority[]>) {
+    const [candidateDrafts, setCandidateDrafts] = useState<Map<string, {
+        edits: CompactReviewEdits; acceptedAuthorityKey: string;
+    }>>(
+        new Map(),
+    );
+    const [pendingIdentityAuthorities, setPendingIdentityAuthorities] = useState<Map<string, string>>(
+        new Map(),
+    );
+    const [authorityChangedCandidates, setAuthorityChangedCandidates] = useState<Set<string>>(
+        new Set(),
+    );
+    useEffect(() => {
+        setAuthorityChangedCandidates(new Set());
+        setPendingIdentityAuthorities(new Map());
+    }, [scope]);
+    useEffect(() => {
+        setCandidateDrafts(current => adoptSavedDraftAuthorities(current, cards, authorities,
+            authorityChangedCandidates, pendingIdentityAuthorities));
+    }, [cards, authorities, authorityChangedCandidates, pendingIdentityAuthorities]);
+    const handleAuthorityStateChange = useCallback((candidateId: string, changed: boolean) => {
+        setAuthorityChangedCandidates((current) => {
+            if (current.has(candidateId) === changed) return current;
+            const next = new Set(current);
+            if (changed) next.add(candidateId);
+            else next.delete(candidateId);
+            return next;
+        });
+    }, []);
+    const handlePendingIdentityChange = useCallback((candidateId: string, active: boolean,
+        acceptedAuthorityKey: string) => {
+        setPendingIdentityAuthorities((current) => {
+            const next = new Map(current);
+            if (active) next.set(candidateId, acceptedAuthorityKey);
+            else next.delete(candidateId);
+            return next;
+        });
+    }, []);
+    const handleDraftChange = useCallback((candidateId: string, edits: CompactReviewEdits, acceptedAuthorityKey: string) => {
+        setCandidateDrafts(current => {
+            const next = new Map(current);
+            if (Object.keys(edits).length === 0) next.delete(candidateId);
+            else next.set(candidateId, { edits, acceptedAuthorityKey });
+            return next;
+        });
+    }, []);
+    return { candidateDrafts, pendingIdentityAuthorities, authorityChangedCandidates,
+        handleAuthorityStateChange, handlePendingIdentityChange, handleDraftChange };
 }

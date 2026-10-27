@@ -6,6 +6,7 @@ import { OwnerUxClientError, ownerUxService } from '../api/ownerUxService';
 import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
 import { ownerBatchReviewService } from '../api/ownerBatchReviewService';
 import { useOwnerBatchReview } from '../queries/ownerBatchReviewReads';
+import { ownerBatchReviewKeys } from '../queries/ownerBatchReviewKeys';
 import { pickerChoices, pickerCard, pickerDetail, pickerDefaults, deferred } from '../testing/editionPickerClientFixtures';
 import { formatInrFromMinor } from '../scanSetup/scanSetupForm';
 import { InventoryCommitCoordinator } from '../commit/inventoryCommitCoordinator';
@@ -701,6 +702,32 @@ describe('Add refusal authority recovery', () => {
         <QueryClientProvider client={client}>{children}</QueryClientProvider>
     );
 
+    it('keeps other cards addable after one card Save refusal', async () => {
+        const cards = [21, 22].map(id => reviewCard({ candidateId: testUuid(id), review: null,
+            reviewVersion: null, reviewReady: false, allowedActions: ['save_review'] }));
+        jest.spyOn(ownerUxService, 'updateCandidateReview').mockRejectedValue(
+            new OwnerUxClientError('P9_STATE_CONFLICT', false, 'Automatic suggestion needs confirmation.'),
+        );
+        function MountedCards() {
+            const coordinator = useInventoryCommitCoordinator(identity, cards[0].sessionId);
+            return <>{cards.map(card => <BatchReviewCard key={card.candidateId} identity={identity} card={card}
+                defaults={{ ...defaults, priceMinor: 15_000, condition: 'good' }} isOffline={false}
+                canMutate={!coordinator.inFlight.has(card.candidateId) && !coordinator.isCommandActive(card.candidateId)}
+                removePending={false} addPending={coordinator.inFlight.has(card.candidateId)}
+                addOutcome={coordinator.outcomes.get(card.candidateId)} onRemove={jest.fn()} onDraftChange={jest.fn()}
+                onAdd={(current, edits, review) => coordinator.addCandidate({ card: current, edits, review,
+                    acceptedAuthorityKey: candidateCommitAuthorityKey(current) })} />)}</>;
+        }
+        const screen = render(<MountedCards />, { wrapper });
+        const first = within(screen.getByTestId('card-' + cards[0].candidateId));
+        const other = within(screen.getByTestId('card-' + cards[1].candidateId));
+        expect(first.getByText('Add to inventory')).not.toBeDisabled();
+        expect(other.getByText('Add to inventory')).not.toBeDisabled();
+        await act(async () => { fireEvent.press(first.getByText('Add to inventory')); });
+        expect(first.getByText('Add to inventory')).toBeDisabled();
+        expect(other.getByText('Add to inventory')).not.toBeDisabled();
+    });
+
     it.each(['individual', 'bulk'])('retires the %s hook refusal after accepted confirmation and forwards supplied selling edits', async (mode) => {
         const base = reviewCard();
         const card = reviewCard({ review: null, reviewVersion: null, reviewReady: false,
@@ -841,12 +868,12 @@ describe('Add refusal authority recovery', () => {
             }
         });
 
-    it('confirms through the mounted picker, waits for batch authority, and adds the preserved price and condition', async () => {
+    it('shows success without a draft conflict after refusal, picker confirmation, and its own first Save', async () => {
         let choices = pickerChoices({ selection: { selectionId: testUuid(30), source: 'current_suggestion',
             optionId: null, snapshot: { ...editionMetadata, title: 'Chosen edition', authors: ['Chosen author'] },
             confirmedByOwner: false } });
         let card = pickerCard(choices), detail = pickerDetail(choices);
-        const cardDefaults = { ...pickerDefaults, priceMinor: 25_000, quantity: 1 as const };
+        const cardDefaults = { ...pickerDefaults, priceMinor: null, condition: null, quantity: 1 as const };
         const batch = (): OwnerBatchReview => ({ sessionId: card.sessionId, status: 'active', sessionVersion: 1,
             presentationRevision: card.candidateVersion, defaults: cardDefaults, batchLabel: null,
             counts: { detected: 1, processing: 0, needsAttention: 0, reviewReadySaved: 0,
@@ -870,10 +897,14 @@ describe('Add refusal authority recovery', () => {
             card = pickerCard(choices, request.review); detail = pickerDetail(choices, request.review);
             return detail;
         });
-        const commit = jest.spyOn(ownerUxService, 'addCandidateToInventory').mockImplementation(async (request) => ({
-            sessionId: request.sessionId, candidateId: request.candidateId, candidateVersion: request.expectedCandidateVersion + 1,
-            inventoryId: testUuid(80), inventoryVersion: 1, outcome: 'committed_private',
-        }));
+        const committed = deferred<void>();
+        const commit = jest.spyOn(ownerUxService, 'addCandidateToInventory').mockImplementation(async (request) => {
+            await committed.promise;
+            return {
+                sessionId: request.sessionId, candidateId: request.candidateId, candidateVersion: request.expectedCandidateVersion + 1,
+                inventoryId: testUuid(80), inventoryVersion: 1, outcome: 'committed_private' as const,
+            };
+        });
         const draftChange = jest.fn();
         function MountedCard() {
             const batchReview = useOwnerBatchReview(identity, choices.sessionId);
@@ -882,17 +913,21 @@ describe('Add refusal authority recovery', () => {
             return current ? <BatchReviewCard identity={identity} card={current} defaults={cardDefaults}
                 isOffline={false} canMutate={!coordinator.inFlight.has(current.candidateId)} removePending={false}
                 addPending={coordinator.inFlight.has(current.candidateId)} addOutcome={coordinator.outcomes.get(current.candidateId)}
+                addAuthorities={coordinator.authorities.get(current.candidateId)}
                 commandSlot={coordinator} onRemove={jest.fn()} onDraftChange={draftChange}
                 onEditionSelection={() => { void batchReview.refetch(); }}
                 onAdd={(card, edits, review) => coordinator.addCandidate({ card, edits, review,
                     acceptedAuthorityKey: candidateCommitAuthorityKey(card) })} /> : null;
         }
         const screen = render(<MountedCard />, { wrapper });
-        await waitFor(() => expect(screen.getByText('Add to inventory')).not.toBeDisabled());
+        await screen.findByTestId('card-price-field');
+        expect(screen.getByText('Add to inventory')).toBeDisabled();
         fireEvent.press(screen.getByTestId('card-price-field'));
-        fireEvent.press(screen.getByLabelText(formatInrFromMinor(50_000)));
+        fireEvent.changeText(screen.getByTestId('card-custom-rupees'), '150');
+        fireEvent.press(screen.getByLabelText('Use custom price'));
         fireEvent.press(screen.getByTestId('card-condition-field'));
-        fireEvent.press(screen.getByLabelText('Acceptable'));
+        fireEvent.press(screen.getByLabelText('Good'));
+        expect(screen.getByTestId('card-review-status')).toHaveProp('accessibilityLabel', 'Ready');
         await act(async () => { fireEvent.press(screen.getByText('Add to inventory')); });
         await screen.findByText('Check the latest details. If this is the suggested edition, open Find or change edition and tap Confirm current suggestion.');
         expect(screen.getByText('Add to inventory')).toBeDisabled();
@@ -903,7 +938,7 @@ describe('Add refusal authority recovery', () => {
         expect(select).toHaveBeenCalledWith(expect.objectContaining({ source: 'current_suggestion',
             selectionId: testUuid(30), expectedCandidateVersion: 4, expectedMetadataRevision: 7 }), expect.anything());
         expect(draftChange).toHaveBeenLastCalledWith(card.candidateId, expect.objectContaining({
-            priceMinor: 50_000, baseCondition: 'acceptable', metadataChoice: { mode: 'edition_option', selectionId: testUuid(30) },
+            priceMinor: 15_000, baseCondition: 'good', metadataChoice: { mode: 'edition_option', selectionId: testUuid(30) },
         }), candidateCommitAuthorityKey(card));
         fireEvent.press(screen.getByText('Close metadata'));
         // Choice adoption alone cannot bypass the batch card's current-authority gate.
@@ -913,13 +948,23 @@ describe('Add refusal authority recovery', () => {
         expect(screen.queryByTestId('compact-authority-changed')).toBeNull();
         expect(screen.getByTestId('card-price-overlay')).toBeTruthy();
         expect(screen.getByTestId('card-condition-overlay')).toBeTruthy();
-        expect(within(screen.getByTestId('card-price-field')).getByText(formatInrFromMinor(50_000))).toBeTruthy();
-        expect(within(screen.getByTestId('card-condition-field')).getByText('Acceptable')).toBeTruthy();
+        expect(within(screen.getByTestId('card-price-field')).getByText(formatInrFromMinor(15_000))).toBeTruthy();
+        expect(within(screen.getByTestId('card-condition-field')).getByText('Good')).toBeTruthy();
         await act(async () => { fireEvent.press(screen.getByText('Add to inventory')); });
+        await waitFor(() => expect(commit).toHaveBeenCalledTimes(1));
+        card = { ...card, candidateState: 'commit_in_progress', allowedActions: [] };
+        await act(async () => {
+            await client.invalidateQueries({ queryKey: ownerBatchReviewKeys.batchReview(identity, card.sessionId) });
+        });
+        await waitFor(() => expect(screen.getByTestId('card-review-status')).toHaveProp('accessibilityLabel', 'Adding'));
+        expect(screen.queryByTestId('compact-authority-changed')).toBeNull();
+        await act(async () => { committed.resolve(); });
         await screen.findByText('Added to Inventory');
+        expect(screen.queryByTestId('compact-authority-changed')).toBeNull();
+        expect(screen.getByTestId('card-review-status')).toHaveProp('accessibilityLabel', 'Added');
         expect(save).toHaveBeenCalledTimes(2);
         expect(save).toHaveBeenLastCalledWith(expect.objectContaining({ review: expect.objectContaining({
-            priceMinor: 50_000, baseCondition: 'acceptable',
+            priceMinor: 15_000, baseCondition: 'good',
             metadataChoice: { mode: 'edition_option', selectionId: testUuid(30) },
         }) }), expect.anything());
         expect(commit).toHaveBeenCalledTimes(1);

@@ -2,6 +2,10 @@ import { synchronizeCandidateReviewSuccess } from '../queries/ownerUxReviewQueri
 import { acceptCandidateRead, candidateVersions, knownCandidateVersions, versionsRegress,
     type CandidateVersions } from '../queries/ownerCandidateAuthority';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useScopedCommitState } from './useScopedCommitState';
+import type { CandidateCommitAuthority } from './inventoryCommitTypes';
+import type { OwnerBatchReviewCard } from '../contracts/ownerBatchReviewContracts';
+import { candidateCommitAuthorityKey, commandOwnsCard, commandOwnsReceipt, reviewMatchesReset } from './inventoryCommitPolicy';
 import { useQueryClient } from '@tanstack/react-query';
 import { ownerUxService } from '../api/ownerUxService';
 import { createCaptureUuid, createSemanticKey } from '../capture/captureIds';
@@ -32,10 +36,16 @@ export function useInventoryCommitCoordinator(
     const controllers = useRef(new Set<AbortController>());
     const outcomeAuthorities = useRef(new Map<string, CandidateVersions>());
     const checkedAuthorities = useRef(new Map<string, CandidateVersions>());
-    const [inFlight, setInFlight] = useState<InFlightState>(new Set());
-    const [outcomes, setOutcomes] = useState<Map<string, CandidateCommitOutcome>>(new Map());
-    const [bulkResult, setBulkResult] = useState<AddAllResult | null>(null);
-    const [bulkPending, setBulkPending] = useState(false);
+    const [inFlight, setInFlight] = useScopedCommitState<InFlightState>(scope, () => new Set());
+    const [outcomes, setOutcomes] = useScopedCommitState<Map<string, CandidateCommitOutcome>>(scope, () => new Map());
+    const [bulkResult, setBulkResult] = useScopedCommitState<AddAllResult | null>(scope, () => null);
+    const [bulkPending, setBulkPending] = useScopedCommitState(scope, () => false);
+
+    const [authorities, setAuthorities] = useScopedCommitState<Map<string, readonly CandidateCommitAuthority[]>>(scope, () => new Map());
+    const acknowledge = (candidateId: string, authority: CandidateCommitAuthority) => {
+        if (activeScope.current !== scope) return;
+        setAuthorities(current => new Map(current).set(candidateId, [...(current.get(candidateId) ?? []), authority]));
+    };
 
     const executeFenced = useMemo(() => async <T,>(
         run: (signal: AbortSignal) => Promise<T>,
@@ -65,6 +75,10 @@ export function useInventoryCommitCoordinator(
             const current = acceptCandidateRead(client, ownerIdentity, canonical);
             if (current !== canonical) throw new Error('OWNER_CANDIDATE_AUTHORITY_CHANGED');
             checkedAuthorities.current.set(request.candidateId, candidateVersions(canonical));
+            if (canonical.sessionId === request.sessionId && canonical.candidateId === request.candidateId
+                && reviewMatchesReset(request.review, canonical.review.value)) {
+                acknowledge(request.candidateId, { kind: 'save', commandId: request.commandId, detail: canonical });
+            }
             await synchronizeCandidateReviewSuccess(client, ownerIdentity, request.sessionId, request.candidateId, canonical);
             return canonical;
         },
@@ -79,13 +93,17 @@ export function useInventoryCommitCoordinator(
         },
         // Retained Unit 7A/M39 mobile client seam. This sends only IDs,
         // canonical versions, and idempotency identities.
-        commitCandidate: (request) => {
+        commitCandidate: async (request) => {
             checkedAuthorities.current.set(request.candidateId, {
                 candidateVersion: request.expectedCandidateVersion,
                 metadataRevision: request.expectedMetadataRevision,
                 reviewVersion: request.expectedReviewVersion,
             });
-            return executeFenced(signal => ownerUxService.addCandidateToInventory(request, signal));
+            const result = await executeFenced(signal => ownerUxService.addCandidateToInventory(request, signal));
+            if (result.sessionId === request.sessionId && result.candidateId === request.candidateId) {
+                acknowledge(request.candidateId, { kind: 'commit', commandId: request.commandId, request, result });
+            }
+            return result;
         },
         synchronizeSuccess: (results: readonly OwnerCandidateCommitResult[]) => (
             synchronizeInventoryCommitSuccess(client, ownerIdentity, sessionId, results)
@@ -104,6 +122,7 @@ export function useInventoryCommitCoordinator(
         activeScope.current = scope;
         setInFlight(new Set());
         setOutcomes(new Map());
+        setAuthorities(new Map());
         outcomeAuthorities.current.clear();
         checkedAuthorities.current.clear();
         setBulkResult(null);
@@ -140,6 +159,7 @@ export function useInventoryCommitCoordinator(
     }, [client, outcomes, ownerIdentity, scope, sessionId]);
 
     const markInFlight = (candidateIds: readonly string[], pending: boolean) => {
+        if (activeScope.current !== scope) return;
         setInFlight((current) => {
             const next = new Set(current);
             candidateIds.forEach((candidateId) => {
@@ -152,6 +172,7 @@ export function useInventoryCommitCoordinator(
         next: readonly CandidateCommitOutcome[],
         authorities: readonly (CandidateVersions & { candidateId: string })[],
     ) => {
+        if (activeScope.current !== scope) return;
         const byId = new Map(authorities.map(authority => [authority.candidateId, authority]));
         next.forEach((outcome) => {
             const authority = checkedAuthorities.current.get(outcome.candidateId)
@@ -241,8 +262,61 @@ export function useInventoryCommitCoordinator(
         releaseSlot: (candidateId: string, token: string) => coordinator.releaseSlot(candidateId, token),
         isCommandActive: (candidateId: string) => coordinator.isCommandActive(candidateId),
         inFlight,
+        authorities,
         outcomes,
         bulkResult,
         bulkPending,
     };
+}
+
+export function useCompactReviewAuthority({
+    card, hasEdits, hasBufferedIdentity, addOutcome,
+    selectedMetadataRevision, savedIdentityRevision, onAuthorityStateChange, addAuthorities, onAdoptAuthority,
+}: {
+    card: OwnerBatchReviewCard;
+    hasEdits: boolean;
+    hasBufferedIdentity: boolean;
+    addOutcome?: CandidateCommitOutcome;
+    addAuthorities?: readonly CandidateCommitAuthority[];
+    onAdoptAuthority?: (authorityKey: string) => void;
+    selectedMetadataRevision?: number;
+    savedIdentityRevision: number | null;
+    onAuthorityStateChange?: (candidateId: string, changed: boolean) => void;
+}) {
+    const authorityKey = candidateCommitAuthorityKey(card);
+    const acceptedAuthority = useRef(authorityKey);
+    const [authorityChanged, setAuthorityChanged] = useState(false);
+    const [identityResetKey, setIdentityResetKey] = useState(0);
+
+    useEffect(() => {
+        if (acceptedAuthority.current === authorityKey) return;
+        // SDD-1 section 2/D2-3: accept only an exact response from this command.
+        if (!authorityChanged && !hasBufferedIdentity && addAuthorities?.some(item => commandOwnsCard(item, card))) {
+            acceptedAuthority.current = authorityKey;
+            setIdentityResetKey(current => current + 1);
+            onAdoptAuthority?.(authorityKey);
+            return;
+        }
+        // Our accepted command is awaiting the parent read; keep the latest draft.
+        if (selectedMetadataRevision !== undefined && card.metadataRevision < selectedMetadataRevision) return;
+        if (savedIdentityRevision !== null && card.metadataRevision < savedIdentityRevision) return;
+        if (hasEdits || hasBufferedIdentity) {
+            if (!authorityChanged) {
+                setAuthorityChanged(true);
+                onAuthorityStateChange?.(card.candidateId, true);
+            }
+        }
+        else {
+            acceptedAuthority.current = authorityKey;
+            setIdentityResetKey((current) => current + 1);
+        }
+    }, [authorityChanged, authorityKey, card.candidateId, card.metadataRevision, card.review,
+        hasEdits, hasBufferedIdentity, addAuthorities, onAdoptAuthority, onAuthorityStateChange,
+        selectedMetadataRevision, savedIdentityRevision]);
+
+    const canClearEdits = !authorityChanged && !hasBufferedIdentity
+        && acceptedAuthority.current === authorityKey && addOutcome?.candidateId === card.candidateId
+        && addOutcome.status === 'succeeded' && !!addOutcome.result
+        && !!addAuthorities?.some(item => commandOwnsReceipt(item, card, addOutcome.result!));
+    return { acceptedAuthority, authorityChanged, setAuthorityChanged, identityResetKey, setIdentityResetKey, canClearEdits };
 }
