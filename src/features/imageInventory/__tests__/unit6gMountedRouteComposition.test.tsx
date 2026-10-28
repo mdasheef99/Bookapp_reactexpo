@@ -217,12 +217,13 @@ jest.mock('../queries/ownerEditionPickerQueries', () => ({
     }),
 }));
 jest.mock('../commit/useInventoryCommitCoordinator', () => ({
+    ...jest.requireActual('../commit/useInventoryCommitCoordinator'),
     useInventoryCommitCoordinator: () => ({
         addCandidate: mockAddCandidate,
         addAll: mockAddAll, retryAddAll: jest.fn(),
         claimSlot: jest.fn(() => 'slot'), releaseSlot: jest.fn(),
         isCommandActive: jest.fn(() => false),
-        inFlight: new Set(), outcomes: new Map(),
+        inFlight: new Set(), outcomes: new Map(), authorities: new Map(),
         bulkResult: null, bulkPending: false,
     }),
 }));

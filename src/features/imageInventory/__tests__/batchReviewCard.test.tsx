@@ -769,6 +769,22 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(screen.getByText('Acceptable')).toBeTruthy();
     });
 
+    it('still detects an external saved review change while Add is pending', () => {
+        const initial = card();
+        const props = { identity: { userId: testUuid(90), storeId: testUuid(91) },
+            defaults, isOffline: false, canMutate: true, removePending: false,
+            onRemove, onAdd, onDraftChange, onAuthorityStateChange: jest.fn() };
+        const screen = render(<BatchReviewCard {...props} card={initial} addPending={false} />);
+        fireEvent.press(screen.getByTestId('card-condition-field'));
+        fireEvent.press(screen.getByText('Acceptable'));
+        screen.rerender(<BatchReviewCard {...props} card={initial} addPending />);
+        screen.rerender(<BatchReviewCard {...props} addPending card={card({ candidateVersion: 3,
+            reviewVersion: 2, review: { ...initial.review!, priceMinor: 99_000 } })} />);
+        expect(screen.getByTestId('compact-authority-changed')).toBeTruthy();
+        expect(props.onAuthorityStateChange).toHaveBeenLastCalledWith(initial.candidateId, true);
+        expect(screen.getByText('Add to inventory')).toBeDisabled();
+    });
+
     it('does not display Ready after an add outcome makes the card ineligible', () => {
         const outcome: CandidateCommitOutcome = {
             candidateId: card().candidateId,
@@ -789,7 +805,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         expect(screen.queryByText('Ready')).toBeNull();
     });
 
-    it('added card shows Added to Inventory without Store View navigation', () => {
+    it.each([true, false])('added card shows Added to Inventory without Store View navigation (actions retained: %s)', (actionsRetained) => {
         const outcome: CandidateCommitOutcome = {
             candidateId: card().candidateId,
             status: 'succeeded',
@@ -806,7 +822,7 @@ describe('Phase 9 NEW 6G-C compact review card', () => {
         const screen = render(
             <BatchReviewCard
                 identity={{ userId: testUuid(90), storeId: testUuid(91) }}
-                card={card()} defaults={defaults} isOffline={false} canMutate
+                card={card(actionsRetained ? {} : { candidateState: 'committed', allowedActions: [] })} defaults={defaults} isOffline={false} canMutate
                 onRemove={onRemove} onAdd={onAdd}
                 removePending={false} addPending={false} onDraftChange={onDraftChange}
                 addOutcome={outcome}

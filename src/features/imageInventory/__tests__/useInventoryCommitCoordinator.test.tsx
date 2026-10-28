@@ -81,16 +81,21 @@ describe('Phase 9 NEW 6G-D commit hook retry routing (F01)', () => {
     let updateReview: jest.SpyInstance;
     let readCandidateSpy: jest.SpyInstance;
     let addToInventory: jest.SpyInstance;
+    let savedReview: OwnerCandidateDetail | undefined;
     const client = new QueryClient();
 
     beforeEach(() => {
         jest.restoreAllMocks();
+        savedReview = undefined;
         resetOwnerRequestFence(identity);
         resetImageInventoryIdentityForTests(identity);
         updateReview = jest.spyOn(ownerUxService, 'updateCandidateReview')
-            .mockImplementation(async () => readyDetail(testUuid(11)));
+            .mockImplementation(async request => {
+                savedReview = { ...readyDetail(request.candidateId), review: { value: request.review, reviewVersion: 3 } };
+                return savedReview;
+            });
         readCandidateSpy = jest.spyOn(ownerUxService, 'readCandidate')
-            .mockImplementation(async () => readyDetail(testUuid(11)));
+            .mockImplementation(async () => savedReview ?? readyDetail(testUuid(11)));
         addToInventory = jest.spyOn(ownerUxService, 'addCandidateToInventory')
             .mockImplementation(async (request) => ({
                 sessionId: request.sessionId, candidateId: request.candidateId,
@@ -196,7 +201,10 @@ describe('Phase 9 NEW 6G-D commit hook retry routing (F01)', () => {
 
     it('marks a repaired needs-attention bulk retry in flight', async () => {
         updateReview.mockRejectedValueOnce(new Error('network hiccup'))
-            .mockImplementation(async (request) => readyDetail(request.candidateId));
+            .mockImplementation(async (request) => {
+                savedReview = { ...readyDetail(request.candidateId), review: { value: request.review, reviewVersion: 3 } };
+                return savedReview;
+            });
         const first = draft({ baseCondition: 'acceptable' });
         const { result } = renderHook(
             () => useInventoryCommitCoordinator(identity, sessionId),

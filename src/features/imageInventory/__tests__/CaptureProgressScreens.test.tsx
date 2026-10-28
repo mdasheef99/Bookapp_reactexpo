@@ -162,12 +162,14 @@ jest.mock('../queries/ownerUxInputQueries', () => ({
     }),
 }));
 jest.mock('../commit/useInventoryCommitCoordinator', () => ({
+    ...jest.requireActual('../commit/useInventoryCommitCoordinator'),
     useInventoryCommitCoordinator: () => ({
         addCandidate: jest.fn(),
         addAll: jest.fn(),
         retryAddAll: jest.fn(),
         inFlight: mockInFlight,
         outcomes: mockOutcomes,
+        authorities: new Map(),
         bulkResult: mockBulkResult,
         bulkPending: false,
         claimSlot: mockClaimSlot,

@@ -26,10 +26,8 @@ export function AddCandidateToInventoryAction({
     onAdd,
 }: CoordinatedAddProps) {
     const { colors } = useTheme();
-    const canShow = card.allowedActions.includes('add_to_inventory')
-        || card.allowedActions.includes('save_review');
-    if (!canShow) return null;
-    if (outcome?.status === 'succeeded' && outcome.result) {
+    if (outcome?.status === 'succeeded' && outcome.candidateId === card.candidateId
+        && outcome.result?.candidateId === card.candidateId && outcome.result.sessionId === card.sessionId) {
         return (
             <View testID={`add-to-inventory-success-${card.candidateId}`} style={{ gap: 8 }}>
                 <Text selectable accessibilityLiveRegion="polite" style={{ color: colors.accent, fontWeight: '800' }}>
@@ -38,6 +36,9 @@ export function AddCandidateToInventoryAction({
             </View>
         );
     }
+    const canShow = card.allowedActions.includes('add_to_inventory')
+        || card.allowedActions.includes('save_review');
+    if (!canShow) return null;
     const retry = outcome?.status === 'failed_retryable' || outcome?.status === 'still_pending';
     const unconfirmedSuggestion = outcome?.stage === 'save' && outcome.code === 'P9_STATE_CONFLICT'
         && editionChoices?.sessionId === card.sessionId && editionChoices.candidateId === card.candidateId

@@ -85,8 +85,16 @@ async function eventually(assertion: () => void) {
 
 function harness(custom: Partial<InventoryCommitCoordinatorDependencies> = {}) {
     let serial = 0;
-    const saveReview = jest.fn(async (request) => readyDetail(request.candidateId));
-    const readCandidate = jest.fn(async (_session: string, candidateId: string) => readyDetail(candidateId));
+    const saved = new Map<string, OwnerCandidateDetail>();
+    const saveReview = jest.fn(async (request) => {
+        const detail = custom.saveReview ? await custom.saveReview(request)
+            : readyDetail(request.candidateId, { candidateVersion: request.expectedCandidateVersion + 1,
+                metadata: { ...readyDetail(request.candidateId).metadata, revision: request.expectedMetadataRevision },
+                review: { value: request.review, reviewVersion: 3 } });
+        saved.set(request.candidateId, detail);
+        return detail;
+    });
+    const readCandidate = jest.fn(async (_session: string, candidateId: string) => saved.get(candidateId) ?? readyDetail(candidateId));
     const commitCandidate = jest.fn(async (request) => ({
         sessionId: request.sessionId, candidateId: request.candidateId,
         candidateVersion: request.expectedCandidateVersion + 1,
@@ -95,11 +103,12 @@ function harness(custom: Partial<InventoryCommitCoordinatorDependencies> = {}) {
     const synchronizeSuccess = jest.fn(async () => undefined);
     const synchronizeIneligible = jest.fn(async () => undefined);
     const dependencies: InventoryCommitCoordinatorDependencies = {
-        saveReview, readCandidate, commitCandidate, synchronizeSuccess,
+        readCandidate, commitCandidate, synchronizeSuccess,
         synchronizeIneligible,
         createIdempotencyKey: (prefix) => `${prefix}:fixed-command-${++serial}`,
         createCommandId: () => testUuid(100 + ++serial),
         ...custom,
+        saveReview,
     };
     const registry = new CandidateCommandRegistry();
     const coordinator = new InventoryCommitCoordinator(dependencies, registry);
@@ -184,7 +193,8 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
         const after = readyDetail(item.card.candidateId, { candidateVersion: 7,
             review: { value: review, reviewVersion: 4 },
             metadata: { ...before.metadata } });
-        const test = harness({ readCandidate: jest.fn().mockResolvedValueOnce(before).mockResolvedValue(after) });
+        const test = harness({ saveReview: jest.fn().mockResolvedValue(after),
+            readCandidate: jest.fn().mockResolvedValueOnce(before).mockResolvedValue(after) });
 
         const outcome = await test.coordinator.addCandidate(item);
         expect(outcome.status).toBe('succeeded');
@@ -301,7 +311,8 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
                 readiness: { ...readyDetail(item.card.candidateId).readiness, reviewReady: false },
             });
             const after = readyDetail(item.card.candidateId, { candidateVersion: 6, metadata: reset.metadata });
-            const test = harness({ readCandidate: jest.fn().mockResolvedValueOnce(reset).mockResolvedValue(after) });
+            const test = harness({ saveReview: jest.fn().mockResolvedValue(after),
+                readCandidate: jest.fn().mockResolvedValueOnce(reset).mockResolvedValue(after) });
             await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({ status: 'succeeded' });
             expect(test.saveReview).toHaveBeenCalledTimes(1);
             expect(test.saveReview.mock.calls[0][0].review).toEqual(review);
@@ -317,9 +328,14 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
                 edits: alreadyReset ? {} : { originalTitle: 'Owner title' } };
             const manual = { ...review, originalTitle: alreadyReset ? review.originalTitle : 'Owner title' };
             let reads = 0;
-            const test = harness({ readCandidate: jest.fn(async () => {
+            let lastRead: OwnerCandidateDetail;
+            const test = harness({ saveReview: jest.fn(async () => lastRead ?? readyDetail(item.card.candidateId, {
+                candidateVersion: 5, review: { value: manual, reviewVersion: 3 },
+                metadata: { ...readyDetail(item.card.candidateId).metadata, revision: 8 },
+                readiness: { ...readyDetail(item.card.candidateId).readiness, reviewReady: false },
+            })), readCandidate: jest.fn(async () => {
                 reads += 1;
-                return readyDetail(item.card.candidateId, { candidateVersion: 4 + reads,
+                return lastRead = readyDetail(item.card.candidateId, { candidateVersion: 4 + reads,
                     review: { value: manual, reviewVersion: 2 + reads },
                     metadata: { ...readyDetail(item.card.candidateId).metadata, revision: 7 + reads },
                     readiness: { ...readyDetail(item.card.candidateId).readiness, reviewReady: false },
@@ -346,7 +362,8 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
         });
         const after = readyDetail(item.card.candidateId, { candidateVersion: 6,
             review: { value: manual, reviewVersion: 4 }, metadata: reset.metadata });
-        const test = harness({ readCandidate: jest.fn().mockResolvedValueOnce(reset).mockResolvedValue(after) });
+        const test = harness({ saveReview: jest.fn().mockResolvedValueOnce(reset).mockResolvedValue(after),
+            readCandidate: jest.fn().mockResolvedValueOnce(reset).mockResolvedValue(after) });
         await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({ status: 'succeeded' });
         expect(test.saveReview).toHaveBeenCalledTimes(2);
         const [first, resave] = test.saveReview.mock.calls.map(([request]) => request);
@@ -445,7 +462,7 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
     });
     it('does not replay a failed frozen command after review authority changes', async () => {
         const saveReview = jest.fn().mockRejectedValueOnce(new Error('retry later'))
-            .mockImplementation(async (request) => readyDetail(request.candidateId));
+            .mockImplementation(async (request) => readyDetail(request.candidateId, { review: { value: request.review, reviewVersion: 3 } }));
         const test = harness({ saveReview });
         const item = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
         await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
@@ -463,7 +480,7 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
         const item = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
         const pending = first.coordinator.addCandidate(item);
         expect(first.commitCandidate).not.toHaveBeenCalled();
-        save.resolve(readyDetail(item.card.candidateId));
+        save.resolve(readyDetail(item.card.candidateId, { review: { value: { ...review, ...item.edits }, reviewVersion: 3 } }));
         await expect(pending).resolves.toMatchObject({ status: 'succeeded' });
         expect(first.saveReview).toHaveBeenCalledTimes(1);
         expect(first.commitCandidate).toHaveBeenCalledTimes(1);
@@ -648,7 +665,7 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
     it('bulk retry supersedes frozen draft A with the Owner current draft B', async () => {
         const saveReview = jest.fn()
             .mockRejectedValueOnce(new Error('flaky transport failure'))
-            .mockImplementation(async (request) => readyDetail(request.candidateId));
+            .mockImplementation(async (request) => readyDetail(request.candidateId, { review: { value: request.review, reviewVersion: 3 } }));
         const test = harness({ saveReview });
         const draftA = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
         const command = test.coordinator.freezeAddAll([draftA]);
@@ -668,7 +685,8 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
     });
 
     it('bulk retry keeps a changed local-invalid draft in Needs attention without server requests', async () => {
-        const saveReview = jest.fn().mockRejectedValueOnce(new Error('flaky transport failure'));
+        const saveReview = jest.fn(async request => readyDetail(request.candidateId,
+            { review: { value: request.review, reviewVersion: 3 } })).mockRejectedValueOnce(new Error('flaky transport failure'));
         const test = harness({ saveReview });
         const draftA = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
         const command = test.coordinator.freezeAddAll([draftA]);
@@ -695,7 +713,7 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
     it('reuses Save identity only for the same values and candidate/metadata revisions', async () => {
         const saveReview = jest.fn()
             .mockRejectedValueOnce(new Error('flaky transport failure'))
-            .mockImplementation(async (request) => readyDetail(request.candidateId));
+            .mockImplementation(async (request) => readyDetail(request.candidateId, { review: { value: request.review, reviewVersion: 3 } }));
         const test = harness({ saveReview });
         const item = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
         await test.coordinator.addCandidate(item);
@@ -711,7 +729,7 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
     ] as const)('creates fresh Save/commit identities when only %s changes', async (_label, cardPatch) => {
         const saveReview = jest.fn()
             .mockRejectedValueOnce(new Error('flaky transport failure'))
-            .mockImplementation(async (request) => readyDetail(request.candidateId));
+            .mockImplementation(async (request) => readyDetail(request.candidateId, { review: { value: request.review, reviewVersion: 3 } }));
         const test = harness({ saveReview });
         const item = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
         await test.coordinator.addCandidate(item);
@@ -748,7 +766,7 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
     it('F01-A: retry with a refreshed draft saves the refreshed draft, never the frozen stale draft', async () => {
         const saveReview = jest.fn()
             .mockRejectedValueOnce(new Error('flaky transport failure'))
-            .mockImplementation(async (request) => readyDetail(request.candidateId));
+            .mockImplementation(async (request) => readyDetail(request.candidateId, { review: { value: request.review, reviewVersion: 3 } }));
         const test = harness({ saveReview });
         const draftA = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
         await expect(test.coordinator.addCandidate(draftA)).resolves.toMatchObject({
@@ -794,7 +812,7 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
     it('F01-C: retry without a draft argument keeps idempotent replay of the frozen command', async () => {
         const saveReview = jest.fn()
             .mockRejectedValueOnce(new Error('flaky transport failure'))
-            .mockImplementation(async (request) => readyDetail(request.candidateId));
+            .mockImplementation(async (request) => readyDetail(request.candidateId, { review: { value: request.review, reviewVersion: 3 } }));
         const test = harness({ saveReview });
         const item = { ...draft(1), edits: { baseCondition: 'acceptable' as const } };
         await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({
@@ -956,4 +974,50 @@ describe('Phase 9 NEW 6G-D inventory commit coordinator', () => {
         expect(test.synchronizeIneligible).toHaveBeenCalledWith([candidateId]);
         expect(commitCandidate).toHaveBeenCalledTimes(2);
     });
+});
+
+// SDD-1 section 2/D2-3: revalidation preserves every submitted field.
+it.each(([
+    ['price', { priceMinor: 99_000 }], ['condition', { baseCondition: 'acceptable' }],
+    ['quantity', { quantity: 8 }], ['notes', { notes: { publicNote: 'Other device', internalNote: null } }],
+    ['location', { shelfLocation: 'Other shelf' }], ['title', { originalTitle: 'Other title' }],
+    ['authors', { authors: ['Other author'] }], ['language', { originalLanguage: 'fr' }],
+    ['script', { script: null }], ['confirmation', { originalFieldConfirmation: { title: false, authors: [true] } }],
+    ['damage', { damageDisclosure: { ...review.damageDisclosure, hasDamage: true, damageTypes: ['other'], damageNote: 'Torn' } }],
+    ['disposition', { candidateDisposition: 'unreviewed' }],
+    ['duplicate intent', { duplicateIntent: { mode: 'create_new' } }],
+    ['metadata choice', { metadataChoice: { mode: 'selected', selectionId: testUuid(99) } }],
+] as const).flatMap(([field, change]) => [
+    { field, change, advanceVersions: false }, { field, change, advanceVersions: true },
+]))('refuses a changed $field between this Save and commit (versions advanced: $advanceVersions)', async ({ change, advanceVersions }) => {
+    const item = { ...draft(1), edits: { priceMinor: 15_000 }, review: { ...review, priceMinor: 15_000 } };
+    const saved = readyDetail(item.card.candidateId, { review: { value: item.review, reviewVersion: 3 } });
+    const external = { ...saved, candidateVersion: advanceVersions ? 6 : saved.candidateVersion,
+        review: { reviewVersion: advanceVersions ? 4 : saved.review.reviewVersion, value: { ...item.review, ...change } } } as OwnerCandidateDetail;
+    const test = harness({ saveReview: jest.fn().mockResolvedValue(saved), readCandidate: jest.fn().mockResolvedValue(external) });
+    await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({ status: 'no_longer_eligible', stage: 'revalidate' });
+    expect(test.commitCandidate).not.toHaveBeenCalled();
+});
+
+it('refuses a different saved authority even if its review equals this command Save', async () => {
+    const item = { ...draft(1), edits: { priceMinor: 15_000 }, review: { ...review, priceMinor: 15_000 } };
+    const saved = readyDetail(item.card.candidateId, { review: { value: item.review, reviewVersion: 3 } });
+    const test = harness({ saveReview: jest.fn().mockResolvedValue(saved),
+        readCandidate: jest.fn().mockResolvedValue({ ...saved, candidateVersion: 6,
+            review: { ...saved.review, reviewVersion: 4 } }) });
+    await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({ status: 'no_longer_eligible' });
+    expect(test.commitCandidate).not.toHaveBeenCalled();
+});
+
+it('does not re-save a metadata reset produced after this command Save response', async () => {
+    const selected = { ...review, priceMinor: 15_000, metadataChoice: { mode: 'edition_option' as const, selectionId: testUuid(77) } };
+    const item = { ...draft(1), edits: { priceMinor: 15_000 }, review: selected };
+    const saved = readyDetail(item.card.candidateId, { review: { value: selected, reviewVersion: 3 } });
+    const external = readyDetail(item.card.candidateId, { candidateVersion: 6,
+        metadata: { ...saved.metadata, revision: 8 }, review: { value: { ...selected, metadataChoice: review.metadataChoice }, reviewVersion: 4 },
+        readiness: { ...saved.readiness, reviewReady: false } });
+    const test = harness({ saveReview: jest.fn().mockResolvedValue(saved), readCandidate: jest.fn().mockResolvedValue(external) });
+    await expect(test.coordinator.addCandidate(item)).resolves.toMatchObject({ status: 'no_longer_eligible' });
+    expect(test.saveReview).toHaveBeenCalledTimes(1);
+    expect(test.commitCandidate).not.toHaveBeenCalled();
 });

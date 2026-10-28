@@ -30,12 +30,14 @@ import { applyCompactEditionSelection } from '../review/editionSelectionDraft';
 import { InlineReviewIdentity, InlineReviewValueFields } from './InlineBatchReviewFields';
 import { OwnerConfirmationDialog } from './OwnerConfirmationDialog';
 import { cardAttentionItems, reviewStatusLabel } from './batchReviewStatus';
+import type { CandidateCommitAuthority } from '../commit/inventoryCommitTypes';
+import { useCompactReviewAuthority } from '../commit/useInventoryCommitCoordinator';
 
 export { applyCompactEdits, type CompactReviewEdits } from '../review/compactReviewDraft';
 
 export function BatchReviewCard({
     identity, card, defaults, isOffline, canMutate, removePending, addPending,
-    addOutcome, onRemove, onAdd, onDraftChange,
+    addOutcome, addAuthorities, onRemove, onAdd, onDraftChange,
     onAuthorityStateChange, onPendingIdentityChange, onUnsavedEditsChange, commandSlot, onEditionSelection, onEditionPendingChange, onEditionChoices,
 }: {
     identity: ImageInventoryIdentity;
@@ -46,6 +48,7 @@ export function BatchReviewCard({
     removePending: boolean;
     addPending: boolean;
     addOutcome?: CandidateCommitOutcome;
+    addAuthorities?: readonly CandidateCommitAuthority[];
     onRemove: (candidateId: string) => void;
     onAdd: (card: OwnerBatchReviewCard, edits: CompactReviewEdits,
         review: NonNullable<ReturnType<typeof buildCompactReview>>) => Promise<unknown>;
@@ -80,8 +83,6 @@ export function BatchReviewCard({
         setSelectionPending(pending); onEditionPendingChange?.(card.candidateId, pending);
     }, [card.candidateId, onEditionPendingChange]);
     const [confirmOpen, setConfirmOpen] = useState(false);
-    const [authorityChanged, setAuthorityChanged] = useState(false);
-    const [identityResetKey, setIdentityResetKey] = useState(0);
     const [bufferedIdentity, setBufferedIdentity] = useState<{
         titleActive: boolean;
         authorsActive: boolean;
@@ -90,37 +91,21 @@ export function BatchReviewCard({
     }>({ titleActive: false, authorsActive: false });
     const bufferedIdentityRef = useRef(bufferedIdentity);
     const authorityKey = candidateCommitAuthorityKey(card);
-    const acceptedAuthority = useRef(authorityKey);
     const hasEdits = Object.keys(mountedEdits).length > 0;
+    const hasBufferedIdentity = bufferedIdentity.titleActive || bufferedIdentity.authorsActive;
+    const display = compactReviewDisplay(card, defaults, mountedEdits);
+    const validation = validateCompactReview(card, defaults, mountedEdits, editionChoices), review = validation.review;
+    const { acceptedAuthority, authorityChanged, setAuthorityChanged, identityResetKey, setIdentityResetKey, canClearEdits }
+        = useCompactReviewAuthority({ card, hasEdits, hasBufferedIdentity, addOutcome,
+            selectedMetadataRevision: selectedEdition?.metadataRevision, savedIdentityRevision, onAuthorityStateChange,
+            addAuthorities, onAdoptAuthority: key => onDraftChange(card.candidateId, latestEdits.current, key) });
     const editable = (card.review !== null && card.reviewVersion !== null)
         || card.allowedActions.includes('save_review');
     const authorityMismatch = acceptedAuthority.current !== authorityKey;
-    const hasBufferedIdentity = bufferedIdentity.titleActive || bufferedIdentity.authorsActive;
     const disabled = !canMutate || isOffline || authorityChanged || authorityMismatch || selectionPending || !editable;
-    const display = compactReviewDisplay(card, defaults, mountedEdits);
-    const validation = validateCompactReview(card, defaults, mountedEdits, editionChoices);
-    const review = validation.review;
     const canStartCommit = candidateCanStartCommit({ card, edits: mountedEdits,
         acceptedAuthorityKey: acceptedAuthority.current,
         ...(review ? { review } : {}) });
-
-    useEffect(() => {
-        if (acceptedAuthority.current === authorityKey) return;
-        // Our accepted command is awaiting the parent read; keep the latest draft.
-        if (selectedEdition && card.metadataRevision < selectedEdition.metadataRevision) return;
-        if (savedIdentityRevision !== null && card.metadataRevision < savedIdentityRevision) return;
-        if (hasEdits || bufferedIdentity.titleActive || bufferedIdentity.authorsActive) {
-            if (!authorityChanged) {
-                setAuthorityChanged(true);
-                onAuthorityStateChange?.(card.candidateId, true);
-            }
-        }
-        else {
-            acceptedAuthority.current = authorityKey;
-            setIdentityResetKey((current) => current + 1);
-        }
-    }, [authorityChanged, authorityKey, card.candidateId, hasEdits,
-        bufferedIdentity.titleActive, bufferedIdentity.authorsActive, onAuthorityStateChange, selectedEdition, savedIdentityRevision]);
 
     useEffect(() => () => {
         if (bufferedIdentityRef.current.titleActive || bufferedIdentityRef.current.authorsActive)
@@ -132,6 +117,12 @@ export function BatchReviewCard({
         setMountedEdits(next);
         onDraftChange(card.candidateId, next);
     };
+    useEffect(() => {
+        if (!canClearEdits || !hasEdits) return;
+        latestEdits.current = {};
+        setMountedEdits({});
+        onDraftChange(card.candidateId, {}, acceptedAuthority.current);
+    }, [canClearEdits, hasEdits, card.candidateId, onDraftChange]);
     const updateEdits = (patch: CompactReviewEdits) => replaceEdits({ ...mountedEdits, ...patch });
     const clearEdits = () => replaceEdits({});
     const adoptEdition = (canonical: EditionChoices, previousRevision: number) => {
@@ -324,10 +315,7 @@ export function BatchReviewCard({
                                 || hasBufferedIdentity || bufferedIdentityRef.current.titleActive
                                 || bufferedIdentityRef.current.authorsActive)
                                 return undefined;
-                            const result = await onAdd(card, mountedEdits, review);
-                            if (result && typeof result === 'object' && 'status' in result
-                                && result.status === 'succeeded') clearEdits();
-                            return result;
+                            return onAdd(card, mountedEdits, review);
                         }} />
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                         {((commandSlot && editable) || card.allowedActions.includes('view_metadata')) ? <MetadataSheetTrigger title="Find or change edition" focusRef={editionTriggerRef} style={{ flexGrow: 1, flexBasis: 150 }}

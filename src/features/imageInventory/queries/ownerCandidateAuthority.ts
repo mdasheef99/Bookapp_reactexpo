@@ -77,7 +77,10 @@ export function assertBatchAuthority(
 ): OwnerBatchReview {
   assertOwnerScope(identity);
   for (const card of batch.items) {
-    if (cardHasConfirmedOutcome(client, identity, card)
+    const receipt = client.getQueryData<Outcome>(ownerEditionPickerKeys.outcome(identity, card.sessionId, card.candidateId));
+    const committed = card.candidateState === 'committed' && (!receipt
+      || ('outcome' in receipt && receipt.outcome === 'committed_private' && card.candidateVersion >= receipt.candidateVersion));
+    if ((cardHasConfirmedOutcome(client, identity, card) && !committed)
       || knownCandidateVersions(client, identity, card).some(accepted => versionsRegress(card, accepted))) {
       throw authorityChanged();
     }

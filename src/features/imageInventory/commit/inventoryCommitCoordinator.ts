@@ -17,6 +17,7 @@ import {
 import {
     aggregate,
     canonicalMatchesControlledChoice,
+    canonicalMatchesSubmittedReview,
     candidateCanStartCommit,
     candidateCanStartBulkCommit,
     candidateCommitPreparation,
@@ -291,21 +292,22 @@ export class InventoryCommitCoordinator {
                 const request = command.resaveRequest ?? command.saveRequest;
                 if (request && !command.saveCompleted) {
                     stage = 'save';
-                    await this.dependencies.saveReview(request);
-                    command = { ...command, saveCompleted: true };
+                    const savedAuthority = await this.dependencies.saveReview(request);
+                    command = { ...command, saveCompleted: true, savedAuthority };
                 }
                 stage = 'revalidate';
                 authority = await this.dependencies.readCandidate(command.sessionId, command.candidateId);
                 if (!canResaveAfterSave(authority, command)) break;
                 command = freezeReviewSave(command, authority);
             }
-            if (!canonicalEligible(authority) || !canonicalMatchesControlledChoice(authority, command.draft)) {
+            const reviewChanged = !canonicalMatchesSubmittedReview(authority, command);
+            if (reviewChanged || !canonicalEligible(authority) || !canonicalMatchesControlledChoice(authority, command.draft)) {
                 this.retries.delete(command.candidateId);
                 // SDD-1 §3: one re-save only; synchronize rejected authority.
                 await this.dependencies.synchronizeIneligible([command.candidateId]);
                 return {
                     candidateId: command.candidateId,
-                    status: 'no_longer_eligible', stage,
+                    status: 'no_longer_eligible', stage, ...(reviewChanged ? { code: 'review_changed' } : {}),
                 };
             }
             const commitRequest: AddCandidateToInventoryRequest = {

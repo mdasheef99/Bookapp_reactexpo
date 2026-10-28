@@ -1875,7 +1875,55 @@ After: canonical_works 5, canonical_editions 5, book_metadata_sources 2, canonic
 - Owner decision 2026-10-27: carry all five to 7b (fix red-first before or with 7b); no separate M84 now. M84 is not authorized.
 - Status: active work unit `post_scan_rework_slice7a_closeout`; commits 621b6d1 (slice 7a, M83) plus the fix-round commit made on the Owner's instruction after this update (hash not recorded); not pushed. Database/storage mutations in the fix round: none.
 
-## 37. Slice 7b start: split, SDD amendment, read-only preflight, 2026-10-27, package 4 red-first tests, packages 5-7
+## 37. 2026-10-27 - Confirm-then-Add browser check (fix round 6e4924d): PARTIAL
+
+**Browser run.** Run by Claude Haiku in the built-in browser; Owner signed in; dev app on localhost:8091 from the worktree; no page reload during the run. Session 4ad4f6c0-9dcf-4bba-bf08-634c2df172b5 (8 cards; the list renders lazily, so cards 7–8 only mount after scrolling).
+
+**Card.** Card 8 "The Complete Father Brown" (G. K. Chesterton), candidate 95b406c5-0450-45a7-8ef5-e28f93e1ab5a, automatic Google Books suggestion (`accepted_metadata_match`), unconfirmed. The other seven cards were no_match or ambiguous.
+
+**Steps.**
+
+- PASS: price set to ₹150 (custom) and condition Good; Add refused with "Check the latest details. If this is the suggested edition, open Find or change edition and tap Confirm current suggestion."; Add disabled.
+- PASS: after "Confirm current suggestion", without reload the refusal text was gone, Add was enabled, ₹150 / Good were kept.
+- FAIL (UI only): pressing Add again showed "Adding", then the draft-conflict prompt "The saved review changed while compact edits were open. Choose which draft to continue with." ("Use latest saved review" / "Reapply compact edits"); "Added to Inventory" never appeared. Neither button was pressed.
+
+**Server truth** (read-only SQL, project ahntbtktjjmvfosgkmgn): candidate state committed, commit_outcome committed_private, review_version 1, metadata_revision 5, saved review priceMinor 15000 / good; store_inventory row 0be74daa-9744-4e33-8cfc-52460ed2c8ef created 2026-10-27 09:51:01 UTC, canonical_edition_id NULL (expected: Google Books is not shared-admitted, 02b §5/§7.2). store_inventory total 46.
+
+**Also observed.** All 8 Add buttons disabled right after the refusal (not yet explained); console showed 409/403/503 responses, CORS blocks on phase9-owner-ingestion, ERR_FAILED / ERR_CONNECTION_CLOSED and an auth refresh "Failed to fetch", not tied to steps.
+
+**Follow-up** (Owner 2026-10-27): Codex Sol diagnoses and fixes the conflict prompt red-first; Codex Terra reviews read-only. Not fixed at the time of this entry.
+
+**Database/storage mutations.** None by the agents; the Owner's scan and the one Add created dev data through the app.
+
+## 38. 2026-10-27 - Add draft-conflict fix (7a closeout) and browser check: PASS
+
+**Cause (pre-existing in 621b6d1, reachable after 6e4924d made refusal → Confirm → Add recoverable).** The batch card treated the Add's own first review Save as an external change while compact edits were open and raised "The saved review changed while compact edits were open. Choose which draft to continue with." Separately, the "Added to Inventory" receipt sat behind the allowed-actions gate, which a committed card no longer has.
+
+**Fix (Codex gpt-6.1-sol xhigh, three rounds; Codex gpt-6.1-terra xhigh read-only reviews: round 1 FINDINGS (1 High, 3 Medium), round 2 FINDINGS (1 Medium, 1 Low), round 3 PASS).**
+
+- The card adopts only the authority acknowledged by this command's own Save/commit response, never by review equality or success alone; any intervening authority still raises the conflict prompt.
+- Before commit, the coordinator revalidates every submitted review field (not just edition identity) and the acknowledged Save versions; an intervening change refuses the commit instead of committing another device's review.
+- Save-authority adoption runs in screen-owned state, so bulk retry works for cards scrolled offscreen (virtualized list).
+- Commit outcomes are scoped to the Owner/session; the receipt checks candidate and session.
+- The success receipt renders before the allowed-actions gate.
+- The Unit 6F architecture boundary is kept (no inventory-commit references from the picker side); a route-composition test mock was updated, assertions unchanged.
+
+**Files.** Under `src/features/imageInventory/`: commit (`inventoryCommitCoordinator.ts`, `inventoryCommitPolicy.ts`, `inventoryCommitTypes.ts`, `useInventoryCommitCoordinator.ts`, new `useScopedCommitState.ts`), components (`AddCandidateToInventoryAction.tsx`, `BatchReviewCard.tsx`, `PostScanInventoryActions.tsx`), `queries/ownerCandidateAuthority.ts`, `screens/CaptureProgressScreens.tsx`; tests: new `CaptureProgressCommitAuthority.test.tsx`, `commitScope.test.tsx`, `compactCommitAuthority.test.tsx`, plus updated postScanUiCorrections, batchReviewCard, inventoryCommitCoordinator, useInventoryCommitCoordinator, AddCandidateToInventoryAction, CaptureProgressScreens, ownerEditionPickerCache and unit6gMountedRouteComposition suites.
+
+**Verification (run by the orchestrator).** `jest src/features/imageInventory --testTimeout=30000`: 74 suites passed, 1 skipped; 1,074 tests passed, 4 skipped, 0 failed. Implementer reports red-first failures for each fix. TypeScript: 8 pre-existing errors in `src/features/books/export/`, none in imageInventory.
+
+**Browser check (2026-10-27, Claude Haiku, built-in browser, Owner signed in, session 4ad4f6c0-9dcf-4bba-bf08-634c2df172b5): PASS for the draft-conflict fix.**
+
+- BOOK 3 "Bleak House" (Dickens), no provider match, never-saved review: price ₹175 (custom) and condition Good set as compact edits ("Edited · saved when added", "Ready"); Add pressed: "Adding" ~8 s, then the card left the review list; header went from "1 Added" to "2 Added". No draft-conflict prompt; not stuck.
+- After a page reload: header "8 Detected / 6 In review / 0 Ready / 6 Need review / 2 Added"; BOOK 3 no longer in the review list.
+- Server truth (read-only SQL, project ahntbtktjjmvfosgkmgn): candidate committed, commit_outcome committed_private, review_version 1, saved priceMinor 17500, good, quantity 1; store_inventory row 2128a9f5-c30f-4e49-80f3-8294d738a723 created 2026-10-27 11:38:10 UTC, canonical_edition_id NULL (no edition chosen); store_inventory total 47.
+- Not re-checked in the browser this run: the refusal → Confirm current suggestion hint (no unconfirmed automatic suggestion left in this scan; it passed in the earlier PARTIAL run and in mounted tests).
+- Observed, not caused by this change: the "Added to Inventory" text was not seen because the committed card leaves the review list after the batch reread; the edition search ("Search Books") stayed on "Searching books…" and BOOK 2 showed "Finding edition…" while the browser console showed CORS preflight failures and 403/503 responses for the `phase9-owner-ingestion` edge function from localhost:8091 (the same errors appeared in the earlier run before this fix). Follow-up: investigate the edge-function CORS/503 errors separately.
+
+**Database/storage mutations.** None by agents; dev data via the app (one Add).
+
+**Status.** The 7a closeout fix is done and browser-checked; commit and push of branch `claude/phase9-psr-slice7a-lean-catalogue-identity` are made on the Owner's instruction (hash not recorded in the docs). Active work unit: post_scan_rework_slice7a_closeout. Exact next authorized action: Owner decides on merging the 7a branch into main (needed before 7b worker deploys/browser checks); separately, investigate the phase9-owner-ingestion CORS/503 errors seen from localhost. 7b runs in its own session/worktree (`.claude/worktrees/p9-7b`, branch `claude/phase9-psr-slice7b-lean-catalogue-writes`).
+## 39. Slice 7b start: split, SDD amendment, read-only preflight, 2026-10-27, package 4 red-first tests, packages 5-7
 
 **Authorized work unit and scope.** Owner 2026-10-27 ("go, split 7b") authorized the Slice 7b start in its own worktree `.claude/worktrees/p9-7b`, branch `claude/phase9-psr-slice7b-lean-catalogue-writes`, cut from commit `6e4924d` (the 7a branch `claude/phase9-psr-slice7a-lean-catalogue-identity`). Nothing is merged or pushed. Active work unit: `post_scan_rework_slice7b1_package5_m84_sql_awaiting_owner_approval`. Package 4 (02b section 12 row 4: red-first tests only) is complete on 2026-10-27; the slice-start part of this entry is kept as history and the package-4 evidence is appended below. The 7a branch, its uncommitted client fix (Add draft-conflict prompt) and the 7a merge to `main` belong to the 7a session.
 
@@ -1921,7 +1969,7 @@ After: canonical_works 5, canonical_editions 5, book_metadata_sources 2, canonic
 
 **Spec-silent contracts used by the tests (to be confirmed when M84 is written).** The index name `canonical_works_normalized_probe_idx` (02b says "proposed"), error codes `P9_STATE_CONFLICT` and `42501` in some refusal checks, and the lookup-effects/companion table and function names listed in 02b section 12; the TypeScript contract module path is fixed by 02b but exported parser names are not.
 
-**This documentation update.** The four top stanzas (ACTIVE.md, DOC-13, TRACKER.md, SESSION-START.md) were rewritten to the package-4-complete heading with the package-4 summary and the package-5-awaiting-approval gate, kept byte-identical to each other; the 7a stanza and everything below it in each file is untouched. This section 37 keeps its slice-start facts and appends the package-4 evidence above; no section 38 was added.
+**This documentation update.** The four top stanzas (ACTIVE.md, DOC-13, TRACKER.md, SESSION-START.md) were rewritten to the package-4-complete heading with the package-4 summary and the package-5-awaiting-approval gate, kept byte-identical to each other; the 7a stanza and everything below it in each file is untouched. This section 39 keeps its slice-start facts and appends the package-4 evidence above; no section 38 was added.
 
 **Status (2026-10-28, 7b-1 applied).** M84 is APPLIED to the dev database as live version `20261028125102` (2026-10-28; read-back below). M85 (7b-2, shared edition-list cache, packages 8-11) is NOT started (PROPOSED / NOT_CREATED / NOT_APPLIED); it needs 7b-1 verified plus its own creation and apply approvals. Slice 7a (M83, live as version `20261026223715`) code is on branch `claude/phase9-psr-slice7a-lean-catalogue-identity` (`6e4924d`), not merged or pushed; another session owns its client fix, merge and deploy. Nothing is staged, committed, pushed, merged or deployed; the working tree is uncommitted. No Storage mutation. The only database mutation is the M84 apply recorded below.
 

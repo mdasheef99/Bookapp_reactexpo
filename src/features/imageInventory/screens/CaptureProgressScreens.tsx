@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, FlatList, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
-import { PostScanFooter, PostScanBulkAction } from '../components/PostScanInventoryActions';
+import { PostScanFooter, PostScanBulkAction, usePostScanDraftState } from '../components/PostScanInventoryActions';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { BatchReviewCard } from '../components/BatchReviewCard';
@@ -25,7 +25,6 @@ import {
 } from '../queries/ownerBatchReviewQueries';
 import {
     validateCompactReview,
-    type CompactReviewEdits,
 } from '../review/compactReviewDraft';
 import { InventoryAccessBoundary } from './InventoryAccessBoundary';
 import { coalesceOwnerUxRefresh } from '../offline/ownerUxOfflineGate';
@@ -68,17 +67,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
             const next = new Set(current); if (pending) next.add(id); else next.delete(id); return next;
         });
     }, []);
-    const [candidateDrafts, setCandidateDrafts] = useState<Map<string, {
-        edits: CompactReviewEdits; acceptedAuthorityKey: string;
-    }>>(
-        new Map(),
-    );
-    const [pendingIdentityAuthorities, setPendingIdentityAuthorities] = useState<Map<string, string>>(
-        new Map(),
-    );
-    const [authorityChangedCandidates, setAuthorityChangedCandidates] = useState<Set<string>>(
-        new Set(),
-    );
     const [dirtyCandidates, setDirtyCandidates] = useState<Set<string>>(new Set());
     const handleUnsavedEditsChange = useCallback((id: string, dirty: boolean) => {
         setDirtyCandidates(current => {
@@ -87,6 +75,9 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
         });
     }, []);
     const cards = batchReview.data?.items ?? [];
+    const { candidateDrafts, pendingIdentityAuthorities, authorityChangedCandidates,
+        handleAuthorityStateChange, handlePendingIdentityChange, handleDraftChange }
+        = usePostScanDraftState(editionScope, cards, inventoryCommit.authorities);
     // SDD-1 §4: only active review cards contribute unsaved edits.
     const dirty = cards.some((card) => card.candidateState !== 'committed'
         && inventoryCommit.outcomes.get(card.candidateId)?.status !== 'succeeded'
@@ -170,8 +161,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     }, [inputs.data?.presentationRevision, isFocused, refreshAll]);
     useEffect(() => {
         setEditionPending(new Set());
-        setAuthorityChangedCandidates(new Set());
-        setPendingIdentityAuthorities(new Map());
     }, [identity.storeId, identity.userId, sessionId]);
     const inputAnnouncement = inputs.data?.items.length
         ? `Image processing: ${inputs.data.items.filter((item) => item.presentationState === 'ready').length} ready, ${inputs.data.items.filter((item) => item.presentationState === 'needs_attention').length} need attention, ${inputs.data.items.filter((item) => ['checking_image', 'finding_books'].includes(item.presentationState)).length} processing.`
@@ -213,24 +202,6 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
     const successesStillInReview = cards.filter((card) => succeededCandidateIds.has(card.candidateId)
         && card.candidateState !== 'committed').length;
     const remainingReviewCount = Math.max(0, activeReviewCandidates - successesStillInReview);
-    const handleAuthorityStateChange = useCallback((candidateId: string, changed: boolean) => {
-        setAuthorityChangedCandidates((current) => {
-            if (current.has(candidateId) === changed) return current;
-            const next = new Set(current);
-            if (changed) next.add(candidateId);
-            else next.delete(candidateId);
-            return next;
-        });
-    }, []);
-    const handlePendingIdentityChange = useCallback((candidateId: string, active: boolean,
-        acceptedAuthorityKey: string) => {
-        setPendingIdentityAuthorities((current) => {
-            const next = new Map(current);
-            if (active) next.set(candidateId, acceptedAuthorityKey);
-            else next.delete(candidateId);
-            return next;
-        });
-    }, []);
     // One readiness rule for the header's Ready count, the card badges and Add all ready books.
     const readyCandidateIds = new Set(commitDrafts.filter((candidate) => candidateCanStartBulkCommit(
         candidate,
@@ -292,6 +263,7 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                         removePending={removeCandidate.isPending}
                         addPending={inventoryCommit.inFlight.has(item.candidateId)}
                         addOutcome={inventoryCommit.outcomes.get(item.candidateId)}
+                        addAuthorities={inventoryCommit.authorities.get(item.candidateId)}
                         commandSlot={inventoryCommit}
                         onEditionPendingChange={handleEditionPending}
                         onEditionChoices={handleEditionChoices}
@@ -306,16 +278,9 @@ function SessionProgress({ identity, sessionId }: { identity: ImageInventoryIden
                             card, edits, review,
                             acceptedAuthorityKey: candidateCommitAuthorityKey(card),
                         })}
-                        onDraftChange={(candidateId, edits, acceptedAuthorityKey) => {
-                            setCandidateDrafts((current) => {
-                                const next = new Map(current);
-                                if (Object.keys(edits).length === 0) next.delete(candidateId);
-                                else next.set(candidateId, {
-                                    edits, acceptedAuthorityKey: acceptedAuthorityKey ?? candidateCommitAuthorityKey(item),
-                                });
-                                return next;
-                            });
-                        }}
+                        onDraftChange={(candidateId, edits, acceptedAuthorityKey) => handleDraftChange(
+                            candidateId, edits, acceptedAuthorityKey ?? candidateCommitAuthorityKey(item),
+                        )}
                     />
                 )}
                 ListHeaderComponent={(
