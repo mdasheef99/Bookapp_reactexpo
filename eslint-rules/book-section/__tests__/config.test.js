@@ -135,6 +135,19 @@ describe('book-section flat config', () => {
             'src/components/library/notes-swipe/NoteOrderMenu.tsx',
             'src/features/books/history/onThisDay.ts',
             'src/components/library/history/OnThisDayLine.tsx',
+            'app/(tabs)/library/collections.tsx',
+    'app/(tabs)/library/collection.tsx',
+    'src/features/books/collections/collectionsContract.ts',
+    'src/features/books/collections/useCollectionCards.ts',
+    'src/components/library/collections/CollectionNoteRow.tsx',
+    'src/components/library/collections/HomeCollectionsLink.tsx',
+    'src/components/library/organising/OrganisingBackground.tsx',
+    'src/features/books/organising/organisingGateway.ts',
+            'src/features/books/organising/useOrganising.ts',
+            'src/components/library/organising/OrganisingSheet.tsx',
+            'src/components/library/labels/LibraryLabelFilter.tsx',
+            'src/features/books/utils/libraryShelf.ts',
+            'src/features/books/labels/labelsContract.ts',
         ]);
     });
 

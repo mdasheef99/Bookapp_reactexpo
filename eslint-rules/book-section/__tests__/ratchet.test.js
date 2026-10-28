@@ -18,12 +18,14 @@ describe('book-section warning ratchet', () => {
             expect(baseline.warnings[ruleId]).toBeGreaterThanOrEqual(0);
         }
 
-        // These four paths must stay in sync with package.json's lint:library script.
+        // These paths must stay in sync with package.json's lint:library script.
         // ESLint 9 does not export bin/eslint.js; resolve it beside the exported package.json.
         const eslintBin = path.join(path.dirname(require.resolve('eslint/package.json')), 'bin/eslint.js');
         const result = childProcess.spawnSync(process.execPath, [
             eslintBin, '--format', 'json',
             'app/(tabs)/library', 'src/components/library', 'src/components/notes', 'src/features/books/notes',
+            'src/features/books/history', 'src/features/books/export', 'src/features/books/organising',
+            'src/features/books/labels', 'src/features/books/utils/libraryShelf.ts', 'src/features/books/collections',
         ], { cwd: repoRoot, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
 
         if (result.status !== 0 && result.status !== 1) {

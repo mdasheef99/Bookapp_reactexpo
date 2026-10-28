@@ -1,6 +1,6 @@
 # 07 — Checkouts and the Shared Database
 
-**Last checked:** 2026-10-18, against the code and the documents it cites.
+**Last checked:** 2026-10-24, against the code and the documents it cites.
 
 Work on BookConnect happens in several git checkouts (worktrees) at once,
 usually one per feature stream, and on more than one machine. All of them talk
@@ -24,9 +24,9 @@ git fetch origin; git log -1 origin/main   # what is the latest main?
   older or newer than the same tracker on `main` or in another checkout. Read the
   handoff (DOC-13, `ACTIVE.md`, the phase tracker) **in the checkout you are
   working in**, and compare with `origin/main` if they disagree.
-- An authorization given for one checkout or branch does not carry over to another.
-- `.opencode/workspace-split.md` describes an older two-checkout setup on
-  another machine; its paths, branches and stash rules are history. The checkout
+- Use only authorization that covers the selected checkout and task.
+- `.opencode/workspace-split.md` describes an older two-checkout setup;
+  its paths, branches and stash rules are history. The checkout
   and branch names in AGENTS.md's dated sections are historical too, but AGENTS.md
   keeps the rules: edit only the checkout the user chose, keep features isolated,
   use separate dev ports when sessions run at once, and coordinate on the shared

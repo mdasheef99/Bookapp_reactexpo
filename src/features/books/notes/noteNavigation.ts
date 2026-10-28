@@ -4,21 +4,22 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { NOTE_CATEGORIES, NoteDeckReturnState, NoteOrigin } from './manualNoteContract';
 import { parseDeckScope } from './noteDeck';
 
-export interface NoteRouteContext { actorId: string; bookId: string; origin: NoteOrigin; canBack: boolean; readerReturn?: boolean; readerKey?: string; swipeKey?: string; swipe?: NoteDeckReturnState }
-export interface SwipeRouteParams { origin?: string; swipeKey?: string; swipeScope?: string; swipeUserBookId?: string; swipeCategory?: string; swipeOrder?: string; swipeSeed?: string; swipeNoteId?: string; swipeAt?: string; swipeNext?: string }
+export interface NoteRouteContext { actorId: string; bookId: string; origin: NoteOrigin; canBack: boolean; readerReturn?: boolean; readerKey?: string; swipeKey?: string; swipe?: NoteDeckReturnState; collectionId?: string; collectionKey?: string }
+export interface SwipeRouteParams { origin?: string; swipeKey?: string; swipeScope?: string; swipeUserBookId?: string; swipeCollectionId?: string; swipeFilterCollectionId?: string; collectionId?: string; collectionKey?: string; swipeCategory?: string; swipeOrder?: string; swipeSeed?: string; swipeNoteId?: string; swipeAt?: string; swipeNext?: string }
 interface NoteNavigationState { getState(): { index: number; routes: readonly { name: string; key?: string; params?: object }[] } | undefined }
 const contexts = new Map<string, NoteRouteContext>();
 useAuthStore.subscribe((state, previous) => { if (state.session?.user.id !== previous.session?.user.id) contexts.clear(); });
 export function noteRouteContext(id: string | undefined, actorId: string, bookId: string, params?: SwipeRouteParams): NoteRouteContext {
   const context = id ? contexts.get(id) : undefined;
   if (context?.actorId === actorId && context.bookId === bookId) return context;
+  if (params?.origin === 'collection') return { actorId, bookId, origin: 'collection', canBack: false, collectionId: params.collectionId, collectionKey: params.collectionKey };
   if (params?.origin === 'swipe') {
     const atRaw = params.swipeAt === undefined ? Number.NaN : Number.parseInt(params.swipeAt, 10);
     const at = Number.isSafeInteger(atRaw) && atRaw >= 0 ? atRaw : undefined;
     const nextId = params.swipeNext === undefined ? undefined : params.swipeNext === '__end__' ? null : params.swipeNext;
     return { actorId, bookId, origin: 'swipe', canBack: false, swipeKey: params.swipeKey,
-      swipe: { scope: parseDeckScope({ scope: params.swipeScope, userBookId: params.swipeUserBookId }),
-        category: NOTE_CATEGORIES.find(c => c.value === params.swipeCategory)?.value ?? 'all',
+      swipe: { scope: parseDeckScope({ scope: params.swipeScope, userBookId: params.swipeUserBookId, collectionId: params.swipeCollectionId }),
+        collectionId: params.swipeFilterCollectionId, category: NOTE_CATEGORIES.find(c => c.value === params.swipeCategory)?.value ?? 'all',
         order: params.swipeOrder === 'newest' || params.swipeOrder === 'oldest' ? params.swipeOrder : 'shuffle',
         seed: params.swipeSeed ?? '', noteId: params.swipeNoteId === '__end__' ? null : params.swipeNoteId ?? '',
         ...(at === undefined ? {} : { at }), ...(nextId === undefined ? {} : { nextId }) } };
@@ -27,15 +28,16 @@ export function noteRouteContext(id: string | undefined, actorId: string, bookId
 }
 function swipeParams(contextId: string): SwipeRouteParams {
   const context = contexts.get(contextId); const state = context?.swipe;
+  if (context?.origin === 'collection') return { origin: 'collection', collectionId: context.collectionId, collectionKey: context.collectionKey };
   return context?.origin === 'swipe' && state ? { origin: 'swipe', swipeKey: context.swipeKey, swipeScope: state.scope.kind,
     swipeUserBookId: state.scope.kind === 'book' ? state.scope.userBookId : undefined, swipeCategory: state.category,
-    swipeOrder: state.order, swipeSeed: state.seed, swipeNoteId: state.noteId ?? '__end__',
+    swipeCollectionId: state.scope.kind === 'collection' ? state.scope.collectionId : undefined, swipeFilterCollectionId: state.collectionId, swipeOrder: state.order, swipeSeed: state.seed, swipeNoteId: state.noteId ?? '__end__',
     ...(state.at === undefined ? {} : { swipeAt: String(state.at) }),
     ...(state.nextId === undefined ? {} : { swipeNext: state.nextId ?? '__end__' }) } : {};
 }
 export function swipeHref(state: NoteDeckReturnState): Href {
   return { pathname: '/(tabs)/library/notes-swipe', params: { scope: state.scope.kind,
-    ...(state.scope.kind === 'book' ? { userBookId: state.scope.userBookId } : {}), category: state.category, order: state.order, seed: state.seed, noteId: state.noteId ?? '__end__',
+    ...(state.scope.kind === 'book' ? { userBookId: state.scope.userBookId } : {}), ...(state.scope.kind === 'collection' ? { collectionId: state.scope.collectionId } : {}), filterCollectionId: state.collectionId, category: state.category, order: state.order, seed: state.seed, noteId: state.noteId ?? '__end__',
     ...(state.at === undefined ? {} : { swipeAt: String(state.at) }),
     ...(state.nextId === undefined ? {} : { swipeNext: state.nextId ?? '__end__' }) } } as Href;
 }
@@ -78,6 +80,9 @@ export function returnToBook(router: Router, navigation: NoteNavigationState, bo
   returnToRoute(router, navigation, '[bookId]', { bookId }, { pathname: '/(tabs)/library/[bookId]', params: { bookId } });
 }
 export function returnFromNote(router: Router, context: NoteRouteContext, navigation: NoteNavigationState) {
+  if (context.origin === 'collection' && context.collectionId) {
+    returnToRoute(router, navigation, 'collection', { collectionId: context.collectionId }, { pathname: '/(tabs)/library/collection', params: { collectionId: context.collectionId } } as Href, context.collectionKey); return;
+  }
   if (context.origin === 'swipe' && context.swipe) {
     returnToRoute(router, navigation, 'notes-swipe', {}, swipeHref(context.swipe), context.swipeKey); return;
   }

@@ -35,6 +35,7 @@ jest.mock('@expo/vector-icons', () => {
   return { Ionicons: ({ name, ...props }: any) => <Text {...props}>{name}</Text> };
 });
 jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
   useLocalSearchParams: () => ({ bookId: 'user-book-1' }),
   useRouter: () => ({
     back: mockBack,
@@ -162,13 +163,14 @@ async function flush() {
   });
 }
 
-function renderScreen() {
+function renderScreen({ seedBook = false }: { seedBook?: boolean } = {}) {
   const client = new QueryClient({
     defaultOptions: {
       queries: { retry: false, gcTime: Infinity },
       mutations: { retry: false, gcTime: Infinity },
     },
   });
+  if (seedBook) client.setQueryData(['book', 'reader-1', 'user-book-1'], mockUserBook);
   const ui = render(
     <QueryClientProvider client={client}>
       <BookDetailScreen />
@@ -225,7 +227,8 @@ afterEach(() => {
 
 describe('1. Rating block position and row order', () => {
   it('renders the rating block after the cover and before the status selector', async () => {
-    const ui = renderScreen();
+    // This checks the layout of a known book, independent of initial fetch timing.
+    const ui = renderScreen({ seedBook: true });
     try {
       await ui.findByText('Walden');
       await ui.findByTestId('book-rating-review');
@@ -273,6 +276,7 @@ describe('1. Rating block position and row order', () => {
       }
       expect(orderIds).toEqual([
         'add-note',
+        'book-row-labels',
         'book-row-notes',
         'book-row-info',
         'book-row-ownership',
@@ -366,7 +370,7 @@ describe('2. Plain rows', () => {
       await ui.findByText('Walden');
       await ui.findByTestId('book-row-info');
       const rows = ui.getAllByTestId(/^book-row-/);
-      expect(rows.length).toBe(4);
+      expect(rows.length).toBe(5);
 
       for (const row of rows) {
         const flat = StyleSheet.flatten(row.props.style);

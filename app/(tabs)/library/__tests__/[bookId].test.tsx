@@ -19,6 +19,7 @@ jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: 'LinearGradient' }));
 jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
     useLocalSearchParams: () => ({ bookId: 'user-book-1' }),
     useRouter: () => ({
         back: mockBack,

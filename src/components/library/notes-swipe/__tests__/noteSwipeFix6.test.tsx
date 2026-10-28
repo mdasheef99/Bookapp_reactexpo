@@ -1,3 +1,4 @@
+jest.mock('@/features/books/organising/useOrganising', () => ({ useOrganising: () => ({ entities: { data: [] }, members: { data: [] }, refresh: jest.fn() }) }));
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
@@ -45,7 +46,7 @@ jest.mock('react-native-gesture-handler', () => {
   const React = require('react');
   const makeChainable = (store: any, isPan: boolean) => {
     const gesture: Record<string, jest.Mock> = {};
-    for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'runOnJS']) gesture[name] = jest.fn(() => gesture);
+    for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'numberOfTaps', 'maxDelay', 'runOnJS']) gesture[name] = jest.fn(() => gesture);
     gesture.onStart = jest.fn((cb: any) => { if (isPan) store.onStart = cb; return gesture; });
     gesture.onUpdate = jest.fn((cb: any) => { if (isPan) store.onUpdate = cb; return gesture; });
     gesture.onEnd = jest.fn((cb: any) => { if (isPan) store.onEnd = cb; else mockTapCallbacks.push(cb); return gesture; });

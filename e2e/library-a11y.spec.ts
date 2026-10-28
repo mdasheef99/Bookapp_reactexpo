@@ -168,6 +168,135 @@ const PHASES = [
   { name: 'midnight', hour: 22 },
 ] as const;
 
+const labelActor = '11111111-1111-4111-8111-111111111111';
+const borrowedLabel = { id: 'label-borrowed', user_id: labelActor, name: 'Borrowed', created_at: '2026-10-01', updated_at: '2026-10-01' };
+for (const phase of PHASES) {
+  test(`${phase.name} organising labels without books`, async ({ page }) => {
+    await startLibrarySession(page, { userBooks: [], labels: [borrowedLabel] }, phase.hour);
+    await page.getByRole('button', { name: 'Filter books by label', exact: true }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    expect(await runScan(page)).toEqual({});
+    await page.getByRole('button', { name: 'Manage', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Rename Borrowed', exact: true })).toBeVisible();
+    expect(await runScan(page)).toEqual({});
+    await page.getByRole('button', { name: 'Done', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Filter books by label', exact: true })).toBeFocused();
+  });
+}
+test('organising labels combine status counts and empty states in list and shelf', async ({ page }) => {
+  await startLibrarySession(page, { labels: [borrowedLabel], bookLabels: [{ user_id: labelActor, user_book_id: UB.cover, label_id: borrowedLabel.id, created_at: '2026-10-01' }] });
+  await page.getByRole('button', { name: 'Filter books by label', exact: true }).click();
+  await page.getByRole('radio', { name: 'Filter by Borrowed', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('radio', { name: 'All, 1 book', exact: true })).toBeVisible();
+  await page.getByRole('radio', { name: /^Finished, 0 books$/ }).click();
+  await expect(page.getByText('No Borrowed books', { exact: true })).toBeVisible();
+  await page.getByRole('radio', { name: 'Shelf view', exact: true }).click();
+  await expect(page.getByText('No Borrowed books', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Arrange shelf', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Filter books by label', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Clear label filter', exact: true })).toHaveCount(0);
+});
+
+const noteGroup = { ...borrowedLabel, id: 'collection-one', name: 'Lines about grief' };
+const collectionItems = [
+  { user_id: labelActor, collection_id: noteGroup.id, note_id: NOTE_IDS.quote, added_at: '2026-10-20' },
+  { user_id: labelActor, collection_id: noteGroup.id, note_id: NOTE_IDS.cover, added_at: '2026-10-21' },
+];
+for (const phase of PHASES) {
+  test(`${phase.name} organising collections management and opener focus`, async ({ page }) => {
+    await startLibrarySession(page, { userBooks: [], notes: [], collections: [noteGroup] }, phase.hour);
+    await page.getByRole('button', { name: 'Collections', exact: true }).click();
+    await expect(page.getByText('0 notes', { exact: true })).toBeVisible();
+    expect(await runScan(page)).toEqual({});
+    await page.getByRole('button', { name: `Rename ${noteGroup.name}`, exact: true }).click();
+    await expect(page.getByRole('textbox', { name: 'Collection name', exact: true })).toHaveValue(noteGroup.name);
+    expect(await runScan(page)).toEqual({});
+    await page.getByRole('button', { name: 'Back in collections', exact: true }).click();
+    await expect(page.getByRole('button', { name: `Rename ${noteGroup.name}`, exact: true })).toBeFocused();
+    await page.getByRole('button', { name: `Delete ${noteGroup.name}`, exact: true }).click();
+    await expect(page.getByText('Only the collection is deleted. Your notes will be kept.', { exact: true })).toBeVisible();
+    expect(await runScan(page)).toEqual({});
+    await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(page.getByRole('button', { name: `Delete ${noteGroup.name}`, exact: true })).toBeFocused();
+  });
+  test(`${phase.name} organising collection rows reader and dedicated deck`, async ({ page }) => {
+    await startLibrarySession(page, { collections: [noteGroup], collectionItems }, phase.hour);
+    await page.goto(`/library/collection?collectionId=${noteGroup.id}`);
+    await expect(page.getByTestId(`collection-note-${NOTE_IDS.cover}`)).toBeVisible();
+    await expect(page.getByTestId(`collection-note-${NOTE_IDS.quote}`)).toBeVisible();
+    expect(await runScan(page)).toEqual({});
+    await page.getByTestId(`collection-note-${NOTE_IDS.quote}`).click();
+    await expect(page.getByRole('button', { name: 'Back to collection', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Add to collection', exact: true }).click();
+    await expect(page.getByRole('checkbox', { name: noteGroup.name, exact: true })).toHaveAttribute('aria-checked', 'true');
+    expect(await runScan(page)).toEqual({});
+    await page.getByRole('button', { name: 'Done', exact: true }).click();
+    await page.getByRole('button', { name: 'Back to collection', exact: true }).click();
+    await page.getByRole('button', { name: 'Swipe through', exact: true }).click();
+    await expect(page.getByTestId('note-card-slot-0')).toContainText(/Fixture Book/);
+    await expect(page.getByRole('heading', { name: noteGroup.name, exact: true })).toBeVisible();
+    expect(await runScan(page)).toEqual({});
+    await page.getByTestId('note-card-slot-0').dblclick({ delay: 80 });
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('checkbox', { name: noteGroup.name, exact: true })).toHaveAttribute('aria-checked', 'true');
+  });
+}
+test('organising collections cap and missing collection recovery', async ({ page }) => {
+  await startLibrarySession(page, { collections: Array.from({ length: 25 }, (_, index) => ({ ...noteGroup, id: `g${index}`, name: `Group ${index}` })) });
+  await page.goto('/library/collections');
+  await expect(page.getByRole('button', { name: 'New collection', exact: true })).toBeDisabled();
+  await expect(page.getByText('You have 25 collections. Delete one to create another.', { exact: true })).toBeVisible();
+  await page.goto('/library/notes-swipe?scope=collection&collectionId=deleted');
+  await expect(page.getByText('This collection no longer exists.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toHaveCount(0);
+});
+test('organising label arrows browse without dismissing before explicit selection', async ({ page }) => {
+  await startLibrarySession(page, { labels: [borrowedLabel, { ...borrowedLabel, id: 'classics', name: 'Classics' }] });
+  await page.getByRole('button', { name: 'Filter books by label', exact: true }).click();
+  await page.getByRole('radio', { name: 'Filter by Borrowed', exact: true }).focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('radio', { name: 'Filter by Classics', exact: true })).toBeFocused();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Labels: Classics', exact: true })).toBeFocused();
+});
+test('organising collection chips distinguish category names and preserve the book scope', async ({ page }) => {
+  const quoteGroup = { ...noteGroup, name: 'Quote' }, otherGroup = { ...noteGroup, id: 'other-group', name: 'Another book' };
+  await startLibrarySession(page, { collections: [quoteGroup, otherGroup], collectionItems: [collectionItems[0], { ...collectionItems[1], collection_id: otherGroup.id }] });
+  await page.goto(`/library/notes-swipe?scope=book&userBookId=${UB.manyNotes}&order=oldest`);
+  await expect(page.getByRole('radio', { name: 'Quote', exact: true })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Collection: Quote', exact: true })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Collection: Another book', exact: true })).toHaveCount(0);
+  await page.getByRole('radio', { name: 'Collection: Quote', exact: true }).click();
+  await expect(page.getByTestId('note-card-slot-0')).toContainText('Many Notes Fixture Book');
+  await expect(page.getByRole('radio', { name: 'Collection: Quote', exact: true })).toHaveAttribute('aria-checked', 'true');
+  expect(await runScan(page)).toEqual({});
+});
+for (const height of [560, 640]) {
+  test(`organising controls reachable with doubled web text in ${height}px window`, async ({ page }) => {
+    await page.setViewportSize({ width: 360, height });
+    await startLibrarySession(page);
+    await page.goto(`/library/notes-swipe?scope=book&userBookId=${UB.manyNotes}&order=oldest`);
+    await expect(page.getByTestId('note-card-slot-0')).toContainText('Many Notes Fixture Book');
+    await page.evaluate(() => {
+      const sizes = [...document.querySelectorAll<HTMLElement>('[class*="css-text"]')].map(node => ({ node, size: parseFloat(getComputedStyle(node).fontSize), line: parseFloat(getComputedStyle(node).lineHeight) }));
+      if (sizes.length === 0) throw new Error('expected css-text nodes to double for the 200% check');
+      for (const { node, size, line } of sizes) { node.style.fontSize = `${size * 2}px`; if (Number.isFinite(line)) node.style.lineHeight = `${line * 2}px`; }
+    });
+    for (const label of ['Previous', 'Read full note', 'Add to collection', 'Next']) {
+      const control = page.getByRole('button', { name: label, exact: true });
+      // Scroll offsets are rounded while flex widths remain fractional in RN Web.
+      await control.scrollIntoViewIfNeeded(); await expect(control).toBeInViewport({ ratio: 0.99 });
+      if (!(await control.isDisabled())) await control.click({ trial: true });
+    }
+    await page.getByRole('radio', { name: 'Question', exact: true }).scrollIntoViewIfNeeded();
+    await expect(page.getByRole('radio', { name: 'Question', exact: true })).toBeInViewport({ ratio: 0.99 });
+    expect(currentFixtureWrites()).toEqual([]);
+  });
+}
+
 const STATES = [
   'home-list',
   'home-empty',

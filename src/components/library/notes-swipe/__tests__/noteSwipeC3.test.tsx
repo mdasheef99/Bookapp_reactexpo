@@ -41,7 +41,7 @@ jest.mock('react-native-gesture-handler', () => {
       Pan: jest.fn(() => { const store: any = {}; mockPanCallbacks.push(store); const g = makeChainable(store); mockPanInstances.push(g); return g; }),
       Tap: jest.fn(() => {
         const gesture: Record<string, jest.Mock> = {};
-        for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'runOnJS']) gesture[name] = jest.fn(() => gesture);
+        for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'numberOfTaps', 'maxDelay', 'runOnJS']) gesture[name] = jest.fn(() => gesture);
         gesture.onEnd = jest.fn((cb: any) => { mockTapCallbacks.push(cb); return gesture; });
         return gesture;
       }),

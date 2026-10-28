@@ -1,3 +1,8 @@
+import { HomeCollectionsLink } from '@/components/library/collections/HomeCollectionsLink';
+import { LibraryEmptyState } from '@/components/library/LibraryBookList';
+import { LibraryLabelFilter } from '@/components/library/labels/LibraryLabelFilter';
+import { OrganisingSheet } from '@/components/library/organising/OrganisingSheet';
+import { useOrganising } from '@/features/books/organising/useOrganising';
 import { View, StyleSheet, ScrollView, Text, Platform } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
@@ -11,6 +16,7 @@ import { LibraryHorizontalShelf } from '@/components/library/LibraryHorizontalSh
 import { LibraryShelfStyleControl, LibraryShelfStyle, LIBRARY_SHELF_STYLE_KEY } from '@/components/library/LibraryShelfStyleControl';
 import {
     filterLibraryBooks,
+    filterLibraryByLabel,
     getLibraryFilterChips,
     getLibraryFilterLabel,
     LibraryBookEntry,
@@ -42,9 +48,11 @@ import { useLibraryCsvExport } from '@/features/books/export/useExportActions';
 const LIBRARY_VIEW_MODE_KEY = 'library_viewMode';
 export type LibraryViewMode = 'shelf' | 'list';
 
-function LibraryPageBackground({ children }: { children: ReactNode }) {
+function LibraryPageBackground({ children, hidden = false }: { children: ReactNode; hidden?: boolean }) {
     const colors = useLibraryAppearance();
-    return <View testID="library-page" style={[styles.page, { backgroundColor: colors.bgPrimary }]}>{children}</View>;
+    const pageRef = useRef<View>(null);
+    useEffect(() => { const page = pageRef.current as unknown as { inert: boolean } | null; if (Platform.OS === 'web' && page) page.inert = hidden; return () => { if (Platform.OS === 'web' && page) page.inert = false; }; }, [hidden]);
+    return <View ref={pageRef} aria-hidden={hidden} importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'} testID="library-page" style={[styles.page, { backgroundColor: colors.bgPrimary }]}>{children}</View>;
 }
 
 export default function LibraryScreen() {
@@ -58,6 +66,16 @@ function LibraryHome() {
     const { isOffline } = useNetworkStatus();
     const csvExport = useLibraryCsvExport(session?.user?.id);
     const [activeFilter, setActiveFilter] = useState<LibraryFilter>('all');
+    const actor = session?.user?.id ?? '';
+    const labels = useOrganising(actor, 'labels');
+    const [labelSelection, setLabelSelection] = useState({ actor, id: '' });
+    const [labelsOpen, setLabelsOpen] = useState(false);
+    const labelsTrigger = useRef<View>(null);
+    const labelId = labelSelection.actor === actor ? labelSelection.id : '';
+    const activeLabel = labels.entities.data?.find(label => label.id === labelId);
+    const clearLabel = () => setLabelSelection({ actor, id: '' });
+    useEffect(() => { setLabelsOpen(false); setLabelSelection({ actor, id: '' }); }, [actor]);
+    useEffect(() => { if (labelId && labels.entities.data !== undefined && !activeLabel) setLabelSelection({ actor, id: '' }); }, [labelId, activeLabel, labels.entities.data, actor]);
     const [viewMode, setViewMode] = useState<LibraryViewMode>('list');
     const [shelfStyle, setShelfStyle] = useState<LibraryShelfStyle>('vertical');
     const shelfStyleChanged = useRef(false);
@@ -95,7 +113,8 @@ function LibraryHome() {
         setViewMode(next);
         void AsyncStorage.setItem(LIBRARY_VIEW_MODE_KEY, next).catch(() => {});
     };
-    const filterChips = useMemo(() => getLibraryFilterChips(books), [books]);
+    const labelBooks = useMemo(() => filterLibraryByLabel(books, labels.members.data ?? [], labelId), [books, labels.members.data, labelId]);
+    const filterChips = useMemo(() => getLibraryFilterChips(labelBooks), [labelBooks]);
     const handleShelfStyleChange = (next: LibraryShelfStyle) => {
         if (arrangement.saving || shelfDragging || shelfStyle === next) return;
         shelfStyleChanged.current = true;
@@ -103,7 +122,7 @@ function LibraryHome() {
         void AsyncStorage.setItem(LIBRARY_SHELF_STYLE_KEY, next).catch(() => {});
     };
     const collection = isShelf ? arrangement.orderedBooks : books;
-    const filteredBooks = useMemo(() => filterLibraryBooks(collection, activeFilter), [activeFilter, collection]);
+    const filteredBooks = useMemo(() => filterLibraryBooks(filterLibraryByLabel(collection, labels.members.data ?? [], labelId), activeFilter), [activeFilter, collection, labels.members.data, labelId]);
     const activeFilterLabel = getLibraryFilterLabel(filterChips, activeFilter);
     const wishlistCount = filterChips.find((chip) => chip.key === 'wishlist')?.count ?? 0;
     const openSearch = () => router.push('/(tabs)/library/search');
@@ -146,6 +165,9 @@ function LibraryHome() {
             {exportCaption}
             <View testID="library-collection-controls">
                 <LibraryFilterBar chips={filterChips} activeFilter={activeFilter} onChange={setActiveFilter} disabled={arrangement.active} />
+                <LibraryLabelFilter triggerRef={labelsTrigger} name={activeLabel?.name} visible={!!labels.entities.data?.length}
+                    disabled={arrangement.active || labels.members.data === undefined} error={labels.entities.isError || labels.members.isError} isOffline={labels.isOffline}
+                    onOpen={() => setLabelsOpen(true)} onClear={clearLabel} onRetry={labels.refresh} />
                 <LibrarySummary count={filteredBooks.length} />
                 <GoalSummary actorId={session?.user?.id ?? ''} />
                 {isOffline && books.length > 0 && <Text accessibilityLiveRegion="polite"
@@ -169,19 +191,22 @@ function LibraryHome() {
     );
 
     return (
-        <LibraryPageBackground>
+        <>
+        <LibraryPageBackground hidden={labelsOpen}>
             {isShelf ? (
                 <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} style={styles.scrollView} scrollEnabled={!shelfDragging}>
                     <View style={styles.content}>
                         {collectionHeader}
                         {continueReadingCard}
+                        {!arrangement.active && <HomeCollectionsLink actor={actor} onPress={() => router.push('/(tabs)/library/collections')} />}
                         {!arrangement.active && <NoteSwipeHomeTile actorId={session?.user?.id ?? ''} onPress={() => router.push({ pathname: '/(tabs)/library/notes-swipe', params: { scope: 'all' } })} />}
                         <OnThisDayLine actorId={session?.user?.id ?? ''} books={books} booksLoaded={data !== undefined} hidden={arrangement.active} onOpenBook={openBookById} />
                         <LibraryShelfStyleControl value={shelfStyle} onChange={handleShelfStyleChange}
                             disabled={arrangement.saving || shelfDragging} />
                         <LibraryArrangeControls arrangement={arrangement} bookCount={books.length} dragging={shelfDragging}
                             interactionHint={shelfStyle === 'horizontal' ? 'Tap a book, then drag it. Hold near an edge to scroll, or use Earlier and Later.' : undefined}
-                            onEnter={() => { setActiveFilter('all'); arrangement.enter(); }} />
+                            onEnter={() => { setActiveFilter('all'); clearLabel(); arrangement.enter(); }} />
+                        {!!activeLabel && filteredBooks.length === 0 && <LibraryEmptyState activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} labelName={activeLabel.name} onShowAll={() => { setActiveFilter('all'); clearLabel(); }} />}
                         {shelfStyle === 'horizontal'
                             ? <LibraryHorizontalShelf books={filteredBooks} onBookPress={openBook} arrangement={arrangement} onDraggingChange={setShelfDragging} openReadIds={openReadIds} />
                             : <LibraryShelf books={filteredBooks} onBookPress={openBook} arrangement={arrangement} onDraggingChange={setShelfDragging} openReadIds={openReadIds} />}
@@ -193,14 +218,17 @@ function LibraryHome() {
                 </ScrollView>
             ) : (
                 <View style={[styles.content, styles.listViewport]}>
-                    <LibraryBookList books={filteredBooks} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel}
-                        isRefetching={isRefetching} onRefresh={refetch} onBookPress={openBook} onShowAll={() => setActiveFilter('all')}
+                    <LibraryBookList books={filteredBooks} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} labelName={activeLabel?.name}
+                        isRefetching={isRefetching} onRefresh={() => { void refetch(); labels.refresh(); }} onBookPress={openBook} onShowAll={() => { setActiveFilter('all'); clearLabel(); }}
                         header={<>{collectionHeader}{continueReadingCard}
+                        {!arrangement.active && <HomeCollectionsLink actor={actor} onPress={() => router.push('/(tabs)/library/collections')} />}
                         {!arrangement.active && <NoteSwipeHomeTile actorId={session?.user?.id ?? ''} onPress={() => router.push({ pathname: '/(tabs)/library/notes-swipe', params: { scope: 'all' } })} />}
                         <OnThisDayLine actorId={session?.user?.id ?? ''} books={books} booksLoaded={data !== undefined} hidden={arrangement.active} onOpenBook={openBookById} /></>} />
                 </View>
             )}
         </LibraryPageBackground>
+        {labelsOpen && <OrganisingSheet returnFocusRef={labelsTrigger} key={actor} actor={actor} kind="labels" mode="filter" selectedId={labelId} onSelect={id => setLabelSelection({ actor, id })} onClose={() => setLabelsOpen(false)} />}
+        </>
     );
 }
 

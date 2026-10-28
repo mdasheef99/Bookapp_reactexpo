@@ -24,6 +24,7 @@ jest.mock('@expo/vector-icons', () => {
   return { Ionicons: ({ name, ...props }: any) => <Text {...props}>{name}</Text> };
 });
 jest.mock('expo-router', () => ({
+  useFocusEffect: jest.fn(),
   useLocalSearchParams: () => ({ bookId: 'user-book-1' }),
   useRouter: () => ({ back: mockBack, push: mockPush, replace: mockReplace, canGoBack: mockCanGoBack }),
 }));

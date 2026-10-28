@@ -60,3 +60,33 @@ GRANT SELECT, DELETE ON public.reading_notes TO authenticated;
 GRANT INSERT (id, user_id, user_book_id, content, tag, page_number) ON public.reading_notes TO authenticated;
 GRANT UPDATE (content, tag, page_number, last_operation_id, updated_at) ON public.reading_notes TO authenticated;
 GRANT ALL ON public.reading_notes TO service_role;
+
+-- Existing revision trigger, present before organising migrations.
+CREATE OR REPLACE FUNCTION public.library_manage_note_revision()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
+AS $revision$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    NEW.version := 1;
+    NEW.last_operation_id := NULL;
+    NEW.created_at := pg_catalog.statement_timestamp();
+  ELSE
+    IF NEW.id IS DISTINCT FROM OLD.id OR NEW.user_id IS DISTINCT FROM OLD.user_id
+      OR NEW.user_book_id IS DISTINCT FROM OLD.user_book_id THEN
+      RAISE EXCEPTION 'LIBRARY_NOTE_IDENTITY_IMMUTABLE' USING ERRCODE='23514';
+    END IF;
+    NEW.version := OLD.version + 1;
+    NEW.created_at := OLD.created_at;
+    IF NEW.last_operation_id IS NOT DISTINCT FROM OLD.last_operation_id THEN
+      NEW.last_operation_id := NULL;
+    END IF;
+  END IF;
+  NEW.updated_at := pg_catalog.statement_timestamp();
+  RETURN NEW;
+END
+$revision$;
+-- The existing trigger keeps its identity/binding. Direct invocation is unnecessary.
+REVOKE ALL ON FUNCTION public.library_manage_note_revision() FROM PUBLIC,anon,authenticated,service_role;
+
+CREATE TRIGGER reading_notes_manage_revision BEFORE INSERT OR UPDATE
+ON public.reading_notes FOR EACH ROW EXECUTE FUNCTION public.library_manage_note_revision();

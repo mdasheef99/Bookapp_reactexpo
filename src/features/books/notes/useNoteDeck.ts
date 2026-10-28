@@ -6,10 +6,13 @@ import { categoryDeck, deckOrder, noteDeckCategories, reconcilePosition, remembe
 import { loadDeckCards } from './noteDeckCache';
 import { noteWasDeleted, retainDeckCards } from './useManualNotes';
 import { NOTE_SWIPE } from './noteSwipeConstants';
+import type { OrganisingEntity, OrganisingMembership } from '../organising/organisingGateway';
+import { collectionFilters, filterCollectionNotes, filterKey, NoteDeckFilter } from '../collections/collectionsContract';
 
 export function useNoteDeckIndex(actorId: string, scope: NoteDeckScope, enabled = true) {
-  return useQuery({ queryKey: noteKeys.deckIndex(actorId, scope), queryFn: ({ signal }) => manualNotesGateway.deckIndex(actorId, scope, signal),
-    enabled: enabled && !!actorId && (scope.kind === 'all' || !!scope.userBookId), retry: false });
+  const baseScope = scope.kind === 'collection' ? { kind: 'all' as const } : scope;
+  return useQuery({ queryKey: noteKeys.deckIndex(actorId, baseScope), queryFn: ({ signal }) => manualNotesGateway.deckIndex(actorId, baseScope, signal),
+    enabled: enabled && !!actorId && (baseScope.kind === 'all' || !!baseScope.userBookId), retry: false });
 }
 /** Reads a cached deck card without registering a fetch observer, so the swipe
  * surface never replaces the Home tile's active query function for the same key.
@@ -41,20 +44,26 @@ function resolveInitialFallback(ids: readonly string[], initial: NoteDeckReturnS
   }
   return ids[0] ?? undefined;
 }
-export function useNoteDeck(actorId: string, initial: NoteDeckReturnState, enabled = true, retainCards = enabled) {
+export function useNoteDeck(actorId: string, initial: NoteDeckReturnState, enabled = true, retainCards = enabled, collections?: { entities?: OrganisingEntity[]; members?: OrganisingMembership[] }) {
   const client = useQueryClient();
   const index = useNoteDeckIndex(actorId, initial.scope, enabled);
   const allRows = useMemo(() => (index.data ?? []).filter(row => !noteWasDeleted(client, actorId, row.user_book_id, row.id)), [index.data, index.isFetching, actorId, client]);
-  const categories = useMemo(() => noteDeckCategories(allRows), [allRows]);
+  const scopeCollectionId = initial.scope.kind === 'collection' ? initial.scope.collectionId : undefined;
+  const scopedRows = useMemo(() => scopeCollectionId !== undefined ? filterCollectionNotes(allRows, collections?.members ?? [], { kind: 'collection', collectionId: scopeCollectionId }) : allRows, [allRows, collections?.members, scopeCollectionId]);
+  const filters = useMemo(() => collectionFilters(scopedRows, scopeCollectionId !== undefined ? [] : collections?.entities ?? [], collections?.members ?? []), [scopedRows, collections?.entities, collections?.members, scopeCollectionId]);
+  const effectiveCollectionId = initial.collectionId && (index.data === undefined || collections?.entities === undefined || collections?.members === undefined || filters.some(filter => filter.kind === 'collection' && filter.collectionId === initial.collectionId)) ? initial.collectionId : undefined;
+  const categories = useMemo(() => noteDeckCategories(scopedRows), [scopedRows]);
   const effectiveCategory: NoteDeckCategory = index.data === undefined ? initial.category : (categories.includes(initial.category) ? initial.category : 'all');
-  const ordered = useMemo(() => deckOrder(categoryDeck(allRows, effectiveCategory), initial.order, initial.seed), [allRows, effectiveCategory, initial.order, initial.seed]);
+  const selectedFilter: NoteDeckFilter = effectiveCollectionId ? { kind: 'collection', collectionId: effectiveCollectionId } : effectiveCategory === 'all' ? { kind: 'all' } : { kind: 'category', tag: effectiveCategory };
+  const positionKey = effectiveCollectionId ? filterKey(selectedFilter) : effectiveCategory;
+  const ordered = useMemo(() => deckOrder(effectiveCollectionId ? filterCollectionNotes(scopedRows, collections?.members ?? [], { kind: 'collection', collectionId: effectiveCollectionId }) : categoryDeck(scopedRows, effectiveCategory), initial.order, initial.seed), [scopedRows, collections?.members, effectiveCollectionId, effectiveCategory, initial.order, initial.seed]);
   const ids = ordered.map(row => row.id);
   const signature = JSON.stringify(ids);
   const orderSeedKey = JSON.stringify([initial.order, initial.seed]);
-  const categoryOrderSeedKey = JSON.stringify([effectiveCategory, initial.order, initial.seed]);
+  const categoryOrderSeedKey = JSON.stringify([positionKey, initial.order, initial.seed]);
   const [positions, setPositions] = useState<DeckPositions>({});
   const idsByCategory = useRef<Record<string, readonly string[]>>({});
-  const lastCategoryRef = useRef<NoteDeckCategory | null>(null);
+  const lastCategoryRef = useRef<string | null>(null);
   const lastOrderSeedRef = useRef<string | null>(null);
   const [position, setPosition] = useState<{ ids: string[]; selected: string | null | undefined; initialized: boolean }>({ ids: [], selected: initial.noteId === '' ? undefined : initial.noteId, initialized: false });
   // Synchronous per-category selection so a category/order switch never flashes a
@@ -62,7 +71,7 @@ export function useNoteDeck(actorId: string, initial: NoteDeckReturnState, enabl
   // baseline, derive the selection from the stored per-category position (or the
   // first card) instead of reconciling the old category's selection.
   const orderChanged = lastOrderSeedRef.current !== null && lastOrderSeedRef.current !== orderSeedKey;
-  const categoryChanged = lastCategoryRef.current !== null && lastCategoryRef.current !== effectiveCategory;
+  const categoryChanged = lastCategoryRef.current !== null && lastCategoryRef.current !== positionKey;
   let selected: string | null | undefined;
   if (!position.initialized) {
     selected = initial.noteId === null ? null : initial.noteId === '' ? (ids[0] ?? undefined) : ids.includes(initial.noteId) ? initial.noteId : resolveInitialFallback(ids, initial);
@@ -70,10 +79,10 @@ export function useNoteDeck(actorId: string, initial: NoteDeckReturnState, enabl
     selected = ids[0] ?? null;
     if (!ids.length) selected = undefined;
   } else if (categoryChanged) {
-    const stored = positions[effectiveCategory];
+    const stored = positions[positionKey];
     if (!ids.length) selected = undefined;
     else if (stored === undefined) selected = ids[0] ?? null;
-    else selected = reconcilePosition(idsByCategory.current[effectiveCategory] ?? [], ids, stored);
+    else selected = reconcilePosition(idsByCategory.current[positionKey] ?? [], ids, stored);
   } else if (position.selected === undefined) {
     selected = ids[0] ?? undefined;
   } else {
@@ -87,25 +96,25 @@ export function useNoteDeck(actorId: string, initial: NoteDeckReturnState, enabl
     // Order or seed changed: clear all stored per-category positions and restart
     // the current category at its first card.
     if (lastOrderSeedRef.current !== null && lastOrderSeedRef.current !== orderSeedKey) {
-      idsByCategory.current = { [effectiveCategory]: ids };
+      idsByCategory.current = { [positionKey]: ids };
       setPositions({});
       if (!ids.length) {
         setPosition(current => ({ ids: [], selected: undefined, initialized: true }));
       } else {
         setPosition({ ids, selected: ids[0] ?? null, initialized: true });
       }
-      lastCategoryRef.current = effectiveCategory;
+      lastCategoryRef.current = positionKey;
       lastOrderSeedRef.current = orderSeedKey;
       return;
     }
     // Category changed: store the old position, restore the new one.
-    if (lastCategoryRef.current !== null && lastCategoryRef.current !== effectiveCategory) {
+    if (lastCategoryRef.current !== null && lastCategoryRef.current !== positionKey) {
       const oldCategory = lastCategoryRef.current;
       const oldExposed: string | null | undefined = position.selected;
       const oldIdsForStore = position.ids;
       idsByCategory.current[oldCategory] = oldIdsForStore;
-      const stored = positions[effectiveCategory];
-      const prevIdsForNew = idsByCategory.current[effectiveCategory] ?? [];
+      const stored = positions[positionKey];
+      const prevIdsForNew = idsByCategory.current[positionKey] ?? [];
       let restored: string | null | undefined;
       if (!ids.length) {
         restored = undefined;
@@ -115,23 +124,23 @@ export function useNoteDeck(actorId: string, initial: NoteDeckReturnState, enabl
         restored = reconcilePosition(prevIdsForNew, ids, stored);
       }
       setPositions(prev => rememberPosition(prev, oldCategory, oldExposed ?? null));
-      idsByCategory.current[effectiveCategory] = ids;
+      idsByCategory.current[positionKey] = ids;
       const nextSel = restored ?? null;
       setPosition(current => {
         if (current.initialized && JSON.stringify(current.ids) === signature && (current.selected ?? null) === (nextSel ?? null)) return current;
         return { ids, selected: ids.length ? nextSel : undefined, initialized: true };
       });
-      lastCategoryRef.current = effectiveCategory;
+      lastCategoryRef.current = positionKey;
       lastOrderSeedRef.current = orderSeedKey;
       return;
     }
     // First mount: record the category/order/seed baseline.
     if (lastCategoryRef.current === null) {
-      lastCategoryRef.current = effectiveCategory;
+      lastCategoryRef.current = positionKey;
       lastOrderSeedRef.current = orderSeedKey;
-      idsByCategory.current[effectiveCategory] = ids;
+      idsByCategory.current[positionKey] = ids;
     } else {
-      idsByCategory.current[effectiveCategory] = ids;
+      idsByCategory.current[positionKey] = ids;
     }
     if (!ids.length) {
       setPosition(current => current.ids.length === 0 && current.selected === undefined ? current : { ids: [], selected: undefined, initialized: current.initialized });
@@ -139,7 +148,7 @@ export function useNoteDeck(actorId: string, initial: NoteDeckReturnState, enabl
     }
     const nextSelection = selection ?? null;
     setPosition(current => current.initialized && JSON.stringify(current.ids) === signature && (current.selected ?? null) === (nextSelection ?? null) && current.selected !== undefined ? current : { ids, selected: nextSelection, initialized: true });
-  }, [signature, categoryOrderSeedKey, orderSeedKey, index.data, selection, effectiveCategory]); // ids are represented by signature
+  }, [signature, categoryOrderSeedKey, orderSeedKey, index.data, selection, positionKey]); // ids are represented by signature
   const exposed = selection ?? null;
   const at = exposed === null ? ids.length : ids.indexOf(exposed);
   const windowIds = ids.slice(Math.max(0, at), at + NOTE_SWIPE.batchSize);
@@ -191,5 +200,5 @@ export function useNoteDeck(actorId: string, initial: NoteDeckReturnState, enabl
   const abort = () => batch.current?.abort();
   return { index, ids, at, noteId: exposed, card: cardData, undercards: [underOneData, underTwoData], move, restart, abort,
     detailError: detail.key === windowKey && detail.error && !index.isFetching, retryCard: () => retryCards(n => n + 1),
-    categories, category: effectiveCategory, positions };
+    categories, category: effectiveCategory, collectionId: effectiveCollectionId, filters, selectedFilter, positions };
 }

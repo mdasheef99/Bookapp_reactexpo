@@ -24,7 +24,7 @@ let mockPhase: ThemePhase = 'daylight';
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
-jest.mock('expo-router', () => ({
+jest.mock('expo-router', () => ({ useFocusEffect: jest.fn(),
     useLocalSearchParams: () => ({ bookId: 'user-book-1' }),
     useRouter: () => ({ back: jest.fn(), push: jest.fn(), replace: jest.fn(), canGoBack: () => true }),
 }));
@@ -142,6 +142,8 @@ function renderScreen(availableForLending = false) {
         author: { user_id: 'reader-2', display_name: 'Reader Two', username: 'reader-two' },
     }]);
     client.setQueryData(noteKeys.list('reader-1', 'user-book-1'), []);
+    client.setQueryData(['library-organising', 'reader-1', 'labels', 'entities'], []);
+    client.setQueryData(['library-organising', 'reader-1', 'labels', 'members'], []);
     // SDD-10 D10-02: seed vault-pages so the absence checks below mean something —
     // if the Saved row were restored, this page would render and fail them.
     // The row stays absent, so this seed does not change the render or fixture.

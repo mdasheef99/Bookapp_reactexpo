@@ -1,6 +1,6 @@
 # 08 — Glossary
 
-**Last checked:** 2026-10-18, against the code and the documents it cites.
+**Last checked:** 2026-10-24, against the code and the documents it cites.
 
 Terms used throughout the code and docs, in plain language.
 
@@ -55,7 +55,7 @@ Terms used throughout the code and docs, in plain language.
 | --- | --- |
 | **Scan session** | One Owner sitting of photographing shelves. |
 | **Input** | One uploaded image in a session. |
-| **Spine / candidate** | A book detected on an image; each becomes a candidate to review. Up to 15 per image. |
+| **Spine / candidate** | Vision reads book spines; accepted observations become candidates to review, with up to 15 per image. An Owner can also add a candidate manually. |
 | **Vision** | AI reading of spines (Gemini), output format `p9-vision-v2`. |
 | **Metadata lookup** | Finding the book's details: Google Books automatically; Open Library only for explicit Owner edition searches. |
 | **Edition picker** | Owner UI to choose the exact edition of a candidate from looked-up options. |
@@ -66,4 +66,4 @@ Terms used throughout the code and docs, in plain language.
 | **Store View** | Owner screens for managing committed stock (Unit 7C). |
 | **Owner API** | The `phase9-owner-ingestion` Edge Function. |
 | **Workers** | Separate Node services for media, vision, metadata and publication jobs (03). |
-| **Fixture mode** | Recorded fake AI responses used in tests and safe deployments. |
+| **Fixture mode** | Recorded fake AI responses used in tests and fixture deployments. |

@@ -1,3 +1,4 @@
+jest.mock('@/features/books/organising/useOrganising', () => ({ useOrganising: () => ({ entities: { data: [] }, members: { data: [] }, refresh: jest.fn() }) }));
 import React from 'react';
 import { Platform } from 'react-native';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
@@ -56,7 +57,7 @@ jest.mock('react-native-gesture-handler', () => {
   const { View } = require('react-native');
   const chainable = () => {
     const g: Record<string, jest.Mock> = {};
-    for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'runOnJS']) g[name] = jest.fn(() => g);
+    for (const name of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'numberOfTaps', 'maxDelay', 'runOnJS']) g[name] = jest.fn(() => g);
     for (const name of ['onStart', 'onUpdate', 'onEnd', 'onFinalize']) g[name] = jest.fn(() => g);
     return g;
   };

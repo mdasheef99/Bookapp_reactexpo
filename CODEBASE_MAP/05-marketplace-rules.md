@@ -1,6 +1,6 @@
 # 05 — Marketplace Rules
 
-**Last checked:** 2026-10-18, against the code and the documents it cites.
+**Last checked:** 2026-10-24, against the code and the documents it cites.
 
 This file summarises the rules most often broken by accident. It is a pointer,
 not an authority: each rule names the document that owns it. If a summary here

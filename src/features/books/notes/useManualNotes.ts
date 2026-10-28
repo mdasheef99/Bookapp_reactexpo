@@ -1,3 +1,4 @@
+import { invalidateOrganising } from '../organising/useOrganising';
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -137,6 +138,7 @@ export function useNoteRemovalRefresh(actorId: string, bookId: string) {
     for (const operation of noteSaves.forBook(actorId, bookId)) {
       if (operation.submission.noteId === noteId && operation.status === 'confirmed') noteSaves.forget(operation.submission.id);
     }
+    invalidateOrganising(client, actorId);
     void client.invalidateQueries({ queryKey: noteKeys.list(actorId, bookId) });
     void client.invalidateQueries({ queryKey: noteKeys.deck(actorId) });
   }, [client, actorId, bookId]);

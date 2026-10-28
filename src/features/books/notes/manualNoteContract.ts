@@ -8,8 +8,8 @@ export const NOTE_CATEGORIES = [
   { value: 'question', label: 'Question' },
 ] as const;
 export type NoteCategory = typeof NOTE_CATEGORIES[number]['value'];
-export type NoteOrigin = 'book' | 'list' | 'swipe';
-export type NoteDeckScope = { kind: 'all' } | { kind: 'book'; userBookId: string };
+export type NoteOrigin = 'book' | 'list' | 'swipe' | 'collection';
+export type NoteDeckScope = { kind: 'all' } | { kind: 'book'; userBookId: string } | { kind: 'collection'; collectionId: string };
 export type NoteDeckOrder = 'shuffle' | 'newest' | 'oldest';
 export type NoteDeckCategory = NoteCategory | 'all';
 export type NoteDeckIndexRow = Pick<ManualNote, 'id' | 'tag' | 'created_at' | 'user_book_id' | 'user_id'>;
@@ -18,6 +18,7 @@ export interface NoteDeckCard { note: ManualNote; book: NoteDeckBook }
 export interface NoteDeckReturnState {
   scope: NoteDeckScope;
   category: NoteDeckCategory;
+  collectionId?: string;
   order: NoteDeckOrder;
   seed: string;
   noteId: string | null;

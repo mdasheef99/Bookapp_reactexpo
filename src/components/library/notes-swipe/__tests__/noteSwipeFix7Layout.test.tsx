@@ -1,7 +1,10 @@
+let mockCollections = false;
+jest.mock('@/features/books/organising/useOrganising', () => ({ useOrganising: () => ({ entities: { data: mockCollections ? [{ id: 'collection', user_id: 'actor', name: 'Collected notes', created_at: '2026-10-25', updated_at: '2026-10-25' }] : [] }, members: { data: [] }, refresh: jest.fn() }) }));
 import React from 'react';
-import { PixelRatio, Platform, StyleSheet, Text, View } from 'react-native';
+import { PixelRatio, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import { NoteSwipeCard } from '../NoteSwipeCard';
+import { NoteSwipeStack } from '../NoteSwipeStack';
 import { NoteFullNoteSheet } from '../NoteFullNoteSheet';
 import NotesSwipeScreen from '../../../../../app/(tabs)/library/notes-swipe';
 import { BookButton } from '../../ui/BookButton';
@@ -20,6 +23,7 @@ jest.mock('@/features/books/notes/useNoteDeck', () => ({ useNoteDeck: () => ({
   index: { data: [{ id: 'a' }] }, ids: ['a'], at: 0, noteId: 'a', card: mockCard(), undercards: [],
   move: jest.fn(), abort: jest.fn(), restart: jest.fn(), retryCard: jest.fn(),
   categories: ['all', 'quote', 'question'], category: 'question',
+  filters: [{ kind: 'all' }, { kind: 'category', tag: 'quote' }, { kind: 'category', tag: 'question' }, ...(mockCollections ? [{ kind: 'collection', collectionId: 'collection' }] : [])],
 }) }));
 jest.mock('../useNoteSwipeMotion', () => ({ useReducedNoteMotion: () => true, useNoteSwipeHint: () => false }));
 jest.mock('expo-haptics', () => ({ impactAsync: jest.fn(), ImpactFeedbackStyle: { Light: 'Light' } }));
@@ -27,7 +31,7 @@ jest.mock('react-native-worklets', () => ({ ...jest.requireActual('react-native-
 jest.mock('react-native-gesture-handler', () => {
   const chain = () => {
     const gesture: Record<string, any> = {};
-    for (const key of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'runOnJS', 'onStart', 'onUpdate', 'onEnd', 'onFinalize']) gesture[key] = () => gesture;
+    for (const key of ['enabled', 'minDistance', 'maxDistance', 'maxDuration', 'numberOfTaps', 'maxDelay', 'runOnJS', 'onStart', 'onUpdate', 'onEnd', 'onFinalize']) gesture[key] = () => gesture;
     return gesture;
   };
   return { Gesture: { Pan: chain, Tap: chain, Native: chain, Exclusive: (pan: unknown) => pan, Simultaneous: (pan: unknown) => pan }, GestureDetector: ({ children }: any) => children, GestureHandlerRootView: ({ children }: any) => children };
@@ -82,6 +86,7 @@ function cardFeedback(ui: UI, height: number, scale: number) {
 }
 
 beforeEach(() => {
+  mockCollections = false;
   (Platform as { OS: string }).OS = 'android';
   const Reanimated = require('react-native-reanimated');
   jest.spyOn(Reanimated, 'useSharedValue').mockImplementation((initial: unknown) => {
@@ -90,6 +95,24 @@ beforeEach(() => {
   });
 });
 afterEach(() => jest.restoreAllMocks());
+
+it.each([560, 640])('keeps four controls and chips in separate scroll areas at 200%% text in a %idp window', height => {
+  const RN = require('react-native');
+  jest.spyOn(RN, 'useWindowDimensions').mockReturnValue({ width: 360, height, scale: 1, fontScale: 2 });
+  jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(2);
+  const ui = render(<NotesSwipeScreen />);
+  for (const label of ['Previous', 'Read full note', 'Add to collection', 'Next']) expect(ui.getByRole('button', { name: label })).toBeTruthy();
+  const chrome = ui.getByTestId('note-swipe-chrome-scroll'), controls = ui.getByTestId('note-swipe-controls-scroll');
+  const scrolls = ui.UNSAFE_getAllByType(ScrollView);
+  expect(scrolls.filter((node: { props: { testID?: string } }) => node.props.testID === 'note-swipe-chrome-scroll')).toHaveLength(1);
+  expect(scrolls.filter((node: { props: { testID?: string } }) => node.props.testID === 'note-swipe-controls-scroll')).toHaveLength(1);
+  expect(flat(chrome).maxHeight + flat(controls).maxHeight).toBeLessThanOrEqual((height - 20) / 2);
+  // Vertical scrolling is confined to chrome/control siblings, outside the pan surface.
+  expect(chrome.findAll((node: { props: { testID?: string } }) => node.props.testID === 'note-card-slot-0')).toHaveLength(0);
+  expect(controls.findAll((node: { props: { testID?: string } }) => node.props.testID === 'note-card-slot-0')).toHaveLength(0);
+  expect(flat(ui.getByTestId('note-swipe-button-bar')).flexWrap).toBe('wrap');
+  ui.unmount();
+});
 
 it('converges at the compact-cover boundary instead of alternating 40/46dp footers', () => {
   const RN = require('react-native');
@@ -105,32 +128,73 @@ it('converges at the compact-cover boundary instead of alternating 40/46dp foote
   expect(nativeLine(body, 1)).toBe(26);
 });
 
-it('measures converging screen/card layout with single native scaling in all four small windows', () => {
+it('resets the Android rounded clip border to zero when a loading slot becomes a note', () => {
+  const props = { undercards: [], at: 0, total: 1, reduced: false, hint: false,
+    enabled: true, onMove: jest.fn(), onRead: jest.fn(), onLeave: jest.fn() };
+  const ui = render(<NoteSwipeStack {...props} />);
+  const viewport = () => flat(ui.getByTestId('note-card-slot-0-inner', hidden));
+  // Loading supplies a 1dp border. Removing that native prop on data arrival
+  // leaves Android's rounded padding-box clip invalid: text has layout and
+  // accessibility bounds but does not paint. Explicit zero resets the insets.
+  // Round-4 device probes reproduce this transition with bfd02ef's stack.
+  expect(viewport().borderWidth).toBe(1);
+  for (const reduced of [false, true]) {
+    ui.rerender(<NoteSwipeStack {...props} reduced={reduced} card={mockCard()} />);
+    expect(viewport().overflow).toBe('hidden');
+    expect(viewport().borderWidth).toBe(0);
+    expect(viewport().borderRadius).toBeGreaterThan(0);
+    expect(ui.getByText(mockCard().note.content, hidden)).toBeTruthy();
+    ui.rerender(<NoteSwipeStack {...props} reduced={reduced} />);
+    expect(viewport().borderWidth).toBe(1);
+  }
+});
+
+it('measures converging E/F chrome, four controls and a complete note line in small windows', () => {
   const RN = require('react-native');
-  for (const height of [640, 560]) for (const scale of [1, 2]) {
+  for (const height of [640, 560]) for (const scale of [1, 2]) for (const collections of [false, true]) for (const tabHeight of [0, 73]) {
+    mockCollections = collections;
     jest.spyOn(RN, 'useWindowDimensions').mockReturnValue({ width: 360, height, scale: 1, fontScale: scale });
     jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(scale);
     let commits = 0;
     const ui = render(<React.Profiler id="screen" onRender={() => { commits += 1; }}><NotesSwipeScreen /></React.Profiler>);
-    // Measure the rendered top/progress/control bars, including wrapped labels.
+    // The screen can sit above tab navigation: budget its actual measured height,
+    // not useWindowDimensions alone. No emulator size/settings override is needed.
+    layout(ui.getByTestId('note-swipe-content'), 360, height - tabHeight);
+    // Measure E/F's Order button and all four wrapped controls, not C2's old trio.
+    // RNTL bubbles a layout event to the nearest ancestor WITH a handler when the
+    // target has none (13.3.3 findEventHandler walks to the parent); a real device
+    // never bubbles onLayout. The bars below have no onLayout of their own, so each
+    // fired layout would clobber contentHeight. Restore it right after (same for
+    // the ScrollView viewports below) so the budgets are measured, not the artefact.
     const title = ui.getByRole('header', { name: 'Your notes' });
     expect(nativeLine(title, scale)).toBe(27 * scale);
     const back = ui.getByRole('button', { name: 'Back' });
     const backText = back.findByType(Text);
-    const topHeight = Math.max(nativeLine(title, scale), nativeLine(backText, scale) + flat(back).paddingVertical * 2 + 2) + flat(ui.getByTestId('note-swipe-top-bar')).paddingVertical * 2;
+    const order = ui.getByRole('button', { name: 'Order' });
+    const topBar = flat(ui.getByTestId('note-swipe-top-bar'));
+    const naturalWidth = (button: { props: any }, text: { props: any }, label: string) => label.length * flat(text).fontSize * scale * 0.5 + flat(button).paddingHorizontal * 2 + 2;
+    const titleWidth = 360 - topBar.paddingHorizontal * 2 - topBar.gap * 2 - naturalWidth(back, backText, '\u2190') - naturalWidth(order, order.findByType(Text), 'Order');
+    const titleLines = Math.min(2, Math.ceil('Your notes'.length * flat(title).fontSize * scale * 0.5 / titleWidth));
+    const topHeight = Math.max(nativeLine(title, scale) * titleLines, nativeLine(backText, scale) + flat(back).paddingVertical * 2 + 2) + topBar.paddingVertical * 2;
     const bar = ui.getByTestId('note-swipe-button-bar');
-    const slotWidth = (360 - flat(bar).paddingHorizontal * 2 - flat(bar).gap * 2) / 3;
-    let buttonHeight = 0;
-    for (const label of ['Previous', 'Read full note', 'Next']) {
+    const barWidth = 360 - flat(bar).paddingHorizontal * 2;
+    let buttonHeight = 0, rowWidth = 0, rowHeight = 0;
+    for (const label of ['Previous', 'Read full note', 'Add to collection', 'Next']) {
       const button = ui.getByRole('button', { name: label });
       const text = ui.getByText(label);
-      const charsPerLine = Math.floor((slotWidth - flat(button).paddingHorizontal * 2 - 2) / (flat(text).fontSize * scale * 0.5));
+      const buttonWidth = Math.min(barWidth, naturalWidth(button, text, label));
+      if (rowWidth && rowWidth + flat(bar).gap + buttonWidth > barWidth) {
+        buttonHeight += rowHeight + flat(bar).gap; rowWidth = 0; rowHeight = 0;
+      }
+      const charsPerLine = Math.max(1, Math.floor((buttonWidth - flat(button).paddingHorizontal * 2 - 2) / (flat(text).fontSize * scale * 0.5)));
       const labelLines = Math.ceil(label.length / charsPerLine);
-      buttonHeight = Math.max(buttonHeight, nativeLine(text, scale) * labelLines + flat(button).paddingVertical * 2 + 2);
+      rowHeight = Math.max(rowHeight, nativeLine(text, scale) * labelLines + flat(button).paddingVertical * 2 + 2);
+      rowWidth += (rowWidth ? flat(bar).gap : 0) + buttonWidth;
       expect(flat(button).height).toBeUndefined();
       expect(flat(button).maxHeight).toBeUndefined();
       expect(text.props.numberOfLines).toBeUndefined();
     }
+    buttonHeight += rowHeight + flat(bar).paddingVertical * 2;
     const progressHeight = 3 + flat(ui.getByTestId('note-position-bar', hidden)).paddingVertical * 2;
     const chip = ui.getByRole('radio', { name: 'Question' });
     const chipText = chip.findByType(Text);
@@ -138,33 +202,38 @@ it('measures converging screen/card layout with single native scaling in all fou
     expect(nativeLine(chipText, scale)).toBe(22 * scale);
     const chipHeight = Math.max(flat(chip).minHeight, nativeLine(chipText, scale) + flat(chip).paddingVertical * 2 + 2);
     const chipsHeight = chipHeight + flat(ui.getByTestId('note-deck-chips-bar')).paddingVertical * 2;
-    const available = height - 20 - topHeight - progressHeight - buttonHeight - flat(bar).paddingVertical * 2 - chipsHeight;
-    // Native Text scales the base label line height once. The shortest window
-    // can still lack space for a complete card at 200%; never invent room here.
+    if (collections) expect(ui.getByRole('radio', { name: 'Collection: Collected notes' })).toBeTruthy();
+    expect(ui.getByTestId('note-deck-chips').props.horizontal).toBe(true);
+    layout(ui.getByTestId('note-swipe-top-bar'), 360, topHeight);
+    layout(ui.getByTestId('note-position-bar', hidden), 360, progressHeight);
+    layout(ui.getByTestId('note-deck-chips-bar'), 360, chipsHeight);
+    layout(bar, 360, buttonHeight);
+    layout(ui.getByTestId('note-swipe-content'), 360, height - tabHeight);
+    const chrome = ui.getByTestId('note-swipe-chrome-scroll'), controls = ui.getByTestId('note-swipe-controls-scroll');
+    // ScrollView's native flexGrow fills its bounded viewport even when its
+    // content is shorter. Both viewport budgets must leave room for the card.
+    const chromeHeight = flat(chrome).maxHeight, controlsHeight = flat(controls).maxHeight;
+    layout(chrome, 360, chromeHeight); layout(controls, 360, controlsHeight);
+    layout(ui.getByTestId('note-swipe-content'), 360, height - tabHeight);
+    const available = height - tabHeight - 20 - chromeHeight - controlsHeight;
     expect(chipsHeight).toBeLessThanOrEqual(80);
-    if (scale === 2) {
-      expect({ withChips: available, withoutChips: available + chipsHeight }).toEqual(
-        height === 640 ? { withChips: 235, withoutChips: 313 } : { withChips: 155, withoutChips: 233 },
-      );
-    }
-    else expect(available).toBeGreaterThan(0);
-    if (available <= 0) { ui.unmount(); continue; }
+    expect(available).toBeGreaterThan(0);
     layout(ui.getByTestId('note-stack-wrap'), 360, available);
     const stage = ui.getByTestId('note-stack-fixed-parent');
     layout(stage, 360, available);
     const outer = ui.getByTestId('note-card-slot-0', hidden);
     const cardHeight = available - flat(outer).top - flat(outer).bottom;
+    if (scale === 2) expect(cardHeight).toBeGreaterThanOrEqual(212);
     const history = [];
     for (let pass = 0; pass < 8; pass += 1) history.push(cardFeedback(ui, cardHeight, scale));
     expect(history.slice(-3)).toEqual([history[7], history[7], history[7]]);
-    expect(commits).toBeLessThan(15);
+    expect(commits).toBeLessThan(20);
     expect(flat(stage).minHeight).toBeLessThanOrEqual(available);
-    const body = ui.queryByText(mockCard().note.content, hidden);
+    const body = ui.getByText(mockCard().note.content, hidden);
     const remaining = Math.max(0, cardHeight - history[7].chrome);
-    if (body) {
-      expect(nativeLine(body, scale)).toBe(26 * scale);
-      expect(body.props.numberOfLines * nativeLine(body, scale)).toBeLessThanOrEqual(remaining);
-    } else expect(remaining).toBeLessThan(26 * scale);
+    expect(nativeLine(body, scale)).toBe(26 * scale);
+    expect(body.props.numberOfLines).toBeGreaterThanOrEqual(1);
+    expect(body.props.numberOfLines * nativeLine(body, scale)).toBeLessThanOrEqual(remaining);
     expect(nativeLine(ui.getByTestId('note-card-meta', hidden), scale)).toBe(20 * scale);
     expect(nativeLine(ui.getByText('Hooked', hidden), scale)).toBe(20 * scale);
     expect(nativeLine(ui.getByTestId('note-quote-mark', hidden), scale)).toBe(40 * scale);

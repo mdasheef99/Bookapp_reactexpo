@@ -122,7 +122,7 @@ test('the only change to an existing table is the new UNIQUE (id, user_id) on re
   assert.deepEqual(keys.map(k => [k.conname, k.def]), [['reading_notes_id_owner_key', 'UNIQUE (id, user_id)']]);
   assert.equal(await count(main, 'pg_policies', "tablename='reading_notes'"), 4, 'reading_notes policies unchanged');
   assert.equal(await count(main, 'information_schema.column_privileges', "table_name='reading_notes' AND grantee='authenticated' AND privilege_type='UPDATE'"), 5, 'reading_notes UPDATE grants unchanged');
-  assert.equal(await count(main, 'pg_trigger', "tgrelid='public.reading_notes'::regclass AND NOT tgisinternal"), 0, 'no trigger added to reading_notes');
+  assert.equal(await count(main, 'pg_trigger', "tgrelid='public.reading_notes'::regclass AND NOT tgisinternal"), 1, 'existing revision trigger preserved');
 });
 
 test('link tables have only composite owner foreign keys (one PostgREST embed path)', async () => {
@@ -238,9 +238,11 @@ test('labels are owner-only: no cross-user reads or writes, anon denied, guard c
 test('label guards (defence in depth, as the table owner): timestamps are server-owned, ids and links are immutable', async () => {
   const name = nextDb(); const setup = await freshDatabase(name, [LABELS]); await setup.end();
   await asSuper(name, async c => {
+    const before = (await c.query('SELECT clock_timestamp() AS observed_at')).rows[0];
     await c.query(`INSERT INTO public.user_library_labels(user_id,name,created_at,updated_at) VALUES ('${OWNER}','Spoof','2001-01-01','2001-01-01')`);
-    const row = (await c.query("SELECT created_at FROM public.user_library_labels WHERE name='Spoof'")).rows[0];
-    assert.ok(row.created_at.getFullYear() >= 2026, 'created_at is overwritten by the server clock');
+    const row = (await c.query("SELECT created_at, clock_timestamp() AS observed_at FROM public.user_library_labels WHERE name='Spoof'")).rows[0];
+    assert.ok(row.created_at instanceof Date && Number.isFinite(+row.created_at), 'created_at is a valid date');
+    assert.ok(+row.created_at >= +before.observed_at && +row.created_at <= +row.observed_at, 'created_at is overwritten by the server clock between the two database observations');
     await c.query('SAVEPOINT g'); await rejectsCode(c.query("UPDATE public.user_library_labels SET id=gen_random_uuid() WHERE name='Spoof'"), '23514', 'library_label_immutable'); await c.query('ROLLBACK TO g');
     await c.query('SAVEPOINT g'); await rejectsCode(c.query(`UPDATE public.user_library_labels SET user_id='${OTHER}' WHERE name='Spoof'`), '23514', 'library_label_immutable'); await c.query('ROLLBACK TO g');
     await c.query(`INSERT INTO public.user_book_labels(user_id,user_book_id,label_id) SELECT '${OWNER}','${UB(1)}',id FROM public.user_library_labels WHERE name='Spoof'`);
@@ -484,4 +486,18 @@ test('owner deletes: only own labels, collections and items; other people cannot
     await rejectsCode(c.query(`UPDATE public.user_note_collections SET user_id='${OTHER}' WHERE id=$1`, [col]), '23514', 'library_collection_immutable');
   });
   await rejectsCode(asUser(name, null, c => c.query("INSERT INTO public.user_note_collections(name) VALUES ('Nobody')"), { role: 'service_role' }), '23502', 'library_collection_user_required');
+});
+
+test('existing revision trigger survives organising and still versions note edits', async () => {
+  await as(OWNER, async c => {
+    const before = (await c.query('SELECT * FROM public.reading_notes WHERE id=$1', [NOTE(1)])).rows[0];
+    const updated = (await c.query('UPDATE public.reading_notes SET content=$1 WHERE id=$2 RETURNING *', ['edited with organising present', NOTE(1)])).rows[0];
+    assert.equal(updated.version, before.version + 1);
+    assert.equal(updated.created_at.toISOString(), before.created_at.toISOString());
+    assert.equal(updated.user_id, before.user_id);
+    assert.equal(updated.user_book_id, before.user_book_id);
+    const collection = await addCollection(c, 'Revision compatibility');
+    await c.query('INSERT INTO public.user_note_collection_items(collection_id,note_id) VALUES ($1,$2)', [collection, NOTE(1)]);
+    assert.equal(await count(c, 'public.user_note_collection_items', `collection_id='${collection}'`), 1);
+  });
 });

@@ -14,6 +14,7 @@ export interface DetailRowProps {
   link?: boolean;
   onPress?: () => void;
   children?: React.ReactNode;
+  triggerRef?: React.RefObject<View | null>;
 }
 
 export function DetailRow({
@@ -25,6 +26,7 @@ export function DetailRow({
   link = false,
   onPress,
   children,
+  triggerRef,
 }: DetailRowProps) {
   const colors = useLibraryAppearance();
   const [focused, setFocused] = useState(false);
@@ -66,6 +68,7 @@ export function DetailRow({
   return (
     <View>
       <Pressable
+        ref={triggerRef}
         testID={`book-row-${id}`}
         accessibilityRole={link ? 'link' : 'button'}
         accessibilityLabel={[label, secondary].filter(Boolean).join(', ')}

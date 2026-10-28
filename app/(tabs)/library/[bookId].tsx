@@ -1,3 +1,5 @@
+import { OrganisingSheet } from '@/components/library/organising/OrganisingSheet';
+import { useOrganising, invalidateOrganising } from '@/features/books/organising/useOrganising';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, Platform, AccessibilityInfo, findNodeHandle } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -100,6 +102,12 @@ export default function BookDetailScreen() {
     const { isOffline } = useNetworkStatus();
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [labelsOpen, setLabelsOpen] = useState(false);
+    const labelsTrigger = useRef<View>(null);
+    const labels = useOrganising(user?.id ?? '', 'labels');
+    const bookLabelIds = new Set((labels.members.data ?? []).filter(row => row.target_id === bookId).map(row => row.entity_id));
+    const labelSummary = (labels.entities.data ?? []).filter(label => bookLabelIds.has(label.id)).sort((a, b) => a.name.localeCompare(b.name)).map(label => label.name).join(', ');
+    useEffect(() => { setLabelsOpen(false); }, [user?.id, bookId]);
     const [openRows, setOpenRows] = useState<OpenRowsState>({});
     const [optimisticStatus, setOptimisticStatus] = useState<ReadingStatus | null>(null);
     const [datesSheetOpen, setDatesSheetOpen] = useState(false);
@@ -127,11 +135,11 @@ export default function BookDetailScreen() {
     useEffect(() => {
         if (Platform.OS !== 'web' || !pageRef.current) return;
         const page = pageRef.current as unknown as { inert: boolean };
-        page.inert = showDeleteModal;
+        page.inert = showDeleteModal || labelsOpen;
         return () => {
             page.inert = false;
         };
-    }, [showDeleteModal]);
+    }, [showDeleteModal, labelsOpen]);
 
     const wasDeleteOpen = useRef(showDeleteModal);
     useEffect(() => {
@@ -144,7 +152,7 @@ export default function BookDetailScreen() {
             }
         }
         wasDeleteOpen.current = showDeleteModal;
-    }, [showDeleteModal]);
+    }, [showDeleteModal, labelsOpen]);
 
     const handleBackPress = useCallback(() => {
         navigateBackOrFallback(router, '/(tabs)/library');
@@ -243,6 +251,7 @@ export default function BookDetailScreen() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['library'] });
             void queryClient.invalidateQueries({ queryKey: ['library-note-deck', user?.id ?? ''] });
+            invalidateOrganising(queryClient, user?.id ?? '');
             handleBackPress();
         },
         onError: (err: any) => {
@@ -544,8 +553,8 @@ export default function BookDetailScreen() {
                 <View
                     ref={pageRef}
                     testID="book-page"
-                    aria-hidden={showDeleteModal}
-                    importantForAccessibility={showDeleteModal ? 'no-hide-descendants' : 'auto'}
+                    aria-hidden={showDeleteModal || labelsOpen}
+                    importantForAccessibility={showDeleteModal || labelsOpen ? 'no-hide-descendants' : 'auto'}
                     style={topStyles.page}
                 >
                     {backHeader}
@@ -735,6 +744,9 @@ export default function BookDetailScreen() {
                         )}
 
                         <View style={topStyles.rows}>
+                            <DetailRow triggerRef={labelsTrigger} id="labels" label="Labels" secondary={labels.entities.data === undefined || labels.members.data === undefined
+                                ? labels.entities.isError || labels.members.isError ? "Couldn't load labels" : 'Loading labels…'
+                                : labelSummary || 'Add labels'} onPress={() => setLabelsOpen(true)} />
                             {notes && notes.length > 0 && (
                                 <DetailRow
                                     id="notes"
@@ -862,6 +874,7 @@ export default function BookDetailScreen() {
                     </ScrollView>
                 </View>
 
+                {labelsOpen && <OrganisingSheet returnFocusRef={labelsTrigger} key={`${user?.id}:${bookId}`} actor={user?.id ?? ''} kind="labels" target={bookId} mode="membership" onClose={() => setLabelsOpen(false)} />}
                 <DeleteBookModal
                     visible={showDeleteModal}
                     onClose={() => setShowDeleteModal(false)}

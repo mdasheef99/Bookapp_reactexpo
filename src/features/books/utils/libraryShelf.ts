@@ -43,3 +43,10 @@ export function filterLibraryBooks(entries: LibraryBookEntry[], activeFilter: Li
 export function getLibraryFilterLabel(filterChips: LibraryFilterChip[], activeFilter: LibraryFilter) {
     return filterChips.find((chip) => chip.key === activeFilter)?.label ?? 'All';
 }
+
+/** A label narrows the existing order before status filtering and chip counts. */
+export function filterLibraryByLabel(entries: LibraryBookEntry[], memberships: readonly { entity_id: string; target_id: string }[], labelId: string): LibraryBookEntry[] {
+    if (!labelId) return entries;
+    const ids = new Set(memberships.filter(row => row.entity_id === labelId).map(row => row.target_id));
+    return entries.filter(entry => ids.has(entry.id));
+}
