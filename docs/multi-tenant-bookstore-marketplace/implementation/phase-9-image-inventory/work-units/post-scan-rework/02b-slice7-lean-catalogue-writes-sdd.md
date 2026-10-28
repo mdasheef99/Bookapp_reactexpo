@@ -2,13 +2,13 @@
 
 | | |
 |---|---|
-| **Status** | **Approved by Owner 2026-10-26 as the Slice 7 design.** 7a build and local migration-file creation are authorized; applying it requires separate Owner approval. 7b is not authorized. Owner answers and approval-round decisions are recorded in §14; the 7a/7b split is recorded in SDD-0/SDD-2. |
+| **Status** | **Approved by Owner 2026-10-26 as the Slice 7 design.** 7a build and local migration-file creation are authorized; applying it requires separate Owner approval. Owner 2026-10-27: 7b starts as two slices, 7b-1 (M84) and 7b-2 (M85) (§13.4, §14 decisions 10-14); the build is authorized through 7b-1 package 4 (red-first tests) once this amendment is approved, and nothing further without a separate Owner approval. Owner answers and approval-round decisions are recorded in §14; the 7a/7b split is recorded in SDD-0/SDD-2. |
 | **Parent** | [SDD-2, Slice 7](./02-catalogue-and-matching-sdd.md#slice-7--lean-catalogue-writes-stats-and-shared-cache), under [SDD-0](./00-overview-sdd.md). Pattern and inherited Add contract: [02a](./02a-slice6-catalogue-link-sdd.md), especially §§3–7, 9, 12–14. |
 | **Authority** | PSR-D33–D40; R01/R04–R10/R12; Q15–Q21; DOC-3 §§4.2/5.1/5.2/14/17. SDD-0 §15 controls tests, review and separate permissions. |
 | **Baseline** | Selected worktree `phase9-psr-slice5b-add-isbn`, branch `claude/phase9-psr-slice7a-lean-catalogue-identity`, created from `87db21c` under R12 (own branch per slice). That commit records M81/M82 and the Slice 7 design locally on `claude/phase9-psr-slice6-catalogue-link`; nothing pushed. No implementation is performed by this documentation step. |
 | **Database evidence** | Supplied [read-only snapshot, 2026-10-25](../../../../../../.claude/psr-slice6/db-evidence.md#L1); [tracker 38, M81 read-back, 2026-10-25](../../trackers/38-post-scan-rework-evidence.md#L1804); [browser evidence, 2026-10-26](../../trackers/38-post-scan-rework-evidence.md#L1806); 02a. These are dated observations, not fresh live verification. |
-| **Migration** | **7a = M83**, proposed local file `supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`: **APPLIED as live version 20261026223715 (2026-10-27); read-back PASS; browser check PASS (tracker 38)**. Local creation authorized by Owner 2026-10-26; application separate. 7b: one migration, number undecided, not authorized. M81 is applied as live version **20261025171647**. M82's separate `phase9_edition_identity_change` first-save fix, local file `20261026000082_marketplace_phase9_edition_choice_survives_first_save.sql`, is applied as live version **20261025220839** (orchestrator read-only verification, 2026-10-26; not re-queried in this step). |
-| **Size / risk** | Large / high for implementation: shared identity, completion replay, cache lineage and privileges. §12 assigns each package to the Owner's accepted 7a/7b split (§14 OQ8); SDD-0/SDD-2 record the split map. |
+| **Migration** | **7a = M83**, proposed local file `supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`: **APPLIED as live version 20261026223715 (2026-10-27); read-back PASS; browser check PASS (tracker 38)**. Local creation authorized by Owner 2026-10-26; application separate. **7b-1 = M84**, proposed local file `supabase/migrations/20261027000084_marketplace_phase9_catalogue_companions_completion.sql`, and **7b-2 = M85**, proposed local file `supabase/migrations/20261027000085_marketplace_phase9_shared_edition_cache.sql`: M84 **APPLIED as live version 20261028125102 (2026-10-28; read-back in §13.5)**; M85 **PROPOSED / NOT_CREATED / NOT_APPLIED**; numbers 84 and 85 were verified free locally and live on 2026-10-27 (at the time the latest live migration was 20261026223715) and the M85 number is re-verified before creating M85; creation and application of M85 needs separate Owner approval. M81 is applied as live version **20261025171647**. M82's separate `phase9_edition_identity_change` first-save fix, local file `20261026000082_marketplace_phase9_edition_choice_survives_first_save.sql`, is applied as live version **20261025220839** (orchestrator read-only verification, 2026-10-26; not re-queried in this step). |
+| **Size / risk** | Large / high for implementation: shared identity, completion replay, cache lineage and privileges. §12 assigns each package to the Owner's accepted 7a/7b split (§14 OQ8); SDD-0/SDD-2 record the split map. Owner 2026-10-27 splits 7b into 7b-1 and 7b-2 (§12, §13.4): one 7b migration would carry about twenty objects across completion, transport, receipts and cache. |
 
 This document specifies the approved Slice 7 design and records the Owner's answers
 and approval-round decisions (§14). **Owner 2026-10-26:** 7a build and local M83
@@ -1060,6 +1060,16 @@ preflight and separate application permission remain required; 7b authority is s
    hidden filtering, receipt recovery, no Google shared rows and unchanged
    automatic Google routing. Automatic OL/relaxed matching remain later gates.
 
+**7b-1 / 7b-2 order and deploy dependency (Owner 2026-10-27).** Order: apply M84
+(read-back, v1 compatibility, proof of the five carried fixes), deploy the
+compatible 7b-1 worker (companions, v2 completion and recovery), then apply M85,
+then deploy the cache-reuse worker path. The Render metadata worker deploys only
+from `main`, so every browser check that needs worker code (companions, completion
+v2, the cache) waits until 7a is merged to `main` and deployed; the 7a session owns
+that merge. Database-side checks need no worker deploy: the five carried fixes,
+Select/Add chosen and added counts and the probe index. Applying SQL deploys no
+worker (step 2 above). 7b-2 requires 7b-1 applied and verified.
+
 **Rollback:** separately approved compatible-worker rollback first, preserving v1
 and additive DB schema. In-flight v2/cache jobs drain or finish by fenced recovery
 before disabling their runtime path; keep support for durable cache-hit selections
@@ -1125,6 +1135,12 @@ postgres calls below admission (§5/AC7-21); production entry points still deny 
 | AC7-26 R04/Owner OQ5 scan-only scope | Immutable scan-text origin plus matching query identity can be public; provider-facts-only, typed/edited/confirmed/equal-looking or unknown-origin queries stay private and cannot supply a cross-store cache hit. | Cache + cache-scope edge suites; scan/provider-only/Owner provenance matrix; red: provider-origin public branch remains. |
 | AC7-27 R06 cache attempt scope | More than ten distinct completed cache-hit requests on one candidate/adapter use fresh lookups, each with one sequence-1 primary attempt and zero provider spend; same-request replay adds no attempt. Same-lookup sequence/role duplicates still fail; legacy NULL-lookup uniqueness is unchanged. | Cache suite; repeated-generation fixture with M67 partial indexes and identity/role constraints; red: reuse RPC absent; assert no candidate-wide capacity failure. |
 | AC7-28 Owner 2026-10-26 / §9 (7a) | SET ROLE anon, authenticated (non-operator), authenticated platform operator and service_role: direct INSERT/UPDATE/DELETE/TRUNCATE on book_metadata_sources are each denied; operator SELECT still returns rows; non-operator authenticated/anon SELECT returns none; service_role SELECT works. | `supabase/tests/phase9/phase9LeanCatalogueSecurity.integration.test.mjs` (NEW); seeded source/operator fixture on disposable DB only. Red: current grants/policy allow operator and service_role writes. |
+| AC7-29 Owner 2026-10-27 / §13.3 item 1 (7b-1) | **Select/Add lineage parity.** An explicit-option Select whose metadata differs from its source lookup or attempt in adapter key, adapter version or normalizer version (attempt and lookup), or whose lookup reuse_policy_version differs from the registry policy version, counts no choice: the effect stays pending and the Select, its receipt and the review state are unchanged. The same Select with matching lineage counts +1. For every lineage case in the matrix the Select count outcome equals Add's link outcome (same predicate as `phase9_catalogue_link_for_add_v1`, [M83 L935-953](../../../../../../supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql#L935)). Reading note: the trace verdict named the normalizer version; parity over the whole lineage predicate is the same defect class and is the Owner-visible reading of this AC. | `supabase/tests/phase9/phase9LeanCatalogueCarriedFixes.integration.test.mjs` (NEW); lineage matrix on the 7a baseline with a matching positive control; red: M83 counts the mismatched cases. One shared predicate is the intended design (Add behaviour byte-identical); the parity matrix, not the factoring, decides acceptance. |
+| AC7-30 §13.3 item 2 (CONFIRMED, 7b-1) | **Registry lock on no-hint Select admission.** The no-hint Select takes admission only from `phase9_catalogue_source_policy_v1` (registry row FOR SHARE) and requires `sharedAdmitted`; an unknown, disabled or storage-revoked provider counts nothing. Native: while the Select holds the registry share lock a concurrent registry UPDATE (for example `enabled=false`) waits (`pg_locks`) and the Select counted under the policy it saw; with the UPDATE committed first the Select counts nothing and its effect stays pending. The registry lock is taken before advisory and row locks (§6.2). | extend `phase9LeanCatalogueConcurrency.postgres.mjs` (native, two independent connections) plus a PGlite static/behaviour check in the CarriedFixes suite; red: M83 reads admission without a lock, the UPDATE is not blocked and a count survives revocation. |
+| AC7-31 §13.3 item 3 (7b-1) | **Saved-ID Add provider-work conflict.** A saved edition E in work A, whose title and authors match A and whose own source row (or, in 7b-1, its private companion) names provider work W, with an existing tuple `(adapter,'work',W)` targeting work B different from A: Add succeeds, the inventory row is saved unlinked, the helper returns NULL/NULL, nothing is written and the disappeared-ID fallback is not entered (identity conflict). An absent tuple, or a tuple targeting A, links as today. | CarriedFixes suite + native suite; seeded combined snapshot and conflicting tuple; red: M83 links to A. |
+| AC7-32 §13.3 item 4 (7b-1) | **Cover rules apply only to provider-sourced metadata.** A Select resolved through a saved or current-suggestion hint, whose canonical display cover belongs to another provider or is null, counts as it otherwise would; a no-hint (provider-sourced) option whose own cover fails the scoped provider's rules still counts nothing. | CarriedFixes suite; hinted/no-hint cover matrix; red: M83 counts nothing for the hinted case. |
+| AC7-33 §13.3 item 5 (7b-1) | **Select does not require a work tuple that Add could create.** An option or saved edition in work A whose source row names provider work W with no `(adapter,'work',W)` tuple and a key-equal work: Select counts +1. A tuple targeting B different from A: counts nothing. A title-key-differing work with no proof: counts nothing (unchanged). For the same inputs Add creates the tuple or skips under the existing rules and the Select/Add outcomes agree. | CarriedFixes suite; absent/own/foreign tuple matrix with Add parity; red: M83 refuses the absent-tuple case. |
+| AC7-34 Owner 2026-10-27 (7b-1) | **Probe index.** M84 creates exactly one non-unique expression index on `public.canonical_works` over `pg_catalog.btrim(marketplace_sec.phase9_metadata_normalized_text(coalesce(title_normalized,primary_title)))` and `marketplace_sec.phase9_catalogue_normalized_authors_v1(primary_authors)`, written exactly as the three M83 scan sites read it ([M83 L397](../../../../../../supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql#L397), [L553](../../../../../../supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql#L553), [L891](../../../../../../supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql#L891)); proposed name `canonical_works_normalized_probe_idx`. ISBN-13/ISBN-10, provider-tuple and source probes already use unique indexes (live 2026-10-27) and get none. On a disposable database: the index exists and both functions are IMMUTABLE; with sequential scans disabled each of the three probe shapes plans on it; results equal the unindexed results, including a legacy raw-case incumbent. Standing rule: changing the body of either function needs a REINDEX and its own approval. | CarriedFixes suite + GUARD `marketplacePhase9LeanCatalogue.test.ts`; red: index absent. |
 
 Keep these **existing** suites green at implementation time; reported historical
 counts are tracker evidence, not results rerun here:
@@ -1177,6 +1193,9 @@ match activation boundary. AC7-11–27 add missing compatibility/security/native
 proof without relaxing existing AC7-1–10; AC7-28 records the Owner's 2026-10-26
 source-write closure and preserved reads (§9). Parent approved AC text is preserved.
 
+AC7-29-AC7-34 (Owner 2026-10-27) add the five carried M83 trace items and the
+probe index to 7b-1; they are acceptance for M84 and do not change any 7a result.
+
 ## 12. Build packages, size and review points
 
 **Owner 2026-10-26:** 02b is approved as the Slice 7 design; **7a build and local
@@ -1192,17 +1211,32 @@ For 7a the Owner overrides SDD-0 §15's agent list only: code by Codex
 Codex Sol (read-only); Haiku runs preflights/tests. Orchestrator reviews all diffs;
 the remaining §15 test/review/separate-permission gates stay in force.
 
+**7b routing (Owner 2026-10-27).** Code by Codex `gpt-6.1-terra` at maximum
+reasoning, workspace-write, one Codex session per package and the same session
+resumed for fix rounds (repeated "model at capacity" is reported to the Owner,
+never answered by switching models). Read-only reviews, in parallel unless the
+Owner says otherwise: Codex `gpt-6.1-sol` xhigh, Codex `gpt-6-luna` xhigh and
+OpenCode Muse (`opencode-go/muse-spark-1.3-contributor`, one OpenCode run at a
+time); Terra never reviews its own code. Every verified High or Medium finding
+returns to the implementing session; the orchestrator verifies each finding in
+the code before sending it. Haiku runs test commands and browser checks (the
+Owner signs in); Muse writes documentation from a factual brief and the
+orchestrator verifies it and runs the continuity validator. The orchestrator
+writes SDD amendments. SDD-0 §15 is unchanged.
 | Order | Slice | Proposed package / size | Red proof and review stop |
 |---|---|---|---|
 | 0 | 7a | Accepted OQ1–OQ8, split-map update and fresh read-only preflight / small | Split map recorded in SDD-0/SDD-2; M83 assigned to 7a, 7b number undecided. Fresh read-only preflight must re-verify project, M82 and numbering before build/local creation; supplied dated evidence does not replace it. |
 | 1 | 7a | SQL identity/Add/Select/stats/ACL/native tests only / medium | Meaningful feature assertions fail before the 7a artifact exists; schema fidelity checked. Fixture excludes every 7b object and worker change. Record red reasons before production SQL; Owner 2026-10-26 has authorized local creation after this red proof and fresh read-only preflight. |
 | 2 | 7a | Identity/model/Add/security SQL / large | Schema→pure validators/admission/lock key→identity core→Add/Select choice+added hooks→hidden/blocklist readers→grants in one transaction. Review M81 body diff, identity/locks and security separately. No 7b relation/function reference, M78 completion change or edit to applied M81/M82. |
 | 3 | 7a | Independent integration/native/security closeout / medium | Prove legacy and no-ISBN Add, source/ID writes, chosen/added counts and replay with all 7b objects absent. Run relevant regression/ACL/native proof and record exact residuals/docs. Application/read-back need separate permission; 7a requires no worker deploy. |
-| 4 | 7b | Completion/cache SQL and companion/transport fixture tests only / medium | On proven 7a, meaningful 7b assertions fail before its artifact/worker exists. Red extraction/binding/bounds/v1/recovery/cache/privacy/zero-spend tests; review every field from original edition JSON, no new HTTP. |
-| 5 | 7b | Completion/lineage/cache SQL / large | Separate creation permission. Add companions/lookup effects, completion/local searched hooks and deferred first-choice attribution, v1/v2 recovery, typed cache writer/reuse core, guards/source-policy/legacy readers. Extend Add/Select only for 7b lineage/searched attribution. Review M78-equivalent validation and all claim/receipt/ACL paths; retain the working 7a core. |
-| 6 | 7b | Companion contract/extraction and worker transport/v2 completion/recovery / medium | Red tests from package 4 first, then implementation in cohesive modules about 300–350 lines. Preserve old-worker/null-companion compatibility and no retry after uncertain completion. |
-| 7 | 7b | Typed query-scope/cache-reuse worker path / large | Cache/security/zero-spend red tests first; SQL boundary reviewed before activation. Pair source-policy/guard review with receiving worker; apply fixed OQ4/OQ5, no app DTO change. |
-| 8 | 7b | Independent integration/native/security closeout / medium | Prove completion/transport/cache as a working addition to completed 7a, including two-store privacy, exact counts, recovery, v1 compatibility and cross-path races. Record docs/validator/residuals. Separate application/read-back, worker deploy and browser-check permissions follow. |
+| 4 | 7b-1 | Red-first tests only: companion/transport fixtures, completion v2, v1 delegate and recovery, receipts, searched counts, AC7-29 to AC7-34 / medium | On proven 7a, meaningful 7b-1 assertions fail before the M84 artifact or worker exists; the five carried-fix tests also run against the live M83 bodies and fail there with the matching positive controls passing. Record red reasons; no production SQL; **stop and report to the Owner.** |
+| 5 | 7b-1 | M84 SQL: companions, lookup effects, completion v2 and v1 delegate, M73 recovery, M15 local-completion hook, validator accounting mode, Add/Select/helper replacements (companion read, searched flush, five fixes) and the probe index / large | Separate creation permission. Review M78-equivalent validation, claim/receipt/ACL paths, the Add/Select diffs against M83 and the lock order separately. No M85 object or reference; the lookup-effects cache columns are created nullable and only M85 writes them. |
+| 6 | 7b-1 | Companion contract and extraction, worker transport, v2 completion and recovery / medium | Red tests from package 4 first, cohesive modules about 300-350 lines, old-worker/null-companion compatibility, no retry after an uncertain completion. |
+| 7 | 7b-1 | Independent integration/native/security closeout / medium | Prove completion/transport as a working addition to completed 7a: exact counts, recovery, v1 compatibility, cross-path races and the five fixes. Record docs, validator and residuals. Application/read-back, worker deploy (after 7a is on `main`) and browser checks need separate permissions. |
+| 8 | 7b-2 | Red-first tests only: cache schema, scope, key, reuse, receipts, privacy and zero-spend / medium | On proven 7b-1, meaningful 7b-2 assertions fail before the M85 artifact or worker exists; **stop and report to the Owner.** |
+| 9 | 7b-2 | M85 SQL: cache union, lookup cache_hit checks, cache helpers, guards, source-policy and legacy-reader changes, completion publication step / large | Separate creation permission. Cache/security SQL boundary reviewed before activation; no change to a 7b-1 result when the cache path is idle. |
+| 10 | 7b-2 | Typed query-scope and cache-reuse worker path / large | Cache/security/zero-spend red tests first; pair source-policy/guard review with the receiving worker; apply fixed OQ4/OQ5, no app DTO change. |
+| 11 | 7b-2 | Independent integration/native/security closeout / medium | Two-store privacy, version matrix, cache races, rollout and worker rollback on completed 7b-1. Application/read-back, worker deploy and browser checks need separate permissions. |
 
 Owner OQ8 has decided the split: **7a identity/model/Add/security**, then
 **7b completion/transport/cache**. 7a is independently working and testable on
@@ -1238,6 +1272,31 @@ claims only its listed part. Searched stays **0 in 7a**.
 | AC7-23 | Facts mode and refusal of every nonnull p_completion; no accounting implementation. | Same-signature accounting replacement, M78 routing/receipt/outcome equivalence and cache facts. |
 | AC7-28 | Source direct-write denials for anon, non-operator/operator authenticated and service_role; operator/service SELECT preserved, non-operator/anon SELECT returns none (§9). | Retain 7a proof; no new source-write path. |
 | AC7-1, AC7-2e, AC7-2f, AC7-7, AC7-9, AC7-11, AC7-12, AC7-13, AC7-15, AC7-16, AC7-24, AC7-25, AC7-26, AC7-27 | No completion/transport/cache implementation or acceptance claim in 7a. | Full checks: lookup-time writes/conflicts, OCLC/LCCN transport, cover/cache reuse, compatibility/recovery, searched attribution, privacy/versions/scope/zero-spend/attempt uniqueness. |
+**7b-1 / 7b-2 split of the 7b column (Owner 2026-10-27).** 7b-1 (M84) carries
+the 7b column of AC7-1, 2e, 2f, 2d (companion, transport, lineage), 3 (M15
+completion re-check and lookup completion), 4/5 (searched hooks, with AC7-12 and
+AC7-25), 8 and 10 (for its objects), 11, 13 (v2 recovery), 14, 17 (7a plus 7b-1
+rows: old worker, new worker after M84, in-flight, worker rollback), 18 (reverse
+batch order, batch-vs-Add, completion races), 21 and 23 (accounting branch, worker
+companion rules), 22 (completion key parity) and the new AC7-29 to AC7-34. 7b-2
+(M85) carries AC7-6 (cache publication and reuse), 7, 9, 15, 16, 24, 26, 27, the
+cache portions of AC7-3, 8, 10, 11, 12 (cache-hit search count), 13 (cache-hit
+receipt recovery), 17, 18 (cache races), 21, 22 (cache key parity) and 23 (cache
+facts). A 7b-1 pass claims only its listed part.
+
+**7b-2 object list.** Everything in §4.5 and the cache rows of §5: the cache
+tagged union (`payload_kind`, `bibliographic_payload`, `payload_digest`,
+`routing_policy_version`) on `phase9_metadata_cache_entries`; the replacement of
+the two live lookup CHECKs `phase9_metadata_lookups_check1` (mode/shape) and
+`phase9_metadata_lookups_execution_mode_check` (local/external only) to admit
+`cache_hit`; `phase9_catalogue_valid_cache_v1`, `phase9_catalogue_cache_receipt_guard`,
+`phase9_catalogue_query_scope_v1`, `phase9_catalogue_store_cache_v1`, the cache-reuse
+core and its public service wrapper; the M68 `phase9_edition_guard_automatic_payload`
+exceptions (live trigger function on attempts, lookups and cache entries); the M73
+`phase9_edition_source_policy` cache-only lineage; legacy cache reader/writer
+discrimination by `payload_kind`; and the completion publication step. Every other
+7b object in §§4-5 belongs to 7b-1. Neither migration references the other's
+functions.
 
 The `book_metadata_sources` direct-write audit **and revoke are in 7a** (§9).
 **Owner 2026-10-26 closes decision 6:** no live/repo writer found; revoke all
@@ -1260,8 +1319,7 @@ direct writer, **stop and report to the Owner**; do not break it.
 
 7a is **M83**, local file
 `supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`,
-**APPLIED** as live version 20261026223715 (2026-10-27); read-back PASS; browser check PASS (tracker 38). 7b has one migration, number decided at
-7b start after 7a is applied and verified. The §1 provider-neutrality rule applies
+**APPLIED** as live version 20261026223715 (2026-10-27); read-back PASS; browser check PASS (tracker 38). 7b-1 is M84 and 7b-2 is M85 (Owner 2026-10-27, §13.4); each is created and applied only on its own separate approval. The §1 provider-neutrality rule applies
 across both artifacts. Each slice needs its own red-first proof and separate
 build/creation/application authority; 7a build/local creation are authorized,
 application is separate and 7b is not authorized. Review SQL by semantic sections; do not split an
@@ -1351,6 +1409,13 @@ read-only MCP only when separately authorized for the build/preflight session:
   new public facts remain within D35, no expiry-requiring second provider. No
   provider HTTP/licence investigation is performed by this task.
 
+- Dated 7b preflight (2026-10-27): collected read-only and recorded in
+  [database-current-vs-target, 2026-10-27 slice 7b read-only preflight](../../supporting/database-current-vs-target.md#2026-10-27-slice-7b-read-only-preflight).
+  Not yet collected: deployed worker versions beyond what the recorded lookup
+  version columns show, scan-origin observation provenance, physical-call and
+  reservation tables and cleanup retention (7b-2 start), provider licence
+  review (no investigation is part of this slice).
+
 ### 13.3 7a implementation record (2026-10-27)
 
 Live version: M83 applied as live version 20261026223715 (2026-10-27); local file `supabase/migrations/20261026000083_marketplace_phase9_lean_catalogue_identity.sql`, 1,359 lines, SHA-256 `6538d7c79b8e2352e70374b96c5f8db1a1152fe9bb9ab86ade94eadd14b00616`; applied through Supabase MCP `apply_migration` (second connector), project `ahntbtktjjmvfosgkmgn`.
@@ -1382,6 +1447,31 @@ Review findings carried to 7b (recorded for Owner review; M84 not authorized):
 - Select checks the canonical display cover against the scoped provider's cover rules — LATENT. Impact: chosen count late or missing. Fix size S.
 - Select requires an existing provider-work tuple that Add could create — LATENT. Impact: chosen count late or missing. Fix size S.
 - Owner decision 2026-10-27: carry all five to 7b (fix red-first before or with 7b); no separate M84 now. M84 is not authorized.
+
+### 13.4 7b start record (2026-10-27)
+
+Owner 2026-10-27 ("go, split 7b") started 7b as two slices: **7b-1 = M84**
+(private companions, completion v2, durable receipts, searched counts, the five
+carried M83 fixes of §13.3, the probe index) and **7b-2 = M85** (shared
+edition-list cache). Numbers 84 and 85 were verified free: no live version after
+20261026223715 and no local migration or ref at 84 or higher; re-verify both
+immediately before creating either. Worktree `.claude/worktrees/p9-7b` (the longer
+name exceeded the Windows path limit on a tracked evidence file) on branch
+`claude/phase9-psr-slice7b-lean-catalogue-writes`, cut from `6e4924d`; the 7a
+branch, its uncommitted client fix and the 7a merge belong to the 7a session.
+Routing is in §12 and decisions in §14 (10-14). The read-only preflight is
+recorded in database-current-vs-target (link in §13.2). Authority: this
+amendment is documentation only; the next authorized action after the Owner
+approves it is 7b-1 package 4 (red-first tests, no production SQL), then a report.
+Creating or applying either migration, any deploy, commit, push and merge each
+need a separate Owner approval, and the project is re-verified through Supabase
+MCP immediately before any application.
+
+### 13.5 M84 applied and read back (2026-10-28)
+
+Live version: M84 applied as live version 20261028125102 (2026-10-28) to Supabase project `ahntbtktjjmvfosgkmgn` (https://ahntbtktjjmvfosgkmgn.supabase.co) on the Owner's explicit request, with the Supabase MCP `apply_migration` in one call by a Claude Sonnet subagent that copied the SQL from the file; result `{"success":true}`. Local file `supabase/migrations/20261027000084_marketplace_phase9_catalogue_companions_completion.sql` (1789 lines, 131354 bytes; SHA-256: not recorded). Live name `marketplace_phase9_catalogue_companions_completion`.
+
+Read-back (PASS, 2026-10-28, read-only `execute_sql`): the stored migration text in `supabase_migrations.schema_migrations` has length 131354 and md5 `253b224c9e7270590751aa435a43ef9f`, equal to the md5 of the local file. New tables `marketplace_sec.phase9_catalogue_companions` and `marketplace_sec.phase9_catalogue_lookup_effects`: owner postgres, row level security enabled, not forced, no policies, ACL only postgres. New functions in `marketplace_sec`: `phase9_catalogue_valid_companion_v1`, `phase9_catalogue_companion_for_choice_v1`, `phase9_catalogue_count_search_v1`, `phase9_catalogue_lock_owner_scope_v1`, `phase9_catalogue_plan_keys_v1` (all postgres-only ACL, `search_path=""`) and `phase9_complete_candidate_edition_options_v2` (ACL postgres and service_role only); `public.phase9_complete_candidate_edition_options_v2` (ACL postgres and service_role only, exactly one overload in each schema); `public.phase9_add_candidate_to_inventory_v1` keeps EXECUTE for `authenticated`. Index `canonical_works_normalized_probe_idx` on `public.canonical_works` is valid and ready. Preflight (Claude Haiku, same day, read-only, CLEAN) and the Supabase CLI note (`supabase db push --linked --dry-run` refused; `supabase/.temp` removed afterwards, gitignored; no other database write) are recorded in supporting/database-current-vs-target.md. Not yet verified after the apply: AC7-8 and AC7-28 effective role privileges and RLS operations through real roles, AC7-13 and AC7-17 real response-loss/outage/rollback behavior, AC7-34 planner use of the index, a live smoke of completion v2 and Add through the worker, and every M85 item (M85 stays PROPOSED / NOT_CREATED / NOT_APPLIED).
 
 ## 14. Owner questions and conflicts
 
@@ -1421,6 +1511,11 @@ migration creation are authorized; application requires separate approval.
 | 7 | M82 GLM closure: "not obtained: free GLM hung three times; covered by Muse (no finding), two Haiku preflights (READY) and the browser re-check PASS". |
 | 8 | Browser proof: if no real Open Library edition without ISBN can be selected through the app, report to Owner, prove provider-ID link in DB and native tests, browser-check ISBN path plus chosen/added counts. This records the proof plan; application/browser check still need separate approval. |
 | 9 | Source-policy contract: §5's exact eight-key `psr-catalogue-source-policy-v1` object and postgres-only `phase9_catalogue_source_policy_v1(text)` builder are approved. Builder locks the registry row FOR SHARE, evaluates admission and uses that same row; unknown key returns NULL. Production entry points use only this builder. Generic consumers RAISE malformed/mismatched policy; valid false returns one NULL pair with zero writes. Disposable postgres synthetic-provider tests may build the exact admitted object directly below the unchanged production allow-list. Record new tests red before M83 creation. |
+| 10 | 7b starts 2026-10-27 and is split by semantic responsibility: 7b-1 = M84 (private companions, completion v2, durable receipts, searched counts, the five carried M83 fixes, the probe index) and 7b-2 = M85 (shared edition-list cache). Separate review, separate creation approval and separate application approval for each; 7b-2 requires 7b-1 applied and verified. |
+| 11 | The five carried M83 trace items (§13.3) are 7b-1 scope, fixed red-first with new AC7-29 to AC7-33; no separate migration. |
+| 12 | 7b-1 adds an expression index for the normalized title/author probes on `canonical_works` (AC7-34); ISBN probes already have unique indexes. |
+| 13 | 7b routing: Codex gpt-6.1-terra (maximum reasoning, workspace-write, one session per package, resumed for fixes) implements; Codex Sol xhigh, Codex Luna xhigh and OpenCode Muse review read-only (Terra never reviews its own code); Haiku runs tests and browser checks; Muse writes docs from a factual brief; the orchestrator writes SDD amendments (§12). |
+| 14 | Deploy dependency: the Render worker deploys only from `main`; browser checks needing worker code (companions, completion v2, the cache) wait until 7a is merged to `main` and deployed by the 7a session; database-side checks do not wait (§10). |
 
 1. **OQ1 — Legacy raw-case work and skipped-link race.** Recommend retain the
    no-update incumbent/accepted safe skip in this slice, with explicit native
@@ -1512,6 +1607,8 @@ migration creation are authorized; application requires separate approval.
 | 02a OQ4 versus new no-ISBN write path | M81 fixes fetchedAt/ISBN stamp, not provider-ID stamp/source refresh. OQ7; no retroactive canonical UPDATE. |
 | SDD-0 one-session guardrail versus earlier SDD-2 optional 7a/7b | Owner OQ8 accepted the 7a/7b split; §12 assigns objects/packages/acceptance. SDD-0/SDD-2 now record 7a=M83 and 7b's undecided number; Owner 2026-10-26 authorizes 7a build/local creation only, application separate and 7b not authorized. |
 | E01 old grants/counts/history versus E02/E03 and this brief | Dated snapshot comments are historical. M81 read-back and one browser proof supersede them; M82 is separate and its actual live status is a preflight fact, not guessed from its local file. |
+| SDD-0 slice 7b row and 02b §12 ("one migration") versus Owner 2026-10-27 | One 7b migration would carry about twenty objects across completion, transport, receipts and cache. Owner split it into 7b-1 (M84) and 7b-2 (M85); SDD-0 §7.1 and SDD-2 Slice 7 carry the split. `phase9_catalogue_lookup_effects` is created in M84 with its cache columns nullable and unused until M85; neither migration references the other's functions. |
+| Terra's M83 trace verdict (item 1) versus AC7-29 | The verdict names the normalizer version; AC7-29 requires parity over the whole lineage predicate Add applies, which is the same defect class. Flagged for Owner review in AC7-29. |
 
 All BookConnect pointers in §2 were checked locally (orchestrator spot-check
 2026-10-26: C02, C04 L119, C10 L120–160, C11 L36/L34, C12 L268/L510 confirmed); proposed NEW paths are labeled, and live-only facts are

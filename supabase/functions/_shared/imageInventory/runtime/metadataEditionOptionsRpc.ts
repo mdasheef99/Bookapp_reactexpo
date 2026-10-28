@@ -1,3 +1,5 @@
+import { serializeCatalogueCompanions } from '../contracts/catalogueWrite';
+import { EditionOptionsCompletionUncertainError } from './metadataEditionOptionsBoundary';
 import type { MetadataRpcClient } from './metadataJobContext';
 import { metadataObject } from './metadataJobContext';
 import { metadataGatewayRpc } from './metadataGatewayContext';
@@ -41,12 +43,13 @@ function failure(value: unknown): MetadataManualCompletion {
 }
 // Only this bounded contract failure changes retry classification; raw RPC details remain private.
 async function completeRpc(client: MetadataRpcClient, input: Record<string, unknown>) {
-  const name = 'phase9_complete_candidate_edition_options_v1';
+  const name = 'phase9_complete_candidate_edition_options_v2';
   const result = await client.rpc(name, input);
   if (result.error !== null) {
     const error = result.error;
     const message = typeof error === 'object' && error !== null && 'message' in error ? error.message : null;
-    throw new Error(message === 'P9_EDITION_ROWS_INVALID' ? message : `P9_METADATA_RPC_FAILED:${name}`);
+    if (message === 'P9_EDITION_ROWS_INVALID') throw new Error(message);
+    throw new EditionOptionsCompletionUncertainError();
   }
   return result.data;
 }
@@ -56,11 +59,22 @@ export function createMetadataEditionOptionsBoundary(client: MetadataRpcClient):
       return completion(await metadataGatewayRpc(client,'phase9_recover_candidate_edition_options_v1',parameters(fence)),fence);
     },
     async complete(input) {
-      return completion(await completeRpc(client,{
-        ...parameters(input), p_lookup_id:input.lookupId,p_attempt_id:input.attemptId,
-        p_source_fetched_at:input.sourceFetchedAt,p_options_expires_at:input.optionsExpiresAt,
-        p_storage_permission_verified:input.storagePermissionVerified,p_rows:input.rows,
-      }),input);
+      // 02b sections 3.1/3.2/5: validate separately before dispatch, never alter row bytes.
+      const companions = serializeCatalogueCompanions(input.catalogueCompanions,input);
+      try {
+        const result = completion(await completeRpc(client,{
+          ...parameters(input), p_lookup_id:input.lookupId,p_attempt_id:input.attemptId,
+          p_source_fetched_at:input.sourceFetchedAt,p_options_expires_at:input.optionsExpiresAt,
+          p_storage_permission_verified:input.storagePermissionVerified,p_rows:input.rows,
+          p_catalogue_companions:companions,
+        }),input);
+        if (result.status === 'missing') throw new Error('P9_EDITION_COMPLETION_INVALID');
+        return result;
+      } catch (error) {
+        if (error instanceof Error && error.message === 'P9_EDITION_ROWS_INVALID') throw error;
+        throw new EditionOptionsCompletionUncertainError(error instanceof Error
+          && error.message === 'P9_EDITION_COMPLETION_INVALID' ? error.message : undefined);
+      }
     },
     async fail(input) {
       return failure(await metadataGatewayRpc(client,'phase9_fail_candidate_edition_options_v1',{

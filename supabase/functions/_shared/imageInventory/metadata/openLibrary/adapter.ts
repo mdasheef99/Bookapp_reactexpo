@@ -6,6 +6,7 @@ import { OPEN_LIBRARY_HOST_POLICY, normalizeOpenLibraryRows, object, hasSafeOpen
   openLibraryRowAuthorKeys } from './normalizer';
 import { getOpenLibraryJson, OpenLibraryFailure } from './transport';
 import type { OpenLibraryConfiguration, EditionHttpHooks } from './transport';
+import { normalizeOpenLibraryCompanions } from './catalogueWrite';
 import { normalizeIsbnClue } from '../../domain/isbn';
 
 // Picker §§4/8/13.2: basic bibliographic facts only; no raw payload/prose/image retention.
@@ -105,7 +106,8 @@ export class OpenLibraryEditionOptionsAdapter implements MetadataProviderAdapter
       const eligible=rows.filter(row=>row.eligibility==='eligible');
       const strong=eligible.some(row=>row.metadata?.matchRationale==='exact_validated_isbn');
       return {outcome:strong?'coherent_match':eligible.length?'ambiguous_match':'no_acceptable_match',
-        rows,fetchedAt,retentionEvidence:resolveOptionsDeadline(fetchedAt,retention)?retention:null,
+        rows,catalogueCompanions:normalizeOpenLibraryCompanions(page.entries,rows,key),fetchedAt,
+        retentionEvidence:resolveOptionsDeadline(fetchedAt,retention)?retention:null,
         retryable:false,providerRequestId:null};
     } catch(error) {
       if (!(error instanceof OpenLibraryFailure)) throw error; // Persistence/fence failures belong to the worker.

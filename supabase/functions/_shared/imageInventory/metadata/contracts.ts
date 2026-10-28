@@ -1,3 +1,4 @@
+import type { CatalogueWriteCompanion } from '../contracts/catalogueWrite';
 import type { StoredEditionRow, OptionsRetentionEvidence } from '../contracts/ownerEditionPicker';
 import type { MetadataNormalizedOutcome } from './providerAdapter';
 import { MetadataEdition } from '../contracts/metadata';
@@ -69,6 +70,7 @@ export type MetadataReuseLineage = Readonly<{
 export type EditionOptionsProviderResult = Readonly<{
   outcome: MetadataNormalizedOutcome;
   rows: readonly StoredEditionRow[];
+  catalogueCompanions?: readonly CatalogueWriteCompanion[] | null;
   fetchedAt: string | null;
   retentionEvidence: OptionsRetentionEvidence | null;
   retryable: boolean;

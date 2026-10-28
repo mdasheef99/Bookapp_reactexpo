@@ -7,9 +7,10 @@ import { randomUUID } from 'node:crypto';
 import { createCatalogueDatabase, facts, olOperation, readSql, rpc, saveReview, selectSql } from './catalogueLinkFixture.mjs';
 import { migrationPath, resetActor, scalar, setActor } from './databaseHarness.mjs';
 import { row } from './editionPickerFixture.mjs';
-import { complete, token, worker } from './editionOptionsCompletionFixture.mjs';
+import { complete, fence, token, worker } from './editionOptionsCompletionFixture.mjs';
 
 export const m83Pattern = /^\d{8}000083_marketplace_phase9_lean_catalogue_identity\.sql$/;
+export const m84Pattern = /^\d{8}000084_marketplace_phase9_catalogue_companions_completion\.sql$/;
 export const operatorId = '70000000-0000-4000-8000-000000000001';
 export const providerOnlyFacts = (overrides = {}) => facts({ isbn10: null, isbn13: null, ...overrides });
 export const isbnFacts = (overrides = {}) => facts(overrides);
@@ -32,6 +33,46 @@ export async function olCardWithRecord(db, overrides = {}) {
   f.selected = await scalar(db, selectSql(f, await scalar(db, readSql(f)), option.optionId));
   await saveReview(db, f);
   return f;
+}
+
+
+// 02b sections 3/7/11: six real v1-compatible option rows with four eligible
+// positions and provider-call receipts, ready for a v1 or v2 completion command.
+export async function catalogueBatch(db, overrides = {}, queryAuthors = null, {
+  authorOutcome = 'no_acceptable_match', existing = null, recordBase = 100, workExternalId = 'OL700W',
+} = {}) {
+  const f = await olOperation(db, { isbn10: null, isbn13: null,
+    matchRationale: 'confirmation_required_text_evidence', confidence: 0, ...overrides }, false, false, existing, queryAuthors);
+  await setActor(db, f.ownerId, 'service_role');
+  for (const [sequence, stage] of [[0, 'search'], [1, 'editions'], [2, 'author:OL1A']]) {
+    const call = await rpc(db, 'phase9_register_edition_options_provider_call_v1',
+      [f.attemptId, f.jobId, worker, token, 1, randomUUID(), sequence, stage]);
+    await rpc(db, 'phase9_finalize_edition_options_provider_call_v1',
+      [call.provider_call_id, f.jobId, worker, token, 1, 'finalized',
+         sequence === 2 ? authorOutcome : 'no_acceptable_match', false, true]);
+  }
+  const rows = Array.from({ length: 6 }, (_, ordinal) => {
+    if (ordinal === 5) return row(ordinal, { eligibility: 'unavailable', googleBooksUrl: null, metadata: null });
+    const recordId = 'OL' + (recordBase + ordinal) + 'M';
+    return row(ordinal, { eligibility: ordinal === 4 ? 'ineligible' : 'eligible',
+      googleBooksUrl: 'https://openlibrary.org/books/' + recordId,
+      metadata: { ...f.facts, providerRecordId: recordId, title: ordinal === 4 ? 'Unrelated volume' : f.facts.title } });
+  });
+  const catalogueCompanions = rows.filter(r => r.metadata).map(r => ({
+    version: 'psr-catalogue-write-v1', optionId: r.optionId, adapterKey: r.metadata.adapterKey,
+    adapterVersion: r.metadata.adapterVersion, normalizerVersion: r.metadata.normalizerVersion,
+    lookupId: f.lookupId, attemptId: f.attemptId, providerRecordId: r.metadata.providerRecordId,
+    workExternalId, fetchedAt: r.metadata.fetchedAt,
+    oclc: String(1234 + r.ordinal).padStart(6, '0'), lccn: `n ${79021164 + r.ordinal}`,
+  }));
+  return { ...f, rows, catalogueCompanions, fetched: f.facts.fetchedAt,
+    deadline: new Date(Date.parse(f.facts.fetchedAt) + 3600000).toISOString() };
+}
+export async function completeCatalogueV2(db, f, overrides = {}) {
+  await setActor(db, f.ownerId, 'service_role');
+  return rpc(db, 'phase9_complete_candidate_edition_options_v2', [...fence(f), f.lookupId, f.attemptId,
+    overrides.fetched ?? f.fetched, overrides.deadline ?? f.deadline, true,
+    overrides.rows ?? f.rows, overrides.catalogueCompanions === undefined ? f.catalogueCompanions : overrides.catalogueCompanions]);
 }
 
 // preflight-1.md §2: exact live source FK/policy names and broad existing grants.
@@ -76,13 +117,19 @@ export function leanMigrationFiles() {
   assert.ok(names.length <= 1, 'at most one approved M83 migration');
   return names;
 }
-export async function createLeanDatabase({ beforeM83 = null } = {}) {
+export async function applyM84IfPresent(db) {
+  const names = fs.readdirSync(migrationPath('')).filter(name => m84Pattern.test(name));
+  assert.ok(names.length <= 1, 'at most one approved M84 migration');
+  for (const name of names) await db.exec(fs.readFileSync(migrationPath(name), 'utf8'));
+}
+export async function createLeanDatabase({ beforeM83 = null, m84 = false } = {}) {
   const db = await createCatalogueDatabase(); // Includes M81 and M82, in order.
   try {
     await resetActor(db);
     await db.exec(leanAlignmentSql);
     if (beforeM83) await beforeM83(db); // Upgrade fixtures run real M81 commands.
     for (const name of leanMigrationFiles()) await db.exec(fs.readFileSync(migrationPath(name), 'utf8'));
+    if (m84) await applyM84IfPresent(db);
     return db; // Missing M83 deliberately leaves the real pre-feature baseline.
   } catch (error) { await db.close(); throw error; }
 }
@@ -93,10 +140,35 @@ export async function requireLean(db,
   const found = (await db.query(`SELECT pg_catalog.${probe}($1) IS NOT NULL AS present`, [object])).rows[0].present;
   assert.equal(found, true, message ?? `M83 feature must exist: ${object}`);
 }
+export async function requireM84(db, object) {
+  await requireLean(db); // Prove the catalogue scanner sees an existing M83 object first.
+  const query = object.includes('(')
+    ? 'SELECT pg_catalog.to_regprocedure($1) IS NOT NULL AS present'
+    : `SELECT pg_catalog.to_regclass($1) IS NOT NULL OR EXISTS (
+        SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
+        WHERE n.nspname=pg_catalog.split_part($1,'.',1) AND p.proname=pg_catalog.split_part($1,'.',2)) AS present`;
+  const found = (await db.query(query, [object])).rows[0].present;
+  assert.equal(found, true, `M84 feature must exist: ${object}`);
+}
 export async function asRole(db, role, actor, action) {
   assert.ok(['anon', 'authenticated', 'service_role', 'postgres'].includes(role));
   await setActor(db, actor ?? '', role);
   try { return await action(); } finally { await resetActor(db); }
+}
+// AC7-30: follow the actual public Select path without fixing helper placement.
+export async function selectAdmissionPath(db) {
+  const rows = (await db.query(`SELECT n.nspname||'.'||p.proname AS name,p.prosrc AS body
+    FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname IN('public','marketplace_sec')`)).rows;
+  const reached = new Map(), visit = name => {
+    if (reached.has(name)) return;
+    const fn = rows.find(f => f.name === name);
+    if (!fn) return;
+    reached.set(name,fn.body);
+    for (const call of fn.body.matchAll(/\b((?:public|marketplace_sec)\.\w+)\s*\(/g)) visit(call[1]);
+  };
+  visit('public.phase9_select_candidate_edition_v1');
+  return reached;
 }
 export async function blockIsbn(db, isbn13, reason = 'Synthetic operator blocklist fixture') {
   await requireLean(db, 'marketplace_sec.phase9_catalogue_isbn_blocklist');

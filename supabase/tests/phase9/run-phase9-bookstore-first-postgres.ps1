@@ -6,7 +6,11 @@ param(
   [switch]$IncludeMediaCorrection,
   [switch]$IncludeDuplicateConfirmation,
   [switch]$IncludeEditionPicker,
-  [switch]$IncludeOpenLibrary
+  [switch]$IncludeOpenLibrary,
+  [ValidateSet('', 'duplicate-confirmation', 'media-correction', 'edition-picker', 'open-library',
+    'bookstore-first', 'storefront-detail', 'catalogue-link', 'lean-catalogue-identity',
+    'edition-first-save', 'lean-catalogue-completion', 'lean-catalogue-local-hook')]
+  [string]$OnlyGroup = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -27,7 +31,10 @@ $serverStarted = $false
 $databaseCreated = $false
 $catalogueDbName = "bookconnect_u8b_${PID}81"
 $catalogueDatabaseCreated = $false
+$completionDbName = "bookconnect_u8b_${PID}84"
+$completionDatabaseCreated = $false
 $exitCode = 1
+$nativeGroups = [Collections.Generic.List[object]]::new()
 
 $initdb = (Get-Command initdb -ErrorAction Stop).Source
 $pgctl = (Get-Command pg_ctl -ErrorAction Stop).Source
@@ -163,6 +170,20 @@ function Invoke-PsqlCommand([string]$database, [string]$sql) {
   return $output
 }
 
+# Owner B1 / 02b sections 11-12: one failed acceptance group must not hide later proofs.
+function Invoke-NativeGroup([string]$name, [scriptblock]$action) {
+  if ($OnlyGroup -and $name -ne $OnlyGroup) { return }
+  $passed = $false
+  try {
+    & $action
+    $passed = $true
+  } catch {
+    Write-Error $_ -ErrorAction Continue
+  } finally {
+    $nativeGroups.Add([pscustomobject]@{ Name = $name; Passed = $passed })
+  }
+}
+
 try {
   if (Test-Path -LiteralPath $DataDir) {
     throw "Refusing to reuse existing disposable PostgreSQL data directory: $DataDir"
@@ -234,32 +255,44 @@ try {
   }
 
   if ($IncludeDuplicateConfirmation) {
-    & node (Join-Path $PSScriptRoot 'phase9DuplicateConfirmationConcurrency.postgres.mjs') $Port $dbName $psql
-    if ($LASTEXITCODE -ne 0) { throw 'Unit 6H duplicate confirmation PostgreSQL acceptance failed' }
+    Invoke-NativeGroup 'duplicate-confirmation' {
+      & node (Join-Path $PSScriptRoot 'phase9DuplicateConfirmationConcurrency.postgres.mjs') $Port $dbName $psql
+      if ($LASTEXITCODE -ne 0) { throw 'Unit 6H duplicate confirmation PostgreSQL acceptance failed' }
+    }
   } elseif ($IncludeMediaCorrection) {
-    & node (Join-Path $PSScriptRoot 'phase9MediaConcurrency.postgres.mjs') $Port $dbName $psql
-    if ($LASTEXITCODE -ne 0) { throw 'Unit 6G media correction PostgreSQL acceptance failed' }
+    Invoke-NativeGroup 'media-correction' {
+      & node (Join-Path $PSScriptRoot 'phase9MediaConcurrency.postgres.mjs') $Port $dbName $psql
+      if ($LASTEXITCODE -ne 0) { throw 'Unit 6G media correction PostgreSQL acceptance failed' }
+    }
   }
 
   if ($IncludeEditionPicker) {
-    & node (Join-Path $PSScriptRoot 'phase9EditionPickerConcurrency.postgres.mjs') $Port $dbName $psql
-    if ($LASTEXITCODE -ne 0) { throw 'Task 8 edition picker PostgreSQL acceptance failed' }
-    Write-Output 'EDITION_PICKER_REAL_POSTGRES_ACCEPTANCE_PASS'
+    Invoke-NativeGroup 'edition-picker' {
+      & node (Join-Path $PSScriptRoot 'phase9EditionPickerConcurrency.postgres.mjs') $Port $dbName $psql
+      if ($LASTEXITCODE -ne 0) { throw 'Task 8 edition picker PostgreSQL acceptance failed' }
+      Write-Output 'EDITION_PICKER_REAL_POSTGRES_ACCEPTANCE_PASS'
+    }
   }
 
   if ($IncludeOpenLibrary) {
-    & node (Join-Path $PSScriptRoot 'phase9OpenLibraryConcurrency.postgres.mjs') $Port $dbName $psql
-    if ($LASTEXITCODE -ne 0) { throw 'Open Library native PostgreSQL acceptance failed' }
-    Write-Output 'OPEN_LIBRARY_REAL_POSTGRES_ACCEPTANCE_PASS'
+    Invoke-NativeGroup 'open-library' {
+      & node (Join-Path $PSScriptRoot 'phase9OpenLibraryConcurrency.postgres.mjs') $Port $dbName $psql
+      if ($LASTEXITCODE -ne 0) { throw 'Open Library native PostgreSQL acceptance failed' }
+      Write-Output 'OPEN_LIBRARY_REAL_POSTGRES_ACCEPTANCE_PASS'
+    }
   }
 
-  $acceptance = Invoke-PsqlFile $dbName (Join-Path $root 'supabase\tests\phase9\phase9_bookstore_first_postgres.sql')
-  $acceptance | ForEach-Object { Write-Output $_ }
-  Write-Output 'U8B_REAL_POSTGRES_ACCEPTANCE_PASS'
+  Invoke-NativeGroup 'bookstore-first' {
+    $acceptance = Invoke-PsqlFile $dbName (Join-Path $root 'supabase\tests\phase9\phase9_bookstore_first_postgres.sql')
+    $acceptance | ForEach-Object { Write-Output $_ }
+    Write-Output 'U8B_REAL_POSTGRES_ACCEPTANCE_PASS'
+  }
   if ($IncludeU8C) {
-    $u8cAcceptance = Invoke-PsqlFile $dbName (Join-Path $root 'supabase\tests\phase9\phase9_storefront_detail_postgres.sql')
-    $u8cAcceptance | ForEach-Object { Write-Output $_ }
-    Write-Output 'U8C_REAL_POSTGRES_ACCEPTANCE_PASS'
+    Invoke-NativeGroup 'storefront-detail' {
+      $u8cAcceptance = Invoke-PsqlFile $dbName (Join-Path $root 'supabase\tests\phase9\phase9_storefront_detail_postgres.sql')
+      $u8cAcceptance | ForEach-Object { Write-Output $_ }
+      Write-Output 'U8C_REAL_POSTGRES_ACCEPTANCE_PASS'
+    }
   }
 
   # 02a §§7.1/10: keep ALL existing native suites on their exact M78-tail
@@ -296,27 +329,57 @@ try {
       Where-Object { $_.Name -match '^[0-9]{8}000083_marketplace_phase9_lean_catalogue_identity\.sql$' })
     if ($catalogueM83.Count -gt 1) { throw 'multiple lean-catalogue M83 files found' }
     if ($catalogueM83.Count -eq 1) { Invoke-PsqlFile $catalogueDbName $catalogueM83[0].FullName | Out-Null }
-    & node (Join-Path $PSScriptRoot 'phase9CatalogueLinkConcurrency.postgres.mjs') $Port $catalogueDbName $psql
-    if ($LASTEXITCODE -ne 0) { throw 'Catalogue-link native PostgreSQL acceptance failed' }
-    Write-Output 'CATALOGUE_LINK_REAL_POSTGRES_ACCEPTANCE_PASS'
-    & node (Join-Path $PSScriptRoot 'phase9LeanCatalogueConcurrency.postgres.mjs') $Port $catalogueDbName $psql
-    if ($LASTEXITCODE -ne 0) { throw 'Lean-catalogue identity native PostgreSQL acceptance failed' }
-    Write-Output 'LEAN_CATALOGUE_IDENTITY_REAL_POSTGRES_ACCEPTANCE_PASS'
+    # 02b sections 7/11-12: legacy fixtures keep M83 completion semantics.
+    # Detect M84 here, but apply it only to its own clone below.
+    $catalogueM84 = @(Get-ChildItem -LiteralPath (Join-Path $root 'supabase\migrations') -File |
+      Where-Object { $_.Name -match '^[0-9]{8}000084_marketplace_phase9_catalogue_companions_completion\.sql$' })
+    if ($catalogueM84.Count -gt 1) { throw 'multiple lean-catalogue M84 files found' }
+    $leanScope = if ($catalogueM84.Count -eq 1) { 'm83' } else { 'all' }
+    Invoke-NativeGroup 'catalogue-link' {
+      & node (Join-Path $PSScriptRoot 'phase9CatalogueLinkConcurrency.postgres.mjs') $Port $catalogueDbName $psql
+      if ($LASTEXITCODE -ne 0) { throw 'Catalogue-link native PostgreSQL acceptance failed' }
+      Write-Output 'CATALOGUE_LINK_REAL_POSTGRES_ACCEPTANCE_PASS'
+    }
+    Invoke-NativeGroup 'lean-catalogue-identity' {
+      & node (Join-Path $PSScriptRoot 'phase9LeanCatalogueConcurrency.postgres.mjs') $Port $catalogueDbName $psql $leanScope
+      if ($LASTEXITCODE -ne 0) { throw 'Lean-catalogue identity native PostgreSQL acceptance failed' }
+      Write-Output 'LEAN_CATALOGUE_IDENTITY_REAL_POSTGRES_ACCEPTANCE_PASS'
+    }
     # Owner M82 brief: run the same first-save assertions on the disposable clone.
     $savedFirstSavePort = $env:PHASE9_FIRST_SAVE_NATIVE_PORT
     $savedFirstSaveDatabase = $env:PHASE9_FIRST_SAVE_NATIVE_DATABASE
     try {
       $env:PHASE9_FIRST_SAVE_NATIVE_PORT = "$Port"
       $env:PHASE9_FIRST_SAVE_NATIVE_DATABASE = $catalogueDbName
-      & node --test (Join-Path $PSScriptRoot 'phase9EditionChoiceFirstSave.integration.test.mjs')
-      if ($LASTEXITCODE -ne 0) { throw 'Edition first-save native PostgreSQL acceptance failed' }
-      Write-Output 'EDITION_FIRST_SAVE_REAL_POSTGRES_ACCEPTANCE_PASS'
+      Invoke-NativeGroup 'edition-first-save' {
+        & node --test (Join-Path $PSScriptRoot 'phase9EditionChoiceFirstSave.integration.test.mjs')
+        if ($LASTEXITCODE -ne 0) { throw 'Edition first-save native PostgreSQL acceptance failed' }
+        Write-Output 'EDITION_FIRST_SAVE_REAL_POSTGRES_ACCEPTANCE_PASS'
+      }
     } finally {
       $env:PHASE9_FIRST_SAVE_NATIVE_PORT = $savedFirstSavePort
       $env:PHASE9_FIRST_SAVE_NATIVE_DATABASE = $savedFirstSaveDatabase
     }
+    if ($catalogueM84.Count -eq 1) {
+      Invoke-PsqlCommand 'postgres' "CREATE DATABASE $completionDbName TEMPLATE $catalogueDbName" | Out-Null
+      $completionDatabaseCreated = $true
+      Invoke-PsqlFile $completionDbName $catalogueM84[0].FullName | Out-Null
+      Invoke-NativeGroup 'lean-catalogue-completion' {
+        & node (Join-Path $PSScriptRoot 'phase9LeanCatalogueConcurrency.postgres.mjs') $Port $completionDbName $psql 'm84'
+        if ($LASTEXITCODE -ne 0) { throw 'Lean-catalogue M84 completion native PostgreSQL acceptance failed' }
+        Write-Output 'LEAN_CATALOGUE_COMPLETION_REAL_POSTGRES_ACCEPTANCE_PASS'
+      }
+      Invoke-NativeGroup 'lean-catalogue-local-hook' {
+        & node (Join-Path $PSScriptRoot 'phase9LeanCatalogueLocalHook.postgres.mjs') $Port $completionDbName $psql 'm84'
+        if ($LASTEXITCODE -ne 0) { throw 'Lean-catalogue M84 local hook native PostgreSQL acceptance failed' }
+        Write-Output 'LEAN_CATALOGUE_LOCAL_HOOK_REAL_POSTGRES_ACCEPTANCE_PASS'
+      }
+    }
   }
-  $exitCode = 0
+  if ($OnlyGroup -and $nativeGroups.Count -eq 0) {
+    throw "Native group '$OnlyGroup' is unavailable; check Include switches and migration files"
+  }
+  $exitCode = if (@($nativeGroups | Where-Object { -not $_.Passed }).Count -gt 0) { 1 } else { 0 }
 }
 catch {
   Write-Error $_ -ErrorAction Continue
@@ -330,6 +393,15 @@ finally {
     }
   } catch { $cleanupErrors.Add("lean setup SQL cleanup: $_") }
   $stopVerified = -not $serverStarted
+  if ($completionDatabaseCreated -and $serverStarted) {
+    try {
+      Invoke-PsqlCommand 'postgres' "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$completionDbName'" | Out-Null
+      Invoke-PsqlCommand 'postgres' "DROP DATABASE IF EXISTS $completionDbName" | Out-Null
+      $completionExists = Invoke-PsqlCommand 'postgres' "SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname='$completionDbName')"
+      if (-not @($completionExists | ForEach-Object { "$_".Trim() }).Contains('f')) { throw 'completion database removal readback failed' }
+      Write-Output "POSTGRES_TEARDOWN_DATABASE_REMOVED=$completionDbName"
+    } catch { $cleanupErrors.Add("completion database cleanup: $_") }
+  }
   if ($catalogueDatabaseCreated -and $serverStarted) {
     try {
       Invoke-PsqlCommand 'postgres' "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$catalogueDbName'" | Out-Null
@@ -386,6 +458,11 @@ finally {
     $exitCode = 1
     $cleanupErrors | ForEach-Object { Write-Error "POSTGRES_TEARDOWN_FAILURE: $_" -ErrorAction Continue }
   } else { Write-Output 'POSTGRES_TEARDOWN_PASS' }
+}
+
+foreach ($group in $nativeGroups) {
+  $result = if ($group.Passed) { 'PASS' } else { 'FAIL' }
+  Write-Output "NATIVE_GROUP $($group.Name) $result"
 }
 
 exit $exitCode

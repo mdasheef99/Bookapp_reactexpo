@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { assertM84CacheProvenanceUnwritten } from './fixtures/leanCatalogueCacheGuard';
 
 const directory = path.join(process.cwd(), 'supabase', 'migrations');
 const pattern = /^\d{8}000083_marketplace_phase9_lean_catalogue_identity\.sql$/u;
@@ -191,5 +192,239 @@ describe('02b slice 7a lean catalogue identity forward artifact', () => {
   it.each(Object.entries(immutable))('[baseline] preserves current LF-normalized SHA-256 of %s', (file, expected) => {
     const text = fs.readFileSync(path.join(directory, file), 'utf8').replace(/\r\n/gu, '\n');
     expect(createHash('sha256').update(text, 'utf8').digest('hex')).toBe(expected);
+  });
+});
+
+
+// 02b sections 3-7/9/11/12: M84 is a separate artifact; M83 assertions above stay intact.
+describe('M84 companion and completion forward artifact', () => {
+  const m84Pattern = /^\d{8}000084_marketplace_phase9_catalogue_companions_completion\.sql$/u;
+  const files = () => fs.readdirSync(directory).filter(name => m84Pattern.test(name));
+  const sql = () => files().length === 1
+    ? uncomment(fs.readFileSync(path.join(directory, files()[0]), 'utf8').replace(/\r\n/gu, '\n')) : '';
+  const definitions = () => [...sql().matchAll(/CREATE(?:\s+OR\s+REPLACE)?\s+FUNCTION\s+([\w.]+)\s*\(([^)]*)\)([\s\S]*?)\bAS\s+\$([\w]*)\$([\s\S]*?)\$\4\$/giu)]
+    .map(match => ({ name: match[1].toLowerCase(), parameters: match[2], header: match[3], body: match[5], definition: match[0] }));
+  const requiredBody = (name: string) => {
+    const found = definitions().filter(fn => fn.name === name);
+    expect(found.map(fn => fn.name)).toEqual([name]);
+    return found[0];
+  };
+  const privateTables84 = ['marketplace_sec.phase9_catalogue_companions', 'marketplace_sec.phase9_catalogue_lookup_effects'];
+  const chunks = () => sql().split(';');
+  const acl = (operation: string, kind: string, object: string, role: string) => chunks().some(statement => {
+    const match = statement.match(new RegExp(`\\b${operation}\\s+([\\s\\S]*?)\\s+ON\\s+(?:${kind}\\s+)?([\\s\\S]*?)\\s+${operation === 'GRANT' ? 'TO' : 'FROM'}\\s+([\\s\\S]*)$`, 'iu'));
+    return Boolean(match && /\b(?:ALL|EXECUTE)\b/iu.test(match[1])
+      && compact(match[2]).includes(compact(object)) && new RegExp(`\\b${role}\\b`, 'iu').test(match[3]));
+  });
+
+  it('[baseline] scans a real M83 function and canonical-work index', () => {
+    expect(names()).toHaveLength(1);
+    expect(body('phase9_catalogue_resolve_v1').body).toMatch(/canonical_works/iu);
+    expect(executable()).toMatch(/CREATE\s+INDEX\s+canonical_provider_ids_edition_idx/iu);
+  });
+
+  it('AC7-17: has exactly one correctly named M84 file', () => {
+    expect(files()).toHaveLength(1);
+    expect(files()[0]).toMatch(m84Pattern);
+  });
+
+  it('AC7-34: adds one non-unique normalized work probe index and no other probe indexes', () => {
+    const indexes = [...sql().matchAll(/CREATE\s+(UNIQUE\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?([\w.]+)\s+ON\s+([\w.]+)[\s\S]*?;/giu)];
+    const work = indexes.filter(match => match[3].toLowerCase() === 'public.canonical_works');
+    expect(work).toHaveLength(1);
+    expect(work[0][1]).toBeUndefined();
+    expect(work[0][2].toLowerCase()).toBe('canonical_works_normalized_probe_idx');
+    const index = compact(work[0][0]);
+    expect(index).toContain(compact('pg_catalog.btrim(marketplace_sec.phase9_metadata_normalized_text(coalesce(title_normalized,primary_title)))'));
+    expect(index).toContain(compact('marketplace_sec.phase9_catalogue_normalized_authors_v1(primary_authors)'));
+    expect(indexes.filter(match => /public\.canonical_editions|public\.canonical_provider_ids|public\.book_metadata_sources/iu.test(match[3]))).toHaveLength(0);
+  });
+
+  it('AC7-30: M84 uses the locked policy builder without fixing helper placement', () => {
+    expect(files()).toHaveLength(1);
+    expect(sql()).toMatch(/phase9_catalogue_source_policy_v1\s*\(/iu);
+    expect(sql()).toMatch(/sharedAdmitted/iu);
+    // PGlite follows public Select; native observes its lock and UPDATE waiting.
+  });  it('AC7-21/23: provider literals are confined to the replaced provider validator', () => {
+    const validator = requiredBody('marketplace_sec.phase9_catalogue_provider_ids_valid_v1');
+    expect(validator.body).toMatch(/\bCASE\s+p_adapter_key\b/iu);
+    expect(validator.body).toMatch(/\bp_completion\b/iu);
+    expect(validator.body).toMatch(/'open_library'/iu);
+    for (const fn of definitions().filter(fn => fn.name !== validator.name)) expect(fn.body).not.toMatch(/'open_library'/iu);
+  });
+
+  it('AC7-22: completion reuses the shared identity-key function instead of a caller-local hash', () => {
+    const completion = requiredBody('marketplace_sec.phase9_complete_candidate_edition_options_v2');
+    expect(sql()).toMatch(/phase9_catalogue_identity_lock_key_v1\s*\(/iu);
+    expect(completion.body).not.toMatch(/\b(?:hashtext|hashtextextended)\s*\(|'psr-catalogue-v1'/iu);
+    expect(sql()).not.toMatch(/\b(?:hashtext|hashtextextended)\s*\(|'psr-catalogue-v1'/iu);
+  });
+
+  it('AC7-8/10: private M84 tables enable RLS and revoke every API role', () => {
+    for (const table of privateTables84) {
+      expect(sql()).toMatch(new RegExp(`CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?${table.replace('.', '\\.')}\\b`, 'iu'));
+      expect(compact(sql())).toContain(compact(`ALTER TABLE ${table} OWNER TO postgres`));
+      expect(compact(sql())).toContain(compact(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`));
+      for (const role of roles) expect(acl('REVOKE', 'TABLE', table, role)).toBe(true);
+      expect(chunks().filter(statement => /\bGRANT\b/iu.test(statement)
+        && compact(statement).includes(compact(table)))).toHaveLength(0);
+    }
+  });
+
+  it('AC7-8: every newly defined function declares ownership and the correct API boundary', () => {
+    requiredBody('marketplace_sec.phase9_catalogue_valid_companion_v1');
+    const older = new Set(fs.readdirSync(directory).filter(name => name.endsWith('.sql') && !m84Pattern.test(name))
+      .flatMap(name => [...uncomment(fs.readFileSync(path.join(directory, name), 'utf8'))
+        .matchAll(/CREATE(?:\s+OR\s+REPLACE)?\s+FUNCTION\s+([\w.]+)\s*\(/giu)]
+        .map(match => match[1].toLowerCase())));
+    const newly = definitions().filter(fn => !older.has(fn.name));
+    expect(newly.length).toBeGreaterThanOrEqual(3);
+    for (const fn of newly) {
+      const types = fn.parameters.split(',').map(parameter => parameter.trim().split(/\s+/u).pop()).join(',');
+      const signature = `${fn.name}(${types})`;
+      expect(compact(sql())).toContain(compact(`ALTER FUNCTION ${signature} OWNER TO postgres`));
+      for (const role of roles) expect(acl('REVOKE', 'FUNCTION', signature, role)).toBe(true);
+      const serviceEntry = fn.name === 'marketplace_sec.phase9_complete_candidate_edition_options_v2'
+        || fn.name === 'public.phase9_complete_candidate_edition_options_v2';
+      expect(acl('GRANT', 'FUNCTION', signature, 'service_role')).toBe(serviceEntry);
+      for (const role of ['PUBLIC', 'anon', 'authenticated']) expect(acl('GRANT', 'FUNCTION', signature, role)).toBe(false);
+    }
+  });
+
+  it('AC7-8/20: companion validator is postgres-only and completion entries are service-only', () => {
+    const validator = requiredBody('marketplace_sec.phase9_catalogue_valid_companion_v1');
+    const privateEntry = requiredBody('marketplace_sec.phase9_complete_candidate_edition_options_v2');
+    const publicEntry = requiredBody('public.phase9_complete_candidate_edition_options_v2');
+    for (const fn of [validator, privateEntry, publicEntry]) {
+      const types = fn.parameters.split(',').map(parameter => parameter.trim().split(/\s+/u).pop()).join(',');
+      const signature = `${fn.name}(${types})`;
+      expect(compact(sql())).toContain(compact(`ALTER FUNCTION ${signature} OWNER TO postgres`));
+      expect(fn.header).toMatch(/SET\s+search_path\s*=\s*''/iu);
+      for (const role of roles) expect(acl('REVOKE', 'FUNCTION', signature, role)).toBe(true);
+      for (const role of ['anon', 'authenticated']) expect(acl('GRANT', 'FUNCTION', signature, role)).toBe(false);
+      expect(acl('GRANT', 'FUNCTION', signature, 'service_role')).toBe(fn !== validator);
+    }
+    expect(validator.header).toMatch(/IMMUTABLE/iu);
+    expect(privateEntry.header).toMatch(/SECURITY\s+DEFINER/iu);
+    expect(publicEntry.header).not.toMatch(/SECURITY\s+DEFINER/iu);
+  });
+
+  it('AC7-17/25: v1 delegates to v2 and recovery and local completion are forward-replaced', () => {
+    const v1 = requiredBody('marketplace_sec.phase9_complete_candidate_edition_options_v1');
+    expect(v1.body).toMatch(/phase9_complete_candidate_edition_options_v2\s*\([\s\S]*?\bNULL(?:\s*::\s*jsonb)?\s*\)/iu);
+    requiredBody('marketplace_sec.phase9_recover_candidate_edition_options_v1');
+    requiredBody('marketplace_sec.phase9_complete_local_metadata_match');
+  });
+
+  // Owner B3 P2 / 02b sections 6.2/7.2: approved M32 private-wrapper deviation.
+  it('P2: structural local replacement retains its private service boundary', () => {
+    const fn = requiredBody('marketplace_sec.phase9_complete_structural_local_metadata_match');
+    const signature = fn.name + '(uuid,text,text,integer,uuid,integer,text,text,text,text,text,text,text,uuid,text,text,jsonb)';
+    expect(fn.parameters.split(',').map(parameter => parameter.trim().split(/\s+/u).pop()).join(','))
+      .toBe(signature.slice(signature.indexOf('(') + 1, -1));
+    expect(fn.header).toMatch(/SECURITY\s+DEFINER/iu);
+    expect(fn.header).toMatch(/SET\s+search_path\s*=\s*''/iu);
+    expect(compact(sql())).toContain(compact('ALTER FUNCTION ' + signature + ' OWNER TO postgres'));
+    for (const role of roles) expect(acl('REVOKE', 'FUNCTION', signature, role)).toBe(true);
+    expect(acl('GRANT', 'FUNCTION', signature, 'service_role')).toBe(true);
+    for (const role of ['PUBLIC', 'anon', 'authenticated']) expect(acl('GRANT', 'FUNCTION', signature, role)).toBe(false);
+    expect(definitions().filter(entry => entry.name === 'public.phase9_complete_structural_local_metadata_match')).toHaveLength(0);
+  });
+
+  it('P2: structural local wrapper locks session before assertion and rechecks returned scope', () => {
+    const fn = requiredBody('marketplace_sec.phase9_complete_structural_local_metadata_match');
+    const assertion = fn.body.indexOf('v_candidate:=marketplace_sec.phase9_assert_structural_metadata_candidate(');
+    expect(assertion).toBeGreaterThan(0);
+    const before = fn.body.slice(0, assertion);
+    expect(before).toMatch(/FROM public\.image_extraction_candidates c[\s\S]*?WHERE c\.id=p_candidate_id\s*;/iu);
+    expect(before).toMatch(/FROM public\.image_extraction_sessions s[\s\S]*?s\.id=v_scope\.session_id AND s\.store_id=v_scope\.store_id FOR UPDATE/iu);
+    expect(before).not.toMatch(/FROM public\.image_extraction_candidates[^;]*FOR\s+(?:UPDATE|SHARE|KEY|NO)/iu);
+    const after = fn.body.slice(assertion);
+    expect(after).toMatch(/v_candidate\.session_id IS DISTINCT FROM v_session\.id[\s\S]*?v_candidate\.store_id IS DISTINCT FROM v_session\.store_id[\s\S]*?P9_STATE_CONFLICT/iu);
+    expect(after).toMatch(/p_query_identity<>marketplace_sec\.phase9_metadata_candidate_query_identity\(v_candidate\)/iu);
+    expect(after).toMatch(/RETURN marketplace_sec\.phase9_complete_local_metadata_match\(/iu);
+  });
+
+  it('P2: M15 keeps replay first, locks session before claim and inserts lookup before choice target', () => {
+    const fn = requiredBody('marketplace_sec.phase9_complete_local_metadata_match');
+    const claim = fn.body.indexOf('v_job:=marketplace_sec.phase9_assert_metadata_claim(');
+    const scope = fn.body.indexOf('INTO v_scope');
+    const replay = fn.body.indexOf('RETURN jsonb_build_object(');
+    const validation = fn.body.lastIndexOf("RAISE EXCEPTION 'P9_REQUEST_INVALID'", claim);
+    expect(replay).toBeGreaterThan(0);
+    expect(validation).toBeGreaterThan(replay);
+    expect(scope).toBeGreaterThan(validation);
+    expect(claim).toBeGreaterThan(scope);
+    expect(fn.body.slice(scope, claim)).toMatch(/FROM public\.image_extraction_sessions s[\s\S]*?FOR UPDATE/iu);
+    expect(fn.body.slice(0, claim)).not.toMatch(/FROM public\.image_extraction_candidates[^;]*FOR\s+(?:UPDATE|SHARE|KEY|NO)/iu);
+    const target = fn.body.indexOf('FROM marketplace_sec.phase9_catalogue_choice_target_v1(');
+    const lookup = fn.body.indexOf('INSERT INTO public.phase9_metadata_lookups(');
+    const state = fn.body.indexOf('PERFORM state.candidate_id');
+    expect(state).toBeGreaterThan(claim);
+    expect(lookup).toBeGreaterThan(state);
+    expect(target).toBeGreaterThan(lookup);
+    expect(fn.body.slice(claim, state)).toMatch(/v_candidate\.id IS DISTINCT FROM v_scope\.candidate_id/iu);
+    expect(fn.body.slice(claim, state)).toMatch(/v_candidate\.session_id IS DISTINCT FROM v_session\.id[\s\S]*?v_candidate\.store_id IS DISTINCT FROM v_session\.store_id/iu);
+    const rechecks = [...fn.body.matchAll(/phase9_edition_local_match\(v_candidate\)/gu)].map(match => match.index!);
+    expect(rechecks).toHaveLength(2);
+    expect(rechecks[0]).toBeLessThan(lookup);
+    expect(rechecks[1]).toBeGreaterThan(target);
+  });
+
+  // Round C / 02b section 6.2: owner-wide scope precedes shared catalogue locks.
+  it('AC7-22: private owner-scope lock preserves revisions and resolves the session actor', () => {
+    const fn = requiredBody('marketplace_sec.phase9_catalogue_lock_owner_scope_v1');
+    expect(fn.header).toMatch(/SECURITY\s+DEFINER[\s\S]*SET\s+search_path\s*=\s*''/iu);
+    expect(fn.body).toMatch(/SELECT\s+s\.created_by\s+INTO\s+v_actor[\s\S]*WHERE\s+s\.id=p_session_id/iu);
+    expect(fn.body).toMatch(/INSERT INTO public\.phase9_owner_review_scopes\(actor_user_id,review_scope_version\)\s*VALUES\(v_actor,1\)\s*ON CONFLICT\(actor_user_id\) DO NOTHING/iu);
+    expect(fn.body).toMatch(/FROM public\.phase9_owner_review_scopes[\s\S]*WHERE actor_user_id=v_actor FOR UPDATE/iu);
+    expect(fn.body).not.toMatch(/\bUPDATE\s+(?:public\.)?phase9_owner_review_scopes|DO\s+UPDATE|auth\.uid\(/iu);
+  });
+
+  it.each([
+    ['phase9_add_candidate_to_inventory_v1', 'public.', 'v_session.id',
+      'SELECT * INTO v_selected FROM public.phase9_candidate_edition_state', 'PERFORM effect.lookup_id'],
+    ['phase9_edition_legacy_select_candidate', 'marketplace_sec.', 'c.session_id',
+      'SELECT * INTO s FROM public.phase9_candidate_edition_state', "IF p_source='edition_option' THEN"],
+    ['phase9_complete_local_metadata_match', 'marketplace_sec.', 'v_candidate.session_id',
+      'PERFORM state.candidate_id', 'IF marketplace_sec.phase9_edition_local_match'],
+  ])('AC7-22: %s prelocks owner scope immediately after private state', (name, schema, session, state, next) => {
+    const fn = requiredBody(schema + name);
+    const stateAt = fn.body.indexOf(state), stateEnd = fn.body.indexOf(';', stateAt);
+    const lockAt = fn.body.indexOf('PERFORM marketplace_sec.phase9_catalogue_lock_owner_scope_v1(' + session + ')');
+    expect(stateAt).toBeGreaterThan(0);
+    expect(lockAt).toBeGreaterThan(stateEnd);
+    expect(fn.body.slice(stateEnd + 1, lockAt).trim()).toBe('');
+    expect(lockAt).toBeLessThan(fn.body.indexOf(next, stateEnd));
+    expect(fn.body.slice(0, lockAt)).not.toMatch(/pg_advisory_xact_lock|phase9_catalogue_(?:source_policy|choice_target|link_for_add)_v1\(/iu);
+  });
+
+  it('AC7-2d: companion history is inserted without a caller update', () => {
+    expect(sql()).toMatch(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?marketplace_sec\.phase9_catalogue_companions/iu);
+    expect(sql()).toMatch(/INSERT\s+INTO\s+marketplace_sec\.phase9_catalogue_companions/iu);
+    expect(sql()).not.toMatch(/UPDATE\s+marketplace_sec\.phase9_catalogue_companions\b/iu);
+    for (const statement of chunks().filter(value => /INSERT\s+INTO\s+marketplace_sec\.phase9_catalogue_companions/iu.test(value)))
+      expect(statement).not.toMatch(/ON\s+CONFLICT[\s\S]*?DO\s+UPDATE/iu);
+  });
+
+  it('AC7-17: M84 excludes M85 cache objects and cache-hit writes', () => {
+    expect(sql()).toMatch(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?marketplace_sec\.phase9_catalogue_lookup_effects/iu);
+    // 02b section 12: complete M85 object/alteration inventory, including
+    // legacy functions whose bodies belong to the cache-only replacement.
+    for (const name of ['payload_kind', 'bibliographic_payload',
+      'phase9_metadata_lookups_check1', 'phase9_metadata_lookups_execution_mode_check',
+      'phase9_catalogue_valid_cache_v1', 'phase9_catalogue_cache_receipt_guard', 'phase9_catalogue_query_scope_v1',
+      'phase9_reuse_candidate_edition_cache_v1', 'phase9_catalogue_store_cache_v1',
+      'phase9_catalogue_reuse_cache_core_v1']) expect(sql()).not.toMatch(new RegExp(`\\b${name}\\b`, 'iu'));
+    // routing_policy_version already exists on lookup/attempt rows in M78;
+    // only its M85 cache-table alteration is forbidden here.
+    for (const column of ['payload_kind', 'bibliographic_payload', 'payload_digest', 'routing_policy_version'])
+      expect(chunks().filter(statement => /ALTER\s+TABLE\s+(?:ONLY\s+)?public\.phase9_metadata_cache_entries\b/iu.test(statement))
+        .some(statement => new RegExp(`\\b${column}\\b`, 'iu').test(statement))).toBe(false);
+    for (const name of ['phase9_edition_guard_automatic_payload', 'phase9_edition_source_policy',
+      'phase9_metadata_cache_reuse_context', 'phase9_complete_metadata_cache_reuse', 'phase9_store_metadata_cache'])
+      expect(sql()).not.toMatch(new RegExp(`CREATE(?:\\s+OR\\s+REPLACE)?\\s+FUNCTION\\s+(?:marketplace_sec|public)\\.${name}\\s*\\(`, 'iu'));
+    expect(sql()).not.toMatch(/'cache_hit'/iu);
+    assertM84CacheProvenanceUnwritten(sql());
   });
 });

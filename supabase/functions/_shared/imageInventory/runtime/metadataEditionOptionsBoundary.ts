@@ -1,3 +1,4 @@
+import type { CatalogueWriteCompanion } from '../contracts/catalogueWrite';
 import type { StoredEditionRow } from '../contracts/ownerEditionPicker';
 import type { MetadataManualCompletion } from './metadataProductionComposition';
 import type { MetadataNormalizedOutcome } from '../metadata/providerAdapter';
@@ -23,7 +24,16 @@ export function editionOptionsFence(context: MetadataJobContext, worker: string)
 export type EditionOptionsCompletionInput = EditionOptionsFence & Readonly<{
   lookupId: string; attemptId: string; sourceFetchedAt: string; optionsExpiresAt: string;
   storagePermissionVerified: true; rows: readonly StoredEditionRow[];
+  catalogueCompanions?: readonly CatalogueWriteCompanion[] | null;
 }>;
+// 02b sections 7.1/10: dispatch may have committed; only receipt recovery is safe.
+export class EditionOptionsCompletionUncertainError extends Error {
+  constructor(message = 'P9_METADATA_RPC_FAILED:phase9_complete_candidate_edition_options_v1') {
+    // Preserve the existing diagnostic identifier across the transport version upgrade.
+    super(message);
+    this.name = 'EditionOptionsCompletionUncertainError';
+  }
+}
 export type EditionOptionsCompletion =
   | Readonly<{ status: 'missing' }>
   | Readonly<{ status: 'stale_rejected' }>

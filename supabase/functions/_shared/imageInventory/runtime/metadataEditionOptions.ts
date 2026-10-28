@@ -8,6 +8,7 @@ export type EditionOptionsAdapter = MetadataProviderAdapter & {
 };
 import { resolveOptionsDeadline } from '../metadata/googleBooks/editionOptions';
 import { parseNormalizedMetadataEdition } from '../contracts/metadata';
+import { fetchedAtMicros } from '../contracts/catalogueWrite';
 import { projectStoredEditionRow } from '../contracts/ownerEditionPicker';
 import { GOOGLE_BOOKS_EDITION_HOST_POLICY } from '../metadata/googleBooks/decoder';
 import type { EditionOptionsProviderResult } from '../metadata/contracts';
@@ -15,7 +16,7 @@ import type { MetadataJobContext } from './metadataJobContext';
 import { decideMetadataProductionPolicy } from './metadataProductionComposition';
 import type { MetadataProductionGateway } from './metadataProductionComposition';
 import type { EditionOptionsFence, EditionOptionsCompletion } from './metadataEditionOptionsBoundary';
-import { editionOptionsFence } from './metadataEditionOptionsBoundary';
+import { EditionOptionsCompletionUncertainError, editionOptionsFence } from './metadataEditionOptionsBoundary';
 
 export type MetadataEditionOptionsJobResult = Readonly<{
   outcome: 'edition_options_available' | 'manual_metadata_required' | 'stale_claim' | 'retry_scheduled';
@@ -52,14 +53,19 @@ export async function executeEditionOptionsLookup(
       throw new Error('P9_EDITION_COMPLETION_INVALID');
     }
     return Date.parse(completion.optionsExpiresAt) > Date.now()
-      ? { outcome: 'edition_options_available' } : null;
+      ? { outcome: 'edition_options_available' } : { outcome: 'manual_metadata_required' };
   };
+  const recoveryOnly = context.currentPhysicalStatus === 'finalized' && context.currentPhysicalRetryable === false
+    && context.currentPhysicalClaimAttempt !== context.attempt;
   try {
     if (signal.aborted) return await fail('cancelled', false);
-    const policy = decideMetadataProductionPolicy(request.providerPolicy);
-    if (!policy.allowFreshProviderCall || !policy.allowPositiveRetention) return await fail('policy_denied', false);
     const recovered = completionResult(await boundary.recover(fence));
     if (recovered) return recovered;
+    const policy = decideMetadataProductionPolicy(request.providerPolicy);
+    if (!policy.allowFreshProviderCall || !policy.allowPositiveRetention) return await fail('policy_denied', false);
+    // 02b section 10: after recovery proves no receipt, terminate without refetching,
+    // after lease reclaim of a finalized nonretryable response.
+    if (recoveryOnly) return await fail('provider_unavailable', false);
     if (context.currentPhysicalStatus === 'stale_rejected' && context.currentPhysicalClaimAttempt === context.attempt) return { outcome: 'stale_claim' };
     // Same-claim replay cannot authorize a duplicate physical call when its outcome is known.
     if (context.currentPhysicalStatus === 'finalized' && context.currentPhysicalClaimAttempt === context.attempt) {
@@ -129,7 +135,7 @@ export async function executeEditionOptionsLookup(
           const metadata = parseNormalizedMetadataEdition(row.metadata, selectedAdapter.normalizedEditionHostPolicy);
           if (metadata.adapterKey !== selectedAdapter.normalizedEditionHostPolicy?.adapterKey
             || metadata.correlationId !== lookupId || metadata.attemptId !== attemptId
-            || metadata.fetchedAt !== provider.fetchedAt) throw new Error('P9_EDITION_ROWS_INVALID');
+            || fetchedAtMicros(metadata.fetchedAt) !== fetchedAtMicros(provider.fetchedAt!)) throw new Error('P9_EDITION_ROWS_INVALID');
         }
       }
     } catch {
@@ -138,6 +144,7 @@ export async function executeEditionOptionsLookup(
     const completion = await boundary.complete({
       ...fence, lookupId, attemptId, sourceFetchedAt: provider.fetchedAt!,
       optionsExpiresAt: expiresAt, storagePermissionVerified: true, rows: provider.rows,
+      catalogueCompanions: provider.catalogueCompanions,
     });
     return completionResult(completion) ?? await fail('provider_unavailable', true);
   } catch (error) {
@@ -146,8 +153,14 @@ export async function executeEditionOptionsLookup(
     try {
       const recovered = completionResult(await boundary.recover(fence));
       if (recovered) return recovered;
+      if (recoveryOnly) return await fail('provider_unavailable', false);
     } catch { /* Missing/unavailable recovery cannot manufacture a saved response. */ }
-    if (error instanceof Error && error.message === 'P9_EDITION_ROWS_INVALID') return await fail('schema_invalid', false);
+    // 02b sections 7.1/10: uncertainty/outage stays recovery-only, never a provider retry.
+    // Claims still use the existing DB attempt budget; this port cannot defer it neutrally.
+    if (error instanceof EditionOptionsCompletionUncertainError || recoveryOnly) return { outcome: 'manual_metadata_required' };
+    if (error instanceof Error && ['P9_EDITION_ROWS_INVALID','P9_CATALOGUE_COMPANIONS_INVALID'].includes(error.message)) {
+      return await fail('schema_invalid', false);
+    }
     return await fail('provider_unavailable', true);
   }
 }
