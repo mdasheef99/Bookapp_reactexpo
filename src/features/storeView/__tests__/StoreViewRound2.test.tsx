@@ -270,7 +270,7 @@ describe('R2 edited set stays fixed across rebases', () => {
         fireEvent.press(screen.getByTestId('store-view-save-changes'));
         await waitFor(() => expect(managementMutate).toHaveBeenCalledTimes(2));
         expect(managementMutate).toHaveBeenLastCalledWith({
-            kind: 'save', inventoryId, inventoryVersion: 4, changes: { title: 'T1', sellingPriceMinor: 111 },
+            kind: 'save', inventoryId, inventoryVersion: 4, changes: { title: 'T1', sellingPriceMinor: 11100 },
         });
         // The later remote title change must show a conflict again: title
         // stayed in the fixed edited set even though it matched the first
@@ -307,7 +307,7 @@ describe('R4 recovery never overwrites the queued draft', () => {
         });
         await waitFor(() => expect(screen.getByText(/kept — check them and save again/i)).toBeTruthy());
         expect(screen.getByDisplayValue('First')).toBeTruthy();
-        await waitFor(() => expect(screen.getByDisplayValue('40000')).toBeTruthy());
+        await waitFor(() => expect(screen.getByDisplayValue('400')).toBeTruthy());
     });
 
     it('R4 mechanism: a draft change racing the recovery completion is rebased from, not overwritten', async () => {
@@ -335,7 +335,7 @@ describe('R4 recovery never overwrites the queued draft', () => {
         screen.getByTestId('store-view-edit-title').props.onChangeText('First plus more');
         await waitFor(() => expect(screen.getByText(/kept — check them and save again/i)).toBeTruthy());
         await waitFor(() => expect(screen.getByDisplayValue('First plus more')).toBeTruthy());
-        await waitFor(() => expect(screen.getByDisplayValue('40000')).toBeTruthy());
+        await waitFor(() => expect(screen.getByDisplayValue('400')).toBeTruthy());
     });
 });
 

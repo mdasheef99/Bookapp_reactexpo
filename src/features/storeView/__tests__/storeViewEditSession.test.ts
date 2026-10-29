@@ -131,28 +131,28 @@ describe('Slice 0a §3.2 conflict rebase', () => {
         const rebased = rebaseEditDraft({ draft, editedSet: edited, refreshed, baseline: base });
         expect(rebased.conflicts).toEqual([]);
         expect(rebased.alreadySaved).toBe(false);
-        expect(rebased.draft.sellingPriceMinor).toBe('40000');
+        expect(rebased.draft.sellingPriceMinor).toBe('400');
         expect(rebased.draft.title).toBe('My title');
     });
 
     it('marks a field both sides changed and blocks save until resolved', () => {
         const base = detail();
         const draft = createStoreViewEditDraft(base);
-        draft.sellingPriceMinor = '99900';
+        draft.sellingPriceMinor = '999';
         const edited = computeEditedSet(base, draft);
         const refreshed = withPresentation(base, { sellingPriceMinor: 40000 });
         (refreshed as any).versions = { inventoryVersion: 4, publicationIntentVersion: 2 };
         const rebased = rebaseEditDraft({ draft, editedSet: edited, refreshed, baseline: base });
         expect(rebased.conflicts).toEqual(['sellingPriceMinor']);
-        expect(rebased.draft.sellingPriceMinor).toBe('99900');
+        expect(rebased.draft.sellingPriceMinor).toBe('999');
         const theirs = resolveEditConflict({
             draft: rebased.draft, refreshed, field: 'sellingPriceMinor', choice: 'theirs',
         });
-        expect(theirs.sellingPriceMinor).toBe('40000');
+        expect(theirs.sellingPriceMinor).toBe('400');
         const mine = resolveEditConflict({
             draft: rebased.draft, refreshed, field: 'sellingPriceMinor', choice: 'mine',
         });
-        expect(mine.sellingPriceMinor).toBe('99900');
+        expect(mine.sellingPriceMinor).toBe('999');
     });
 
     it('marks the damage group when the remote side changed any member', () => {

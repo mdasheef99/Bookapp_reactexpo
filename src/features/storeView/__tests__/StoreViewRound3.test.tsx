@@ -228,9 +228,9 @@ it('F2 detail save closes the edit modal while its follow-up detail refetch neve
         expectedInventoryVersion: 3, changes: { title: 'Updated title' },
     }));
     expect(refetch).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('store-view-action-feedback').props.children).toBe('Changes saved.');
+    expect(screen.getByTestId('store-view-action-feedback').props.children).toBe('Changes saved. Updating details…');
     expect(screen.queryByTestId('store-view-save-changes')).toBeNull();
-    expect(screen.getByTestId('store-view-edit')).toBeEnabled();
+    expect(screen.getByTestId('store-view-edit')).toBeDisabled();
 });
 
 it('F2 detail stock shows success and closes the stock sheet while its follow-up detail refetch never resolves', async () => {
@@ -248,9 +248,9 @@ it('F2 detail stock shows success and closes the stock sheet while its follow-up
         expectedInventoryVersion: 3, delta: 2,
     }));
     expect(refetch).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('store-view-action-feedback').props.children).toBe('Stock updated.');
+    expect(screen.getByTestId('store-view-action-feedback').props.children).toBe('Stock updated. Updating details…');
     expect(screen.queryByTestId('store-view-apply-stock')).toBeNull();
-    expect(screen.getByTestId('store-view-adjust-stock')).toBeEnabled();
+    expect(screen.getByTestId('store-view-adjust-stock')).toBeDisabled();
 });
 
 it('F2 photo command reaches ready while invalidation detail refetch stalls', async () => {

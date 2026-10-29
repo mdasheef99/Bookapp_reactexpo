@@ -3,6 +3,7 @@ import { clearCommerceSession } from '@/features/marketplace/commerce/services/c
 import { clearImageInventoryIdentityState } from '@/features/imageInventory/queries/ownerUxQueries';
 import { setAuthState } from '@/features/auth/store/authStore';
 import { captureAppException } from '@/lib/sentry';
+import { clearStoreViewFilterPreferences } from '@/features/storeView/state/storeViewFilterPreference';
 
 let observedUserId: string | null = null;
 let transitionRevision = 0;
@@ -21,6 +22,14 @@ function nextAuthState(session: Session | null) {
 
 async function cleanPreviousUserState(): Promise<void> {
   const results = await Promise.allSettled([
+    // Non-sensitive device preference: report and retry later without blocking a switch.
+    clearStoreViewFilterPreferences(observedUserId!).catch((error) => {
+      captureAppException(error, {
+        area: 'auth',
+        action: 'user_session_cleanup_failed',
+        tags: { feature: 'auth', coordinator: 'application-session' },
+      });
+    }),
     clearImageInventoryIdentityState(),
     clearCommerceSession(),
   ]);

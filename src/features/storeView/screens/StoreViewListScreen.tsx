@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
@@ -9,6 +9,7 @@ import { FILTER_LABELS } from '../components/storeViewPresentation';
 import { STORE_VIEW_FILTERS, type StoreViewFilter } from '../contracts/storeViewContracts';
 import { useStoreViewPage } from '../queries/storeViewQueries';
 import { StoreViewAccessBoundary } from './StoreViewAccessBoundary';
+import { createStoreViewFilterSession } from '../state/storeViewFilterPreference';
 
 function StateCard({ title, body, onRetry }: { title: string; body: string; onRetry?: () => void }) {
     const { colors } = useTheme();
@@ -35,8 +36,20 @@ function StateCard({ title, body, onRetry }: { title: string; body: string; onRe
 }
 
 export function StoreViewListContent({ identity }: { identity: ImageInventoryIdentity }) {
+    // Remount local selection immediately on identity changes, before any stored read.
+    return <StoreViewIdentityList key={JSON.stringify([identity.userId, identity.storeId])} identity={identity} />;
+}
+
+function StoreViewIdentityList({ identity }: { identity: ImageInventoryIdentity }) {
     const { colors } = useTheme();
     const [filter, setFilter] = useState<StoreViewFilter>('all');
+    const [preference] = useState(() => createStoreViewFilterSession(identity));
+    const tapped = useRef(false);
+    useEffect(() => {
+        let active = true;
+        void preference.read().then((stored) => { if (active && !tapped.current) setFilter(stored); });
+        return () => { active = false; };
+    }, [preference]);
     const query = useStoreViewPage(identity, filter);
     const initialLoading = query.isPending && query.items.length === 0;
     const initialError = query.isError && query.items.length === 0;
@@ -64,7 +77,7 @@ export function StoreViewListContent({ identity }: { identity: ImageInventoryIde
                                         testID={`store-view-filter-${value}`}
                                         accessibilityRole="tab"
                                         accessibilityState={{ selected }}
-                                        onPress={() => setFilter(value)}
+                                        onPress={() => { tapped.current = true; setFilter(value); void preference.write(value); }}
                                         style={{ borderWidth: 1, borderColor: selected ? colors.accent : colors.border, backgroundColor: selected ? colors.accent : colors.bgCard, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 }}
                                     >
                                         <Text style={{ color: selected ? '#FFFFFF' : colors.textPrimary, fontWeight: '700', fontSize: 13 }}>

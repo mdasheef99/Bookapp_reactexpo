@@ -28,6 +28,7 @@ export function StoreViewStockModal({
     };
     return (
         <Modal visible={visible} animationType="slide" presentationStyle="formSheet" onRequestClose={onDismiss}>
+            <View testID="store-view-stock-sheet" style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
             <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16 }}>
                 <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800' }}>Adjust Stock</Text>
                 <Text selectable style={{ color: colors.textSecondary }}>Current available stock: {detail.stock.quantityAvailable}</Text>
@@ -44,6 +45,7 @@ export function StoreViewStockModal({
                     </Pressable>
                 </View>
             </ScrollView>
+            </View>
         </Modal>
     );
 }

@@ -94,6 +94,7 @@ export function resolveEditConflict(args: {
 
 /** Human-readable remote value shown next to a conflicted field. */
 export function remoteFieldLabel(field: StoreViewEditField, refreshed: StoreViewDetail): string {
+    if (field === 'sellingPriceMinor') return `₹${draftFieldFromDetail(refreshed, field)}`;
     const value = readDetailField(refreshed, field);
     if (value === null) return 'empty';
     if (Array.isArray(value)) return value.length ? value.join(', ') : 'empty';

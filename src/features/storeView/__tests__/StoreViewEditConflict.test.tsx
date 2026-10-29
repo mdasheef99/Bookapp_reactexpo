@@ -142,7 +142,7 @@ describe('Slice 0a §3.2 edit session keeps the owner draft', () => {
         fireEvent.press(screen.getByTestId('store-view-save-changes'));
         await waitFor(() => expect(screen.getByText(/kept — check them and save again/i)).toBeTruthy());
         expect(screen.getByDisplayValue('My title')).toBeTruthy();
-        expect(screen.getByDisplayValue('40000')).toBeTruthy();
+        expect(screen.getByDisplayValue('400')).toBeTruthy();
         managementMutate.mockResolvedValueOnce({ outcome: 'details_updated' });
         fireEvent.press(screen.getByTestId('store-view-save-changes'));
         await waitFor(() => expect(managementMutate).toHaveBeenCalledTimes(2));
@@ -161,16 +161,16 @@ describe('Slice 0a §3.2 edit session keeps the owner draft', () => {
         managementMutate.mockRejectedValueOnce(conflictError());
         const screen = render(<StoreViewDetailContent identity={identity} inventoryId={inventoryId} />);
         openEditor(screen);
-        fireEvent.changeText(screen.getByTestId('store-view-edit-price-minor'), '99900');
+        fireEvent.changeText(screen.getByTestId('store-view-edit-price-minor'), '999');
         fireEvent.press(screen.getByTestId('store-view-save-changes'));
         await waitFor(() => expect(
             screen.getByTestId('store-view-edit-conflict-sellingPriceMinor'),
         ).toBeTruthy());
-        expect(screen.getByText('Changed by someone else to 40000')).toBeTruthy();
+        expect(screen.getByText('Changed by someone else to ₹400')).toBeTruthy();
         expect(screen.getByTestId('store-view-save-changes').props.accessibilityState.disabled).toBe(true);
         fireEvent.press(screen.getByTestId('store-view-edit-keep-mine-sellingPriceMinor'));
         expect(screen.queryByTestId('store-view-edit-conflict-sellingPriceMinor')).toBeNull();
-        expect(screen.getByDisplayValue('99900')).toBeTruthy();
+        expect(screen.getByDisplayValue('999')).toBeTruthy();
         managementMutate.mockResolvedValueOnce({ outcome: 'details_updated' });
         fireEvent.press(screen.getByTestId('store-view-save-changes'));
         await waitFor(() => expect(managementMutate).toHaveBeenCalledTimes(2));
@@ -188,13 +188,13 @@ describe('Slice 0a §3.2 edit session keeps the owner draft', () => {
         managementMutate.mockRejectedValueOnce(conflictError());
         const screen = render(<StoreViewDetailContent identity={identity} inventoryId={inventoryId} />);
         openEditor(screen);
-        fireEvent.changeText(screen.getByTestId('store-view-edit-price-minor'), '99900');
+        fireEvent.changeText(screen.getByTestId('store-view-edit-price-minor'), '999');
         fireEvent.press(screen.getByTestId('store-view-save-changes'));
         await waitFor(() => expect(
             screen.getByTestId('store-view-edit-conflict-sellingPriceMinor'),
         ).toBeTruthy());
         fireEvent.press(screen.getByTestId('store-view-edit-use-theirs-sellingPriceMinor'));
-        expect(screen.getByDisplayValue('40000')).toBeTruthy();
+        expect(screen.getByDisplayValue('400')).toBeTruthy();
     });
 
     it('locks typing during recovery (C1/R5): the pre-recovery draft survives the refresh', async () => {
@@ -219,7 +219,7 @@ describe('Slice 0a §3.2 edit session keeps the owner draft', () => {
         resolveRefresh({ data: refreshed, error: null });
         await waitFor(() => expect(screen.getByText(/kept — check them and save again/i)).toBeTruthy());
         expect(screen.getByDisplayValue('First')).toBeTruthy();
-        expect(screen.getByDisplayValue('40000')).toBeTruthy();
+        expect(screen.getByDisplayValue('400')).toBeTruthy();
     });
 
     it('routes access loss during the recovery refresh to onAccessLost (C2)', async () => {
@@ -336,7 +336,7 @@ describe('Slice 0a §3.2 edit session keeps the owner draft', () => {
         openEditor(screen);
         fireEvent.changeText(screen.getByTestId('store-view-edit-title'), 'My title');
         fireEvent.press(screen.getByTestId('store-view-save-changes'));
-        await waitFor(() => expect(screen.getByDisplayValue('40000')).toBeTruthy());
+        await waitFor(() => expect(screen.getByDisplayValue('400')).toBeTruthy());
         managementMutate.mockRejectedValueOnce(conflictError());
         managementMutate.mockResolvedValueOnce({ outcome: 'details_updated' });
         fireEvent.press(screen.getByTestId('store-view-save-changes'));

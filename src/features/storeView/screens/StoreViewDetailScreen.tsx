@@ -13,6 +13,7 @@ import { StoreViewManagementClientError } from '../api/storeViewManagementServic
 import type { StoreViewChanges } from '../contracts/storeViewManagementContracts';
 import type { StoreViewDetail } from '../contracts/storeViewContracts';
 import { StoreViewActions } from '../components/StoreViewActions';
+import { StoreViewAttentionReasons } from '../components/StoreViewAttentionReasons';
 import { StoreViewEditModal, type StoreViewSaveOutcome } from '../components/StoreViewEditModal';
 import { isEditAccessLost, refreshEditBaseline, type EditRefreshResult } from '../state/storeViewEditRebase';
 import { storeViewKeys } from '../queries/storeViewQueries';
@@ -61,15 +62,26 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
     const management = useStoreViewManagementCommands(identity);
     const publication = usePublicationCommands(identity);
     const actionLock = useRef(false);
+    const mountedRef = useRef(true);
+    const changeRefreshAttemptRef = useRef(0);
     const [editOpen, setEditOpen] = useState(false);
+    const [focusEditPrice, setFocusEditPrice] = useState(false);
     const [stockOpen, setStockOpen] = useState(false);
     const [photosOpen, setPhotosOpen] = useState(false);
     const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
     const [actionBusy, setActionBusy] = useState(false);
+    const [refreshingAfterChange, setRefreshingAfterChange] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
     const [stockError, setStockError] = useState<string | null>(null);
     const [feedback, setFeedback] = useState<string | null>(null);
     const [accessLost, setAccessLost] = useState(false);
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+            changeRefreshAttemptRef.current += 1;
+        };
+    }, []);
     // The screen can render without a QueryClient in unit tests; the
     // access-lost removal below simply skips when none is available.
     let queryClient: ReturnType<typeof useQueryClient> | null = null;
@@ -125,10 +137,7 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
         );
     }
     const item = query.data;
-    const busy = actionBusy || management.isPending || publication.isPending;
-    const attention = item.attention.attentionReasons.length
-        ? item.attention.attentionReasons.map((reason) => reason.replaceAll('_', ' ')).join(', ')
-        : 'None';
+    const busy = actionBusy || refreshingAfterChange || management.isPending || publication.isPending;
 
     const refetch = async () => {
         await query.refetch();
@@ -153,7 +162,7 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                 kind: 'save', inventoryId: item.identity.inventoryId,
                 inventoryVersion: baselineVersion, changes,
             });
-            void refetch();
+            void refreshAfterChange('Changes saved.');
             return { ok: true };
         } catch (failure) {
             const coded = failure instanceof StoreViewManagementClientError ? failure : null;
@@ -187,9 +196,29 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
         onLate,
         onLateFailure,
     });
+    // Keep mutation/modal completion prompt while fencing actions that would
+    // otherwise reuse the pre-change inventory version. The existing helper
+    // bounds the read at 15s and clears its timer in finally. No late callbacks
+    // are accepted here; query errors still use the access-loss effect above.
+    const refreshAfterChange = async (message: string) => {
+        if (!mountedRef.current) return;
+        const attempt = ++changeRefreshAttemptRef.current;
+        setRefreshingAfterChange(true);
+        setFeedback(`${message} Updating details…`);
+        const result = await refreshBook(() => undefined);
+        if (!mountedRef.current || attempt !== changeRefreshAttemptRef.current) return;
+        setRefreshingAfterChange(false);
+        if (result.ok) setFeedback(message);
+        else if (!isEditAccessLost(result)) {
+            setFeedback(`${message} The latest details could not be loaded. Your next action may ask you to review.`);
+        }
+    };
     const handleSaved = (message: string) => {
         setEditOpen(false);
-        setFeedback(message);
+        // Preserve the post-save refresh message, even if that read already
+        // finished. Conflict recovery's already-saved path still supplies its
+        // own message when no post-change refresh has started.
+        setFeedback((current) => current ?? message);
     };
     const adjustStock = (delta: number) => void runLocked(async () => {
         setStockError(null);
@@ -199,9 +228,8 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                 kind: 'stock', inventoryId: item.identity.inventoryId,
                 inventoryVersion: item.versions.inventoryVersion, delta,
             });
-            void refetch();
             setStockOpen(false);
-            setFeedback('Stock updated.');
+            void refreshAfterChange('Stock updated.');
         } catch (failure) {
             const code = failure instanceof StoreViewManagementClientError ? failure.code : null;
             if (code === 'P9_VERSION_CONFLICT') {
@@ -261,13 +289,15 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                 </Section>
                 <Section title="Status">
                     <Field testID="store-view-detail-state" label="State" value={EFFECTIVE_STATE_LABELS[item.lifecycle.effectiveState]} />
-                    <Field testID="store-view-detail-attention" label="Attention" value={attention} />
+                    <StoreViewAttentionReasons item={item} busy={busy}
+                        onEdit={(focusPrice) => { setEditError(null); setFocusEditPrice(focusPrice); setEditOpen(true); }}
+                        onRetry={() => requestPublication('retry_publication')} />
                     <Field label="Stock" value={stockLabel(item)} />
                     {feedback ? <Text testID="store-view-action-feedback" selectable style={{ color: colors.textSecondary, fontWeight: '700' }}>{feedback}</Text> : null}
                     <StoreViewActions
                         capabilities={item.capabilities}
                         disabled={busy}
-                        onEdit={() => { setEditError(null); setEditOpen(true); }}
+                        onEdit={() => { setEditError(null); setFocusEditPrice(false); setEditOpen(true); }}
                         onStock={() => { setStockError(null); setStockOpen(true); }}
                         onPublication={requestPublication}
                     />
@@ -303,6 +333,7 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
             </ScrollView>
             <StoreViewEditModal
                 visible={editOpen}
+                focusPrice={focusEditPrice}
                 detail={item}
                 identity={identity}
                 submitting={busy}

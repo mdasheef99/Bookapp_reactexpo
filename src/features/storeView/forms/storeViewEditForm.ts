@@ -1,5 +1,6 @@
 import type { StoreViewDetail } from '../contracts/storeViewContracts';
 import type { StoreViewChanges } from '../contracts/storeViewManagementContracts';
+import { rupeesToPriceMinor } from '@/features/imageInventory/scanSetup/scanSetupForm';
 
 type DamageType = NonNullable<StoreViewChanges['damageTypes']>[number];
 type Condition = NonNullable<StoreViewChanges['condition']>;
@@ -9,6 +10,7 @@ export type StoreViewEditDraft = {
     authors: string;
     language: string;
     publicDescription: string;
+    /** Rupee entry text; the API field retains its paise name. */
     sellingPriceMinor: string;
     condition: Condition;
     publicConditionNote: string;
@@ -22,6 +24,12 @@ export type StoreViewEditDraft = {
 
 const languagePattern = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/u;
 const integerPattern = /^(?:0|[1-9]\d*)$/u;
+
+export function priceMinorToRupees(price: number): string {
+    const rupees = Math.floor(price / 100);
+    const paise = price % 100;
+    return paise ? `${rupees}.${String(paise).padStart(2, '0')}` : String(rupees);
+}
 
 function nullable(value: string): string | null {
     return value.trim() || null;
@@ -37,7 +45,7 @@ export function createStoreViewEditDraft(detail: StoreViewDetail): StoreViewEdit
         authors: detail.presentation.authors.join(', '),
         language: detail.presentation.language ?? '',
         publicDescription: detail.presentation.publicDescription ?? '',
-        sellingPriceMinor: String(detail.presentation.sellingPriceMinor),
+        sellingPriceMinor: priceMinorToRupees(detail.presentation.sellingPriceMinor),
         condition: detail.presentation.condition,
         publicConditionNote: detail.presentation.publicConditionNote ?? '',
         hasDamage: detail.presentation.hasDamage,
@@ -49,7 +57,10 @@ export function createStoreViewEditDraft(detail: StoreViewDetail): StoreViewEdit
     };
 }
 
-export function validateStoreViewEditDraft(draft: StoreViewEditDraft): string | null {
+export function validateStoreViewEditDraft(
+    draft: StoreViewEditDraft,
+    editedSet?: ReadonlySet<StoreViewEditField>,
+): string | null {
     const parsedAuthors = authors(draft.authors);
     if (!draft.title.trim() || draft.title.trim().length > 512) return 'Enter a title up to 512 characters.';
     if (parsedAuthors.length > 20 || parsedAuthors.some((author) => author.length > 256)) {
@@ -58,9 +69,10 @@ export function validateStoreViewEditDraft(draft: StoreViewEditDraft): string | 
     if (!languagePattern.test(draft.language.trim().replaceAll('_', '-'))) {
         return 'Enter a valid language code, such as en or hi-Latn.';
     }
-    if (!integerPattern.test(draft.sellingPriceMinor)
-        || Number(draft.sellingPriceMinor) > 2_147_483_647) {
-        return 'Enter a whole non-negative price in paise.';
+    if ((!editedSet || editedSet.has('sellingPriceMinor'))
+        && (!integerPattern.test(draft.sellingPriceMinor)
+            || rupeesToPriceMinor(Number(draft.sellingPriceMinor)) === null)) {
+        return 'Enter the price in whole rupees, for example 250.';
     }
     if (draft.publicDescription.trim().length > 5_000) return 'Public description is too long.';
     if (draft.publicConditionNote.trim().length > 1_000) return 'Public condition note is too long.';
@@ -82,7 +94,7 @@ export function validateStoreViewEditDraft(draft: StoreViewEditDraft): string | 
  *   entries before sending, so the server never receives them
  * - language: `btrim`, then every `_` becomes `-`
  * - publicDescription: `nullif(btrim(v), '')`
- * - sellingPriceMinor: digits-only text becomes integer
+ * - sellingPriceMinor: whole rupees convert to integer paise before sending
  * - condition: sent as-is
  * - publicConditionNote: `nullif(btrim(v), '')`
  * - hasDamage: boolean; when false the server clears damageTypes to `[]`
@@ -142,7 +154,14 @@ export function normalizeEditField(field: StoreViewEditField, draft: StoreViewEd
         case 'authors': return normalizedAuthors(draft.authors);
         case 'language': return btrimLike(draft.language).replaceAll('_', '-');
         case 'publicDescription': return nullableNormalized(draft.publicDescription);
-        case 'sellingPriceMinor': return Number(draft.sellingPriceMinor);
+        case 'sellingPriceMinor': {
+            // Exact prefilled paise comparison, without floating-point multiplication.
+            const match = /^(0|[1-9][0-9]*)(?:\.([0-9]{2}))?$/.exec(draft.sellingPriceMinor);
+            if (!match) return null;
+            return match[2] === undefined
+                ? rupeesToPriceMinor(Number(match[1]))
+                : Number(match[1]) * 100 + Number(match[2]);
+        }
         case 'condition': return draft.condition;
         case 'publicConditionNote': return nullableNormalized(draft.publicConditionNote);
         case 'hasDamage': return draft.hasDamage;
@@ -177,6 +196,7 @@ export function readDetailField(detail: StoreViewDetail, field: StoreViewEditFie
 export function editFieldEquals(field: StoreViewEditField, detail: StoreViewDetail, draft: StoreViewEditDraft): boolean {
     // R1: authors compare by field text against the original array's text.
     if (field === 'authors') return !isAuthorsTextEdited(detail, draft);
+    if (field === 'sellingPriceMinor') return draft.sellingPriceMinor === priceMinorToRupees(detail.presentation.sellingPriceMinor);
     return JSON.stringify(readDetailField(detail, field))
         === JSON.stringify(normalizeEditField(field, draft));
 }
@@ -205,7 +225,7 @@ export function computeEditedSet(
 export function draftFieldFromDetail(detail: StoreViewDetail, field: StoreViewEditField): string | boolean | string[] {
     switch (field) {
         case 'authors': return detail.presentation.authors.join(', ');
-        case 'sellingPriceMinor': return String(detail.presentation.sellingPriceMinor);
+        case 'sellingPriceMinor': return priceMinorToRupees(detail.presentation.sellingPriceMinor);
         case 'language': return detail.presentation.language ?? '';
         case 'publicDescription': return detail.presentation.publicDescription ?? '';
         case 'publicConditionNote': return detail.presentation.publicConditionNote ?? '';

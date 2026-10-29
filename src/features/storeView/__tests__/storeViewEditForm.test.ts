@@ -19,7 +19,7 @@ describe('Unit 7C WU3 Store View edit form', () => {
             title: detail.presentation.title,
             authors: 'Penelope Fitzgerald',
             language: 'en',
-            sellingPriceMinor: '35000',
+            sellingPriceMinor: '350',
             shelfLocation: 'A3',
             internalNotes: 'Owner note',
         });
@@ -43,8 +43,8 @@ describe('Unit 7C WU3 Store View edit form', () => {
     it('validates price and damage without inventing publication policy', () => {
         const draft = createStoreViewEditDraft(detail);
         draft.sellingPriceMinor = '-1';
-        expect(validateStoreViewEditDraft(draft)).toMatch(/paise/i);
-        draft.sellingPriceMinor = '35000';
+        expect(validateStoreViewEditDraft(draft)).toMatch(/whole rupees/i);
+        draft.sellingPriceMinor = '350';
         draft.hasDamage = true;
         draft.damageTypes = [];
         draft.damageNote = '';

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type Ref } from 'react';
 import {
     ActivityIndicator,
     Modal,
@@ -44,10 +44,11 @@ export type StoreViewSaveOutcome =
 export type StoreViewConflictNotice = 'conflict' | 'no-changes-kept' | null;
 
 function Input({
-    label, value, onChangeText, testID, ownerOnly = false, multiline = false, editable = true,
+    label, value, onChangeText, testID, ownerOnly = false, multiline = false, editable = true, inputRef,
 }: {
     label: string; value: string; onChangeText: (value: string) => void;
     testID: string; ownerOnly?: boolean; multiline?: boolean; editable?: boolean;
+    inputRef?: Ref<TextInput>;
 }) {
     const { colors } = useTheme();
     return (
@@ -56,6 +57,7 @@ function Input({
                 {`${label}${ownerOnly ? ' · Owner only' : ''}`}
             </Text>
             <TextInput
+                ref={inputRef}
                 testID={testID}
                 accessibilityLabel={label}
                 value={value}
@@ -73,9 +75,10 @@ function Input({
 }
 
 export function StoreViewEditModal({
-    visible, detail, identity, submitting, error, onDismiss, onSave, onRefreshBook, onAccessLost, onSaved,
+    visible, detail, identity, submitting, error, onDismiss, onSave, onRefreshBook, onAccessLost, onSaved, focusPrice = false,
 }: {
     visible: boolean;
+    focusPrice?: boolean;
     detail: StoreViewDetail;
     identity: ImageInventoryIdentity;
     submitting: boolean;
@@ -90,6 +93,7 @@ export function StoreViewEditModal({
     onSaved: (message: string) => void;
 }) {
     const { colors } = useTheme();
+    const priceRef = useRef<TextInput>(null);
     // Baseline: a copy of the book and its version taken when the modal
     // opens. The draft starts from the baseline and background refreshes
     // never touch it, so typed edits survive.
@@ -329,7 +333,7 @@ export function StoreViewEditModal({
         try {
             const currentDraft = draftRef.current;
             const base = baselineRef.current ?? detail;
-            const validation = validateStoreViewEditDraft(currentDraft);
+            const validation = validateStoreViewEditDraft(currentDraft, editedSetRef.current);
             if (validation) return setLocalError(validation);
             const pendingChanges = buildEditedChanges(base, currentDraft, editedSetRef.current);
             if (Object.keys(pendingChanges).length === 0) return setLocalError('There are no changes to save.');
@@ -417,7 +421,9 @@ export function StoreViewEditModal({
     const inputsLocked = saving || recovering;
 
     return (
-        <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onDismiss}>
+        <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onDismiss}
+            onShow={() => { if (visible && focusPrice) priceRef.current?.focus(); }}>
+            <View testID="store-view-edit-sheet" style={{ flex: 1, backgroundColor: colors.bgPrimary }}>
             <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16 }}>
                 <Text selectable accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800' }}>Edit book</Text>
                 <Text selectable style={{ color: colors.textSecondary }}>Save Changes updates this committed inventory item. Public and Owner-only fields are labeled separately.</Text>
@@ -483,7 +489,7 @@ export function StoreViewEditModal({
                 <Input label="Authors (comma separated)" testID="store-view-edit-authors" value={draft.authors} onChangeText={(authors) => update({ authors })} editable={!inputsLocked} />
                 <Input label="Language" testID="store-view-edit-language" value={draft.language} onChangeText={(language) => update({ language })} editable={!inputsLocked} />
                 <Input multiline label="Public description" testID="store-view-edit-public-description" value={draft.publicDescription} onChangeText={(publicDescription) => update({ publicDescription })} editable={!inputsLocked} />
-                <Input label="Selling price in paise" testID="store-view-edit-price-minor" value={draft.sellingPriceMinor} onChangeText={(sellingPriceMinor) => update({ sellingPriceMinor })} editable={!inputsLocked} />
+                <Input inputRef={priceRef} label="Selling price (₹)" testID="store-view-edit-price-minor" value={draft.sellingPriceMinor} onChangeText={(sellingPriceMinor) => update({ sellingPriceMinor })} editable={!inputsLocked} />
                 <View style={{ gap: 8 }}>
                     <Text selectable style={{ color: colors.textSecondary, fontWeight: '700' }}>Condition</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -530,6 +536,7 @@ export function StoreViewEditModal({
                     </Pressable>
                 </View>
             </ScrollView>
+            </View>
         </Modal>
     );
 }
