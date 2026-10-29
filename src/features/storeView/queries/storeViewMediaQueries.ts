@@ -28,6 +28,14 @@ function retry(failureCount: number, error: Error): boolean {
 export function useStoreViewMedia(
     identity: ImageInventoryIdentity | null,
     inventoryId: string | null,
+    /**
+     * R3: the photo modal keeps this false until the detail version is
+     * confirmed, so no media fetch starts before the detail read resolves.
+     * The list shown and used for actions comes from a media read that
+     * starts after the detail read resolves. Defaults to true so existing
+     * readers are unaffected.
+     */
+    armed = true,
 ) {
     return useQuery({
         queryKey: storeViewMediaKeys.detail(
@@ -35,7 +43,7 @@ export function useStoreViewMedia(
             inventoryId ?? 'unresolved',
         ),
         queryFn: ({ signal }) => storeViewMediaService.read(inventoryId as string, signal),
-        enabled: Boolean(identity && inventoryId),
+        enabled: Boolean(identity && inventoryId) && armed,
         staleTime: 15_000,
         gcTime: 5 * 60_000,
         refetchOnReconnect: true,

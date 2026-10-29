@@ -2,10 +2,9 @@ import type { PropsWithChildren } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import { createCaptureAttempt } from '@/features/imageInventory/capture/captureIds';
-import { ownerInventoryReadKeys } from '@/features/imageInventory/queries/ownerInventoryReadQueries';
 import { storeViewManagementService } from '../api/storeViewManagementService';
 import { useStoreViewManagementCommands } from '../queries/storeViewManagementQueries';
-import { storeViewKeys } from '../queries/storeViewQueries';
+import { storeViewFamilyPrefixes } from '../queries/storeViewInvalidation';
 
 jest.mock('@/features/imageInventory/capture/captureIds', () => ({
     createCaptureAttempt: jest.fn(),
@@ -65,8 +64,10 @@ describe('Unit 7C WU3 Store View management query layer', () => {
         expect(storeViewManagementService.adjustStock).toHaveBeenCalledWith(expect.objectContaining({
             inventoryId, expectedInventoryVersion: 4, delta: -1,
         }));
-        await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: storeViewKeys.all }));
-        expect(invalidate).toHaveBeenCalledWith({ queryKey: ownerInventoryReadKeys.all });
+        const prefixes = storeViewFamilyPrefixes(identity);
+        await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: prefixes.storeView }));
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: prefixes.storeViewHistory });
+        expect(invalidate).toHaveBeenCalledWith({ queryKey: prefixes.ownerRead });
         hook.unmount();
         client.getMutationCache().getAll().forEach((mutation) => mutation.destroy());
         client.clear();

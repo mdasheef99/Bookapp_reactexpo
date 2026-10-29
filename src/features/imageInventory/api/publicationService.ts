@@ -62,7 +62,22 @@ export class PublicationClientError extends Error {
         readonly code: z.infer<typeof errorEnvelope>['error'] | 'P9_RESPONSE_INVALID',
         readonly retryable: boolean,
         message: string,
+        readonly httpStatus: number | null = null,
     ) { super(message); this.name = 'PublicationClientError'; }
+}
+
+function httpStatusOf(error: unknown): number | null {
+    if (!error || typeof error !== 'object') return null;
+    const context = (error as { context?: unknown }).context;
+    if (context && typeof context === 'object' && 'status' in context) {
+        const status = (context as { status?: unknown }).status;
+        if (typeof status === 'number' && Number.isInteger(status)) return status;
+    }
+    if ('status' in error) {
+        const status = (error as { status?: unknown }).status;
+        if (typeof status === 'number' && Number.isInteger(status)) return status;
+    }
+    return null;
 }
 
 async function errorJson(error: unknown): Promise<unknown> {
@@ -76,11 +91,12 @@ async function invoke(action: string, body: Record<string, unknown>): Promise<Pu
         body: { action, contractVersion: PUBLICATION_CONTRACT_VERSION, ...body },
     });
     if (result.error) {
+        const status = httpStatusOf(result.error);
         const parsed = errorEnvelope.safeParse(await errorJson(result.error));
         if (parsed.success) throw new PublicationClientError(
-            parsed.data.error, parsed.data.retryable, parsed.data.message,
+            parsed.data.error, parsed.data.retryable, parsed.data.message, status,
         );
-        throw new PublicationClientError('P9_RESPONSE_INVALID', false, 'Publication response was invalid.');
+        throw new PublicationClientError('P9_RESPONSE_INVALID', false, 'Publication response was invalid.', status);
     }
     const parsed = envelope.safeParse(result.data);
     if (!parsed.success) throw new PublicationClientError(
@@ -98,11 +114,12 @@ async function invokeMedia<T>(
         body: { action, contractVersion: PUBLICATION_CONTRACT_VERSION, ...body },
     });
     if (result.error) {
+        const status = httpStatusOf(result.error);
         const parsed = errorEnvelope.safeParse(await errorJson(result.error));
         if (parsed.success) throw new PublicationClientError(
-            parsed.data.error, parsed.data.retryable, parsed.data.message,
+            parsed.data.error, parsed.data.retryable, parsed.data.message, status,
         );
-        throw new PublicationClientError('P9_RESPONSE_INVALID', false, 'Publication response was invalid.');
+        throw new PublicationClientError('P9_RESPONSE_INVALID', false, 'Publication response was invalid.', status);
     }
     const parsed = schema.safeParse(result.data);
     if (!parsed.success) throw new PublicationClientError(

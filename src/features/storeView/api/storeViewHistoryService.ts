@@ -5,6 +5,7 @@ import {
     type StoreViewHistory,
 } from '../contracts/storeViewHistoryContracts';
 import { StoreViewMediaClientError } from './storeViewMediaService';
+import { httpStatusOf, isAccessLostHttpStatus } from './storeViewHttpStatus';
 
 export async function storeViewHistoryService(
     inventoryId: string,
@@ -20,6 +21,12 @@ export async function storeViewHistoryService(
             ...(signal ? { signal } : {}),
         });
         if (result.error) {
+            const accessStatus = httpStatusOf(result.error);
+            if (isAccessLostHttpStatus(accessStatus)) {
+                throw new StoreViewMediaClientError(
+                    'P9_AUTH_REQUIRED', false, 'Activity history is unavailable.', accessStatus,
+                );
+            }
             const context = (result.error as { context?: { json?: () => Promise<unknown> } }).context;
             const body = await context?.json?.().catch(() => null);
             const code = body && typeof body === 'object' && 'error' in body

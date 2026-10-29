@@ -1,6 +1,7 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Image } from 'expo-image';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { onlineManager, useQueryClient } from '@tanstack/react-query';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { OwnerConfirmationDialog } from '@/features/imageInventory/components/OwnerConfirmationDialog';
@@ -10,8 +11,13 @@ import type { ImageInventoryIdentity } from '@/features/imageInventory/queries/o
 import { useTheme } from '@/hooks/useTheme';
 import { StoreViewManagementClientError } from '../api/storeViewManagementService';
 import type { StoreViewChanges } from '../contracts/storeViewManagementContracts';
+import type { StoreViewDetail } from '../contracts/storeViewContracts';
 import { StoreViewActions } from '../components/StoreViewActions';
-import { StoreViewEditModal } from '../components/StoreViewEditModal';
+import { StoreViewEditModal, type StoreViewSaveOutcome } from '../components/StoreViewEditModal';
+import { isEditAccessLost, refreshEditBaseline, type EditRefreshResult } from '../state/storeViewEditRebase';
+import { storeViewKeys } from '../queries/storeViewQueries';
+import { storeViewMediaKeys } from '../queries/storeViewMediaQueries';
+import { storeViewHistoryKeys } from '../queries/storeViewHistoryQueries';
 import { StoreViewHistorySection } from '../components/StoreViewHistorySection';
 import { StoreViewManagePhotosModal } from '../components/StoreViewManagePhotosModal';
 import { StoreViewStockModal } from '../components/StoreViewStockModal';
@@ -63,10 +69,51 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
     const [editError, setEditError] = useState<string | null>(null);
     const [stockError, setStockError] = useState<string | null>(null);
     const [feedback, setFeedback] = useState<string | null>(null);
+    const [accessLost, setAccessLost] = useState(false);
+    // The screen can render without a QueryClient in unit tests; the
+    // access-lost removal below simply skips when none is available.
+    let queryClient: ReturnType<typeof useQueryClient> | null = null;
+    try {
+        queryClient = useQueryClient();
+    } catch {
+        queryClient = null;
+    }
+    const handleStoreViewAccessLost = () => {
+        // Owner-only shelf location and internal notes must not linger.
+        // Uses the inventoryId prop (not `item`, which is uninitialized on
+        // early-return renders where the R6a effect can also fire).
+        queryClient?.removeQueries({ queryKey: storeViewKeys.detail(identity, inventoryId) });
+        queryClient?.removeQueries({ queryKey: storeViewMediaKeys.detail(identity, inventoryId) });
+        queryClient?.removeQueries({ queryKey: storeViewHistoryKeys.detail(identity, inventoryId) });
+        setEditOpen(false);
+        setPhotosOpen(false);
+        setAccessLost(true);
+    };
+    // Access loss on either the initial read or a background detail refetch
+    // routes to the access-lost path. Temporary errors
+    // keep the current behaviour (the last good data stays on screen).
+    // This effect (and the handler above) must stay before the early
+    // returns: when access is lost the next render takes the error-page
+    // branch, and hooks after an early return would break hook order.
+    const queryError = query.error as { code?: unknown; httpStatus?: unknown } | null;
+    useEffect(() => {
+        if (!queryError) return;
+        const code = typeof queryError.code === 'string' ? queryError.code : null;
+        const rawStatus = queryError.httpStatus;
+        if (isEditAccessLost({
+            code,
+            httpStatus: typeof rawStatus === 'number' ? rawStatus : null,
+        })) {
+            handleStoreViewAccessLost();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [queryError]);
     if (query.isPending) {
         return <ScreenBackground><View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 }}><ActivityIndicator color={colors.accent} /><Text selectable style={{ color: colors.textSecondary }}>Loading book details…</Text></View></ScreenBackground>;
     }
-    if (query.isError || !query.data) {
+    // The error page shows only when there is no cached book; a background
+    // refresh failure keeps the last good data on screen.
+    if (accessLost || !query.data) {
         return (
             <ScreenBackground>
                 <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20 }}>
@@ -95,33 +142,55 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
             setActionBusy(false);
         }
     };
-    const save = (changes: StoreViewChanges) => void runLocked(async () => {
+    const saveEdit = async (
+        changes: StoreViewChanges,
+        baselineVersion: number,
+    ): Promise<StoreViewSaveOutcome> => {
         setEditError(null);
         setFeedback(null);
         try {
             await management.mutateAsync({
                 kind: 'save', inventoryId: item.identity.inventoryId,
-                inventoryVersion: item.versions.inventoryVersion, changes,
+                inventoryVersion: baselineVersion, changes,
             });
-            await refetch();
-            setEditOpen(false);
-            setFeedback('Changes saved.');
+            void refetch();
+            return { ok: true };
         } catch (failure) {
-            const code = failure instanceof StoreViewManagementClientError ? failure.code : null;
-            if (code === 'P9_VERSION_CONFLICT') {
-                setEditError('This book changed. Latest details were refreshed; review and try again.');
-                await refetch();
-                return;
+            const coded = failure instanceof StoreViewManagementClientError ? failure : null;
+            const code = coded?.code ?? 'P9_INTERNAL_ERROR';
+            const httpStatus = coded?.httpStatus ?? null;
+            if (code === 'P9_VERSION_CONFLICT' || code === 'P9_NO_CHANGES') {
+                return { ok: false, code, message: '', httpStatus };
             }
-            if (code === 'P9_NO_CHANGES') {
-                setEditError('There are no changes to save.');
-                return;
-            }
-            setEditError(item.lifecycle.publicationState === 'published'
-                ? "Changes weren't saved. Your live listing is unchanged."
-                : failure instanceof Error ? failure.message : "Changes weren't saved.");
+            return {
+                ok: false,
+                code,
+                message: item.lifecycle.publicationState === 'published'
+                    ? "Changes weren't saved. Your live listing is unchanged."
+                    : failure instanceof Error ? failure.message : "Changes weren't saved.",
+                httpStatus,
+            };
         }
+    };
+    const refreshBook = (
+        onLate: (detail: StoreViewDetail) => void,
+        onLateFailure?: (failure: { ok: false; offline: boolean; code?: string | null; httpStatus?: number | null }) => void,
+    ): Promise<EditRefreshResult> => refreshEditBaseline({
+        isOnline: onlineManager.isOnline(),
+        refresh: async () => {
+            const result = await query.refetch();
+            // Keep the error code and HTTP status so the modals can route
+            // access loss (§3.2) instead of showing "try again".
+            if (!result || result.error || !result.data) throw result?.error ?? new Error('Store View refresh failed.');
+            return result.data;
+        },
+        onLate,
+        onLateFailure,
     });
+    const handleSaved = (message: string) => {
+        setEditOpen(false);
+        setFeedback(message);
+    };
     const adjustStock = (delta: number) => void runLocked(async () => {
         setStockError(null);
         setFeedback(null);
@@ -130,7 +199,7 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                 kind: 'stock', inventoryId: item.identity.inventoryId,
                 inventoryVersion: item.versions.inventoryVersion, delta,
             });
-            await refetch();
+            void refetch();
             setStockOpen(false);
             setFeedback('Stock updated.');
         } catch (failure) {
@@ -235,10 +304,14 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
             <StoreViewEditModal
                 visible={editOpen}
                 detail={item}
+                identity={identity}
                 submitting={busy}
                 error={editError}
                 onDismiss={() => { if (!busy) setEditOpen(false); }}
-                onSave={save}
+                onSave={(changes, baselineVersion) => saveEdit(changes, baselineVersion)}
+                onRefreshBook={refreshBook}
+                onAccessLost={handleStoreViewAccessLost}
+                onSaved={handleSaved}
             />
             <StoreViewStockModal
                 visible={stockOpen}
@@ -252,8 +325,9 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                 visible={photosOpen}
                 identity={identity}
                 inventoryId={item.identity.inventoryId}
-                inventoryVersion={item.versions.inventoryVersion}
                 onDismiss={() => { if (!busy) setPhotosOpen(false); }}
+                onConfirmBook={refreshBook}
+                onAccessLost={handleStoreViewAccessLost}
             />
             <OwnerConfirmationDialog
                 visible={publishConfirmOpen}

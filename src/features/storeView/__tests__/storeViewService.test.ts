@@ -39,4 +39,35 @@ describe('Unit 7C WU2 Store View service', () => {
             },
         });
     });
+
+    it('R7: reads a real Response P9_NOT_FOUND body with its receiver kept', async () => {
+        const body = { error: 'P9_NOT_FOUND', retryable: false, message: 'missing' };
+        invoke.mockResolvedValue({
+            data: null,
+            error: {
+                context: new Response(JSON.stringify(body), {
+                    status: 404,
+                    headers: { 'Content-Type': 'application/json' },
+                }),
+            },
+        });
+        // Detaching json() from its Response throws "Illegal invocation",
+        // which used to turn this into a retryable P9_INTERNAL_ERROR.
+        await expect(storeViewService.detail(inventoryId)).rejects.toMatchObject({
+            code: 'P9_NOT_FOUND',
+            retryable: false,
+        });
+    });
+
+    it.each([[401], [403]])(
+        'R18: a bodyless HTTP %s function error is typed access loss',
+        async (status) => {
+            invoke.mockResolvedValue({ data: null, error: { context: { status } } });
+            await expect(storeViewService.detail(inventoryId)).rejects.toMatchObject({
+                code: 'P9_AUTH_REQUIRED',
+                retryable: false,
+                httpStatus: status,
+            });
+        },
+    );
 });

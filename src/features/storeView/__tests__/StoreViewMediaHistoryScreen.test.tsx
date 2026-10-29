@@ -39,11 +39,11 @@ const linkA = '00000000-0000-4000-8000-000000000011';
 const linkB = '00000000-0000-4000-8000-000000000012';
 const assetId = '00000000-0000-4000-8000-000000000013';
 const createdAt = '2026-08-15T04:00:00.000+05:30';
-const refetch = jest.fn().mockResolvedValue(undefined);
+const refetch = jest.fn().mockResolvedValue({ data: null, error: null });
 const managementMutate = jest.fn();
 const publicationMutate = jest.fn();
 const mediaMutate = jest.fn();
-const mediaRefetch = jest.fn().mockResolvedValue(undefined);
+const mediaRefetch = jest.fn().mockResolvedValue({ data: null, error: null });
 
 function detail(overrides: Record<string, unknown> = {}) {
     return {
@@ -99,6 +99,10 @@ describe('Unit 7C WU4 Store View media and history UI', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         setDetail();
+        // Slice 0a §3.3: the photo buttons stay disabled until the modal
+        // confirms a fresh detail version and photo list on open.
+        refetch.mockResolvedValue({ data: detail(), error: null });
+        mediaRefetch.mockResolvedValue({ data: mediaData(), error: null });
         (useStoreViewManagementCommands as jest.Mock).mockReturnValue({
             mutateAsync: managementMutate, isPending: false,
         });
@@ -140,6 +144,7 @@ describe('Unit 7C WU4 Store View media and history UI', () => {
     it('renders approved media with role/order and dispatches deterministic reorder', async () => {
         const screen = render(<StoreViewDetailContent identity={identity} inventoryId={inventoryId} />);
         fireEvent.press(screen.getByTestId('store-view-manage-photos'));
+        await waitFor(() => expect(screen.getByTestId('store-view-media-up-1')).toBeEnabled());
         expect(screen.getAllByText('Primary photo').length).toBeGreaterThan(0);
         expect(screen.getAllByText('Actual copy').length).toBeGreaterThan(0);
         fireEvent.press(screen.getByTestId('store-view-media-up-1'));
@@ -153,6 +158,7 @@ describe('Unit 7C WU4 Store View media and history UI', () => {
     it('dispatches version-fenced remove through the controlled command', async () => {
         const screen = render(<StoreViewDetailContent identity={identity} inventoryId={inventoryId} />);
         fireEvent.press(screen.getByTestId('store-view-manage-photos'));
+        await waitFor(() => expect(screen.getByTestId('store-view-media-remove-0')).toBeEnabled());
         fireEvent.press(screen.getByTestId('store-view-media-remove-0'));
         expect(screen.getByText(/Required damage evidence cannot be removed/)).toBeTruthy();
         fireEvent.press(screen.getByTestId('store-view-media-confirm-remove'));
@@ -192,6 +198,9 @@ describe('Unit 7C WU4 Store View media and history UI', () => {
         });
         const screen = render(<StoreViewDetailContent identity={identity} inventoryId={inventoryId} />);
         fireEvent.press(screen.getByTestId('store-view-manage-photos'));
+        await waitFor(() => expect(
+            screen.getByTestId('store-view-media-install-00000000-0000-4000-8000-000000000021'),
+        ).toBeEnabled());
         fireEvent.press(screen.getByTestId('store-view-media-install-00000000-0000-4000-8000-000000000021'));
         await waitFor(() => expect(mediaMutate).toHaveBeenCalledWith({
             kind: 'replace', inventoryId, inventoryVersion: 3,
@@ -207,7 +216,7 @@ describe('Unit 7C WU4 Store View media and history UI', () => {
         const screen = render(<StoreViewDetailContent identity={identity} inventoryId={inventoryId} />);
         fireEvent.press(screen.getByTestId('store-view-manage-photos'));
         const addPhoto = screen.getByTestId('store-view-media-add-photo');
-        expect(addPhoto).toBeEnabled();
+        await waitFor(() => expect(addPhoto).toBeEnabled());
         fireEvent.press(addPhoto);
         await waitFor(() => expect(screen.getByTestId('store-view-media-message')).toHaveTextContent(
             'Media-library permission is required.',
