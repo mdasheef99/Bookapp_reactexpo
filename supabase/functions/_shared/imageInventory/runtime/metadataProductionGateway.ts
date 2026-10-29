@@ -20,6 +20,7 @@ import {
   MetadataGatewayConfiguration,
   metadataGatewayRpc,
   metadataLookupParameters,
+  buildEditionOptionsCacheVersions,
 } from './metadataGatewayContext';
 import { completeMetadataJobManually } from './metadataCompletionGateway';
 import { persistMetadataRepresentativeCover } from './metadataRepresentativeCoverGateway';
@@ -55,7 +56,10 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
     private readonly client: MetadataRpcClient,
     private readonly configuration: MetadataGatewayConfiguration,
   ) {
-    this.editionOptions = configuration.editionOptions;
+    this.editionOptions = configuration.editionOptions ? {
+      ...configuration.editionOptions,
+      cacheVersions: () => buildEditionOptionsCacheVersions(configuration),
+    } : undefined;
     this.editionProviderCalls = configuration.context.purpose === 'edition_options'
       ? createEditionProviderCalls(client,configuration) : undefined;
     this.providerValidation = Object.freeze({
@@ -149,13 +153,14 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
     return { lookupId: text(data.lookup_id) };
   }
   async reserveUsage(input: MetadataProductionRequest & { lookupId: string }) {
+    // 02b section 5: policy context must fail closed before the reservation RPC.
+    const policyVersion = Number(metadataLookupParameters(input, this.configuration, null).p_reuse_policy_version);
+    if (!Number.isInteger(policyVersion)) throw new Error('P9_METADATA_POLICY_VERSION_INVALID');
     const data = object(await metadataGatewayRpc(this.client, 'phase9_reserve_metadata_usage', {
       ...metadataClaimParameters(input), p_lookup_id: input.lookupId,
       p_adapter_key: this.configuration.context.currentLookupAdapterKey ?? this.configuration.adapterKey,
       p_adapter_version: this.configuration.context.currentLookupAdapterVersion ?? this.configuration.adapterVersion,
-      p_policy_version: Number(metadataLookupParameters(
-        input, this.configuration, null,
-      ).p_reuse_policy_version),
+      p_policy_version: policyVersion,
     }));
     return { reservationId: text(data.reservation_id) };
   }

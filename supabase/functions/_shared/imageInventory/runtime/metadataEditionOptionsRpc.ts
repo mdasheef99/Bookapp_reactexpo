@@ -58,6 +58,18 @@ export function createMetadataEditionOptionsBoundary(client: MetadataRpcClient):
     async recover(fence) {
       return completion(await metadataGatewayRpc(client,'phase9_recover_candidate_edition_options_v1',parameters(fence)),fence);
     },
+    async reuseCache(input) {
+      try {
+        const row = metadataObject(await metadataGatewayRpc(client,'phase9_reuse_candidate_edition_cache_v1',{
+          ...parameters(input), p_cache_versions: input.cacheVersions,
+        }));
+        if (row.status === 'miss' && Object.keys(row).length === 1) return { status: 'miss' };
+        const result = completion(row,input);
+        if (result.status === 'completed' || result.status === 'replayed') return result;
+      } catch { /* A committed cache transaction may have lost its response; recover only. */ }
+      // 02b sections 8.2/10: neither malformed responses nor RPC failures authorize egress.
+      throw new EditionOptionsCompletionUncertainError('P9_METADATA_RPC_FAILED:phase9_reuse_candidate_edition_cache_v1');
+    },
     async complete(input) {
       // 02b sections 3.1/3.2/5: validate separately before dispatch, never alter row bytes.
       const companions = serializeCatalogueCompanions(input.catalogueCompanions,input);

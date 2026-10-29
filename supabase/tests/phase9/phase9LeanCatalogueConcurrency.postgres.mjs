@@ -15,9 +15,11 @@ import { advisoryLocks, receipts, transaction, waitingOn } from './leanCatalogue
 // M84 changes completion writes and searched timing; runner selects the schema
 // appropriate to each test group. Direct invocation defaults to all tests.
 const nativeScope = process.argv[5] ?? 'all';
-assert.ok(['all','m83','m84'].includes(nativeScope));
-const legacyTest = nativeScope === 'm84' ? test.skip : test;
-const m84Test = nativeScope === 'm83' ? test.skip : test;
+assert.ok(['all','m83','m84','m87','m88'].includes(nativeScope));
+const legacyTest = ['m84','m87','m88'].includes(nativeScope) ? test.skip : test;
+const m87Test = ['all','m87','m88'].includes(nativeScope) ? test : test.skip;
+const m88Test = ['all','m88'].includes(nativeScope) ? test : test.skip;
+const m84Test = ['m83','m87','m88'].includes(nativeScope) ? test.skip : test;
 
 // Same per-connection role adapter as the existing native catalogue suite;
 // shared CAN fixtures still call the real local-completion/review RPCs.
@@ -54,6 +56,7 @@ const shared = () => json(`SELECT jsonb_build_array(
 async function clean() {
   fixtureRole = 'postgres'; fixtureActor = '';
   await sql('TRUNCATE public.stores,public.canonical_works,public.canonical_editions CASCADE');
+  if (['all','m87','m88'].includes(nativeScope)) await sql('TRUNCATE public.phase9_metadata_cache_entries CASCADE');
   await enableLibrary();
   await sql("UPDATE public.phase9_provider_registry SET provider_kind='metadata',adapter_version='1.0.0',public_display_allowed=true WHERE adapter_key='open_library'");
 }
@@ -370,7 +373,7 @@ legacyTest('§6.1: saved Add waits for a competing provider resolver and remains
       ON s.provider=ids.adapter_key AND s.provider_book_id=ids.external_id
     WHERE ids.adapter_key='open_library' AND ids.id_kind='edition' AND ids.external_id='OL100M'`);
   assert.equal(mapped.edition, mapped.source); assert.notEqual(mapped.edition, target.editionId);
-  assert.equal(await json('SELECT coalesce(sum(times_chosen),0)::int FROM public.canonical_edition_stats'), 1);
+  assert.equal(await json('SELECT to_json(coalesce(sum(times_chosen),0)::int) FROM public.canonical_edition_stats'), 1);
 });
 
 
@@ -643,7 +646,7 @@ legacyTest('[baseline] AC7-30: committed registry revocation is pre-empted by th
   assert.deepEqual(await pending(),before);
   await save(f); assert.equal((await owner(await addSql(f),f)).outcome,'committed_private');
   unmatched(await item(f)); assert.deepEqual(await pending(),before); assert.deepEqual(await shared(),prior);
-  assert.equal(await json('SELECT coalesce(sum(times_chosen),0)::int FROM public.canonical_edition_stats'),0);
+  assert.equal(await json('SELECT to_json(coalesce(sum(times_chosen),0)::int) FROM public.canonical_edition_stats'),0);
 });
 
 // 02b sections 6.2/8.2/11 AC7-18/22: M85 cache races. The existing runner's
@@ -709,6 +712,53 @@ const cacheLedger = p => json(`SELECT jsonb_build_object(
   'state',(SELECT to_jsonb(s) FROM public.phase9_candidate_edition_state s WHERE candidate_id=${q(p.candidateId)}),
   'calls',(SELECT count(*) FROM public.phase9_metadata_provider_calls WHERE job_id=${q(p.jobId)}),
   'reservations',(SELECT count(*) FROM public.phase9_usage_reservations WHERE job_id=${q(p.jobId)}))`);
+
+// Owner M88 / review A3 (Terra slice 1 #2), 02b sections 6.2/8.2/AC7-24.
+// A holds the incumbent row; B must really wait past BOTH deadlines before A
+// releases. This is separate from the in-process BEFORE INSERT expiry barrier.
+m88Test('M88 deadline: cache-key lock wait expires publisher without overwriting incumbent',async()=>{
+  const source=await publishedCache(), publisher=await cacheBatch();
+  publisher.r.rows[0].metadata.publisher='Expired publisher press';
+  publisher.r.deadline=await json("SELECT to_json(clock_timestamp()+interval '6 seconds')");
+  await sql(`UPDATE public.phase9_metadata_cache_entries SET expires_at=${q(publisher.r.deadline)}::timestamptz-interval '500 milliseconds'
+    WHERE id=${q(source.cache.id)}`);
+  const before=await json('SELECT row_to_json(c) FROM public.phase9_metadata_cache_entries c WHERE id='+q(source.cache.id));
+  publisher.command=rpcSql('phase9_complete_candidate_edition_options_v2',
+    [...fence(publisher),publisher.lookupId,publisher.attemptId,publisher.r.fetched,publisher.r.deadline,true,
+      publisher.r.rows,[publisher.companion]])
+    // Start the publisher budget in its own statement, after psql startup/setup.
+    .replace(q(publisher.r.deadline),"(pg_catalog.statement_timestamp()+interval '6 seconds')");
+  const overlap=await held('cache-publisher-deadline',
+    'SELECT id FROM public.phase9_metadata_cache_entries WHERE id='+q(source.cache.id)+' FOR UPDATE',
+    serviceAction(publisher.command),{inspect:async evidence=>{
+      assert.notEqual(evidence.wait_event,'advisory','the holder owns only the cache row lock');
+      const lock=await json(`SELECT json_build_object('deadline',s.query_start+interval '6 seconds',
+        'cacheKeyRead',EXISTS(SELECT 1 FROM pg_locks WHERE pid=s.pid
+          AND relation='public.phase9_metadata_cache_entries'::regclass AND mode='RowShareLock' AND granted))
+        FROM pg_stat_activity s WHERE s.pid=${evidence.pid}`);
+      assert.equal(lock.cacheKeyRead,true,'publisher reached the cache-key SELECT FOR UPDATE');
+      publisher.r.deadline=lock.deadline;
+      await waitFor(()=>json(`SELECT to_json(clock_timestamp()>=${q(publisher.r.deadline)}::timestamptz)`),
+        'publisher deadline must cross while its cache-key lock is blocked');
+      assert.equal(await json(`SELECT to_json(expires_at<=clock_timestamp()) FROM public.phase9_metadata_cache_entries
+        WHERE id=${q(source.cache.id)}`),true,'incumbent deadline must also have crossed');
+      assert.equal(await json(`SELECT to_json(wait_event_type='Lock') FROM pg_stat_activity WHERE pid=${evidence.pid}`),true);
+    }});
+  assert.equal(overlap.result.status,'completed','expired publication must not fail completion');
+  const effect=(await nativeLedger(publisher)).effect;
+  assert.deepEqual(effect.completion_response,overlap.result);
+  assert.equal(effect.cache_entry_id,null); assert.equal(effect.cache_payload_digest,null);
+  assert.deepEqual(await json('SELECT row_to_json(c) FROM public.phase9_metadata_cache_entries c WHERE id='+q(source.cache.id)),before,
+    'incumbent bytes, digest, fetched time, creation time and deadline must remain identical');
+  const persistedDeadline=await json('SELECT to_json(options_expires_at) FROM public.phase9_candidate_edition_state'
+    +' WHERE candidate_id='+q(publisher.candidateId));
+  assert.equal(persistedDeadline,publisher.r.deadline,'activity clock identifies the exact RPC deadline');
+  publisher.command=rpcSql('phase9_complete_candidate_edition_options_v2',
+    [...fence(publisher),publisher.lookupId,publisher.attemptId,publisher.r.fetched,persistedDeadline,true,
+      publisher.r.rows,[publisher.companion]]);
+  assert.equal((await service(publisher.command)).status,'replayed');
+  assert.deepEqual(await json('SELECT row_to_json(c) FROM public.phase9_metadata_cache_entries c WHERE id='+q(source.cache.id)),before);
+});
 async function assertCacheHit(p, source) {
   const saved = await cacheLedger(p);
   assert.equal(saved.lookups.length, 1); assert.equal(saved.attempts.length, 1);
@@ -726,7 +776,7 @@ async function assertCacheHit(p, source) {
   return saved;
 }
 
-m84Test('[baseline] M85 native fixtures persist scan provenance and complete accounted v2 options', async () => {
+m87Test('[baseline] M87 native fixtures persist scan provenance and complete accounted v2 options', async () => {
   await requireM84(db, completionV2);
   const p = await cacheBatch();
   const chain = await json(`SELECT json_build_object('candidate',c.id,'observation',o.id,'result',r.id,'input',i.id,
@@ -743,12 +793,28 @@ m84Test('[baseline] M85 native fixtures persist scan provenance and complete acc
   assert.equal(saved.options.options.length, 1);
 });
 
-m84Test('AC7-18: concurrent cache publication and reuse retain the live incumbent without deadlock', async () => {
+// 02b sections 6.2/8.2: pg_locks proves catalogue advisory contention precedes
+// a cache row lock. The tentative cache SELECT may hold AccessShareLock only.
+async function assertCacheLockOrder(evidence, holderPid) {
+  const locks = await json(`SELECT coalesce(json_agg(json_build_object('pid',pid,'mode',mode)),'[]')
+    FROM pg_locks WHERE pid IN(${evidence.pid},${holderPid})
+      AND relation='public.phase9_metadata_cache_entries'::regclass AND granted`);
+  const contender = locks.filter(l => l.pid === evidence.pid).map(l => l.mode);
+  assert.ok(!contender.includes('RowShareLock') && !contender.includes('RowExclusiveLock'),
+    'no cache row lock or write before identity advisory locks');
+  const advisory = await advisoryLocks(evidence.pid);
+  assert.equal(advisory.filter(l => !l.granted).length, 1);
+  assert.ok(locks.some(l => l.pid === holderPid && l.mode === 'RowShareLock'),
+    'completed publisher retains the final cache FOR UPDATE lock');
+  console.log('LEAN_CACHE_LOCK_ORDER ' + JSON.stringify({ holderPid, contenderPid:evidence.pid, locks, advisory }));
+}
+
+m87Test('AC7-18: concurrent cache publication and reuse retain the live incumbent without deadlock', async () => {
   const source = await publishedCache(), publisher = await cacheBatch(), receiver = await cacheRequest(source.versions);
   assert.notEqual(publisher.storeId, receiver.storeId);
   assert.equal(publisher.context.queryIdentity, receiver.context.queryIdentity);
   const before = await shared(), cacheBefore = source.cache;
-  const overlap = await held('cache-publish-reuse', publisher.command, serviceAction(receiver.command), { role: 'service_role' });
+  const overlap = await held('cache-publish-reuse', publisher.command, serviceAction(receiver.command), { role: 'service_role', inspect: assertCacheLockOrder });
   assert.ok(heldReceipt(overlap.output)); assert.equal(overlap.result.status, 'completed');
   await assertCacheHit(receiver, source);
   const published = await nativeLedger(publisher);
@@ -758,7 +824,7 @@ m84Test('AC7-18: concurrent cache publication and reuse retain the live incumben
   assert.deepEqual(await shared(), before, 'concurrent reuse/publication must preserve canonical incumbents');
 });
 
-m84Test('AC7-18: two stores concurrently reuse one entry with isolated receipts and no provider calls', async () => {
+m87Test('AC7-18: two stores concurrently reuse one entry with isolated receipts and no provider calls', async () => {
   const source = await publishedCache(), a = await cacheRequest(source.versions), b = await cacheRequest(source.versions);
   assert.equal(new Set([source.storeId, a.storeId, b.storeId]).size, 3);
   const overlap = await held('cache-two-store-reuse', a.command, serviceAction(b.command), { role: 'service_role' });
@@ -774,7 +840,77 @@ m84Test('AC7-18: two stores concurrently reuse one entry with isolated receipts 
   assert.deepEqual(await cacheLedger(a), left); assert.deepEqual(await cacheLedger(b), right);
 });
 
-m84Test('AC7-18: cache publication holds admission while registry disable waits then future reuse misses', async () => {
+// 02b sections 6.2/8.2: both new completions contend for the same empty key.
+m87Test('AC7-18: same-key concurrent publishers bind both receipts to one winner without replay refresh', async () => {
+  const a = await cacheBatch(), b = await cacheBatch();
+  assert.notEqual(a.storeId, b.storeId); assert.equal(a.context.queryIdentity, b.context.queryIdentity);
+  const overlap = await held('cache-two-publishers', a.command, serviceAction(b.command),
+    { role: 'service_role', inspect: assertCacheLockOrder });
+  assert.ok(heldReceipt(overlap.output)); assert.equal(overlap.result.status, 'completed');
+  const left = (await nativeLedger(a)).effect, right = (await nativeLedger(b)).effect;
+  assert.notEqual(left.cache_entry_id, null); assert.equal(left.cache_entry_id, right.cache_entry_id);
+  assert.equal(left.cache_payload_digest, right.cache_payload_digest);
+  assert.equal(await sql("SELECT count(*) FROM public.phase9_metadata_cache_entries WHERE payload_kind='edition_options_v1'"), '1');
+  const before = await json('SELECT row_to_json(c) FROM public.phase9_metadata_cache_entries c WHERE id=' + q(left.cache_entry_id));
+  assert.equal((await service(a.command)).status, 'replayed'); assert.equal((await service(b.command)).status, 'replayed');
+  assert.deepEqual(await json('SELECT row_to_json(c) FROM public.phase9_metadata_cache_entries c WHERE id=' + q(left.cache_entry_id)), before);
+});
+
+// The contender reaches its first identity lock only AFTER tentative filtering.
+// Commit the hide while it waits there, before the resolver's edition FOR SHARE.
+m87Test('AC7-6: hide between tentative read and identity locks makes reuse miss atomically', async () => {
+  const source = await publishedCache(), receiver = await cacheRequest(source.versions);
+  const expected = [...(await keys(source.r.rows[0].metadata)), await sql(`SELECT
+    marketplace_sec.phase9_catalogue_identity_lock_key_v1('provider','["open_library","work","OL700W"]'::jsonb)::text`)]
+    .sort((a, b) => BigInt(a) < BigInt(b) ? -1 : BigInt(a) > BigInt(b) ? 1 : 0);
+  const before = await cacheLedger(receiver);
+  const overlap = await held('cache-hide-before-lock', 'SELECT pg_advisory_xact_lock(' + expected[0] + ')',
+    serviceAction(receiver.command), { second: 'UPDATE public.canonical_editions SET hidden=true', inspect: async evidence => {
+      const pending = (await advisoryLocks(evidence.pid)).filter(lock => !lock.granted).map(lock => lock.key);
+      assert.deepEqual(pending, [expected[0]], 'reuse is paused after filtering and before shared row locks');
+    } });
+  assert.deepEqual(overlap.result, { status: 'miss' });
+  assert.deepEqual(await cacheLedger(receiver), before, 'no private rows, options, receipt or spend survive refusal');
+  assert.equal(await json('SELECT to_json(bool_and(hidden)) FROM public.canonical_editions'), true);
+});
+
+// 02b AC7-6: retained rows without a resolved pair need the final recheck too.
+for (const kind of ['ineligible','conflict-skipped'])
+m87Test('AC7-6: hide between tentative read and locks covers a ' + kind + ' cached row', async () => {
+  const p = await cacheBatch(), original = p.r.rows[0];
+  const row = { ...original, optionId:randomUUID(), ordinal:1,
+    eligibility:kind === 'ineligible' ? 'ineligible' : 'eligible',
+    metadata:{ ...original.metadata, providerRecordId:'OL104M', isbn10:'0-306-40615-2', isbn13:null,
+      title:kind === 'ineligible' ? 'Unrelated volume' : original.metadata.title },
+    googleBooksUrl:'https://openlibrary.org/books/OL104M' };
+  const companion = { ...p.companion, optionId:row.optionId, providerRecordId:'OL104M', workExternalId:'OL704W' };
+  const target = await seedIncumbent(db,{ ...row.metadata, title:'Different canonical work', isbn10:'0306406152' });
+  p.r.rows.push(row);
+  p.command = rpcSql('phase9_complete_candidate_edition_options_v2',
+    [...fence(p),p.lookupId,p.attemptId,p.r.fetched,p.r.deadline,true,p.r.rows,[p.companion,companion]]);
+  const source = await publishCache(p), receiver = await cacheRequest(source.versions);
+  assert.ok(source.cache.bibliographic_payload.rows.some(r => r.providerRecordId === 'OL104M'));
+  const persisted = await nativeLedger(source);
+  assert.equal(persisted.effect.canonical_results.find(r => r.optionId === row.optionId).canonicalEditionId,null);
+  const gate = (await keys(original.metadata))[0], before = await cacheLedger(receiver);
+  const overlap = await held('cache-hide-' + kind, 'SELECT pg_advisory_xact_lock(' + gate + ')',
+    serviceAction(receiver.command), { second:'UPDATE public.canonical_editions SET hidden=true WHERE id=' + q(target.editionId),
+      inspect:async evidence => {
+        assert.deepEqual((await advisoryLocks(evidence.pid)).filter(l => !l.granted).map(l => l.key),[gate]);
+        const cacheLocks = await json(`SELECT coalesce(json_agg(mode),'[]') FROM pg_locks WHERE pid=${evidence.pid}
+          AND relation='public.phase9_metadata_cache_entries'::regclass AND granted`);
+        assert.ok(!cacheLocks.includes('RowShareLock'), 'cache row remains unlocked during identity acquisition');
+      } });
+  assert.deepEqual(overlap.result,{status:'miss'});
+  assert.deepEqual(await cacheLedger(receiver),before,'late hide leaves no partial receipt, options or spend');
+  assert.equal(await json('SELECT to_json(hidden) FROM public.canonical_editions WHERE id=' + q(target.editionId)),true);
+  assert.equal((await service(receiver.command)).status,'completed','retry filters the committed hide and retains the visible neighbour');
+  const received = await cacheLedger(receiver);
+  assert.equal(received.state.options.some(r => r.metadata?.providerRecordId === 'OL104M'),false);
+  assert.equal(received.calls,0); assert.equal(received.reservations,0);
+});
+
+m87Test('AC7-18: cache publication holds admission while registry disable waits then future reuse misses', async () => {
   const source = await publishedCache(), publisher = await cacheBatch(), receiver = await cacheRequest(source.versions);
   const disable = "UPDATE public.phase9_provider_registry SET enabled=false WHERE adapter_key='open_library' RETURNING json_build_object('enabled',enabled)";
   const overlap = await held('cache-publish-disable', publisher.command, { statement: disable, role: 'postgres' }, {
@@ -791,7 +927,7 @@ m84Test('AC7-18: cache publication holds admission while registry disable waits 
   assert.deepEqual(await cacheLedger(receiver), before, 'disabled admission must leave no cache-hit lookup/effect or spend');
 });
 
-m84Test('AC7-18: expiry while reuse holds catalogue keys rolls back its hit before a waiting refresh publishes', async () => {
+m87Test('AC7-18: expiry while reuse holds catalogue keys rolls back its hit before a waiting refresh publishes', async () => {
   // Choose the source's edition-only key after the common work/work-provider
   // keys. The refresh uses another edition ID and therefore never needs this gate.
   const preview = await cacheBatch(), common = [
@@ -813,12 +949,7 @@ m84Test('AC7-18: expiry while reuse holds catalogue keys rolls back its hit befo
   const source = await cacheBatch({ record: gate.record });
   const receiver = await cacheRequest(source.versions), publisher = await cacheBatch({ record: 'OL100M' });
   const before = await cacheLedger(receiver);
-  const searchedBefore = await json('SELECT coalesce(sum(times_searched),0)::int FROM public.canonical_work_stats');
-  // Build every vision/request/egress fixture before starting the short deadline;
-  // only the completion and the native lock barriers run against that clock.
-  source.r.deadline = new Date(Date.now() + 8000).toISOString();
-  source.command = rpcSql('phase9_complete_candidate_edition_options_v2', [...fence(source), source.lookupId,
-    source.attemptId, source.r.fetched, source.r.deadline, true, source.r.rows, [source.companion]]);
+  const searchedBefore = await json('SELECT to_json(coalesce(sum(times_searched),0)::int) FROM public.canonical_work_stats');
   await publishCache(source);
   const barrier = transaction('cache-expiry-edition-gate', 'SELECT pg_advisory_xact_lock(' + gate.key + ')', { hold: true });
   let reuse, refresh;
@@ -832,6 +963,9 @@ m84Test('AC7-18: expiry while reuse holds catalogue keys rolls back its hit befo
       FOR UPDATE NOWAIT; ROLLBACK`), source.cache.id, 'paused reuse must leave the cache row available to refresh');
     refresh = transaction('cache-expiry-refresh', publisher.command, { role: 'service_role' });
     await refresh.pid(); await waitingOn('cache-refresh-waits-for-reuse-catalogue', refresh, reusePid);
+    // Both lock waits are established. Expire only now, using the database clock.
+    await sql(`UPDATE public.phase9_metadata_cache_entries SET expires_at=clock_timestamp()-interval '1 millisecond'
+      WHERE id=${q(source.cache.id)}`);
     await waitFor(() => json(`SELECT to_json(expires_at<=clock_timestamp()) FROM public.phase9_metadata_cache_entries
       WHERE id=${q(source.cache.id)}`), 'cache deadline crosses while both production commands overlap');
     barrier.release(true);
@@ -843,18 +977,20 @@ m84Test('AC7-18: expiry while reuse holds catalogue keys rolls back its hit befo
     assert.ok(receipts(refreshEnd.output).find(value => value.status === 'completed'));
     assert.deepEqual(await cacheLedger(receiver), before,
       'expiry recheck must roll back private lookup/attempt/options/effects, catalogue counters and spend');
-    assert.equal(await json('SELECT coalesce(sum(times_searched),0)::int FROM public.canonical_work_stats'), searchedBefore,
+    assert.equal(await json('SELECT to_json(coalesce(sum(times_searched),0)::int) FROM public.canonical_work_stats'), searchedBefore,
       'both explicit completions remain unselected; neither they nor expired reuse count a search');
     const effect = (await nativeLedger(publisher)).effect;
     assert.notEqual(effect.cache_entry_id, null);
     const current = await json('SELECT row_to_json(c) FROM public.phase9_metadata_cache_entries c WHERE id=' + q(effect.cache_entry_id));
-    assert.ok(Date.parse(current.expires_at) > Date.parse(source.cache.expires_at), 'waiting new completion replaces the expired entry');
+    assert.equal(await json('SELECT to_json(expires_at>clock_timestamp()) FROM public.phase9_metadata_cache_entries WHERE id='
+      + q(current.id)), true, 'waiting new completion replaces the expired entry with a live deadline');
+    assert.equal(current.payload_digest, effect.cache_payload_digest);
   } finally {
     barrier.release(); await Promise.all([barrier.done, reuse?.done, refresh?.done]);
   }
 });
 
-m84Test('AC7-22: cache reuse and delayed Add acquire identical signed sorted identity keys before the cache row', async () => {
+m87Test('AC7-22: cache reuse and delayed Add acquire identical signed sorted identity keys before the cache row', async () => {
   const source = await publishedCache(), metadata = source.r.rows[0].metadata;
   const expected = [...new Set([...(await keys(metadata)), await sql(`SELECT
     marketplace_sec.phase9_catalogue_identity_lock_key_v1('provider','["open_library","work","OL700W"]'::jsonb)::text`)])]
@@ -878,10 +1014,14 @@ m84Test('AC7-22: cache reuse and delayed Add acquire identical signed sorted ide
     assert.equal(overlap.result.status, 'completed');
     const hit = await assertCacheHit(receiver, source), option = hit.state.options[0];
     const selected = await owner(selectSql(receiver, await choices(receiver), option.optionId), receiver);
-    await save(receiver, reviewedValue({ originalTitle: option.metadata.title, authors: option.metadata.authors,
+    // 02b section 7.2: scan-created candidates have no prior review for save() to merge.
+    const review = reviewedValue({ originalTitle: option.metadata.title, authors: option.metadata.authors,
       originalLanguage: option.metadata.language, script: option.metadata.script,
       metadataChoice: { mode: 'edition_option', selectionId: selected.selection.selectionId },
-      originalFieldConfirmation: { title: true, authors: option.metadata.authors.map(() => true) } }));
+      originalFieldConfirmation: { title: true, authors: option.metadata.authors.map(() => true) } });
+    const current = await choices(receiver);
+    await owner(rpcSql('phase9_update_candidate_review_v2', [receiver.sessionId, receiver.candidateId,
+      current.candidateVersion, current.metadataRevision, review, randomUUID(), randomUUID()]), receiver);
     await held('cache-add-key-' + index, 'SELECT pg_advisory_xact_lock(' + expected[index] + ')',
       ownerAction(await addSql(receiver), receiver), { inspect: inspectPrefix });
     linked(await item(receiver));

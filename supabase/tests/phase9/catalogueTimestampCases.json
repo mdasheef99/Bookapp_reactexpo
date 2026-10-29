@@ -1,0 +1,9 @@
+[
+  {"label":"six digits","source":"2026-10-28T00:00:00.123456Z","companion":"2026-10-28T00:00:00.123456Z","ts":true,"sql":true},
+  {"label":"offset equality","source":"2026-10-28T00:00:00.123456Z","companion":"2026-10-28T05:30:00.123456+05:30","ts":true,"sql":true},
+  {"label":"one microsecond difference","source":"2026-10-28T00:00:00.123456Z","companion":"2026-10-28T00:00:00.123457Z","ts":false,"sql":false},
+  {"label":"fraction padding","source":"2026-10-28T00:00:00.100000Z","companion":"2026-10-28T00:00:00.1Z","ts":true,"sql":true},
+  {"label":"before epoch","source":"1969-12-31T23:59:59.999999Z","companion":"1970-01-01T00:59:59.999999+01:00","ts":true,"sql":true},
+  {"label":"SQL rounds down seventh digit; TS refuses precision","source":"2026-10-28T00:00:00.123456Z","companion":"2026-10-28T00:00:00.1234561Z","ts":false,"sql":true},
+  {"label":"SQL rounds up seventh digit; TS refuses precision","source":"2026-10-28T00:00:00.123457Z","companion":"2026-10-28T00:00:00.1234569Z","ts":false,"sql":true}
+]

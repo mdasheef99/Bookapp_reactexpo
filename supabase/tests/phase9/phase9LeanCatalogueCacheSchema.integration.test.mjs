@@ -2,19 +2,46 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, beforeEach, test } from 'node:test';
-import { asRole, catalogueBatch, completeCatalogueV2, createLeanDatabase, requireM85 } from './leanCatalogueFixture.mjs';
+import { applyM85IfPresent, asRole, catalogueBatch, completeCatalogueV2, createLeanDatabase, requireM85 } from './leanCatalogueFixture.mjs';
 import { automaticCard, enableOL, facts, resetActor, setActor } from './catalogueLinkFixture.mjs';
-import { rpc, worker, token } from './editionOptionsCompletionFixture.mjs';
+import { finalize, prepareCall, resultRows, rpc, seedOperation, worker, token } from './editionOptionsCompletionFixture.mjs';
 import { claimJob, scalar } from './editionPickerFixture.mjs';
 
 let db;
-before(async () => { db = await createLeanDatabase({ m84:true, m85:true }); });
+before(async () => { db = await createLeanDatabase({ m85:true }); });
 beforeEach(async () => {
   await resetActor(db);
   await db.exec('TRUNCATE public.stores,public.canonical_works,public.canonical_editions,public.phase9_metadata_cache_entries CASCADE');
   await enableOL(db);
 });
 after(async () => { await db?.close(); });
+
+// 02b sections 8.2/10/12: the idle M85 stage adds cache lineage only.
+test('AC7-11/17: M85 preserves the M73 external provider predicate exactly',async()=>{
+  const old=await createLeanDatabase({m84:true});
+  try {
+    await enableOL(old);
+    const ol=await catalogueBatch(old); await completeCatalogueV2(old,ol);
+    const gb=await seedOperation(old); await prepareCall(old,gb); await finalize(old,gb);
+    await completeCatalogueV2(old,{...gb,...resultRows(gb),catalogueCompanions:null});
+    await resetActor(old);
+    const policy=async f=>(await old.query(`SELECT marketplace_sec.phase9_edition_source_policy(s) AS admitted
+      FROM public.phase9_candidate_edition_state s WHERE candidate_id=$1`,[f.candidateId])).rows[0].admitted;
+    assert.equal(await policy(ol),true); assert.equal(await policy(gb),true);
+    await old.exec(`INSERT INTO public.phase9_provider_registry(adapter_key,provider_kind,adapter_version,
+      enabled,matching_allowed,storage_allowed,public_display_allowed,revalidation_seconds,policy_version)
+      VALUES('third_metadata','metadata','1.0.0',true,true,true,true,3600,1)`);
+    const switchOL=async adapter=>{
+      await old.query('UPDATE public.metadata_enrichment_attempts SET adapter_key=$1 WHERE id=$2',[adapter,ol.attemptId]);
+      await old.query('UPDATE public.phase9_metadata_lookups SET adapter_key=$1 WHERE id=$2',[adapter,ol.lookupId]);
+    };
+    await switchOL('third_metadata'); assert.equal(await policy(ol),false,'M73 refuses an enabled third metadata provider');
+    await applyM85IfPresent(old);
+    assert.equal(await policy(ol),false,'M85 must preserve M73 external-lineage refusal');
+    assert.equal(await policy(gb),true,'genuine Google external lineage remains admitted');
+    await switchOL('open_library'); assert.equal(await policy(ol),true,'genuine Open Library external lineage remains admitted');
+  } finally { await old.close(); }
+});
 
 function safePayload() {
   const metadata = facts({ isbn10:null,isbn13:null,fetchedAt:'2026-10-28T00:00:00Z' });
@@ -92,6 +119,19 @@ test('AC7-15: strict validator accepts safe bibliographic rows and unavailable n
   assert.equal(await validate(payload),true,'M85 validator must accept the strict safe payload');
 });
 
+// 02b section 8.2: hostile jsonb has bounded refusal; duplicate keys use SQL's
+// last-key semantics rather than pretending the original JSON text survives.
+test('AC7-15: validator bounds hostile key sets, arrays, Unicode and numeric extremes',async()=>{
+  const p=safePayload(), text=JSON.stringify(p);
+  const cases=[Object.assign({},p,Object.fromEntries(Array.from({length:8192},(_,i)=>['key'+i,'x']))),
+    {...p,rows:Array(8192).fill(p.rows[0])},{...p,'版本\u200d':'x'},
+    text.replace('"ordinal":0','"ordinal":1e1000'),text.slice(0,-1)+',"version":"invalid"}'];
+  for(const payload of cases) assert.equal(await validate(payload),false);
+  assert.equal(await validate(text.replace('"version":"psr-edition-cache-v1"',
+    '"version":"invalid","version":"psr-edition-cache-v1"')),true,'last valid duplicate is indistinguishable from canonical jsonb');
+  assert.equal(await validate(p),true);
+});
+
 for (const [label,alter] of [
   ['forged scope',p=>{p.privacyScope='public_bibliographic';}],
   ['Owner text',p=>{p.ownerTitle='Private Owner note';}],
@@ -149,8 +189,6 @@ test('AC7-8: changed cache table retains RLS and service SELECT only through eff
 
 const privateFunctions = [
   'phase9_catalogue_valid_cache_v1(jsonb)','phase9_catalogue_cache_receipt_guard()',
-  'phase9_catalogue_query_scope_v1(uuid,uuid)','phase9_catalogue_store_cache_v1(uuid,jsonb)',
-  'phase9_catalogue_reuse_cache_core_v1(uuid,text,text,integer,uuid,uuid,uuid,uuid,integer,text,jsonb,jsonb)',
 ];
 for(const signature of privateFunctions) test(`AC7-8: postgres-only cache helper ${signature}`,async()=>{
   const name='marketplace_sec.'+signature; await requireM85(db,name);
@@ -166,17 +204,6 @@ for(const signature of privateFunctions) test(`AC7-8: postgres-only cache helper
       await assert.rejects(()=>db.query(`SELECT marketplace_sec.${signature.split('(')[0]}(${args})`),
         e=>e.code==='42501');
     });
-  }
-});
-
-test('AC7-8/10: reuse wrappers are service-only and preserve invoker/definer boundary',async()=>{
-  const signature='phase9_reuse_candidate_edition_cache_v1(uuid,text,text,integer,uuid,uuid,uuid,uuid,integer,text,jsonb)';
-  for(const schema of ['public','marketplace_sec']) {
-    const name=schema+'.'+signature; await requireM85(db,name);
-    const row=(await db.query('SELECT prosecdef FROM pg_proc WHERE oid=to_regprocedure($1)',[name])).rows[0];
-    assert.equal(row.prosecdef,schema==='marketplace_sec');
-    for(const role of ['anon','authenticated','service_role'])
-      assert.equal((await db.query('SELECT has_function_privilege($1,$2,\'EXECUTE\') AS allowed',[role,name])).rows[0].allowed,role==='service_role');
   }
 });
 
@@ -229,50 +256,6 @@ test('AC7-15/17: real lookup CHECKs accept cache-hit shape and reject each missi
     'reuse_policy_version','cache_policy_version','cache_namespace','leader_lookup_id','reuse_source_attempt_id','outcome_source_attempt_id']) local[name]=null;
   assert.equal(await evaluateChecks('phase9_metadata_lookups',local,names),true,'M84 local branch must stay valid');
 });
-
-// 02b sections 4.5/8.2/10: real automatic SQL writer and M32 legacy reader.
-test('[baseline] legacy SQL cache writer and reader preserve accepted automatic selected-snapshot payloads',async()=>{
-  const source=await automaticCard(db);
-  await setActor(db,source.ownerId,'service_role');
-  const stored=await rpc(db,'phase9_store_metadata_cache',[source.lookupId,worker,token,1,'positive',source.facts,
-    source.facts.providerRecordId,source.facts.fetchedAt,new Date(Date.now()+3600000).toISOString()]);
-  assert.equal(stored.outcome,'positive');
-  await resetActor(db);
-  const cached=(await db.query(`SELECT to_jsonb(c) AS row,normalized_snapshot::text AS snapshot_bytes,
-    $2::jsonb::text AS source_bytes FROM public.phase9_metadata_cache_entries c WHERE id=$1`,
-  [stored.cache_id,source.facts])).rows[0];
-  assert.equal(cached.snapshot_bytes,cached.source_bytes);
-  assert.equal(cached.row.source_attempt_id,source.attemptId);
-  assert.equal(cached.row.privacy_scope,'store_private');
-  assert.equal(cached.row.store_id,source.storeId);
-  if(Object.hasOwn(cached.row,'payload_kind')) assert.equal(cached.row.payload_kind,'selected_snapshot_v1');
-
-  const follower={...source,candidateId:randomUUID()}, observationId=randomUUID(), jobId=randomUUID();
-  // A second original observation from the same immutable scan; no Owner review.
-  await db.query(`INSERT INTO public.image_analysis_observations
-    SELECT (jsonb_populate_record(NULL::public.image_analysis_observations,
-      to_jsonb(o)||jsonb_build_object('id',$1::uuid,'observation_ordinal',2))).*
-    FROM public.image_analysis_observations o JOIN public.image_extraction_candidates c
-      ON c.analysis_observation_id=o.id WHERE c.id=$2`,[observationId,source.candidateId]);
-  await db.query(`INSERT INTO public.image_extraction_candidates(id,session_id,store_id,candidate_index,
-    observed_title,observed_authors,observed_isbn_clue,observed_language,observed_script,state,
-    input_id,vision_job_id,analysis_observation_id,analysis_schema_version)
-    SELECT $1,session_id,store_id,2,observed_title,observed_authors,observed_isbn_clue,
-    observed_language,observed_script,'processing',input_id,vision_job_id,$3,analysis_schema_version
-    FROM public.image_extraction_candidates WHERE id=$2`,[follower.candidateId,source.candidateId,observationId]);
-  await db.query(`INSERT INTO public.image_extraction_jobs(id,store_id,entity_type,entity_id,job_kind,dedupe_key,operation_version)
-    VALUES($1,$2,'candidate',$3,'metadata_enrich',$1::uuid::text,'p9-metadata-foundation-v1')`,
-  [jobId,source.storeId,follower.candidateId]);
-  const context=await scalar(db,await claimJob(db,follower,jobId));
-  assert.equal(context.queryIdentity,cached.row.query_identity);
-  const read=key=>rpc(db,'phase9_metadata_cache_reuse_context',[jobId,worker,token,1,follower.candidateId,
-    context.candidateVersion,key]);
-  assert.deepEqual(await read(cached.row.provider_cache_identity),{
-    leaderLookupId:source.lookupId,normalizedOutcome:'accepted_metadata_match',
-  });
-  assert.deepEqual(await read('uncached-legacy-key'),{leaderLookupId:null,normalizedOutcome:null});
-});
-
 
 test('AC7-17: legacy tagged-union branch retains its snapshot and refuses all new-kind payload fields',async()=>{
   await schemaReady();

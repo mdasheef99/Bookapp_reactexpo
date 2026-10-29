@@ -9,7 +9,7 @@ param(
   [switch]$IncludeOpenLibrary,
   [ValidateSet('', 'duplicate-confirmation', 'media-correction', 'edition-picker', 'open-library',
     'bookstore-first', 'storefront-detail', 'catalogue-link', 'lean-catalogue-identity',
-    'edition-first-save', 'lean-catalogue-completion', 'lean-catalogue-local-hook')]
+    'edition-first-save', 'lean-catalogue-completion', 'lean-catalogue-local-hook', 'lean-catalogue-cache')]
   [string]$OnlyGroup = ''
 )
 
@@ -33,6 +33,8 @@ $catalogueDbName = "bookconnect_u8b_${PID}81"
 $catalogueDatabaseCreated = $false
 $completionDbName = "bookconnect_u8b_${PID}84"
 $completionDatabaseCreated = $false
+$cacheDbName = "bookconnect_u8b_${PID}87"
+$cacheDatabaseCreated = $false
 $exitCode = 1
 $nativeGroups = [Collections.Generic.List[object]]::new()
 
@@ -369,6 +371,27 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'Lean-catalogue M84 completion native PostgreSQL acceptance failed' }
         Write-Output 'LEAN_CATALOGUE_COMPLETION_REAL_POSTGRES_ACCEPTANCE_PASS'
       }
+      # 02b section 12 amendment: cache acceptance owns an independent M84-M88 clone.
+      Invoke-NativeGroup 'lean-catalogue-cache' {
+        $cacheChain = @()
+        foreach ($number in @('85','86','87','88')) {
+          $files = @(Get-ChildItem -LiteralPath (Join-Path $root 'supabase\migrations') -File |
+            Where-Object { $_.Name -match "^[0-9]{8}0000${number}_marketplace_phase9_[a-z0-9_]+\.sql$" })
+          if ($files.Count -gt 1) { throw "multiple lean-catalogue M$number files found" }
+          if ($files.Count -eq 1) { $cacheChain += $files[0] }
+        }
+        if ($cacheChain.Count -ne 4) {
+          Write-Output 'LEAN_CATALOGUE_CACHE SKIPPED (M85-M88 not present)'
+          return
+        }
+        Invoke-PsqlCommand 'postgres' "CREATE DATABASE $cacheDbName TEMPLATE $catalogueDbName" | Out-Null
+        $script:cacheDatabaseCreated = $true
+        Invoke-PsqlFile $cacheDbName $catalogueM84[0].FullName | Out-Null
+        foreach ($file in $cacheChain) { Invoke-PsqlFile $cacheDbName $file.FullName | Out-Null }
+        & node (Join-Path $PSScriptRoot 'phase9LeanCatalogueConcurrency.postgres.mjs') $Port $cacheDbName $psql 'm88'
+        if ($LASTEXITCODE -ne 0) { throw 'Lean-catalogue M88 cache native PostgreSQL acceptance failed' }
+        Write-Output 'LEAN_CATALOGUE_CACHE_REAL_POSTGRES_ACCEPTANCE_PASS'
+      }
       Invoke-NativeGroup 'lean-catalogue-local-hook' {
         & node (Join-Path $PSScriptRoot 'phase9LeanCatalogueLocalHook.postgres.mjs') $Port $completionDbName $psql 'm84'
         if ($LASTEXITCODE -ne 0) { throw 'Lean-catalogue M84 local hook native PostgreSQL acceptance failed' }
@@ -393,6 +416,15 @@ finally {
     }
   } catch { $cleanupErrors.Add("lean setup SQL cleanup: $_") }
   $stopVerified = -not $serverStarted
+  if ($cacheDatabaseCreated -and $serverStarted) {
+    try {
+      Invoke-PsqlCommand 'postgres' "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$cacheDbName'" | Out-Null
+      Invoke-PsqlCommand 'postgres' "DROP DATABASE IF EXISTS $cacheDbName" | Out-Null
+      $cacheExists = Invoke-PsqlCommand 'postgres' "SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname='$cacheDbName')"
+      if (-not @($cacheExists | ForEach-Object { "$_".Trim() }).Contains('f')) { throw 'cache database removal readback failed' }
+      Write-Output "POSTGRES_TEARDOWN_DATABASE_REMOVED=$cacheDbName"
+    } catch { $cleanupErrors.Add("cache database cleanup: $_") }
+  }
   if ($completionDatabaseCreated -and $serverStarted) {
     try {
       Invoke-PsqlCommand 'postgres' "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='$completionDbName'" | Out-Null

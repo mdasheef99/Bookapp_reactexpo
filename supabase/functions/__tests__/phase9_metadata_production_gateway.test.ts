@@ -176,3 +176,37 @@ describe('Phase 9 production metadata gateway boundary', () => {
     })).rejects.toThrow('P9_METADATA_RPC_FAILED:phase9_metadata_job_context');
   });
 });
+
+// 02b section 5 policy context: registry policyVersion is an integer; fail before the reservation RPC.
+describe('metadata usage reservation policy version', () => {
+  const make = (policyVersion: number) => {
+    const decoded = decodeMetadataJobContext({ ...context,
+      queryIdentity: '["p9-metadata-lookup-v1", "p9-bibliographic-normalizer-v1", "bibliographic", "9780306406157", "fixture book", ["fixture author"], "en", []]',
+    });
+    const rpc = jest.fn(async () => ({ data: { reservation_id: 'reservation-1' }, error: null }));
+    const gateway = new SupabaseMetadataProductionGateway({ rpc }, {
+      worker: 'metadata-worker-0001',context: { ...decoded,
+        providerPolicies: [{ ...decoded.providerPolicies[0], policyVersion }],
+      },primary: { lookup: jest.fn() } as any,
+      adapterKey: 'google_books',adapterVersion: '1.0.0',capabilityVersion: 'cap-v1',
+      schemaVersion: 'p9-metadata-foundation-v1',lookupContractVersion: 'p9-metadata-lookup-v1',
+      normalizerVersion: 'p9-bibliographic-normalizer-v1',routingPolicyVersion: 'p9-metadata-routing-v1',
+      selectionPolicyVersion: 'p9-metadata-selection-v1',snapshotVersion: 'p9-selected-metadata-v1',
+      cachePolicyVersion: 'p9-metadata-cache-v1',cacheNamespace: 'metadata-v1',
+      pricingPolicyVersion: 'metadata-zero-cost-v1',revalidationSeconds: 1,
+    });
+    return { gateway, rpc, request: { ...requestFromMetadataContext(decoded), lookupId: 'lookup-1' } };
+  };
+  it.each([NaN, Infinity, -Infinity, 1.5])('refuses non-integer policy %s before reserving usage', async policy => {
+    const { gateway, rpc, request } = make(policy);
+    await expect(gateway.reserveUsage(request)).rejects.toThrow('P9_METADATA_POLICY_VERSION_INVALID');
+    expect(rpc).not.toHaveBeenCalled();
+  });
+  it.each([1, 2])('preserves integer policy %s in the usage RPC', async policy => {
+    const { gateway, rpc, request } = make(policy);
+    await expect(gateway.reserveUsage(request)).resolves.toEqual({ reservationId: 'reservation-1' });
+    expect(rpc).toHaveBeenCalledWith('phase9_reserve_metadata_usage', expect.objectContaining({
+      p_policy_version: policy,
+    }));
+  });
+});

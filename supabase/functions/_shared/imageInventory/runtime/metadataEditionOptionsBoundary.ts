@@ -4,12 +4,21 @@ import type { MetadataManualCompletion } from './metadataProductionComposition';
 import type { MetadataNormalizedOutcome } from '../metadata/providerAdapter';
 import type { MetadataJobContext } from './metadataJobContext';
 
-// Picker §§4.3/5/9: controlled transaction port implemented by M68's service-only RPCs.
-// Local installation grants no provider retention permission or live application authority.
-export type EditionOptionsFence = Readonly<{
-  jobId: string; claimWorker: string; claimLeaseToken: string; claimAttempt: number;
+// 02b sections 5/8.1/9: server-resolved query scope, not a public-sharing assertion.
+// SQL proves origin and derives privacy scope/key; no lease secrets enter this projection.
+export type EditionOptionsQueryScope = Readonly<{
   candidateId: string; storeId: string; sessionId: string;
   requestId: string; requestGeneration: number; queryIdentity: string;
+}>;
+// Picker §§4.3/5/9: controlled transaction port implemented by service-only RPCs.
+export type EditionOptionsFence = EditionOptionsQueryScope & Readonly<{
+  jobId: string; claimWorker: string; claimLeaseToken: string; claimAttempt: number;
+}>;
+// 02b section 8.1: exactly the current lookup configuration and companion contract.
+export type EditionOptionsCacheVersions = Readonly<{
+  adapterKey: string; adapterVersion: string; capabilityVersion: string;
+  normalizerVersion: string; schemaVersion: string; routingPolicyVersion: string;
+  cachePolicyVersion: string; reusePolicyVersion: string; companionVersion: 'psr-catalogue-write-v1';
 }>;
 export function editionOptionsFence(context: MetadataJobContext, worker: string): EditionOptionsFence {
   if (context.purpose !== 'edition_options' || context.requestGeneration === null) {
@@ -44,6 +53,11 @@ export type EditionOptionsCompletion =
 export type MetadataEditionOptionsBoundary = Readonly<{
   // Reauthorize/recover only this request; receipt never contains alternatives.
   recover(fence: EditionOptionsFence): Promise<EditionOptionsCompletion>;
+  // 02b sections 5/8.2: only a strict miss authorizes the existing provider path.
+  reuseCache(input: EditionOptionsFence & Readonly<{ cacheVersions: EditionOptionsCacheVersions }>): Promise<
+    | Readonly<{ status: 'miss' }>
+    | Extract<EditionOptionsCompletion, { status: 'completed' | 'replayed' }>
+  >;
   // Atomically save the private set and resolve this job/lookup; never write selection/review.
   complete(input: EditionOptionsCompletionInput): Promise<EditionOptionsCompletion>;
   // Preserve automatic snapshots, candidate state and Owner details during failure/retry.

@@ -71,7 +71,7 @@ export function catalogueWriteWorkerFixture(loseResponse = false, corrupt?: (com
   }
   const primary = new GoogleBooksAdapter({mode:'real',apiKey:'fixture',timeoutMs:1000,maxResponseBytes:64000,
     fetcher:async () => { throw new Error('unconfigured Google transport must not be called'); }});
-  let receipt:Record<string,unknown> | null = null, call = 0;
+  let receipt:Record<string,unknown> | null = null, receiptClaim:Record<string,any> | null = null, call = 0;
   const rpc = async (name:string, parameters:Record<string,any>) => {
     if (name === 'phase9_register_structural_metadata_lookup')
       return {data:{lookup_id:'00000000-0000-4000-8000-000000000101'},error:null};
@@ -87,6 +87,25 @@ export function catalogueWriteWorkerFixture(loseResponse = false, corrupt?: (com
     }
     if (name === 'phase9_recover_candidate_edition_options_v1') {
       recoveries.push(name);
+      // 02b sections 5/10: durable replay still binds scope and current claim.
+      const current = fixture.contexts.get(parameters.p_job_id);
+      const expected = current && { p_job_id:current.jobId, p_worker:fixture.dependencies.workerId,
+        p_lease_token:current.claimToken, p_attempt_count:current.attempt,
+        p_candidate_id:current.candidateId, p_store_id:current.storeId, p_session_id:current.sessionId,
+        p_request_id:current.jobId, p_request_generation:current.requestGeneration, p_query_identity:current.queryIdentity };
+      if (!expected || !fixture.controls.ownerActive || !fixture.controls.uncommitted
+        || Object.entries(expected).some(([key,value]) => parameters[key] !== value))
+        return {data:{status:'stale_rejected'},error:null};
+      const durableClaim = receipt?.requestId === parameters.p_request_id
+        && receiptClaim?.p_attempt_count === parameters.p_attempt_count
+        && receiptClaim?.p_lease_token === parameters.p_lease_token
+        && receiptClaim?.p_worker === parameters.p_worker;
+      if (!durableClaim && Date.parse(String(current!.claimExpiresAt)) <= Date.now())
+        return {data:{status:'stale_rejected'},error:null};
+      if (receipt && receipt.requestId !== parameters.p_request_id)
+        return {data:{status:'missing'},error:null};
+      if (receipt && !durableClaim && Date.parse(String(receipt.optionsExpiresAt)) <= Date.now())
+        return {data:{status:'stale_rejected'},error:null};
       if (receipt && recoveryControls.failRecoveryAfterCommit)
         return {data:null,error:{message:'fixture recovery temporarily unavailable'}};
       if (receipt && receipt.requestGeneration !== parameters.p_request_generation)
@@ -98,6 +117,7 @@ export function catalogueWriteWorkerFixture(loseResponse = false, corrupt?: (com
       completions.push({name,parameters});
       if (recoveryControls.rejectCompletionBeforeReceipt)
         return {data:null,error:{message:'fixture completion temporarily unavailable'}};
+      receiptClaim = {...parameters};
       receipt = {status:'completed',requestId:parameters.p_request_id,requestGeneration:parameters.p_request_generation,
         optionsVersion:1,optionsExpiresAt:parameters.p_options_expires_at};
       if (loseResponse) { loseResponse = false; return {data:null,error:{message:'fixture response lost after commit'}}; }
@@ -107,7 +127,7 @@ export function catalogueWriteWorkerFixture(loseResponse = false, corrupt?: (com
   };
   const dependencies = {...fixture.dependencies,serviceClient:{rpc},primary,editionFallback:adapter,
     editionOptionsBoundary:createMetadataEditionOptionsBoundary({rpc})};
-  return { fixture,urls,completions,recoveries,recoveryControls,committedReceipt:() => receipt,
+  return { fixture,adapter,boundary:dependencies.editionOptionsBoundary,urls,completions,recoveries,recoveryControls,committedReceipt:() => receipt,
     run:() => runMetadataWorkerBatch(1,dependencies) };
 }
 

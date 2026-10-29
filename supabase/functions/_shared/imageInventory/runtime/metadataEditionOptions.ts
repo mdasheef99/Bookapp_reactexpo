@@ -61,6 +61,13 @@ export async function executeEditionOptionsLookup(
     if (signal.aborted) return await fail('cancelled', false);
     const recovered = completionResult(await boundary.recover(fence));
     if (recovered) return recovered;
+    // 02b sections 7.1/8.1-8.2/10: recover before deriving the current cache tuple.
+    // Only SQL's plain miss continues to registration/reservation/provider egress.
+    const reused = await boundary.reuseCache({ ...fence, cacheVersions: port.cacheVersions() });
+    if (reused.status !== 'miss') {
+      return completionResult(reused) ?? { outcome: 'manual_metadata_required' };
+    }
+    if (signal.aborted) return await fail('cancelled', false);
     const policy = decideMetadataProductionPolicy(request.providerPolicy);
     if (!policy.allowFreshProviderCall || !policy.allowPositiveRetention) return await fail('policy_denied', false);
     // 02b section 10: after recovery proves no receipt, terminate without refetching,

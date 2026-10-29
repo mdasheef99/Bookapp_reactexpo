@@ -20,6 +20,12 @@ export async function createCompletionDatabase() {
   }
   return db;
 }
+// 02b sections 7.1/10: compiled v2 workers need M81-M84, and no cache migrations.
+// Retain the M68 constructor for historical v1-only SQL tests. Call once in before().
+export async function createWorkerCompletionDatabase() {
+  const { createLeanDatabase } = await import('./leanCatalogueFixture.mjs');
+  return createLeanDatabase({ m84: true });
+}
 export async function rpc(db, name, values) {
   const result = await db.query('SELECT public.' + name + '(' + values.map((_, i) => '$' + (i + 1)).join(',') + ')', values);
   return Object.values(result.rows[0])[0];
@@ -77,6 +83,10 @@ export function resultRows(f, count = 1) {
 export function complete(db, f, result = resultRows(f), permission = true) {
   return rpc(db, 'phase9_complete_candidate_edition_options_v1', [...fence(f), f.lookupId,
     f.attemptId, result.fetched, result.deadline, permission, result.rows]);
+}
+export function completeV2(db, f, result = resultRows(f), permission = true, companions = null) {
+  return rpc(db, 'phase9_complete_candidate_edition_options_v2', [...fence(f), f.lookupId,
+    f.attemptId, result.fetched, result.deadline, permission, result.rows, companions]);
 }
 export const recover = (db, f) => rpc(db, 'phase9_recover_candidate_edition_options_v1', fence(f));
 export const fail = (db, f, outcome = 'provider_unavailable', retryable = true) =>
@@ -235,9 +245,13 @@ const signatures={
     "p_retryable"
   ]
 };
+signatures.phase9_complete_candidate_edition_options_v2 = [
+  ...signatures.phase9_complete_candidate_edition_options_v1, 'p_catalogue_companions',
+];
 export function completionServiceClient(db) {
   return { rpc: async (name, parameters) => {
     try {
+      if(name==='phase9_reuse_candidate_edition_cache_v1') return {data:{status:'miss'},error:null};
       if(name==='claim_phase9_metadata_jobs') return {data:(await db.query(
         'SELECT * FROM public.claim_phase9_metadata_jobs($1,$2)',
         [parameters.p_batch_size,parameters.p_worker])).rows,error:null};

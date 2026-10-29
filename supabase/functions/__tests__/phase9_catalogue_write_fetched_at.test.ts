@@ -108,3 +108,11 @@ describe('legacy adapter fetchedAt binding before v2 dispatch', () => {
     }
   });
 });
+
+// 02b section 3.1: SQL rounds sub-microsecond values; dispatch deliberately refuses them.
+const timestampCases: Array<{label:string;source:string;companion:string;ts:boolean;sql:boolean}> =
+  require('../../tests/phase9/catalogueTimestampCases.json');
+it.each(timestampCases)('fetchedAt TS/SQL corpus: $label', c => {
+  if (c.ts) expect(check(c.companion,c.source,c.source)).toHaveLength(1);
+  else expect(() => check(c.companion,c.source,c.source)).toThrow('P9_CATALOGUE_COMPANIONS_INVALID');
+});

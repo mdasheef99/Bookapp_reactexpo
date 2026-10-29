@@ -6,10 +6,10 @@ import { GOOGLE_BOOKS_CAPABILITY } from '../../../.phase9-dist/supabase/function
 import { createMetadataEditionOptionsBoundary } from '../../../.phase9-dist/supabase/functions/_shared/imageInventory/runtime/metadataEditionOptionsRpc.js';
 import { runMetadataWorkerBatch } from '../../../.phase9-dist/workers/phase9-metadata-worker/index.js';
 import { lookupSql, seedAutomaticLineage } from './editionPickerFixture.mjs';
-import { asService, completionServiceClient, createCompletionDatabase, readSql, resetActor, scalar,
+import { asService, completionServiceClient, createWorkerCompletionDatabase, readSql, resetActor, scalar,
   seedOperation, selectSql, setActor, worker } from './editionOptionsCompletionFixture.mjs';
 let db;
-before(async()=>{db=await createCompletionDatabase();});
+before(async()=>{db=await createWorkerCompletionDatabase();});
 after(async()=>db?.close());
 async function queued() {
   const f=await seedOperation(db), lineage=await seedAutomaticLineage(db,f); await resetActor(db);
@@ -23,14 +23,14 @@ function transport({permission=true,statuses=[200],loseResponse=false,failPersis
   let requests=0;
   const service=completionServiceClient(db);
   const client={rpc:async(name,p)=>{
-    if(name==='phase9_complete_candidate_edition_options_v1' && failPersistence) {
+    if(name==='phase9_complete_candidate_edition_options_v2' && failPersistence) {
       failPersistence=false; return {data:null,error:new Error('fixture precommit failure')};
     }
-    if(name==='phase9_complete_candidate_edition_options_v1' && invalidCompletion) {
+    if(name==='phase9_complete_candidate_edition_options_v2' && invalidCompletion) {
       p=structuredClone(p); p.p_rows[0].metadata.matchRationale='x'.repeat(800);
     }
     const reply=await service.rpc(name,p);
-    if(name==='phase9_complete_candidate_edition_options_v1' && loseResponse && !reply.error){
+    if(name==='phase9_complete_candidate_edition_options_v2' && loseResponse && !reply.error){
       loseResponse=false; return {data:null,error:new Error('fixture committed response lost')};
     }
     return reply;
@@ -96,13 +96,21 @@ test('disabled provider resolves explicit work through its controlled failure po
   assert.equal(await scalar(db,"SELECT status FROM public.image_extraction_jobs WHERE id='"+f.jobId+"'"),'resolved');
 });
 for(const [name,controls] of [
-  ['429 retry',{statuses:[429,200]}],['finalized response with failed persistence',{failPersistence:true}],
+  ['429 retry',{statuses:[429,200]}],
 ]) test(name+' records two actual requests and becomes ready only after durable retry',async()=>{
   const f=await queued(),t=transport(controls);
   assert.equal((await t.run()).results[0].outcome,'retry_scheduled'); await makeRetryDue(f);
   assert.equal((await t.run()).results[0].outcome,'edition_options_available'); assert.equal(t.requests(),2);
   await resetActor(db);
   assert.equal(await scalar(db,"SELECT count(*)::int FROM public.phase9_metadata_provider_calls WHERE job_id='"+f.jobId+"'"),2);
+});
+
+// 02b sections 7.1/10: uncertainty/outage stays recovery-only, never a provider retry.
+test('finalized response with failed persistence is recovery-only and never schedules a provider retry',async()=>{
+  const f=await queued(),t=transport({failPersistence:true});
+  assert.equal((await t.run()).results[0].outcome,'manual_metadata_required'); assert.equal(t.requests(),1);
+  await resetActor(db);
+  assert.equal(await scalar(db,"SELECT count(*)::int FROM public.phase9_metadata_provider_calls WHERE job_id='"+f.jobId+"'"),1);
 });
 
 // SQL proposal §3.6 / picker §9: actual SQL contract failure survives the concrete port and never schedules a provider retry.

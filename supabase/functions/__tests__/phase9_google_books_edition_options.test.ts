@@ -1,5 +1,6 @@
 import { GoogleBooksAdapter } from '../_shared/imageInventory/metadata/googleBooks/adapter';
-import { buildMetadataQueryIdentity } from '../_shared/imageInventory/metadata/queryIdentity';
+import { decodeGoogleBooksItem } from '../_shared/imageInventory/metadata/googleBooks/decoder';
+import { buildMetadataQueryIdentity, METADATA_NORMALIZER_VERSION } from '../_shared/imageInventory/metadata/queryIdentity';
 import { projectStoredEditionRow, StoredEditionRow } from '../_shared/imageInventory/contracts/ownerEditionPicker';
 import { googleBooksEditionPickerFixtures as fixtures, googleBooksEditionRetentionFixtures as retention } from './fixtures/phase9/googleBooksResponses';
 import { editionUuid } from './fixtures/phase9/editionPickerContracts';
@@ -43,6 +44,21 @@ beforeAll(() => {
   });
 });
 afterEach(() => jest.useRealTimers());
+
+// 02b sections 4.5/7.1: completion v2 requires row/lookup/attempt normalizer parity.
+describe('Google normalizer version parity', () => {
+  it.each(Object.entries(fixtures).filter(([, raw]) => 'items' in raw))('uses the shared normalizer for every available %s edition row', (_name, raw) => {
+    for (const row of rows(raw)) {
+      if (row.metadata !== null) expect(row.metadata.normalizerVersion).toBe(METADATA_NORMALIZER_VERSION);
+    }
+  });
+  it('uses the shared normalizer for the legacy single-record decoder', () => {
+    const decoded = decodeGoogleBooksItem(original, { correlationId: 'edition-correlation',
+      attemptId: 'edition-attempt', fetchedAt });
+    expect(decoded).not.toBeNull();
+    expect(decoded!.normalizerVersion).toBe(METADATA_NORMALIZER_VERSION);
+  });
+});
 
 describe('Task 3 original Google result positions (picker §§3/5/13.2)', () => {
   it('keeps ten positions and duplicate provider IDs with distinct opaque selection IDs', () => {

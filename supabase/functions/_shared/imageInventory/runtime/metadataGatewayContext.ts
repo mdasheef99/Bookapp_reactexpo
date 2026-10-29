@@ -6,6 +6,8 @@ import {
 import type { MetadataProviderAdapter } from '../metadata/providerAdapter';
 import type { MetadataJobContext, MetadataRpcClient } from './metadataJobContext';
 import type { MetadataProductionRequest } from './metadataProductionComposition';
+import { CATALOGUE_WRITE_VERSION } from '../contracts/catalogueWrite';
+import type { EditionOptionsCacheVersions } from './metadataEditionOptionsBoundary';
 
 export type MetadataGatewayConfiguration = Readonly<{
   worker: string;
@@ -62,8 +64,7 @@ export function metadataLookupParameters(
   configuration: MetadataGatewayConfiguration,
   leaderLookupId: string | null,
 ) {
-  const reusePolicyVersion = String(configuration.context.providerPolicies
-    .find((policy) => policy.adapterKey === configuration.adapterKey)?.policyVersion ?? '');
+  const reusePolicyVersion = metadataReusePolicyVersion(configuration);
   const providerCacheIdentity = buildProviderCacheIdentity({
     query: request.query,
     adapterKey: configuration.adapterKey,
@@ -93,6 +94,23 @@ export function metadataLookupParameters(
     p_cache_namespace: configuration.cacheNamespace,
     p_leader_lookup_id: leaderLookupId,
   };
+}
+
+const metadataReusePolicyVersion = (configuration: MetadataGatewayConfiguration): string =>
+  String(configuration.context.providerPolicies
+    .find((policy) => policy.adapterKey === configuration.adapterKey)?.policyVersion ?? '');
+
+// 02b section 8.1: share lookup version authority; SQL owns scope, key and registry validation.
+export function buildEditionOptionsCacheVersions(
+  configuration: MetadataGatewayConfiguration,
+): EditionOptionsCacheVersions {
+  return Object.freeze({
+    adapterKey: configuration.adapterKey, adapterVersion: configuration.adapterVersion,
+    capabilityVersion: configuration.capabilityVersion, normalizerVersion: configuration.normalizerVersion,
+    schemaVersion: configuration.schemaVersion, routingPolicyVersion: configuration.routingPolicyVersion,
+    cachePolicyVersion: configuration.cachePolicyVersion, reusePolicyVersion: metadataReusePolicyVersion(configuration),
+    companionVersion: CATALOGUE_WRITE_VERSION,
+  });
 }
 
 export function requestFromMetadataContext(

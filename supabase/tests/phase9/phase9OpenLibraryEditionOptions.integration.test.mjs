@@ -1,25 +1,15 @@
 // Open Library amendment: full M65-M74 stack, disposable database only.
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import {test,before,after} from 'node:test';
-import {migrationPath} from './databaseHarness.mjs';
-import {createCompletionDatabase,seedOperation,rpc,worker,token,complete,recover,resultRows,finalize,prepareCall,
+import {createWorkerCompletionDatabase,seedOperation,rpc,worker,token,complete,recover,resultRows,finalize,prepareCall,
   setActor,resetActor,scalar as fixtureScalar,readSql,selectSql} from './editionOptionsCompletionFixture.mjs';
 import {metadata} from './editionPickerFixture.mjs';
-import {createCommitDatabase,currentCommitSql,saveReview,reviewValue,originalSelection,seedCard} from './editionPickerCommitFixture.mjs';
-const suffixes=[
- '20261008000070_marketplace_phase9_edition_picker_confirmation.sql',
- '20261010000071_marketplace_phase9_edition_picker_selection_eligibility.sql',
- '20261010000072_marketplace_phase9_edition_picker_superseded_jobs.sql',
- '20261011000073_marketplace_phase9_open_library_edition_options.sql',
- '20261012000074_marketplace_phase9_open_library_author_isolation.sql',
-];
+import {currentCommitSql,saveReview,reviewValue,originalSelection,seedCard} from './editionPickerCommitFixture.mjs';
 async function scalar(db,sql,values=[]) {const result=await db.query(sql,values);return Object.values(result.rows[0] ?? {})[0];}
 let db;
-before(async()=>{db=await createCommitDatabase();for(const file of suffixes){
- if(fs.existsSync(migrationPath(file))) await db.exec(fs.readFileSync(migrationPath(file),'utf8'));
-}});
+// One M84 database for all cases; provider HTTP remains recorded and local.
+before(async()=>{db=await createWorkerCompletionDatabase();});
 after(async()=>{await db?.close();});
 async function olCall(options={}) {
  const f=await seedOperation(db,options),lookupAdapter=options.lookupAdapter ?? 'open_library';

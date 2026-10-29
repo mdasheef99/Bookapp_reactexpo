@@ -84,6 +84,8 @@ export function editionWorkerFixture(count = 1) {
     optionsVersion: 1, optionsExpiresAt: input.optionsExpiresAt,
   });
   const boundary: MetadataEditionOptionsBoundary = {
+    // 02b section 8.2: existing provider-path cases explicitly model a cache miss.
+    async reuseCache() { return { status: 'miss' }; },
     async recover(fence) {
       if (!valid(fence)) return { status: 'stale_rejected' };
       const prior = saved.get(fence.candidateId);
@@ -110,6 +112,9 @@ export function editionWorkerFixture(count = 1) {
   };
   const rpc = async (name: string, parameters: Record<string, any>) => {
     calls.push({ name, parameters });
+    if (name === 'phase9_reuse_candidate_edition_cache_v1') {
+      return { data: { status: 'miss' }, error: null };
+    }
     if (name === 'claim_phase9_metadata_jobs') {
       const ids = queue.splice(0, parameters.p_batch_size);
       return { data: ids.map(id => ({ id, attempt_count: contexts.get(id)!.attempt,

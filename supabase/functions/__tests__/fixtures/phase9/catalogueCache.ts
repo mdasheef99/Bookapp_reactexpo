@@ -35,7 +35,14 @@ export const cacheRecording = {
 type Call = { name: string; parameters: Record<string, any> };
 type Receipt = { status: string; requestId: unknown; requestGeneration: unknown;
   optionsVersion: number; optionsExpiresAt: string };
-export function catalogueCacheWorkerFixture(mode: 'miss' | 'hit' | 'response_lost' = 'miss') {
+type Reply = { data: unknown; error: unknown };
+type Responses = {
+  reuse?: (parameters: Record<string, any>) => Reply | Promise<Reply>;
+  recover?: (parameters: Record<string, any>) => Reply | Promise<Reply>;
+};
+export function catalogueCacheWorkerFixture(
+  mode: 'miss' | 'hit' | 'response_lost' = 'miss', responses: Responses = {},
+) {
   const base = editionWorkerFixture();
   base.current().providerPolicies = [...base.current().providerPolicies as unknown[], {
     adapterKey: 'open_library', adapterVersion: '1.0.0', enabled: true,
@@ -51,9 +58,11 @@ export function catalogueCacheWorkerFixture(mode: 'miss' | 'hit' | 'response_los
   const rpc = async (name: string, parameters: Record<string, any>) => {
     calls.push({ name, parameters });
     if (name === 'phase9_recover_candidate_edition_options_v1') {
+      if (responses.recover) return responses.recover(parameters);
       return { data: durable ? { ...durable, status: 'replayed' } : { status: 'missing' }, error: null };
     }
     if (name === cacheReuseRpc) {
+      if (responses.reuse) return responses.reuse(parameters);
       if (mode === 'miss') return { data: { status: 'miss' }, error: null };
       durable = receipt(parameters);
       if (loseResponse) {
@@ -70,6 +79,8 @@ export function catalogueCacheWorkerFixture(mode: 'miss' | 'hit' | 'response_los
       return { data: { provider_call_id: 'recorded-' + ++physicalId, status: 'registered' }, error: null };
     if (name === 'phase9_finalize_edition_options_provider_call_v1')
       return { data: { status: 'finalized' }, error: null };
+    if (name === 'phase9_finish_edition_primary_for_fallback_v1')
+      return { data: { status: 'finished' }, error: null };
     if (name === 'phase9_complete_candidate_edition_options_v2') {
       durable = receipt(parameters);
       return { data: durable, error: null };
@@ -90,6 +101,6 @@ export function catalogueCacheWorkerFixture(mode: 'miss' | 'hit' | 'response_los
     } });
   const dependencies = { ...base.dependencies, primary: null, serviceClient: { rpc }, editionFallback: adapter,
     editionOptionsBoundary: createMetadataEditionOptionsBoundary({ rpc }) };
-  return { base, calls, urls, rpc, durableReceipt: () => durable,
+  return { base, calls, urls, rpc, adapter, dependencies, durableReceipt: () => durable,
     run: () => runMetadataWorkerBatch(1, dependencies) };
 }

@@ -1,6 +1,7 @@
 import { parseMetadataEdition, MetadataEdition } from '../../contracts/metadata';
 import { ProviderHostPolicy } from '../../contracts/providerReuse';
 import { normalizeIsbnClue } from '../../domain/isbn';
+import { METADATA_NORMALIZER_VERSION } from '../queryIdentity';
 
 const MAX_ITEMS = 10;
 const MAX_AUTHORS = 16;
@@ -139,7 +140,7 @@ export function decodeGoogleBooksItem(value: unknown, context: Context, authorLi
       schema_version: 'p9-metadata-v1',
       adapter_key: 'google_books',
       adapter_version: '1.0.0',
-      normalizer_version: 'p9-google-books-normalizer-v1',
+      normalizer_version: METADATA_NORMALIZER_VERSION,
       correlation_id: context.correlationId,
       attempt_id: context.attemptId,
       provider_record_id: id,

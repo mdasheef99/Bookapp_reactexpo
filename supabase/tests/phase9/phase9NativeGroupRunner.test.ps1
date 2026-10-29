@@ -96,4 +96,52 @@ if (-not $missingGroupGuard) { throw 'Unavailable OnlyGroup must fail instead of
 $missingGroupError = $null
 try { . ([scriptblock]::Create($missingGroupGuard.Extent.Text)) } catch { $missingGroupError = $_ }
 if (-not $missingGroupError -or $missingGroupError -notmatch 'unavailable') { throw 'Missing native group must be reported' }
+# 02b section 12: exercise only the extracted cache action, never initdb/psql.
+$cacheGroup = $ast.Find({ param($node)
+  $node -is [Management.Automation.Language.CommandAst] -and
+    $node.GetCommandName() -eq 'Invoke-NativeGroup' -and
+    $node.CommandElements[1].Extent.Text -eq "'lean-catalogue-cache'"
+}, $true)
+if (-not $cacheGroup) { throw 'Missing independent M88 cache group' }
+$cacheAction = [scriptblock]::Create($cacheGroup.CommandElements[2].ScriptBlock.Extent.Text.Trim('{','}'))
+$root = Split-Path (Split-Path (Split-Path $PSScriptRoot))
+$catalogueDbName = 'fixture83'; $cacheDbName = 'fixture87'; $Port = 5450; $psql = 'fixture-psql'
+$catalogueM84 = @([pscustomobject]@{ FullName = 'M84.sql' })
+$script:fixtureFiles = @()
+$script:appliedFiles = @()
+$script:databaseCommands = @()
+$script:nodeArguments = @()
+function Get-ChildItem { param($LiteralPath,[switch]$File) $script:fixtureFiles }
+function Invoke-PsqlFile { param($database,$file) $script:appliedFiles += "$database/$file" }
+function Invoke-PsqlCommand { param($database,$sql) $script:databaseCommands += "$database/$sql" }
+function node { $script:nodeArguments = @($args); $global:LASTEXITCODE = 0 }
+# Where-Object uses each numbered pattern against this synthetic inventory.
+$allFiles = @(85,86,87,88 | ForEach-Object { [pscustomobject]@{
+  Name = "202610280000$($_)_marketplace_phase9_fixture.sql"; FullName = "M$_.sql"
+} })
+$OnlyGroup = 'lean-catalogue-cache'
+foreach ($missing in @(85,86,87,88)) {
+  $nativeGroups.Clear(); $script:fixtureFiles = @($allFiles | Where-Object { $_.FullName -ne "M$missing.sql" })
+  $output = @(Invoke-NativeGroup $OnlyGroup $cacheAction)
+  if ($output -notcontains 'LEAN_CATALOGUE_CACHE SKIPPED (M85-M88 not present)' -or
+      $script:databaseCommands.Count -ne 0 -or $script:appliedFiles.Count -ne 0 -or
+      $nativeGroups.Count -ne 1 -or -not $nativeGroups[0].Passed) {
+    throw "Missing M$missing must skip the cache action without cloning, applying or failing"
+  }
+}
+$nativeGroups.Clear(); $script:fixtureFiles = $allFiles
+$output = @(Invoke-NativeGroup $OnlyGroup $cacheAction)
+if (($script:appliedFiles -join ',') -ne 'fixture87/M84.sql,fixture87/M85.sql,fixture87/M86.sql,fixture87/M87.sql,fixture87/M88.sql' -or
+    $script:databaseCommands.Count -ne 1 -or $script:databaseCommands[0] -notmatch 'TEMPLATE fixture83' -or
+    $script:nodeArguments[-1] -ne 'm88' -or $script:nodeArguments[-3] -ne 'fixture87' -or
+    -not $script:cacheDatabaseCreated -or $output -notcontains 'LEAN_CATALOGUE_CACHE_REAL_POSTGRES_ACCEPTANCE_PASS' -or
+    $nativeGroups.Count -ne 1 -or -not $nativeGroups[0].Passed) {
+  throw 'M88 cache group must clone and apply M84, M85, M86, M87, M88 in order and select only m88 tests'
+}
+$script:fixtureFiles = @($allFiles)+@($allFiles[0]); $nativeGroups.Clear()
+$output = @(Invoke-NativeGroup $OnlyGroup $cacheAction 2>&1)
+if ($nativeGroups[0].Passed -or @($output | Where-Object { $_ -is [Management.Automation.ErrorRecord] }).Count -ne 1) {
+  throw 'Duplicate M85 must fail before applying any chain'
+}
+Write-Output 'NATIVE_CACHE_GROUP_TEST_PASS: OnlyGroup, four missing-chain skips, ordered isolated clone, m88 scope, duplicate rejection'
 Write-Output 'NATIVE_GROUP_AGGREGATION_TEST_PASS: all-pass, mixed failures, environment restoration, summaries, exit status, OnlyGroup selection/failure/unavailable'
