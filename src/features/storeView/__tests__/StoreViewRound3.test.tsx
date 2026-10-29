@@ -166,6 +166,9 @@ afterEach(() => {
     jest.useRealTimers();
 });
 
+// The 5s Jest default cut the first (cold-start) test off under load.
+jest.setTimeout(30000);
+
 it('F1 cold-cache Retry starts a fresh media request after its detail read and uses its result', async () => {
     const old = deferred();
     const read = storeViewMediaService.read as jest.Mock;

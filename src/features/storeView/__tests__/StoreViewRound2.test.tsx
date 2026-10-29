@@ -112,6 +112,9 @@ function waitFor(expectation: () => void) {
     return waitForBase(expectation, { timeout: 8000 });
 }
 
+// Tests chain several 8s waits; the 5s Jest default cut them off under load.
+jest.setTimeout(30000);
+
 function renderDetail() {
     const client = new QueryClient({
         defaultOptions: {

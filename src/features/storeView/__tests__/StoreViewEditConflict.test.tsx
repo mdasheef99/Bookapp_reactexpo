@@ -97,6 +97,9 @@ function waitFor(expectation: () => void) {
     return waitForBase(expectation, { timeout: 8000 });
 }
 
+// Tests chain several 8s waits; the 5s Jest default cut them off under load.
+jest.setTimeout(30000);
+
 describe('Slice 0a §3.2 edit session keeps the owner draft', () => {
     beforeEach(() => {
         jest.clearAllMocks();

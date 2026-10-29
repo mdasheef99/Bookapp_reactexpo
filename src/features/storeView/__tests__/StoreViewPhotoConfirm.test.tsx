@@ -59,6 +59,9 @@ function waitFor(expectation: () => void) {
     return waitForBase(expectation, { timeout: 8000 });
 }
 
+// Tests chain several 8s waits; the 5s Jest default cut them off under load.
+jest.setTimeout(30000);
+
 const identity = { userId: 'owner-a', storeId: 'store-a' };
 const inventoryId = '00000000-0000-4000-8000-000000000001';
 const linkA = '00000000-0000-4000-8000-000000000011';
