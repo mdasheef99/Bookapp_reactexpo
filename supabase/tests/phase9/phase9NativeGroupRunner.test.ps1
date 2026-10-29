@@ -103,7 +103,7 @@ $cacheGroup = $ast.Find({ param($node)
     $node.CommandElements[1].Extent.Text -eq "'lean-catalogue-cache'"
 }, $true)
 if (-not $cacheGroup) { throw 'Missing independent M88 cache group' }
-$cacheAction = [scriptblock]::Create($cacheGroup.CommandElements[2].ScriptBlock.Extent.Text.Trim('{','}'))
+$cacheAction = $cacheGroup.CommandElements[2].ScriptBlock.GetScriptBlock()
 $root = Split-Path (Split-Path (Split-Path $PSScriptRoot))
 $catalogueDbName = 'fixture83'; $cacheDbName = 'fixture87'; $Port = 5450; $psql = 'fixture-psql'
 $catalogueM84 = @([pscustomobject]@{ FullName = 'M84.sql' })
@@ -122,13 +122,24 @@ $allFiles = @(85,86,87,88 | ForEach-Object { [pscustomobject]@{
 $OnlyGroup = 'lean-catalogue-cache'
 foreach ($missing in @(85,86,87,88)) {
   $nativeGroups.Clear(); $script:fixtureFiles = @($allFiles | Where-Object { $_.FullName -ne "M$missing.sql" })
-  $output = @(Invoke-NativeGroup $OnlyGroup $cacheAction)
-  if ($output -notcontains 'LEAN_CATALOGUE_CACHE SKIPPED (M85-M88 not present)' -or
+  $output = @(Invoke-NativeGroup $OnlyGroup $cacheAction 2>&1)
+  $errors = @($output | Where-Object { $_ -is [Management.Automation.ErrorRecord] })
+  if ($errors.Count -ne 1 -or $errors[0] -notmatch "M$missing\b" -or
       $script:databaseCommands.Count -ne 0 -or $script:appliedFiles.Count -ne 0 -or
-      $nativeGroups.Count -ne 1 -or -not $nativeGroups[0].Passed) {
-    throw "Missing M$missing must skip the cache action without cloning, applying or failing"
+      $nativeGroups.Count -ne 1 -or $nativeGroups[0].Passed) {
+    throw "Missing M$missing must fail the explicitly selected cache action without cloning or applying"
   }
 }
+$OnlyGroup = ''
+$nativeGroups.Clear(); $script:fixtureFiles = @()
+$output = @(Invoke-NativeGroup 'lean-catalogue-cache' $cacheAction 2>&1)
+if ($output -notcontains 'LEAN_CATALOGUE_CACHE SKIPPED (M85-M88 not present)' -or
+    @($output | Where-Object { $_ -is [Management.Automation.ErrorRecord] }).Count -ne 0 -or
+    $script:databaseCommands.Count -ne 0 -or $script:appliedFiles.Count -ne 0 -or
+    $nativeGroups.Count -ne 1 -or -not $nativeGroups[0].Passed) {
+  throw 'Missing cache chain must still skip without failure or database commands when OnlyGroup is empty'
+}
+$OnlyGroup = 'lean-catalogue-cache'
 $nativeGroups.Clear(); $script:fixtureFiles = $allFiles
 $output = @(Invoke-NativeGroup $OnlyGroup $cacheAction)
 if (($script:appliedFiles -join ',') -ne 'fixture87/M84.sql,fixture87/M85.sql,fixture87/M86.sql,fixture87/M87.sql,fixture87/M88.sql' -or
@@ -143,5 +154,5 @@ $output = @(Invoke-NativeGroup $OnlyGroup $cacheAction 2>&1)
 if ($nativeGroups[0].Passed -or @($output | Where-Object { $_ -is [Management.Automation.ErrorRecord] }).Count -ne 1) {
   throw 'Duplicate M85 must fail before applying any chain'
 }
-Write-Output 'NATIVE_CACHE_GROUP_TEST_PASS: OnlyGroup, four missing-chain skips, ordered isolated clone, m88 scope, duplicate rejection'
+Write-Output 'NATIVE_CACHE_GROUP_TEST_PASS: OnlyGroup, four missing-chain failures, full-run skip, ordered isolated clone, m88 scope, duplicate rejection'
 Write-Output 'NATIVE_GROUP_AGGREGATION_TEST_PASS: all-pass, mixed failures, environment restoration, summaries, exit status, OnlyGroup selection/failure/unavailable'

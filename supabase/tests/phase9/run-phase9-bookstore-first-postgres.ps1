@@ -374,13 +374,18 @@ try {
       # 02b section 12 amendment: cache acceptance owns an independent M84-M88 clone.
       Invoke-NativeGroup 'lean-catalogue-cache' {
         $cacheChain = @()
+        $missingCacheMigrations = @()
         foreach ($number in @('85','86','87','88')) {
           $files = @(Get-ChildItem -LiteralPath (Join-Path $root 'supabase\migrations') -File |
             Where-Object { $_.Name -match "^[0-9]{8}0000${number}_marketplace_phase9_[a-z0-9_]+\.sql$" })
           if ($files.Count -gt 1) { throw "multiple lean-catalogue M$number files found" }
           if ($files.Count -eq 1) { $cacheChain += $files[0] }
+          if ($files.Count -eq 0) { $missingCacheMigrations += "M$number" }
         }
         if ($cacheChain.Count -ne 4) {
+          if ($OnlyGroup -eq 'lean-catalogue-cache') {
+            throw "Lean-catalogue cache acceptance missing migrations: $($missingCacheMigrations -join ', ')"
+          }
           Write-Output 'LEAN_CATALOGUE_CACHE SKIPPED (M85-M88 not present)'
           return
         }
