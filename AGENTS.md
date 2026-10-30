@@ -46,9 +46,9 @@ For page-by-page Clubs visual refinement, follow the [Clubs Page-by-Page UI/UX R
 Before proposing, editing, migrating, or implementing:
 
 1. Resolve the repository/worktree root, current branch, and `git status --short`. Preserve unrelated user changes.
-2. Read [the marketplace active-phase router](./docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md).
+2. Read [the short marketplace current-state file](./docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md).
 3. Read [DOC-13](./docs/multi-tenant-bookstore-marketplace/DOC-13-implementation-tracker.md) for global status, blockers, and the authoritative active phase.
-4. Follow the ordered reading list in the active-phase router and its session-start document.
+4. Follow ACTIVE.md's ordered reading list and the session-start protocol. Read only evidence needed for the authorized task; archives are historical reference, not mandatory startup reading.
 5. Read [`CODEBASE_MAP/README.md`](./CODEBASE_MAP/README.md) and follow its reading order for the area you are touching. The map is orientation only: it never gives status, next actions or product rules.
 6. Inspect the relevant current code and migrations before assuming the documented target is already implemented.
 7. State the current phase, completed milestone, active work unit, next authorized action, blockers, and database-mutation authority back to the user before acting.
@@ -68,9 +68,9 @@ For marketplace product behavior:
 For implementation status:
 
 1. DOC-13 is the global status authority.
-2. `implementation/ACTIVE.md` is the routing authority.
-3. The active phase `TRACKER.md` is the local current-state/next-action authority.
-4. Detailed phase trackers contain decision and implementation evidence.
+2. `implementation/ACTIVE.md` is the single current-state and routing authority: milestone, active work unit, exact next authorized action, mutation authority, recorded live state, blockers and residual risks.
+3. The active phase `TRACKER.md` owns local decision and implementation evidence and links to ACTIVE.md for current state.
+4. Detailed phase trackers own dated verification, decisions, approvals and implementation evidence; `implementation/history/` preserves superseded handoffs.
 
 Trackers may record status and evidence; they must not silently originate product behavior.
 
@@ -102,7 +102,8 @@ For any database, RLS, function, trigger, storage, bucket, migration, or tenant 
 Every material change must update the files named by the active phase session-start update matrix. At minimum:
 
 - update the local phase tracker for any work performed;
-- update DOC-13 when phase/milestone/status/risk/blocker/next action changes;
+- rewrite ACTIVE.md when the current milestone/work unit/next action, authority, recorded live state, blocker or residual risk changes;
+- update DOC-13 when global phase/milestone/status/risk/blocker or cross-phase sequencing changes; link to ACTIVE.md instead of copying its dated handoff;
 - update the owning SDD and traceability when behavior or acceptance changes;
 - update the data dictionary/current-vs-target audit for schema/storage decisions;
 - update the implementation verification tracker with code, tests, migrations, rollout, or operational evidence;
@@ -131,13 +132,13 @@ split an already-applied migration for line-count reasons.
 
 Before ending a session that changed files or external state:
 
-1. Re-read the active tracker and record the exact completed scope.
+1. Re-read ACTIVE.md and the relevant evidence tracker; record the exact completed scope in its owning log.
 2. Record verification actually run; never imply an unrun test passed.
 3. Record database/storage mutations or explicitly state none.
 4. Record new decisions, deviations, blockers, and residual risk in their owning documents.
 5. If the change altered anything `CODEBASE_MAP/` describes (see the "When to update" table in its README), update the matching map file in the same change, following that README's "Keeping this folder accurate". Never add status to the map.
-6. Set one exact next authorized action and active work unit; do not leave vague “continue implementation” text.
-7. Update DOC-13 if the global handoff changed.
+6. Rewrite ACTIVE.md's current-state block with one exact next authorized action, active work unit, completed milestone, mutation authority, recorded live references, blockers and residual risks. Preserve dated evidence in its owning tracker; do not append duplicate handoff paragraphs to ACTIVE.md, SESSION-START.md, TRACKER.md and DOC-13.
+7. Update DOC-13 if global phase, milestone, status, risk, blocker or cross-phase sequencing changed. Keep SESSION-START.md focused on protocol, reading order, rules and the update matrix.
 8. Run the active phase documentation validator and relevant code/security tests.
 9. Report uncommitted changes and whether anything was staged, committed, pushed, deployed, or applied.
 

@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$RunSemanticNegativeProbes
 )
 Set-StrictMode -Version Latest
@@ -107,6 +107,13 @@ $requiredGlobal = @(
     (Join-Path $marketplaceRoot 'README.md'),
     (Join-Path $implementationRoot 'README.md'),
     (Join-Path $implementationRoot 'ACTIVE.md'),
+    (Join-Path $implementationRoot 'history/README.md'),
+    (Join-Path $implementationRoot 'history/ACTIVE-history-to-2026-10-29.md'),
+    (Join-Path $implementationRoot 'history/DOC-13-phase9-history-to-2026-10-29.md'),
+    (Join-Path $implementationRoot 'history/phase9-SESSION-START-history-to-2026-10-29.md'),
+    (Join-Path $implementationRoot 'history/phase9-TRACKER-history-to-2026-10-29.md'),
+    (Join-Path $implementationRoot 'history/phase9-tracker38-status-history-to-2026-10-29.md'),
+    (Join-Path $implementationRoot 'history/AGENTS-session-protocol-history-to-2026-10-29.md'),
     (Join-Path $implementationRoot 'PHASE-9-image-to-LLM-inventory.md'),
     (Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md')
 )
@@ -128,9 +135,22 @@ foreach ($marker in $trackerMarkers) {
         Write-Error "TRACKER.md is missing required marker: $marker"
     }
 }
+# Local current-state markers above stay in TRACKER; prior unit gates also live in history.
+$tracker += [IO.File]::ReadAllText((Join-Path $implementationRoot 'history/phase9-TRACKER-history-to-2026-10-29.md'))
 $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'ACTIVE.md'))
 if (-not $active.Contains('phase-9-image-inventory/SESSION-START.md')) { Write-Error 'ACTIVE.md does not route to the Phase 9 session entrypoint.' }
 if (-not $active.Contains('DOC-13-implementation-tracker.md')) { Write-Error 'ACTIVE.md does not route to DOC-13.' }
+# Current-state structure is checked here; dated handoff assertions below check
+# preserved history, not the mutable current work unit.
+$activeCurrent = $active
+foreach ($marker in @('## Current work', 'Active phase:', 'Active slice/work unit:',
+    'Completed milestone:', 'Exact next authorized action:', '## Mutation authority now',
+    '## Last recorded live state', 'Latest applied migration:', 'Deployed worker:',
+    'Latest relevant recorded commit on', '## Open items, blockers and residual risks',
+    '## Ordered reading list', '## Historical records', 'history/README.md')) {
+    if (-not $activeCurrent.Contains($marker)) { Write-Error "ACTIVE.md is missing current-state field: $marker" }
+}
+$active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'history/ACTIVE-history-to-2026-10-29.md'))
 $legacyM32Handoff = $active.Contains('Structural vision-candidate to metadata-worker to Owner-readback integration has completed the final bounded correction pass') -and
     $active.Contains('Forward M32 is repository-only and unapplied') -and
     $active.Contains('M30 and WU1 remain the recorded live migration tail') -and
@@ -204,10 +224,16 @@ $unit7aEdgeBlockedHandoff = $active.Contains('The sole authorized `phase9-owner-
     $active.Contains('version 3 remains ACTIVE') -and
     $active.Contains('controlled live Add-to-Inventory/exact replay')
 if (-not ($legacyM32Handoff -or $liveM32Handoff -or $metadataSafetyHandoff -or $dispatcherHandoff -or $integrationHandoff -or $metadataRetryHandoff -or $unit6ClosureHandoff -or $mobileUploadCorrectionHandoff -or $mobileUploadNativeFailureHandoff -or $mobileUploadFileSystemHandoff -or $visionResponseResilienceHandoff -or $unit7aCreateOnlyHandoff -or $unit7aLocalCompleteHandoff -or $unit7aM39LiveHandoff -or $unit7aEdgeBlockedHandoff)) {
-    Write-Error 'ACTIVE.md does not preserve the current Phase 9 handoff and external-mutation gates.'
+    Write-Error 'ACTIVE history does not preserve the prior Phase 9 handoff and external-mutation gates.'
 }
 $doc13 = [IO.File]::ReadAllText((Join-Path $marketplaceRoot 'DOC-13-implementation-tracker.md'))
 if ($doc13 -notmatch '\| Current phase \| Phase 9:') { Write-Error 'DOC-13 does not identify Phase 9 as the current marketplace phase.' }
+if (-not $doc13.Contains('Phase 9 current state: see [implementation/ACTIVE.md]') -or
+    -not $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `in_progress`')) {
+    Write-Error 'DOC-13 must retain its phase table and route current Phase 9 detail to ACTIVE.md.'
+}
+# Retain all historical migration-chain and fail-closed assertions after relocation.
+$doc13 += [IO.File]::ReadAllText((Join-Path $implementationRoot 'history/DOC-13-phase9-history-to-2026-10-29.md'))
 if (-not ($doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6g_sdd_owner_review_pending`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6e_finalized_unit6f_separately_gated`') -or
     $doc13.Contains('| Phase 9: Image-to-LLM Inventory | `unit6f_browser_verified_native_gate_pending`') -or
@@ -924,6 +950,9 @@ if (-not $sessionStart.Contains('| 0B Backend/API technical design or review (on
     -not $sessionStart.Contains('all seven linked `00b-technical-design/` artifacts')) {
     Write-Error 'SESSION-START.md does not route the WU0B authority and artifact set.'
 }
+if (-not $sessionStart.Contains('[ACTIVE.md](../ACTIVE.md)')) { Write-Error 'SESSION-START.md does not route current state to ACTIVE.md.' }
+# Unit 6E/6F remains required historical evidence, not duplicated startup status.
+$sessionStart += [IO.File]::ReadAllText((Join-Path $implementationRoot 'history/phase9-SESSION-START-history-to-2026-10-29.md'))
 if (-not $sessionStart.Contains('06-owner-capture-review-recovery-ux-sdd.md') -or
     -not $sessionStart.Contains('18-unit6-owner-ux-design-evidence.md') -or
     -not $sessionStart.Contains('20-unit6b-route-query-cache-evidence.md') -or
@@ -991,9 +1020,24 @@ foreach ($path in $extraMarkdownPaths) {
     $markdownFiles += Get-Item -LiteralPath $path
 }
 
+$markdownFiles += @(Get-ChildItem -LiteralPath (Join-Path $implementationRoot 'history') -Filter '*.md')
+
 $brokenLinks = @()
 foreach ($file in $markdownFiles) {
     $body = [IO.File]::ReadAllText($file.FullName)
+    # Literal archive blocks retain original spelling. Check every original link
+    # against its source directory; rendered relocated links use the archive directory.
+    $originalDirectory = $file.DirectoryName
+    $literalRanges = @()
+    if ($file.DirectoryName -eq (Join-Path $implementationRoot 'history')) {
+        $source = [regex]::Match($body, '(?m)^Source file: `([^`]+)`\r?$')
+        if ($source.Success) {
+            $originalPath = Join-Path $repoRoot $source.Groups[1].Value
+            if (-not (Test-Path -LiteralPath $originalPath)) { Write-Error "Archive source missing: $originalPath" }
+            $originalDirectory = Split-Path -Parent $originalPath
+            $literalRanges = @([regex]::Matches($body, '(?ms)^<!-- original-lines: \d+-\d+ -->\r?\n(`{4,})markdown\r?\n.*?^\1\r?$'))
+        }
+    }
     foreach ($match in [regex]::Matches($body, '\]\(([^)]+)\)')) {
         $target = $match.Groups[1].Value.Trim()
         if ($target -match '^(https?://|mailto:|#)') {
@@ -1004,7 +1048,14 @@ foreach ($file in $markdownFiles) {
             continue
         }
         $target = [Uri]::UnescapeDataString($target.Trim('<', '>'))
-        $resolved = [IO.Path]::GetFullPath((Join-Path $file.DirectoryName $target))
+        $linkDirectory = $file.DirectoryName
+        foreach ($literal in $literalRanges) {
+            if ($match.Index -ge $literal.Index -and $match.Index -lt ($literal.Index + $literal.Length)) {
+                $linkDirectory = $originalDirectory
+                break
+            }
+        }
+        $resolved = [IO.Path]::GetFullPath((Join-Path $linkDirectory $target))
         if (-not (Test-Path -LiteralPath $resolved)) {
             $brokenLinks += "$($file.FullName) -> $($match.Groups[1].Value)"
         }

@@ -68,19 +68,15 @@ feature is in `supabase/functions/_shared/imageInventory/` and `workers/` (see 0
 Source-scanning architecture tests restrict what code may do in this module
 (see 06 "Architecture guard tests").
 
-`review/compactReviewDraft.ts` derives a manual review's script during validation,
-after deciding its metadata choice. `contracts/ownerUxValidation.ts` holds the
-shared language/script map, app coherence rule and server-rule mirror. The card's
-edit tracking uses the original script accessor. Scan setup and the card language
-chooser share `scanSetup/scanSetupForm.ts`'s language options (including Kannada,
-Telugu and Malayalam). See [post-scan SDD-1 §6](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/01-review-screen-sdd.md#6-slice-4--remove-full-correction-simplify-add-a-book).
+- **Routes:** `app/(store-owner)/inventory/index.tsx` opens the hub; `scan/[sessionId]/index.tsx` mounts session review through `InventoryFoundationScreens`; `scan/[sessionId]/missed.tsx` opens Add a book.
+- **Post-scan cards:** `screens/CaptureProgressScreens.tsx` composes `components/BatchReviewCard.tsx`, session reads and bulk controls; `PostScanInventoryActions.tsx` retains draft/authority state.
+- **Card edits:** `review/compactReviewDraft.ts` validates edits and derives script; `contracts/ownerUxValidation.ts` owns language/script coherence; `scanSetup/scanSetupForm.ts` shares language choices.
+- **Edition sheet:** `components/CandidateMetadataSheet.tsx` opens from **Find or change edition**; `CandidateEditionPicker.tsx` reads choices, requests search and confirms selection through `queries/ownerEditionPickerQueries.ts` and `api/ownerEditionPickerService.ts`.
+- **Search controls:** the picker renders **Search Books** and **Retry search**; the [SDD-2 saved-results design](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/02-catalogue-and-matching-sdd.md#slice-9--relaxed-automatic-match-tie-pick-saved-results) calls the repeat-search action **Search again**. Opening the sheet only reads saved choices.
+- **Typed ISBN:** `components/CandidateEditionIsbnSearch.tsx` and `queries/ownerEditionPickerIsbnMutation.ts` coordinate review save, ISBN save, reread and lookup; `ownerMissedBookIsbnFlow.ts` serves Add a book. Normalization/recovery: `review/isbn.ts`, `isbnSearchRecovery.ts`.
+- **Add to Inventory:** `components/AddCandidateToInventoryAction.tsx` calls `commit/inventoryCommitCoordinator.ts` to save review then commit with expected authority; `inventoryCommitPolicy.ts` checks readiness and owned receipts. SQL links the chosen catalogue edition; see [03](./03-backend.md#metadata-routing-and-persistence).
 
-Typed-ISBN search starts at `components/CandidateEditionIsbnSearch.tsx` in the
-edition picker. `queries/ownerEditionPickerIsbnMutation.ts` coordinates review
-save, ISBN save, authoritative reread and edition lookup;
-`queries/ownerMissedBookIsbnFlow.ts` coordinates the Add-a-book ISBN flow.
-Shared normalization and recovery helpers live in `review/isbn.ts` and
-`review/isbnSearchRecovery.ts`.
+Review design: [SDD-1 §§2–7](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/01-review-screen-sdd.md#2-cross-slice-design-rules-for-this-area).
 
 ### Store View — `src/features/storeView/`
 

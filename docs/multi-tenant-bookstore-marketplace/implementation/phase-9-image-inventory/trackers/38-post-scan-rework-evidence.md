@@ -2228,10 +2228,8 @@ Superseded by section 48: M88 applied to Supabase on 2026-10-29 as live `2026102
 
 **Test-infra fixes by Sol (2026-10-29), committed and pushed as `0d240ef`, re-run by the orchestrator.** (1) The explicit `-OnlyGroup lean-catalogue-cache` run now throws `Lean-catalogue cache acceptance missing migrations: ...` (naming the missing M numbers) before any database command, and records the group as failed; a full run (no `-OnlyGroup`) still skips; `phase9NativeGroupRunner.test.ps1` updated (+17/-6; four missing-chain failures and the full-run skip asserted; run: `NATIVE_CACHE_GROUP_TEST_PASS` and `NATIVE_GROUP_AGGREGATION_TEST_PASS`). (2) `package.json` `test:phase9:db` now also globs `supabase/tests/phase9/*.guard.test.mjs` (that glob alone: 4 tests, 4 pass; the whole `test:phase9:db` suite was not re-run). Files: `package.json`, `supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1`, `supabase/tests/phase9/phase9NativeGroupRunner.test.ps1`.
 
-**Status.** Slice 7b-2 implementation is live (M85-M88 applied, code on `main`, worker deployed, live smoke passed for Open Library lookup + reuse). Still recorded UNPROVEN, not passed: AC7-21(b) synthetic-provider admission and the provider-facts-only privacy case.
+**Current state and next authorized action:** see [ACTIVE.md](../../ACTIVE.md).
 
 **Database/storage mutations this session.** M88 apply (section 48); the smoke's rows (lookups, provider calls, cache row, effects, canonical work/edition) were created by the app/worker itself through the owner flow in the dev project; agents wrote nothing directly. This docs update and the Sol fixes were committed and pushed to `origin/main` as `0d240ef`.
-
-**Exact next authorized action (one exact).** the closeout docs and the three test-infrastructure files are pushed as `0d240ef` (a follow-up to `3fdc0c4`; no worker change, no Render redeploy needed); the Owner chooses the next work unit (slice 8; its scope is not recorded here and must be read from the post-scan-rework SDDs before starting).
 
 **Docs validator.** NOT run (blocked locally).

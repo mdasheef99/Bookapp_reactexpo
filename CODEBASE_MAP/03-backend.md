@@ -108,6 +108,33 @@ manual equivalent; it reads `PHASE9_<SERVICE>_WORKER_URL` and
 | `phase9-publication-worker` | Retry public listing publication |
 | `phase9-runtime` | Shared environment, HTTP and request-security helpers |
 
+### Metadata routing and persistence
+
+Paths below are relative to `supabase/functions/_shared/imageInventory/` unless noted.
+
+- **Worker entry:** `workers/phase9-metadata-worker/index.ts` — claims jobs, loads fenced context and dispatches by purpose; `bootstrap.ts` installs adapters and the SQL boundary.
+- **Provider choice:** `workers/phase9-metadata-worker/editionProviderRoute.ts` — explicit-search routing from registry policy, retention permission and resumed provider lineage.
+- **Adapters:** `metadata/googleBooks/` and `metadata/openLibrary/` — bounded HTTP, decoding and normalization behind the shared contract.
+- **Shared contract:** `metadata/providerAdapter.ts` validates provider-neutral outcomes; `routing.ts` defines sequential primary/secondary routing; `queryIdentity.ts` builds normalized query and provider-cache identities.
+- **Automatic enrichment:** `runtime/metadataProductionComposition.ts` — local resolution → automatic cache/coalescing → usage reservation and provider attempt → coherent snapshot or manual fallback; `metadataProductionGateway.ts` supplies RPCs.
+- **Explicit edition options:** `runtime/metadataEditionOptions.ts` — recover saved completion → try edition-list cache → on miss reserve usage and call the routed provider → complete options. It never selects an edition for the Owner.
+- **SQL boundary:** `runtime/metadataEditionOptionsBoundary.ts` defines the worker port; `metadataEditionOptionsRpc.ts` transports recovery, cache reuse, companion-aware completion and failure.
+- **Catalogue companions:** `contracts/catalogueWrite.ts` validates separate provider facts; `metadata/openLibrary/catalogueWrite.ts` extracts them beside option rows. SQL completion owns catalogue writes and cache publication.
+- **Provider registry:** `public.phase9_provider_registry` — enablement, adapter identity, matching/storage/display permissions, retention and source notes; checked by job context and SQL admission. It does not install adapters or replace bootstrap wiring.
+
+| RPC family | Used for |
+| --- | --- |
+| `phase9_owner_*`, `phase9_update_candidate_review*`, `phase9_add_candidate_to_inventory*` | Authenticated Owner reads, review saves and create-only Add; routed by `runtime/ownerUxRpcRoutes.ts` and `ownerBatchReviewIngestion.ts` |
+| `phase9_owner_candidate_edition_choices*`, `phase9_request_candidate_edition_options*`, `phase9_set_candidate_isbn*`, `phase9_select_candidate_edition*` | Read choices, request search, save typed ISBN and confirm selection; `runtime/ownerEditionPickerGateway.ts` |
+| `claim_phase9_metadata_jobs`, `phase9_metadata_job_context*`, `phase9_register_*`, `phase9_reserve_metadata_usage`, `phase9_finalize_*` | Worker claims, authority, logical lookups/attempts, reservations and physical-call accounting |
+| `phase9_*local_metadata_match`, `phase9_*metadata_cache*`, `phase9_select_structural_metadata_snapshot` | Automatic local/cache reuse and accepted metadata snapshots |
+| `phase9_recover_candidate_edition_options*`, `phase9_reuse_candidate_edition_cache*`, `phase9_complete_candidate_edition_options*`, `phase9_fail_candidate_edition_options*` | Service-only explicit-search recovery, edition-list reuse, atomic completion and failure |
+| `marketplace_sec.phase9_catalogue_*`, `marketplace_sec.phase9_edition_*` | Private SQL helpers for admission, identity, Add linkage, selection effects, statistics, cache scope/payload and receipts; reached through controlled RPCs |
+
+- **Shared tables:** `canonical_works`, `canonical_editions`, `book_metadata_sources`, `canonical_provider_ids`, `canonical_work_stats`, `canonical_edition_stats` — facts, provider cross-references and popularity.
+- **Private persistence:** `marketplace_sec` holds companions/effect receipts; `phase9_metadata_cache_entries` holds scoped edition lists.
+- **SQL definitions:** `supabase/migrations/` — catalogue and RPC forward replacements; design in [catalogue SDD §§3–10](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/02b-slice7-lean-catalogue-writes-sdd.md#3-companion-contract-and-transport-d35d37-r06r09), guardrails in [05](./05-marketplace-rules.md#phase-9-catalogue-and-reuse).
+
 Workers claim database jobs with leases and attempt numbers; that, not process
 memory, decides who may write. They use a server-only service-role key plus a
 worker-specific ingress secret. Never put those secrets in `.env`, logs or docs.

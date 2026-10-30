@@ -14,7 +14,11 @@ Source documents are in `docs/multi-tenant-bookstore-marketplace/` (short names 
 - **DOC-14** — `DOC-14-commerce-state-machines.md`
 - **P6 SDD** — `implementation/PHASE-6-order-request-confirmation-SDD.md`
 - **P9 Master** — `implementation/phase-9-image-inventory/00-phase-9-master-sdd.md`
+- **P9 SESSION-START** — [session protocol](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/SESSION-START.md)
 - **Picker SDD** — `implementation/phase-9-image-inventory/work-units/owner-edition-picker-sdd.md`
+- **Rework SDD-0** — [overview and decisions](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/00-overview-sdd.md)
+- **Rework 02a** — [catalogue link at Add](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/02a-slice6-catalogue-link-sdd.md)
+- **Rework 02b** — [lean catalogue, completion and cache](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/02b-slice7-lean-catalogue-writes-sdd.md)
 - **AGENTS** — repository [`AGENTS.md`](../AGENTS.md)
 
 ## Separation from the P2P exchange
@@ -31,6 +35,7 @@ Source documents are in `docs/multi-tenant-bookstore-marketplace/` (short names 
 | Every store-owned row and media object is scoped by a **server-derived** `store_id`. Never trust a store ID from the app, route params, deep links, request bodies, AsyncStorage/MMKV or other client-controlled input. | DOC-1 §4.2; AGENTS "Database and Supabase rule"; P9 Master MAS-03 |
 | Store Owner authority comes from an active `store_administrators` owner row plus capability/entitlement checks; platform review authority is an internal platform role, implemented as the `platform_user_roles` table that `store-review` checks. Consumer profile fields grant nothing. | DOC-1 §§3–4.2; P6 SDD §3 (capability resolver); code: `supabase/functions/_shared/marketplaceAuth.ts` |
 | AI/provider output is untrusted input. Only validated deterministic code advances state or writes data. | P9 Master MAS-02 |
+| Keep providers behind the versioned common adapter contract; replacement preserves candidate, storage, review, inventory and projection contracts. | DOC-3 §5.2; P9 Master MAS-13 |
 | No metadata provider is canonical. An accepted edition snapshot comes from one coherent provider result or reviewed manual data; never stitch fields across providers. | DOC-3 §5.2; P9 Master MAS-15 |
 | Receiving provider metadata or a cover URL does not grant the right to store it, show it publicly or cache the image. Field-level reuse permissions, attribution and expiry apply, and explicit edition results fail closed without verified retention permission. | DOC-1 §13; Picker SDD §§8, 13.2 |
 
@@ -53,6 +58,17 @@ Source documents are in `docs/multi-tenant-bookstore-marketplace/` (short names 
 | A valid private commit survives a failed publication; publication retries never create or increment inventory again. | P9 Master MAS-11 |
 | Quota or cost failures never disable manual inventory entry; provider outages keep the manual path working. | P9 Master MAS-10, MAS-16 |
 
+## Phase 9 catalogue and reuse
+
+| Rule | Source |
+| --- | --- |
+| Shared catalogue admission requires permission for permanent shared storage/public reuse and current registry checks. The implemented admission allow-list is Open Library; Google and manual choices never create shared rows. Storage permission alone is insufficient. | Rework SDD-0 §4 PSR-D35; Rework 02a §6; Rework 02b §5 |
+| Owner corrections, selling fields, notes and store identity stay private. Shared facts come from coherent admitted provider data; provider IDs are cross-references to internal work/edition IDs. | Rework SDD-0 §4 PSR-D35/D40; Rework 02b §§3–4, 9 |
+| Identity resolution checks ISBNs/blocklist, provider identity and hidden targets. Expected conflicts roll back shared writes and preserve private Add/options; unexpected database errors propagate. Incumbent catalogue facts are never rewritten. | Rework 02a §§5–7; Rework 02b §§1, 6–7 |
+| Companions remain separate from option metadata. Completion atomically saves options, catalogue effects, cache and receipts; recovery/replay cannot duplicate catalogue rows, counters or spend. Popularity never means verified metadata. | Rework 02b §§3, 7; Rework SDD-0 §4 PSR-D36 |
+| Share an edition-list cache entry only after SQL proves safe query origin and payload. Owner-derived queries stay store-private even when text matches provider facts; hashing does not make them public. | Rework 02b §§8.1, 9 |
+| Cache reuse rechecks policy, versions and original expiry, creates fresh receiving-store lineage, and makes no provider call or usage reservation. It never confirms an Owner choice or extends freshness; uncertain completion requires recovery before egress. | Rework 02b §§8.1–8.2, 10 |
+
 ## Commerce and deferred phases
 
 | Rule | Source |
@@ -67,3 +83,4 @@ Source documents are in `docs/multi-tenant-bookstore-marketplace/` (short names 
 | Planning approval ≠ implementation approval ≠ migration creation ≠ migration application. Each needs its own authorization. | AGENTS "Authorization boundaries" |
 | Resolve database, RLS, Storage and tenant uncertainty through Supabase MCP, not local migration files alone; re-verify the exact project before creating a migration plan and again before applying it. | AGENTS "Database and Supabase rule" |
 | Applied migrations are never edited; corrections are additive. | P6 SDD §14 (AGENTS "Documentation size and structure" adds: never change or split an applied migration for line-count reasons) |
+| Write and observe failing tests before deterministic behavior changes; use provider fixtures and schema/contract checks for model output. | P9 SESSION-START §7; Rework SDD-0 §15 |

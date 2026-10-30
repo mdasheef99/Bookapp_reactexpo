@@ -1,6 +1,6 @@
 # Codebase Map
 
-**Last checked:** 2026-10-24, against the local code and cited documents at `bfd02ef` (`git rev-parse --short HEAD`).
+**Last checked:** 2026-10-24, against the local code and cited documents.
 
 This folder is an orientation guide for anyone (human or AI session) starting work
 on BookConnect. It answers "where does this live, how does it fit together, what
@@ -15,8 +15,9 @@ your checkout, treat it as superseded: do not use it for status, rules or layout
 - **Not a status report.** It never records phase status, test results, function
   versions, commit hashes or "next action". Those change daily and are owned by:
   - [DOC-13](../docs/multi-tenant-bookstore-marketplace/DOC-13-implementation-tracker.md) — global marketplace status
-  - [implementation/ACTIVE.md](../docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md) — where a session starts
-  - the active phase `TRACKER.md` named by `ACTIVE.md` (for example the [Phase 9 TRACKER](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md)) — current work and next action
+  - [implementation/ACTIVE.md](../docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md) — short current state, next action and mutation authority; where a session starts
+  - the active phase `TRACKER.md` named by `ACTIVE.md` (for example the [Phase 9 TRACKER](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/TRACKER.md)) — local decisions and implementation evidence
+  - [implementation/history/](../docs/multi-tenant-bookstore-marketplace/implementation/history/README.md) — superseded dated handoffs, read when needed
   - [Clubs TRACKER](../docs/user/clubs/TRACKER.md) — current Clubs work
 - **Not a rulebook.** Product rules belong to the source specs. File 05 only
   summarises them and links to the section that owns each one.
@@ -43,7 +44,9 @@ your checkout, treat it as superseded: do not use it for status, rules or layout
 | Task | Read first | Code to open | Tests |
 | --- | --- | --- | --- |
 | Owner scan / review / Add to Inventory (Phase 9) | 05, 04 § Image inventory, Phase 9 SESSION-START | `src/features/imageInventory/`, `app/(store-owner)/inventory/` | `src/features/imageInventory/__tests__/`, `supabase/functions/__tests__/phase9_*`, `supabase/tests/phase9/` |
-| Edition picker / metadata lookup | 03 § Workers, 04 § Image inventory | `src/features/imageInventory/api/ownerEditionPicker*.ts`, `supabase/functions/_shared/imageInventory/metadata/`, `workers/phase9-metadata-worker/` | `ownerEditionPicker*.test.ts*`, `phase9_metadata_*`, `phase9_open_library_*` |
+| Edition picker / metadata lookup | 03 § Metadata routing and persistence, 04 § Image inventory | `src/features/imageInventory/components/CandidateEditionPicker.tsx`, `workers/phase9-metadata-worker/editionProviderRoute.ts`, `supabase/functions/_shared/imageInventory/runtime/metadataEditionOptions.ts` | `src/features/imageInventory/__tests__/ownerEditionPicker*.test.ts*`, `supabase/functions/__tests__/phase9_metadata_*`, `supabase/functions/__tests__/phase9_open_library_*` |
+| Shared catalogue / edition-list cache / reuse | 03 § Metadata routing and persistence, 05 § Phase 9 catalogue and reuse, 06 | `supabase/functions/_shared/imageInventory/contracts/catalogueWrite.ts`, `supabase/functions/_shared/imageInventory/runtime/metadataEditionOptionsRpc.ts`, `supabase/migrations/` | `supabase/tests/phase9/phase9LeanCatalogue*`, `supabase/migrations/__tests__/marketplacePhase9*`, `supabase/functions/__tests__/phase9_catalogue_*` |
+| Status routing / Owner decisions / work-unit design | 09, [DECISIONS.md](../docs/multi-tenant-bookstore-marketplace/DECISIONS.md) | `docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md` | Phase 9 continuity validator (06) |
 | Committed stock, editing, publishing (Store View) | 05, 04 § Store View | `src/features/storeView/`, `app/(store-owner)/store-view/` | `src/features/storeView/__tests__/`, `e2e/store-view-*.spec.ts` |
 | Customer marketplace search / store pages | 05 § Public vs private | `src/features/marketplace/`, `app/(tabs)/marketplace/` | `src/features/marketplace/**/__tests__/` |
 | Cart, order requests, Owner orders (Phase 6) | 05 § Commerce, DOC-14 | `src/features/marketplace/commerce/`, `supabase/functions/commerce-*` | `src/features/marketplace/commerce/__tests__/`, `supabase/tests/phase6_*` |

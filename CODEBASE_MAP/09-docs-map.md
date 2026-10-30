@@ -1,6 +1,6 @@
 # 09 — Docs Map
 
-**Last checked:** 2026-10-24, against the code and the documents it cites.
+**Last checked:** 2026-10-30, against the code and the documents it cites.
 
 Where the project's documents live and which ones are authoritative.
 
@@ -9,8 +9,9 @@ Where the project's documents live and which ones are authoritative.
 For marketplace **behaviour**: the user's current decision → DOC-0…DOC-16 →
 the active phase master SDD → the owning domain SDD → supporting documents.
 
-For **status**: DOC-13 → `implementation/ACTIVE.md` → the active phase
-`TRACKER.md` → detailed trackers.
+For **status**: DOC-13 owns cross-phase/global status; `implementation/ACTIVE.md`
+owns current work, next action and gates; the active phase `TRACKER.md` and
+detailed trackers own local decisions and dated evidence.
 
 This folder (`CODEBASE_MAP/`) sits below all of these.
 
@@ -33,24 +34,46 @@ Root specifications:
 | DOC-10 | Notifications, events and realtime |
 | DOC-11 | Demand signals, bookclubs and places |
 | DOC-12 | Build strategy and phase sequence (phases, separation rules) |
-| DOC-13 | Implementation tracker: **global status**, newest entries at the top |
+| DOC-13 | Implementation tracker: **cross-phase/global status**, phase table and global blockers; current phase detail links to ACTIVE.md |
 | DOC-14 | Commerce state machines |
 | DOC-15 | Finance, tax and settlement |
 | DOC-16 | Pilot and unit economics |
 
 `implementation/`:
 
-- `ACTIVE.md` — where a session starts.
+- `ACTIVE.md` — short current-state file, rewritten at session close; current work, next action, mutation authority and live-state references.
+- [history/](../docs/multi-tenant-bookstore-marketplace/implementation/history/README.md) — source-attributed superseded handoffs and prior session protocols; read for historical evidence, not current authority.
 - `PHASE-N-*.md` — per-phase plans and records (Phases 0–12).
 - `PHASE-6-order-request-confirmation-SDD.md` and `PHASE-6-verification-and-traceability.md` — the Phase 6 design and its evidence.
 - `phase-9-image-inventory/` — the Phase 9 folder (check `ACTIVE.md` for which phase is active):
-  - `SESSION-START.md` (start protocol), `TRACKER.md` (current state and next action), `README.md`;
+  - `SESSION-START.md` (protocol, reading order, update matrix and rules), `TRACKER.md` (local decisions and implementation evidence; current state links to ACTIVE.md), `README.md`;
   - `00`–`06` SDDs (master, data/metadata, extraction pipeline, Owner review/commit, media security, marketplace display, customer photo requests);
   - `work-units/` — per-unit SDDs and plans (06g batch review, 06h duplicates, 07a commit, 07b publication, 07c Store View, 08 bookstore-first, owner edition picker, …); `post-scan-rework/` holds its overview/decision register and domain SDDs;
   - `trackers/` — numbered evidence logs;
   - `supporting/` — data dictionary, current-vs-target database audit, requirements traceability, scope register;
   - `scripts/` — documentation validators.
 - `archive/` — superseded material.
+
+- **Owner decisions:** [DECISIONS.md](../docs/multi-tenant-bookstore-marketplace/DECISIONS.md) — index of explicit decisions, linked to owning SDDs/trackers; no current status.
+
+### Post-scan rework SDDs
+
+Under `implementation/phase-9-image-inventory/work-units/post-scan-rework/`:
+
+| Document | Owns |
+| --- | --- |
+| [00 Overview](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/00-overview-sdd.md) | Decision register, glossary, cross-slice rules and build order |
+| [01 Review screen](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/01-review-screen-sdd.md) | Cards, edition sheet, simplified Add a book and typed ISBN |
+| [01a Typed ISBN](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/01a-slice5-typed-isbn-sdd.md) | Detailed typed-ISBN search in the edition sheet and Add a book |
+| [02 Catalogue and matching](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/02-catalogue-and-matching-sdd.md) | Catalogue/matching design, provider order and saved-result direction |
+| [02a Catalogue link at Add](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/02a-slice6-catalogue-link-sdd.md) | Detailed Add linkage, identity, provider admission and conflict behavior |
+| [02b Lean catalogue writes](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/02b-slice7-lean-catalogue-writes-sdd.md) | Companions, completion, statistics, cache scope/reuse and receipts |
+| [03 Session lifecycle](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/03-session-lifecycle-sdd.md) | Removal, server close, daily limits and deletion design |
+| [04 Add and publish](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/04-add-and-publish-sdd.md) | Single Add receipt and pre-scan publication choice |
+| [05 Classification](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/05-classification-sdd.md) | Category and private-label design |
+
+These are design owners; use ACTIVE.md and its routed evidence for implementation
+and authorization. Overview §2 routes detailed reading.
 
 ## `docs/user/clubs/` — Clubs
 

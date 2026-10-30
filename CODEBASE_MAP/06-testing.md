@@ -10,7 +10,7 @@ relevant tracker.
 | Layer | Tool | Where |
 | --- | --- | --- |
 | App and Edge-function unit tests | Jest (`jest-expo` preset) + React Native Testing Library | Any `*.test.*` / `*.spec.*` JS or TS file (Jest `testMatch`), excluding `e2e/` and `.spec/` scratch copies |
-| Phase 9 database tests (in-memory) | Node test runner + PGlite (Postgres in WASM) | `supabase/tests/phase9/*.integration.test.mjs` |
+| Phase 9 database tests (in-memory) | Node test runner + PGlite (Postgres in WASM); Node static guards share the npm command | `supabase/tests/phase9/*.integration.test.mjs`, `*.guard.test.mjs` |
 | Phase 9 database tests (real Postgres) | PowerShell runner with a disposable local Postgres; needs `initdb`, `pg_ctl` and `psql` on PATH | `supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1` |
 | Phase 6 database tests | SQL integration scripts and PowerShell concurrency scripts | `supabase/tests/phase6_*` |
 | Clubs database tests | Node runner that needs **Docker** (starts a disposable PostGIS 17 container) | `supabase/tests/clubs/` |
@@ -74,7 +74,7 @@ Database and worker commands:
 
 ```powershell
 npm.cmd run build:phase9:metadata-worker           # REQUIRED first: several DB suites import the gitignored .phase9-dist/ output
-npm.cmd run test:phase9:db                        # PGlite Phase 9 DB suites (*.integration.test.mjs)
+npm.cmd run test:phase9:db                        # Phase 9 integration + *.guard.test.mjs suites
 npm.cmd run test:phase9:u8b:postgres              # real Postgres runner (disposable DB)
 npm.cmd run test:phase9:u8c:postgres              # same, adds -IncludeU8C
 npm.cmd run test:phase9:structural-metadata       # builds metadata worker, runs its DB test
@@ -96,12 +96,29 @@ apply further migrations themselves (for example `unit7aFixture.mjs`,
 has its own `$migrations` branches. A new Phase 9 migration must be added to the
 lists of the suites that need it, or they silently run without it.
 
+- **Catalogue suites:** `supabase/tests/phase9/phase9LeanCatalogue*.integration.test.mjs` — identity, admission, companions, completion, accounting, privacy and cache reuse; fixtures extend the base chain explicitly.
+- **SQL/worker boundary:** `supabase/tests/phase9/phase9EditionOptionsWorkerSql.integration.test.mjs` — compiled worker with disposable SQL; `phase9LeanCatalogueCacheHardening.guard.test.mjs` checks the cache migration tail and helper body.
+- **Migration Jest guards:** `supabase/migrations/__tests__/marketplacePhase9LeanCatalogue.test.ts`, `marketplacePhase9CacheReuse.test.ts` — SQL shape, ACLs and controlled-write boundaries.
+- **Worker/Edge Jest:** `supabase/functions/__tests__/phase9_catalogue_*.test.ts`, `phase9_metadata_*.test.ts`, `phase9_open_library_*.test.ts` — mocked provider transport, companion validation, recovery, scope and reuse.
+
 The real-Postgres runner accepts the switches `-IncludeU8C`,
 `-IncludeUnit6gBaseline`, `-IncludeMediaCorrection`,
 `-IncludeDuplicateConfirmation`, `-IncludeEditionPicker` and
 `-IncludeOpenLibrary`; read the parameter block and migration branches before
 use. `-IncludeOpenLibrary` implies `-IncludeEditionPicker`, whose migration list
 also includes the Open Library and typed-ISBN lookup SQL files.
+
+Use `-OnlyGroup` to select a native acceptance group; prerequisites still need
+their `-Include*` switches. For example:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1 -IncludeOpenLibrary -OnlyGroup lean-catalogue-cache
+```
+
+Groups report separate results and aggregate a failing exit code. A selected
+unavailable group or missing cache-migration chain fails; an unselected cache
+group can be skipped when its chain is absent. Runner guards:
+`supabase/tests/phase9/phase9NativeGroupRunner.test.ps1` (no PostgreSQL needed).
 
 Library organising verification has no npm wrapper; run it directly with an
 existing runtime configured:
@@ -140,6 +157,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File docs/multi-tenant-bookst
 
 The continuity validator also runs `validate-phase9-migration-set.ps1`, passing
 the paths and tracker contents it needs; do not run that helper on its own.
+
+### Environment pitfalls
+
+- **Line endings:** `core.autocrlf=true` can make LF-sensitive migration guards fail on CRLF working copies; check bytes before diagnosing SQL behavior.
+- **Media tests:** `phase9_media_processor.test.ts` loads `node_modules/@imagemagick/magick-wasm/dist/magick.wasm`; the package's WASM asset must be present.
+- **PowerShell:** execution policy can block `.ps1` validators; the per-process `-ExecutionPolicy Bypass` invocation above avoids changing machine policy.
 
 ## Architecture guard tests
 
@@ -197,6 +220,7 @@ Read the workflow file for exact triggers before relying on CI coverage.
 
 ## Verification habits
 
+- Start deterministic changes red-first; see [05 process rules](./05-marketplace-rules.md#process-rules).
 - Run the narrowest relevant tests first, then TypeScript.
 - Database, RLS or security changes need migration tests or DB suites **and** a
   read-only Supabase MCP check of the live project.

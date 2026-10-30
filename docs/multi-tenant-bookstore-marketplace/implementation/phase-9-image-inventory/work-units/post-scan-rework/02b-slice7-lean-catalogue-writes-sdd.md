@@ -1374,7 +1374,7 @@ its proof; no broad cleanup or later matcher implementation.
 
 ### 13.1 Documentation update matrix
 
-At implementation, follow [CODEBASE_MAP update table L62](../../../../../../CODEBASE_MAP/README.md#L62)
+At implementation, follow [CODEBASE_MAP update table](../../../../../../CODEBASE_MAP/README.md#when-to-update)
 and SESSION-START §6/§8. This draft changes no described runtime/source-spec
 folder and needs no map edit; only the brief's allowed documentation is changed.
 

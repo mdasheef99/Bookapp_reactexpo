@@ -968,8 +968,8 @@ provider, hidden-record lookup rule or no-ISBN catalogue write is claimed.
 
 ## 13. Documentation at implementation time
 
-Follow [SESSION-START update matrix, L1630](../../SESSION-START.md#L1630) and
-[CODEBASE_MAP update table, L62](../../../../../../CODEBASE_MAP/README.md#L62).
+Follow [SESSION-START update matrix](../../SESSION-START.md#6-documentation-update-matrix) and
+[CODEBASE_MAP update table](../../../../../../CODEBASE_MAP/README.md#when-to-update).
 This docs-only pass changes neither source behavior nor installed schema.
 Implementation must update:
 
