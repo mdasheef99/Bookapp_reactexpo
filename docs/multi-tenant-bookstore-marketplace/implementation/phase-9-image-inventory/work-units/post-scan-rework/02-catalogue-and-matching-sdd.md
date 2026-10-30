@@ -404,6 +404,8 @@ compatibility, normalizer IDs, cache-scope choice (faked HTTP).
 
 ## Slice 8 — Open Library first, clues, Google off
 
+**Pass-2 pointer (OD-1–4):** [02c](./02c-slice8-open-library-first-sdd.md) owns slice-8 contracts/ACs and 8a database / 8b worker / 8c switch; its [activation appendix](./02c-1-slice8-switch-runbook-and-benchmark.md) owns benchmark/drain/runbook detail. Older details below are historical design. Genres wait for OQ8-7; AC8-9a/9b replace AC8-9; migration-rule amendment is OQ8-5. Author caching/automatic full-list reuse are recommended deferrals OQ8-9/10; an added 8c benchmark gate is only OQ8-4. [02d](./02d-edition-sheet-prefill-sdd.md) owns D30 after 8b/before 9; 8c does not require it.
+
 **Goal:** the automatic lookup goes catalogue → Open Library and uses the ISBN
 and publisher Gemini already reads (D25, D27).
 
@@ -607,6 +609,8 @@ deploying the worker is a separate Owner approval.
 
 ## Slice 9 — Relaxed automatic match, tie pick, saved results
 
+**Pass-2 pointer (OD-4):** relaxed automatic matching/tie-pick stays here; D30 persistence and AC9-4/5 move to [02d](./02d-edition-sheet-prefill-sdd.md) after [02c's 8b](./02c-slice8-open-library-first-sdd.md#5-design--8b-compatible-worker-google-remains-primary), superseding their older slice-9 placement below.
+
 **Goal:** more books get the right edition automatically, and the sheet opens
 with choices already there (D26, D28, D30).
 
@@ -618,7 +622,7 @@ with choices already there (D26, D28, D30).
   provider order. No match → nothing (D28).
 - The first lookup's results (up to 10) are saved as the card's edition
   options, language matches first and others under "Other languages"; opening
-  the sheet shows them with no new request; "Search again" re-runs with the
+  the sheet shows them with no new request; "Search Books" / "Retry search" re-runs with the
   card's current title and author (D30). Saved options follow the existing
   24-hour option expiry; an expired list falls back to a fresh search.
 - **Benchmark gate (D38):** the saved real spine readings ([`data/benchmark-spine-readings-2026-10-18.json`](./data/benchmark-spine-readings-2026-10-18.json), 85 entries), with saved provider
@@ -649,7 +653,7 @@ test fixture with recorded provider responses in pass 2).
   "Other languages" for display (D28, D30).
 - AC9-4: Given a completed automatic lookup, when the Owner opens the sheet,
   then the saved results show without a new request (D30).
-- AC9-5: Given the Owner changed the title, when they press Search again, then
+- AC9-5: Given the Owner changed the title, when they press Search Books / Retry search, then
   a new search runs with the new title and the old list is gone (D07, D30).
 - AC9-6: Given worker and SQL rules, then they agree on every benchmark and
   parity case (R07).
@@ -671,15 +675,15 @@ options.
 | PSR-D28 | 8, 9 | AC8-4, AC9-2, AC9-3 |
 | PSR-D22 | 8 | AC8-7 |
 | PSR-D29 | 7, 8 | AC7-9, AC8-7 |
-| PSR-D30 | 9 | AC9-3 to AC9-5 |
+| PSR-D30 | 9; [02d after 8b](./02d-edition-sheet-prefill-sdd.md#7-acceptance-checks-and-red-first-proof) | AC9-3 stays in slice 9; AC9-4 → ACP-1; AC9-5 → ACP-4; ACP-3 owns the new explicit-refresh command; ACP-8 owns language grouping (OQ-P1) |
 | PSR-D31 | 8 | AC8-5, AC8-6 |
-| PSR-D32 | 8 | AC8-2, AC8-9 (full synthetic-provider cycle), AC8-10 |
+| PSR-D32 | 8 | 02c AC8-2, AC8-9a backend / AC8-9b client (OQ8-2), AC8-10 |
 | PSR-D33 | 7, 8 | AC7-7, AC7-9, AC8-1 |
 | PSR-D34 | 6 | AC6-1 |
-| PSR-D35 | 6, 7, 8 | AC6-1 to AC6-4, AC7-1, AC7-2/2b/2c/2d/2e/2f, AC7-8, AC7-10, AC8-9 |
+| PSR-D35 | 6, 7, 8 | AC6-1 to AC6-4, AC7-1, AC7-2/2b/2c/2d/2e/2f, AC7-8, AC7-10; 02c AC8-9a/9b, AC8-12 |
 | PSR-D36 | 7 | AC7-4, AC7-5, AC7-2e |
 | PSR-D37 | 6, 7 | AC6-5, AC7-3, AC7-6 |
-| PSR-D38 | 9 | AC9-1 |
+| PSR-D38 | 8, 9 | 02c AC8-15 baseline/comparison; [appendix §1](./02c-1-slice8-switch-runbook-and-benchmark.md#1-benchmark-and-equivalence) added 8c threshold gate is OQ8-4 only; mandatory AC9-1 remains slice 9 |
 | PSR-D39 | 7 | AC7-1, AC7-2e |
 | PSR-D40 | 6, 7 | AC6-6, AC7-2b/2c, AC7-7 |
-| PSR-D43 | 8 | AC8-8 (planned server test: recorded Open Library work-subjects fixture normalizes to categories) |
+| PSR-D43 | 8 | 02c AC8-8/16 **conditional OQ8-7**: all-genres/legacy bound/golden conflict unresolved; no genre transport before Owner answer |
