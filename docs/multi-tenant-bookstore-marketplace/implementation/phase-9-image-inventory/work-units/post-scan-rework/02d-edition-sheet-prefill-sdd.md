@@ -291,7 +291,7 @@ NEW tests are proposals; no product tests are written/run by this document.
 |---|---|---|
 | P0 | Verify 8b contract/receipt/versions, source state and language decision / S | Fresh read-only preflight under separate authority; no guessed migration number. |
 | P1 | Worker/SQL/app/native red tests / M-high | Observe feature failures before code/SQL; races use independent connections. |
-| P2 | Proposed one migration: prefill/helper/hook recovery, lock/source-policy/read mapping, monotonic refresh version / L-high | OQ8-5 rule amendment first; known contention uses existing P9_STATE_CONFLICT. No automatic cache command/ranker/proof tables. 300-500 soft target; >~800 stop/re-scope; separate creation/application gates. |
+| P2 | Proposed one migration: prefill/helper/hook recovery, lock/source-policy/read mapping, monotonic refresh version / L-high | OQ8-5 amendment approved (OD-2026-10-31-1); known contention uses existing P9_STATE_CONFLICT. No automatic cache command/ranker/proof tables. 300-500 soft target, no line-count stop; separate creation/application gates. |
 | P3 | External automatic-list transport, canonical-choices mutation return/refresh authority, paired DTO and sheet/list UI, §3.2 neutral server/client conflict messages / M-L | Actual RPC-to-client conflict/wording/old-client and QueryClient race proofs; no new error code, author cache or automatic full-list reuse. No slice-9 matcher. |
 | P4 | Independent review, focused SQL/worker/Jest/native/ACL/build, rollback/expiry proof / M-high | Validator + diff check; separate deploy after DB; allowed read-only sheet smoke, explicit search writes require approved script. |
 

@@ -265,7 +265,7 @@ These hold after every slice. A slice that cannot keep one stops and reports.
 | PSR-R09 | Provider output and model output are untrusted until validated (MAS-02); Open Library etiquette (spacing, identifying User-Agent) is kept. |
 | PSR-R10 | Manual paths keep working when providers, Gemini or quotas fail (MAS-10, MAS-16): the Owner can always Add with a typed title and author. |
 | PSR-R11 | Nothing from §11 (deferred) is built inside a slice. |
-| PSR-R12 | Each slice has at most one migration, its own branch and PR, red-first tests, and recorded evidence before the next slice starts. |
+| PSR-R12 | Each slice has at most one migration, its own branch and PR, red-first tests, and recorded evidence before the next slice starts. **Amended for slice 8 by [OD-2026-10-31-1](../../../../DECISIONS.md#log):** each 8a sub-package (8a-1…8a-5) and 02d may have one migration each, with separate create/apply/green approvals; no line-count stop. |
 | PSR-R13 | Owner-facing text is plain language; error states say what to do next. |
 | PSR-R14 | Accessibility is kept: every new control has a label, statuses are announced, and nothing relies on colour alone. |
 

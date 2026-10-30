@@ -516,21 +516,20 @@ reviewed schema under the amended migration plan, not hidden extra migrations.
 
 ### 4.4 Proposed migration split by responsibility
 
-This is a **design estimate**, not a compliant/approved migration plan or filename
-reservation. R12/D45 permit at most one migration per slice; SDD-0 §7.3 guardrail 1
-also requires one session. **OQ8-5 must explicitly amend these rules for 8a-1…5
-and 02d before any SQL creation.** Approval of OD-2 alone did not amend them.
-If approved, each row has one separately approved migration, working against
-earlier rows only; never add a forward dependency. Soft target
-300–500 lines each; **stop and flag >~800 before creation**, do not compress SQL
+This is a design estimate, not a filename reservation. **OQ8-5 answered by
+[OD-2026-10-31-1](../../../../DECISIONS.md#log):** R12/D45 and SDD-0 §7.3
+guardrail 1 are amended so each row below, and 02d, has one separately approved
+migration, working against earlier rows only; never add a forward dependency.
+Soft target 300–500 lines each; the Owner removed the ~800-line stop, so record
+size in review but do not block on it. Do not compress SQL
 or split an applied file. OD-2's 8a/8b/8c names remain unchanged.
 
 | 8a subpackage | Owned objects / expected size / idle compatibility |
 |---|---|
 | 8a-1 registry/policy | Columns/configuration/transition data, independent Google veto and **interim OL-only** admission/source policy (section 4.2); ~300-500 lines. No forward validator dependency; old contexts/routes unchanged. |
 | 8a-2 pure validators | OL v1/v2/Google facts/call/profile validators + fixed dispatcher; then atomically generalize interim admission to capability + existing veto + installed field profile; ~400-500. Native interim/old-worker proof; saved bytes unchanged. |
-| 8a-3 route/physical accounting | Structural lookup/attempt/usage, stage CHECK, grant_epoch column, admission-gate schema/ACL (initially open) and gate-locked physical grant wrappers; ~400-600. No reference to later queue helpers; existing per-claim uniqueness retained. No author-proof schema. Native legacy-FK/old-worker proof; >~800 stop/re-scope. |
-| 8a-4 automatic transaction | New automatic completion/receipt recovery and selected-companion support; audit current explicit v1/v2/recovery and Add/Select policy calls; ~400–700. New entry idle until 8b. If body duplication exceeds ~800, stop for a semantic split/factored private core review. |
+| 8a-3 route/physical accounting | Structural lookup/attempt/usage, stage CHECK, grant_epoch column, admission-gate schema/ACL (initially open) and gate-locked physical grant wrappers; ~400-600. No reference to later queue helpers; existing per-claim uniqueness retained. No author-proof schema. Native legacy-FK/old-worker proof; size recorded, not a stop (OD-2026-10-31-1). |
+| 8a-4 automatic transaction | New automatic completion/receipt recovery and selected-companion support; audit current explicit v1/v2/recovery and Add/Select policy calls; ~400–700. New entry idle until 8b. If body duplication is large, review a factored private core; size alone does not block. |
 | 8a-5 queue/protection | Automatic run/retry ledger, proposed fair admission/cap state/ACL and admission-wait helpers using the already installed gate (§7), optional shared permits/breaker; ~300–500 estimate requires rescoping after function-size readback. OQ8-1/3/5 gates; no extra migration silently added. |
 
 No migration is needed merely to edit 8c registry values; those operational row
@@ -756,7 +755,7 @@ No such implementation result is asserted by this draft.
 |---|---|---|
 | 0 | Resolve §12 build-gating questions; fresh read-only preflight / S | Owner approves design/subsplit; no implementation from document approval alone. |
 | 1 / 8a | Tests only for capabilities/validators/roles/legacy context/synthetic provider / M-high | Record meaningful red + passing controls on M88 baseline; report before SQL creation. |
-| 2 / 8a | §4.4 subpackages 8a-1→5, one forward migration each / L-high | Separate create/apply approvals per file, 300–500 soft target, >~800 stop; independent security/lock/body review and compatibility after each. |
+| 2 / 8a | §4.4 subpackages 8a-1→5, one forward migration each / L-high | Separate create/apply approvals per file, 300–500 soft target, no line-count stop (OD-2026-10-31-1); independent security/lock/body review and compatibility after each. |
 | 3 / 8a | Native/API-role/generalization closeout / M-high | AC8-9a backend hashes/old-worker proof; AC8-9b remains separately gated. No worker deployment yet. |
 | 4 / 8b | Worker routing/manifest/environment tests, golden packets and protection tests only / M | Capture old outputs and red new assertions before production refactor. |
 | 5 / 8b | Generic route/protocol/context + adapters/clues/approved genres/protection / L-high | Bounded cohesive modules; separate egress/recovery from ranking. No author cache, SQL ranker or automatic full-list reuse dependency. |
@@ -765,8 +764,8 @@ No such implementation result is asserted by this draft.
 | 8 / D30 | [02d packages](./02d-edition-sheet-prefill-sdd.md#8-build-packages-and-documentation) / separate | After 8b, before slice 9; migration/worker/app scope owned there. |
 | 9 / 8c | Rehearsed drain/switch/rollback matrix, operational script / M-high | Owner approves benchmark/pacing/config and operations; no code/SQL deletion. Execute/read back/smoke only under separate authority. |
 
-8a-1–5 are a proposed **exception to still-binding R12/D45/§7.3**, not compliant
-under OD-2 alone; OQ8-5 must amend those rules for separately approved subunits.
+8a-1–5 are an **approved exception to R12/D45/§7.3** under
+[OD-2026-10-31-1](../../../../DECISIONS.md#log) (OQ8-5): one migration per subunit, each separately approved.
 Independent reviews follow SDD-0 §15; unavailable named reviewer tools are reported,
 never represented as completed reviews. No stage/commit/push/deploy authority here.
 
@@ -859,12 +858,12 @@ Implementation choices within an approved contract remain with the builder.
 | OQ8-2: approve one-time provider-neutral presentation work in 8b? | Approve §3.3's typed opt-in DTO/security/legacy projection. Otherwise only backend AC8-9a/OL switch can pass; full third-host replacement/AC8-9b remains unaccepted. | Before presentation package/9b/third-host activation; not OL-only 8c. |
 | OQ8-3: approve fairness/limits and distinguish hard quota, temporary capacity and all-provider-down retry? | Recommend ticket mechanism and durable capacity deferral per master section 8:561; hard quota may end manual. Set D31 one next-claim retry/recheck/cooldown without breaker traffic/loops and measurable cap/window/backoff. No unconditional manual_cap policy is decided. | Before protection build/AC8-5/6 and switch. |
 | OQ8-4: **add a wrong-edition benchmark threshold gate to 8c**, or collect comparison only? Who adjudicates, approves threshold and authorizes baseline calls/retention? | Recommend adding the 8c gate; it is not decided by D38 (which gates slice 9). Approve section 6 qualified/equivalence labels and denominators, name adjudicator/approver, separately authorize pre-disable Google recording. If gate declined, record comparison without a new pass/fail threshold; preserve slice-9 gate. | Before comparison/activation plan; unrecordable baseline needs explicit disposition, no Google re-enable later. |
-| OQ8-5: explicitly amend R12/D45 and SDD-0 §7.3 guardrail 1 for multi-session 8a-1…5 plus 02d? | Approve each semantic subunit with at most one migration, separate create/apply/green/Owner gates; retain OD-2 names/R06, adjust scope after size/dependency evidence, stop >~800. Five files are **not compliant until amendment recorded**; propagate approved map/rule amendment then. | Before any migration creation; no amendment presumed here. |
+| **Answered — approved, no 800-line stop ([OD-2026-10-31-1](../../../../DECISIONS.md#log)).** OQ8-5: explicitly amend R12/D45 and SDD-0 §7.3 guardrail 1 for multi-session 8a-1…5 plus 02d? | Approve each semantic subunit with at most one migration, separate create/apply/green/Owner gates; retain OD-2 names/R06, adjust scope after size/dependency evidence, stop >~800. Five files are **not compliant until amendment recorded**; propagate approved map/rule amendment then. | Before any migration creation; no amendment presumed here. |
 | OQ8-6: approve automatic direct-ISBN transport and how should explicit parity coexist? | Automatic ISBN+title retrieval needs its own labelled spend/result comparison and recorded status/redirect/retention fixtures. Explicit optimization only with complete-list parity; otherwise retain legacy search. No automatic or explicit isbn-stage activation before answer/proof. Narrowing explicit lists needs explicit approval. | Before direct transport/AC8-3/16; schema may reserve bounded stage shape but dispatcher denies activation. |
 | OQ8-7: D43 all genres versus 20×128 categories and explicit-v1 [] goldens? | Recommend a separate versioned all-genres transport for **both** automatic and explicit lookups, preserving bounded legacy categories/rows; Owner approves its oversized/unsafe-input policy and companion/cache scope. Truncation, automatic-only genres, or changed v2 categories/goldens each needs an explicit decision; none is chosen here. | Before subjects/genre build and AC8-8/16; record approved full-data versus compatibility expectations. |
 | OQ8-8 / SDD-0 §12.2: pre-existing Google data terms/cleanup before real stores? | Inventory private snapshots/picker/inventory/auxiliary covers read-only; settle retention/display terms or approve a separate cleanup plan before launch. Keep chosen bytes/existing links during this transition; no blanket purge is approved. | Pre-launch, not permission to erase data or a blocker for documentation/build. |
-| OQ8-9: defer author-name caching from OL-first? | Recommend defer: keep every author read physical, existing <=6 GET plan. No cache issuer/proof/table or migration/package dependency; revisit only with a reviewed trusted verifier/retention boundary. | Optional future optimization, not 8c prerequisite. |
-| OQ8-10: defer automatic full-list cache reuse/SQL ranking? | Recommend defer: keep automatic catalogue/local and legacy selected-snapshot cache/coalescing, existing explicit typed-cache behavior; prefill only a newly fetched retained list. No new SQL ranker/command. A future smaller worker-ranked form would still need source/fence/parity review. | Optional future optimization; no AC/package depends on approval now. |
+| **Answered — deferred ([OD-2026-10-31-2](../../../../DECISIONS.md#log)).** OQ8-9: defer author-name caching from OL-first? | Recommend defer: keep every author read physical, existing <=6 GET plan. No cache issuer/proof/table or migration/package dependency; revisit only with a reviewed trusted verifier/retention boundary. | Optional future optimization, not 8c prerequisite. |
+| **Answered — deferred ([OD-2026-10-31-2](../../../../DECISIONS.md#log)).** OQ8-10: defer automatic full-list cache reuse/SQL ranking? | Recommend defer: keep automatic catalogue/local and legacy selected-snapshot cache/coalescing, existing explicit typed-cache behavior; prefill only a newly fetched retained list. No new SQL ranker/command. A future smaller worker-ranked form would still need source/fence/parity review. | Optional future optimization; no AC/package depends on approval now. |
 | OQ8-11: how to disposition provider-facts-only privacy origin without a distinct producer? | Recommend keep UNPROVEN/private and defer separate acceptance until an actual producer with distinct persisted origin evidence is specified, or Owner records it unreachable. Never duplicate the unknown fixture and call it proof. | Only that privacy case; current scan-only public scope remains mandatory. |
 | Q18, with Q15/Q16/Q17: future second-provider licensing/field rights/retention/overwrite/expiry? | Keep deferred while OL alone. Require §3.1's approved full-field profile before retention/sharing/presentation; mixed field rights require a reviewed extension, not permissive flags. Permanent public/cover/attribution rights precede shared capability; expiry-requiring canonical facts stay disabled until all readers enforce expiry/withdrawal. No overwrite/fuzzy merge/reset in slice 8. | Future second-provider admission, not current OL-only design blocker. |
 | Q19: per-store provider choice? | Keep deferred; current registry route is global, shared-row visibility never varies by store provider choice. | No implementation/AC in this slice. |
