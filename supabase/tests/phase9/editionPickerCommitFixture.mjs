@@ -72,7 +72,7 @@ export async function originalSelection(db, f, textOnly = false) {
   await resetActor(db);
   await db.query("INSERT INTO public.phase9_selected_metadata_snapshots(id,candidate_id,store_id,lookup_id,selected_attempt_id,"
     + "outcome_source_attempt_id,snapshot_version,selection_policy_version,coherent_edition,match_evidence,manual_outcome)"
-    + "VALUES($1,$2,$3,$4,$5,$5,'p9-selected-v1','p9-metadata-selection-v1',$6,$7,'accepted_metadata_match')",
+    + "VALUES($1,$2,$3,$4,$5,$5,'p9-selected-v1','p9-metadata-selection-v1',$6,$7::jsonb,'accepted_metadata_match')",
   [selectionId, f.candidateId, f.storeId, saved.lookupId, saved.attemptId, coherent,
     textOnly ? ['exact_original_title_author_language'] : ['validated_isbn']]);
   await db.query("INSERT INTO marketplace_sec.phase9_metadata_representative_covers(source_attempt_id,source_lookup_id,"

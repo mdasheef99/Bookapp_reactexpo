@@ -1,0 +1,295 @@
+{
+  "authority": "02c §11.1 exact M88 overload inventory; proposed 8a overloads are separately marked",
+  "sql": [
+    {
+      "signature": "marketplace_sec.phase9_catalogue_choice_target_v1(jsonb, uuid, text, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_companion_for_choice_v1(jsonb, uuid, uuid, uuid, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_count_choice_v1(uuid, uuid, text, uuid, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_count_search_v1(uuid, uuid, uuid, uuid, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_identity_lock_key_v1(text, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_increment_v1(uuid, uuid, integer, integer, integer)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_isbn_v1(text, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_link_for_add_v1(uuid, uuid, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_resolve_v1(jsonb, jsonb, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_reuse_cache_core_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, jsonb, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_shared_admitted_v1(text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_source_policy_v1(text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_source_policy_v2(text, text)",
+      "pkg": "8a-2"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_store_cache_v1(uuid, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_valid_cache_v1(jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_automatic_metadata_v1(jsonb)",
+      "pkg": "8a-4"
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_candidate_edition_options_v2(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_metadata_cache_reuse(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_edition_legacy_select_candidate(uuid, uuid, integer, integer, integer, text, integer, uuid, uuid, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_edition_source_policy(phase9_candidate_edition_state)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_edition_worker_context(image_extraction_jobs)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_edition_options_provider_call_v1(uuid, uuid, text, text, integer, text, text, boolean, boolean)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_metadata_attempt(uuid, uuid, text, text, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_metadata_provider_call(uuid, uuid, text, text, integer, text, text, text, text, boolean, jsonb, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finish_edition_primary_for_fallback_v1(uuid, uuid, text, text, integer, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_metadata_cache_reuse_context(uuid, text, text, integer, uuid, integer, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_metadata_job_context_v2(uuid, text, text, integer)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_metadata_job_context(uuid, text, text, integer)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_provider_permanent_reuse_allowed_v1(text, text)",
+      "pkg": "8a-1"
+    },
+    {
+      "signature": "marketplace_sec.phase9_recover_automatic_metadata_v1(jsonb)",
+      "pkg": "8a-4"
+    },
+    {
+      "signature": "marketplace_sec.phase9_recover_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_edition_options_provider_call_v1(uuid, uuid, text, text, integer, uuid, integer, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_metadata_attempt(uuid, uuid, text, text, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_metadata_lookup(uuid, text, text, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_metadata_provider_call(uuid, uuid, text, text, integer, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_structural_metadata_lookup(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserve_metadata_usage(uuid, text, text, integer, uuid, text, text, integer)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_reuse_candidate_edition_cache_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_select_metadata_snapshot(uuid, uuid, text, text, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_select_structural_metadata_snapshot(uuid, uuid, text, text, integer, uuid, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_store_metadata_cache(uuid, text, text, integer, text, jsonb, text, timestamp with time zone, timestamp with time zone)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_add_candidate_to_inventory_v1(uuid, uuid, integer, integer, integer, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_complete_automatic_metadata_v1(jsonb)",
+      "pkg": "8a-4"
+    },
+    {
+      "signature": "public.phase9_complete_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_complete_candidate_edition_options_v2(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_complete_metadata_cache_reuse(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_finalize_edition_options_provider_call_v1(uuid, uuid, text, text, integer, text, text, boolean, boolean)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_finalize_metadata_attempt(uuid, uuid, text, text, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_finalize_metadata_provider_call(uuid, uuid, text, text, integer, text, text, text, text, boolean, jsonb, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_finalize_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_finish_edition_primary_for_fallback_v1(uuid, uuid, text, text, integer, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_metadata_cache_reuse_context(uuid, text, text, integer, uuid, integer, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_metadata_job_context(uuid, text, text, integer)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_provider_configuration_v1()",
+      "pkg": "8a-1"
+    },
+    {
+      "signature": "public.phase9_recover_automatic_metadata_v1(jsonb)",
+      "pkg": "8a-4"
+    },
+    {
+      "signature": "public.phase9_recover_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_register_edition_options_provider_call_v1(uuid, uuid, text, text, integer, uuid, integer, text)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_register_metadata_attempt(uuid, uuid, text, text, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_register_metadata_lookup(uuid, text, text, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_register_metadata_provider_call(uuid, uuid, text, text, integer, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_register_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_register_structural_metadata_lookup(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_reserve_metadata_usage(uuid, text, text, integer, uuid, text, text, integer)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_reuse_candidate_edition_cache_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, jsonb)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_select_candidate_edition_v1(uuid, uuid, integer, integer, integer, text, integer, uuid, uuid, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_select_metadata_snapshot(uuid, uuid, text, text, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_select_structural_metadata_snapshot(uuid, uuid, text, text, integer, uuid, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_store_metadata_cache(uuid, text, text, integer, text, jsonb, text, timestamp with time zone, timestamp with time zone)",
+      "pkg": "m88"
+    }
+  ],
+  "checks": [
+    "phase9_edition_http_stage",
+    "phase9_metadata_provider_calls_claim_attempt_number_check",
+    "phase9_metadata_provider_calls_claim_lease_token_hash_check",
+    "phase9_metadata_provider_calls_status_check"
+  ]
+}

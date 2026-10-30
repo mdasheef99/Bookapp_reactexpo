@@ -1,0 +1,10 @@
+{
+  "authority": "02c §11.1 AC8-9a; freeze AFTER generalized 8a, before synthetic installation",
+  "baselineArtifact": null,
+  "status": "NEEDS-OBJECT generalized 8a; do not substitute M88 preflight hashes or auto-update this golden",
+  "sql": [],
+  "checks": [],
+  "files": [],
+  "metadata": [],
+  "inventory": "provider-replacement-generic-inventory.json"
+}

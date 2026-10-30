@@ -7,15 +7,20 @@ param(
   [switch]$IncludeDuplicateConfirmation,
   [switch]$IncludeEditionPicker,
   [switch]$IncludeOpenLibrary,
+  [switch]$IncludeProviderReplacement,
+  [ValidateSet('m88','8a-1','8a-2','8a-3','8a-4','8a-5')]
+  [string]$ProviderPrefix = 'm88',
   [ValidateSet('', 'duplicate-confirmation', 'media-correction', 'edition-picker', 'open-library',
     'bookstore-first', 'storefront-detail', 'catalogue-link', 'lean-catalogue-identity',
-    'edition-first-save', 'lean-catalogue-completion', 'lean-catalogue-local-hook', 'lean-catalogue-cache')]
+    'edition-first-save', 'lean-catalogue-completion', 'lean-catalogue-local-hook', 'lean-catalogue-cache', 'provider-replacement')]
   [string]$OnlyGroup = ''
 )
 
 $ErrorActionPreference = 'Stop'
 if ($IncludeMediaCorrection) { $IncludeUnit6gBaseline = $true }
 if ($IncludeDuplicateConfirmation) { $IncludeMediaCorrection = $true; $IncludeUnit6gBaseline = $true }
+if ($OnlyGroup -eq 'provider-replacement') { $IncludeProviderReplacement = $true }
+if ($IncludeProviderReplacement) { $IncludeOpenLibrary = $true }
 if ($IncludeOpenLibrary) { $IncludeEditionPicker = $true }
 if ($IncludeEditionPicker) { $IncludeUnit6gBaseline = $true }
 $env:PGCLIENTENCODING = 'UTF8'
@@ -396,6 +401,38 @@ try {
         & node (Join-Path $PSScriptRoot 'phase9LeanCatalogueConcurrency.postgres.mjs') $Port $cacheDbName $psql 'm88'
         if ($LASTEXITCODE -ne 0) { throw 'Lean-catalogue M88 cache native PostgreSQL acceptance failed' }
         Write-Output 'LEAN_CATALOGUE_CACHE_REAL_POSTGRES_ACCEPTANCE_PASS'
+      }
+      # 02c §9: provider acceptance is independently selectable/reported, never nested in cache acceptance.
+      if ($IncludeProviderReplacement) {
+        Invoke-NativeGroup 'provider-replacement' {
+          if (-not $cacheDatabaseCreated) {
+            Invoke-PsqlCommand 'postgres' "CREATE DATABASE $cacheDbName TEMPLATE $catalogueDbName" | Out-Null
+            $script:cacheDatabaseCreated = $true
+            Invoke-PsqlFile $cacheDbName $catalogueM84[0].FullName | Out-Null
+            foreach ($number in @('85','86','87','88')) {
+              $files = @(Get-ChildItem -LiteralPath (Join-Path $root 'supabase\migrations') -File |
+                Where-Object { $_.Name -match "^[0-9]{8}0000${number}_marketplace_phase9_[a-z0-9_]+\.sql$" })
+              if ($files.Count -ne 1) { throw "Provider baseline needs exactly one M$number" }
+              Invoke-PsqlFile $cacheDbName $files[0].FullName | Out-Null
+            }
+          }
+          $savedProviderPort = $env:PHASE9_PROVIDER_NATIVE_PORT
+          $savedProviderDatabase = $env:PHASE9_PROVIDER_NATIVE_DATABASE
+          $savedProviderPrefix = $env:PHASE9_PROVIDER_PREFIX
+          try {
+            $env:PHASE9_PROVIDER_NATIVE_PORT = "$Port"
+            $env:PHASE9_PROVIDER_NATIVE_DATABASE = $cacheDbName
+            $env:PHASE9_PROVIDER_PREFIX = $ProviderPrefix
+            $providerTests = @(Get-ChildItem -LiteralPath $PSScriptRoot -Filter 'phase9Provider*.integration.test.mjs' |
+              Sort-Object Name | ForEach-Object { $_.FullName })
+            & node --experimental-vm-modules --test --test-concurrency=1 @providerTests
+            if ($LASTEXITCODE -ne 0) { throw 'Slice 8 provider-replacement M88 baseline tests failed (inspect behavioral RED versus setup)' }
+          } finally {
+            $env:PHASE9_PROVIDER_NATIVE_PORT = $savedProviderPort
+            $env:PHASE9_PROVIDER_NATIVE_DATABASE = $savedProviderDatabase
+            $env:PHASE9_PROVIDER_PREFIX = $savedProviderPrefix
+          }
+        }
       }
       Invoke-NativeGroup 'lean-catalogue-local-hook' {
         & node (Join-Path $PSScriptRoot 'phase9LeanCatalogueLocalHook.postgres.mjs') $Port $completionDbName $psql 'm84'

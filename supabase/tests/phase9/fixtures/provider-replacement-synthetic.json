@@ -1,0 +1,237 @@
+{
+  "authority": "02c §§3.1,5.1,9 AC8-9a; R4-01 retention ID boundary",
+  "adapterKey": "synthetic_catalogue",
+  "adapterVersion": "1.0.0",
+  "validationContract": "synthetic-catalogue-v1",
+  "hostPolicyVersion": "synthetic-hosts-v1",
+  "capabilityVersion": "synthetic-capability-v1",
+  "normalizerVersion": "p9-bibliographic-normalizer-v1",
+  "payloadSchemaVersion": "p9-metadata-v1",
+  "lookupSchemaVersion": "p9-metadata-foundation-v1",
+  "retentionContract": "synthetic-options-v1",
+  "stages": [
+    "discover",
+    "edition:ED-42",
+    "person:AUTH-7"
+  ],
+  "providerRecordId": "ED-42",
+  "workExternalId": "WORK-9",
+  "bookUrl": "https://catalogue.example.test/books/ED-42",
+  "coverUrl": "https://catalogue.example.test/covers/42.jpg",
+  "permissionAuthority": "Test-only synthetic facts; no production rights grant",
+  "fieldProfile": "synthetic-retained-fields-v1",
+  "retainedFields": [
+    "title",
+    "subtitle",
+    "authors",
+    "language",
+    "script",
+    "publisher",
+    "publishedDate",
+    "editionStatement",
+    "series",
+    "volume",
+    "format",
+    "pageCount",
+    "isbn10",
+    "isbn13",
+    "categories",
+    "description",
+    "coverReference",
+    "providerRecordId",
+    "workExternalId",
+    "oclc",
+    "lccn"
+  ],
+  "fieldPermissions": {
+    "title": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "subtitle": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "authors": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "language": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "script": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "publisher": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "publishedDate": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "editionStatement": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "series": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "volume": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "format": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "pageCount": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "isbn10": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "isbn13": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "categories": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "description": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "coverReference": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "providerRecordId": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "workExternalId": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "oclc": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    },
+    "lccn": {
+      "matchingOnly": false,
+      "storageAllowed": true,
+      "publicDisplayAllowed": true,
+      "imageCachingAllowed": false,
+      "attributionRequired": true,
+      "revalidationSeconds": 3600,
+      "authorityReference": "Test-only synthetic facts; no production rights grant"
+    }
+  }
+}

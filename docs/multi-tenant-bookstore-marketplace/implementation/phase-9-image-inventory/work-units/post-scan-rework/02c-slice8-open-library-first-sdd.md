@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Status** | **Pass-2 design draft, 2026-10-30; NOT IMPLEMENTED.** Owner authorized these documents only. Every proposed behavior below needs design approval and separately authorized build packages. |
-| **Parent** | [SDD-2 Slice 8](./02-catalogue-and-matching-sdd.md#slice-8--open-library-first-clues-google-off); [SDD-0](./00-overview-sdd.md) §§4–7/14–15. Detailed slice-8 contracts/ACs are owned here; genre transport is gated by OQ8-7. OD-1–4 govern split, rollback and D30 placement; migration-rule amendments remain unapproved (OQ8-5). |
+| **Parent** | [SDD-2 Slice 8](./02-catalogue-and-matching-sdd.md#slice-8--open-library-first-clues-google-off); [SDD-0](./00-overview-sdd.md) §§4–7/14–15. Detailed slice-8 contracts/ACs are owned here; genre transport is gated by OQ8-7. OD-1–4 govern split, rollback and D30 placement; migration-rule amendment approved by OD-2026-10-31-1 (OQ8-5 answered): one migration per subpackage and 02d, no 800-line stop. |
 | **Authority** | [OD-2026-10-30-1–3](../../../../DECISIONS.md#log); PSR-D22/D25/D27–D29/D31–D40, R04–R10/R12; master SDD §3 MAS-02/03/10/13–17; DOC-3 §5.2/§5.2.1; DOC-1 §13. |
 | **Baseline** | Local checkout `C:\Users\user\Desktop\Bookconnect-main`, branch `phase9/slice8-providers`, code baseline `c93e628` recorded for the initial draft. Evidence is local source, not live readback or a fresh Git-status claim. [ACTIVE](../../../ACTIVE.md) records slice 7b-2 closeout; its dated deployment observations are not reverified here. |
 | **Migration** | Proposed responsibility split in §4.4; filenames/numbers unassigned. No SQL file created, edited or applied. R06: forward replacements only. |
@@ -340,6 +340,28 @@ workers; add a NEW service-only provider-configuration read/versioned context
 extension for 8b. Do not append capabilities to the old array indiscriminately.
 Same signatures/delegates and omitted-companion handling remain callable (R06).
 
+(interface clarification, package 1 fix round 1, pending review) The separate
+service read is `public.phase9_provider_configuration_v1() RETURNS jsonb`,
+owned by postgres, SECURITY INVOKER, STABLE, `search_path=''`. EXECUTE is granted
+only to service_role, revoked from PUBLIC/anon/authenticated (SQLSTATE 42501).
+Wire DTO is exactly `{version:'p9-provider-configuration-v1',providers:[{adapterKey,
+providerKind,adapterVersion,enabled,matchingAllowed,storageAllowed,publicDisplayAllowed,
+imageCacheAllowed,attributionRequired,revalidationSeconds,rawRetentionSeconds,
+policyVersion,sharedSourceNote,automaticLookupAllowed,explicitSearchAllowed,
+sharedCatalogueAllowed,automaticRole,explicitRole,automaticOrder,explicitOrder,
+acceptedAdapterVersions,versionContracts,validationContract,hostPolicyVersion,
+approvedRequestHosts,approvedBookHosts,approvedCoverHosts,optionsRetentionSeconds,
+displayLabel,protectionPolicy}]}`, ordered by adapterKey. Fields map one-to-one to
+§3.1's registry columns and bounds, with providerKind/legacy permissions retained;
+versionContracts and protectionPolicy retain §3.1's exact keys. No credentials,
+raw headers, email, private licence text or resolved contact value is returned;
+contactId is only the safe unresolved identifier. Invalid stored configuration
+raises SQLSTATE P0001 / `P9_PROVIDER_CONFIGURATION_INVALID`; duplicate active
+routes raise P0001 / `P9_PROVIDER_ROUTE_INVALID`; neither returns a partial DTO.
+The old seven-key context policy and eight-key source-policy DTO remain exact.
+Alternative: a versioned context extension is permitted by the parent design,
+but this separate zero-argument read is the selected package-1 interface.
+
 **8a invariant:** add fields with §3.1 defaults, then populate only NEW fields
 from the reviewed transition manifest. Do not change any existing row's
 `enabled`, `adapter_version`, `policy_version`, matching/storage/display/retention
@@ -391,6 +413,19 @@ M88:14–30 explain why shape validity and the trusted policy alone are insuffic
 | `phase9_catalogue_reuse_cache_core_v1` | Existing explicit cache tuple + every row + receiving attempt; independent veto before shared effects/list publication / H reuse. Automatic full-list reuse deferred OQ8-10. |
 | `phase9_store_metadata_cache`, `phase9_metadata_cache_reuse_context`, `phase9_complete_metadata_cache_reuse` (M85:205/258/377) | Legacy selected-snapshot source attempt and payload; veto for public scope. Permitted store-private selected-snapshot branch remains; no conversion into edition-list cache / I legacy cache. |
 | `phase9_catalogue_count_search_v1` and Select/Add count helpers | Only source-bound admitted canonical result from the preceding guarded operation; verify effect's originating attempt, never count a Google hint / J counts. |
+
+(interface clarification, package 1 fix round 1, pending review) **8a-2** owns
+the resolver Google veto in `phase9_catalogue_resolve_v1`: before shared writes,
+a valid Google policy yields the existing null canonical pair, without an error.
+8a-1 installs the predicate and interim OL-only admission/source policy; 8a-2
+binds the resolver to that predicate independently of a forged admitted policy.
+
+(interface clarification, package 1 fix round 1, pending review) For a fresh
+physical grant while the §4.3/§7 gate is paused, both legacy physical registration
+wrappers raise SQLSTATE P0001 / `P9_EXTERNAL_ADMISSION_PAUSED`. The refusal
+leaves calls, reservations, usage, attempts, jobs and private effects unchanged.
+An exact existing grant identity remains recovery-only and may return its original
+receipt; pausing creates no new grant or provider spend.
 
 AC8-12 sets every existing/NEW permissive Google flag true, valid notes/versions/
 retention, and also supplies a forged admitted policy. A…J must show zero new
@@ -527,10 +562,10 @@ or split an applied file. OD-2's 8a/8b/8c names remain unchanged.
 | 8a subpackage | Owned objects / expected size / idle compatibility |
 |---|---|
 | 8a-1 registry/policy | Columns/configuration/transition data, independent Google veto and **interim OL-only** admission/source policy (section 4.2); ~300-500 lines. No forward validator dependency; old contexts/routes unchanged. |
-| 8a-2 pure validators | OL v1/v2/Google facts/call/profile validators + fixed dispatcher; then atomically generalize interim admission to capability + existing veto + installed field profile; ~400-500. Native interim/old-worker proof; saved bytes unchanged. |
+| 8a-2 pure validators | (interface clarification, package 1 fix round 1, pending review) Owns the resolver Google veto (§4.2). OL v1/v2/Google facts/call/profile validators + fixed dispatcher; then atomically generalize interim admission to capability + existing veto + installed field profile; ~400-500. Native interim/old-worker proof; saved bytes unchanged. |
 | 8a-3 route/physical accounting | Structural lookup/attempt/usage, stage CHECK, grant_epoch column, admission-gate schema/ACL (initially open) and gate-locked physical grant wrappers; ~400-600. No reference to later queue helpers; existing per-claim uniqueness retained. No author-proof schema. Native legacy-FK/old-worker proof; size recorded, not a stop (OD-2026-10-31-1). |
 | 8a-4 automatic transaction | New automatic completion/receipt recovery and selected-companion support; audit current explicit v1/v2/recovery and Add/Select policy calls; ~400–700. New entry idle until 8b. If body duplication is large, review a factored private core; size alone does not block. |
-| 8a-5 queue/protection | Automatic run/retry ledger, proposed fair admission/cap state/ACL and admission-wait helpers using the already installed gate (§7), optional shared permits/breaker; ~300–500 estimate requires rescoping after function-size readback. OQ8-1/3/5 gates; no extra migration silently added. |
+| 8a-5 queue/protection | Automatic run/retry ledger, proposed fair admission/cap state/ACL and admission-wait helpers using the already installed gate (§7), optional shared permits/breaker; ~300–500 estimate requires rescoping after function-size readback. OQ8-1/3 gates; OQ8-5 approved with no 800-line stop; no extra migration silently added. |
 
 No migration is needed merely to edit 8c registry values; those operational row
 updates need separate authority and before/after readback. 02d owns its own migration.
@@ -858,7 +893,7 @@ Implementation choices within an approved contract remain with the builder.
 | OQ8-2: approve one-time provider-neutral presentation work in 8b? | Approve §3.3's typed opt-in DTO/security/legacy projection. Otherwise only backend AC8-9a/OL switch can pass; full third-host replacement/AC8-9b remains unaccepted. | Before presentation package/9b/third-host activation; not OL-only 8c. |
 | OQ8-3: approve fairness/limits and distinguish hard quota, temporary capacity and all-provider-down retry? | Recommend ticket mechanism and durable capacity deferral per master section 8:561; hard quota may end manual. Set D31 one next-claim retry/recheck/cooldown without breaker traffic/loops and measurable cap/window/backoff. No unconditional manual_cap policy is decided. | Before protection build/AC8-5/6 and switch. |
 | OQ8-4: **add a wrong-edition benchmark threshold gate to 8c**, or collect comparison only? Who adjudicates, approves threshold and authorizes baseline calls/retention? | Recommend adding the 8c gate; it is not decided by D38 (which gates slice 9). Approve section 6 qualified/equivalence labels and denominators, name adjudicator/approver, separately authorize pre-disable Google recording. If gate declined, record comparison without a new pass/fail threshold; preserve slice-9 gate. | Before comparison/activation plan; unrecordable baseline needs explicit disposition, no Google re-enable later. |
-| **Answered — approved, no 800-line stop ([OD-2026-10-31-1](../../../../DECISIONS.md#log)).** OQ8-5: explicitly amend R12/D45 and SDD-0 §7.3 guardrail 1 for multi-session 8a-1…5 plus 02d? | Approve each semantic subunit with at most one migration, separate create/apply/green/Owner gates; retain OD-2 names/R06, adjust scope after size/dependency evidence, stop >~800. Five files are **not compliant until amendment recorded**; propagate approved map/rule amendment then. | Before any migration creation; no amendment presumed here. |
+| **Answered — approved, no 800-line stop ([OD-2026-10-31-1](../../../../DECISIONS.md#log)).** OQ8-5: explicitly amend R12/D45 and SDD-0 §7.3 guardrail 1 for multi-session 8a-1…5 plus 02d? | Approve each semantic subunit with at most one migration, separate create/apply/green/Owner gates; retain OD-2 names/R06 and adjust scope after size/dependency evidence. OD-2026-10-31-1 records the approved amendment; size is reviewed without an 800-line stop. | Each migration still needs separate creation, application and green approval. |
 | OQ8-6: approve automatic direct-ISBN transport and how should explicit parity coexist? | Automatic ISBN+title retrieval needs its own labelled spend/result comparison and recorded status/redirect/retention fixtures. Explicit optimization only with complete-list parity; otherwise retain legacy search. No automatic or explicit isbn-stage activation before answer/proof. Narrowing explicit lists needs explicit approval. | Before direct transport/AC8-3/16; schema may reserve bounded stage shape but dispatcher denies activation. |
 | OQ8-7: D43 all genres versus 20×128 categories and explicit-v1 [] goldens? | Recommend a separate versioned all-genres transport for **both** automatic and explicit lookups, preserving bounded legacy categories/rows; Owner approves its oversized/unsafe-input policy and companion/cache scope. Truncation, automatic-only genres, or changed v2 categories/goldens each needs an explicit decision; none is chosen here. | Before subjects/genre build and AC8-8/16; record approved full-data versus compatibility expectations. |
 | OQ8-8 / SDD-0 §12.2: pre-existing Google data terms/cleanup before real stores? | Inventory private snapshots/picker/inventory/auxiliary covers read-only; settle retention/display terms or approve a separate cleanup plan before launch. Keep chosen bytes/existing links during this transition; no blanket purge is approved. | Pre-launch, not permission to erase data or a blocker for documentation/build. |
