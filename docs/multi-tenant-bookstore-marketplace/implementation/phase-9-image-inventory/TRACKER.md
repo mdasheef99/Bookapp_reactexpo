@@ -25,6 +25,42 @@ record the method and verification. No database, Storage or external mutation;
 nothing staged, committed, pushed, deployed or applied. Review handoff: this
 consolidation remains local; the exact next authorized action stays in ACTIVE.md.
 
+## 2026-10-31 - Slice 8 package 0 preflight and package 1 red-first tests complete
+
+Branch `phase9/slice8-providers` holds three local commits; nothing is pushed:
+`d25217b` (the slice 8 SDDs), `7a2ef73` (the Owner answers OQ8-5/9/10),
+`3c064da` (package 1 red-first provider-replacement tests).
+
+Package 0 (read-only live preflight via Supabase MCP) is complete. Project
+`ahntbtktjjmvfosgkmgn`. The live ledger ends at M88 (`20261029151325`); there
+are no slice 8 migrations. Both `google_books` and `open_library` are enabled
+with policy_version 1; Google has public_display=false and raw_retention=604800,
+Open Library has public_display=true, attribution=true and raw_retention=0.
+No automatic-lookup, role or order columns exist yet. All physical calls are
+finalized; the live CHECK keeps `claim_attempt_number BETWEEN 1 AND 5`. Three
+stale `reserved` usage reservations from August 2026 remain; the 02c-1 drain
+must handle them. No phase9 function has PUBLIC execute; 12 have anon execute,
+all public search/detail helpers, as expected. The deployed worker config, the
+instance count and the pacing settings were not collected; they are needed
+before the protection package and 8c.
+
+Package 1 (8a red-first tests) is complete and committed as `3c064da`. Built by
+Sol (Codex), reviewed by Terra in three rounds with every confirmed finding
+fixed, and test-run by a Claude Haiku agent. On the M88 baseline: PGlite 230
+tests with 67 pass, 16 behavioural reds, 128 skipped and 19 TODO; the native
+Postgres provider group shows the same 16 reds and no other failures; Jest
+legacy-context passes 23 of 23; edition-picker suites pass 100 of 100 after the
+shared-fixture jsonb cast. The 16 reds are what 8a must turn green. New 02c
+interface clarifications stand as pending review in 02c. Full counts, the red
+breakdown, deferred TODOs with owners, and the known pre-existing local issues
+are recorded in [the implementation/verification tracker](./trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-0-read-only-preflight-and-package-1-red-first-tests-complete).
+
+Exact next authorized action: package 8a-1, in which Sol creates the 8a-1
+migration file; creating it and applying it each need separate Owner approval.
+Mutation authority: none. The Owner questions still open are OQ8-1, -2, -3,
+-4, -6, -7, -8, -11 and OQ-P1. Current state and the one exact next action:
+see [ACTIVE.md](../ACTIVE.md).
+
 ## Historical handoffs with unique evidence
 
 ## 2026-10-17 - Clubs publication CI passed

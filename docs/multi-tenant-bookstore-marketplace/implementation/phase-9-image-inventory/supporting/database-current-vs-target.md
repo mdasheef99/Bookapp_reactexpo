@@ -1934,3 +1934,19 @@ Migration ledger: local file `supabase/migrations/20261028000086_marketplace_pha
 Migration ledger: local file `supabase/migrations/20261028000087_marketplace_phase9_catalogue_cache_reuse.sql` (267 lines, 23181 bytes, md5 `b168eb12206cc1d5e720adcd1b2657c9`) | live version **20261028222318** (`marketplace_phase9_catalogue_cache_reuse`) | project `ahntbtktjjmvfosgkmgn` re-verified via preflight/apply/readback 2026-10-29 | effects: the reuse core and the public wrapper `public.phase9_reuse_candidate_edition_cache_v1` exist and 0 rows have payload_kind `edition_options_v1` (nothing publishes yet); latest four live migrations M87, M86, M85, M84 | verification: result `{"success":true}` on the first try, apply-agent read-back as listed.
 
 Migration ledger: local file `supabase/migrations/20261029000088_marketplace_phase9_catalogue_cache_hardening.sql` (145 lines, sha256 `d7ad24a0abc25e05b84255b6a1acb47602f414103a6d66dd91aa891ca03d4d9f`, unchanged) | live version **20261029151325** (`marketplace_phase9_catalogue_cache_hardening`) | project `ahntbtktjjmvfosgkmgn` (https://ahntbtktjjmvfosgkmgn.supabase.co) re-verified before apply: `list_migrations` ended at M87 (`20261028222318`), 0 other active sessions, 0 waiting locks (open item 9 lock-duration re-check; single `CREATE OR REPLACE FUNCTION`, no table touched) | effects: replaces only `marketplace_sec.phase9_catalogue_store_cache_v1(uuid,jsonb)`; no table/data change | verification: result `{"success":true}`; read-back prosecdef true, owner postgres, proacl `{postgres=X/postgres}` (same as before apply), proconfig `search_path=""`, live definition contains the routing_policy_version guard, the provider_role guard and the post-lock deadline re-check, EXECUTE denied to anon, authenticated, service_role, 0 other active sessions afterwards.
+
+## 2026-10-31 slice 8 package 0 read-only preflight
+
+Read-only Supabase MCP preflight for slice 8 package 0. Project `ahntbtktjjmvfosgkmgn`. Nothing was written; re-verify the project before any 8a migration work.
+
+**Migration history.** The live ledger ends at M88 (`20261029151325`). There are no slice 8 migrations.
+
+**Registry.** Both `google_books` and `open_library` are enabled, with policy_version 1. Google has public_display=false and raw_retention=604800. Open Library has public_display=true, attribution=true and raw_retention=0. There are no automatic-lookup, role or order columns yet.
+
+**Physical calls.** All are finalized. The live CHECK has `claim_attempt_number BETWEEN 1 AND 5`.
+
+**Stale rows.** Three `reserved` usage reservations from August 2026 remain (two `google_books`, one NULL adapter). The 02c-1 drain must handle them.
+
+**Functions.** No phase9 function has PUBLIC execute. Twelve have anon execute, all public search/detail helpers, as expected.
+
+**Not collected.** The deployed worker config, the instance count and the pacing settings. These are needed before the protection package and 8c.

@@ -1,53 +1,73 @@
 # Marketplace current state
 
-Recorded state: 2026-10-29. Documentation consolidated 2026-10-30 from `5face78`.
+Recorded state: 2026-10-31. Slice 8 package 1 complete on branch `phase9/slice8-providers`.
 This file is rewritten at session close; dated evidence belongs in trackers.
 
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
-- Active slice/work unit: **slice 7b-2 live and smoked; closeout published**.
-- Completed milestone: slice 7b-2 migrations, worker cache reuse, Open Library
-  lookup and same-store reuse smoke, whole-slice review, and test-infrastructure
-  fixes; [tracker 38 section 49](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#49-slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes-2026-10-29).
-- Exact next authorized action: **the Owner chooses the next work unit (slice 8)**.
-  Read its scope in the [post-scan-rework SDDs](phase-9-image-inventory/work-units/post-scan-rework/00-overview-sdd.md)
-  before starting; its mention here does not authorize implementation.
+- Active slice/work unit: **slice 8 (Open Library first, replaceable providers), package 1 complete**.
+- Completed milestone: slice 8 package 0 read-only live preflight and package 1
+  8a red-first provider-replacement tests, committed as `3c064da` on branch
+  `phase9/slice8-providers` (earlier branch commits: `d25217b` slice 8 SDDs,
+  `7a2ef73` Owner answers OQ8-5/9/10); nothing is pushed;
+  [evidence](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-0-read-only-preflight-and-package-1-red-first-tests-complete).
+- Exact next authorized action: **package 8a-1, in which Sol creates the 8a-1
+  migration file** (registry capability columns, the permanent-reuse veto,
+  interim admission/source policy, transition values, and the configuration
+  read). Creating the file needs separate Owner approval, and applying it needs
+  another. Its mention here does not authorize creation.
 
 ## Mutation authority now
 
-- This consolidation authorizes local documentation and continuity-validator edits only.
+- This task authorizes Markdown documentation edits only.
 - Database/migration application: **none**; Storage: **none**; deployment: **none**.
-- No network, Supabase, Render, stage, commit, push, or branch switch is authorized
-  by this task. Prior approvals and actions remain historical evidence in
-  [tracker 38 sections 48-49](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#48-m88-applied-to-supabase-2026-10-29).
+- No migration has been created or applied, nothing is deployed, and nothing is
+  pushed. No Supabase, Render, stage, commit, push, or branch switch is authorized
+  by this task.
 
 ## Last recorded live state
 
 These are recorded development-project results, not a fresh operational readback.
 
-- Latest applied migration: **M88**, local file
-  [20261029000088_marketplace_phase9_catalogue_cache_hardening.sql](../../../supabase/migrations/20261029000088_marketplace_phase9_catalogue_cache_hardening.sql),
-  live version **`20261029151325`**; [application/readback](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#48-m88-applied-to-supabase-2026-10-29).
-- Deployed worker: **`phase9-metadata-worker`**, deploy **`dep-dbhmr07b9u1s73f8qjpg`**,
-  from **`3fdc0c4`** on `main`, live about 16:02 UTC 2026-10-29, `/health` 200;
-  [deployment and smoke](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#49-slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes-2026-10-29).
-- Latest relevant recorded commit on `main`: **`0d240ef`**, closeout docs and three
-  test-infrastructure files; no worker change or redeploy was needed; [publication evidence](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#49-slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes-2026-10-29).
-- No Expo/app release was made in that closeout; [recorded boundary](history/ACTIVE-history-to-2026-10-29.md#2026-10-29---slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes).
+- Project: **`ahntbtktjjmvfosgkmgn`**; live ledger ends at **M88**, live version
+  **`20261029151325`**; no slice 8 migrations exist; [preflight](phase-9-image-inventory/supporting/database-current-vs-target.md#2026-10-31-slice-8-package-0-read-only-preflight).
+- Registry: `google_books` and `open_library` enabled, policy_version 1; Google
+  public_display=false, raw_retention=604800; Open Library public_display=true,
+  attribution=true, raw_retention=0; no automatic-lookup, role or order columns yet.
+- Physical calls are all finalized; the live CHECK keeps
+  `claim_attempt_number BETWEEN 1 AND 5`. Three stale `reserved` usage
+  reservations from August 2026 remain; the 02c-1 drain must handle them.
+- Functions: no phase9 function has PUBLIC execute; 12 have anon execute, all
+  public search/detail helpers, as expected.
+- Prior `main` state is unchanged: worker deploy `dep-dbhmr07b9u1s73f8qjpg` and
+  closeout commit `0d240ef`;
+  [publication evidence](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#49-slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes-2026-10-29).
 
 ## Open items, blockers and residual risks
 
-- Next-slice gate: the Owner must choose the next work unit; [handoff evidence](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#49-slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes-2026-10-29).
-- AC7-21(b) synthetic-provider admission remains UNPROVEN; [Owner disposition](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#47-slice-7b-2-closeout-whole-slice-review-m88-created-locally-test-hardening-2026-10-29).
-- The provider-facts-only privacy case remains UNPROVEN; [Owner disposition](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#47-slice-7b-2-closeout-whole-slice-review-m88-created-locally-test-hardening-2026-10-29).
-- The in-flight/selected-option rollback matrix was not proved by the lookup/reuse smoke; [section 46](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#46-slice-7b-2-package-11-independent-closeout-review-2026-10-29).
-- Live Google Books, expiry/invalidation, M88 guard firing and response-field comparison remain unproved; [smoke limits](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#49-slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes-2026-10-29).
-- Accepted items 3-6, 8, 10, 11 and 14 retain policy, hide-race, attempt-budget and fallback-reuse limits; [Owner decisions](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#47-slice-7b-2-closeout-whole-slice-review-m88-created-locally-test-hardening-2026-10-29).
-- Worker TypeScript names remain spec-silent; confirmation status is recorded in [sections 45-46](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#45-slice-7b-2-package-10-worker-cache-reuse-path-reviews-and-verification-2026-10-29).
-- Accepted Low SQL/test residuals and receipts/effects cleanup debt remain; [section 47](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#47-slice-7b-2-closeout-whole-slice-review-m88-created-locally-test-hardening-2026-10-29).
+- Package 8a-1 file creation and application each wait for separate Owner approval.
+- Owner questions still open: OQ8-1, -2, -3, -4, -6, -7, -8, -11 and OQ-P1.
+- Not collected in the preflight: deployed worker config, instance count and
+  pacing settings; needed before the protection package and 8c.
+- New 02c interface clarifications stand as pending review, not approved:
+  the service-only read `public.phase9_provider_configuration_v1()`, 8a-2
+  ownership of the resolver Google veto, and the paused-gate refusal
+  `P9_EXTERNAL_ADMISSION_PAUSED`.
+- Deferred, unproved package 1 TODOs with owners: real v2 cover mode (8b/8c),
+  orphan or unknown-egress restart recovery (8b), retention/profile and synthetic
+  proofs (8a-2..4), the post-generalization frozen golden (8a-4), prefill
+  negatives (02d), provider-facts-only origin (OQ8-11).
+- Pre-existing local issues, not slice 8: `core.autocrlf=true` CRLF checkout breaks
+  raw-byte migration checks (Jest M84 hash, M86 guard); LF `.gitattributes`
+  proposed and deferred. `phase9MetadataFoundation.integration.test.mjs` has 3
+  stale failures from its August-stopped harness. The continuity validator fails
+  with `PHASE9_MIGRATION_SET_INVALID` (allowlist stops at M83). `.phase9-dist`
+  must be built before some phase9 suites run.
+- Earlier accepted slice 7b-2 limits carry over: AC7-21(b) UNPROVEN, the
+  provider-facts-only privacy case UNPROVEN, unproved in-flight/selected-option
+  rollback and live Google/expiry/M88-guard cases; [closeout evidence](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#47-slice-7b-2-closeout-whole-slice-review-m88-created-locally-test-hardening-2026-10-29).
 - Representative low-end Android Unit 6F validation remains deferred, not PASS; [owning evidence](phase-9-image-inventory/trackers/24-unit6f-readiness-quality-gates-evidence.md).
-- The last closeout did not run the docs validator or the whole test:phase9:db suite; [section 49](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#49-slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes-2026-10-29).
 
 ## Ordered reading list
 
