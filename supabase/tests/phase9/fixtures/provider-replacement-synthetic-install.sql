@@ -44,7 +44,7 @@ RETURNS boolean LANGUAGE sql IMMUTABLE SECURITY INVOKER SET search_path='' AS $$
 $$;
 
 -- Explicit test clock and trusted source-policy input; no remote-header proof.
--- This does not install the later generic retention/completion dispatcher.
+-- Its installed field profile declares the same retention bound for 8a-4.
 CREATE OR REPLACE FUNCTION marketplace_sec.phase9_test_synthetic_retention_valid_v1(
  p_key text,p_version text,p_contract text,p_fetched_at timestamptz,
  p_deadline timestamptz,p_current_policy jsonb,p_now timestamptz)
@@ -67,7 +67,12 @@ END$$;
 CREATE OR REPLACE FUNCTION marketplace_sec.phase9_test_synthetic_field_profile_v1()
 RETURNS jsonb LANGUAGE sql IMMUTABLE SECURITY INVOKER SET search_path='' AS $$
  SELECT pg_catalog.jsonb_build_object('version','synthetic-retained-fields-v1',
-  'adapterKey','synthetic_catalogue','adapterVersion','1.0.0','fields',
+  'adapterKey','synthetic_catalogue','adapterVersion','1.0.0',
+  'purposeContracts',pg_catalog.jsonb_build_object('synthetic-catalogue-v1',
+   pg_catalog.jsonb_build_object('automaticAllowed',true,'retentionContract','synthetic-options-v1')),
+  'retentionContracts',pg_catalog.jsonb_build_object('synthetic-catalogue-v1',
+   pg_catalog.jsonb_build_object('synthetic-options-v1',pg_catalog.jsonb_build_object('maxSeconds',3600))),
+  'fields',
   pg_catalog.jsonb_object_agg(field,pg_catalog.jsonb_build_object(
    'matchingOnly',false,'storageAllowed',true,'publicDisplayAllowed',true,
    'imageCachingAllowed',false,'attributionRequired',true,'revalidationSeconds',3600,
@@ -88,7 +93,8 @@ BEGIN
   ('phase9_provider_validation_contract_v1','phase9_test_original_validation_contract_v1','text,text'),
   ('phase9_provider_field_profile_v1','phase9_test_original_field_profile_v1','text,text'),
   ('phase9_provider_retained_fields_valid_v1','phase9_test_original_retained_fields_valid_v1','text,text,jsonb'),
-  ('phase9_provider_facts_valid_v1','phase9_test_original_facts_valid_v1','text,text,text,text,text,text')
+  ('phase9_provider_facts_valid_v1','phase9_test_original_facts_valid_v1','text,text,text,text,text,text'),
+  ('phase9_provider_call_contract_v1','phase9_test_original_call_contract_v1','text,text,jsonb')
  ) AS functions(name,delegate,arguments) LOOP
   IF pg_catalog.to_regprocedure('marketplace_sec.'||f.delegate||'('||f.arguments||')') IS NULL THEN
    definition:=pg_catalog.pg_get_functiondef(pg_catalog.to_regprocedure(
@@ -138,6 +144,72 @@ BEGIN
  END IF;
 END$$;
 
+-- 02c §§3.2/4.2/9: the fixture installs its own physical protocol into the
+-- provider-owned dispatchers. Generic registration/completion/CHECKs stay frozen.
+CREATE OR REPLACE FUNCTION marketplace_sec.phase9_test_synthetic_call_contract_v1(c jsonb)
+RETURNS TABLE(valid boolean,logical_outcome text)
+LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER SET search_path='' AS $$
+DECLARE r jsonb; seen integer[]:=ARRAY[]::integer[]; sequence integer;
+BEGIN
+ valid:=false; logical_outcome:=NULL;
+ IF NOT marketplace_sec.phase9_provider_call_shape_v1(c)
+  OR pg_catalog.jsonb_array_length(c->'receipts')<>3 THEN RETURN NEXT; RETURN; END IF;
+ FOR r IN SELECT value FROM pg_catalog.jsonb_array_elements(c->'receipts') LOOP
+  IF pg_catalog.jsonb_typeof(r->'callSequence') IS DISTINCT FROM 'number'
+   OR r->>'callSequence' !~ '^[0-2]$' THEN RETURN NEXT; RETURN; END IF;
+  sequence:=(r->>'callSequence')::integer;
+  IF sequence=ANY(seen) OR NOT marketplace_sec.phase9_test_synthetic_stage_valid_v1('synthetic_catalogue','1.0.0',sequence,r->>'callStage')
+   OR r->>'status' IS DISTINCT FROM 'finalized' OR r->'egressStarted' IS DISTINCT FROM 'true'::jsonb
+   OR r->'retryable' IS DISTINCT FROM 'false'::jsonb OR r->>'normalizedOutcome' IS DISTINCT FROM 'no_acceptable_match'
+   OR r->'normalizedCandidate' IS DISTINCT FROM 'null'::jsonb OR r->'matchEvidence' IS DISTINCT FROM '[]'::jsonb
+  THEN RETURN NEXT; RETURN; END IF;
+  seen:=pg_catalog.array_append(seen,sequence);
+ END LOOP;
+ valid:=true;
+ logical_outcome:=CASE WHEN EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(c->'rows') row
+  WHERE row->>'eligibility'='eligible' AND row#>>'{metadata,matchRationale}'='exact_validated_isbn') THEN 'coherent_match'
+ WHEN EXISTS(SELECT 1 FROM pg_catalog.jsonb_array_elements(c->'rows') row
+  WHERE row->>'eligibility'='eligible') THEN 'ambiguous_match' ELSE 'no_acceptable_match' END;
+ RETURN NEXT;
+END$$;
+
+CREATE OR REPLACE FUNCTION marketplace_sec.phase9_provider_call_contract_v1(p_key text,p_version text,p_completion jsonb)
+RETURNS TABLE(valid boolean,logical_outcome text)
+LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER SET search_path='' AS $$
+BEGIN
+ IF p_key='synthetic_catalogue' AND p_version='1.0.0' THEN RETURN QUERY
+  SELECT * FROM marketplace_sec.phase9_test_synthetic_call_contract_v1(p_completion);
+ ELSE RETURN QUERY SELECT * FROM marketplace_sec.phase9_test_original_call_contract_v1(p_key,p_version,p_completion);
+ END IF;
+END$$;
+
+-- The facts/profile installer remains usable at 8a-2. Extend the stage
+-- dispatcher only if 8a-3 has installed it; no later production object is faked.
+DO $stage_install$
+DECLARE definition text;
+BEGIN
+ IF pg_catalog.to_regprocedure('marketplace_sec.phase9_provider_stage_valid_v1(text,text,integer,text,text)') IS NULL
+ THEN RETURN; END IF;
+ IF pg_catalog.to_regprocedure('marketplace_sec.phase9_test_original_stage_valid_v1(text,text,integer,text,text)') IS NULL THEN
+  definition:=pg_catalog.pg_get_functiondef('marketplace_sec.phase9_provider_stage_valid_v1(text,text,integer,text,text)'::regprocedure);
+  EXECUTE pg_catalog.replace(definition,'FUNCTION marketplace_sec.phase9_provider_stage_valid_v1(',
+   'FUNCTION marketplace_sec.phase9_test_original_stage_valid_v1(');
+ END IF;
+ EXECUTE $install$
+  CREATE OR REPLACE FUNCTION marketplace_sec.phase9_provider_stage_valid_v1(
+   p_key text,p_version text,p_sequence integer,p_stage text,p_query_kind text)
+  RETURNS boolean LANGUAGE sql IMMUTABLE SECURITY INVOKER SET search_path='' AS $body$
+   SELECT CASE WHEN p_key='synthetic_catalogue' AND p_version='1.0.0'
+    THEN marketplace_sec.phase9_test_synthetic_stage_valid_v1(p_key,p_version,p_sequence,p_stage)
+   ELSE marketplace_sec.phase9_test_original_stage_valid_v1(p_key,p_version,p_sequence,p_stage,p_query_kind) END
+  $body$
+ $install$;
+END
+$stage_install$;
+
+-- 02c sections 3.2/4.3/5.1: purpose/retention declarations above are read by
+-- the installed dispatchers. This installer replaces no M92 function.
+
 -- The harness deliberately has hostile default grants. Restrict all fixture
 -- functions and delegates, preserving the postgres-only production boundary.
 DO $acl$
@@ -148,6 +220,8 @@ BEGIN
   WHERE n.nspname='marketplace_sec' AND p.proname=ANY(ARRAY[
    'phase9_test_synthetic_facts_v1','phase9_test_synthetic_stage_valid_v1',
    'phase9_test_synthetic_retention_valid_v1','phase9_test_synthetic_field_profile_v1',
+   'phase9_test_synthetic_call_contract_v1','phase9_test_original_call_contract_v1',
+   'phase9_test_original_stage_valid_v1','phase9_provider_stage_valid_v1','phase9_provider_call_contract_v1',
    'phase9_test_original_validation_contract_v1','phase9_test_original_field_profile_v1',
    'phase9_test_original_retained_fields_valid_v1','phase9_test_original_facts_valid_v1',
    'phase9_provider_validation_contract_v1','phase9_provider_field_profile_v1',

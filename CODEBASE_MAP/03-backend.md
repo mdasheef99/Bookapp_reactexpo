@@ -133,6 +133,16 @@ Paths below are relative to `supabase/functions/_shared/imageInventory/` unless 
 
 - **Shared tables:** `canonical_works`, `canonical_editions`, `book_metadata_sources`, `canonical_provider_ids`, `canonical_work_stats`, `canonical_edition_stats` — facts, provider cross-references and popularity.
 - **Private persistence:** `marketplace_sec` holds companions/effect receipts; `phase9_metadata_cache_entries` holds scoped edition lists.
+  The automatic SQL boundary exposes service-only
+  `phase9_complete_automatic_metadata_v1`
+  and `phase9_recover_automatic_metadata_v1`; private automatic receipts bind the
+  selected option to its original companion for subsequent Add. A coherent
+  fan-out winner requires its exact retained row and companion; single-call
+  receipts can bind a selected snapshot without a retained list. Cached selected
+  snapshots resolve the companion through the proved leader lineage. Explicit
+  completion intersects its deadline with current provider retention and rechecks
+  wall-clock expiry after lock waits and before returning. Contract:
+  [provider SDD §4.3](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/02c-slice8-open-library-first-sdd.md#43-automatic-completion-fairness-and-protection-prerequisites).
 - **SQL definitions:** `supabase/migrations/` — catalogue and RPC forward replacements; design in [catalogue SDD §§3–10](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/post-scan-rework/02b-slice7-lean-catalogue-writes-sdd.md#3-companion-contract-and-transport-d35d37-r06r09), guardrails in [05](./05-marketplace-rules.md#phase-9-catalogue-and-reuse).
 
 Workers claim database jobs with leases and attempt numbers; that, not process

@@ -881,3 +881,64 @@ migration file, not observed live schema. No existing row is rewritten.
 
 Gate transitions remain operator-owned; this file authorizes no transition,
 smoke, provider activation, queue, retry allowance, quota or breaker behavior.
+
+## Slice 8 package 8a-4 — local target only (M92, not applied)
+
+Authority: 02c §§4.2-4.4/8/9, AC8-7/10/11/12/14; 02b §§6.2/7.2.
+This describes the local file, without a fresh live schema claim or data rewrite.
+
+| Object / fields | Local contract |
+| --- | --- |
+| marketplace_sec.phase9_automatic_completion_effects | Postgres-owned, RLS enabled, all PUBLIC/anon/authenticated/service_role table privileges revoked. No rows or raw token in the receipt. |
+| lookup_id / job_id | Lookup PK/FK with cascade on lookup deletion; unique non-null job FK. One durable automatic completion per job. |
+| candidate_id / store_id / session_id | Non-null existing-entity FKs; scope re-derived from the job and compared to the service fence. |
+| candidate_version / query_identity | Original positive candidate version and bounded 1-2048 query identity; retained for receipt-first recovery. |
+| claim_worker / claim_lease_token_hash / claim_attempt_number | Original worker, SHA256 lease-token hash, existing five-claim bound. No new retry allowance. |
+| request_generation / captured_request_id | Nonnegative generation and nullable original request UUID, checked against candidate edition state before completion. |
+| selected_option_id / snapshot_id | Nullable exact selected option binding and saved-snapshot FK; no dependency on the alternatives list surviving cleanup. |
+| completion_digest / receipt / completed_at | SHA256 of exact command evidence with a hashed lease token; original versioned slim receipt and transaction timestamp. |
+| public.phase9_complete_automatic_metadata_v1(jsonb) / phase9_recover_automatic_metadata_v1(jsonb) | Empty-search-path invoker wrappers, service-only execute, delegated definer entries; malformed/fenced/source/companion errors roll back, stale returns no mutation, replay returns the original receipt. |
+
+Selected-companion reads retain explicit option equality and additionally accept
+only the automatic receipt's exact selected UUID, snapshot, source and metadata
+digest. Legacy own-cover snapshots and existing inventory bytes remain unchanged.
+Representative projections/writes/new Add use one enabled-source gate in legacy
+mode; automatic-capability mode remains 8b work. 02d alone owns alternatives
+publication; prefill remains `skipped/not_installed`. No queue/protection schema,
+retry ledger, operating values, contact value, transport or provider switch added.
+
+The new automatic boundary also enforces 02c §5.1's five-field retained-list
+envelope: `sourceFetchedAt`, `permittedDeadlineAt`, `policyVersion`,
+`storagePermissionVerified`, and `retentionContract`. Pure installed-purpose and
+retention dispatch deny OL v1 automatic use, unknown/cross-provider retention
+IDs, and Google retained lists without an independent installed verifier. OL v2
+keeps the existing search/editions/author receipt grammar; direct ISBN remains
+gated. Deadline/current-policy checks occur separately from pure validation.
+
+The completion audit also replaces the inherited OL-only fan-out finalizer gate
+with the locked source's installed stage validator. Finalization during a drain
+still records the already-granted call; it cannot grant egress. Full tagged
+records used by identity/Select/Add may use installed tuple/profile/facts rules;
+stripped anonymous snapshots retain the existing host grammar. These are backend
+rules under 02c §§4.2/5.1, without enabling the gated client presentation contract.
+
+Under 02c §§3.1/4.2/4.3, new explicit completion caps `options_expires_at`
+at the minimum of supplied deadline, 24 hours and non-null registry
+`options_retention_seconds` from `source_fetched_at`; replay preserves its
+original receipt. Automatic accepted attempts use canonical
+`accepted_metadata_match` while physical receipts preserve provider outcomes.
+Terminal jobs populate `dead_lettered_at` and safe metadata error fields for
+failure, clearing earlier retry errors on accepted completion. No column or
+privilege is added by these corrections. Cached selected snapshots retain the
+leader's exact companion option UUID, metadata digest and source scope for Add.
+For fan-out completion, coherent selected metadata requires a retained matching
+row/selected UUID and matching accepted companion; the existing fan-out receipt
+does not bind selected bytes. Existing single-call no-list receipts continue to
+bind their selected metadata directly. Fresh explicit options recheck the capped
+deadline against `clock_timestamp()` after identity-lock waits and after final
+writes; expiry raises the existing storage-denied error and rolls back the entire
+completion. These are 02c §§3.1/4.2/4.3 safeguards, with no new fields or grants.
+Automatic fan-out also rejects `ambiguous_match` when its candidates array is
+empty (02c §§4.3/5.2). The existing no-list fan-out guard remains pending a
+source-bound selection proof; the no-retention suggestion requirement and the
+verification gap are recorded in ACTIVE.md and the implementation tracker.

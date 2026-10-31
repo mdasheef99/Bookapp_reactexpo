@@ -3,6 +3,6 @@
   "8a-1": ["20261031000089_marketplace_phase9_provider_registry_policy.sql"],
   "8a-2": ["20261031000090_marketplace_phase9_provider_validation.sql"],
   "8a-3": ["20261031000091_marketplace_phase9_provider_route_accounting.sql"],
-  "8a-4": [],
+  "8a-4": ["20261031000092_marketplace_phase9_provider_automatic_transaction.sql"],
   "8a-5": []
 }

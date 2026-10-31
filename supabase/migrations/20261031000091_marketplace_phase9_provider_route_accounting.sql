@@ -29,7 +29,14 @@ ALTER TABLE public.phase9_metadata_provider_calls ADD COLUMN grant_epoch bigint;
 -- Retain both per-claim sequence/stage indexes and the five-claim CHECK verbatim.
 ALTER TABLE public.phase9_metadata_provider_calls DROP CONSTRAINT phase9_edition_http_stage;
 ALTER TABLE public.phase9_metadata_provider_calls ADD CONSTRAINT phase9_edition_http_stage CHECK (
- (edition_call_sequence IS NULL AND edition_call_stage IS NULL) OR
+ -- M73/M78 allow (0..5,NULL), plus (NULL,search/editions/author:OL…A);
+ -- M78 also allows (NULL,edition). Both NULL remain valid. Other half-null
+ -- pairs fail. Registration requires a full installed pair for NEW fan-out calls.
+ ((edition_call_sequence IS NULL AND edition_call_stage IS NULL) OR
+ (edition_call_sequence BETWEEN 0 AND 5 AND
+  ((edition_call_sequence=0 AND edition_call_stage='search') OR
+   (edition_call_sequence=1 AND edition_call_stage IN('editions','edition')) OR
+   (edition_call_sequence BETWEEN 2 AND 5 AND edition_call_stage ~ '^author:OL[1-9][0-9]*A$')))) OR
  (edition_call_sequence IS NOT NULL AND edition_call_stage IS NOT NULL
   AND edition_call_sequence BETWEEN 0 AND 5
   AND edition_call_stage ~ '^[A-Za-z][A-Za-z0-9._:-]*$'));

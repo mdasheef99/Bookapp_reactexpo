@@ -6,6 +6,7 @@ import { after, before, beforeEach, test } from 'node:test';
 import { clean, createProviderDatabase, genericHashes, installSyntheticProvider, needs, resetActor,
   resetSyntheticProvider, requireObject, setActor, synthetic, value } from './providerReplacementFixture.mjs';
 import { completeCatalogueV2 } from './leanCatalogueFixture.mjs';
+import { clearCatalogueOptions } from './leanCatalogueCompletionFixture.mjs';
 import { cacheRequest, cacheVersions, reuseCatalogueCache } from './leanCatalogueCacheFixture.mjs';
 import { add, facts, readSql, rpc, saveReview, selectSql } from './catalogueLinkFixture.mjs';
 import { seedOperation, token, worker } from './editionOptionsCompletionFixture.mjs';
@@ -36,11 +37,11 @@ async function install(t) {
   await db.exec(`UPDATE public.phase9_provider_registry SET automatic_lookup_allowed=false,explicit_search_allowed=false,
     automatic_role=NULL,automatic_order=NULL,explicit_role=NULL,explicit_order=NULL WHERE adapter_key IN('google_books','open_library')`);
   await db.query(`INSERT INTO public.phase9_provider_registry(adapter_key,provider_kind,adapter_version,enabled,
-    matching_allowed,storage_allowed,public_display_allowed,shared_source_note,revalidation_seconds,
+    matching_allowed,storage_allowed,public_display_allowed,attribution_required,shared_source_note,revalidation_seconds,
     automatic_lookup_allowed,explicit_search_allowed,shared_catalogue_allowed,accepted_adapter_versions,
     version_contracts,validation_contract,host_policy_version,approved_request_hosts,approved_book_hosts,
     approved_cover_hosts,options_retention_seconds,display_label,automatic_role,automatic_order,explicit_role,explicit_order)
-    VALUES($1,'metadata',$2,true,true,true,true,'Test-only synthetic full-field rights',3600,true,true,true,
+    VALUES($1,'metadata',$2,true,true,true,true,true,'Test-only synthetic full-field rights',3600,true,true,true,
     ARRAY[$2],$3,$4,$5,ARRAY['catalogue.example.test'],ARRAY['catalogue.example.test'],ARRAY['catalogue.example.test'],3600,'Synthetic Catalogue','primary',1,'primary',1)`,
   [synthetic.adapterKey,synthetic.adapterVersion,{[synthetic.adapterVersion]:{
     validationContract:synthetic.validationContract,hostPolicyVersion:synthetic.hostPolicyVersion,
@@ -80,13 +81,23 @@ async function operation() {
 
 test('AC8-9a [8a-2/3/4] synthetic admission→custom physical stages→completion→typed-cache reuse→Select→Add changes no generic hash',async t=>{
   const before=await genericHashes(db);
+  const metadataDefinition=await value(db,"SELECT pg_get_functiondef('marketplace_sec.phase9_edition_valid_metadata(jsonb,boolean)'::regprocedure)");
   if(!await install(t))return;
   assert.equal(await value(db,'SELECT marketplace_sec.phase9_catalogue_shared_admitted_v1($1)',[synthetic.adapterKey]),true);
-  const f=await operation(); assert.equal((await completeCatalogueV2(db,f)).status,'completed');
+  const f=await operation();
+  await resetActor(db);
+  assert.equal(await value(db,'SELECT marketplace_sec.phase9_edition_valid_metadata($1,false)',[f.rows[0].metadata]),true,
+    'SQL Select/Add accepts installed source-tagged facts');
+  assert.equal(await value(db,'SELECT marketplace_sec.phase9_edition_valid_metadata(marketplace_sec.phase9_edition_snapshot($1),false)',[f.rows[0].metadata]),false,
+    'anonymous legacy snapshots retain their existing host grammar; presentation remains gated');
+  await setActor(db,f.ownerId,'service_role');
+  assert.equal((await completeCatalogueV2(db,f)).status,'completed');
   await resetActor(db);
   assert.equal(await value(db,"SELECT count(*)::int FROM public.phase9_metadata_cache_entries WHERE adapter_key=$1 AND privacy_scope='store_private'",[synthetic.adapterKey]),1);
+  await clearCatalogueOptions(db,f);
   const next=await cacheRequest(db,f),versions=cacheVersions({adapterKey:synthetic.adapterKey,
     capabilityVersion:synthetic.capabilityVersion});
+  assert.notEqual(next.jobId,f.jobId,'cache reuse must have a fresh receiving operation');
   assert.equal((await reuseCatalogueCache(db,next,versions)).status,'completed');
   await resetActor(db);
   assert.equal(await value(db,'SELECT count(*)::int FROM public.phase9_metadata_provider_calls WHERE job_id=$1',[next.jobId]),0);
@@ -97,11 +108,13 @@ test('AC8-9a [8a-2/3/4] synthetic admission→custom physical stages→completio
   await value(db,selectSql(f,choices,option.optionId)); await saveReview(db,f);
   const saved=await add(db,f); assert.ok(saved.item.canonical_edition_id); assert.ok(saved.item.canonical_work_id);
   assert.deepEqual(await genericHashes(db),before,'all generic SQL bodies/CHECKs/owners/ACLs remain byte-identical');
+  assert.equal(await value(db,"SELECT pg_get_functiondef('marketplace_sec.phase9_edition_valid_metadata(jsonb,boolean)'::regprocedure)"),
+    metadataDefinition,'provider installation does not edit the common metadata schema');
 });
 
-test('AC8-9a [8a-2..4] reviewed generalized-8a golden freezes every generic definition without auto-rebaselining',async t=>{
+test('AC8-9a [8a-2..4] recorded generalized-8a golden freezes every generic definition without auto-rebaselining',async t=>{
   const golden=JSON.parse(fs.readFileSync(new URL('./fixtures/provider-replacement-generic-sha256.json',import.meta.url)));
-  if(golden.baselineArtifact===null){requireObject(t,db,false,'8a-4','reviewed post-generalization SHA256 golden and metadata; never M88 hashes');return;}
+  if(golden.baselineArtifact===null){requireObject(t,db,false,'8a-4','post-generalization SHA256 golden and metadata; never M88 hashes');return;}
   const current=await genericHashes(db);
   assert.deepEqual(current.sql,golden.sql);
   assert.deepEqual(current.metadata,golden.metadata,'separate owner/ACL/volatility/search-path evidence is mandatory');

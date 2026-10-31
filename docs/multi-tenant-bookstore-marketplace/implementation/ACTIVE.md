@@ -1,39 +1,58 @@
 # Marketplace current state
 
-Recorded state: 2026-10-31. Slice 8 package 8a-3 file complete (local only, pending review) on branch `phase9/slice8-providers`.
+Recorded state: 2026-11-01. Slice 8 package 8a-4 empty-ambiguity correction locally tested; no-retention fan-out proof remains open. Nothing applied.
 This file is rewritten at session close; dated evidence belongs in trackers.
 
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
-- Active slice/work unit: **slice 8 (Open Library first, replaceable providers), package 8a-3 file complete, pending independent review; not applied**.
-- Completed milestone: local M91 route/physical-accounting file (501 lines),
-  registered under `8a-3`; M89 (`746e061`) and M90 (`f4f6d8c`) are already
-  committed and unchanged. M91 and its continuity records are uncommitted;
-  [evidence](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-3-routephysical-accounting-file-only).
-- Exact next authorized action: **independent review of the local M91 file**
-  through the prescribed paid DeepSeek/Muse cycle. Terra reviews the whole 8a
-  layer after 8a-5. No reviewer result is claimed here. Later migration creation,
-  application and deployment remain separately gated; the orchestrator owns commits.
+- Active slice/work unit: **slice 8 (Open Library first, replaceable providers), package 8a-4 review corrections; no-retention fan-out source proof remains open**.
+- Latest bounded change: automatic fan-out completion rejects an ambiguous
+  outcome with no candidates; the focused 8a-4 suites passed **17/17**. The
+  existing golden fixture was not regenerated; its freeze test fails on the
+  intentionally changed function definition.
+  See the [review correction record](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-11-01---empty-ambiguity-correction-and-no-retention-proof-gap).
+- Completed milestone: P1 unbound fan-out selection and P2 wall-clock retention
+  expiry were reproduced before production edits, then corrected locally.
+  Focused PGlite checks pass: 8a-4 **16/16** and 8a-2 retention **4/4**.
+  Actual two-connection advisory-lock tests now pass **2/2** across 8a-2 and
+  8a-4, and native selection/compatibility checks pass **7/7**; both disposable
+  clusters passed teardown. The earlier S1–S7 native run was
+  **193 pass / 0 fail / 18 skip / 19 TODO**, but predates these corrections.
+  Before the latest correction, the provisional hash fixture and synthetic
+  installation, hash-freeze and guard checks reported **13 pass / 0 fail / 3 TODO**.
+  The unchanged no-list Google single-call completion/replay control passes.
+  M89/M90/M91 have committed baselines (`746e061`, `f4f6d8c`, `dba657d`),
+  with subsequent local M90/M91 corrections and M92 unapplied. Consult Git
+  status and history for the current commit state.
+  [Correction evidence](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-11-01---follow-up-p1p2-selection-and-deadline-corrections)
+  owns exact proof and limitations.
+- Exact next authorized action: **review and specify a source-bound no-retention
+  fan-out selection proof across the 8a receipt boundary and planned 8b worker,
+  then verify it before enabling no-list fan-out completion**.
 
 ## Mutation authority now
 
-- This task authorized local M91 file creation, prefix registration and required
-  continuity records only; no Supabase or network access and no git writes.
-- Database/migration application: **none**; Storage: **none**; deployment: **none**.
-- M89/M90 are committed local files; M91 is uncommitted. None has been applied.
-  This task grants no application authority. Any future apply must follow its
-  separate approval/review and exact-project preflight, ordered from M89.
-  Nothing was staged, committed, pushed, deployed or applied in this session.
+- The Owner authorized updating documentation and one local commit of the
+  current checkout changes. Preserve the earlier instruction not to regenerate
+  the golden fixture; this does not authorize push, deployment or external writes.
+- Shared database/migration application: **none**; Storage: **none**; deployment: **none**.
+- M89/M90/M91 have committed baselines; corrected M90/M91 and M92 remain
+  unapplied. Git status and history own their local commit state.
+  Disposable PGlite migrations/fixtures were used for verification only. Apply is
+  authorized after each migration completes its review cycle, with a Haiku
+  preflight (re-verify `ahntbtktjjmvfosgkmgn`, read-only live registry check)
+  and an ordered apply starting with M89. It does not cover push or deploy.
+- No push, deployment or application to shared services is authorized.
 
 ## Last recorded live state
 
 These are recorded development-project results, not a fresh operational readback.
 
 - Latest applied migration: **M88**, live version **`20261029151325`**, project
-  **`ahntbtktjjmvfosgkmgn`** (recorded, not freshly verified). M89–M91 are
+  **`ahntbtktjjmvfosgkmgn`** (recorded, not freshly verified). M89–M92 are
   **not applied**;
-  [ledger](phase-9-image-inventory/supporting/database-current-vs-target.md#2026-10-31-slice-8-package-8a-3-file-not-applied).
+  [ledger](phase-9-image-inventory/supporting/database-current-vs-target.md#2026-10-31-slice-8-package-8a-4-file-not-applied).
 - Registry: `google_books` and `open_library` enabled, policy_version 1; Google
   public_display=false, raw_retention=604800; Open Library public_display=true,
   attribution=true, raw_retention=0; no automatic-lookup, role or order columns yet.
@@ -48,6 +67,13 @@ These are recorded development-project results, not a fresh operational readback
 
 ## Open items, blockers and residual risks
 
+- The current fan-out finalizer stores no selected bytes, while 02c §4.3 requires
+  source-bound selection and 02d requires no-retention prefill to preserve valid
+  suggestions. Removing the no-list refusal would reintroduce the unbound
+  selection defect. The receipt/worker proof contract remains unresolved; no
+  8b behavior or new interface was invented in this correction.
+- The existing provider golden-freeze test fails because the M92 automatic
+  completion function changed and the fixture was intentionally not regenerated.
 - Applying any 8a migration needs the per-migration review cycle plus a Haiku
   preflight (re-verify `ahntbtktjjmvfosgkmgn`, read-only live registry check),
   ordered starting with M89. Pushing and deploying are not authorized.
@@ -56,13 +82,40 @@ These are recorded development-project results, not a fresh operational readback
   read-only (2 Medium, both resolved; detail in the tracker entry). Terra noted
   M90 is not repeatable if applied twice (plain CREATE FUNCTION); M84 and M89
   follow the same pattern, so no change.
-- M91 PGlite proof and all four prefix counts are in the owning evidence entry.
-  All executable `[8a-3]` checks pass; seven later-package reds remain, with
-  messages unchanged from the 8a-2 baseline. Manifest registration activates one
-  partial-prefix control in every older prefix (+1 pass / -1 skip). Native
-  Postgres, lock/FK races and independent review were not run in this session.
-  Historical suites: 231 pass / one pre-existing CRLF byte-guard failure.
-- Owner decisions 2026-10-31: placeholders are allowed for the Open Library contact
+- Terra 8a-3 review (read-only, Owner-requested, 754 s) found three Medium
+  compatibility defects that Muse and paid DeepSeek had missed. Corrections
+  were already present in the dirty M90/M91 files when this S1–S7 session
+  started; their prior independent closure is not claimed here. (1) M90:525: the
+  `phase9_catalogue_valid_cache_v1` replacement tightens an existing CHECK; an
+  Open Library cache row valid under M85 with `normalizerVersion="legacy-v1"`
+  would fail on a later UPDATE. (2) M90:390: the stricter row validator runs
+  before the M86 completion-replay branch; replaying a previously accepted
+  option whose book URL names a different valid Open Library edition raises
+  `P9_EDITION_ROWS_INVALID`. (3) M91:31: the replacement stage CHECK rejects
+  half-null pairs that M78 accepted through SQL UNKNOWN, e.g.
+  `(edition_call_sequence, edition_call_stage) = (0, NULL)`; adding the
+  constraint would fail if such a row exists. Terra verdict: M89, M90 and M91
+  remain gated for application until the correction review and preflight complete. Live
+  data was not inspected. The pre-apply read-only live check must look for rows
+  matching the first and third cases. Fix owner: paid DeepSeek, confirmed by a
+  PGlite probe against the old baseline first, then re-reviewed.
+- M92's earlier S1–S7 native provider checks passed with verified cleanup. The
+  follow-up P1/P2 defects were reproduced and corrected; the 71-definition SHA256
+  fixture was refreshed as provisional and must not be treated as review approval.
+  The full historical PGlite command was stopped
+  during unrelated bookstore cases and is not claimed complete. The builder also edited
+  `phase9ProviderSynthetic.integration.test.mjs` and
+  `provider-replacement-synthetic-install.sql`; reviewers are checking that no
+  assertion was weakened.
+  [Exact proof and limits](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-4-automatic-transaction-file-only).
+  Earlier named-model review and native status records are historical; this
+  correction does not claim a completed Terra rerun. The historical CRLF
+  byte-guard failure remains unchanged.
+- Owner decisions 2026-10-31 and 2026-11-01: paid DeepSeek (with Muse) replaces
+  Sol for review-driven fixes and corrections, to save Codex credits; Sol
+  writes only the main migration of each package. Terra reviews stay for 8a-2,
+  8a-3, 8a-4 and the whole 8a layer because Terra found real defects the
+  cheaper reviews missed. Placeholders are allowed for the Open Library contact
   email and for quota/pacing numbers only where a package needs one; for oversized
   or unsafe input (OQ8-7) the orchestrator decides a simple truncation when that
   package is briefed.
@@ -77,8 +130,9 @@ These are recorded development-project results, not a fresh operational readback
   `P9_EXTERNAL_ADMISSION_PAUSED`.
 - Deferred, unproved package 1 TODOs with owners: real v2 cover mode (8b/8c),
   orphan or unknown-egress restart recovery (8b), retention/profile and synthetic
-  proofs (8a-2..4), the post-generalization frozen golden (8a-4), prefill
-  negatives (02d), provider-facts-only origin (OQ8-11).
+  proofs beyond the bounded S1–S7 cases (8a-2..4), prefill negatives (02d),
+  provider-facts-only origin (OQ8-11). The updated P1/P2 hash fixture is
+  provisional; correction review and full 8a acceptance remain separately gated.
 - Pre-existing local issues, not slice 8: `core.autocrlf=true` CRLF checkout breaks
   raw-byte migration checks (Jest M84 hash, M86 guard); an LF `.gitattributes`
   rule for `supabase/migrations/*.sql` is authorized as one small separate commit. `phase9MetadataFoundation.integration.test.mjs` has 3

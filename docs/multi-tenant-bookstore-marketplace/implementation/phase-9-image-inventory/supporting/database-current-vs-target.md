@@ -1980,3 +1980,90 @@ effects: structural registration/usage and provider-stage generalization,
 private initially-open admission gate, nullable server-stamped grant epoch,
 gate-locked legacy physical registration/replay | live effects: **none** |
 verification: [8a-3 implementation evidence](../trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-3-routephysical-accounting-file-only).
+
+Terra 8a-3 review added 2026-11-01 (read-only, 754 s) found three open Medium
+defects: M90:525 legacy `normalizerVersion="legacy-v1"` cache row, M90:390
+completion-replay order, and M91:31 half-null stage pairs. M89/M90/M91 are
+committed and not applied. They are not safe to apply until the fixes are
+resolved and verified. Live data was not inspected. The pre-apply read-only
+live check must look for rows matching the first and third cases. Fix owner:
+paid DeepSeek.
+
+## 2026-10-31 slice 8 package 8a-4 file (not applied)
+
+Authority: the Owner's 8a-4 build brief, 02c §§4.2-4.4/8/9 and 02b §§6.2/7.2.
+M89/M90/M91 are committed per that brief (`746e061`, `f4f6d8c`, `dba657d`)
+and remain unchanged. Earlier dated review/commit handoffs above are historical.
+No Supabase/network readback, database/Storage mutation or migration application
+is authorized or claimed. Recorded live state still ends at M88; separately
+authorized application must re-verify `ahntbtktjjmvfosgkmgn` and proceed in order.
+
+Ledger: local version `20261031000092`, file
+`supabase/migrations/20261031000092_marketplace_phase9_provider_automatic_transaction.sql`
+| live version **not applied** | target: private automatic completion receipt,
+strict service completion/recovery, selected-companion binding, accepted-version
+explicit source policy and legacy Add/cache/auxiliary-cover gates | data rewrite:
+**none** | live effects: **none**. New service-only execute grants delegate the
+invoker wrappers; no new API table privileges or existing grant widening.
+
+[Implementation evidence](../trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-4-automatic-transaction-file-only)
+owns test results and unproved gates. The data dictionary records the private
+receipt fields. No 8a-5 run/retry ledger, queue, fairness, cap or breaker schema
+is introduced. Contact/protection operating placeholders remain unset; no
+provider activation, direct-ISBN stage or 02d list-publication hook is installed.
+Native Postgres for 8a-4 and the reviews (Terra, Muse, GLM free, paid
+DeepSeek) are in progress. The missing golden hash fixture will be created
+after the review fixes. The synthetic test and fixture edits are under reviewer
+check for weakened assertions.
+
+The bounded completion audit also forward-replaces M73's OL-only fan-out
+finalization gate and default-mode validation of full tagged facts used by
+identity/Select/Add. Both dispatch through installed validators; legacy anonymous
+host rules, function signatures/ACLs and receipt finalization during a drain are
+preserved. The activated synthetic proof required test-only attribution,
+dispatcher-installation and fresh-receiver setup repairs; no production registry
+row or already-committed migration was edited.
+
+## 2026-11-01 — S1–S7 local correction ledger (M90/M92, not applied)
+
+The Owner explicitly requested confirmation and resolution of the seven pasted
+review findings. Authority: 02c §§3.1/3.2/4.2/4.3/9; M32 terminal semantics.
+Local M90 (`20261031000090`) and M92 (`20261031000092`) are corrected in place
+because neither is applied. No migration is created or applied; no schema,
+privilege, registry or stored-data change occurs on the shared project.
+Recorded live state remains M88, not freshly verified here. Exact-project
+Supabase readback and the ordered application preflight remain required before
+any shared application; this session performed only disposable local testing.
+
+Effects: installed single-call admission, independent automatic outcome versus
+explicit-list summary validation, canonical accepted-attempt outcome for the
+representative writer, proved-leader companion scope at Add, terminal timestamp
+and safe-error bookkeeping, explicit provider retention cap and single-call
+retry-flag equality. M90's retention cap also protects its partial prefix;
+M92's replacement preserves it. Existing replay returns original receipts.
+No 8a-5 retry allowance, queue/protection, provider activation or 02d publication
+is introduced. [Correction evidence](../trackers/02-implementation-and-verification.md#2026-11-01---s1s7-review-confirmation-and-local-corrections)
+owns actual tests, independent review, hashes and remaining gates.
+
+## 2026-11-01 — follow-up P1/P2 local correction (M90/M92, not applied)
+
+The Owner requested correction of a coherent fan-out selection without source
+binding and a retention deadline checked against transaction start rather than
+wall time. Under 02c §§3.1/4.2/4.3 and DOC-1 §13, M90/M92 are corrected locally:
+fan-out winners need their existing exact row/UUID/companion proof, and fresh
+explicit completion rechecks expiry after lock waits and before returning.
+The existing error aborts and rolls back all completion effects. PGlite
+red→green and native contention evidence are recorded in the implementation log;
+the refreshed hash fixture is provisional and is not independent review. No migration is
+created or applied, and no shared schema, policy, data, Storage, provider or
+network state changes. Recorded live M88 is not freshly verified here; the
+existing exact-project preflight remains mandatory before any later application.
+
+## 2026-11-01 — empty-ambiguity correction (M92, not applied)
+
+The local automatic completion function refuses an ambiguous fan-out result
+without candidates (02c §§4.3/5.2). Its focused PGlite regression and existing
+tie control passed; no live schema, data, privileges, Storage or provider state
+was inspected or changed. The no-retention fan-out selection proof remains open,
+and the unchanged golden fixture fails against the altered function. Exact proof
+and limitations are in the [implementation log](../trackers/02-implementation-and-verification.md#2026-11-01---empty-ambiguity-correction-and-no-retention-proof-gap).

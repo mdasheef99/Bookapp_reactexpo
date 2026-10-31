@@ -154,16 +154,16 @@ export async function claimJob(db, f, jobId, token = 'a'.repeat(64)) {
   await setActor(db, f.ownerId, 'service_role');
   return "SELECT public.phase9_metadata_job_context('" + jobId + "','picker-worker-0001','" + token + "',1)";
 }
-export async function seedAutomaticLineage(db, f, authority = 'accepted') {
+export async function seedAutomaticLineage(db, f, authority = 'accepted', sourceHash = 'a'.repeat(64)) {
   await resetActor(db);
   const inputId = randomUUID(), visionJobId = randomUUID(), resultId = randomUUID(), observationId = randomUUID();
   const jobId = randomUUID(), mediaId = randomUUID();
   await db.query("INSERT INTO public.media_assets(id,store_id,uploaded_by,purpose,privacy_class,bucket_id,object_path,"
     + "sha256,detected_mime,bytes,width,height,session_id,retention_class,lifecycle_status)"
-    + "VALUES($1,$2,$3,'scan_input','private_scan','scan-private',$1::uuid::text,repeat('a',64),'image/jpeg',1024,100,100,$4,'scan_source','validated')",
-  [mediaId, f.storeId, f.ownerId, f.sessionId]);
+    + "VALUES($1,$2,$3,'scan_input','private_scan','scan-private',$1::uuid::text,$5,'image/jpeg',1024,100,100,$4,'scan_source','validated')",
+  [mediaId, f.storeId, f.ownerId, f.sessionId, sourceHash]);
   await db.query("INSERT INTO public.image_extraction_inputs(id,session_id,store_id,source_kind,sha256,orchestration_version,state,media_asset_id)"
-    + "VALUES($1,$2,$3,'gallery',repeat('a',64),'fixture-v1','ready',$4)", [inputId, f.sessionId, f.storeId, mediaId]);
+    + "VALUES($1,$2,$3,'gallery',$5,'fixture-v1','ready',$4)", [inputId, f.sessionId, f.storeId, mediaId, sourceHash]);
   await db.query("INSERT INTO public.image_extraction_jobs(id,store_id,entity_type,entity_id,job_kind,dedupe_key,status)"
     + "VALUES($1,$2,'input',$3,'vision_extract',$1::uuid::text,'resolved')", [visionJobId, f.storeId, inputId]);
   await db.query("INSERT INTO public.image_analysis_results(id,store_id,session_id,input_id,vision_job_id,contract_version,"

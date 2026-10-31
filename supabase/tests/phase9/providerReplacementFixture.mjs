@@ -129,7 +129,7 @@ export const automaticGoogleCommand=(db,options={})=>automaticProviderCommand(db
 export async function automaticProviderCommand(db, {adapterKey='google_books',privacyScope='store_private',registerCall=true}={}) {
   assert.ok(['google_books','open_library'].includes(adapterKey),'only installed legacy providers in this fixture');
   const { seedCard,seedAutomaticLineage,claimJob }=await import('./editionPickerFixture.mjs');
-  const { finalize,resultRows,rpc,token,worker }=await import('./editionOptionsCompletionFixture.mjs');
+  const { resultRows,rpc,token,worker }=await import('./editionOptionsCompletionFixture.mjs');
   const f=await seedCard(db), {jobId}=await seedAutomaticLineage(db,f);
   const context=await value(db,await claimJob(db,f,jobId));
   Object.assign(f,{jobId,context,attempt:1});
@@ -145,9 +145,12 @@ export async function automaticProviderCommand(db, {adapterKey='google_books',pr
     'p9-bibliographic-normalizer-v1','p9-metadata-routing-v1','local_insufficient',usage.reservation_id]);
   const call=registerCall?await rpc(db,'phase9_register_metadata_provider_call',[attempt.attempt_id,...base,randomUUID()]):null;
   Object.assign(f,{lookupId:lookup.lookup_id,attemptId:attempt.attempt_id,callId:call?.provider_call_id,reservationId:usage.reservation_id});
-  if(registerCall)await finalize(db,f);
   const m=resultRows(f).rows[0].metadata;
   if(adapterKey==='open_library')Object.assign(m,{adapterKey,providerRecordId:'OL100M',coverReference:'https://covers.openlibrary.org/b/id/123-M.jpg'});
+  // 02c section 4.3 / F4: the positive fixture's receipt carries exactly the
+  // selected bytes/evidence submitted to automatic completion.
+  if(registerCall)await rpc(db,'phase9_finalize_metadata_provider_call',[f.callId,jobId,worker,token,1,
+    'finalized','coherent_match','coherent_match','fixture-request-1',false,m,['validated_isbn']]);
   return { f,command:{fence:{jobId,worker,leaseToken:token,claimAttempt:1,candidateId:f.candidateId,
     storeId:f.storeId,sessionId:f.sessionId,candidateVersion:context.candidateVersion,
     queryIdentity:context.queryIdentity,capturedRequestId:null,requestGeneration:0},

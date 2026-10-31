@@ -27,7 +27,7 @@ test('AC8-10 [8a-1..5] GREEN fixture-control uncreated packages reserve no guess
     for(const name of manifest[pkg])assert.match(name,/^\d{14}_marketplace_phase9_[a-z0-9_]+\.sql$/);
   }
 });
-test('AC8-9a [8a-2..4] GREEN fixture-control incomplete generalized freeze cannot masquerade as a reviewed golden',()=>{
+test('AC8-9a [8a-2..4] GREEN fixture-control incomplete generalized freeze cannot masquerade as a populated golden',()=>{
   const golden=read('provider-replacement-generic-sha256.json');
   if(golden.baselineArtifact===null){assert.match(golden.status,/NEEDS-OBJECT/);assert.deepEqual(golden.sql,[]);return;}
   assert.ok(golden.sql.length>0);

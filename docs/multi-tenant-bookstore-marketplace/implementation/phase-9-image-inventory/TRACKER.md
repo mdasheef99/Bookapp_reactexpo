@@ -16,12 +16,58 @@ they do not override ACTIVE.md. Repeated status copies moved to the
 **Implementation authority:** See ACTIVE.md and the Owner's explicit scope.
 **Migration creation/application authority:** See ACTIVE.md; prior approvals are historical.
 
-## 2026-10-31 slice 8 package 8a-3 evidence
+## 2026-10-31 slice 8 package 8a-4 evidence
+
+The subsequent empty-ambiguity correction and remaining no-retention fan-out
+proof gap are recorded in the [2026-11-01 implementation log](./trackers/02-implementation-and-verification.md#2026-11-01---empty-ambiguity-correction-and-no-retention-proof-gap).
+Current status and gates remain in ACTIVE.md; Git history owns commit state.
+
+Follow-up: the Owner requested P1 unbound fan-out selection and P2 elapsed
+retention correction after the S1–S7 review. Both were reproduced before
+editing and corrected in M90/M92; focused PGlite tests, native selection
+checks (7/7), both native lock contention cases, the unchanged no-list Google control and the refreshed
+provisional hash freeze pass. Current state and gates are in ACTIVE.md; the
+[follow-up evidence](./trackers/02-implementation-and-verification.md#2026-11-01---follow-up-p1p2-selection-and-deadline-corrections) is in the implementation log.
+
+Subsequent S1–S7 confirmation and correction evidence is owned by the
+[2026-11-01 correction log](./trackers/02-implementation-and-verification.md#2026-11-01---s1s7-review-confirmation-and-local-corrections).
+All seven findings were reproduced before production edits. Local M90/M92
+corrections, ten focused regression checks, M90-only retention controls, ten
+provider guards, the hash freeze and metadata-worker build are verified.
+Native provider group: **193 pass / 0 fail / 18 skip / 19 TODO**, with verified
+teardown. The full historical PGlite command was not completed; exact limits
+belong in that log. No shared mutation or publication authority is added. ACTIVE.md
+owns the current work unit and next action; the dated baseline below remains
+historical, including its former missing-golden and open-fix statements.
+
+The Owner's 8a-4 brief supersedes the historical M91 review handoff for local
+file creation only. Sol built the M92 file; it is not committed and not
+applied. M89-M91 are committed and not applied. The M92 file and its prefix
+registration implement 02c §§4.2-4.4/8/9, without application or 8a-5
+behavior. The new entry stays idle until 8b. Size is 1,743 lines against a 400
+to 700 estimate; the size is recorded and is not a stop under OD-2026-10-31-1.
+[Implementation and verification record](./trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-4-automatic-transaction-file-only)
+owns proof and limitations; [ACTIVE.md](../ACTIVE.md) owns the handoff.
+Native Postgres for 8a-4 and the reviews (Terra, Muse, GLM free, paid
+DeepSeek) are in progress. The builder also edited the synthetic integration
+test and the synthetic install fixture; reviewers are checking that no
+assertion was weakened. The missing golden hash fixture will be created after
+the review fixes. Owner decisions 2026-11-01: paid DeepSeek (with Muse)
+replaces Sol for review-driven fixes, to save Codex credits; Sol writes only
+the main migration of each package. Terra reviews stay for 8a-2, 8a-3, 8a-4
+and the whole 8a layer.
+
+## 2026-10-31 slice 8 package 8a-3 evidence (Terra 8a-3 findings open)
 
 Local M91 migration and prefix registration implement only 02c §4.4's 8a-3
 scope. [Implementation and verification record](./trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-3-routephysical-accounting-file-only)
 owns results and limits; [ACTIVE.md](../ACTIVE.md) owns the review handoff.
 No live application, operational proof or independent review is claimed.
+Terra 8a-3 read-only review (754 s) later found three open Medium
+compatibility defects that Muse and paid DeepSeek had missed: M90:525 legacy
+`normalizerVersion="legacy-v1"` cache row, M90:390 completion-replay order,
+and M91:31 half-null stage pairs. They will be fixed in place in M90/M91
+before any apply. Detail is in [ACTIVE.md](../ACTIVE.md).
 
 ## 2026-10-30 documentation consolidation evidence
 

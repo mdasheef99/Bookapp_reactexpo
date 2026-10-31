@@ -6556,8 +6556,432 @@ Current handoff is in ACTIVE.md; next action is independent M91 review, with
 later file creation/application separately gated. DOC-13 remains the global
 Phase 9 pointer; no global phase/status or source requirement changed.
 
+Terra 8a-3 review added 2026-11-01 (read-only, Owner-requested, 754 s). It
+found three open Medium compatibility defects that Muse and paid DeepSeek had
+missed. The earlier review statements above stand. (1) M90:525: the
+`phase9_catalogue_valid_cache_v1` replacement tightens an existing CHECK; an
+Open Library cache row valid under M85 with `normalizerVersion="legacy-v1"`
+would fail on a later UPDATE. (2) M90:390: the stricter row validator runs
+before the M86 completion-replay branch; replaying a previously accepted
+option whose book URL names a different valid Open Library edition raises
+`P9_EDITION_ROWS_INVALID`. (3) M91:31: the replacement stage CHECK rejects
+half-null pairs that M78 accepted through SQL UNKNOWN, e.g.
+`(edition_call_sequence, edition_call_stage) = (0, NULL)`. Terra verdict: M89,
+M90 and M91 are not safe to apply in order until these are resolved and
+verified. Live data was not inspected. The pre-apply read-only live check must
+look for rows matching the first and third cases. Fix owner: paid DeepSeek,
+confirmed by a PGlite probe against the old baseline first, then re-reviewed.
+M89/M90/M91 are committed and not applied, so the fixes will be made in place
+before any apply.
+
 Exact native follow-up command (recorded only, NOT executed):
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1 -OnlyGroup provider-replacement -ProviderPrefix 8a-3
 ```
+
+
+## 2026-10-31 - Slice 8 package 8a-4 automatic transaction (file only)
+
+Authority: Owner's 8a-4 build brief; 02c §§4.2-4.4/5.1/8/9 and 02b §§6.2/7.2.
+Sol built `20261031000092_marketplace_phase9_provider_automatic_transaction.sql` (M92, **1743 lines**).
+It is not committed and not applied. It is registered under `8a-4`.
+M89/M90/M91 remain committed and unchanged. The
+brief supersedes the old ACTIVE.md M91-review handoff for this file creation;
+it grants no live application, network, deployment or git-write authority. The
+new entry stays idle until 8b. No 8a-5 behavior was built.
+
+Completed scope:
+
+- Private postgres-owned/RLS automatic completion effects, strict AutoFence and
+  MetadataResultV2 validators, exact command digest, service-only invoker wrappers
+  over delegated completion/recovery. Receipt-first replay uses original scope,
+  query, generation and hashed claim, without requiring a live lease or repeating
+  effects/spend. Late lease/retention/session expiry rolls back the command.
+- OL automatic purpose requires v2; old v1 entrypoints remain callable. Retained
+  lists require all five §5.1 fields and an installed source-specific retention
+  contract, current policy version and bounded original source deadline. SQL
+  claims no remote-header proof; that remains the controlled worker verifier.
+- Exact automatic selected-option/companion/snapshot/metadata-digest binding for
+  subsequent Add; no latest-row inference, chosen count or 02d list publication.
+  Prefill is the specified `skipped/not_installed`. Existing canonical-local and
+  selected-only cache paths retain their validated legacy boundaries; the new
+  local command handles zero-egress manual outcomes without provider artifacts.
+- Independent Google veto before edition-list cache hints in both scopes, Add's
+  saved canonical-ID hint, and public legacy selected-snapshot storage/reuse.
+  Private Google lookup/selection/Add and private selected-only caching survive.
+- Shared enabled-source gate for saved auxiliary detail/compact/new Add and the
+  writer. Google-only representative CHECKs, chosen own-cover bytes and existing
+  inventory remain intact; v2 automatic-purpose presentation remains 8b work.
+- Current explicit v2 completion uses the selected accepted version's strict
+  eight-key source policy; v1 delegate/recovery and seven-key contexts stay intact.
+  The audit found M73's OL-only fan-out finalizer and default-mode validation's
+  anonymous-host restriction on full tagged facts. Forward replacements now use
+  installed source/stage/facts rules. Anonymous legacy snapshots keep their
+  existing host grammar, and finalization remains possible during a policy drain.
+
+Red-first and corrections: pre-M92 baseline was 165 pass / 7 fail / 39 skip /
+19 TODO. All seven known behavioral reds are green with M92. The builder also
+edited `phase9ProviderSynthetic.integration.test.mjs` and
+`provider-replacement-synthetic-install.sql` to activate the synthetic proof.
+The activated fixture had omitted required attribution, lacked its own
+stage/call dispatcher installation, and reused the already-completed operation
+instead of creating a fresh receiver. Those **test-only** setup gaps were fixed
+without relaxing source policy or editing an earlier migration. Reviewers are
+checking that no assertion was weakened. Paired assertions
+prove full tagged facts accepted / anonymous third-host projection rejected,
+fresh receiving operation, zero GETs on reuse, and unchanged complete generic
+definitions (including the common metadata schema) after provider installation.
+An attempted malformed-lineage probe was rejected by the existing
+`image_extraction_candidates_analysis_lineage_check` before the command; no new
+production behavior or source-error-normalization claim is based on that probe.
+
+Final PGlite matrix (230 tests in each prefix):
+
+| Prefix | Pass | Fail | Skip | TODO |
+| --- | ---: | ---: | ---: | ---: |
+| 8a-4 | 186 | 1 | 24 | 19 |
+| 8a-3 | 166 | 7 | 38 | 19 |
+| 8a-2 | 162 | 7 | 42 | 19 |
+| 8a-1 | 150 | 16 | 45 | 19 |
+| m88 | 71 | 16 | 124 | 19 |
+
+The four older prefixes keep their original failure counts and gain one passing
+M92 partial-prefix compatibility control from manifest registration. Their base
+SQL does not load M92. Current M92's full run also exercises each partial prefix's
+old Google automatic and OL explicit v1/v2 path. No existing registry field was
+rewritten, no old migration changed, and no existing grant was widened.
+
+Remaining executable failure (not 8a-5):
+
+`8a-4 installed but promised object missing: reviewed post-generalization SHA256 golden and metadata; never M88 hashes`
+
+The reviewed artifact is still NULL. It will be created after the review fixes
+because the hashes depend on the final migration text. Full 8a review/freeze
+and the existing reviewed
+retained/local/synthetic automatic fixture TODOs remain separate gates. Named
+GATED checks remain skipped; no 8a-5 retry/run ledger, queue, fairness, cap,
+capacity or breaker behavior was built to silence them.
+
+Other verification actually run:
+
+- One successful metadata-worker compilation. Initial sandbox Node path
+  resolution failed with `EPERM: operation not permitted, lstat C:\Users\user`;
+  `NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main'` allowed compilation
+  and the offline Node suites. No repeated worker build after SQL-only edits.
+- Supplemental disposable PGlite probes PASS on the final file: no-list Google
+  completion and exact completion/recovery replay; changed-digest refusal;
+  OL v2 retained winner with truthful search + editions receipts and five-field
+  retention; unknown/cross-provider retention IDs denied; exact selected companion,
+  searched once, Select/Add; zero-egress manual result with no calls/attempts/usage.
+- Same 12 historical suites as 8a-3: **231 pass / 1 fail / 232 total**, no skips.
+  Existing `M88 GUARD: body retains every M86 byte except the three reviewed
+  additions` fails at `assert.ok(body.includes(addition))` because of the already
+  recorded CRLF working-copy issue. No historical migration, guard or line-ending
+  policy was changed.
+- Native Postgres for 8a-4 and the reviews (Terra, Muse, GLM free, paid
+  DeepSeek) are in progress. No result is stated. Concurrency/pool/lock/FK
+  races, live readback, actual worker HTTP/restart behavior and operational
+  smoke remain NOT_RUN.
+- Continuity validator and final diff hygiene: see the closeout line below.
+  No Python test suite was run.
+
+Deviations/placeholders: no product/rights/gating deviation from 02c. Necessary
+fixture repairs are the only extra test-file scope. Size is 1,743 lines
+against a 400 to 700 estimate; the size is recorded and is not a stop under
+OD-2026-10-31-1. Sol notes the legacy forwarders plus the automatic core give
+a natural review split, kept in one migration. Existing private validators,
+planner, resolver and counters are reused instead of a second independent core.
+No operating number, contact value or new default TTL was invented. No new Owner
+placeholder was needed: existing `protection_policy` remains NULL, contact email
+unset and OQ8-3 operating values unset. OQ8-1/2/3/4/6/7/8/11 gates remain intact.
+Provider-facts-only origin remains unproved/private; no direct-ISBN transport,
+all-genres transport, author caching, Google purge or provider activation added.
+
+Owner decisions 2026-11-01: paid DeepSeek (with Muse) replaces Sol for
+review-driven fixes and corrections, to save Codex credits; Sol writes only
+the main migration of each package. Terra reviews stay for 8a-2, 8a-3, 8a-4
+and the whole 8a layer. Apply is authorized after each migration completes its
+review cycle, with a Haiku preflight and an ordered apply starting with M89;
+it does not cover push or deploy. Nothing has been applied.
+
+Updated owning records: ACTIVE.md, phase tracker, current-vs-target migration
+ledger, data dictionary and backend map. Source requirements/acceptance and the
+global Phase 9 status did not change; DOC-13 remains the global pointer.
+
+External mutations: **none**. Shared migration application: **none**. All changes
+remain local/uncommitted. Nothing staged, committed, pushed or deployed. Next
+authorized action is in ACTIVE.md: finish the 8a-4 review cycle, fix the Terra
+8a-3 findings and any 8a-4 findings with paid DeepSeek, create the golden
+fixture, commit, then build 8a-5, then one Terra review of the whole 8a layer,
+then the Haiku preflight and the ordered apply; the orchestrator owns commits.
+
+Exact native follow-up command (recorded only, NOT executed):
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1 -OnlyGroup provider-replacement -ProviderPrefix 8a-4
+```
+
+Closeout checks: requirement definitions 195, duplicates 0, missing traceability 0
+and validator regression probes PASS. The continuity validator then stopped at
+the pre-existing `PHASE9_MIGRATION_SET_INVALID` allowlist gate; it was not widened
+for this package. `git diff --check` PASS; M89/M90/M91 have no diff; staged paths
+none; remaining `.pyc` count 0. No Python test suite was run.
+
+## 2026-11-01 - S1–S7 review confirmation and local corrections
+
+Authorized scope: the Owner asked to confirm and resolve the seven pasted
+targeted-review findings. Phase 9 / slice 8 / package 8a-4 only. Requirement
+authority: 02c §§3.1/3.2/4.2/4.3/9 (AC8-9a/10/11/14), 02b §§3/8, and the
+existing M32 terminal-job convention. Existing M90/M91/M92, fixture and
+documentation changes were present at entry and preserved. No new migration,
+8a-5 behavior, provider activation or 02d publication was authorized or added.
+
+All seven findings were confirmed with behavioral failures before production
+edits. The S4 fixture initially failed the existing observation uniqueness,
+lineage and duplicate-input constraints; those setup failures were corrected
+and are **not** counted as proof. Its eventual meaningful RED created a new
+title-derived work rather than the source companion's existing `OL1W` work.
+
+| Finding | Reproduced behavior | Local correction / authority |
+| --- | --- | --- |
+| S1 High | Installed synthetic single-call provider completed physical registration/finalization but automatic completion raised `P9_AUTO_SOURCE_INVALID`. | M92 uses the installed single-call stage validator plus unchanged legacy compatibility; later current-purpose/registry/tuple gates remain (02c §§3.2/4.2/4.3). |
+| S2 High | Two exact-ISBN OL v2 editions with no selected winner were rejected as `P9_AUTO_SOURCE_INVALID`. | Successful fan-out protocol validation is separate from the explicit-list summary. The worker owns automatic ranking; SQL retains outcome shape, source, selected-row/companion binding and a successful-outcome allowlist. Forged technical-outcome control remains rejected (02c §4.3). |
+| S3 High | First completion with a valid representative cover raised `P9_STATE_CONFLICT`. | Accepted attempt writes canonical `accepted_metadata_match`, as required by the existing writer; original physical provider receipt is unchanged. Cover plus snapshot completion and replay are atomic (02c §§4.2/4.3). |
+| S4 Medium | Cache-reused current suggestion Add created another work despite an original selected companion naming existing `OL1W`. | Resolve the companion under the already-proved leader candidate/store/session, preserving exact original option UUID, metadata digest and automatic selected binding (02c §§4.2/4.3, AC8-14). |
+| S5 Medium | Exhausted claim-five timeout became dead-letter without timestamp/error evidence; accepted success retained an earlier retry error. | Fill terminal timestamp and M32 safe error fields; clear previous retry evidence on accepted success (02c §4.3). |
+| S6 Medium | A 600-second provider limit yielded 86,400 seconds in both the M90-only and M92 prefixes. | Cap only fresh explicit lists by the current registry limit after the source-policy SHARE lock, preserving original completion replay and the null-limit 24-hour default (02c §3.1). |
+| S7 Low | A physical timeout finalized as nonretryable was accepted as retryable at claim five. | Require submitted retryability to equal the persisted single-call receipt (02c §4.3). |
+
+Files: production edits confined to the existing unapplied M90 and M92 files.
+New regression suites are `phase9ProviderAutomaticReview.integration.test.mjs`
+and `phase9ProviderCompletionReview.integration.test.mjs`, with
+`providerAutomaticReviewFixture.mjs`. `seedAutomaticLineage` in the existing
+edition-picker fixture accepts an optional source hash so two same-store scans
+do not falsely collide; its default bytes and existing callers are unchanged.
+All three new files stay below 150 lines. The cohesive M92 migration remains
+one file under the approved 02c §4.4 / OD-2026-10-31-1 exception; no applied
+migration is split or edited.
+
+Verification actually run:
+
+- Focused PGlite RED: eight behavioral failures and two passing controls across
+  the ten checks after fixture setup was valid. M90-only S6 separately showed
+  one failure and one default-lifetime control pass.
+- Focused PGlite GREEN: **10 pass / 0 fail**, no skip/TODO; M90-only S6
+  **2 pass / 0 fail**. These cover immutable generic hashes during single-provider
+  installation, exact ISBN ambiguity, source-bound cover and receipt replay,
+  source companion UUID refusal, cached Add with zero receiving provider calls,
+  terminal evidence and retention replay after a policy change.
+- `npm.cmd run build:phase9:metadata-worker`: **PASS**. Node ancestor-path
+  sandbox resolution requires `NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main'`.
+- Independent read-only correction review returned no actionable findings.
+  This is **not** a Terra review; no result from an additional Terra review is
+  claimed. No reviewer ran tests or changed files.
+- Explicit correction hash refresh captured 71 complete generic SQL definitions,
+  71 owner/ACL/volatility/search-path records, four CHECK hashes and four exact
+  migration file hashes. The fixture never auto-rebaselines during a test.
+- Standalone PGlite golden freeze: **1 pass / 0 fail**. Provider harness and
+  fixture guards: **10 pass / 0 fail**. Absolute Node test paths hit the sandbox
+  ancestor-path restriction; relative test paths plus the above NODE_OPTIONS
+  completed the guard run.
+- Native PostgreSQL provider group: **193 pass / 0 fail / 18 skip / 19 TODO**,
+  230 total, 593560 ms. This includes all new regressions, per-prefix old Google
+  automatic/OL explicit v1/v2 compatibility, registry SHARE-lock behavior,
+  independent-connection registration/Select races, roles/ACLs, privacy,
+  cache/replay, synthetic installation and version validators. Gated 8a-5,
+  transport/presentation and existing TODOs remain explicit, not passed.
+  Native group **PASS**; temporary databases removed, zero connections before
+  base drop, cluster stopped, temporary directory removed, teardown **PASS**.
+  The first sandbox attempt failed at initdb restricted-token creation (Windows
+  error 87); its cleanup passed. The successful permitted rerun used the exact
+  existing disposable runner, without accessing Supabase.
+- `npm.cmd run test:phase9:db -- --test-concurrency=1` was started with prefix
+  `8a-4`, then stopped while it was rebuilding unrelated historical U8B cases.
+  That full 97-file historical PGlite command is **NOT COMPLETE**; no full-suite
+  pass or old known-failure re-verification is claimed. The affected provider
+  corpus completed natively and the focused PGlite checks above completed.
+- Frozen before/after comparison: exactly three effective generic definitions
+  changed (`phase9_catalogue_link_for_add_v1`,
+  `phase9_complete_automatic_metadata_v1`,
+  `phase9_complete_candidate_edition_options_v2`). All 71 owner/ACL/volatility/
+  search-path records, four CHECK definitions and overload inventory are
+  identical to the entry snapshot. M90 SHA256:
+  `5acd1e78f58c8dbf17d4d9fbc736523cc60e459c87ac102a466c68efdd47ade1`;
+  M92 SHA256:
+  `642f1f36ecdf8b73cf22e9381d8487fec08e1a580bc04c4629452f4d24df9bd2`.
+  Exact bytes of all four migration files match the refreshed golden. M92 is
+  1,896 lines excluding the trailing empty line; no unrelated rewrite occurred.
+- Continuity validator: requirement definitions **195**, duplicates **0**,
+  missing traceability **0**, regression probes **PASS**; then the pre-existing
+  `PHASE9_MIGRATION_SET_INVALID` allowlist gate failed. No unrelated migration
+  allowlist was widened. Final hygiene is recorded at closeout below.
+
+Documentation: current-state ACTIVE.md and this evidence log own handoff/status;
+the phase tracker links here. Current-vs-target ledger, data dictionary and
+backend/testing maps describe the corrected boundaries. No product requirement,
+acceptance rule, schema or privilege changed; DOC-13 remains the global Phase 9
+pointer. Earlier dated missing-golden/open-fix statements are historical.
+
+Shared Supabase/database/Storage/provider/network mutations: **none**. Local
+disposable databases only. No staging, commit, push, deployment or migration
+application. Existing unrelated dirty changes remain preserved. Full 8a
+acceptance, earlier independent correction gates and exact-project application
+preflight remain outside this bounded S1–S7 completion.
+
+Completed native command (local disposable cluster only):
+
+```powershell
+$env:NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main'
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1 -OnlyGroup provider-replacement -ProviderPrefix 8a-4 -Port 5459
+```
+
+Closeout: all S1–S7 corrections are locally verified. Remaining full-8a gates,
+the interrupted historical suite and the pre-existing continuity allowlist
+failure are recorded limits. No further review, package implementation or
+operational application was performed. Closing validator reproduced the same
+pre-existing allowlist failure after all 195 requirement/traceability checks
+passed. `git diff --check` PASS; staged paths none; remaining `.pyc` count **0**.
+No Python test suite was run. All task changes remain uncommitted.
+
+## 2026-11-01 - Follow-up P1/P2 selection and deadline corrections
+
+Scope: Owner-requested confirmation and correction of the two findings on the
+S1–S7 work above. Authority: DOC-1 §13, DOC-3 §5.2, 02b §§3/8 and 02c
+§§3.1/4.2/4.3/9. M89–M92 remain unapplied; existing dirty M90/M91/M92 and
+fixture/documentation edits were preserved. No new migration, provider switch,
+8a-5 behavior or shared database/Storage/provider mutation is authorized here.
+
+P1 was reproduced on 8a-4: finalized valid Open Library fan-out receipts and a
+`no_acceptable_match` list summary accepted a submitted coherent selected
+snapshot with no retained row/companion. Corrected M92 refuses coherent
+fan-out selection without a retained list. The existing row/selected UUID and
+companion/digest checks then bind retained winners; ambiguous ISBN ties remain
+valid. Existing single-call receipts continue to bind selected bytes without a
+list. The current fan-out finalizer does not carry selected bytes; admitting a
+future no-list fan-out result needs a separately validated provider proof.
+
+P2 was reproduced in both M90-only (`8a-2`) and M92 (`8a-4`) prefixes. A
+transaction starting before a provider's shortened expiry accepted a list after
+expiry, and a delayed final job write also committed expired completion effects.
+Both unapplied completion definitions now check the cap with wall time after the
+registry policy read, after canonical identity lock waits, and after final writes
+before returning. The existing `P9_METADATA_STORAGE_DENIED` exception rolls
+back the job, options, cache, companions, catalogue and accounting effects.
+Existing receipt-first replay occurs before these fresh-completion checks.
+
+Red→green evidence actually observed:
+
+- P1 PGlite: **1 semantic RED** (missing expected rejection), with three
+  retained-winner/wrong-row/missing-companion controls passing; after correction
+  the combined 8a-4 focused suites passed **16/16**. A separate post-fix P1
+  check also asserted the installed validator's `no_acceptable_match` summary
+  and passed **1/1**. ISBN-tie and single-call controls remained green; the
+  existing no-list Google completion and replay control separately passed **1/1**.
+  The focused native PostgreSQL selection run passed **7/7**: installed single
+  call, ISBN tie, the unbound rejection, retained winner, wrong row, missing
+  companion and representative cover. Its temporary cluster was removed and
+  teardown **PASS**.
+- P2 PGlite: **2 semantic REDs per prefix** (`8a-2` and `8a-4`): elapsed
+  transaction and delay during the final job write. After correction, the 8a-4
+  suite passed **16/16** and the 8a-2 expiry/default/replay checks passed **4/4**.
+  A test-only temporary trigger plus a nontransactional sequence proves the late
+  write delay actually ran, and whole-database footprints prove rollback.
+- Native PostgreSQL RED: independent connections observed an actual advisory
+  lock blocker in each prefix; after the cap elapsed, both old definitions
+  incorrectly returned success. After correction, the same tests passed **2/2**
+  with no skips/TODOs. Each test verified the observed advisory blocker, that
+  the transaction started before expiry, and that all writes rolled back after
+  the lock was released past expiry. Both red and green temporary databases and
+  clusters were removed; each teardown **PASS**.
+- The 71-definition golden was explicitly refreshed as **provisional** after
+  checking that exactly the two expected effective functions changed. All 71
+  owner/ACL/volatility/search-path records, four CHECK hashes and signatures
+  were unchanged; M89/M91 bytes were unchanged. M90 SHA256 is
+  `b9c3718d3cff2d9236baf5897fb9d0a685cd13845521901ffae0598ec6288e73`;
+  M92 SHA256 is
+  `8cff8a196ef773e48bbf11147053f9e35afa78b68bbab253580c7457d344c28d`.
+  M92 is 1,903 lines; the existing one-file 8a-4 exception remains in force.
+  The synthetic installation, provisional freeze and provider guard suites
+  reported **13 pass / 0 fail / 3 TODO**. A matching hash is not approval
+  of these corrections. The broader historical PGlite suite remains incomplete;
+  the existing documentation migration-allowlist validator failure remains.
+
+Changed production files: existing local M90 and M92 only. Regression coverage:
+`phase9ProviderAutomaticReview.integration.test.mjs`,
+`phase9ProviderCompletionReview.integration.test.mjs`, and the new
+`phase9ProviderDeadline.integration.test.mjs` for actual native lock waits in
+both prefixes. Golden-test names now describe a recorded fixture rather than
+implying approval; no assertion was removed. Entry copies of M90, M92 and the
+prior golden are under `node_modules/.cache/phase9-s1-s7/p1-p2-entry-fP2gnq/`.
+The earlier cross-candidate/cross-store S4 Add coverage is not claimed exhaustive.
+
+No shared database/Storage/provider/network writes, migration application,
+staging, commit, push or deployment occurred. Full 8a acceptance and the
+separately gated exact-project application preflight remain outside this work.
+
+The final wall-clock check runs after the completion function's writes and lock
+waits, immediately before it returns. The caller still controls when a surrounding
+transaction commits; no new commit-time trigger or general transaction-lifetime
+guarantee was introduced. The review's broader cross-candidate/cross-store S4
+Add coverage caveat remains; these two corrections did not expand that proof.
+The long implementation tracker was assessed as a chronological evidence ledger;
+no content was pruned or split solely to satisfy a line-count target.
+
+Native tests used a temporary copy of the existing disposable provider runner,
+with only its test-file/name filter narrowed; the tracked runner was not changed.
+The unfiltered existing runner also picks up the new native deadline suite. No
+test in this evidence requires access to shared Supabase.
+
+Closeout: requirement definitions **195**, duplicates **0**, missing
+traceability **0** and validator regression probes **PASS**; the pre-existing
+`PHASE9_MIGRATION_SET_INVALID` allowlist failure remains. `git diff --check`
+and untracked-source whitespace checks **PASS**; staged paths **0**, remaining
+`.pyc` files **0**. No Python tests were run. All changes remain local and
+uncommitted; no staging, push, deployment or shared migration application.
+
+## 2026-11-01 - Empty ambiguity correction and no-retention proof gap
+
+Scope: the Owner requested local resolution of the two follow-up review
+findings. Authority: 02c §§4.3/5.2 and 02d §§3/acceptance ACP-7. In M92,
+successful fan-out completion now refuses `ambiguous_match` when the candidates
+array is empty. The new regression first failed with “Missing expected
+rejection”; after the change the two focused PGlite suites passed **17/17**,
+including the existing valid exact-ISBN tie, row-binding, retention and replay
+controls. No Python tests were run.
+
+The coherent no-retention fan-out case remains unresolved. 02d requires a valid
+automatic suggestion to survive a prefill skip, while 02c §4.3 requires the
+selected bytes to be source-bound. The current fan-out finalizer writes a null
+normalized candidate and empty evidence, so simply removing the no-list guard
+reintroduces the previously reproduced unbound selection. A source-bound receipt
+and its 8b producer need a reviewed contract; no unapproved interface or 8b
+implementation was added here.
+
+The provider golden-freeze test was run and **failed** on the intentionally
+changed automatic completion function hash. The fixture was not regenerated,
+following the Owner's earlier explicit instruction. The continuity validator
+reported 195 definitions, zero duplicates/missing traceability and passing
+regression probes, then failed its existing `PHASE9_MIGRATION_SET_INVALID`
+allowlist gate. The full historical suite and native provider group were not run.
+No shared database, Storage, provider, network, migration application,
+staging, commit, push or deployment actions occurred. Existing dirty changes
+were preserved; M92 and its new regression remain local and uncommitted.
+
+## 2026-11-01 - Documentation and local commit handoff
+
+The Owner requested updated documentation followed by one local commit of all
+current checkout changes. ACTIVE.md, the master tracker, data dictionary and
+current-vs-target audit now point to the current evidence and preserve the open
+no-retention fan-out proof, provisional golden mismatch and unapplied migration
+status. The earlier test results and review records above are dated evidence,
+not a claim of full Phase 9 acceptance. Git status and history own commit state.
+
+This request does not authorize a push, deployment, database or Storage write,
+provider call, migration application, or golden-fixture regeneration. A fresh
+continuity validator run reported 195 requirement definitions, zero duplicates
+or missing traceability, and passing validator probes, then stopped at the
+existing `PHASE9_MIGRATION_SET_INVALID` allowlist gate. The recorded golden
+freeze remains failing against the changed automatic completion definition.
+The two focused 8a-4 PGlite regression suites were rerun and passed **17/17**;
+the native group and full historical suite were not rerun for this handoff.
