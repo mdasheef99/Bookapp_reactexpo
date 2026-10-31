@@ -213,7 +213,7 @@ test('AC8-12 [8a-2] forged admitted Google policy cannot create canonical facts 
 });
 
 test('AC8-9a [8a-2] storage/display permissions without shared capability cannot admit OL', async t => {
-  if (!await needsCapabilities(t, db)) return;
+  if (!await needs(t, db, 'marketplace_sec.phase9_catalogue_source_policy_v2(text,text)', '8a-2')) return;
   await db.exec("UPDATE public.phase9_provider_registry SET shared_catalogue_allowed=false WHERE adapter_key='open_library'");
   assert.equal(await value(db,"SELECT marketplace_sec.phase9_catalogue_shared_admitted_v1('open_library')"),false);
 });
