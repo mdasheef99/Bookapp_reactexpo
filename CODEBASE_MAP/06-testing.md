@@ -97,6 +97,7 @@ has its own `$migrations` branches. A new Phase 9 migration must be added to the
 lists of the suites that need it, or they silently run without it.
 
 - **Catalogue suites:** `supabase/tests/phase9/phase9LeanCatalogue*.integration.test.mjs` — identity, admission, companions, completion, accounting, privacy and cache reuse; fixtures extend the base chain explicitly.
+- **Provider migration prefixes:** `supabase/tests/phase9/phase9Provider*.mjs` uses `PHASE9_PROVIDER_PREFIX` (`m88` or `8a-1` through `8a-5`) and the explicit ordered manifest `supabase/tests/phase9/fixtures/provider-replacement-packages.json`. The native runner selects the same manifest with `-OnlyGroup provider-replacement -ProviderPrefix <prefix>`; adding a manifest entry also activates that package's partial-prefix compatibility control in older-prefix runs.
 - **SQL/worker boundary:** `supabase/tests/phase9/phase9EditionOptionsWorkerSql.integration.test.mjs` — compiled worker with disposable SQL; `phase9LeanCatalogueCacheHardening.guard.test.mjs` checks the cache migration tail and helper body.
 - **Migration Jest guards:** `supabase/migrations/__tests__/marketplacePhase9LeanCatalogue.test.ts`, `marketplacePhase9CacheReuse.test.ts` — SQL shape, ACLs and controlled-write boundaries.
 - **Worker/Edge Jest:** `supabase/functions/__tests__/phase9_catalogue_*.test.ts`, `phase9_metadata_*.test.ts`, `phase9_open_library_*.test.ts` — mocked provider transport, companion validation, recovery, scope and reuse.

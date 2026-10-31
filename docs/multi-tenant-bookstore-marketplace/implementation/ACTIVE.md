@@ -1,43 +1,39 @@
 # Marketplace current state
 
-Recorded state: 2026-10-31. Slice 8 package 8a-2 file complete (local only) on branch `phase9/slice8-providers`.
+Recorded state: 2026-10-31. Slice 8 package 8a-3 file complete (local only, pending review) on branch `phase9/slice8-providers`.
 This file is rewritten at session close; dated evidence belongs in trackers.
 
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
-- Active slice/work unit: **slice 8 (Open Library first, replaceable providers), package 8a-2 complete (file only, not applied)**.
-- Completed milestone: slice 8 package 8a-2 provider-validation migration (M90,
-  889 lines), created as a local file only; not applied and not committed at the
-  time of writing (the orchestrator commits it after this docs pass); earlier
-  branch commits: `d25217b` slice 8 SDDs, `7a2ef73` Owner answers OQ8-5/9/10,
-  `3c064da` package 1 red-first tests, `746e061` 8a-1 migration; nothing is pushed;
-  [evidence](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-2-provider-validation-file-complete-not-applied).
-- Exact next authorized action: **package 8a-3, in which Sol builds the main
-  migration; reviews and fixes then go to paid DeepSeek and Muse; Terra reviews
-  the whole 8a layer after 8a-5**. Creating the file needs separate Owner
-  approval. Its mention here does not authorize creation. The LF `.gitattributes`
-  rule for `supabase/migrations/*.sql` goes as one small separate commit.
+- Active slice/work unit: **slice 8 (Open Library first, replaceable providers), package 8a-3 file complete, pending independent review; not applied**.
+- Completed milestone: local M91 route/physical-accounting file (501 lines),
+  registered under `8a-3`; M89 (`746e061`) and M90 (`f4f6d8c`) are already
+  committed and unchanged. M91 and its continuity records are uncommitted;
+  [evidence](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-3-routephysical-accounting-file-only).
+- Exact next authorized action: **independent review of the local M91 file**
+  through the prescribed paid DeepSeek/Muse cycle. Terra reviews the whole 8a
+  layer after 8a-5. No reviewer result is claimed here. Later migration creation,
+  application and deployment remain separately gated; the orchestrator owns commits.
 
 ## Mutation authority now
 
-- This task authorizes Markdown documentation edits only.
+- This task authorized local M91 file creation, prefix registration and required
+  continuity records only; no Supabase or network access and no git writes.
 - Database/migration application: **none**; Storage: **none**; deployment: **none**.
-- Migration M89 and M90 exist as local files only; they have not been applied. Nothing is
-  deployed and nothing is pushed. No Supabase, Render, stage, commit, push, or
-  branch switch is authorized by this task. The Owner authorized applying slice 8
-  migrations after the usual review cycle for each migration, with a Haiku preflight
-  (re-verify the project, read-only live registry check) and an ordered apply
-  starting with M89. This authorization does not cover pushing or deploying.
-  Nothing has been applied yet.
+- M89/M90 are committed local files; M91 is uncommitted. None has been applied.
+  This task grants no application authority. Any future apply must follow its
+  separate approval/review and exact-project preflight, ordered from M89.
+  Nothing was staged, committed, pushed, deployed or applied in this session.
 
 ## Last recorded live state
 
 These are recorded development-project results, not a fresh operational readback.
 
-- Project: **`ahntbtktjjmvfosgkmgn`**; live ledger ends at **M88**, live version
-  **`20261029151325`**; M89 and M90 are local files only and are **not applied**;
-  [ledger](phase-9-image-inventory/supporting/database-current-vs-target.md#2026-10-31-slice-8-package-8a-2-file-complete-not-applied).
+- Latest applied migration: **M88**, live version **`20261029151325`**, project
+  **`ahntbtktjjmvfosgkmgn`** (recorded, not freshly verified). M89–M91 are
+  **not applied**;
+  [ledger](phase-9-image-inventory/supporting/database-current-vs-target.md#2026-10-31-slice-8-package-8a-3-file-not-applied).
 - Registry: `google_books` and `open_library` enabled, policy_version 1; Google
   public_display=false, raw_retention=604800; Open Library public_display=true,
   attribution=true, raw_retention=0; no automatic-lookup, role or order columns yet.
@@ -46,8 +42,8 @@ These are recorded development-project results, not a fresh operational readback
   reservations from August 2026 remain; the 02c-1 drain must handle them.
 - Functions: no phase9 function has PUBLIC execute; 12 have anon execute, all
   public search/detail helpers, as expected.
-- Prior `main` state is unchanged: worker deploy `dep-dbhmr07b9u1s73f8qjpg` and
-  closeout commit `0d240ef`;
+- Deployed worker: recorded `phase9-metadata-worker` deploy `dep-dbhmr07b9u1s73f8qjpg`.
+- Latest relevant recorded commit on `main`: closeout `0d240ef`;
   [publication evidence](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#49-slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes-2026-10-29).
 
 ## Open items, blockers and residual risks
@@ -60,14 +56,12 @@ These are recorded development-project results, not a fresh operational readback
   read-only (2 Medium, both resolved; detail in the tracker entry). Terra noted
   M90 is not repeatable if applied twice (plain CREATE FUNCTION); M84 and M89
   follow the same pattern, so no change.
-- Package 8a-2 test evidence: with the 8a-2 prefix, PGlite shows 230 tests
-  (160 pass, 7 fail, 44 skipped, 19 TODO) and native Postgres shows 220 tests
-  (155 pass, 7 fail, 39 skipped, 19 TODO). The 7 failures are the expected reds:
-  five belong to 8a-4 and two tagged `[8a-2/4]` need a change to the existing
-  `phase9_catalogue_store_cache_v1` (M88; its existing-cache early return precedes
-  the Google veto), so they stay red until 8a-4. The 8a-1 prefix (148 pass /
-  16 fail) and the M88 prefix (69 pass / 16 fail) are unchanged. Historical phase9
-  suites show 199/199 and harness guards 6/6 (Sol run).
+- M91 PGlite proof and all four prefix counts are in the owning evidence entry.
+  All executable `[8a-3]` checks pass; seven later-package reds remain, with
+  messages unchanged from the 8a-2 baseline. Manifest registration activates one
+  partial-prefix control in every older prefix (+1 pass / -1 skip). Native
+  Postgres, lock/FK races and independent review were not run in this session.
+  Historical suites: 231 pass / one pre-existing CRLF byte-guard failure.
 - Owner decisions 2026-10-31: placeholders are allowed for the Open Library contact
   email and for quota/pacing numbers only where a package needs one; for oversized
   or unsafe input (OQ8-7) the orchestrator decides a simple truncation when that

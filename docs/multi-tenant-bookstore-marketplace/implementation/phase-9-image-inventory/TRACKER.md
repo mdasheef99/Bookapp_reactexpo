@@ -16,6 +16,13 @@ they do not override ACTIVE.md. Repeated status copies moved to the
 **Implementation authority:** See ACTIVE.md and the Owner's explicit scope.
 **Migration creation/application authority:** See ACTIVE.md; prior approvals are historical.
 
+## 2026-10-31 slice 8 package 8a-3 evidence
+
+Local M91 migration and prefix registration implement only 02c §4.4's 8a-3
+scope. [Implementation and verification record](./trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-3-routephysical-accounting-file-only)
+owns results and limits; [ACTIVE.md](../ACTIVE.md) owns the review handoff.
+No live application, operational proof or independent review is claimed.
+
 ## 2026-10-30 documentation consolidation evidence
 
 Owner-approved documentation-only consolidation from `5face78`: current state moved

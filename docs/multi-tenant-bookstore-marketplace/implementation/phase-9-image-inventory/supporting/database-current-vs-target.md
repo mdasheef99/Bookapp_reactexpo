@@ -1966,3 +1966,17 @@ Migration M90 exists as a local file only; it has not been applied to Supabase a
 **Target objects (file only).** Open Library v1/v2 and Google facts and call validators; a fixed dispatcher; URL binding; the resolver Google veto and the Google list-cache veto; the installed Owner-approved profile `ol-retained-fields-v1`; atomic replacement of the interim admission and source-policy bodies by `marketplace_sec.phase9_catalogue_source_policy_v2(text,text)`; a legacy-compatible option-list CHECK (`phase9_edition_valid_rows_check_v1` accepts new-rule rows or exact M73-legacy rows, so stored rows stay updatable; the new URL binding is enforced where new option lists are written). Postgres-only helpers with `search_path=''`; no new grants to PUBLIC, anon, authenticated or service_role.
 
 Migration ledger: local file `supabase/migrations/20261031000090_marketplace_phase9_provider_validation.sql` (M90, 889 lines) | live version **not applied** | project `ahntbtktjjmvfosgkmgn` must be re-verified before any apply | effects: none live (file only) | verification: not applied; test evidence only (with the 8a-2 prefix PGlite shows 160 pass / 7 fail of 230 and native Postgres shows 155 pass / 7 fail of 220, where the 7 failures are the expected reds that 8a-4 owns, including two tagged `[8a-2/4]` that stay red until 8a-4; the 8a-1 prefix and the M88 prefix baselines are unchanged).
+
+## 2026-10-31 slice 8 package 8a-3 file (not applied)
+
+M91 is local only: `supabase/migrations/20261031000091_marketplace_phase9_provider_route_accounting.sql`.
+Authority: Owner's 8a-3 build brief; 02c §§4.1–4.4/8/9; 02c-1 §2.
+No network, Supabase readback, migration application, database/Storage mutation,
+deployment or git write occurred. The recorded live ledger still ends at M88;
+re-verify project `ahntbtktjjmvfosgkmgn` before any separately authorized apply.
+
+Ledger: local version `20261031000091` | live version **not applied** | local
+effects: structural registration/usage and provider-stage generalization,
+private initially-open admission gate, nullable server-stamped grant epoch,
+gate-locked legacy physical registration/replay | live effects: **none** |
+verification: [8a-3 implementation evidence](../trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-3-routephysical-accounting-file-only).

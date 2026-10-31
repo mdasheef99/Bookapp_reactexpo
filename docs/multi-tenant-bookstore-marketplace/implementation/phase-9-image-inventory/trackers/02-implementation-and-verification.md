@@ -6465,3 +6465,99 @@ Active work unit: post_scan_rework_slice7a_closeout. Exact next authorized actio
 Commits: 621b6d1 (slice 7a, M83) plus the fix-round and closeout-fix commits, all made on the Owner's instruction (hashes not recorded in the docs); branch `claude/phase9-psr-slice7a-lean-catalogue-identity` committed and pushed on the Owner's instruction.
 
 Database mutations: none by the agents; dev data via the app (one Add).
+
+## 2026-10-31 - Slice 8 package 8a-3 route/physical accounting (file only)
+
+Authorized scope: Owner's M91 build brief; 02c §§3.1/3.2/4.1–4.4/8/9
+AC8-5/10/11; 02c-1 §2. Local migration creation only, no network, Supabase,
+native Postgres runner, git writes or deployment. Checkout was clean on
+`phase9/slice8-providers`; committed M89 `746e061` and M90 `f4f6d8c` were preserved.
+
+Completed file: `supabase/migrations/20261031000091_marketplace_phase9_provider_route_accounting.sql`
+(501 lines), registered under `8a-3` in `provider-replacement-packages.json`.
+Adds the private initially-open singleton admission gate and ACL/RLS, nullable
+physical `grant_epoch`, provider-neutral stage shape with installed grammar
+dispatch, structural lookup/attempt/usage fences and gate-locked physical grant
+wrappers. Sorted registry SHARE locks pin route policy. Exact identity replay
+preserves the prior call/epoch; fresh grants lock the gate through commit.
+Legacy v1 policy semantics, signatures, old context/source-policy DTOs, existing
+function ACLs, per-claim indexes and five-claim CHECK are retained. Terminal raw
+registration rejects before candidate-FK insertion, without taking a candidate
+lock. Native interleaving proof remains NOT_RUN.
+
+Red first: with only the new gate schema installed, the three paused-call checks
+were 1 pass / 2 fail: the fan-out grant was still created and the single-call
+path reported `Missing expected rejection.` Final focused security checks:
+22 pass / 10 later-package skips. Implementation checks caught and corrected a
+CASE-expression parse error, a mistakenly narrowed legacy service grant and
+new-tuple enforcement on legacy v1 calls before the final runs below. An
+unrequired extra physical-call CHECK was removed; the fixed CHECK inventory is
+unchanged. No test assertion or existing migration was edited.
+
+| Final PGlite prefix | Pass | Fail | Skip | TODO |
+| --- | ---: | ---: | ---: | ---: |
+| 8a-3 | 165 | 7 | 39 | 19 |
+| 8a-2 | 161 | 7 | 43 | 19 |
+| 8a-1 | 149 | 16 | 46 | 19 |
+| m88 | 70 | 16 | 125 | 19 |
+
+Each run had 230 tests. Pre-registration 8a-2 baseline: 160/7/44/19, exactly
+the brief. Registering M91 activates the previously skipped 8a-3 partial-prefix
+old-worker compatibility control in **every** prefix (+1 pass / -1 skip); the
+older failure counts remain unchanged. Final 8a-3 has no executable `[8a-3]`
+failure or promised-object-missing failure. Its seven failure names/messages
+match the baseline after normalizing generated UUIDs: two cache-publication
+early returns (`[8a-2/4]`), three saved Google auxiliary-cover paths, Google
+saved-ID Add, and Google legacy public selected-snapshot cache (8a-4).
+No later-package behavior was implemented to remove those reds; GATED checks
+remain skipped and the synthetic full-flow/frozen-golden proofs await 8a-4.
+
+Verification actually run:
+
+- `npm.cmd run build:phase9:metadata-worker` PASS once. PowerShell blocked the
+  initial `npm` alias; `npm.cmd` worked. Node test processes used
+  `NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main'` after the initial
+  sandbox `EPERM: operation not permitted, lstat 'C:\\Users\\user'` setup failure.
+- Four requested `phase9Provider*.mjs` runs, serial within each prefix, as above.
+- Historical suites: CacheSchema, CachePublication, CacheReuse, CachePrivacy,
+  CacheAdmission, CacheLegacy, CacheHardening guard, CatalogueCacheQueuedGaps,
+  OpenLibraryEditionOptions, EditionOptionsWorkerSql, LeanCatalogueCompletion,
+  LeanCatalogueCompanion: **231 pass / 1 fail / 232 total**. Existing M88 guard
+  `body retains every M86 byte except the three reviewed additions` fails at
+  `assert.ok(body.includes(addition))`. Read-only diagnosis: M88 has 145 CRLF
+  pairs; all three literals are absent raw and present after in-memory LF
+  normalization. No historical SQL, guard or `.gitattributes` was changed.
+- Supplementary disposable PGlite assertions PASS: existing legacy call bytes
+  retain NULL epoch; every existing function ACL and physical-call index is
+  unchanged; new helper owner/search_path/ACL, refused gated ISBN stage,
+  smoke allowed/unlisted/expired cohorts, <=20 cohort constraint, epoch stamping
+  and paired-null/sequence CHECKs. Temporary probe removed at closeout.
+- Native Postgres, live readback, worker HTTP/restart barriers, independent
+  reviews and operational smoke: **NOT_RUN**. No equivalent proof is claimed.
+- Continuity validator: requirement duplicates/traceability both zero and
+  regression probes PASS, then the pre-existing stale migration allowlist
+  stopped it with `PHASE9_MIGRATION_SET_INVALID`. The initial run also found
+  missing legacy current-state labels in ACTIVE.md; those were restored during
+  its required handoff update. No validator implementation was changed.
+- `git diff --check` PASS; M89/M90 have no diff. No Python tests ran.
+
+Deviations/placeholders: no product or package-scope deviation; 501 lines remain
+cohesive, so no additional migration split is proposed. No operating numbers,
+contact email or default TTL were introduced. Existing protection_policy remains
+NULL; contact email and OQ8-3 numbers stay unset. Initial smoke expiry is NULL
+with an empty cohort; only a separately authorized operator can supply smoke
+jobs/expiry. OQ8-1/2/3/4/6/7/8/11 behavior remains outside this package. No direct
+ISBN transport, author-proof schema, queue, run/retry ledger, fairness, caps,
+breaker, automatic completion/recovery, or Add/Select behavior was added.
+
+External mutations: **none**. Migration application: **none**. M91 and continuity
+changes are local/uncommitted; nothing staged, committed, pushed or deployed.
+Current handoff is in ACTIVE.md; next action is independent M91 review, with
+later file creation/application separately gated. DOC-13 remains the global
+Phase 9 pointer; no global phase/status or source requirement changed.
+
+Exact native follow-up command (recorded only, NOT executed):
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1 -OnlyGroup provider-replacement -ProviderPrefix 8a-3
+```

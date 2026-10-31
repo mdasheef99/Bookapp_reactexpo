@@ -867,3 +867,17 @@ All entries below are live from M83 version 20261026223715.
 | canonical_editions.normalizer_version | New column, live from M83. |
 | canonical_works.normalizer_version | New column, live from M83. |
 | phase9_provider_registry.shared_source_note | New column, live from M83. |
+
+## Slice 8 package 8a-3 — local target only (M91, not applied)
+
+Authority: 02c §§4.2–4.4/8 and 02c-1 §2. This section describes the local
+migration file, not observed live schema. No existing row is rewritten.
+
+| Relation / field | Local migration contract |
+| --- | --- |
+| marketplace_sec.phase9_external_admission_gate | Postgres-owned singleton; RLS enabled, no PUBLIC/anon/authenticated/service_role table privileges. Initially mode `open`, epoch `0`, empty smoke cohort, NULL expiry. Modes `open`/`paused`/`smoke`; smoke has 1–20 non-null job UUIDs and finite expiry; other modes have no cohort/expiry. |
+| public.phase9_metadata_provider_calls.grant_epoch | Nullable bigint; existing rows retain NULL. Fresh registrations stamp the server gate epoch while holding its SHARE lock through INSERT/commit; replay preserves the original row/receipt. |
+| phase9_edition_http_stage CHECK | Paired-null legacy single-call shape or paired non-null stage/sequence 0–5 with safe stage syntax. Provider/version/query-specific grammar belongs to immutable installed validators at locked registration, including refusal of the gated `isbn` stage. Existing per-claim unique indexes and five-claim CHECK remain unchanged. |
+
+Gate transitions remain operator-owned; this file authorizes no transition,
+smoke, provider activation, queue, retry allowance, quota or breaker behavior.
