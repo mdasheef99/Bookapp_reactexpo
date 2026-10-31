@@ -1,39 +1,43 @@
 # Marketplace current state
 
-Recorded state: 2026-10-31. Slice 8 package 8a-1 file complete (local only) on branch `phase9/slice8-providers`.
+Recorded state: 2026-10-31. Slice 8 package 8a-2 file complete (local only) on branch `phase9/slice8-providers`.
 This file is rewritten at session close; dated evidence belongs in trackers.
 
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
-- Active slice/work unit: **slice 8 (Open Library first, replaceable providers), package 8a-1 complete (file only, not applied)**.
-- Completed milestone: slice 8 package 8a-1 provider-registry capability and policy
-  migration, committed as `746e061` on branch `phase9/slice8-providers`
-  (earlier branch commits: `d25217b` slice 8 SDDs, `7a2ef73` Owner answers
-  OQ8-5/9/10, `3c064da` package 1 red-first tests); nothing is pushed;
-  [evidence](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-1-registry-capability-and-policy-file-complete-not-applied).
-- Exact next authorized action: **Sol finishes package 8a-2 (resolver Google veto,
-  facts/row validators, source-policy v2 and the admission capability check) after
-  the Codex usage limit resets (7:05 AM), then one Terra review of 8a-2**.
-  Creating the file needs separate Owner approval. Its mention here does not
-  authorize creation.
+- Active slice/work unit: **slice 8 (Open Library first, replaceable providers), package 8a-2 complete (file only, not applied)**.
+- Completed milestone: slice 8 package 8a-2 provider-validation migration (M90,
+  889 lines), created as a local file only; not applied and not committed at the
+  time of writing (the orchestrator commits it after this docs pass); earlier
+  branch commits: `d25217b` slice 8 SDDs, `7a2ef73` Owner answers OQ8-5/9/10,
+  `3c064da` package 1 red-first tests, `746e061` 8a-1 migration; nothing is pushed;
+  [evidence](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-2-provider-validation-file-complete-not-applied).
+- Exact next authorized action: **package 8a-3, in which Sol builds the main
+  migration; reviews and fixes then go to paid DeepSeek and Muse; Terra reviews
+  the whole 8a layer after 8a-5**. Creating the file needs separate Owner
+  approval. Its mention here does not authorize creation. The LF `.gitattributes`
+  rule for `supabase/migrations/*.sql` goes as one small separate commit.
 
 ## Mutation authority now
 
 - This task authorizes Markdown documentation edits only.
 - Database/migration application: **none**; Storage: **none**; deployment: **none**.
-- Migration M89 exists as a local file only; it has not been applied. Nothing is
+- Migration M89 and M90 exist as local files only; they have not been applied. Nothing is
   deployed and nothing is pushed. No Supabase, Render, stage, commit, push, or
-  branch switch is authorized by this task. Applying M89 needs separate Owner
-  approval and a fresh project re-verification of `ahntbtktjjmvfosgkmgn`.
+  branch switch is authorized by this task. The Owner authorized applying slice 8
+  migrations after the usual review cycle for each migration, with a Haiku preflight
+  (re-verify the project, read-only live registry check) and an ordered apply
+  starting with M89. This authorization does not cover pushing or deploying.
+  Nothing has been applied yet.
 
 ## Last recorded live state
 
 These are recorded development-project results, not a fresh operational readback.
 
 - Project: **`ahntbtktjjmvfosgkmgn`**; live ledger ends at **M88**, live version
-  **`20261029151325`**; M89 is a local file only and is **not applied**;
-  [ledger](phase-9-image-inventory/supporting/database-current-vs-target.md#2026-10-31-slice-8-package-8a-1-file-complete-not-applied).
+  **`20261029151325`**; M89 and M90 are local files only and are **not applied**;
+  [ledger](phase-9-image-inventory/supporting/database-current-vs-target.md#2026-10-31-slice-8-package-8a-2-file-complete-not-applied).
 - Registry: `google_books` and `open_library` enabled, policy_version 1; Google
   public_display=false, raw_retention=604800; Open Library public_display=true,
   attribution=true, raw_retention=0; no automatic-lookup, role or order columns yet.
@@ -48,20 +52,29 @@ These are recorded development-project results, not a fresh operational readback
 
 ## Open items, blockers and residual risks
 
-- Package 8a-2 file creation waits for separate Owner approval; applying any 8a
-  migration waits for another approval plus a fresh project re-verification.
-- Process decision (Owner, 2026-10-31): Terra reviews package 8a-2 after Sol
-  finishes it, not only at the end of 8a-5. Before any apply, a read-only check
-  of the live registry rows is required.
-- Package 8a-1 test gate: the `AC8-9a [8a-2]` test is gated to the 8a-2 object
-  (`phase9_catalogue_source_policy_v2`); the manifest lists M89 under `8a-1`.
-  With the 8a-1 prefix, PGlite shows 230 tests (147 pass, 16 fail, 48 skipped,
-  19 TODO) and native Postgres shows 220 tests (142 pass, 16 fail, 43 skipped,
-  19 TODO). The 16 failures are the reds that 8a-2 and later packages own (same
-  messages as the M88 baseline); no `[8a-1]` test fails. The M88 baseline is
-  unchanged in behaviour (one pass-count difference, 68 vs 67, is unexplained
-  and noted).
-- Owner questions still open in part: OQ8-1 contact email, OQ8-3 numbers, OQ8-7 input policy.
+- Applying any 8a migration needs the per-migration review cycle plus a Haiku
+  preflight (re-verify `ahntbtktjjmvfosgkmgn`, read-only live registry check),
+  ordered starting with M89. Pushing and deploying are not authorized.
+- Reviews of M90: Muse (no issues); paid DeepSeek (1 Low, overlong Open Library
+  id lost the 256-character bound, confirmed with a probe and fixed); Terra
+  read-only (2 Medium, both resolved; detail in the tracker entry). Terra noted
+  M90 is not repeatable if applied twice (plain CREATE FUNCTION); M84 and M89
+  follow the same pattern, so no change.
+- Package 8a-2 test evidence: with the 8a-2 prefix, PGlite shows 230 tests
+  (160 pass, 7 fail, 44 skipped, 19 TODO) and native Postgres shows 220 tests
+  (155 pass, 7 fail, 39 skipped, 19 TODO). The 7 failures are the expected reds:
+  five belong to 8a-4 and two tagged `[8a-2/4]` need a change to the existing
+  `phase9_catalogue_store_cache_v1` (M88; its existing-cache early return precedes
+  the Google veto), so they stay red until 8a-4. The 8a-1 prefix (148 pass /
+  16 fail) and the M88 prefix (69 pass / 16 fail) are unchanged. Historical phase9
+  suites show 199/199 and harness guards 6/6 (Sol run).
+- Owner decisions 2026-10-31: placeholders are allowed for the Open Library contact
+  email and for quota/pacing numbers only where a package needs one; for oversized
+  or unsafe input (OQ8-7) the orchestrator decides a simple truncation when that
+  package is briefed.
+- Owner-open items left: the contact email (placeholder), OQ8-3 numbers (placeholder
+  only where needed), OQ8-7 input policy (orchestrator decides simple truncation at
+  that package).
 - Not collected in the preflight: deployed worker config, instance count and
   pacing settings; needed before the protection package and 8c.
 - New 02c interface clarifications stand as pending review, not approved:
@@ -73,8 +86,8 @@ These are recorded development-project results, not a fresh operational readback
   proofs (8a-2..4), the post-generalization frozen golden (8a-4), prefill
   negatives (02d), provider-facts-only origin (OQ8-11).
 - Pre-existing local issues, not slice 8: `core.autocrlf=true` CRLF checkout breaks
-  raw-byte migration checks (Jest M84 hash, M86 guard); LF `.gitattributes`
-  proposed and deferred. `phase9MetadataFoundation.integration.test.mjs` has 3
+  raw-byte migration checks (Jest M84 hash, M86 guard); an LF `.gitattributes`
+  rule for `supabase/migrations/*.sql` is authorized as one small separate commit. `phase9MetadataFoundation.integration.test.mjs` has 3
   stale failures from its August-stopped harness. The continuity validator fails
   with `PHASE9_MIGRATION_SET_INVALID` (allowlist stops at M83). `.phase9-dist`
   must be built before some phase9 suites run.
