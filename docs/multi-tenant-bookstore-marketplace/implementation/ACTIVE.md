@@ -1,37 +1,38 @@
 # Marketplace current state
 
-Recorded state: 2026-10-31. Slice 8 package 1 complete on branch `phase9/slice8-providers`.
+Recorded state: 2026-10-31. Slice 8 package 8a-1 file complete (local only) on branch `phase9/slice8-providers`.
 This file is rewritten at session close; dated evidence belongs in trackers.
 
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
-- Active slice/work unit: **slice 8 (Open Library first, replaceable providers), package 1 complete**.
-- Completed milestone: slice 8 package 0 read-only live preflight and package 1
-  8a red-first provider-replacement tests, committed as `3c064da` on branch
-  `phase9/slice8-providers` (earlier branch commits: `d25217b` slice 8 SDDs,
-  `7a2ef73` Owner answers OQ8-5/9/10); nothing is pushed;
-  [evidence](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-0-read-only-preflight-and-package-1-red-first-tests-complete).
-- Exact next authorized action: **package 8a-1, in which Sol creates the 8a-1
-  migration file** (registry capability columns, the permanent-reuse veto,
-  interim admission/source policy, transition values, and the configuration
-  read). Creating the file needs separate Owner approval, and applying it needs
-  another. Its mention here does not authorize creation.
+- Active slice/work unit: **slice 8 (Open Library first, replaceable providers), package 8a-1 complete (file only, not applied)**.
+- Completed milestone: slice 8 package 8a-1 provider-registry capability and policy
+  migration, committed as `746e061` on branch `phase9/slice8-providers`
+  (earlier branch commits: `d25217b` slice 8 SDDs, `7a2ef73` Owner answers
+  OQ8-5/9/10, `3c064da` package 1 red-first tests); nothing is pushed;
+  [evidence](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-1-registry-capability-and-policy-file-complete-not-applied).
+- Exact next authorized action: **package 8a-2 (resolver Google veto, facts/row
+  validators, source-policy v2 and the admission capability check), built by Sol
+  after the Codex usage limit resets (7:05 AM)**. Creating the file needs
+  separate Owner approval. Its mention here does not authorize creation.
 
 ## Mutation authority now
 
 - This task authorizes Markdown documentation edits only.
 - Database/migration application: **none**; Storage: **none**; deployment: **none**.
-- No migration has been created or applied, nothing is deployed, and nothing is
-  pushed. No Supabase, Render, stage, commit, push, or branch switch is authorized
-  by this task.
+- Migration M89 exists as a local file only; it has not been applied. Nothing is
+  deployed and nothing is pushed. No Supabase, Render, stage, commit, push, or
+  branch switch is authorized by this task. Applying M89 needs separate Owner
+  approval and a fresh project re-verification of `ahntbtktjjmvfosgkmgn`.
 
 ## Last recorded live state
 
 These are recorded development-project results, not a fresh operational readback.
 
 - Project: **`ahntbtktjjmvfosgkmgn`**; live ledger ends at **M88**, live version
-  **`20261029151325`**; no slice 8 migrations exist; [preflight](phase-9-image-inventory/supporting/database-current-vs-target.md#2026-10-31-slice-8-package-0-read-only-preflight).
+  **`20261029151325`**; M89 is a local file only and is **not applied**;
+  [ledger](phase-9-image-inventory/supporting/database-current-vs-target.md#2026-10-31-slice-8-package-8a-1-file-complete-not-applied).
 - Registry: `google_books` and `open_library` enabled, policy_version 1; Google
   public_display=false, raw_retention=604800; Open Library public_display=true,
   attribution=true, raw_retention=0; no automatic-lookup, role or order columns yet.
@@ -46,7 +47,20 @@ These are recorded development-project results, not a fresh operational readback
 
 ## Open items, blockers and residual risks
 
-- Package 8a-1 file creation and application each wait for separate Owner approval.
+- Package 8a-2 file creation waits for separate Owner approval; applying any 8a
+  migration waits for another approval plus a fresh project re-verification.
+- Process decision (Owner, 2026-10-31): no per-package Terra review for 8a-1.
+  One Terra review covers the whole database layer (8a-1 to 8a-5) before anything
+  is applied to Supabase. Before any apply, a read-only check of the live
+  registry rows is required.
+- Package 8a-1 test gate: the `AC8-9a [8a-2]` test is gated to the 8a-2 object
+  (`phase9_catalogue_source_policy_v2`); the manifest lists M89 under `8a-1`.
+  With the 8a-1 prefix, PGlite shows 230 tests (147 pass, 16 fail, 48 skipped,
+  19 TODO) and native Postgres shows 220 tests (142 pass, 16 fail, 43 skipped,
+  19 TODO). The 16 failures are the reds that 8a-2 and later packages own (same
+  messages as the M88 baseline); no `[8a-1]` test fails. The M88 baseline is
+  unchanged in behaviour (one pass-count difference, 68 vs 67, is unexplained
+  and noted).
 - Owner questions still open: OQ8-1, -2, -3, -4, -6, -7, -8, -11 and OQ-P1.
 - Not collected in the preflight: deployed worker config, instance count and
   pacing settings; needed before the protection package and 8c.

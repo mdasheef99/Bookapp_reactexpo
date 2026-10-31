@@ -1950,3 +1950,11 @@ Read-only Supabase MCP preflight for slice 8 package 0. Project `ahntbtktjjmvfos
 **Functions.** No phase9 function has PUBLIC execute. Twelve have anon execute, all public search/detail helpers, as expected.
 
 **Not collected.** The deployed worker config, the instance count and the pacing settings. These are needed before the protection package and 8c.
+
+## 2026-10-31 slice 8 package 8a-1 file complete (not applied)
+
+Migration M89 exists as a local file only; it has not been applied to Supabase. Re-verify project `ahntbtktjjmvfosgkmgn` before any 8a migration work and again before any apply.
+
+**Target objects (file only).** 17 new `phase9_provider_registry` columns (capabilities, role, order, version contracts, hosts, retention, display, protection), with bounded validation. The immutable Google permanent-reuse veto `marketplace_sec.phase9_provider_permanent_reuse_allowed_v1(text,text)`. Interim `phase9_catalogue_shared_admitted_v1` and `phase9_catalogue_source_policy_v1` that consult the veto. Transition values: Google automatic primary, Open Library explicit primary, shared Open Library only; existing values preserved. A service_role-only `public.phase9_provider_configuration_v1()`. No PUBLIC, anon or authenticated access to anything new.
+
+Migration ledger: local file `supabase/migrations/20261031000089_marketplace_phase9_provider_registry_policy.sql` (M89, about 300 lines) | live version **not applied** | project `ahntbtktjjmvfosgkmgn` must be re-verified before any apply | effects: none live (file only) | verification: not applied; test gate only (the `AC8-9a [8a-2]` test is gated to the 8a-2 object `phase9_catalogue_source_policy_v2`; manifest lists M89 under `8a-1`; with the 8a-1 prefix PGlite shows 147 pass / 16 fail of 230 and native Postgres shows 142 pass / 16 fail of 220, where the 16 failures are the reds that 8a-2 and later packages own and no `[8a-1]` test fails).

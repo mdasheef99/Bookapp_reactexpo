@@ -25,6 +25,57 @@ record the method and verification. No database, Storage or external mutation;
 nothing staged, committed, pushed, deployed or applied. Review handoff: this
 consolidation remains local; the exact next authorized action stays in ACTIVE.md.
 
+## 2026-10-31 - Slice 8 package 8a-1 registry capability and policy file complete (not applied)
+
+Branch `phase9/slice8-providers` holds a new local commit `746e061`
+("feat(phase9): slice 8 package 8a-1 provider registry capability and policy
+migration"); nothing is pushed.
+
+Package 8a-1 created one migration file, NOT applied: `supabase/migrations/
+20261031000089_marketplace_phase9_provider_registry_policy.sql` (M89, about
+300 lines). It adds 17 new `phase9_provider_registry` columns (capabilities,
+role, order, version contracts, hosts, retention, display, protection) with
+bounded validation; the immutable Google permanent-reuse veto
+`marketplace_sec.phase9_provider_permanent_reuse_allowed_v1(text,text)`;
+interim `phase9_catalogue_shared_admitted_v1` and
+`phase9_catalogue_source_policy_v1` that consult the veto; transition values
+(Google automatic primary, Open Library explicit primary, shared Open Library
+only) with existing values preserved; and a service_role-only
+`public.phase9_provider_configuration_v1()`. Nothing new grants PUBLIC, anon
+or authenticated access.
+
+The `AC8-9a [8a-2]` test in `phase9ProviderPolicy.integration.test.mjs` is now
+gated to the 8a-2 object (`phase9_catalogue_source_policy_v2`). The manifest
+`fixtures/provider-replacement-packages.json` lists M89 under `8a-1`. Results
+with the 8a-1 prefix: PGlite 230 tests (147 pass, 16 fail, 48 skipped,
+19 TODO); native Postgres 220 tests (142 pass, 16 fail, 43 skipped, 19 TODO).
+The 16 failures are exactly the reds that 8a-2 and later packages own (same
+messages as the M88 baseline); no `[8a-1]` test fails. The M88 baseline is
+unchanged in behaviour (one pass-count difference, 68 vs 67, is unexplained
+and noted).
+
+Review process (no Claude self-verification): Muse and paid DeepSeek
+completeness reviews; three opencode models ran the tests; paid DeepSeek
+confirmed and fixed 5 Low findings (role/order CHECK constraints, rule that an
+unconfigured row may not carry approved hosts, verification note on the Open
+Library 86400 retention, note on the service_role grant, early 8a-2 test
+gate); a Muse re-review raised 2 findings and paid DeepSeek rejected both
+with evidence (`array_ndims('{}')` is NULL, so the check passes).
+
+Process decision (Owner, 2026-10-31): no per-package Terra review for 8a-1.
+One Terra review covers the whole database layer (8a-1 to 8a-5) before
+anything is applied to Supabase. Before any apply, a read-only check of the
+live registry rows is required.
+
+Mutation authority: none. Migration file created; not applied; nothing
+deployed; nothing pushed. Applying needs separate Owner approval and a fresh
+project re-verification of `ahntbtktjjmvfosgkmgn`. Exact next authorized
+action: package 8a-2, built by Sol after the Codex usage limit resets
+(7:05 AM); creating the file needs separate Owner approval. The Owner
+questions still open are OQ8-1, -2, -3, -4, -6, -7, -8, -11 and OQ-P1.
+Full detail is recorded in [the implementation/verification tracker](./trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-1-registry-capability-and-policy-file-complete-not-applied).
+Current state and the one exact next action: see [ACTIVE.md](../ACTIVE.md).
+
 ## 2026-10-31 - Slice 8 package 0 preflight and package 1 red-first tests complete
 
 Branch `phase9/slice8-providers` holds three local commits; nothing is pushed:
