@@ -307,7 +307,7 @@ no status files or DECISIONS links need edits in this correction.
 
 | Owner decision | Recommendation and effect |
 |---|---|
-| OQ-P1: D30 language grouping now or with slice 9 display work? | Include presentation-only grouping here with the small search-button change, preserving stored order/eligibility. Deferring grouping requires Owner-recorded partial D30 acceptance; do not silently reorder data. |
+| **Answered — include ([OD-2026-10-31-5](../../../../DECISIONS.md#log)).** OQ-P1: D30 language grouping now or with slice 9 display work? | Include presentation-only grouping here with the small search-button change, preserving stored order/eligibility. Deferring grouping requires Owner-recorded partial D30 acceptance; do not silently reorder data. |
 | 02c OQ8-4 benchmark/activation | Prefill deploys after verified 8b/retention, independently of 8c; only OL automatic activation waits for 8c operational gates. No duplicate threshold decision here. |
 
 No new decision is needed on write timing/counts/privacy: 02b §14 OQ3/OQ5/OQ6

@@ -12,10 +12,11 @@ This file is rewritten at session close; dated evidence belongs in trackers.
   (earlier branch commits: `d25217b` slice 8 SDDs, `7a2ef73` Owner answers
   OQ8-5/9/10, `3c064da` package 1 red-first tests); nothing is pushed;
   [evidence](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-1-registry-capability-and-policy-file-complete-not-applied).
-- Exact next authorized action: **package 8a-2 (resolver Google veto, facts/row
-  validators, source-policy v2 and the admission capability check), built by Sol
-  after the Codex usage limit resets (7:05 AM)**. Creating the file needs
-  separate Owner approval. Its mention here does not authorize creation.
+- Exact next authorized action: **Sol finishes package 8a-2 (resolver Google veto,
+  facts/row validators, source-policy v2 and the admission capability check) after
+  the Codex usage limit resets (7:05 AM), then one Terra review of 8a-2**.
+  Creating the file needs separate Owner approval. Its mention here does not
+  authorize creation.
 
 ## Mutation authority now
 
@@ -49,10 +50,9 @@ These are recorded development-project results, not a fresh operational readback
 
 - Package 8a-2 file creation waits for separate Owner approval; applying any 8a
   migration waits for another approval plus a fresh project re-verification.
-- Process decision (Owner, 2026-10-31): no per-package Terra review for 8a-1.
-  One Terra review covers the whole database layer (8a-1 to 8a-5) before anything
-  is applied to Supabase. Before any apply, a read-only check of the live
-  registry rows is required.
+- Process decision (Owner, 2026-10-31): Terra reviews package 8a-2 after Sol
+  finishes it, not only at the end of 8a-5. Before any apply, a read-only check
+  of the live registry rows is required.
 - Package 8a-1 test gate: the `AC8-9a [8a-2]` test is gated to the 8a-2 object
   (`phase9_catalogue_source_policy_v2`); the manifest lists M89 under `8a-1`.
   With the 8a-1 prefix, PGlite shows 230 tests (147 pass, 16 fail, 48 skipped,
@@ -61,7 +61,7 @@ These are recorded development-project results, not a fresh operational readback
   messages as the M88 baseline); no `[8a-1]` test fails. The M88 baseline is
   unchanged in behaviour (one pass-count difference, 68 vs 67, is unexplained
   and noted).
-- Owner questions still open: OQ8-1, -2, -3, -4, -6, -7, -8, -11 and OQ-P1.
+- Owner questions still open in part: OQ8-1 contact email, OQ8-3 numbers, OQ8-7 input policy.
 - Not collected in the preflight: deployed worker config, instance count and
   pacing settings; needed before the protection package and 8c.
 - New 02c interface clarifications stand as pending review, not approved:
