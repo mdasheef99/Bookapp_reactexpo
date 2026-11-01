@@ -1,6 +1,7 @@
 // 02c §§3.1/5.1/9/11.1: offline fixture integrity only, NOT SQL/runtime acceptance.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 import { test } from 'node:test';
 const read=name=>JSON.parse(fs.readFileSync(new URL('./fixtures/'+name,import.meta.url)));
 const synthetic=read('provider-replacement-synthetic.json');
@@ -32,4 +33,12 @@ test('AC8-9a [8a-2..4] GREEN fixture-control incomplete generalized freeze canno
   if(golden.baselineArtifact===null){assert.match(golden.status,/NEEDS-OBJECT/);assert.deepEqual(golden.sql,[]);return;}
   assert.ok(golden.sql.length>0);
   for(const row of golden.sql){assert.match(row.signature,/^(public|marketplace_sec)\.[a-z0-9_]+\(/);assert.match(row.sha256,/^[0-9a-f]{64}$/);}
+});
+test('AC8-9a [8a-5] explicit separate freeze covers its reviewed inventory and unchanged earlier files',()=>{
+  const g=read('provider-replacement-generic-8a5-sha256.json'),i=read('provider-replacement-generic-inventory.json');
+  assert.deepEqual(g.sql.map(r=>r.signature).sort(),i.sql.map(r=>r.signature).sort());
+  assert.deepEqual(g.sql.map(r=>r.signature),g.metadata.map(r=>r.signature));
+  assert.equal(g.files.length,5);
+  for(const row of g.files)
+    assert.equal(createHash('sha256').update(fs.readFileSync(new URL('../../../'+row.path,import.meta.url))).digest('hex'),row.sha256,row.path);
 });

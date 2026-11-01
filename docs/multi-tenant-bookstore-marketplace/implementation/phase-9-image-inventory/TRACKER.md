@@ -16,6 +16,31 @@ they do not override ACTIVE.md. Repeated status copies moved to the
 **Implementation authority:** See ACTIVE.md and the Owner's explicit scope.
 **Migration creation/application authority:** See ACTIVE.md; prior approvals are historical.
 
+## 2026-11-02 whole-8a review and fixes
+
+The whole-8a read-only review of M89..M93 as one ordered apply ran, its
+confirmed blocker findings (LEGACY-LIVE-1/2) were fixed in M93, and the final
+regression passed (M93 1,513 lines, sha256 `80d496a173c9…`). Nothing applied,
+committed, pushed or deployed; M90/M91 untouched. Findings, preflight counts
+and regression numbers:
+[tracker 39 whole-8a section](./trackers/39-package8a5-contract-review.md#2026-11-02--whole-8a-review-of-m89m93-fixes-preflight-and-final-regression) and the
+[2026-11-02 implementation log](./trackers/02-implementation-and-verification.md#2026-11-02---whole-8a-review-of-m89m93-fixes-preflight-and-final-regression).
+ACTIVE.md owns the current work unit, next action and authority.
+
+## 2026-11-01 slice 8 package 8a-5 file
+
+The Owner requested the local queue/protection migration. M93 adds the private
+run/retry ledger, fair claim and admission-wait helpers under 02c §§4.3–4.4/9
+and 02c-1 §2. Exact scope, red-first proof, executed checks and remaining worker/
+review gates belong to the [implementation record](./trackers/02-implementation-and-verification.md#2026-11-01---slice-8-package-8a-5-targeted-reviews-fixes-golden-refresh-and-verification).
+The [migration ledger](./supporting/database-current-vs-target.md#2026-11-01-slice-8-package-8a-5-file-not-applied)
+records fresh read-only project evidence. M93 is untracked/uncommitted, never
+applied (1,499 lines, sha256 `f431df3d…10c210`); targeted reviews, corrections,
+golden refresh and native verification are recorded in
+[tracker 39](./trackers/39-package8a5-contract-review.md#2026-11-01--targeted-8a-5-review-correction-golden-refresh-and-verification).
+Nothing is applied; ACTIVE.md owns the
+current work unit, next action and authority.
+
 ## 2026-10-31 slice 8 package 8a-4 evidence
 
 The subsequent empty-ambiguity correction and no-retention fan-out design

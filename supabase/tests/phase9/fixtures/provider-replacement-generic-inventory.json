@@ -2,6 +2,30 @@
   "authority": "02c §11.1 exact M88 overload inventory; proposed 8a overloads are separately marked",
   "sql": [
     {
+      "signature": "marketplace_sec.phase9_admission_fence_v1(jsonb, boolean)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_admission_scope_current_v1(jsonb, text)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_assert_queue_grant_v1(uuid, text, text, integer)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_automatic_terminal_run_v1(jsonb)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_begin_automatic_provider_run_v1(jsonb, text, text)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_capacity_configuration_valid_v1(jsonb)",
+      "pkg": "8a-5"
+    },
+    {
       "signature": "marketplace_sec.phase9_catalogue_choice_target_v1(jsonb, uuid, text, text)",
       "pkg": "m88"
     },
@@ -62,6 +86,10 @@
       "pkg": "m88"
     },
     {
+      "signature": "marketplace_sec.phase9_claim_metadata_jobs_v2(integer, text)",
+      "pkg": "8a-5"
+    },
+    {
       "signature": "marketplace_sec.phase9_complete_automatic_metadata_v1(jsonb)",
       "pkg": "8a-4"
     },
@@ -76,6 +104,10 @@
     {
       "signature": "marketplace_sec.phase9_complete_metadata_cache_reuse(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text)",
       "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_defer_metadata_admission_v1(jsonb, bigint)",
+      "pkg": "8a-5"
     },
     {
       "signature": "marketplace_sec.phase9_edition_legacy_select_candidate(uuid, uuid, integer, integer, integer, text, integer, uuid, uuid, text, uuid)",
@@ -106,6 +138,14 @@
       "pkg": "m88"
     },
     {
+      "signature": "marketplace_sec.phase9_finish_automatic_provider_run_v1(jsonb, text, text, timestamp with time zone)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finish_automatic_provider_run_v1(jsonb, text, text)",
+      "pkg": "8a-5"
+    },
+    {
       "signature": "marketplace_sec.phase9_finish_edition_primary_for_fallback_v1(uuid, uuid, text, text, integer, text)",
       "pkg": "m88"
     },
@@ -126,12 +166,20 @@
       "pkg": "8a-1"
     },
     {
+      "signature": "marketplace_sec.phase9_provider_run_grant_v1()",
+      "pkg": "8a-5"
+    },
+    {
       "signature": "marketplace_sec.phase9_recover_automatic_metadata_v1(jsonb)",
       "pkg": "8a-4"
     },
     {
       "signature": "marketplace_sec.phase9_recover_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text)",
       "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_edition_options_provider_call_pre_queue_v1(uuid, uuid, text, text, integer, uuid, integer, text)",
+      "pkg": "8a-5"
     },
     {
       "signature": "marketplace_sec.phase9_register_edition_options_provider_call_v1(uuid, uuid, text, text, integer, uuid, integer, text)",
@@ -146,6 +194,10 @@
       "pkg": "m88"
     },
     {
+      "signature": "marketplace_sec.phase9_register_metadata_provider_call_pre_queue_v1(uuid, uuid, text, text, integer, uuid)",
+      "pkg": "8a-5"
+    },
+    {
       "signature": "marketplace_sec.phase9_register_metadata_provider_call(uuid, uuid, text, text, integer, uuid)",
       "pkg": "m88"
     },
@@ -158,12 +210,52 @@
       "pkg": "m88"
     },
     {
+      "signature": "marketplace_sec.phase9_release_closed_admission_v1()",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_release_metadata_provider_round_v1(jsonb, text, text)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserve_metadata_provider_round_v1(jsonb, text, text)",
+      "pkg": "8a-5"
+    },
+    {
       "signature": "marketplace_sec.phase9_reserve_metadata_usage(uuid, text, text, integer, uuid, text, text, integer)",
       "pkg": "m88"
     },
     {
+      "signature": "marketplace_sec.phase9_reserve_round_capacity_v1(jsonb, text, text, boolean)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserved_store_holds_v1(uuid)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserved_store_slots_v1(uuid)",
+      "pkg": "8a-5"
+    },
+    {
       "signature": "marketplace_sec.phase9_reuse_candidate_edition_cache_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, jsonb)",
       "pkg": "m88"
+    },
+    {
+      "signature": "marketplace_sec.phase9_run_fence_digest_v1(jsonb)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_run_receipt_digest_v1(uuid, uuid, integer)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_schedule_automatic_provider_recheck_v1(jsonb, text, text)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_seed_store_admission_v1()",
+      "pkg": "8a-5"
     },
     {
       "signature": "marketplace_sec.phase9_select_metadata_snapshot(uuid, uuid, text, text, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
@@ -178,8 +270,20 @@
       "pkg": "m88"
     },
     {
+      "signature": "marketplace_sec.phase9_wake_store_admission_v1(uuid)",
+      "pkg": "8a-5"
+    },
+    {
       "signature": "public.phase9_add_candidate_to_inventory_v1(uuid, uuid, integer, integer, integer, text, uuid)",
       "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_begin_automatic_provider_run_v1(jsonb, text, text)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "public.phase9_claim_metadata_jobs_v2(integer, text)",
+      "pkg": "8a-5"
     },
     {
       "signature": "public.phase9_complete_automatic_metadata_v1(jsonb)",
@@ -198,6 +302,10 @@
       "pkg": "m88"
     },
     {
+      "signature": "public.phase9_defer_metadata_admission_v1(jsonb, bigint)",
+      "pkg": "8a-5"
+    },
+    {
       "signature": "public.phase9_finalize_edition_options_provider_call_v1(uuid, uuid, text, text, integer, text, text, boolean, boolean)",
       "pkg": "m88"
     },
@@ -212,6 +320,14 @@
     {
       "signature": "public.phase9_finalize_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
       "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_finish_automatic_provider_run_v1(jsonb, text, text, timestamp with time zone)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "public.phase9_finish_automatic_provider_run_v1(jsonb, text, text)",
+      "pkg": "8a-5"
     },
     {
       "signature": "public.phase9_finish_edition_primary_for_fallback_v1(uuid, uuid, text, text, integer, text)",
@@ -262,12 +378,24 @@
       "pkg": "m88"
     },
     {
+      "signature": "public.phase9_release_metadata_provider_round_v1(jsonb, text, text)",
+      "pkg": "8a-5"
+    },
+    {
+      "signature": "public.phase9_reserve_metadata_provider_round_v1(jsonb, text, text)",
+      "pkg": "8a-5"
+    },
+    {
       "signature": "public.phase9_reserve_metadata_usage(uuid, text, text, integer, uuid, text, text, integer)",
       "pkg": "m88"
     },
     {
       "signature": "public.phase9_reuse_candidate_edition_cache_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, jsonb)",
       "pkg": "m88"
+    },
+    {
+      "signature": "public.phase9_schedule_automatic_provider_recheck_v1(jsonb, text, text)",
+      "pkg": "8a-5"
     },
     {
       "signature": "public.phase9_select_candidate_edition_v1(uuid, uuid, integer, integer, integer, text, integer, uuid, uuid, text, uuid)",

@@ -216,6 +216,7 @@ $draftMigrationNames = @(
     '20261031000090_marketplace_phase9_provider_validation.sql'
     '20261031000091_marketplace_phase9_provider_route_accounting.sql'
     '20261031000092_marketplace_phase9_provider_automatic_transaction.sql'
+    '20261101000093_marketplace_phase9_provider_queue_protection.sql'
 ) | Select-Object -Unique
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or

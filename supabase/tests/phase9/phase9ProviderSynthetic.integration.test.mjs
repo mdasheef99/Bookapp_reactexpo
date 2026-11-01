@@ -113,7 +113,8 @@ test('AC8-9a [8a-2/3/4] synthetic admission→custom physical stages→completio
 });
 
 test('AC8-9a [8a-2..4] recorded generalized-8a golden freezes every generic definition without auto-rebaselining',async t=>{
-  const golden=JSON.parse(fs.readFileSync(new URL('./fixtures/provider-replacement-generic-sha256.json',import.meta.url)));
+  const goldenName=db.installedPackages.includes('8a-5')?'provider-replacement-generic-8a5-sha256.json':'provider-replacement-generic-sha256.json';
+  const golden=JSON.parse(fs.readFileSync(new URL('./fixtures/'+goldenName,import.meta.url)));
   if(golden.baselineArtifact===null){requireObject(t,db,false,'8a-4','post-generalization SHA256 golden and metadata; never M88 hashes');return;}
   const current=await genericHashes(db);
   assert.deepEqual(current.sql,golden.sql);

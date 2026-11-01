@@ -1,0 +1,1493 @@
+{
+  "authority": "02c §11.1 AC8-9a; freeze AFTER generalized 8a, before synthetic installation",
+  "baselineArtifact": "correction-candidate-generalized-8a5-M89-M93-2026-11-01",
+  "status": "Explicit provisional M93 correction freeze; Terra correction review and whole-8a acceptance are recorded separately in tracker 39",
+  "sql": [
+    {
+      "signature": "marketplace_sec.phase9_admission_fence_v1(jsonb, boolean)",
+      "sha256": "98dbd4acb4e93e90a0a33b145a8829614e9ff5dcbb16bf8d41850953e3815376"
+    },
+    {
+      "signature": "marketplace_sec.phase9_admission_scope_current_v1(jsonb, text)",
+      "sha256": "dcf96750e3e1226561be1d1fabb7ba54f637943cce3f96b4bd087cd452e2e392"
+    },
+    {
+      "signature": "marketplace_sec.phase9_assert_queue_grant_v1(uuid, text, text, integer)",
+      "sha256": "bc1826e212864f6508b1c062d64929ea9e2471fe78c6dafa40a7def698406fb5"
+    },
+    {
+      "signature": "marketplace_sec.phase9_automatic_terminal_run_v1(jsonb)",
+      "sha256": "942dbfb529be34f33a5199375e20386db2ce5d846c4cd6fd0ca5e6705f87729f"
+    },
+    {
+      "signature": "marketplace_sec.phase9_begin_automatic_provider_run_v1(jsonb, text, text)",
+      "sha256": "2efa7f005a78178f339f7ff720c395026fc0a9f45d9180af80b54e6e75a9f17b"
+    },
+    {
+      "signature": "marketplace_sec.phase9_capacity_configuration_valid_v1(jsonb)",
+      "sha256": "8d5471ea273677c45385a3170d45882723d16e46a149343f3795ca3af17a62a3"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_choice_target_v1(jsonb, uuid, text, text)",
+      "sha256": "47d8f5fd9409d7cc9c8854685c68654e2cc27812c0ddb91a176076a584c0b16a"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_companion_for_choice_v1(jsonb, uuid, uuid, uuid, uuid)",
+      "sha256": "32d242ba99fbfa93cc3dd3db61e4dad02803773998a99005860d153986ad9b8f"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_count_choice_v1(uuid, uuid, text, uuid, uuid)",
+      "sha256": "cdd9d6c165363a51e405fbf1f953c07e763120566c52b2754348e903d5e208cc"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_count_search_v1(uuid, uuid, uuid, uuid, uuid)",
+      "sha256": "109172a51a2994e950bca268507c1bb56ac0f04d322d578da39930abe903ac5e"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_identity_lock_key_v1(text, jsonb)",
+      "sha256": "9de49baad61d803e96db709a7786777e9b1654f179c693edffe5c021a9500d77"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_increment_v1(uuid, uuid, integer, integer, integer)",
+      "sha256": "6900bb265bb4405ae34cf1bf4f63aa4d12122bc875608b5233946e544d2f5fe3"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_isbn_v1(text, text)",
+      "sha256": "a98c5eaf076f195871caa189723e3e3f4dd88a47e11dde04bfa995ac3869001b"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_link_for_add_v1(uuid, uuid, uuid)",
+      "sha256": "4c54c8bf028d63ca5cc8baa746e8a2867cc7bd0bfbd956052dcda786cb428e26"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_resolve_v1(jsonb, jsonb, jsonb)",
+      "sha256": "acfed485964e2f9f435113855c54d6e293df6d67f33ce4abdbc31349bb2b59d6"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_reuse_cache_core_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, jsonb, jsonb)",
+      "sha256": "8003dc1e1628e877cfb384d1ccf83dc709c6f90ac29f029cce4b2c69e58c54e8"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_shared_admitted_v1(text)",
+      "sha256": "7d02aafab10313f48537cd65163cba08fceb2575854e5d9ea09a45ce22bfe572"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_source_policy_v1(text)",
+      "sha256": "9a352d2e49cfc04ea91920bcbcfddef93dbfb67069aa22e2114a855f489044de"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_source_policy_v2(text, text)",
+      "sha256": "0b3d59f56313b051e8b6ea3cd58ba202c4d9d0fa662629f8da31eac31b0075d4"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_store_cache_v1(uuid, jsonb)",
+      "sha256": "c90c3d1b9da39cbd0d8cd59e40562a671116312270e9e81f261b894e72e84c52"
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_valid_cache_v1(jsonb)",
+      "sha256": "49cad4218f2d95718706a34d643f4e12d5592373e908f860cdae1f7c4f887f0f"
+    },
+    {
+      "signature": "marketplace_sec.phase9_claim_metadata_jobs_v2(integer, text)",
+      "sha256": "55cf82149aec5f8ff7dc50a5ca3fb69ca9a3e554807106f2f64c96b860959e87"
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_automatic_metadata_v1(jsonb)",
+      "sha256": "2ae8c799ac3b81e741b064dfb696e4757a2b0265a79aef7cbcb0119e351e429f"
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb)",
+      "sha256": "f4e0d72d8bcc149194b45bac6d9348f87ea1a12abb494fafe613f6a091061edc"
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_candidate_edition_options_v2(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb, jsonb)",
+      "sha256": "0218e18d3daaba2e30e65806b45b1beb87fcca7d57d315b86d021b9a255a5b74"
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_metadata_cache_reuse(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text)",
+      "sha256": "3cb5f653df1faf0b09e24844eee1f1e0a27a266f9528392d9473947add3ccb0a"
+    },
+    {
+      "signature": "marketplace_sec.phase9_defer_metadata_admission_v1(jsonb, bigint)",
+      "sha256": "084238580422b9639aa9ce2b95b1f01b6c66db107d1bfd10c68cd04e51278be0"
+    },
+    {
+      "signature": "marketplace_sec.phase9_edition_legacy_select_candidate(uuid, uuid, integer, integer, integer, text, integer, uuid, uuid, text, uuid)",
+      "sha256": "8a154d05e1a45f70fd4b8a611f9899fd32c09ea641a3f958f2c64f9542a1380d"
+    },
+    {
+      "signature": "marketplace_sec.phase9_edition_source_policy(phase9_candidate_edition_state)",
+      "sha256": "c6d262c9bcd05815ef460a08c82b3a6f728f8eff3c41f0a5d2abc92262f7b794"
+    },
+    {
+      "signature": "marketplace_sec.phase9_edition_worker_context(image_extraction_jobs)",
+      "sha256": "78981803fbb258e94d1e721175a23ebacc5a2f30a6b8b3e315c468fc489414d2"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_edition_options_provider_call_v1(uuid, uuid, text, text, integer, text, text, boolean, boolean)",
+      "sha256": "3fb0b3ef36164aedda00c50199d6534628ca9eb17a48e893af02cd2d42f35fb1"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_metadata_attempt(uuid, uuid, text, text, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "sha256": "92396d54462c5dd9c19e7283a91961942a654a84b432f9871572dded1c3aef9e"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_metadata_provider_call(uuid, uuid, text, text, integer, text, text, text, text, boolean, jsonb, jsonb)",
+      "sha256": "bb661881bf5eae2adb8a08cb477a0ae5b1baf5902c18bbd2074578e78d99c100"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "sha256": "69fb02984df41d4f880c9b1e3275a21ebd998a698c0ddd00d782e66569984e64"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finish_automatic_provider_run_v1(jsonb, text, text)",
+      "sha256": "cf76c33df9e1bc89f626fbc60ad33069520e37fce729fe3d427d6484f7caa3bb"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finish_automatic_provider_run_v1(jsonb, text, text, timestamp with time zone)",
+      "sha256": "7844fd66876e6ed270eee40911b6db106f9f10842fe3228307a0866681dd327e"
+    },
+    {
+      "signature": "marketplace_sec.phase9_finish_edition_primary_for_fallback_v1(uuid, uuid, text, text, integer, text)",
+      "sha256": "e3a6cd0414c01a10eac1b02990eea7b08ff046352f7cb6809cde0fd3ab39af66"
+    },
+    {
+      "signature": "marketplace_sec.phase9_metadata_cache_reuse_context(uuid, text, text, integer, uuid, integer, text)",
+      "sha256": "2a1b498078a2dc0c781019bda24fea0b1a7dda5a63ec92c69d8170ede9412d82"
+    },
+    {
+      "signature": "marketplace_sec.phase9_metadata_job_context(uuid, text, text, integer)",
+      "sha256": "96cc316d3c4b5ae6fa103681342326aabebf0556e93d05daba91dd7509bccbfd"
+    },
+    {
+      "signature": "marketplace_sec.phase9_metadata_job_context_v2(uuid, text, text, integer)",
+      "sha256": "cb4d2e1fa20ceef557cf5f8079e0a1549009f49c376b84f9cb1a4bc20d11e0b0"
+    },
+    {
+      "signature": "marketplace_sec.phase9_provider_permanent_reuse_allowed_v1(text, text)",
+      "sha256": "3264361ca2dbf32725f6b2b5e16b10190db184da719b0c8a5fdca81a08671a0a"
+    },
+    {
+      "signature": "marketplace_sec.phase9_provider_run_grant_v1()",
+      "sha256": "51bc2c7b56319b2a9ddbe21ceda040e132bcb4e3e4a6708fa9f2b089ceeb456c"
+    },
+    {
+      "signature": "marketplace_sec.phase9_recover_automatic_metadata_v1(jsonb)",
+      "sha256": "14f1ced8e06ff558fc37df97949b2b2e67345bb903cd108a077250744c7b8be0"
+    },
+    {
+      "signature": "marketplace_sec.phase9_recover_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text)",
+      "sha256": "32e82c582e1eacaf4966adb01ac965112abb5c1ee5afa56911bd9d0db38db6a7"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_edition_options_provider_call_pre_queue_v1(uuid, uuid, text, text, integer, uuid, integer, text)",
+      "sha256": "4e398bf16363d3ed27d8c30e30983cf3a390a1ada7033fd82dc5c1dfb1310b4a"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_edition_options_provider_call_v1(uuid, uuid, text, text, integer, uuid, integer, text)",
+      "sha256": "f10084b805b9d53fe0638d09b66593ab096468fd9097ccf16575193ea42549c4"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_metadata_attempt(uuid, uuid, text, text, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "sha256": "d4a98f56917b730bd574ef49e322d8da5f17b97a914b3abf624c67776c466ef7"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_metadata_lookup(uuid, text, text, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "sha256": "f2eb861df0dd4787eab4276aac59f0ddcf20f9820c0bcdbc6f671858be39f04e"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_metadata_provider_call(uuid, uuid, text, text, integer, uuid)",
+      "sha256": "a22639ed67c490545c6776716a8baebb98b174a4021d4fb8bb19aff7a738b8a9"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_metadata_provider_call_pre_queue_v1(uuid, uuid, text, text, integer, uuid)",
+      "sha256": "568b5425479efa07bc7fe96a34745c60fedf60db7aa670fc11ba28980a36cce0"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "sha256": "a9e03421c44db8674f159ffe22e2294c7f3c568ec7385505847be6b00a68f1ab"
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_structural_metadata_lookup(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "sha256": "902c02b1406ba0e9827b0b44013a4d06fcf9535a671f90d13afa716ed1f68b6c"
+    },
+    {
+      "signature": "marketplace_sec.phase9_release_closed_admission_v1()",
+      "sha256": "204405fa6bc7552e114e3430d23fe9a7a1d12981b9ef31b066117aa4f2a2afc0"
+    },
+    {
+      "signature": "marketplace_sec.phase9_release_metadata_provider_round_v1(jsonb, text, text)",
+      "sha256": "4c7e7a4b3d2b50bd6cb852fd00e73f99e75d440929602d8d983f20379e48c137"
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserve_metadata_provider_round_v1(jsonb, text, text)",
+      "sha256": "6b459a29e8727c7e6a3c0a0165ce3d7c2988b87e179eeee0d5fc0ac2f116b62d"
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserve_metadata_usage(uuid, text, text, integer, uuid, text, text, integer)",
+      "sha256": "04179323f4a31a07638c9b47ea7d10ca92a0055614b82a1e10bf0574c529c039"
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserve_round_capacity_v1(jsonb, text, text, boolean)",
+      "sha256": "738409843a3328242eff5243f743d5a324851df85120c413183d6d4f8f59b689"
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserved_store_holds_v1(uuid)",
+      "sha256": "d301b79ce7d8a6350862526e76f9e4689fdedd211e748dda06531a9b7191fa7c"
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserved_store_slots_v1(uuid)",
+      "sha256": "cf47df1c364dd90145eea474153e0ac4da9d350f189ef2f7873c134313d4d9f7"
+    },
+    {
+      "signature": "marketplace_sec.phase9_reuse_candidate_edition_cache_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, jsonb)",
+      "sha256": "60672c6f489bb0b1bc58ec4c16f3291b034a431685c2c4f3ee312483f31c6f5e"
+    },
+    {
+      "signature": "marketplace_sec.phase9_run_fence_digest_v1(jsonb)",
+      "sha256": "69d546f47c56da2d276d5b6774251d34b72263bed66479109a6109aaa2ab75c0"
+    },
+    {
+      "signature": "marketplace_sec.phase9_run_receipt_digest_v1(uuid, uuid, integer)",
+      "sha256": "c5a84eb2fa614e6a31d699283be685f587a1fd3049c8e6d2af7b0d8995fff3d2"
+    },
+    {
+      "signature": "marketplace_sec.phase9_schedule_automatic_provider_recheck_v1(jsonb, text, text)",
+      "sha256": "80224c0c475e8a65a7e4b2f031abbeec9c715891237baa4d77b8821f3749b7c3"
+    },
+    {
+      "signature": "marketplace_sec.phase9_seed_store_admission_v1()",
+      "sha256": "60fd9087e42beef501f25eff65604a7ccca23385216f96987185ea40a25b8d22"
+    },
+    {
+      "signature": "marketplace_sec.phase9_select_metadata_snapshot(uuid, uuid, text, text, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "sha256": "0f7dc1e357625da3118970b196208b4828005b7ec2bf61ff6f3f61cf7cca48ba"
+    },
+    {
+      "signature": "marketplace_sec.phase9_select_structural_metadata_snapshot(uuid, uuid, text, text, integer, uuid, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "sha256": "662c866210b16295ddcee415ae8dc946e32d520ede60c6f2e9dbc8be3d3885c0"
+    },
+    {
+      "signature": "marketplace_sec.phase9_store_metadata_cache(uuid, text, text, integer, text, jsonb, text, timestamp with time zone, timestamp with time zone)",
+      "sha256": "ea69efe70fe49158f3d65ea343cfb3b33749ad90f75453b29d259ab2909f7f75"
+    },
+    {
+      "signature": "marketplace_sec.phase9_wake_store_admission_v1(uuid)",
+      "sha256": "956f32ff6c437d9f335e45017f783edf4220745f17c4ba1b7b0749b54d7339e3"
+    },
+    {
+      "signature": "public.phase9_add_candidate_to_inventory_v1(uuid, uuid, integer, integer, integer, text, uuid)",
+      "sha256": "7a38fae5383640be56f5cc28eae300714504026dd6c38b82ce30851d71434b9b"
+    },
+    {
+      "signature": "public.phase9_begin_automatic_provider_run_v1(jsonb, text, text)",
+      "sha256": "50a5237dd0ad2677b59d68d39df389850215000e273d74e3acd65e21d8fc87c8"
+    },
+    {
+      "signature": "public.phase9_claim_metadata_jobs_v2(integer, text)",
+      "sha256": "c1f3e68ad249bdff938fc63eaa5414318599d39d2b084e0b5a83562d9aab8b1e"
+    },
+    {
+      "signature": "public.phase9_complete_automatic_metadata_v1(jsonb)",
+      "sha256": "3b6678207f1dd7254dae2de97c3d7a6997462b583c485733aaec151849a5b974"
+    },
+    {
+      "signature": "public.phase9_complete_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb)",
+      "sha256": "f81004d8441d20e42caacb93ea68aa12aec24336aabf33f6b786f32b09f63294"
+    },
+    {
+      "signature": "public.phase9_complete_candidate_edition_options_v2(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb, jsonb)",
+      "sha256": "3c938f14f2be5f8e80f4e4f99985ed5210655317cd10d47f6cc76d98994554b5"
+    },
+    {
+      "signature": "public.phase9_complete_metadata_cache_reuse(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text)",
+      "sha256": "288b639a626201eefa407d17179943ae9ebf047e012bd957237fbd88e0f26ed1"
+    },
+    {
+      "signature": "public.phase9_defer_metadata_admission_v1(jsonb, bigint)",
+      "sha256": "be42de5964dcdb027bf844e67fa0fd8243251aae8d09ccf00147f98154cdb0b4"
+    },
+    {
+      "signature": "public.phase9_finalize_edition_options_provider_call_v1(uuid, uuid, text, text, integer, text, text, boolean, boolean)",
+      "sha256": "36760e18a4cb6f549e3fe1db761870d3032b89e8bb27224f8836906278369209"
+    },
+    {
+      "signature": "public.phase9_finalize_metadata_attempt(uuid, uuid, text, text, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "sha256": "2dbfda79e8daf8d0a578d6694d96b8cf54b25e60568b627efcc54f34506d7591"
+    },
+    {
+      "signature": "public.phase9_finalize_metadata_provider_call(uuid, uuid, text, text, integer, text, text, text, text, boolean, jsonb, jsonb)",
+      "sha256": "9a9e44a3f6ea31b486e910e67b779ac6b8765f7c153b9506b91e1d73fb0f9ecd"
+    },
+    {
+      "signature": "public.phase9_finalize_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "sha256": "6566401b46eb50ee131b919d0a92f52e0cb75a7ecc7ab2f25c915e2b1f0a7e02"
+    },
+    {
+      "signature": "public.phase9_finish_automatic_provider_run_v1(jsonb, text, text)",
+      "sha256": "d4d9985d6796c5b25b083e9574a7280a85844a5c52e27e6f2a55ebec5076fa49"
+    },
+    {
+      "signature": "public.phase9_finish_automatic_provider_run_v1(jsonb, text, text, timestamp with time zone)",
+      "sha256": "4f95f12064a5f5d53270538caa68b36aad35ff20304b3ca4f4abbe435cac4cb4"
+    },
+    {
+      "signature": "public.phase9_finish_edition_primary_for_fallback_v1(uuid, uuid, text, text, integer, text)",
+      "sha256": "074592bec66d0af859435cd72d6f30e62448f03628b9eeb1c7b5e6dda6d88990"
+    },
+    {
+      "signature": "public.phase9_metadata_cache_reuse_context(uuid, text, text, integer, uuid, integer, text)",
+      "sha256": "66262e53ab700ed2af8de2363119c6035354a3ebbe2a5b09cab15dcbb52c870b"
+    },
+    {
+      "signature": "public.phase9_metadata_job_context(uuid, text, text, integer)",
+      "sha256": "7972442edf5e604e57e01b1589d4b82ae3ff3b787531c19a3d18662c30f7a047"
+    },
+    {
+      "signature": "public.phase9_provider_configuration_v1()",
+      "sha256": "b92405b7391a7e82f22c1c68b7bb10c7fea38ded579f5ab6e3231912fd7b914f"
+    },
+    {
+      "signature": "public.phase9_recover_automatic_metadata_v1(jsonb)",
+      "sha256": "e44b85a3be86b56b45ef0aa7ee2e9cb3b265b8641be74aa48a937ffc95d12136"
+    },
+    {
+      "signature": "public.phase9_recover_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text)",
+      "sha256": "6202ac6b4372d665c0ac6743f29037c4dc71f74970c5beffa6802f170a8dc175"
+    },
+    {
+      "signature": "public.phase9_register_edition_options_provider_call_v1(uuid, uuid, text, text, integer, uuid, integer, text)",
+      "sha256": "277da49b68aa3f503efbe971974c52e58fbadb4055e64c49a1ab11609d84f257"
+    },
+    {
+      "signature": "public.phase9_register_metadata_attempt(uuid, uuid, text, text, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "sha256": "211da88c6521ae0413e0ad291443d608c1c3dea5421cafd46e9bb1e682b9ca38"
+    },
+    {
+      "signature": "public.phase9_register_metadata_lookup(uuid, text, text, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "sha256": "c88ca73c31ed58d2da0019731331cb10286e1c90b3f4016776cec08f8f297985"
+    },
+    {
+      "signature": "public.phase9_register_metadata_provider_call(uuid, uuid, text, text, integer, uuid)",
+      "sha256": "8575638e9648b948f3bb82b825611b7eac1de5b4255424165fc21cc6f04f395d"
+    },
+    {
+      "signature": "public.phase9_register_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "sha256": "47278c82e64c526bc482cbd1e48eb95f4c6aec5e0136d1cbfe3a9a435e7477a1"
+    },
+    {
+      "signature": "public.phase9_register_structural_metadata_lookup(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "sha256": "1b4b12b504c8127f493cdfe64d31dbfc97964ef36c300fb05701ca0f2c6ebf34"
+    },
+    {
+      "signature": "public.phase9_release_metadata_provider_round_v1(jsonb, text, text)",
+      "sha256": "df086c55d7b4517d4725f8f51f77ea9efc1061a9e2a0e4bf79ee56da2173c38d"
+    },
+    {
+      "signature": "public.phase9_reserve_metadata_provider_round_v1(jsonb, text, text)",
+      "sha256": "83cd193f7b46cc2b71b64516764f26379cb08fd26457dc88105d532f0d7e74f0"
+    },
+    {
+      "signature": "public.phase9_reserve_metadata_usage(uuid, text, text, integer, uuid, text, text, integer)",
+      "sha256": "4c594921e10ea5748c798f02170ef1c188953faecd107bf7f0d8298dd0f2bbb7"
+    },
+    {
+      "signature": "public.phase9_reuse_candidate_edition_cache_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, jsonb)",
+      "sha256": "e54d0d14a8238c4b18863d2c534b297f16494ce5492764e83a82527e430c5e89"
+    },
+    {
+      "signature": "public.phase9_schedule_automatic_provider_recheck_v1(jsonb, text, text)",
+      "sha256": "587c0ad8aa4d48fae773a797d0f7718135b8d0f3af317e019963eaf8c4f28cab"
+    },
+    {
+      "signature": "public.phase9_select_candidate_edition_v1(uuid, uuid, integer, integer, integer, text, integer, uuid, uuid, text, uuid)",
+      "sha256": "79799075e4d1ed2cfe4efed22fe3dfb3578b9395452ca667aeaf81e0eeefac56"
+    },
+    {
+      "signature": "public.phase9_select_metadata_snapshot(uuid, uuid, text, text, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "sha256": "b746ad1376d2786104829bccba4b009504035833a34b8817d093eb26b1f72f20"
+    },
+    {
+      "signature": "public.phase9_select_structural_metadata_snapshot(uuid, uuid, text, text, integer, uuid, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "sha256": "346d86818bc08d02deb19fbc65a8831ef664900bd7c49d859541a816b3631998"
+    },
+    {
+      "signature": "public.phase9_store_metadata_cache(uuid, text, text, integer, text, jsonb, text, timestamp with time zone, timestamp with time zone)",
+      "sha256": "6d2c5e9ee6228bd3d7ab5496387b113f9b72572d5af4ebe64e59714cddae7c83"
+    }
+  ],
+  "checks": [
+    {
+      "signature": "phase9_edition_http_stage",
+      "sha256": "b92c6900dff7c0a5939531a30a42f3a36a564431dff9fc750a9d9a212092dfe7"
+    },
+    {
+      "signature": "phase9_metadata_provider_calls_claim_attempt_number_check",
+      "sha256": "01606e04e434c596ddb983bd5ad0d2d6e820a39f1e2125385127ccf5ca601f4f"
+    },
+    {
+      "signature": "phase9_metadata_provider_calls_claim_lease_token_hash_check",
+      "sha256": "7cff36bd2ac79830bd014347cc990e05b0a5786405cb0c9c1674c07e9e9708b9"
+    },
+    {
+      "signature": "phase9_metadata_provider_calls_status_check",
+      "sha256": "e731964d801efdf0b5791e5c934620baad55b80aab652ac8c4c21bf9b8d093ed"
+    }
+  ],
+  "files": [
+    {
+      "path": "supabase/migrations/20261031000089_marketplace_phase9_provider_registry_policy.sql",
+      "sha256": "fffe86d24e1ca1549e1529702410d9dbd70d59acffc2c76e551b5153f746e59b"
+    },
+    {
+      "path": "supabase/migrations/20261031000090_marketplace_phase9_provider_validation.sql",
+      "sha256": "b9c3718d3cff2d9236baf5897fb9d0a685cd13845521901ffae0598ec6288e73"
+    },
+    {
+      "path": "supabase/migrations/20261031000091_marketplace_phase9_provider_route_accounting.sql",
+      "sha256": "dd498db9934e5fbf8a10034955668fc2d2a98394959b52577d91861ac3a44598"
+    },
+    {
+      "path": "supabase/migrations/20261031000092_marketplace_phase9_provider_automatic_transaction.sql",
+      "sha256": "b256e00ff2a86ec7ad58f4b27fcab8775a8925c92fc275e5279d37e8ea56c230"
+    },
+    {
+      "path": "supabase/migrations/20261101000093_marketplace_phase9_provider_queue_protection.sql",
+      "sha256": "80d496a173c9f6fe30f42d3714c0c787488ced2669024be18d2090c9bea34c5e"
+    }
+  ],
+  "metadata": [
+    {
+      "signature": "marketplace_sec.phase9_admission_fence_v1(jsonb, boolean)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_admission_scope_current_v1(jsonb, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_assert_queue_grant_v1(uuid, text, text, integer)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_automatic_terminal_run_v1(jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "s",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_begin_automatic_provider_run_v1(jsonb, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_capacity_configuration_valid_v1(jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "s",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_choice_target_v1(jsonb, uuid, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_companion_for_choice_v1(jsonb, uuid, uuid, uuid, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "s",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_count_choice_v1(uuid, uuid, text, uuid, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_count_search_v1(uuid, uuid, uuid, uuid, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_identity_lock_key_v1(text, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "i",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_increment_v1(uuid, uuid, integer, integer, integer)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_isbn_v1(text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "s",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_link_for_add_v1(uuid, uuid, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_resolve_v1(jsonb, jsonb, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_reuse_cache_core_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, jsonb, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_shared_admitted_v1(text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "s",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_source_policy_v1(text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_source_policy_v2(text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_store_cache_v1(uuid, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_catalogue_valid_cache_v1(jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "i",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_claim_metadata_jobs_v2(integer, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_automatic_metadata_v1(jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_candidate_edition_options_v2(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_complete_metadata_cache_reuse(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_defer_metadata_admission_v1(jsonb, bigint)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_edition_legacy_select_candidate(uuid, uuid, integer, integer, integer, text, integer, uuid, uuid, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_edition_source_policy(phase9_candidate_edition_state)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "s",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_edition_worker_context(image_extraction_jobs)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_edition_options_provider_call_v1(uuid, uuid, text, text, integer, text, text, boolean, boolean)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_metadata_attempt(uuid, uuid, text, text, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_metadata_provider_call(uuid, uuid, text, text, integer, text, text, text, text, boolean, jsonb, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_finalize_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_finish_automatic_provider_run_v1(jsonb, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_finish_automatic_provider_run_v1(jsonb, text, text, timestamp with time zone)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_finish_edition_primary_for_fallback_v1(uuid, uuid, text, text, integer, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_metadata_cache_reuse_context(uuid, text, text, integer, uuid, integer, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_metadata_job_context(uuid, text, text, integer)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_metadata_job_context_v2(uuid, text, text, integer)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_provider_permanent_reuse_allowed_v1(text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "i",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_provider_run_grant_v1()",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_recover_automatic_metadata_v1(jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_recover_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_edition_options_provider_call_pre_queue_v1(uuid, uuid, text, text, integer, uuid, integer, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_edition_options_provider_call_v1(uuid, uuid, text, text, integer, uuid, integer, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_metadata_attempt(uuid, uuid, text, text, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_metadata_lookup(uuid, text, text, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_metadata_provider_call(uuid, uuid, text, text, integer, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_metadata_provider_call_pre_queue_v1(uuid, uuid, text, text, integer, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_register_structural_metadata_lookup(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_release_closed_admission_v1()",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_release_metadata_provider_round_v1(jsonb, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserve_metadata_provider_round_v1(jsonb, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserve_metadata_usage(uuid, text, text, integer, uuid, text, text, integer)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserve_round_capacity_v1(jsonb, text, text, boolean)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserved_store_holds_v1(uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "s",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_reserved_store_slots_v1(uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "s",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_reuse_candidate_edition_cache_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_run_fence_digest_v1(jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "i",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_run_receipt_digest_v1(uuid, uuid, integer)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "s",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\"",
+        "TimeZone=UTC"
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_schedule_automatic_provider_recheck_v1(jsonb, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_seed_store_admission_v1()",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_select_metadata_snapshot(uuid, uuid, text, text, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_select_structural_metadata_snapshot(uuid, uuid, text, text, integer, uuid, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_store_metadata_cache(uuid, text, text, integer, text, jsonb, text, timestamp with time zone, timestamp with time zone)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "marketplace_sec.phase9_wake_store_admission_v1(uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_add_candidate_to_inventory_v1(uuid, uuid, integer, integer, integer, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_begin_automatic_provider_run_v1(jsonb, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_claim_metadata_jobs_v2(integer, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_complete_automatic_metadata_v1(jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_complete_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_complete_candidate_edition_options_v2(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_complete_metadata_cache_reuse(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_defer_metadata_admission_v1(jsonb, bigint)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_finalize_edition_options_provider_call_v1(uuid, uuid, text, text, integer, text, text, boolean, boolean)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_finalize_metadata_attempt(uuid, uuid, text, text, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_finalize_metadata_provider_call(uuid, uuid, text, text, integer, text, text, text, text, boolean, jsonb, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_finalize_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, text, text, text, text, integer, text, jsonb, numeric, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_finish_automatic_provider_run_v1(jsonb, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_finish_automatic_provider_run_v1(jsonb, text, text, timestamp with time zone)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_finish_edition_primary_for_fallback_v1(uuid, uuid, text, text, integer, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_metadata_cache_reuse_context(uuid, text, text, integer, uuid, integer, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_metadata_job_context(uuid, text, text, integer)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_provider_configuration_v1()",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "s",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_recover_automatic_metadata_v1(jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_recover_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_register_edition_options_provider_call_v1(uuid, uuid, text, text, integer, uuid, integer, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_register_metadata_attempt(uuid, uuid, text, text, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_register_metadata_lookup(uuid, text, text, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_register_metadata_provider_call(uuid, uuid, text, text, integer, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_register_structural_metadata_attempt(uuid, uuid, text, text, integer, uuid, integer, uuid, text, text, integer, text, text, text, text, text, text, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_register_structural_metadata_lookup(uuid, text, text, integer, uuid, integer, text, text, text, text, text, text, text, text, text, text, text, text, text, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_release_metadata_provider_round_v1(jsonb, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_reserve_metadata_provider_round_v1(jsonb, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_reserve_metadata_usage(uuid, text, text, integer, uuid, text, text, integer)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_reuse_candidate_edition_cache_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, jsonb)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_schedule_automatic_provider_recheck_v1(jsonb, text, text)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_select_candidate_edition_v1(uuid, uuid, integer, integer, integer, text, integer, uuid, uuid, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": true,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_select_metadata_snapshot(uuid, uuid, text, text, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_select_structural_metadata_snapshot(uuid, uuid, text, text, integer, uuid, integer, uuid, uuid, text, text, jsonb, jsonb, text, uuid)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    },
+    {
+      "signature": "public.phase9_store_metadata_cache(uuid, text, text, integer, text, jsonb, text, timestamp with time zone, timestamp with time zone)",
+      "owner": "postgres",
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "provolatile": "v",
+      "prosecdef": false,
+      "proconfig": [
+        "search_path=\"\""
+      ]
+    }
+  ],
+  "inventory": "provider-replacement-generic-inventory.json"
+}

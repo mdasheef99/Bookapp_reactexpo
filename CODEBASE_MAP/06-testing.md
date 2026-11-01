@@ -223,6 +223,21 @@ Read the workflow file for exact triggers before relying on CI coverage.
 
 ## Verification habits
 
+`phase9ProviderQueue.integration.test.mjs` exercises the provider queue/run
+boundary on disposable SQL. With `PHASE9_PROVIDER_NATIVE_PORT` set by the
+provider runner, it also uses independent connections to lock a store/head job
+and verify another store can claim. Its operating limits are test fixtures.
+Run the native group with `-OnlyGroup provider-replacement -ProviderPrefix 8a-5`.
+The companion `phase9ProviderQueueReview`, `phase9ProviderCapacity`,
+`phase9ProviderRoundAdmission`, `phase9ProviderRunCompletion` and
+`phase9ProviderQueueInstall` suites cover full-fence recovery, capacity holds,
+explicit/custom-provider admission, terminal accounting, and installation.
+Native capacity tests hold locks across quota/lease/session deadlines. Golden
+fixtures are prefix-specific: the 8a-4 baseline is preserved separately from
+the explicit 8a-5 generalized freeze
+(`fixtures/provider-replacement-generic-8a5-sha256.json`); no test automatically
+refreshes either.
+
 - Start deterministic changes red-first; see [05 process rules](./05-marketplace-rules.md#process-rules).
 - Run the narrowest relevant tests first, then TypeScript.
 - Database, RLS or security changes need migration tests or DB suites **and** a

@@ -42,8 +42,8 @@ export async function olAutomaticRoute(db) {
       validation_contract='open-library-v2' WHERE adapter_key='open_library';`);
 }
 
-export async function beginAutomatic(db,{key='google_books',version='1.0.0',claim=1,card=null}={}) {
-  const f=card??await seedCard(db),{jobId}=await seedAutomaticLineage(db,f);
+export async function beginAutomatic(db,{key='google_books',version='1.0.0',claim=1,card=null,sourceHash='a'.repeat(64)}={}) {
+  const f=card??await seedCard(db),{jobId}=await seedAutomaticLineage(db,f,'accepted',sourceHash);
   await value(db,await claimJob(db,f,jobId));
   await resetActor(db);
   await db.query('UPDATE public.image_extraction_jobs SET attempt_count=$1 WHERE id=$2',[claim,jobId]);

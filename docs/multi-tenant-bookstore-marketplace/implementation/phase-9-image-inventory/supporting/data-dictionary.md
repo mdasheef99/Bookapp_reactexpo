@@ -1,3 +1,41 @@
+## 8a-5 queue/protection schema (02c §§4.3–4.4; 02c-1 §2)
+
+All four new relations are private in `marketplace_sec`, owned by postgres,
+RLS enabled, without PUBLIC/anon/authenticated/service_role table privileges.
+
+| Relation | Fields and authority |
+|---|---|
+| `phase9_store_admission` | Server store FK/PK, monotonic `last_ticket`, capacity `window_started_at`, nullable positive `window_seconds` pinned for the active window, actual `gets_used`, `next_due_at`. Tickets come from the private bigint `phase9_admission_ticket` sequence; no wall-clock ordering claim. A nonempty window keeps its duration across policy changes. |
+| `phase9_job_admission_wait` | Job FK/PK, blocked gate epoch and recording time. New claims exclude that exact epoch; a new operator epoch makes work eligible again. |
+| `phase9_automatic_provider_runs` | PK job/query SHA256/provider/version/round 0 or 1; nullable lookup/primary-attempt FKs before egress; claim worker/hash/number, candidate version, captured request/generation, complete fence SHA256; queued/running/finalized/unknown state; due time, finite Retry-After floor, safe retry allowance, explicit known-unsent breaker marker, outcome and timezone-stable receipt SHA256. No raw token, metadata rows or copied spend counter. |
+| `phase9_metadata_admissions` | Job FK/PK and v2 claim marker, including claims with no run. Server store, selected provider/version, full fence excluding raw lease token, policy snapshot and 0..6 remaining ungranted slots. One single-call or six-slot fan-out reservation is not usage; a new physical grant alone decrements it and increments actual gets. Terminal/neutral release clears unused slots; stale/superseded/expired claims contribute no live holds. The marker counts only when its claim tuple (claim_attempt_number, claim_worker, claim_lease_token_hash) equals the job's CURRENT claim. |
+| `marketplace_sec.phase9_reserved_store_holds_v1` | Shared read-only helper counting reserved store holds. Used by the slot count, wake and reserve due-time calculations so all three agree on which holds count. |
+
+The new service claim preserves `(id,attempt_count,lease_token)` and the existing
+five-claim constraint. AutoFence and explicit request fence validation resolve
+the server job/store/session. Paused zero-obligation work and pre-egress capacity
+waits release the unused claim; existing obligations require drain. One safe
+finalized retry binds a strictly larger claim and different token to the same
+lookup/primary attempt. Unknown calls are recovery-only. Original physical IDs,
+reservations and spend remain untouched. Retry receipts can be recovered after
+the original lease release.
+
+V2 claims and explicit reservation entries opt into full fencing before new
+physical grants; copied private legacy delegates preserve original registration
+OIDs and receipt replay. NULL protection denies new v2 grants while preserving
+legacy behavior. Configured active routes share consistent store-window/cap
+fields; unassigned providers do not determine admission. Explicit reservation,
+release and known-unsent breaker scheduling are service-only. A compatible
+finish overload persists a safely parsed Retry-After lower bound; raw headers
+are not stored. M93 narrowly forward-replaces automatic terminal completion for
+proven no-retry manual technical outcomes, consuming the original reservation
+once without altering failed-call receipts. This migration writes no operating
+values or provider flags; worker pacing/observation remains 8b.
+Only approved single-instance mode is supported; shared_db configuration refuses
+rather than claiming shared pacing. Actual pacing, circuit state, cooldown
+rechecks and worker integration remain 8b work, with operating limits measured
+before rollout. No live application is implied by this schema description.
+
 ## 2026-10-12 - M74 applied and verified; Open Library disabled; Render held
 
 Current status: open_library_m74_applied_verified_render_held. Phase 9 / Unit 6G remains active. The Owner explicitly requested completion of M74 preflight/application after the approved bounded correction. That application authority supersedes the earlier local-only gate for M74; publication, provider activation and Render deployment remain held.
@@ -909,9 +947,11 @@ retry ledger, operating values, contact value, transport or provider switch adde
 
 The new automatic boundary also enforces 02c §5.1's five-field retained-list
 envelope: `sourceFetchedAt`, `permittedDeadlineAt`, `policyVersion`,
-`storagePermissionVerified`, and `retentionContract`. Pure installed-purpose and
-retention dispatch deny OL v1 automatic use, unknown/cross-provider retention
-IDs, and Google retained lists without an independent installed verifier. OL v2
+`storagePermissionVerified`, and `retentionContract`. Installed-purpose dispatch
+denies OL v1 automatic use (`automaticAllowed=false`); retention dispatch
+accepts the OL v1/v2 `open-library-options-v1` contract, and denies
+unknown/cross-provider retention IDs and Google retained lists without an
+independent installed verifier. OL v2
 keeps the existing search/editions/author receipt grammar; direct ISBN remains
 gated. Deadline/current-policy checks occur separately from pure validation.
 

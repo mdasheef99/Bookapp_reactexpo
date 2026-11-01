@@ -532,6 +532,7 @@ unchanged while 8b is staged. No after-terminal catalogue call.
 | Unknown send/result, registered orphan, lost completion | Recovery-only; no new GET/round or invented unsent receipt. |
 | Kill/policy/auth/input/quota denial | No retry/fallback bypass; manual survives. |
 | Pacing/temporary capacity | Durable queue/due-time deferral, no provider attempt/spend. Master section 8:561 requires queued capacity admission; hard per-store search-cap treatment is OQ8-3, not unconditional terminal-cap behavior. |
+| Whole-round admission (Owner OD-2026-11-01-1) | Reserve one single-call slot or the common six-slot fan-out bound before creating new external lineage. A new physical grant alone consumes a slot and increments actual gets; replay charges neither again. Release unused slots on finish, neutral pause, cancellation or fenced lease expiry. Insufficient headroom defers durably with no technical retry; a cap below the installed round bound requires configuration/manual recovery. Partial-round continuation is not selected. |
 | Breaker open | No HTTP while open/fallback bypass. D31 all-provider-down retry/recheck uses the one next-claim allowance and approved cooldown; still open -> manual, no second recheck loop. |
 | Ambiguous/conflict/no match | Manual; retain permitted fetched list, no technical retry. |
 
@@ -539,6 +540,16 @@ Terminal/manual snapshot keeps existing needs_review/safe reason and resolved or
 exhausted-technical dead_letter job (M32:1068-1077/1109-1128), no new candidate
 state. Capacity wait stays durable until admission or existing manual supersession;
 OQ8-3 must settle cap/capacity/recheck behavior without disabling manual Add.
+
+The approved single store counter requires consistent `storeWindowSeconds` and
+`storeMaxGets` across simultaneously configured active provider routes. These
+are configuration consistency rules, not selected numeric limits. Preserve the
+window's original duration until it expires; changing a provider's policy must
+not erase another provider's still-current grants. Capacity-blocked stores have
+a durable eligibility time; unused-hold release recomputes eligibility without
+refunding actual calls. Already-deferred jobs retain their due times, so this
+does not promise immediate wakeup. All final admissions and grants recheck
+wall-clock lease/session/candidate expiry after potentially blocking locks.
 
 **Fair queue proposal — mechanism and values require OQ8-3 approval:**
 
@@ -573,6 +584,42 @@ or split an applied file. OD-2's 8a/8b/8c names remain unchanged.
 
 No migration is needed merely to edit 8c registry values; those operational row
 updates need separate authority and before/after readback. 02d owns its own migration.
+
+**8a-5 SQL interfaces (implementation of the approved mechanisms above):**
+`public.phase9_claim_metadata_jobs_v2(integer,text)` returns the legacy
+`(id,attempt_count,lease_token)` tuple using private fair tickets and due heads.
+`public.phase9_defer_metadata_admission_v1(jsonb,bigint)` accepts AutoFence or
+the explicit request fence and returns `deferred` or `drain_required`; no-child
+deferral restores the unused claim and records the blocked server gate epoch.
+`public.phase9_begin_automatic_provider_run_v1(jsonb,text,text)` and
+`public.phase9_finish_automatic_provider_run_v1(jsonb,text,text)` consume
+AutoFence/provider/version. Begin returns started/replayed, recovery_only,
+configuration_required, capacity_wait or drain_required. Finish derives its
+decision from persisted physical receipts, returning finalized, retry_scheduled
+or recovery_only. A first safe retry uses configured bounded jitter; receipt-first
+recovery never reissues a call. New physical grants bind opted-in automatic runs
+to their original primary lookup/attempt, and charge configured store capacity.
+The compatible finish overload also accepts a finite `timestamptz` not-before
+floor from 8b's safely parsed Retry-After; the persisted schedule never precedes
+it, and replay must use the same floor. The service-only
+`phase9_schedule_automatic_provider_recheck_v1(jsonb,text,text)` records one
+known-unsent breaker cooldown and a final manual outcome if still open.
+`phase9_reserve_metadata_provider_round_v1(jsonb,text,text)` and its matching
+`phase9_release_metadata_provider_round_v1` use the explicit request fence and
+the same private store accounting. A private admission marker makes every v2
+claim require protection even before a run exists; legacy NULL-policy entries
+keep their existing behavior. A begun round with no lookup/reservation/grant
+can be neutrally paused, held as queued, and resumed as round zero after reopen.
+Finalized no-retry technical runs use a narrowly proved forward replacement of
+the existing completion transaction: truthful failed receipts remain unchanged,
+the original reservation is consumed once, and no selected/list/shared data is
+admitted. Receipt hashes use a fixed timezone and full request/claim fences.
+These are service-only invoker wrappers over private definer entries with strict
+scope checks; no private table privilege is delegated. NULL operating policy
+stays unconfigured. OD-2026-10-31-4's single-instance worker owns actual pacing,
+circuit observation and HTTP cooldown rechecks; SQL persists the one durable
+recheck allowance. No shared-db pacing is implemented by
+these SQL interfaces, and that mode is refused.
 
 ## 5. Design — 8b compatible worker (Google remains primary)
 

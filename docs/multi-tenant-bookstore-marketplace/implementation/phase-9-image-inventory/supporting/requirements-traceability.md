@@ -884,6 +884,37 @@ and the [verification report](./post-scan-slice4b-verification.md) own counts an
 | AC4-11 / D2-5 / R06 | Variant service/schema/type/constants/cases removed; all non-test `src/` architecture scan, server-definition preservation checks and no-importer search. Manual Add's one offline-disabled mutation remains. |
 
 
+## Slice 8 queue/protection implementation mapping
+
+02c §§4.3–4.4/9 (AC8-5/6/10/11) and 02c-1 §2 map to M93's
+private admission/run/wait schema, v2 fair claim, fenced begin/finish and neutral
+paused deferral. The admissions marker counts only when its claim tuple equals
+the job's CURRENT claim; the shared helper
+`marketplace_sec.phase9_reserved_store_holds_v1` aligns slot, wake and reserve
+due-time counting. `phase9ProviderQueue.integration.test.mjs` exercises round
+identity, bounded retry, unknown-call recovery, capacity/pause no-spend behavior,
+explicit fence, tenant/epoch refusal, ACLs and 1000:1 store fairness; native mode
+also holds store/head locks on an independent connection. This is SQL proof,
+not worker HTTP/pacing/breaker or full AC8-5/6 acceptance. AC8-6 native fairness
+is NOT natively proven: the five native fairness tests were skipped as GATED on
+unset OQ8-3 operating numbers, so fairness rests on PGlite and review reading
+only. Exact executed results (PGlite guard + harness + Synthetic 17 tests, 14
+pass / 0 fail / 3 todo per prefix 8a-5 and 8a-4; native provider-replacement
+prefix 8a-5: 317 tests, 286 pass / 0 fail / 12 skipped / 19 todo) belong in the
+[implementation tracker](../trackers/02-implementation-and-verification.md#2026-11-01---slice-8-package-8a-5-targeted-reviews-fixes-golden-refresh-and-verification);
+operating numbers remain unconfigured.
+
+Owner OD-2026-11-01-1 and 02c §4.3 additionally map whole-round capacity to
+`phase9_metadata_admissions`, actual-grant accounting, active-route policy
+consistency and durable store exclusion/wake. QueueReview/Capacity/RoundAdmission
+cover unknown send, post-lock wall-clock expiry, neutral pause/reopen, legacy
+NULL operation version, actual explicit reservation and synthetic custom stages.
+RunCompletion covers single/fan-out second failure, unsent breaker terminal,
+kill-before-finish, no duplicate accounting, changed receipts and timezone-safe
+replay. QueueInstall records the existing FK lock protecting concurrent store
+insertion. [Contract review](../trackers/39-package8a5-contract-review.md)
+owns findings, retractions, correction hashes and exact executed evidence.
+
 ## Post-scan rework slice 6 - pass-2 design mapping (not implementation evidence)
 
 [02a](../work-units/post-scan-rework/02a-slice6-catalogue-link-sdd.md) refines SDD-2 slice 6; [tracker 38 section 35](../trackers/38-post-scan-rework-evidence.md#35-slice-6-pass-2-detailed-design-2026-10-25) records this documentation-only pass. No acceptance is claimed passed; OQ1-OQ4 and OQ6-OQ7 were decided by the Owner on 2026-10-25 (02a section 14); build is not approved. DOC-3 sections 5.1/5.2/17 amendments ship at implementation, not here.

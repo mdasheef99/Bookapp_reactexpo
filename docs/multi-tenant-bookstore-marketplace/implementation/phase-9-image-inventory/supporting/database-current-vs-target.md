@@ -1,3 +1,52 @@
+## 2026-11-01 slice 8 package 8a-5 file (not applied)
+
+Authority: Owner requested the local 8a-5 migration; 02c §§4.3–4.4/7/9,
+02c-1 §2 and OD-2026-10-31-4/6. File:
+`supabase/migrations/20261101000093_marketplace_phase9_provider_queue_protection.sql`
+(M93, 1,499 lines; SHA256
+`f431df3d25052eab43b80ff5b213f7459e8dd3248228fc69358d34bc8a10c210`).
+Live version: **none / NOT_APPLIED**. The file is untracked/uncommitted and
+never applied. Size exceeds the soft target slightly;
+the schema/fencing/claim/round boundary remains cohesive under OD-2026-10-31-1.
+
+Supabase MCP re-verified `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn` as
+ACTIVE_HEALTHY. Latest migration remains M88 / `20261029151325`. Read-only
+schema/registry queries found no new queue/run/wait tables, both providers still
+enabled, old retention values unchanged, and the existing job attempt/max checks
+still bounded by five. At `2026-11-01T00:29:24.636333Z`, the private legacy
+claim had postgres ownership, SECURITY DEFINER, empty search_path and only
+postgres/service_role execute; definition MD5 `a4bb8e1a375f8b26f6ed659d8ffefa7c`.
+These reads are not application or rollout proof.
+
+Current corrected target: four private RLS tables and a ticket sequence, v2
+claim markers and whole-round holds, fair claims, neutral paused deferral,
+two-round automatic allowance, known-unsent breaker recheck, typed Retry-After
+floor, complete request fences and grant accounting. The admissions marker
+counts only when its claim tuple (claim_attempt_number, claim_worker,
+claim_lease_token_hash) equals the job's CURRENT claim. One shared helper
+`marketplace_sec.phase9_reserved_store_holds_v1` serves the slot count, wake
+and reserve due-time calculations. New service entries: v2 claim/admission
+(`phase9_claim_metadata_jobs_v2`, `phase9_defer_metadata_admission_v1`),
+run begin/finish (`phase9_begin_automatic_provider_run_v1`,
+`phase9_finish_automatic_provider_run_v1`), round capacity
+(`phase9_reserve_round_capacity_v1`), queue grant assertion
+(`phase9_assert_queue_grant_v1`) and run grant (`phase9_provider_run_grant_v1`).
+Exact legacy registration bodies are private delegates while original function
+OIDs remain guarded. M93 forward-replaces the M92 automatic terminal body
+only for proved manual technical outcomes and adds service v2 terminal
+deadline checks/nonblocking hold wake. M89–M92, original physical IDs and old
+registry values remain unchanged.
+
+Initial artifact above (`0db0d7c9…`) is historical. Current M93 SHA256:
+`f431df3d25052eab43b80ff5b213f7459e8dd3248228fc69358d34bc8a10c210`.
+Live version remains **none / NOT_APPLIED**. The file is untracked/uncommitted
+and never applied. Terra/targeted-review findings, explicit capacity decision,
+native red/green proofs, freeze inventory and the inherited
+M91 NULL-version route risk are owned by
+[tracker 39](../trackers/39-package8a5-contract-review.md).
+Protection remains unconfigured; one-instance HTTP pacing/observation and measured
+numbers remain 8b/rollout gates. No shared DB/Storage mutation, provider call,
+deployment, stage, commit or push. Whole-8a acceptance/application remain gated.
 ## 2026-10-12 - M74 applied and verified; Open Library disabled; Render held
 
 Current status: open_library_m74_applied_verified_render_held. Phase 9 / Unit 6G remains active. The Owner explicitly requested completion of M74 preflight/application after the approved bounded correction. That application authority supersedes the earlier local-only gate for M74; publication, provider activation and Render deployment remain held.

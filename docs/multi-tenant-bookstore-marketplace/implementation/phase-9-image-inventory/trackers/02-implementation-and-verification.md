@@ -7037,3 +7037,227 @@ as recorded. No Python tests, shared database, Storage, provider or network
 access, migration application, staging, commit, push or deployment occurred.
 The Owner subsequently authorized a local commit of these maintenance changes;
 Git history owns the resulting commit state.
+
+## 2026-11-01 - Slice 8 package 8a-5 queue/protection file
+
+Authority: the Owner requested explanation and creation of the next 8a-5
+migration file. Requirements: 02c §§4.3–4.4/7/9, 02c-1 §2,
+OD-2026-10-31-4/6 and Master §8. No shared application, commit, push or deploy
+is authorized by this request. The local design/steps are recorded in
+`work-units/post-scan-rework/02c-2-package8a5-implementation-plan.md`.
+
+Created M93:
+`supabase/migrations/20261101000093_marketplace_phase9_provider_queue_protection.sql`.
+It adds the private store ticket/capacity state, paused-job epoch wait and
+automatic provider run ledger; v2 fair claims preserve the legacy claim tuple.
+AutoFence and explicit fences re-prove server scope. No-child paused/capacity
+deferral returns the unused claim without spending a provider allowance.
+Existing lookup/reservation/call obligations require drain. Round 0 permits
+one known-safe delayed round 1 on a larger claim/new token, bound to the same
+lookup/primary attempt. Persisted unknown calls remain recovery-only. New grant
+INSERTs enforce opted-in run fencing and count configured store capacity once;
+replays return original call IDs. Retry receipts recover after lease release.
+
+The migration leaves protection_policy and provider flags unchanged. NULL
+operating policy returns configuration_required, and unimplemented shared_db
+pacing refuses. The approved single-instance 8b worker still owns actual GET
+pacing, circuit opening/cooldown recheck, retry dispatch, rejected-terminal
+shortcut integration and HTTP/crash recovery. No worker or 02d behavior was
+implemented. Hard-quota policy and measured operating values were not invented.
+
+RED evidence: the first four tests failed on absent private relations/entries
+before M93 was written. Subsequent capacity and released-lease receipt tests
+failed behaviorally before their fixes; the unsupported-mode test also failed
+with Missing expected rejection before its guard. Final focused PGlite before
+the added OL case: **13 pass / 0 fail / 2 native-only skips**. The additional
+OL fan-out retry test passed independently and proves one primary/reservation
+with fresh stage-0 physical IDs across the two claims.
+
+Native command:
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -File supabase/tests/phase9/run-phase9-bookstore-first-postgres.ps1 -OnlyGroup provider-replacement -ProviderPrefix 8a-5 -Port 5463`.
+Result: **223 pass / 0 fail / 12 skip / 19 TODO**, including the first 15 queue
+cases, both independent-connection store/head lock tests, all earlier partial
+prefix compatibility checks, selected/Add paths and the unchanged golden
+baseline. Disposable runner reports POSTGRES_TEARDOWN_PASS and removed its
+databases, cluster and temporary directory. Existing pg deprecation warnings
+were observed; no provider or shared Supabase request was made by these tests.
+
+An extra focused run cloned that same local cluster but overlapped the owning
+runner's teardown: its final hooks lost the connection with 57P01, so that
+attempt is not a pass. A bounded copy of the existing runner (only test-file
+selection narrowed, tracked runner unchanged) reran all final queue cases on
+its own disposable port 5464: **16 pass / 0 fail / 0 skip / 0 TODO**. It includes
+the added OL fan-out retry and new-grant pause assertion. Teardown verified
+zero remaining connections and removal of all databases, cluster and temporary
+directory; POSTGRES_TEARDOWN_PASS. The temporary runner was removed too.
+
+Supabase MCP read-only evidence re-verified the exact project, M88 as latest,
+the legacy claim's owner/ACL/search_path/hash and five-claim constraints, and
+absence of all three new tables. The migration ledger owns timestamps and
+file hash. M89–M92 and the golden fixture are byte-unchanged. M93 and its
+manifest/continuity registration are local only. Updated map, dictionary,
+traceability, SDD interfaces and trackers describe the same bounded scope.
+
+The migration-set guard passes its real current set plus all four negative
+controls. Full worker/HTTP, operational limits, independent package/whole-8a
+review and ordered apply preflight remain separate gates. Two historical
+original evidence files remain unavailable as already recorded in ACTIVE.
+No Python tests, shared database/Storage mutation, provider call, migration
+application, staging, commit, push or deployment occurred.
+
+ 8a-5 closeout: full continuity validator **PASS**, 195 requirement definitions,
+ zero duplicates/missing traceability, 120 Markdown files / 62 required phase
+ files. Migration-set real/negative probes and repository/new-file whitespace
+ checks **PASS**. Remaining `.pyc` files **0**; staged paths **0**. The new M93,
+ tests, registration and owning documents remain uncommitted. Exact next action
+ is review of M93 and the whole 8a layer before any ordered apply preflight.
+
+## 2026-11-01 - Slice 8 package 8a-5 targeted reviews, fixes, golden refresh and verification
+
+Dated evidence: the [8a-5 contract review and correction record](./39-package8a5-contract-review.md#2026-11-01--targeted-8a-5-review-correction-golden-refresh-and-verification)
+owns findings, hashes and limits. M93 `supabase/migrations/20261101000093_marketplace_phase9_provider_queue_protection.sql`
+is untracked/uncommitted, never applied, 1,499 lines, sha256
+`f431df3d25052eab43b80ff5b213f7459e8dd3248228fc69358d34bc8a10c210`.
+M89 (`746e061`), M90 (`f4f6d8c`, corrected in `1a834fb`), M91 (`dba657d`,
+corrected in `1a834fb`) and M92 (added in `1a834fb`) are committed;
+`fbd74e1` restored verification checks. Latest applied migration is still M88
+(`20261029151325`), project `ahntbtktjjmvfosgkmgn`; nothing applied, pushed or
+deployed in this work.
+
+Fourteen targeted read-only reviews (seven units Q1..Q7 of M93; paid DeepSeek 5
+runs, Muse 4, GLM free 5). Muse found nothing in four runs; paid DeepSeek and
+GLM produced nine distinct findings (Q3-1, Q3-2, Q4-1, GLM Q4 finish fence,
+GLM Q1 stale marker, Q6-1, Q2-1, Q2-2, Q4-2 with severities as recorded in the
+contract review; Q4-2 deliberately NOT changed, staying an Owner-gated
+question). Paid DeepSeek confirmed and fixed eight of nine (all reproduced
+before the fix), added regression tests, no assertion weakened; a max-effort
+re-review rated seven fixes correct and found one regression (R-1 Q2-2 hot
+loop), fixed with one shared helper
+`marketplace_sec.phase9_reserved_store_holds_v1` used by the slot count, wake
+and reserve due-time calculations. Terra/max correction review of the changed
+hunks: F2..F8 fixed; F1 "not fixed" (stale marker blocking legacy re-claim;
+configured-policy begin writing the marker before capacity returned
+configuration_required). Fixed: the marker now counts only when its claim tuple
+equals the job's CURRENT claim, at four sites
+(`phase9_assert_queue_grant_v1` legacy bypass,
+`phase9_reserve_round_capacity_v1` marker write only after the
+NULL-policy/mode/capacity/budget checks,
+`phase9_begin_automatic_provider_run_v1` pre-capacity marker insert removed,
+`phase9_provider_run_grant_v1` hold_current); the helper was added to the freeze
+selection and inventory, and regression tests were added. A further max-effort
+re-review of the marker semantics found no defect (S1..S4 correct). Golden
+`provider-replacement-generic-8a5-sha256.json` was recomputed offline by Haiku
+(method proven by reproducing the 98 unchanged hashes first) for the changed
+M93 functions, the M93 file hash and the new helper (103 sql and 103 metadata
+entries); metadata for the helper was derived from its sibling and is confirmed
+by the Synthetic integration test.
+
+Verification actually run: PGlite after the golden refresh (guard + harness +
+Synthetic, prefixes 8a-5 and 8a-4): 17 tests, 14 pass, 0 fail, 3 todo each.
+The earlier full-suite PGlite counts (8a-5 278/0/28/19, 8a-4 273/0/33/19, 8a-3
+239/8, 8a-2 235/8, 8a-1 219/17, m88 140/17) PREDATE the last marker change and
+helper addition. Native Postgres (disposable cluster, port chosen by the
+runner): `run-phase9-bookstore-first-postgres.ps1 -OnlyGroup
+provider-replacement -ProviderPrefix 8a-5`: `NATIVE_GROUP provider-replacement
+PASS`, 317 tests, 286 pass, 0 fail, 12 skipped, 19 todo, 0 statement timeouts,
+`POSTGRES_TEARDOWN_PASS`; ran and passed: round-capacity terminal-wake deadlock
+check, advisory-lock wait past deadline (8a-2/8a-4), empty cleanup lock wait.
+NOT proven: the five native fairness tests (AC8-6) were skipped because they
+are GATED on OQ8-3 (operating numbers, not set); no explicit 40P01 assertion
+appears in the log; the other 7 skips are gated policy items (OQ8-1, OQ8-2,
+OQ8-3, OQ8-6, OQ8-7, OQ8-11). Fairness is therefore covered by PGlite and review
+reading only, not natively.
+
+Terra's earlier retracted finding (store-install race) and the inherited gap
+stay as already written in tracker 39 (historical automatic job with NULL
+operation_version can fail a nonlegacy OL v2 route; to be dispositioned in the
+whole-8a review and the pre-apply drain/compatibility assessment). No M91 byte
+change claimed. Not authorised or done: no commit, push, deployment,
+shared-database application, provider call, worker change. Remaining gates:
+whole-8a Terra review; Haiku preflight (re-verify project ahntbtktjjmvfosgkmgn,
+read-only live registry check, read-only checks for Open Library cache rows
+with the `legacy-v1` normalizer and for stage pairs like (0, NULL), because new
+CHECKs need live-row readback); ordered apply M89..M93 under the Owner's
+standing permission (2026-10-31: "you have my permission to apply after the
+usual cycle is complete"), each apply recorded in the migration ledger; then
+slice 8b worker, 8c switch, 02d prefill. Owner items still open: contact email
+(placeholder), OQ8-3 operating numbers (unset), Q4-2 retry-floor bound (needs a
+Owner number), pre-launch checklist item to inventory and purge Google-sourced
+data.
+
+## 2026-11-02 - Whole-8a review of M89..M93, fixes, preflight and final regression
+
+Dated evidence: the
+[whole-8a section of tracker 39](./39-package8a5-contract-review.md#2026-11-02--whole-8a-review-of-m89m93-fixes-preflight-and-final-regression)
+owns the full findings, hashes and regression counts. This record supersedes
+the pending whole-8a Terra review and preflight gates as next actions; it
+grants no behavior or mutation authority beyond the documented task. The
+whole-8a read-only review of
+M89..M93 as one ordered apply ran (Terra/max 763 s; paid DeepSeek max angle A
+"APPLY-ORDER" about 25 min; paid DeepSeek max angle B "LEGACY-LIVE" about
+31 min; Muse inventory 319 s, clean including search_path on every function,
+service_role-only new grants and no signature mismatches). Terra's verdict
+before the fixes: "ACCEPT M89..M93 for ordered apply: no".
+
+Findings and outcome: WHOLE-1 (historical automatic job with NULL
+`operation_version` fails a non-legacy OL v2 route, M91:113/137/213/261; latent
+until 8c; needs a null-safe flag in a later slice plus a drain; live count 0);
+WHOLE-2/ORDER-2 (M90 replacement cache CHECK possibly stricter than M84 for
+Google book URLs with whitespace or backslash; reviewers disagreed; 0 offending
+live rows; no edit); ORDER-1 (M89 gate kind `metadata`/adapter_version
+`1.0.0`; live both pass, count 2); ORDER-3 (M91 stage CHECK accepts half-null
+pairs, inherited from M78; live none, 172 call rows are (NULL,NULL); left
+unchanged); LEGACY-LIVE-1 and LEGACY-LIVE-2 confirmed real and FIXED; LEGACY-LIVE-3
+(an existing public Google selected_snapshot cache row would raise on the old
+worker's cache read; live count 0) added to the pre-launch Google data purge
+checklist item.
+
+Read-only live preflight on `ahntbtktjjmvfosgkmgn` at latest migration M88
+`20261029151325`: the counts and findings listed in tracker 39; no database
+writes. To-check before apply: one `metadata_enrich` candidate job
+`in_progress`, attempt_count 5, lease expired 2026-10-12, operation_version
+`p9-owner-edition-options-v1` (max_attempts and drainability); and which
+migration adds the `protection_policy` registry column (absent live).
+
+M93 fixes: LEGACY-LIVE-1 — the legacy bypass in `phase9_assert_queue_grant_v1`
+and the run lookup in `phase9_provider_run_grant_v1` are scoped to the
+incoming/current claim tuple, so a run from an earlier claim no longer turns an
+8a-4 re-claim into a v2 claim. LEGACY-LIVE-2 — with `protection_policy` NOT NULL
+and no hold or running current-claim run, the grant trigger raises
+`P9_PROVIDER_RUN_NOT_ADMITTED` before capacity; NULL policy unchanged. A paid
+DeepSeek max changed-hunk review accepted both ("ACCEPT changed hunks: yes").
+Two Low test-evidence notes left open, not blockers (Capacity test 181-202
+would not catch a reverted post-lock clock refresh; QueueReview test 143-152
+passes for a different reason than its name). M93 is now 1,513 lines, sha256
+`80d496a173c9f6fe30f42d3714c0c787488ced2669024be18d2090c9bea34c5e`.
+Tests added: Queue 252-284 (initially a test defect, fixed to register on the
+existing logical attempt; that file then ran 18 pass, 0 fail, 2 skipped) and
+Capacity 58-81; existing tests aligned to the stricter contract: Queue 285-299,
+Capacity 181-202 (native-only), QueueReview 143-146. Behaviour change: a
+policy-protected legacy caller that relied on unadmitted free-capacity calls
+now gets `P9_PROVIDER_RUN_NOT_ADMITTED`.
+
+Golden `provider-replacement-generic-8a5-sha256.json` recomputed by Haiku after
+proving 101 unchanged entries reproduce; changed entries:
+`phase9_assert_queue_grant_v1` (`83632e423e7f…` → `bc1826e21286…`),
+`phase9_provider_run_grant_v1` (`7156ece4389d…` → `51bc2c7b5631…`), M93 file
+hash (`f431df3d2505…` → `80d496a173c9…`). 103 of 103 match.
+
+Final regression (2026-11-02; M93 sha256 `80d496a173c9f6fe…`, 1,513 lines,
+golden 103/103): PGlite 8a-5 **283 pass, 0 fail**; PGlite 8a-4 **278 pass,
+0 fail**; Capacity file PGlite **20 tests, 16 pass, 0 fail, 4 skipped**; native
+Postgres 8a-5 (provider-replacement group): **319 tests, 288 pass, 0 fail,
+12 skipped, 19 todo, teardown pass, NATIVE_GROUP provider-replacement PASS**.
+The native-only Capacity test (round capacity, clock after the store lock) was
+rewritten three times (routing, then a bind-parameter-count slip) and now
+passes; it also now catches a reverted post-lock clock refresh (T1 addressed).
+Native fairness AC8-6 not proven (gated on OQ8-3); no explicit 40P01 assertion.
+M90 and M91 untouched (committed, unapplied); nothing applied, committed,
+pushed or deployed.
+
+Active work unit: `slice8_providers_package8a5_whole8a_review_fixes`. Exact
+next authorized action: finish the regression run; then, with the Owner's
+go-ahead to commit, ordered apply of M89..M93 under the Owner's standing apply
+permission (see slice8-owner delegations in the existing docs), recording each
+in the migration ledger; then 8b worker. Supabase/database/storage/deployment
+mutation authority: none beyond the recorded read-only preflight.

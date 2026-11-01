@@ -54,6 +54,7 @@ If implementation changes product or architecture behavior, update the relevant 
 
 ## 4. Global Blockers
 
+- Phase 9 M93 remains unapplied and uncommitted; the whole-8a review of M89..M93 ran 2026-11-02, its confirmed blocker findings were fixed in M93 (1,513 lines; native provider group 319 tests, 288 pass, 0 fail), and ordered apply of M89..M93 under the Owner's standing permission after the Owner's commit go-ahead is the next gate. [Whole-8a evidence](./implementation/phase-9-image-inventory/trackers/39-package8a5-contract-review.md#2026-11-02--whole-8a-review-of-m89m93-fixes-preflight-and-final-regression); current action and authority remain in ACTIVE.md.
 - Payment provider not selected.
 - Delivery provider not selected.
 - Legal/accounting review pending before production payments.

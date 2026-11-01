@@ -156,6 +156,24 @@ then `npm run start:phase9:<same>-worker`. Helpers: `npm run invoke:phase9:worke
 
 ## Migrations (`supabase/migrations/`)
 
+The provider queue/protection boundary uses service-only
+`phase9_claim_metadata_jobs_v2`, `phase9_defer_metadata_admission_v1`,
+`phase9_begin_automatic_provider_run_v1` / `phase9_finish_automatic_provider_run_v1`,
+`phase9_reserve_round_capacity_v1`, `phase9_assert_queue_grant_v1` and
+`phase9_provider_run_grant_v1`. Private `phase9_store_admission` holds store tickets/capacity windows,
+`phase9_job_admission_wait` holds blocked gate epochs, and
+`phase9_automatic_provider_runs` binds the one next-claim retry to its original
+lookup/primary attempt. `phase9_metadata_admissions` records v2 claims and whole
+round capacity holds before egress; an admissions marker counts only when its
+claim tuple matches the job's current claim. The shared read-only helper
+`phase9_reserved_store_holds_v1` counts reserved store holds for the slot, wake
+and reserve due-time calculations. Explicit reserve/release entries use the
+same accounting; breaker-recheck scheduling persists the one unsent allowance.
+A physical-call INSERT guard rechecks the full request/claim fence and counts
+configured capacity once per new grant. Existing claim entry points
+remain separate. Worker pacing and circuit state use the approved single-instance
+model. Contract: provider SDD §§4.3–4.4 and switch runbook §2.
+
 - Files are named `<timestamp>_<name>.sql`. Marketplace files often use a
   sequence-style timestamp (for example `20260812000039_…`), and docs refer to
   them by that sequence as **M39**.
