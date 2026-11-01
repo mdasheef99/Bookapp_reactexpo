@@ -328,6 +328,100 @@ are recorded there.
   documentation validation completed in this checkpoint except the whole-8a
   review; no unrun test is claimed passed.
 
+## 2026-11-02 — ordered apply of M89..M93, ledger note rows and post-apply verification
+
+Ordered apply of M89..M93 to the dev project `ahntbtktjjmvfosgkmgn` under
+the Owner's standing apply permission, after the review cycle (commit
+`ebb613c`, M93 sha256
+`80d496a173c9f6fe30f42d3714c0c787488ced2669024be18d2090c9bea34c5e`).
+
+- M89 file `20261031000089_marketplace_phase9_provider_registry_policy.sql`
+  (sha256 `fffe86d2...f746e59b`) applied through Supabase MCP
+  `apply_migration`; live version `20261101224556`; stored text md5
+  `d3b3f14524fd81916974f41d6fb719d3` equals the local file md5.
+- M90 `20261031000090_marketplace_phase9_provider_validation.sql` (sha256
+  `b9c3718d...6288e73`) applied via `apply_migration`; live version
+  `20261101224911`; stored text equals the local file with the trailing
+  newline removed (md5 `10573afe8c316332b3e89b753c008836`, 90,201 chars).
+  Check after: 434 phase9 functions, 0 with PUBLIC execute.
+- M91 `20261031000091_marketplace_phase9_provider_route_accounting.sql`
+  (sha256 `dd498db9...3a44598`) applied via `apply_migration`; live version
+  `20261101225107`; stored md5 `c522cd4714721cf29de6ff58c5291f11` equals the
+  local file with the trailing newline removed. 439 phase9 functions,
+  0 PUBLIC execute.
+- M92 `20261031000092_marketplace_phase9_provider_automatic_transaction.sql`
+  (136,148 bytes, 1,904 lines, sha256 `b256e00f...a56c230`) and M93
+  `20261101000093_marketplace_phase9_provider_queue_protection.sql`
+  (1,513 lines): applied by the Owner through the Supabase dashboard SQL
+  editor (both returned "Success. No rows returned"; the dashboard warning
+  about UPDATE/DELETE is a text-scan false alarm: all statements are inside
+  function bodies with WHERE clauses). The inline `apply_migration` route
+  could not be used for M92 (file too large to transcribe byte-exact; a
+  safety classifier interrupted one attempt; nothing ran).
+- Ledger note-only rows (gap closed, Owner-approved, inserted by Haiku):
+  version `20261101230500` name
+  `marketplace_phase9_provider_automatic_transaction` (M92) and version
+  `20261101230501` name `marketplace_phase9_provider_queue_protection`
+  (M93). Their `statements` hold a one-line note (applied through the
+  dashboard, source file path and sha256), not the migration SQL;
+  `created_by`, `idempotency_key`, `rollback` are NULL. The ledger now ends
+  at `20261101230501` and lists M89..M93. Live versions of all five: M89
+  `20261101224556`, M90 `20261101224911`, M91 `20261101225107`, M92
+  `20261101230500`, M93 `20261101230501`. Do not describe the ledger gap as
+  open; M92/M93 rows are note-only rows. Do not run `db push` (frozen).
+- Read-only post-apply verification by Haiku (SELECTs only): 5
+  `marketplace_sec` tables exist with RLS on and no
+  anon/authenticated/service_role table privileges;
+  `phase9_store_admission` rows 7 = `public.stores` 7, none missing;
+  triggers `phase9_seed_store_admission_v1` (stores),
+  `phase9_guard_terminal_admission_v1` and
+  `phase9_release_closed_admission_v1` (`image_extraction_jobs`),
+  `phase9_provider_run_grant_v1` (`phase9_metadata_provider_calls`) exist
+  and are enabled; no PUBLIC/anon/authenticated execute on any M93
+  function, service_role only on the public wrappers and the
+  `marketplace_sec` entry points; all functions owner postgres with
+  `search_path` set; both `phase9_finish_automatic_provider_run_v1`
+  overloads present in public and `marketplace_sec`; anon execute exactly
+  the 12 known helpers; PUBLIC execute 0; authenticated execute 84
+  (baseline unchanged); live `phase9_provider_run_grant_v1` contains
+  `P9_PROVIDER_RUN_NOT_ADMITTED`; registry `google_books` and
+  `open_library` both enabled with `protection_policy` NULL (so M93
+  `begin_automatic_provider_run` returns `configuration_required` for
+  automatic runs until a policy is set, i.e. the legacy NULL-policy path is
+  what the deployed worker uses); job
+  `4ffe137d-5ff5-4ef6-9a24-27a2911c027c` still `in_progress` attempt 5/5,
+  lease expired 2026-10-12 (to check/recover before 8b/8c). Several M93
+  helper functions are SECURITY INVOKER (`prosecdef=false`) with no grants:
+  observation only, not compared to the file's intent. A golden-hash
+  comparison of the live definitions was not run.
+- No push, deployment or data writes. Native fairness AC8-6 still unproven
+  (OQ8-3). Next: 8b worker (adapter, validators, registry row), 8c switch
+  (includes the WHOLE-1 null-safe flag plus drain), 02d prefill. Owner
+  items open: contact email placeholder, OQ8-3 operating numbers, Q4-2
+  retry-floor bound, pre-launch Google data purge checklist.
+- Live smoke test PASSED (2026-11-02 ~23:34-23:36 UTC, dev project,
+  store-owner Inventory > resume scan > Find or change edition for Bleak
+  House > Search by ISBN 9780141439723): job
+  `c01c8347-74c8-433f-b5ef-d5ae6dd442cb` (`operation_version`
+  `p9-owner-edition-options-v1`) went open > in_progress (attempt 1, lease
+  owner `phase9-metadata-render-0001`) > resolved; the free-plan Render
+  worker `phase9-metadata-worker` woke on dispatch (`service_started`
+  23:35:27Z, `invocation_accepted` 23:35:34Z) about 80 s after the job was
+  created; 3 provider calls finalized, `claim_attempt_number` 1, stages
+  search (seq 0), edition (1), author:OL24638A (2); 1 usage reservation;
+  `marketplace_sec.phase9_metadata_admissions` and
+  `phase9_automatic_provider_runs` stayed at 0 rows (legacy NULL-policy
+  path); no `P9_` error; UI showed one selectable edition (Bleak House,
+  Penguin Books, 2003, Open Library). "Select edition" was not clicked; no
+  inventory data changed. The deployed worker is Render commit `3fdc0c44` on
+  main (slice 7b-2 build, deployed 2026-10-29), not a slice 8 build. NOT
+  covered: the fair queue/admission path (needs a protection policy, 8c)
+  and an automatic Google lookup on the legacy path. This closes the "smoke
+  test before 8c" item for the legacy explicit path; re-run once with the
+  8b worker deployed and before 8c.
+- Dev-server launch config `.claude/launch.json` (expo web on port 8081)
+  was created for this test and is uncommitted.
+
 ## Read-only operational evidence
 
 Supabase re-verified `Bookconnect_reactexpo` / `ahntbtktjjmvfosgkmgn`, latest M88

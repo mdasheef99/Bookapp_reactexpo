@@ -16,6 +16,22 @@ they do not override ACTIVE.md. Repeated status copies moved to the
 **Implementation authority:** See ACTIVE.md and the Owner's explicit scope.
 **Migration creation/application authority:** See ACTIVE.md; prior approvals are historical.
 
+## 2026-11-02 slice 8 package 8a applied (M89..M93) and legacy smoke passed
+
+Ordered apply of M89..M93 to the dev project `ahntbtktjjmvfosgkmgn` under
+the Owner's standing apply permission is done (live versions M89
+`20261101224556`, M90 `20261101224911`, M91 `20261101225107`, M92
+`20261101230500` note-only row, M93 `20261101230501` note-only row; ledger
+ends at `20261101230501`; `db push` frozen). Read-only post-apply
+verification (SELECTs only) and a legacy-explicit-path live smoke
+(job `c01c8347-...` resolved, 3 provider calls, 1 reservation, no `P9_`
+error) passed 2026-11-02. Apply record:
+[tracker 39 apply section](./trackers/39-package8a5-contract-review.md#2026-11-02--ordered-apply-of-m89m93-ledger-note-rows-and-post-apply-verification),
+[implementation log](./trackers/02-implementation-and-verification.md#2026-11-02---ordered-apply-of-m89m93-post-apply-verification-and-legacy-smoke),
+[ledger](./supporting/database-current-vs-target.md#2026-11-02-slice-8-package-8a-applied-m89m93).
+ACTIVE.md owns the current work unit (8b worker), next action
+(check/recover stuck job 4ffe137d first) and authority.
+
 ## 2026-11-02 whole-8a review and fixes
 
 The whole-8a read-only review of M89..M93 as one ordered apply ran, its
