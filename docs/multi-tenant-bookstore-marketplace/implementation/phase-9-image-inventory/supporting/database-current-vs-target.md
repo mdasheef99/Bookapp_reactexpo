@@ -1685,8 +1685,9 @@ Verification: `supabase/tests/phase9/phase9OwnerIsbnEditionLookup.integration.te
 ## 2026-10-26 slice 7a read-only preflight
 
 **Read-only evidence; no mutation.** Source: Haiku's
-[preflight-1.md](../../../../../.claude/psr-slice7a/preflight-1.md), 2026-10-26,
-steps 1–8. The orchestrator independently verified the source policy/grant rows
+`.claude/psr-slice7a/preflight-1.md`, 2026-10-26, steps 1–8. The original is
+unavailable in this checkout; its [dated tracker summary](../trackers/38-post-scan-rework-evidence.md#36-slice-7a-start-design-approval-split-map-and-numbering-2026-10-26) and the details below remain.
+The orchestrator independently verified the source policy/grant rows
 and canonical-reader list with its own same-day read-only query (Owner brief).
 Only SELECT statements ran through Supabase MCP in the supplied audit; no DDL,
 DML, migration application or Storage write. This documentation follow-up makes
@@ -2067,3 +2068,9 @@ tie control passed; no live schema, data, privileges, Storage or provider state
 was inspected or changed. The no-retention fan-out selection proof remains open,
 and the unchanged golden fixture fails against the altered function. Exact proof
 and limitations are in the [implementation log](../trackers/02-implementation-and-verification.md#2026-11-01---empty-ambiguity-correction-and-no-retention-proof-gap).
+
+**Subsequent local maintenance:** the Owner authorized a golden refresh; its
+check and the continuity validator now pass. The no-retention fan-out case is a
+design question, not an explicitly assigned 8a-4 requirement. The original
+historical preflight files remain unavailable as described above; no shared
+readback or mutation was performed. [Verification evidence](../trackers/02-implementation-and-verification.md#2026-11-01---golden-and-continuity-check-maintenance).

@@ -805,8 +805,10 @@ if (-not $packageJson.Contains('"test:phase9:db"') -or -not $packageJson.Contain
 if ($tracker -match '(?i)\b(?:Supabase audit|migration-file creation|live migration application|product/runtime implementation) (?:is|are) authorized\b') {
     Write-Error 'TRACKER.md incorrectly represents a later authorization.'
 }
-$nextActionCount = [regex]::Matches($tracker, '(?m)^\*\*Next authorized action:\*\*').Count
+$nextActionCount = [regex]::Matches([IO.File]::ReadAllText($trackerPath), '(?m)^\*\*Next authorized action:\*\*').Count
 if ($nextActionCount -ne 1) { Write-Error "TRACKER.md must contain exactly one current next-action marker; found $nextActionCount." }
+$activeNextActionCount = [regex]::Matches($activeCurrent, '(?m)^- Exact next authorized action:').Count
+if ($activeNextActionCount -ne 1) { Write-Error "ACTIVE.md must contain exactly one current next action; found $activeNextActionCount." }
 $catalogue = $artifactBodies['00b-technical-design/01-command-query-and-dto-catalogue.md']
 $commandIds = @([regex]::Matches($catalogue, '\bC(?:0[1-9]|[12][0-9]|30)\b') | ForEach-Object Value | Sort-Object -Unique)
 $queryIds = @([regex]::Matches($catalogue, '\bQ(?:0[1-9]|1[01])\b') | ForEach-Object Value | Sort-Object -Unique)

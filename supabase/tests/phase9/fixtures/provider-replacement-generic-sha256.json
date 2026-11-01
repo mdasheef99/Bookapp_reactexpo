@@ -1,7 +1,7 @@
 {
   "authority": "02c §11.1 AC8-9a; freeze AFTER generalized 8a, before synthetic installation",
-  "baselineArtifact": "p1-p2-local-generalized-8a-4-M89-M92-2026-11-01",
-  "status": "Provisional local P1/P2 correction hash fixture; independent correction review and full 8a acceptance remain open",
+  "baselineArtifact": "empty-ambiguity-local-generalized-8a-4-M89-M92-2026-11-01",
+  "status": "Provisional local 8a-4 correction hash fixture; independent correction review and full 8a acceptance remain open",
   "sql": [
     {
       "signature": "marketplace_sec.phase9_catalogue_choice_target_v1(jsonb, uuid, text, text)",
@@ -65,7 +65,7 @@
     },
     {
       "signature": "marketplace_sec.phase9_complete_automatic_metadata_v1(jsonb)",
-      "sha256": "fcaee0c0020973ee50ea2c35af7e2094517f327160c22e377965d942695ba5c8"
+      "sha256": "2b2c7fbe27a97d5c476d7822cc2f2f0383c917035dd7e407c636195e702e7001"
     },
     {
       "signature": "marketplace_sec.phase9_complete_candidate_edition_options_v1(uuid, text, text, integer, uuid, uuid, uuid, uuid, integer, text, uuid, uuid, timestamp with time zone, timestamp with time zone, boolean, jsonb)",
@@ -321,7 +321,7 @@
     },
     {
       "path": "supabase/migrations/20261031000092_marketplace_phase9_provider_automatic_transaction.sql",
-      "sha256": "8cff8a196ef773e48bbf11147053f9e35afa78b68bbab253580c7457d344c28d"
+      "sha256": "b256e00ff2a86ec7ad58f4b27fcab8775a8925c92fc275e5279d37e8ea56c230"
     }
   ],
   "metadata": [

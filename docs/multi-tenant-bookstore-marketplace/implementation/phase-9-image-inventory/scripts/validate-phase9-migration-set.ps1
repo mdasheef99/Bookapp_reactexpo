@@ -183,6 +183,40 @@ if ($tracker.Contains('Owner authorized M83 creation and application') -and
     $tracker.Contains('20261026000083_marketplace_phase9_lean_catalogue_identity.sql')) {
     $draftMigrationNames += '20261026000083_marketplace_phase9_lean_catalogue_identity.sql'
 }
+# ACTIVE.md and the Phase 9 migration ledger preserve the exact local M65–M92
+# artifacts after old tracker handoff labels were archived. This list confirms
+# local files only; it does not assert that any migration is applied.
+$draftMigrationNames = @(
+    $draftMigrationNames
+    '20261007000065_marketplace_phase9_edition_picker_state.sql'
+    '20261007000066_marketplace_phase9_edition_picker_commands.sql'
+    '20261007000067_marketplace_phase9_edition_picker_operation_fences.sql'
+    '20261007000068_marketplace_phase9_edition_picker_worker_completion.sql'
+    '20261008000069_marketplace_phase9_edition_picker_commit_cleanup.sql'
+    '20261008000070_marketplace_phase9_edition_picker_confirmation.sql'
+    '20261010000071_marketplace_phase9_edition_picker_selection_eligibility.sql'
+    '20261010000072_marketplace_phase9_edition_picker_superseded_jobs.sql'
+    '20261011000073_marketplace_phase9_open_library_edition_options.sql'
+    '20261012000074_marketplace_phase9_open_library_author_isolation.sql'
+    '20261016000076_marketplace_phase9_edition_explicit_matching.sql'
+    '20261017000075_marketplace_phase9_edition_picker_exhausted_lookup_recovery.sql'
+    '20261017000077_marketplace_phase9_edition_matching_variants.sql'
+    '20261022000078_marketplace_phase9_owner_isbn_edition_lookup.sql'
+    '20261023000079_marketplace_phase9_isbn_match_metadata_state.sql'
+    '20261023000080_marketplace_phase9_manual_card_and_current_match_state.sql'
+    '20261025000081_marketplace_phase9_catalogue_link_at_add.sql'
+    '20261026000082_marketplace_phase9_edition_choice_survives_first_save.sql'
+    '20261026000083_marketplace_phase9_lean_catalogue_identity.sql'
+    '20261027000084_marketplace_phase9_catalogue_companions_completion.sql'
+    '20261028000085_marketplace_phase9_catalogue_cache_schema.sql'
+    '20261028000086_marketplace_phase9_catalogue_cache_scope_publication.sql'
+    '20261028000087_marketplace_phase9_catalogue_cache_reuse.sql'
+    '20261029000088_marketplace_phase9_catalogue_cache_hardening.sql'
+    '20261031000089_marketplace_phase9_provider_registry_policy.sql'
+    '20261031000090_marketplace_phase9_provider_validation.sql'
+    '20261031000091_marketplace_phase9_provider_route_accounting.sql'
+    '20261031000092_marketplace_phase9_provider_automatic_transaction.sql'
+) | Select-Object -Unique
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or
     $tracker.Contains('**Implementation status:** `wu2_owner_inventory_client_locally_complete_runtime_deferred`') -or

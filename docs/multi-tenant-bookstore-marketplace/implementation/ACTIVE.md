@@ -1,17 +1,20 @@
 # Marketplace current state
 
-Recorded state: 2026-11-01. Slice 8 package 8a-4 empty-ambiguity correction locally tested; no-retention fan-out proof remains open. Nothing applied.
+Recorded state: 2026-11-01. Slice 8 package 8a-4 golden and continuity checks pass locally; two original historical evidence files remain unavailable. Nothing applied.
 This file is rewritten at session close; dated evidence belongs in trackers.
 
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
-- Active slice/work unit: **slice 8 (Open Library first, replaceable providers), package 8a-4 review corrections; no-retention fan-out source proof remains open**.
+- Active slice/work unit: **slice 8 (Open Library first, replaceable providers), package 8a-4 verification handoff; 8a-5 is next in the planned sequence**.
 - Latest bounded change: automatic fan-out completion rejects an ambiguous
   outcome with no candidates; the focused 8a-4 suites passed **17/17**. The
-  existing golden fixture was not regenerated; its freeze test fails on the
-  intentionally changed function definition.
-  See the [review correction record](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-11-01---empty-ambiguity-correction-and-no-retention-proof-gap).
+  approved local golden refresh now matches the changed function and M92 file;
+  the provider golden/guard suites passed **13**, with **3 TODOs**. The
+  migration-set guard passes its current-set and four negative cases. The
+  full continuity validator passes with the unavailable original evidence
+  explicitly identified and tracked summaries linked.
+  See the [verification record](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-11-01---golden-and-continuity-check-maintenance).
 - Completed milestone: P1 unbound fan-out selection and P2 wall-clock retention
   expiry were reproduced before production edits, then corrected locally.
   Focused PGlite checks pass: 8a-4 **16/16** and 8a-2 retention **4/4**.
@@ -27,22 +30,21 @@ This file is rewritten at session close; dated evidence belongs in trackers.
   status and history for the current commit state.
   [Correction evidence](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-11-01---follow-up-p1p2-selection-and-deadline-corrections)
   owns exact proof and limitations.
-- Exact next authorized action: **review and specify a source-bound no-retention
-  fan-out selection proof across the 8a receipt boundary and planned 8b worker,
-  then verify it before enabling no-list fan-out completion**.
+- Exact next authorized action: **hand off the 8a-4 verification results and
+  missing historical evidence for review; 8a-5 is the next planned work unit**.
 
 ## Mutation authority now
 
-- The Owner authorized updating documentation and one local commit of the
-  current checkout changes. Preserve the earlier instruction not to regenerate
-  the golden fixture; this does not authorize push, deployment or external writes.
+- The Owner authorized the local golden-fixture, continuity-check and handoff
+  corrections and their local commit. Push, deployment and external writes are
+  not authorized.
 - Shared database/migration application: **none**; Storage: **none**; deployment: **none**.
 - M89/M90/M91 have committed baselines; corrected M90/M91 and M92 remain
   unapplied. Git status and history own their local commit state.
-  Disposable PGlite migrations/fixtures were used for verification only. Apply is
-  authorized after each migration completes its review cycle, with a Haiku
-  preflight (re-verify `ahntbtktjjmvfosgkmgn`, read-only live registry check)
-  and an ordered apply starting with M89. It does not cover push or deploy.
+  Disposable PGlite migrations/fixtures were used for verification only. The
+  Owner deferred shared migration application until after 8a-5. Any later
+  application remains subject to review, exact-project preflight and ordered
+  application starting with M89; no application is authorized in this session.
 - No push, deployment or application to shared services is authorized.
 
 ## Last recorded live state
@@ -67,13 +69,14 @@ These are recorded development-project results, not a fresh operational readback
 
 ## Open items, blockers and residual risks
 
-- The current fan-out finalizer stores no selected bytes, while 02c §4.3 requires
-  source-bound selection and 02d requires no-retention prefill to preserve valid
-  suggestions. Removing the no-list refusal would reintroduce the unbound
-  selection defect. The receipt/worker proof contract remains unresolved; no
-  8b behavior or new interface was invented in this correction.
-- The existing provider golden-freeze test fails because the M92 automatic
-  completion function changed and the fixture was intentionally not regenerated.
+- The SDD does not explicitly assign a no-retention fan-out proof to 8a-4.
+  Whether that future worker scenario needs support is a design question, not
+  a confirmed 8a-4 requirement or gate. The current no-list guard remains;
+  removing it without a source proof would reintroduce the unbound-selection defect.
+- The original historical files `.claude/psr-slice6/db-evidence.md` and
+  `.claude/psr-slice7a/preflight-1.md` are absent from this checkout. Dated
+  tracked summaries are linked, but do not replace the originals or establish
+  fresh live state. The continuity validator passes with this limitation noted.
 - Applying any 8a migration needs the per-migration review cycle plus a Haiku
   preflight (re-verify `ahntbtktjjmvfosgkmgn`, read-only live registry check),
   ordered starting with M89. Pushing and deploying are not authorized.
@@ -101,7 +104,7 @@ These are recorded development-project results, not a fresh operational readback
   PGlite probe against the old baseline first, then re-reviewed.
 - M92's earlier S1–S7 native provider checks passed with verified cleanup. The
   follow-up P1/P2 defects were reproduced and corrected; the 71-definition SHA256
-  fixture was refreshed as provisional and must not be treated as review approval.
+  fixture is refreshed as provisional and must not be treated as review approval.
   The full historical PGlite command was stopped
   during unrelated bookstore cases and is not claimed complete. The builder also edited
   `phase9ProviderSynthetic.integration.test.mjs` and
@@ -136,8 +139,8 @@ These are recorded development-project results, not a fresh operational readback
 - Pre-existing local issues, not slice 8: `core.autocrlf=true` CRLF checkout breaks
   raw-byte migration checks (Jest M84 hash, M86 guard); an LF `.gitattributes`
   rule for `supabase/migrations/*.sql` is authorized as one small separate commit. `phase9MetadataFoundation.integration.test.mjs` has 3
-  stale failures from its August-stopped harness. The continuity validator fails
-  with `PHASE9_MIGRATION_SET_INVALID` (allowlist stops at M83). `.phase9-dist`
+  stale failures from its August-stopped harness. The continuity validator now
+  passes with the historical evidence limitation described above. `.phase9-dist`
   must be built before some phase9 suites run.
 - Earlier accepted slice 7b-2 limits carry over: AC7-21(b) UNPROVEN, the
   provider-facts-only privacy case UNPROVEN, unproved in-flight/selected-option

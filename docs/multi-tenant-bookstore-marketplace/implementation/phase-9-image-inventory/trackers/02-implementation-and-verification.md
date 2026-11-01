@@ -6942,6 +6942,11 @@ uncommitted; no staging, push, deployment or shared migration application.
 
 ## 2026-11-01 - Empty ambiguity correction and no-retention proof gap
 
+**Later clarification:** the fan-out no-retention scenario below was an
+inference, not an explicitly specified 8a-4 requirement. It remains a design
+question, not a confirmed blocker for the next work unit. The existing no-list
+guard remains in place and must not be removed without source-bound proof.
+
 Scope: the Owner requested local resolution of the two follow-up review
 findings. Authority: 02c §§4.3/5.2 and 02d §§3/acceptance ACP-7. In M92,
 successful fan-out completion now refuses `ambiguous_match` when the candidates
@@ -6985,3 +6990,50 @@ existing `PHASE9_MIGRATION_SET_INVALID` allowlist gate. The recorded golden
 freeze remains failing against the changed automatic completion definition.
 The two focused 8a-4 PGlite regression suites were rerun and passed **17/17**;
 the native group and full historical suite were not rerun for this handoff.
+
+## 2026-11-01 - Golden and continuity check maintenance
+
+Scope: the Owner authorized the local golden-fixture and continuity-check
+corrections discussed in the handoff, including an updated fixture. Authority:
+02c §11.1/AC8-9a and the Phase 9 SESSION-START §8 continuity contract. Review
+clarified that the no-retention fan-out case is a design question, not an
+explicitly assigned 8a-4 requirement; no product decision is inferred. The Owner
+deferred shared migration application until after 8a-5; this session does not
+authorize it.
+
+Before refreshing the fixture, an in-memory 8a-4 prefix comparison found exactly
+one changed complete SQL definition among 71:
+`marketplace_sec.phase9_complete_automatic_metadata_v1(jsonb)`. No definition
+was missing; all 71 owner/ACL/volatility/search-path records and all four CHECK
+hashes matched. The only changed migration-file hash among M89–M92 was M92.
+The fixture was updated for that reviewed correction, including its baseline
+label; the golden, synthetic and provider guard suites passed **13 / 0 fail /
+3 TODO**, and all four migration-file hashes matched. The fixture remains a
+provisional local baseline, not independent review or full 8a acceptance.
+
+The continuity migration-set guard was reproduced failing before the change.
+Tracker consolidation had invalidated old status-string conditions for some
+M65–M83 files as well as leaving M84–M92 absent. The guard now records the exact
+local M65–M92 names while retaining its unexpected-file, missing-file,
+duplicate-number and malformed-name refusals. `test-phase9-migration-set.ps1`
+passed the actual current set and all four negative controls. It checks local
+filenames only; it does not assert application or authorize new migrations. A second stale
+check counted a historical tracker next-action marker as current; it now checks
+the current tracker and the unique ACTIVE.md action separately.
+
+Once those checks passed, the continuity validator exposed an incorrect decision
+link and links to two absent, historically untracked files:
+`.claude/psr-slice6/db-evidence.md` and `.claude/psr-slice7a/preflight-1.md`.
+The decision link is corrected. The affected documents retain the original
+filenames, explicitly state that those originals are unavailable here, and link
+to existing dated tracked summaries. The summaries do not replace the missing
+originals or constitute fresh live evidence. The full continuity validator then
+passed, including 195 requirement definitions, zero duplicates/missing
+traceability, local link checking, and its regression probes.
+
+The full historical PGlite suite and the wider native provider group were not
+rerun in this maintenance task; earlier evidence and outstanding reviews remain
+as recorded. No Python tests, shared database, Storage, provider or network
+access, migration application, staging, commit, push or deployment occurred.
+The Owner subsequently authorized a local commit of these maintenance changes;
+Git history owns the resulting commit state.

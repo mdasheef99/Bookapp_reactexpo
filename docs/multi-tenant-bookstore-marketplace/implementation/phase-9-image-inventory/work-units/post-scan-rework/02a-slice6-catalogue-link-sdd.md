@@ -6,7 +6,7 @@
 | **Parent** | [SDD-2, slice 6](./02-catalogue-and-matching-sdd.md#slice-6--catalogue-link-at-add), under [SDD-0](./00-overview-sdd.md). |
 | **Authority** | PSR-D34/D35/D37/D40; PSR-R01/R04/R05/R06/R09/R10; Q15–Q21. SDD-0 §§2/7.3/15 require review and separate Owner approvals. |
 | **Baseline** | Local branch claude/phase9-psr-slice6-catalogue-link, HEAD d09e8fd, the committed amendment cherry-picked from facf1c7 (Owner brief); no publication in this session. Slice 5 closed at 0de13ed. |
-| **Database evidence** | Only [live snapshot 2026-10-25](../../../../../../.claude/psr-slice6/db-evidence.md#L1). No fresh connection or project verification was performed here. |
+| **Database evidence** | Only the supplied live snapshot 2026-10-25 (`.claude/psr-slice6/db-evidence.md`); the original file is unavailable in this checkout. See the [dated tracker summary](../../trackers/38-post-scan-rework-evidence.md#35-slice-6-pass-2-detailed-design-2026-10-25). No fresh connection or project verification was performed here. |
 | **Migration** | Phase 9 **M81: APPLIED_LIVE** (file created locally 2026-10-25; applied 2026-10-25 as live version 20261025171647; the file's header comment still says "PROPOSED, not applied" - stale by design, an applied migration file must not be edited). One forward migration: private helper, Add replacement and canonical-table write revocation (OQ6, decided). No reset precondition. |
 | **Size / risk** | M / medium; cross-store identity, shared public facts and real uniqueness races require native PostgreSQL proof. |
 
@@ -101,8 +101,8 @@ M-number shorthand elsewhere in this document refers to these exact files.
 | C19 | [Open Library SQL fixture pattern, L24](../../../../../../supabase/tests/phase9/phase9OpenLibraryEditionOptions.integration.test.mjs#L24); [native Open Library fixture, L17](../../../../../../supabase/tests/phase9/openLibraryPostgresFixture.mjs#L17), chosen card L59; [race API, L5](../../../../../../supabase/tests/phase9/phase9OpenLibraryConcurrency.postgres.mjs#L5). |
 | C20 | [M52 structural guard, L40](../../../../../../supabase/migrations/__tests__/marketplacePhase9Unit6gFoundation.test.ts#L40) checks immutable M52 only; it does not prohibit a new forward Add replacement. [Dictionary metadata fields, L317](../../supporting/data-dictionary.md#L317). |
 | C21 | [Phase 3 smoke record, L52](../../../PHASE-3-inventory-canonical-listings.md#L52): historical inventory/listing smoke evidence; it is not reset authority. |
-| C22 | [Snapshot facts, L9](../../../../../../.claude/psr-slice6/db-evidence.md#L9): tables/triggers/registry; grants L22; Add hash L28; existing data L36; migration history L42. |
-| C23 | [Live snapshot 2026-10-25, addendum L49](../../../../../../.claude/psr-slice6/db-evidence.md#L49): incoming canonical FKs/delete actions/counts, three blocking references, no-FK projection, JSON not scanned, no view/rule dependency. Only this addendum supplies reset reference counts. |
+| C22 | Snapshot facts, L9 (`.claude/psr-slice6/db-evidence.md`, original unavailable here; [dated tracker summary](../../trackers/38-post-scan-rework-evidence.md#35-slice-6-pass-2-detailed-design-2026-10-25)): tables/triggers/registry; grants L22; Add hash L28; existing data L36; migration history L42. |
+| C23 | Live snapshot 2026-10-25, addendum L49 (`.claude/psr-slice6/db-evidence.md`, original unavailable here; [dated tracker summary](../../trackers/38-post-scan-rework-evidence.md#35-slice-6-pass-2-detailed-design-2026-10-25)): incoming canonical FKs/delete actions/counts, three blocking references, no-FK projection, JSON not scanned, no view/rule dependency. Only this addendum supplies reset reference counts. |
 
 **Add body comparison:** extracted all characters between Add's two $$ body
 delimiters (including its final END), retaining body newlines, with CRLF converted to

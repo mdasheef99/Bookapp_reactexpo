@@ -18,9 +18,12 @@ they do not override ACTIVE.md. Repeated status copies moved to the
 
 ## 2026-10-31 slice 8 package 8a-4 evidence
 
-The subsequent empty-ambiguity correction and remaining no-retention fan-out
-proof gap are recorded in the [2026-11-01 implementation log](./trackers/02-implementation-and-verification.md#2026-11-01---empty-ambiguity-correction-and-no-retention-proof-gap).
+The subsequent empty-ambiguity correction and no-retention fan-out design
+question are recorded in the [2026-11-01 implementation log](./trackers/02-implementation-and-verification.md#2026-11-01---empty-ambiguity-correction-and-no-retention-proof-gap).
 Current status and gates remain in ACTIVE.md; Git history owns commit state.
+The no-retention fan-out case is a design question, not an explicitly assigned
+8a-4 requirement. The latest golden/validator maintenance and missing historical
+evidence are recorded in the [verification handoff](./trackers/02-implementation-and-verification.md#2026-11-01---golden-and-continuity-check-maintenance).
 
 Follow-up: the Owner requested P1 unbound fan-out selection and P2 elapsed
 retention correction after the S1–S7 review. Both were reproduced before

@@ -939,6 +939,7 @@ deadline against `clock_timestamp()` after identity-lock waits and after final
 writes; expiry raises the existing storage-denied error and rolls back the entire
 completion. These are 02c §§3.1/4.2/4.3 safeguards, with no new fields or grants.
 Automatic fan-out also rejects `ambiguous_match` when its candidates array is
-empty (02c §§4.3/5.2). The existing no-list fan-out guard remains pending a
-source-bound selection proof; the no-retention suggestion requirement and the
-verification gap are recorded in ACTIVE.md and the implementation tracker.
+empty (02c §§4.3/5.2). The existing no-list fan-out guard remains. Whether a
+future fan-out provider needs no-retention selection support is a design
+question; the SDD does not explicitly assign that proof to 8a-4. See ACTIVE.md
+and the implementation tracker for the current verification status.
