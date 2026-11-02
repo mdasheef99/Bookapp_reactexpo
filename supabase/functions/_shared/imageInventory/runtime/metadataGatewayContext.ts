@@ -26,6 +26,10 @@ export type MetadataGatewayConfiguration = Readonly<{
   cacheNamespace: string;
   pricingPolicyVersion: string;
   revalidationSeconds: number;
+  // U2: the resolver's selected policy version for the configured key/version,
+  // including resumed historical identity. The legacy context policy lookup by
+  // key cannot see history, so routed calls carry it explicitly.
+  selectedPolicyVersion?: number;
   editionOptions?: Readonly<{ request: MetadataProductionRequest;
     boundary: import('./metadataEditionOptionsBoundary').MetadataEditionOptionsBoundary }>;
 }>;
@@ -96,9 +100,14 @@ export function metadataLookupParameters(
   };
 }
 
-const metadataReusePolicyVersion = (configuration: MetadataGatewayConfiguration): string =>
-  String(configuration.context.providerPolicies
+const metadataReusePolicyVersion = (configuration: MetadataGatewayConfiguration): string => {
+  const selected = configuration.selectedPolicyVersion;
+  if (typeof selected === 'number' && Number.isSafeInteger(selected) && selected > 0) {
+    return String(selected);
+  }
+  return String(configuration.context.providerPolicies
     .find((policy) => policy.adapterKey === configuration.adapterKey)?.policyVersion ?? '');
+};
 
 // 02b section 8.1: share lookup version authority; SQL owns scope, key and registry validation.
 export function buildEditionOptionsCacheVersions(
@@ -115,6 +124,7 @@ export function buildEditionOptionsCacheVersions(
 
 export function requestFromMetadataContext(
   context: MetadataJobContext,
+  selected?: Readonly<{ adapterKey: string; adapterVersion: string }>,
 ): MetadataProductionRequest {
   const built = buildMetadataQueryIdentity({
     strategy: 'bibliographic',
@@ -128,7 +138,15 @@ export function requestFromMetadataContext(
     throw new Error('P9_METADATA_QUERY_IDENTITY_MISMATCH');
   }
   const query: MetadataQueryIdentity = built;
-  const provider = context.providerPolicies[0];
+  // Routed calls supply the resolver's selected key/version so the lookup and
+  // cache policy match the selected descriptor, including resumed identity.
+  // The one-argument shape preserves the legacy first-row behavior for
+  // callers that have not routed yet.
+  const provider = selected === undefined
+    ? context.providerPolicies[0]
+    : context.providerPolicies.find((policy) =>
+      policy.adapterKey === selected.adapterKey
+      && policy.adapterVersion === selected.adapterVersion);
   return Object.freeze({
     candidateId: context.candidateId,
     storeId: context.storeId,
@@ -139,8 +157,8 @@ export function requestFromMetadataContext(
     query,
     providerPolicy: {
       enabled: provider?.enabled ?? false,
-      adapterVersionCompatible: true,
-      capabilityVersionCompatible: true,
+      adapterVersionCompatible: selected === undefined ? true : provider !== undefined,
+      capabilityVersionCompatible: selected === undefined ? true : provider !== undefined,
       matchingAllowed: provider?.matchingAllowed ?? false,
       storageAllowed: provider?.storageAllowed ?? false,
       reuseAllowed: provider?.reuseAllowed ?? false,

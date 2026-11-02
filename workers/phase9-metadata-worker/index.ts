@@ -1,5 +1,11 @@
-import { editionProviderRoute } from './editionProviderRoute';
+import { editionProviderRoute, hasPersistedEvidence } from './editionProviderRoute';
 import type { OpenLibraryEditionOptionsAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary';
+import { OPEN_LIBRARY_CAPABILITY } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary';
+import { createGoogleBooksDescriptor } from '../../supabase/functions/_shared/imageInventory/metadata/googleBooks/descriptor';
+import { createOpenLibraryV1Descriptor } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary/descriptor';
+import type { ProviderDescriptor } from '../../supabase/functions/_shared/imageInventory/metadata/providerDescriptor';
+import { providerManifestKey } from '../../supabase/functions/_shared/imageInventory/metadata/providerDescriptor';
+import { parseProviderConfigurationSnapshot } from '../../supabase/functions/_shared/imageInventory/runtime/providerConfiguration';
 import { GoogleBooksAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/googleBooks/adapter';
 import { executeEditionOptionsLookup } from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptions';
 import type { MetadataEditionOptionsBoundary } from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptionsBoundary';
@@ -26,6 +32,12 @@ export type MetadataWorkerDependencies = Readonly<{
   primary: MetadataProviderAdapter | null;
   primaryCapability: ProviderCapabilityDeclaration | null;
   editionFallback?: OpenLibraryEditionOptionsAdapter;
+  // Optional installed descriptor manifest supplied by the bootstrap (U3) or
+  // the test harness. When present, automatic and explicit share the resolved
+  // registry route; the unbound manifest is never the execution map, so
+  // readiness is never overridden to force routing. When absent, the legacy
+  // capability route below is preserved for old callers.
+  installed?: ReadonlyMap<string, ProviderDescriptor>;
   // Trusted composition port; production bootstrap installs the M68 RPC implementation.
   editionOptionsBoundary?: MetadataEditionOptionsBoundary;
 }>;
@@ -79,6 +91,277 @@ async function resolveSupersededEditionJob(
   }
 }
 
+async function processRoutedClaim(
+  claim: MetadataClaim,
+  dependencies: MetadataWorkerDependencies,
+  context: MetadataJobContext,
+  installed: ReadonlyMap<string, ProviderDescriptor>,
+): Promise<MetadataWorkerResult> {
+  // Receipt-first local short-circuit (02c §3.2: resolve local first). A
+  // durable local canonical edition resolves without any provider route or
+  // egress, so it is checked before the registry read. The provisional
+  // gateway needs a real configured primary (its type requires one); with no
+  // primary the claim fails closed below instead of inventing gateway config.
+  if (context.purpose === 'automatic' && context.localCanonicalEditionId !== null
+    && dependencies.primary !== null && dependencies.primaryCapability !== null) {
+    const provisional = new SupabaseMetadataProductionGateway(dependencies.serviceClient, {
+      worker: dependencies.workerId, context, primary: dependencies.primary,
+      adapterKey: dependencies.primaryCapability.adapterKey,
+      adapterVersion: dependencies.primaryCapability.adapterVersion,
+      capabilityVersion: dependencies.primaryCapability.capabilityVersion,
+      schemaVersion: 'p9-metadata-foundation-v1',
+      lookupContractVersion: 'p9-metadata-lookup-v1',
+      normalizerVersion: 'p9-bibliographic-normalizer-v1',
+      routingPolicyVersion: 'p9-metadata-routing-v1',
+      selectionPolicyVersion: 'p9-metadata-selection-v1',
+      snapshotVersion: 'p9-selected-metadata-v1', cachePolicyVersion: 'p9-metadata-cache-v1',
+      cacheNamespace: 'metadata-v1', pricingPolicyVersion: 'metadata-zero-cost-v1',
+      revalidationSeconds: 86400,
+    });
+    const local = await provisional.resolveLocal({
+      ...requestFromMetadataContext(context), claimWorker: dependencies.workerId,
+      providerPolicy: {
+        enabled: false, adapterVersionCompatible: false,
+        capabilityVersionCompatible: false,
+        matchingAllowed: false, storageAllowed: false,
+        reuseAllowed: false, pricingPolicyCompatible: true,
+      },
+    });
+    if (local.outcome === 'matched') return { outcome: 'local_canonical_match' };
+  }
+  // Persisted evidence (a registered lookup, attempt, or physical call, or a
+  // known attempt disposition) means a previous provider flow touched this
+  // job: it is not fresh. Run receipt-first recovery, then refuse new egress.
+  // The resolver is never called with resumed:null over an existing attempt,
+  // so no fresh route can execute against old lookup/attempt identity — for
+  // unknown or registered sends this stays recovery-only (02c §5.1). An
+  // M93-authorized next-claim retry cannot be distinguished here (the round
+  // allowance is private to M93; neither an older claim number nor
+  // retryable=true proves authorization), so its round-1 execution is a U5
+  // dependency; U2 preserves every receipt U5 needs to complete it.
+  if (hasPersistedEvidence(context)) {
+    if (context.purpose === 'edition_options') {
+      if (dependencies.editionOptionsBoundary === undefined) {
+        return { outcome: 'manual_metadata_required' };
+      }
+      const fence = editionOptionsFence(context, dependencies.workerId);
+      const recovered = await dependencies.editionOptionsBoundary.recover(fence);
+      if (recovered.status === 'completed' || recovered.status === 'replayed') {
+        if (recovered.requestId !== fence.requestId
+          || recovered.requestGeneration !== fence.requestGeneration
+          || !Number.isSafeInteger(recovered.optionsVersion)
+          || recovered.optionsVersion < 1
+          || !Number.isFinite(Date.parse(recovered.optionsExpiresAt))) {
+          throw new Error('P9_EDITION_COMPLETION_INVALID');
+        }
+        return Date.parse(recovered.optionsExpiresAt) > Date.now()
+          ? { outcome: 'edition_options_available' }
+          : { outcome: 'manual_metadata_required' };
+      }
+      if (recovered.status === 'stale_rejected') {
+        await resolveSupersededEditionJob(claim, dependencies);
+        return { outcome: 'stale_claim' };
+      }
+      return completionResult(await dependencies.editionOptionsBoundary.fail({
+        ...fence, outcome: 'provider_disabled', retryable: false,
+      }));
+    }
+    // Automatic: receipt-first through the existing finalized-attempt path
+    // when the old lookup/attempt identity exists; otherwise fail closed.
+    // No new fetch is issued from this branch.
+    if (context.currentLookupId !== null && context.currentAttemptId !== null
+      && dependencies.primary !== null && dependencies.primaryCapability !== null) {
+      const provisional = new SupabaseMetadataProductionGateway(dependencies.serviceClient, {
+        worker: dependencies.workerId, context, primary: dependencies.primary,
+        adapterKey: dependencies.primaryCapability.adapterKey,
+        adapterVersion: dependencies.primaryCapability.adapterVersion,
+        capabilityVersion: dependencies.primaryCapability.capabilityVersion,
+        schemaVersion: 'p9-metadata-foundation-v1',
+        lookupContractVersion: 'p9-metadata-lookup-v1',
+        normalizerVersion: 'p9-bibliographic-normalizer-v1',
+        routingPolicyVersion: 'p9-metadata-routing-v1',
+        selectionPolicyVersion: 'p9-metadata-selection-v1',
+        snapshotVersion: 'p9-selected-metadata-v1', cachePolicyVersion: 'p9-metadata-cache-v1',
+        cacheNamespace: 'metadata-v1', pricingPolicyVersion: 'metadata-zero-cost-v1',
+        revalidationSeconds: 86400,
+      });
+      const resumed = await provisional.resumeFinalizedAttempt({
+        ...requestFromMetadataContext(context), claimWorker: dependencies.workerId,
+        providerPolicy: {
+          enabled: false, adapterVersionCompatible: false,
+          capabilityVersionCompatible: false,
+          matchingAllowed: false, storageAllowed: false,
+          reuseAllowed: false, pricingPolicyCompatible: true,
+        },
+        lookupId: context.currentLookupId, attemptId: context.currentAttemptId,
+      });
+      if (resumed !== null) return resumed;
+    }
+    const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
+      p_job_id: context.jobId,p_worker: dependencies.workerId,
+      p_lease_token: context.claimToken,p_attempt_count: context.attempt,
+      p_candidate_id: context.candidateId,p_candidate_version: context.candidateVersion,
+      p_query_identity: context.queryIdentity,p_failure_kind: 'provider_disabled',
+      p_retryable: false,
+    });
+    if (failed.error) throw new Error('P9_METADATA_COMPLETION_FAILED');
+    return completionResult(failed.data);
+  }
+  // Service-only registry read for genuinely fresh jobs only. A failed read
+  // never falls back to legacy election: the claim fails closed below.
+  const configuration = await dependencies.serviceClient.rpc(
+    'phase9_provider_configuration_v1',
+  );
+  if (configuration === null || typeof configuration !== 'object'
+    || ((configuration as { error?: unknown }).error !== null
+      && (configuration as { error?: unknown }).error !== undefined)) {
+    throw new Error('P9_METADATA_RPC_FAILED:phase9_provider_configuration_v1');
+  }
+  const registry = parseProviderConfigurationSnapshot(
+    (configuration as { data?: unknown }).data,
+  );
+  // Automatic and explicit share the same resolved route; invalid routes
+  // throw before any egress. Existing context/claim checks are unchanged.
+  // Evidence is absent here, so resumed is always null: fresh routing only.
+  const route = editionProviderRoute({ context, registry, installed });
+  if ('manual' in route) {
+    if (context.purpose === 'edition_options' && dependencies.editionOptionsBoundary) {
+      return completionResult(await dependencies.editionOptionsBoundary.fail({
+        ...editionOptionsFence(context, dependencies.workerId),
+        outcome: 'provider_disabled', retryable: false,
+      }));
+    }
+    if (context.purpose === 'edition_options') {
+      return { outcome: 'manual_metadata_required' };
+    }
+    const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
+      p_job_id: context.jobId,p_worker: dependencies.workerId,
+      p_lease_token: context.claimToken,p_attempt_count: context.attempt,
+      p_candidate_id: context.candidateId,p_candidate_version: context.candidateVersion,
+      p_query_identity: context.queryIdentity,p_failure_kind: 'provider_disabled',
+      p_retryable: false,
+    });
+    if (failed.error) throw new Error('P9_METADATA_COMPLETION_FAILED');
+    return completionResult(failed.data);
+  }
+  // The unbound manifest is never the execution map. The configured adapter
+  // must serve the exact selected key@version with the exact contract tuple;
+  // a key-only match never runs under a relabelled version. The rebound
+  // factory descriptor is identity-only: credentials and retention readiness
+  // were already verified on the selected manifest descriptor by the resolver.
+  const configured = [dependencies.primary, dependencies.editionFallback ?? null];
+  const adapterForKey = (adapterKey: string): MetadataProviderAdapter | null =>
+    configured.find((adapter) =>
+      adapter?.normalizedEditionHostPolicy?.adapterKey === adapterKey) ?? null;
+  const reboundDescriptorFor = (
+    adapterKey: string, adapter: MetadataProviderAdapter,
+  ): ProviderDescriptor | null => {
+    if (adapterKey === 'google_books') {
+      return createGoogleBooksDescriptor({
+        adapter: adapter as unknown as GoogleBooksAdapter,
+      });
+    }
+    if (adapterKey === 'open_library') {
+      return createOpenLibraryV1Descriptor({
+        adapter: adapter as unknown as OpenLibraryEditionOptionsAdapter,
+        policyVersion: null,
+      });
+    }
+    return null;
+  };
+  const sameContractTuple = (left: ProviderDescriptor, right: ProviderDescriptor): boolean =>
+    left.validationContract === right.validationContract
+    && left.hostPolicyVersion === right.hostPolicyVersion
+    && left.capabilityVersion === right.capabilityVersion
+    && left.normalizerVersion === right.normalizerVersion
+    && left.payloadSchemaVersion === right.payloadSchemaVersion
+    && left.lookupSchemaVersion === right.lookupSchemaVersion;
+  const bindAdapter = (descriptor: ProviderDescriptor): MetadataProviderAdapter | null => {
+    const candidate = adapterForKey(descriptor.adapterKey);
+    if (candidate === null) return null;
+    const rebound = reboundDescriptorFor(descriptor.adapterKey, candidate);
+    if (rebound === null || rebound.adapterVersion !== descriptor.adapterVersion
+      || !sameContractTuple(rebound, descriptor)) {
+      return null;
+    }
+    return candidate;
+  };
+  const primary = bindAdapter(route.primary);
+  // Capability derives from the selected descriptor and its registry row: the
+  // resolver verified registry enabled/matching/storage for this row, so the
+  // value below is derived, not forced.
+  const selectedRow = registry.providers.find((row) =>
+    row.adapterKey === route.primary.adapterKey
+    && row.adapterVersion === route.primary.adapterVersion) ?? null;
+  const capability = {
+    adapterKey: route.primary.adapterKey,
+    adapterVersion: route.primary.adapterVersion,
+    capabilityVersion: route.primary.capabilityVersion,
+    enabled: selectedRow !== null && selectedRow.enabled
+      && selectedRow.matchingAllowed && selectedRow.storageAllowed,
+  } as ProviderCapabilityDeclaration;
+  if (primary === null) {
+    const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
+      p_job_id: context.jobId,p_worker: dependencies.workerId,
+      p_lease_token: context.claimToken,p_attempt_count: context.attempt,
+      p_candidate_id: context.candidateId,p_candidate_version: context.candidateVersion,
+      p_query_identity: context.queryIdentity,p_failure_kind: 'provider_disabled',
+      p_retryable: false,
+    });
+    if (failed.error) throw new Error('P9_METADATA_COMPLETION_FAILED');
+    return completionResult(failed.data);
+  }
+  const provider = context.providerPolicies.find((item) =>
+    item.adapterKey === capability.adapterKey
+    && item.adapterVersion === capability.adapterVersion);
+  const request = {
+    ...requestFromMetadataContext(context, {
+      adapterKey: capability.adapterKey, adapterVersion: capability.adapterVersion,
+    }),
+    claimWorker: dependencies.workerId,
+    providerPolicy: {
+      enabled: provider?.enabled ?? false,adapterVersionCompatible: provider !== undefined,
+      capabilityVersionCompatible: capability.enabled,
+      matchingAllowed: provider?.matchingAllowed ?? false,
+      storageAllowed: provider?.storageAllowed ?? false,
+      reuseAllowed: provider?.reuseAllowed ?? false,pricingPolicyCompatible: true,
+    },
+  };
+  const gateway = new SupabaseMetadataProductionGateway(dependencies.serviceClient, {
+    worker: dependencies.workerId, context, primary,
+    adapterKey: capability.adapterKey, adapterVersion: capability.adapterVersion,
+    capabilityVersion: capability.capabilityVersion,
+    schemaVersion: 'p9-metadata-foundation-v1',
+    lookupContractVersion: 'p9-metadata-lookup-v1',
+    normalizerVersion: route.primary.normalizerVersion,
+    routingPolicyVersion: 'p9-metadata-routing-v1',
+    selectionPolicyVersion: 'p9-metadata-selection-v1',
+    snapshotVersion: 'p9-selected-metadata-v1', cachePolicyVersion: 'p9-metadata-cache-v1',
+    cacheNamespace: 'metadata-v1', pricingPolicyVersion: 'metadata-zero-cost-v1',
+    revalidationSeconds: 86400,
+    // The resolver's selected row policy for this fresh key/version. (Only
+    // direct resolver callers carry resumed historical identity; the worker
+    // never manufactures lineage, so this is always the current row policy.)
+    selectedPolicyVersion:
+      route.policyVersions[providerManifestKey(capability.adapterKey, capability.adapterVersion)],
+    editionOptions: context.purpose === 'edition_options' && dependencies.editionOptionsBoundary
+      ? { request,boundary: dependencies.editionOptionsBoundary } : undefined,
+  });
+  if (context.purpose === 'edition_options') {
+    const fallbackAdapter = route.secondary === null
+      ? null : bindAdapter(route.secondary);
+    const fallback = fallbackAdapter as unknown as OpenLibraryEditionOptionsAdapter | undefined;
+    const result = await executeEditionOptionsLookup(
+      context,gateway,
+      primary as OpenLibraryEditionOptionsAdapter,
+      new AbortController().signal,fallback,
+    );
+    if (result.outcome === 'stale_claim') await resolveSupersededEditionJob(claim,dependencies);
+    return result;
+  }
+  return await runMetadataProductionComposition(request,gateway);
+}
+
 async function processMetadataClaim(
   claim: MetadataClaim,
   dependencies: MetadataWorkerDependencies,
@@ -89,7 +372,29 @@ async function processMetadataClaim(
       jobId: claim.id,worker: dependencies.workerId,
       leaseToken: claim.lease_token,attempt: claim.attempt_count,
     });
-    const route = context.purpose === 'edition_options' ? editionProviderRoute(context,dependencies) : null;
+    if (dependencies.installed !== undefined) {
+      return await processRoutedClaim(claim,dependencies,context,dependencies.installed);
+    }
+    // Pre-8b compatibility for callers without an installed manifest (legacy
+    // fixtures and production until U3 binds runnable descriptors). Owned by
+    // later units; the routed path above is the 8b behavior.
+    const job: MetadataJobContext = context;
+    const google = dependencies.primary instanceof GoogleBooksAdapter ? dependencies.primary : null;
+    const library = dependencies.editionFallback ?? null;
+    const allowed = (key: string,version: string) => job.providerPolicies.some((row) =>
+      row.adapterKey === key && row.adapterVersion === version && row.enabled
+      && row.matchingAllowed && row.storageAllowed);
+    const resumedKey = job.currentAttemptAdapterKey ?? job.currentLookupAdapterKey;
+    const route = job.purpose !== 'edition_options' ? null
+      : resumedKey === 'open_library' ? library && allowed('open_library','1.0.0')
+        ? { adapter: library,capability: OPEN_LIBRARY_CAPABILITY,fallback: null } : null
+      : resumedKey === 'google_books' && library && !google?.optionsRetentionConfigured ? null
+      : google && dependencies.primaryCapability && allowed('google_books',dependencies.primaryCapability.adapterVersion)
+        && (google.optionsRetentionConfigured || !library)
+        ? { adapter: google,capability: dependencies.primaryCapability,
+          fallback: library && allowed('open_library','1.0.0') ? library : null }
+      : library && allowed('open_library','1.0.0')
+        ? { adapter: library,capability: OPEN_LIBRARY_CAPABILITY,fallback: null } : null;
     if (context.purpose === 'edition_options' && (!dependencies.editionOptionsBoundary || !route)) {
       if (dependencies.editionOptionsBoundary) {
         return completionResult(await dependencies.editionOptionsBoundary.fail({
