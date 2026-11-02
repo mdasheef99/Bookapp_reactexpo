@@ -3,6 +3,12 @@ import {
   createMetadataProductionDependencies,
 } from '../../../workers/phase9-metadata-worker/bootstrap';
 
+import { bootstrapOpenLibraryOnly, runDescriptorWorker, installedManifest } from './support/providerModules';
+import { automaticDependencies } from './support/automaticWorker';
+import { providerConfigurationRow, providerConfigurationSnapshot } from './fixtures/phase9/providerConfiguration';
+import { automaticContext } from './fixtures/phase9/editionOptionsWorker';
+import { TEST_ONLY_PROTECTION_POLICY } from './support/providerProtection';
+
 const base = {
   SUPABASE_URL: 'https://ahntbtktjjmvfosgkmgn.supabase.co',
   SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret-that-is-long-enough-0001',
@@ -55,6 +61,30 @@ describe('Phase 9 metadata worker server-only environment', () => {
 
   it('defaults to fixture mode without a provider credential', () => {
     expect(loadMetadataWorkerEnvironment(base)).toMatchObject({ providerMode: 'fixture' });
+  });
+
+  it('boots and dispatches a real OL-only runtime without any Google credential', async () => {
+    const urls: string[] = [];
+    const fetcher = jest.fn(async (address: string | URL | Request) => {
+      const url = new URL(address instanceof Request ? address.url : String(address)); urls.push(url.hostname);
+      return new Response(JSON.stringify({ docs: [] }), { headers: { 'content-type': 'application/json' } });
+    });
+    const production = bootstrapOpenLibraryOnly(base, fetcher);
+    // The OL-only runtime is the production bootstrap; the automatic fixture
+    // receives it directly and must not construct a Google adapter or key.
+    const subject = automaticDependencies({ production, context: { providerPolicies: [{
+      ...automaticContext.providerPolicies[0], adapterKey: 'open_library', adapterVersion: '2.0.0',
+    }] }, rpc: async name => name === 'phase9_provider_configuration_v1' ? {
+      data: providerConfigurationSnapshot([providerConfigurationRow('open_library', '2.0.0', {
+        protectionPolicy: TEST_ONLY_PROTECTION_POLICY,
+      })]), error: null,
+    } : undefined });
+    const globalFetch = jest.spyOn(globalThis, 'fetch').mockImplementation(fetcher);
+    try {
+      await runDescriptorWorker({ ...subject.dependencies, ...production }, production.installed ?? installedManifest());
+      expect(urls).toEqual(['openlibrary.org']);
+      expect(subject.command()?.result.outcome.outcome).toBe('no_acceptable_match');
+    } finally { globalFetch.mockRestore(); }
   });
 
   it('requires explicit real mode and bounded complete Google Books configuration', () => {

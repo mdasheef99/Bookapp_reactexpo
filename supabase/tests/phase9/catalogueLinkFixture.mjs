@@ -89,15 +89,25 @@ export async function enableOL(db) {
     storage_allowed=true,public_display_allowed=true,provider_kind='metadata',adapter_version='1.0.0',policy_version=1 WHERE adapter_key='open_library';`);
 }
 // C19 olCall/operation/receipt pattern extracted here; no suite-private imports.
-export async function olOperation(db, overrides = {}, automatic = false, fallback = false, existing = null, queryAuthors = null) {
-  const m = facts(overrides);
+export async function olOperation(db, overrides = {}, automatic = false, fallback = false, existing = null, queryAuthors = null,
+  { adapterVersion = '1.0.0' } = {}) {
+  const m = facts({ adapterVersion, ...overrides });
   const observedAuthors = queryAuthors ?? m.authors;
+  const capabilityVersion = adapterVersion === '2.0.0'
+    ? 'open-library-capability-v2' : 'open-library-capability-v1';
   const f = existing ?? await seedCard(db, { isbn: m.isbn13 ?? m.isbn10, language: m.language,
     review: { originalTitle: m.title, authors: observedAuthors, originalLanguage: m.language,
       script: m.script, originalFieldConfirmation: { title: true, authors: observedAuthors.map(() => true) } } });
   await resetActor(db);
   if (!existing) await db.query('UPDATE public.image_extraction_candidates SET observed_title=$1,observed_authors=$2 WHERE id=$3', [m.title, observedAuthors, f.candidateId]);
   await enableOL(db);
+  if (adapterVersion === '2.0.0') await db.query(`UPDATE public.phase9_provider_registry
+    SET adapter_version='2.0.0',accepted_adapter_versions=ARRAY['1.0.0','2.0.0'],
+     validation_contract='open-library-v2',host_policy_version='open-library-hosts-v1',
+     version_contracts=jsonb_build_object(
+      '1.0.0',marketplace_sec.phase9_provider_validation_contract_v1('open_library','1.0.0'),
+      '2.0.0',marketplace_sec.phase9_provider_validation_contract_v1('open_library','2.0.0'))
+    WHERE adapter_key='open_library'`);
   if (fallback) await db.exec(`INSERT INTO public.phase9_provider_registry(adapter_key,provider_kind,adapter_version,enabled,matching_allowed,storage_allowed,revalidation_seconds,policy_version)
     VALUES('google_books','metadata','1.0.0',true,true,true,86400,1) ON CONFLICT(adapter_key) DO UPDATE SET enabled=true,matching_allowed=true,storage_allowed=true,adapter_version='1.0.0'`);
   await setActor(db, f.ownerId);
@@ -106,15 +116,17 @@ export async function olOperation(db, overrides = {}, automatic = false, fallbac
     : (await scalar(db, lookupSql(f, existing ? (await scalar(db, readSql(f))).requestGeneration : 0))).operationId;
   const context = await scalar(db, await claimJob(db, f, jobId));
   const p = { ...f, jobId, context, attempt: 1 }, lookupAdapter = fallback ? 'google_books' : 'open_library';
+  const lookupVersion = fallback ? '1.0.0' : adapterVersion;
+  const lookupCapability = fallback ? 'open-library-capability-v1' : capabilityVersion;
   const lookup = await rpc(db, 'phase9_register_structural_metadata_lookup', [jobId, worker, token, 1,
     f.candidateId, context.candidateVersion, context.queryIdentity, 'catalogue:' + jobId,
-    lookupAdapter, '1.0.0', 'open-library-capability-v1', 'p9-metadata-foundation-v1', 'bibliographic',
+    lookupAdapter, lookupVersion, lookupCapability, 'p9-metadata-foundation-v1', 'bibliographic',
     'p9-metadata-lookup-v1', 'p9-bibliographic-normalizer-v1', 'p9-metadata-routing-v1',
     'store_private', '1', 'p9-metadata-cache-v1', 'metadata-v1', null]);
-  const usage = await rpc(db, 'phase9_reserve_metadata_usage', [jobId, worker, token, 1, lookup.lookup_id, lookupAdapter, '1.0.0', 1]);
+  const usage = await rpc(db, 'phase9_reserve_metadata_usage', [jobId, worker, token, 1, lookup.lookup_id, lookupAdapter, lookupVersion, 1]);
   const register = (adapter, providerRole, sequence, predecessor) => rpc(db, 'phase9_register_structural_metadata_attempt', [lookup.lookup_id, jobId, worker, token, 1,
     f.candidateId, context.candidateVersion, randomUUID(), 'catalogue:' + jobId, providerRole, sequence,
-    adapter, '1.0.0', 'open-library-capability-v1', 'p9-metadata-foundation-v1',
+    adapter, lookupVersion, lookupCapability, 'p9-metadata-foundation-v1',
     'p9-bibliographic-normalizer-v1', 'p9-metadata-routing-v1', predecessor, usage.reservation_id]);
   let attempt = await register(lookupAdapter, 'primary', 1, 'local_insufficient');
   if (fallback) {

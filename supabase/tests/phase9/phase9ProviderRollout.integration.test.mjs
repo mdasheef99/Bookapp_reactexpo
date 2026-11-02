@@ -31,8 +31,7 @@ async function legacyGoogleAutomatic(database) {
   assert.ok(cache.cache_id,'legacy private selected-snapshot cache remains writable');
   return f;
 }
-async function legacyOlExplicit(database, v2=false) {
-  const f=await catalogueBatch(database);
+async function finishOlExplicit(database, f, v2=false) {
   for(const p of f.context.providerPolicies) assert.deepEqual(Object.keys(p).sort(),legacyPolicyKeys);
   const result=()=>v2 ? completeCatalogueV2(database,f) : complete(database,f,f);
   assert.equal((await result()).status,'completed');
@@ -45,9 +44,102 @@ async function legacyOlExplicit(database, v2=false) {
   assert.ok(saved.item.canonical_edition_id,'OL completion→Select→Add remains linked');
   return f;
 }
+async function legacyOlExplicit(database, v2=false) {
+  return finishOlExplicit(database, await catalogueBatch(database), v2);
+}
 
 test('AC8-10 [8a-1..4] GREEN-control old Google automatic context→physical call→selected snapshot→private cache',async()=>{
   await legacyGoogleAutomatic(db);
+});
+async function eightBTransition(database) {
+  await resetActor(database);
+  await database.query(`UPDATE public.phase9_provider_registry SET enabled=true,matching_allowed=true,storage_allowed=true,
+    automatic_lookup_allowed=true,automatic_role='primary',automatic_order=1,
+    explicit_search_allowed=false,explicit_role=NULL,explicit_order=NULL WHERE adapter_key='google_books'`);
+  await database.query(`UPDATE public.phase9_provider_registry SET enabled=true,matching_allowed=true,storage_allowed=true,
+    automatic_lookup_allowed=false,automatic_role=NULL,automatic_order=NULL,
+    explicit_search_allowed=true,explicit_role='primary',explicit_order=1 WHERE adapter_key='open_library'`);
+  await setActor(database,'','service_role');
+  return value(database,'SELECT public.phase9_provider_configuration_v1()');
+}
+async function eightBFinalOlTuple(database) {
+  await resetActor(database);
+  await database.query(`UPDATE public.phase9_provider_registry SET enabled=false,matching_allowed=false,storage_allowed=false,
+    automatic_lookup_allowed=false,automatic_role=NULL,automatic_order=NULL,
+    explicit_search_allowed=false,explicit_role=NULL,explicit_order=NULL WHERE adapter_key='google_books'`);
+  await database.query(`UPDATE public.phase9_provider_registry SET enabled=true,matching_allowed=true,storage_allowed=true,
+    public_display_allowed=true,attribution_required=true,shared_catalogue_allowed=true,
+    adapter_version='2.0.0',accepted_adapter_versions=ARRAY['1.0.0','2.0.0'],
+    validation_contract='open-library-v2',host_policy_version='open-library-hosts-v1',
+    version_contracts=jsonb_build_object(
+      '1.0.0',marketplace_sec.phase9_provider_validation_contract_v1('open_library','1.0.0'),
+      '2.0.0',marketplace_sec.phase9_provider_validation_contract_v1('open_library','2.0.0')),
+    automatic_lookup_allowed=false,automatic_role=NULL,automatic_order=NULL,
+    explicit_search_allowed=true,explicit_role='primary',explicit_order=1,
+    options_retention_seconds=86400 WHERE adapter_key='open_library'`);
+  await setActor(database,'','service_role');
+  return value(database,'SELECT public.phase9_provider_configuration_v1()');
+}
+
+test('AC8-10 [8b] transition row: old Google automatic and 8b automatic transaction with Google primary/OL auto disabled, then rollback floor with Google off',async t=>{
+  if(!await needs(t,db,'public.phase9_provider_configuration_v1()','8a-1') ||
+    !await needs(t,db,'public.phase9_complete_automatic_metadata_v1(jsonb)','8a-4'))return;
+  const transition=await eightBTransition(db);
+  const google=transition.providers.find(row=>row.adapterKey==='google_books');
+  const library=transition.providers.find(row=>row.adapterKey==='open_library');
+  assert.deepEqual([google.automaticRole,google.automaticOrder],['primary',1]);
+  assert.deepEqual([library.automaticRole,library.automaticOrder],[null,null]);
+  assert.deepEqual([library.explicitRole,library.explicitOrder],['primary',1]);
+  await clean(db);
+  await legacyGoogleAutomatic(db);
+  await clean(db);
+  await eightBTransition(db);
+  const {command}=await automaticGoogleCommand(db);
+  const receipt=await rpc(db,'phase9_complete_automatic_metadata_v1',[command]);
+  assert.equal(receipt.status,'completed');
+  assert.equal(receipt.outcome,'accepted_metadata_match');
+  await clean(db);
+  const rollback=await eightBFinalOlTuple(db);
+  const off=rollback.providers.find(row=>row.adapterKey==='google_books');
+  const final=rollback.providers.find(row=>row.adapterKey==='open_library');
+  assert.equal(off.enabled,false);
+  assert.deepEqual([off.automaticRole,off.automaticOrder],[null,null]);
+  assert.deepEqual([final.adapterVersion],['2.0.0']);
+  assert.deepEqual(final.acceptedAdapterVersions,['1.0.0','2.0.0']);
+  assert.equal(final.validationContract,'open-library-v2');
+  assert.deepEqual([final.automaticRole,final.automaticOrder],[null,null]);
+  assert.deepEqual([final.explicitRole,final.explicitOrder],['primary',1]);
+});
+test('AC8-10 [8b rollback] accepted v1 explicit lineage completes/replays after the post-switch tuple with Google off',async t=>{
+  if(!await needs(t,db,'public.phase9_provider_configuration_v1()','8a-1') ||
+    !await needs(t,db,'public.phase9_complete_candidate_edition_options_v2(uuid,text,text,integer,uuid,uuid,uuid,uuid,integer,text,uuid,uuid,timestamptz,timestamptz,boolean,jsonb,jsonb)','8a-2'))return;
+  await clean(db);
+  const v1=await catalogueBatch(db);
+  const tuple=await eightBFinalOlTuple(db);
+  const off=tuple.providers.find(row=>row.adapterKey==='google_books');
+  assert.deepEqual([off.enabled,off.explicitRole,off.explicitOrder],[false,null,null]);
+  assert.equal((await completeCatalogueV2(db,v1)).status,'completed');
+  const calls=await value(db,'SELECT count(*)::int FROM public.phase9_metadata_provider_calls WHERE job_id=$1',[v1.jobId]);
+  const first=await recover(db,v1), second=await recover(db,v1);
+  assert.deepEqual(second,first,'post-switch v1 lineage replays its original receipt');
+  assert.equal(await value(db,'SELECT count(*)::int FROM public.phase9_metadata_provider_calls WHERE job_id=$1',[v1.jobId]),
+    calls,'recovery dispatches no new physical call');
+});
+test('AC8-10/14 [8b rollback] accepted v2 explicit lineage completes/replays after the post-switch tuple with Google off',async t=>{
+  if(!await needs(t,db,'public.phase9_provider_configuration_v1()','8a-1') ||
+    !await needs(t,db,'public.phase9_complete_candidate_edition_options_v2(uuid,text,text,integer,uuid,uuid,uuid,uuid,integer,text,uuid,uuid,timestamptz,timestamptz,boolean,jsonb,jsonb)','8a-2'))return;
+  await clean(db);
+  const v2=await catalogueBatch(db,{},null,{providerVersion:'2.0.0'});
+  const tuple=await eightBFinalOlTuple(db);
+  const off=tuple.providers.find(row=>row.adapterKey==='google_books');
+  assert.deepEqual([off.enabled,off.explicitRole,off.explicitOrder],[false,null,null]);
+  assert.equal(v2.rows[0].metadata.adapterVersion,'2.0.0');
+  assert.equal((await completeCatalogueV2(db,v2)).status,'completed');
+  const calls=await value(db,'SELECT count(*)::int FROM public.phase9_metadata_provider_calls WHERE job_id=$1',[v2.jobId]);
+  const first=await recover(db,v2), second=await recover(db,v2);
+  assert.deepEqual(second,first,'post-switch v2 lineage replays its original receipt');
+  assert.equal(await value(db,'SELECT count(*)::int FROM public.phase9_metadata_provider_calls WHERE job_id=$1',[v2.jobId]),
+    calls,'recovery dispatches no new physical call');
 });
 for(const v2 of [false,true]) test(`AC8-10/14 [8a-1..4] GREEN-control OL explicit ${v2?'v2 companion':'v1 omitted-companion'} completion→recover→Select→Add`,async()=>{
   await legacyOlExplicit(db,v2);

@@ -1,6 +1,12 @@
 import { runMetadataWorkerBatch } from '../../../workers/phase9-metadata-worker';
 import { decodeMetadataJobContext } from '../_shared/imageInventory/runtime/metadataJobContext';
-import { editionWorkerFixture, explicitContext, automaticContext } from './fixtures/phase9/editionOptionsWorker';
+import { executeDescriptorOptions, descriptorOptionsGateway } from './support/providerModules';
+import { providerConfigurationRow, providerConfigurationSnapshot } from './fixtures/phase9/providerConfiguration';
+import { editionWorkerFixture, explicitContext, automaticContext, CANDIDATE_ID }
+ from './fixtures/phase9/editionOptionsWorker';
+import { TEST_ONLY_PROTECTION_POLICY } from './support/providerProtection';
+import { m93BeginReceipt, m93ClaimReceipt, m93DeferReceipt, m93FinishReceipt,
+  m93ReleaseReceipt, m93ReserveReceipt } from './support/automaticWorker';
 
 // RED targets: incorrect purpose dispatch/early winner exit, false ready, stale acceptance,
 // repeated egress on replay, incorrect per-request billing, and missing concurrency refill.
@@ -11,12 +17,11 @@ const until = async (condition: () => boolean) => {
   expect(condition()).toBe(true);
 };
 const invokeDirect = (fixture: ReturnType<typeof editionWorkerFixture>, signal: AbortSignal) => {
-  let execute: typeof import('../_shared/imageInventory/runtime/metadataEditionOptions').executeEditionOptionsLookup | undefined;
-  try { execute = require('../_shared/imageInventory/runtime/metadataEditionOptions').executeEditionOptionsLookup; }
-  catch { /* Assert the missing entry point, rather than failing module discovery. */ }
+  const execute = require('../_shared/imageInventory/runtime/metadataEditionOptions')
+    .executeEditionOptionsLookup as typeof import('../_shared/imageInventory/runtime/metadataEditionOptions').executeEditionOptionsLookup;
   expect(execute).toEqual(expect.any(Function));
   const { context, gateway } = fixture.direct();
-  return execute!(context, gateway, fixture.adapter, signal);
+  return execute(context, gateway, fixture.adapter, signal);
 };
 
 describe('Task 4 explicit metadata worker (picker §§4.1-4.3/5/9)', () => {
@@ -26,6 +31,41 @@ describe('Task 4 explicit metadata worker (picker §§4.1-4.3/5/9)', () => {
   });
   it('defaults legacy v2 context purpose to automatic', () => {
     expect(decodeMetadataJobContext(automaticContext)).toMatchObject({ purpose: 'automatic', candidateState: 'processing' });
+  });
+  it('serves contract-valid M93 receipts from the shared explicit fixture', async () => {
+    const fixture = editionWorkerFixture();
+    const lineage = fixture.useUuidLineage();
+    const rpc = fixture.dependencies.serviceClient.rpc;
+    const fence = {
+      jobId: lineage.jobId, worker: fixture.dependencies.workerId,
+      leaseToken: fixture.current().claimToken, claimAttempt: fixture.current().attempt,
+      candidateId: lineage.candidateId, storeId: lineage.storeId, sessionId: lineage.sessionId,
+      candidateVersion: fixture.current().candidateVersion,
+      queryIdentity: fixture.current().queryIdentity,
+      capturedRequestId: null, requestGeneration: fixture.current().requestGeneration,
+    };
+    const claim = await rpc('phase9_claim_metadata_jobs_v2', {
+      p_batch_size: 1, p_worker: fixture.dependencies.workerId,
+    });
+    expect(claim.error).toBeNull();
+    expect(claim.data).toEqual(m93ClaimReceipt([{ id: lineage.jobId,
+      attemptCount: fixture.current().attempt, leaseToken: fixture.current().claimToken }]));
+    const receipts = [
+      ['phase9_begin_automatic_provider_run_v1', m93BeginReceipt()],
+      ['phase9_reserve_metadata_provider_round_v1', m93ReserveReceipt()],
+      ['phase9_finish_automatic_provider_run_v1', m93FinishReceipt()],
+      ['phase9_release_metadata_provider_round_v1', m93ReleaseReceipt()],
+      ['phase9_defer_metadata_admission_v1', m93DeferReceipt(7)],
+    ] as const;
+    for (const [name, receipt] of receipts) {
+      const result = await rpc(name, { f: fence, p_key: 'google_books',
+        p_version: '1.0.0', p_not_before: null, p_epoch: 7 });
+      expect(result.error).toBeNull();
+      expect(result.data).toEqual(receipt);
+    }
+    expect(fixture.calls.map(call => call.name)).toEqual([
+      'phase9_claim_metadata_jobs_v2', ...receipts.map(([name]) => name),
+    ]);
   });
   it.each([
     { purpose: 'other' }, { requestGeneration: -1 }, { requestGeneration: 0.5 },
@@ -39,7 +79,7 @@ describe('Task 4 explicit metadata worker (picker §§4.1-4.3/5/9)', () => {
     Object.assign(fixture.current(), { localCanonicalEditionId: 'local-winner',
       reusableLookupId: 'cached-winner', reusableOutcome: 'accepted_metadata_match' });
     expect(await fixture.run()).toEqual({ claimed: 1, results: [{ outcome: 'edition_options_available' }] });
-    const saved = fixture.saved.get('candidate-1')!;
+    const saved = fixture.saved.get(CANDIDATE_ID)!;
     expect(saved.rows).toHaveLength(10);
     expect(saved.rows.map(row => row.ordinal)).toEqual([0,1,2,3,4,5,6,7,8,9]);
     expect(saved.rows[1]).toMatchObject({ ordinal: 1, eligibility: 'unavailable', metadata: null });
@@ -100,7 +140,7 @@ describe('Task 4 explicit metadata worker (picker §§4.1-4.3/5/9)', () => {
     fixture.controls.failPersistence = true;
     expect((await fixture.run()).results).toEqual([{ outcome: 'retry_scheduled' }]);
     expect(fixture.saved.size).toBe(0);
-    expect(fixture.physicalCalls).toEqual([{ jobId: 'job-1', attempt: 1, finalized: true }]);
+    expect(fixture.physicalCalls).toEqual([{ jobId: fixture.current().jobId, attempt: 1, finalized: true }]);
   });
   it('recovers saved completion after response loss without another provider request', async () => {
     const fixture = editionWorkerFixture();
@@ -116,7 +156,7 @@ describe('Task 4 explicit metadata worker (picker §§4.1-4.3/5/9)', () => {
     const fixture = editionWorkerFixture();
     fixture.controls.payload = { kind: 'books#volumes', totalItems: 0 };
     expect((await fixture.run()).results).toEqual([{ outcome: 'edition_options_available' }]);
-    expect(fixture.saved.get('candidate-1')!.rows).toEqual([]);
+    expect(fixture.saved.get(CANDIDATE_ID)!.rows).toEqual([]);
     fixture.requeue();
     expect((await fixture.run()).results).toEqual([{ outcome: 'edition_options_available' }]);
     expect(fixture.stats().providerRequests).toBe(1);
@@ -127,7 +167,7 @@ describe('Task 4 explicit metadata worker (picker §§4.1-4.3/5/9)', () => {
     expect((await fixture.run()).results).toEqual([{ outcome: 'retry_scheduled' }]);
     expect(fixture.saved.size).toBe(0);
     fixture.controls.status = 200;
-    fixture.requeue({ currentLookupId: 'lookup-job-1', currentAttemptId: 'attempt-job-1',
+    fixture.requeue({ currentLookupId: '00000000-0000-4000-8000-000000000101', currentAttemptId: '00000000-0000-4000-8000-000000000201',
       currentAttemptDisposition: 'unresolved', currentAttemptCandidate: null,
       currentPhysicalStatus: 'finalized', currentPhysicalClaimAttempt: 1,
       currentPhysicalOutcome: 'rate_limited', currentPhysicalRetryable: true });
@@ -170,6 +210,135 @@ describe('Task 4 explicit metadata worker (picker §§4.1-4.3/5/9)', () => {
     expect((await fixture.run()).results).toEqual([{ outcome: 'stale_claim' }]);
     expect(fixture.saved.size).toBe(0);
   });
+  const syntheticDescriptor = (
+    onInvoke: (input: { http: { get: Function }; purpose: string }) => Promise<unknown>,
+  ) => ({
+    adapterKey: 'synthetic_catalogue', adapterVersion: '1.0.0',
+    capabilityVersion: 'synthetic-capability-v1',
+    normalizerVersion: 'p9-bibliographic-normalizer-v1',
+    payloadSchemaVersion: 'p9-metadata-v1', lookupSchemaVersion: 'p9-metadata-foundation-v1',
+    validationContract: 'synthetic-catalogue-v1', hostPolicyVersion: 'synthetic-hosts-v1',
+    protocol: { kind: 'fanout', maxGets: 6 }, retentionContract: 'synthetic-options-v1',
+    purposes: ['automatic', 'edition_options'],
+    credentialsReady: () => true, retentionReady: () => true,
+    invoke: onInvoke,
+  });
+
+  // Same synthetic identity/host/stages as the SQL fixture install; permissions
+  // are test-only. No Google/OL policy is smuggled into this dispatch proof.
+  const configureSynthetic = (fixture: ReturnType<typeof editionWorkerFixture>) => {
+    fixture.current().providerPolicies = [{ adapterKey: 'synthetic_catalogue', adapterVersion: '1.0.0',
+      enabled: true, matchingAllowed: true, storageAllowed: true, reuseAllowed: true, policyVersion: 1 }];
+    const baseRpc = fixture.dependencies.serviceClient.rpc;
+    fixture.dependencies.serviceClient.rpc = async (name, parameters) => {
+      if (name === 'phase9_provider_configuration_v1') return { data: providerConfigurationSnapshot([
+        providerConfigurationRow('synthetic_catalogue', '1.0.0', {
+          providerKind: 'metadata', enabled: true, matchingAllowed: true, storageAllowed: true,
+          publicDisplayAllowed: true, imageCacheAllowed: false, attributionRequired: true,
+          revalidationSeconds: 3600, rawRetentionSeconds: 0, policyVersion: 1,
+          sharedSourceNote: 'Synthetic catalogue; reusable normalized facts.',
+          automaticLookupAllowed: false, automaticRole: null, automaticOrder: null,
+          explicitSearchAllowed: true, explicitRole: 'primary', explicitOrder: 1,
+          validationContract: 'synthetic-catalogue-v1', hostPolicyVersion: 'synthetic-hosts-v1',
+          approvedRequestHosts: ['catalogue.example.test'], approvedBookHosts: ['catalogue.example.test'],
+          approvedCoverHosts: ['catalogue.example.test'],
+          optionsRetentionSeconds: 3600, displayLabel: 'Synthetic Catalogue',
+          protectionPolicy: TEST_ONLY_PROTECTION_POLICY,
+          versionContracts: { '1.0.0': { validationContract: 'synthetic-catalogue-v1',
+            hostPolicyVersion: 'synthetic-hosts-v1', capabilityVersion: 'synthetic-capability-v1',
+            normalizerVersion: 'p9-bibliographic-normalizer-v1', payloadSchemaVersion: 'p9-metadata-v1',
+            lookupSchemaVersion: 'p9-metadata-foundation-v1' } },
+        }),
+      ]), error: null };
+      return baseRpc(name, parameters);
+    };
+  };
+
+  const failurePacket = {
+    version: 'p9-metadata-result-v2',
+    purpose: 'edition_options',
+    outcome: {
+      outcome: 'provider_unavailable', candidates: [], selected: null, evidence: [],
+      retryable: true, secondaryEligible: true, providerRequestId: null,
+      representativeCover: null,
+    },
+    rows: null,
+    catalogueCompanions: null,
+    retention: null,
+  };
+
+  it('invokes the descriptor through a fenced ProviderHttpPort that registers and finalizes the GET', async () => {
+    const fixture = editionWorkerFixture();
+    fixture.useUuidLineage();
+    configureSynthetic(fixture);
+    const fetched = jest.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(
+      JSON.stringify({ docs: [{ key: '/works/OL1W' }] }),
+      { headers: { 'content-type': 'application/json', 'cache-control': 'max-age=86400' } },
+    ));
+    let portSeen: { get: Function } | undefined;
+    let response: { json: unknown; receiptId: string } | undefined;
+    const synthetic = syntheticDescriptor(async (input) => {
+      expect(input.purpose).toBe('edition_options');
+      portSeen = input.http;
+      response = await input.http.get({
+        url: new URL('https://catalogue.example.test/discover'),
+        stage: 'discover',
+        sequence: 0,
+        signal: new AbortController().signal,
+      }) as { json: unknown; receiptId: string };
+      return failurePacket;
+    });
+    try {
+      const { context, gateway } = descriptorOptionsGateway(fixture, synthetic);
+      const result = await executeDescriptorOptions(context, gateway, synthetic);
+      expect(portSeen?.get).toEqual(expect.any(Function));
+      expect(response).toMatchObject({ json: { docs: [{ key: '/works/OL1W' }] } });
+      expect(fetched).toHaveBeenCalledTimes(1);
+      expect(String(fetched.mock.calls[0]?.[0])).toContain('https://catalogue.example.test/discover');
+      expect(fixture.physicalCalls).toHaveLength(1);
+      expect(fixture.physicalCalls[0]).toMatchObject({
+        sequence: 0, stage: 'discover', finalized: true,
+      });
+      expect(fixture.calls.some(call => call.name === 'phase9_register_edition_options_provider_call_v1')).toBe(true);
+      expect(fixture.calls.some(call => call.name === 'phase9_finalize_edition_options_provider_call_v1')).toBe(true);
+      expect(result.outcome).toBe('retry_scheduled');
+    } finally {
+      fetched.mockRestore();
+    }
+  });
+
+  it('prevents the descriptor GET when the pre-request registration refuses the grant', async () => {
+    const fixture = editionWorkerFixture();
+    fixture.useUuidLineage();
+    fixture.controls.denyPhysicalRegistration = true;
+    configureSynthetic(fixture);
+    const fetched = jest.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      throw new Error('HTTP must not start after a refused grant');
+    });
+    const synthetic = syntheticDescriptor(async (input) => {
+      await input.http.get({
+        url: new URL('https://catalogue.example.test/discover'),
+        stage: 'discover',
+        sequence: 0,
+        signal: new AbortController().signal,
+      });
+      return failurePacket;
+    });
+    try {
+      const { context, gateway } = descriptorOptionsGateway(fixture, synthetic);
+      const result = await executeDescriptorOptions(context, gateway, synthetic);
+      expect(fixture.calls.some(call => call.name === 'phase9_register_edition_options_provider_call_v1')).toBe(true);
+      // A paused admission is an operator/policy refusal, not a technical
+      // retry allowance: no fabricated finalization, no GET, manual fallback.
+      expect(fixture.calls.some(call => call.name === 'phase9_finalize_edition_options_provider_call_v1')).toBe(false);
+      expect(fetched).not.toHaveBeenCalled();
+      expect(fixture.physicalCalls).toEqual([]);
+      expect(result.outcome).toBe('manual_metadata_required');
+    } finally {
+      fetched.mockRestore();
+    }
+  });
+
   it('cancels before egress without a physical reservation or provider request', async () => {
     const fixture = editionWorkerFixture();
     const controller = new AbortController(); controller.abort();
@@ -184,13 +353,16 @@ describe('Task 4 explicit metadata worker (picker §§4.1-4.3/5/9)', () => {
     expect((await fixture.run()).results[0].outcome).toBe('local_canonical_match');
     fixture.newRequest();
     expect((await fixture.run()).results[0].outcome).toBe('edition_options_available');
-    const first = fixture.saved.get('candidate-1')!;
-    fixture.saved.set('candidate-1', { ...first, optionsExpiresAt: '2020-01-01T00:00:00Z' });
+    const first = fixture.saved.get(CANDIDATE_ID)!;
+    fixture.saved.set(CANDIDATE_ID, { ...first, optionsExpiresAt: '2020-01-01T00:00:00Z' });
     fixture.newRequest();
     expect((await fixture.run()).results[0].outcome).toBe('edition_options_available');
     expect(fixture.stats().providerRequests).toBe(2);
-    expect(fixture.calls.filter(call => call.name === 'phase9_register_structural_metadata_attempt')
-      .map(call => call.parameters.p_lookup_id)).toEqual(['lookup-job-2', 'lookup-job-3']);
+    const lookups = fixture.calls.filter(call => call.name === 'phase9_register_structural_metadata_attempt')
+      .map(call => call.parameters.p_lookup_id);
+    expect(lookups).toEqual([expect.stringMatching(/^[0-9a-f-]{36}$/u),
+      expect.stringMatching(/^[0-9a-f-]{36}$/u)]);
+    expect(new Set(lookups).size).toBe(2);
   });
   it('rechecks identity before provider egress', async () => {
     const fixture = editionWorkerFixture();
@@ -206,10 +378,10 @@ describe('Task 4 explicit metadata worker (picker §§4.1-4.3/5/9)', () => {
     const fixture = editionWorkerFixture();
     fixture.controls.beforeComplete = async () => {
       fixture.current().candidateVersion = 2;
-      fixture.selections.set('candidate-1', { selectionId: 'newer-owner-choice', price: 700, quantity: 3, notes: 'new' });
+      fixture.selections.set(CANDIDATE_ID, { selectionId: 'newer-owner-choice', price: 700, quantity: 3, notes: 'new' });
     };
     expect((await fixture.run()).results[0].outcome).toBe('edition_options_available');
-    expect(fixture.selections.get('candidate-1')).toEqual({
+    expect(fixture.selections.get(CANDIDATE_ID)).toEqual({
       selectionId: 'newer-owner-choice', price: 700, quantity: 3, notes: 'new',
     });
   });

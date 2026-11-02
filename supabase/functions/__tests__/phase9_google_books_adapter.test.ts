@@ -11,6 +11,14 @@ import {
   googleBooksMultipleVolumes,
 } from './fixtures/phase9/googleBooksResponses';
 import { buildMetadataQueryIdentity } from '../_shared/imageInventory/metadata';
+import {
+  GOLDEN_CLOCK,
+  GOLDEN_LOOKUP_ID,
+  GOLDEN_ATTEMPT_ID,
+  GOOGLE_AUTOMATIC_V1,
+  GOOGLE_EXPLICIT_V1,
+} from './fixtures/phase9/providerReplacementGoldens';
+import { tenPositions } from './fixtures/phase9/editionOptionsWorker';
 
 const isbnQuery = buildMetadataQueryIdentity({
   strategy: 'isbn',
@@ -481,5 +489,76 @@ describe('Phase 9 Unit 5B Google Books adapter', () => {
       signal: controller.signal,
     })).resolves.toMatchObject({ outcome: 'cancelled', retryable: false });
     expect(fetcher).not.toHaveBeenCalled();
+  });
+});
+
+describe('Phase 9 package 8b-4 Google transition golden control', () => {
+  const jsonResponse = (body: unknown, headers: Record<string, string> = {}) => new Response(
+    JSON.stringify(body),
+    { headers: { 'content-type': 'application/json', ...headers } },
+  );
+  async function withFixedUuid<T>(ids: readonly string[], run: () => Promise<T>): Promise<T> {
+    const original = globalThis.crypto.randomUUID;
+    let index = 0;
+    Object.defineProperty(globalThis.crypto, 'randomUUID', {
+      configurable: true,
+      value: () => ids[index++] ?? '00000000-0000-4000-8000-000000000000',
+    });
+    try { return await run(); } finally {
+      Object.defineProperty(globalThis.crypto, 'randomUUID', {
+        configurable: true, value: original,
+      });
+    }
+  }
+
+  it('keeps the captured automatic Google outcome unchanged', async () => {
+    jest.useFakeTimers(); jest.setSystemTime(Date.parse(GOLDEN_CLOCK));
+    try {
+      const adapter = new GoogleBooksAdapter({
+        mode: 'real',
+        apiKey: 'fixture-only-no-network',
+        timeoutMs: 1000,
+        maxResponseBytes: 64_000,
+        fetcher: async () => jsonResponse(googleBooksMultipleVolumes, {
+          'x-request-id': 'golden-google-automatic-request',
+        }),
+      });
+      const result = await adapter.lookup({
+        query: isbnQuery,
+        correlationId: GOLDEN_LOOKUP_ID,
+        attemptId: GOLDEN_ATTEMPT_ID,
+        signal: new AbortController().signal,
+      });
+      expect(JSON.parse(JSON.stringify(result))).toEqual(GOOGLE_AUTOMATIC_V1);
+    } finally { jest.useRealTimers(); }
+  });
+
+  it('keeps the captured counted explicit Google packet unchanged', async () => {
+    jest.useFakeTimers(); jest.setSystemTime(Date.parse(GOLDEN_CLOCK));
+    try {
+      const adapter = new GoogleBooksAdapter({
+        mode: 'real',
+        apiKey: 'fixture-only-no-network',
+        timeoutMs: 1000,
+        maxResponseBytes: 64_000,
+        verifyOptionsRetention: ({ fetchedAt }) => ({
+          storagePermissionVerified: true,
+          permittedDeadlineAt: new Date(Date.parse(fetchedAt) + 3_600_000).toISOString(),
+        }),
+        fetcher: async () => jsonResponse(tenPositions, {
+          'cache-control': 'private, max-age=3600',
+          'x-request-id': 'golden-google-explicit-request',
+        }),
+      });
+      const optionIds = Array.from({ length: 10 }, (_, index) =>
+        `33333333-3333-4333-8333-${String(index + 1).padStart(12, '0')}`);
+      const result = await withFixedUuid(optionIds, () => adapter.lookupEditionOptions({
+        query: isbnQuery,
+        correlationId: GOLDEN_LOOKUP_ID,
+        attemptId: GOLDEN_ATTEMPT_ID,
+        signal: new AbortController().signal,
+      }));
+      expect(JSON.parse(JSON.stringify(result))).toEqual(GOOGLE_EXPLICIT_V1);
+    } finally { jest.useRealTimers(); }
   });
 });

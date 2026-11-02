@@ -2,7 +2,13 @@ import { handlePhase9MetadataWorker, runMetadataWorkerBatch }
   from '../../../workers/phase9-metadata-worker';
 import { buildMetadataQueryIdentity }
   from '../_shared/imageInventory/metadata';
-import { editionWorkerFixture } from './fixtures/phase9/editionOptionsWorker';
+import { GoogleBooksAdapter } from '../_shared/imageInventory/metadata/googleBooks/adapter';
+import { editionWorkerFixture, automaticContext } from './fixtures/phase9/editionOptionsWorker';
+import { installedProviderDescriptors, providerConfigurationRow, providerConfigurationSnapshot }
+  from './fixtures/phase9/providerConfiguration';
+import { runDescriptorWorker, installedManifest } from './support/providerModules';
+import { automaticDependencies } from './support/automaticWorker';
+import { TEST_ONLY_PROTECTION_POLICY } from './support/providerProtection';
 
 const workerId = 'metadata-worker-000001';
 const workerAuthToken = 'metadata-worker-ingress-A7z.49_xYp-001';
@@ -29,6 +35,53 @@ const request = (authorization?: string, batchSize = 1) => new Request('http://w
 });
 
 describe('Phase 9 runnable metadata worker', () => {
+  it('dispatches the automatic registry primary through the real installed OL descriptor and fenced GETs', async () => {
+    const urls: URL[] = [];
+    const fetcher = jest.fn(async (address: string | URL | Request) => {
+      const url = new URL(address instanceof Request ? address.url : String(address)); urls.push(url);
+      const body = url.pathname === '/search.json' ? { docs: [{ key: '/works/OL1W' }] }
+        : url.pathname.endsWith('/editions.json') ? { entries: [{ key: '/books/OL100M',
+          title: 'The Fixture Book', authors: [{ key: '/authors/OL1A' }],
+          languages: [{ key: '/languages/eng' }], isbn_13: ['9780306406157'] }] }
+        : { key: '/authors/OL1A', name: 'Fixture Author' };
+      return new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
+    });
+    const subject = automaticDependencies({ fetcher, context: { providerPolicies: [
+      ...automaticContext.providerPolicies,
+      { adapterKey: 'open_library', adapterVersion: '2.0.0', enabled: true,
+        matchingAllowed: true, storageAllowed: true, reuseAllowed: true, policyVersion: 1 },
+    ] }, rpc: async name => name === 'phase9_provider_configuration_v1' ? {
+      data: providerConfigurationSnapshot([
+        providerConfigurationRow('google_books', '1.0.0', {
+          automaticLookupAllowed: false, automaticRole: null, automaticOrder: null,
+        }),
+        providerConfigurationRow('open_library', '2.0.0', { protectionPolicy: TEST_ONLY_PROTECTION_POLICY }),
+      ]), error: null,
+    } : undefined });
+    const globalFetch = jest.spyOn(globalThis, 'fetch').mockImplementation(fetcher);
+    try {
+      const result = await runDescriptorWorker(subject.dependencies, installedManifest());
+      expect(urls.filter(url => url.hostname === 'www.googleapis.com')).toEqual([]);
+      expect(result.results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+      expect(urls.map(url => url.pathname)).toEqual([
+        '/search.json', '/works/OL1W/editions.json', '/authors/OL1A.json',
+      ]);
+      const registrations = subject.fixture.calls.filter(call => call.name === 'phase9_register_edition_options_provider_call_v1');
+      expect(registrations.map(call => [call.parameters.p_call_sequence, call.parameters.p_call_stage]))
+        .toEqual([[0, 'search'], [1, 'editions'], [2, 'author:OL1A']]);
+      expect(subject.fixture.calls.filter(call => call.name === 'phase9_finalize_edition_options_provider_call_v1'))
+        .toHaveLength(urls.length);
+      expect(subject.command()?.result.outcome.selected).toMatchObject({ adapterKey: 'open_library', adapterVersion: '2.0.0' });
+      const command = subject.command()!;
+      const selectedRow = command.result.rows?.find((row: { optionId: string }) =>
+        row.optionId === command.selectedOptionId);
+      // A retained-list winner binds an eligible row UUID and the receipt echoes it.
+      expect(selectedRow).toMatchObject({ eligibility: 'eligible' });
+      expect(command.selectedOptionId).not.toBeNull();
+      expect(subject.receipt()?.selectedOptionId).toBe(command.selectedOptionId);
+    } finally { globalFetch.mockRestore(); }
+  });
+
   it('rejects unauthenticated manual invocation before claiming', async () => {
     const rpc = jest.fn();
     const response = await handlePhase9MetadataWorker(request(), {
@@ -129,7 +182,7 @@ describe('Phase 9 runnable metadata worker', () => {
     expect(fixture.calls).toContainEqual({
       name: 'phase9_resolve_superseded_edition_job_v1',
       parameters: {
-        p_job_id: 'job-1',p_worker: fixture.dependencies.workerId,
+        p_job_id: fixture.current().jobId,p_worker: fixture.dependencies.workerId,
         p_lease_token: fixture.current().claimToken,p_attempt_count: 5,
       },
     });

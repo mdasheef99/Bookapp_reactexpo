@@ -114,6 +114,19 @@ describe('Phase 9 provider-neutral metadata outcome validation', () => {
     expect(failClosedMetadataProviderOutcome(value, expected)).toEqual(invalidOutcome);
   });
 
+  it('keeps the current outcome parser strict and does not absorb the v2 envelope keys', () => {
+    const selected = edition();
+    const v2Envelope = {
+      version: 'p9-metadata-result-v2',
+      purpose: 'automatic',
+      outcome: coherent(selected),
+      rows: null,
+      catalogueCompanions: null,
+      retention: null,
+    };
+    expect(failClosedMetadataProviderOutcome(v2Envelope, expected)).toEqual(invalidOutcome);
+  });
+
   it('accepts a valid Google Books normalized result through the same contract', () => {
     const query = buildMetadataQueryIdentity({
       strategy: 'isbn',isbnClue: '9780306406157',title: 'The Fixture Book',authors: ['Fixture Author'],

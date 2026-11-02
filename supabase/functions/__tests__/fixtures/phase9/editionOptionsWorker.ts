@@ -8,6 +8,8 @@ import { runMetadataWorkerBatch } from '../../../../../workers/phase9-metadata-w
 import type { MetadataEditionOptionsBoundary, EditionOptionsCompletionInput }
   from '../../../_shared/imageInventory/runtime/metadataEditionOptionsBoundary';
 import { googleBooksMultipleVolumes } from './googleBooksResponses';
+import { m93BeginReceipt, m93ClaimReceipt, m93DeferReceipt, m93FinishReceipt,
+  m93ReleaseReceipt, m93ReserveReceipt } from '../../support/automaticWorker';
 
 // Picker §§4.1-4.3/5/9: recorded transport + disposable in-memory boundary.
 // This models the required SQL port; it is not database/concurrency acceptance proof.
@@ -18,10 +20,25 @@ export const query = buildMetadataQueryIdentity({
 });
 const epoch = Date.now();
 const future = new Date(epoch + 3600000).toISOString();
+// Legacy fixture lineage (pre-8b tests rely on these labels). New 8b paths
+// opt into UUID_LINEAGE through useUuidLineage so the SQL boundary is legal.
+export const JOB_ID = 'job-1';
+export const CANDIDATE_ID = 'candidate-1';
+export const idAt = (ordinal: number) =>
+  `00000000-0000-4000-8000-${String(ordinal).padStart(12, '0')}`;
+export const UUID_LINEAGE = Object.freeze({
+  jobId: idAt(11), candidateId: idAt(12), storeId: idAt(13),
+  sessionId: idAt(14), inputId: idAt(15), observationId: idAt(16),
+});
+export const UUID_CANDIDATE_ID = UUID_LINEAGE.candidateId;
+export function useUuidLineage(fixture: { current: () => Record<string, any> }) {
+  Object.assign(fixture.current(), UUID_LINEAGE);
+  return UUID_LINEAGE;
+}
 export const automaticContext = {
-  contractVersion: 'p9-metadata-job-context-v2', jobId: 'job-1', attempt: 1,
+  contractVersion: 'p9-metadata-job-context-v2', jobId: JOB_ID, attempt: 1,
   claimToken: 'a'.repeat(64), claimExpiresAt: future,
-  candidateId: 'candidate-1', candidateState: 'processing', candidateVersion: 1,
+  candidateId: CANDIDATE_ID, candidateState: 'processing', candidateVersion: 1,
   storeId: 'store-1', sessionId: 'session-1', inputId: 'input-1', observationId: 'observation-1',
   title: 'The Fixture Book', authors: ['Fixture Author'], isbnClue: '9780306406157',
   publisherClue: null, language: 'en', script: null, queryIdentity: query.key,
@@ -54,22 +71,39 @@ export function editionWorkerFixture(count = 1) {
       claimToken: index.toString(16).padStart(64, '0') });
     queue.push(id);
   }
+  const ordinalFor = (jobId: string) => {
+    const ordinal = Array.from(contexts.keys()).indexOf(String(jobId));
+    return ordinal < 0 ? contexts.size : ordinal + 1;
+  };
+  const lookupIdFor = (jobId: string) => idAt(100 + ordinalFor(jobId));
+  const attemptIdFor = (jobId: string) => idAt(200 + ordinalFor(jobId));
   const calls: Call[] = [];
-  const physicalCalls: Array<{ jobId: string; attempt: number; finalized: boolean }> = [];
+  const physicalCalls: Array<{ jobId: string; attempt: number; finalized: boolean;
+    sequence?: number; stage?: string }> = [];
+  // SQL provider_call_id is uuid; the port's beforeRequest returns the same UUID.
+  const physicalCallIds = new Map<string, number>();
+  const registerPhysicalCall = (call: (typeof physicalCalls)[number]) => {
+    const providerCallId = `00000000-0000-4000-8000-${String(physicalCalls.length + 1).padStart(12, '0')}`;
+    physicalCalls.push(call);
+    physicalCallIds.set(providerCallId, physicalCalls.length - 1);
+    return providerCallId;
+  };
   const saved = new Map<string, EditionOptionsCompletionInput>();
-  const selections = new Map([['candidate-1', { selectionId: 'owner-choice', price: 450, quantity: 2, notes: 'keep' }]]);
+  const selections = new Map([[CANDIDATE_ID, { selectionId: 'owner-choice', price: 450, quantity: 2, notes: 'keep' }]]);
   let providerRequests = 0;
   let maximumActive = 0;
   let active = 0;
   const controls = {
     payload: tenPositions as unknown, status: 200, ownerActive: true, uncommitted: true,
     loseCompletionResponse: false, failPersistence: false, rejectPhysical: false,
+    denyPhysicalRegistration: false,
     permission: true, deadline: future as string | null,
     beforeFetch: null as null | (() => Promise<void>),
     beforeComplete: null as null | (() => Promise<void>),
     beforeContextRead: null as null | (() => void),
   };
-  const current = () => contexts.get('job-1')!;
+  let activeKey = 'job-1';
+  const current = () => contexts.get(activeKey)!;
   const valid = (fence: Record<string, any>) => {
     const value = contexts.get(fence.jobId);
     return !!value && controls.ownerActive && controls.uncommitted
@@ -120,26 +154,68 @@ export function editionWorkerFixture(count = 1) {
       return { data: ids.map(id => ({ id, attempt_count: contexts.get(id)!.attempt,
         lease_token: contexts.get(id)!.claimToken })), error: null };
     }
+    // M93 queue receipts for the 8b explicit path; legacy claim stays above.
+    if (name === 'phase9_claim_metadata_jobs_v2') {
+      const ids = queue.splice(0, parameters.p_batch_size);
+      return { data: m93ClaimReceipt(ids.map(id => ({ id, attemptCount: contexts.get(id)!.attempt,
+        leaseToken: contexts.get(id)!.claimToken }))), error: null };
+    }
+    if (name === 'phase9_begin_automatic_provider_run_v1') {
+      return { data: m93BeginReceipt(), error: null };
+    }
+    if (name === 'phase9_reserve_metadata_provider_round_v1') {
+      return { data: m93ReserveReceipt(), error: null };
+    }
+    if (name === 'phase9_finish_automatic_provider_run_v1') {
+      return { data: m93FinishReceipt(), error: null };
+    }
+    if (name === 'phase9_release_metadata_provider_round_v1') {
+      return { data: m93ReleaseReceipt(), error: null };
+    }
+    if (name === 'phase9_defer_metadata_admission_v1') {
+      return { data: m93DeferReceipt(parameters.p_epoch), error: null };
+    }
     if (name === 'phase9_metadata_job_context') {
       if (controls.beforeContextRead) controls.beforeContextRead();
       return { data: contexts.get(parameters.p_job_id), error: null };
     }
     if (name === 'phase9_register_structural_metadata_lookup') {
-      return { data: { lookup_id: 'lookup-' + parameters.p_job_id }, error: null };
+      return { data: { lookup_id: lookupIdFor(parameters.p_job_id) }, error: null };
     }
     if (name === 'phase9_reserve_metadata_usage') {
-      return { data: { reservation_id: 'reservation-' + parameters.p_job_id }, error: null };
+      return { data: { reservation_id: idAt(300 + ordinalFor(parameters.p_job_id)) }, error: null };
     }
     if (name === 'phase9_register_structural_metadata_attempt') {
-      return { data: { attempt_id: 'attempt-' + parameters.p_job_id }, error: null };
+      return { data: { attempt_id: attemptIdFor(parameters.p_job_id) }, error: null };
     }
     if (name === 'phase9_register_metadata_provider_call') {
-      physicalCalls.push({ jobId: parameters.p_job_id, attempt: parameters.p_attempt_count, finalized: false });
-      return { data: { provider_call_id: 'call-' + physicalCalls.length }, error: null };
+      const providerCallId = registerPhysicalCall({
+        jobId: parameters.p_job_id, attempt: parameters.p_attempt_count, finalized: false,
+      });
+      return { data: { status: 'registered', provider_call_id: providerCallId, grant_epoch: 1 }, error: null };
+    }
+    if (name === 'phase9_register_edition_options_provider_call_v1') {
+      if (controls.denyPhysicalRegistration) throw new Error('P9_EXTERNAL_ADMISSION_PAUSED');
+      const providerCallId = registerPhysicalCall({
+        jobId: parameters.p_job_id ?? current().jobId,
+        attempt: parameters.p_attempt_count ?? current().attempt,
+        finalized: false,
+        sequence: parameters.p_call_sequence,
+        stage: parameters.p_call_stage,
+      });
+      return { data: { status: 'registered', provider_call_id: providerCallId, grant_epoch: 1 }, error: null };
+    }
+    if (name === 'phase9_finalize_edition_options_provider_call_v1') {
+      const index = physicalCallIds.get(String(parameters.p_provider_call_id));
+      if (index !== undefined) physicalCalls[index].finalized = true;
+      return { data: { status: controls.rejectPhysical ? 'stale_rejected' : 'finalized',
+        provider_call_id: parameters.p_provider_call_id }, error: null };
     }
     if (name === 'phase9_finalize_metadata_provider_call') {
-      physicalCalls[Number(parameters.p_provider_call_id.split('-')[1]) - 1].finalized = true;
-      return { data: { status: controls.rejectPhysical ? 'stale_rejected' : 'finalized' }, error: null };
+      const index = physicalCallIds.get(String(parameters.p_provider_call_id));
+      if (index !== undefined) physicalCalls[index].finalized = true;
+      return { data: { status: controls.rejectPhysical ? 'stale_rejected' : 'finalized',
+        provider_call_id: parameters.p_provider_call_id }, error: null };
     }
     if (name === 'phase9_finalize_structural_metadata_attempt'
       || name === 'phase9_complete_structural_local_metadata_match') return { data: {}, error: null };
@@ -167,10 +243,10 @@ export function editionWorkerFixture(count = 1) {
     workerId: worker, workerAuthToken: 'fixture-worker-ingress', serviceClient: { rpc },
     primary: adapter, primaryCapability: GOOGLE_BOOKS_CAPABILITY, editionOptionsBoundary: boundary,
   };
-  const direct = () => {
+  const direct = (configurationOverrides: Record<string, unknown> = {}) => {
     const context = decodeMetadataJobContext(current());
     const request = { ...requestFromMetadataContext(context), claimWorker: worker };
-    const gateway = new SupabaseMetadataProductionGateway({ rpc }, {
+    const gateway = new SupabaseMetadataProductionGateway(dependencies.serviceClient, {
       worker, context, primary: adapter, adapterKey: 'google_books', adapterVersion: '1.0.0',
       capabilityVersion: 'cap-v1', schemaVersion: 'p9-metadata-foundation-v1',
       lookupContractVersion: 'p9-metadata-lookup-v1', normalizerVersion: 'p9-bibliographic-normalizer-v1',
@@ -178,22 +254,37 @@ export function editionWorkerFixture(count = 1) {
       snapshotVersion: 'p9-selected-metadata-v1', cachePolicyVersion: 'p9-metadata-cache-v1',
       cacheNamespace: 'metadata-v1', pricingPolicyVersion: 'metadata-zero-cost-v1', revalidationSeconds: 86400,
       editionOptions: { boundary, request },
+      ...configurationOverrides,
     });
     return { context, gateway };
+  };
+  const promoteLineage = () => {
+    const legacyId = activeKey;
+    const context = contexts.get(legacyId)!;
+    contexts.delete(legacyId);
+    Object.assign(context, UUID_LINEAGE);
+    contexts.set(UUID_LINEAGE.jobId, context);
+    activeKey = UUID_LINEAGE.jobId;
+    for (let index = 0; index < queue.length; index += 1) {
+      if (queue[index] === legacyId) queue[index] = UUID_LINEAGE.jobId;
+    }
+    return UUID_LINEAGE;
   };
   const requeue = (updates: RawContext = {}) => {
     Object.assign(current(), { attempt: Number(current().attempt) + 1,
       claimToken: 'f'.repeat(64), ...updates });
-    queue.push('job-1');
+    queue.push(activeKey);
   };
   const newRequest = () => {
     const id = 'job-' + (contexts.size + 1);
     contexts.set(id, { ...explicitContext, jobId: id, candidateId: 'candidate-1',
       claimToken: (contexts.size + 1).toString(16).padStart(64, '0') });
     queue.push(id);
+    activeKey = id;
     return id;
   };
   return { newRequest, adapter, boundary, dependencies, contexts, current, calls, controls, saved, selections,
-    physicalCalls, direct, requeue, run: (budget = count) => runMetadataWorkerBatch(budget, dependencies),
+    physicalCalls, direct, requeue, lookupIdFor, attemptIdFor, useUuidLineage: promoteLineage,
+    run: (budget = count) => runMetadataWorkerBatch(budget, dependencies),
     stats: () => ({ providerRequests, maximumActive, active }) };
 }

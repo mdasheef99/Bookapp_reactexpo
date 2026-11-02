@@ -40,9 +40,11 @@ export async function olCardWithRecord(db, overrides = {}) {
 // positions and provider-call receipts, ready for a v1 or v2 completion command.
 export async function catalogueBatch(db, overrides = {}, queryAuthors = null, {
   authorOutcome = 'no_acceptable_match', existing = null, recordBase = 100, workExternalId = 'OL700W',
+  providerVersion = '1.0.0',
 } = {}) {
   const f = await olOperation(db, { isbn10: null, isbn13: null,
-    matchRationale: 'confirmation_required_text_evidence', confidence: 0, ...overrides }, false, false, existing, queryAuthors);
+    matchRationale: 'confirmation_required_text_evidence', confidence: 0, ...overrides }, false, false, existing, queryAuthors,
+  { adapterVersion: providerVersion });
   await setActor(db, f.ownerId, 'service_role');
   for (const [sequence, stage] of [[0, 'search'], [1, 'editions'], [2, 'author:OL1A']]) {
     const call = await rpc(db, 'phase9_register_edition_options_provider_call_v1',

@@ -2,6 +2,9 @@
 import { buildMetadataQueryIdentity } from '../_shared/imageInventory/metadata/queryIdentity';
 import {OpenLibraryEditionOptionsAdapter} from '../_shared/imageInventory/metadata/openLibrary/adapter';
 import {getOpenLibraryJson,createOpenLibraryRateLimiter} from '../_shared/imageInventory/metadata/openLibrary/transport';
+import {
+  GOLDEN_CLOCK, GOLDEN_LOOKUP_ID, GOLDEN_ATTEMPT_ID, OL_V1_EXPLICIT_V1,
+} from './fixtures/phase9/providerReplacementGoldens';
 const query = (extra = {}) => buildMetadataQueryIdentity({
   strategy: 'bibliographic', title: 'The Fixture Book', authors: ['Fixture Author'],
   isbnClue: '9780306406157', language: 'en', editionClues: [], ...extra,
@@ -40,7 +43,32 @@ beforeAll(() => {
     configurable: true, value: require('node:crypto').webcrypto,
   });
 });
+async function withFixedUuid<T>(ids: readonly string[], run: () => Promise<T>): Promise<T> {
+  const original = globalThis.crypto.randomUUID;
+  let index = 0;
+  Object.defineProperty(globalThis.crypto, 'randomUUID', {
+    configurable: true,
+    value: () => ids[index++] ?? '00000000-0000-4000-8000-000000000000',
+  });
+  try { return await run(); } finally {
+    Object.defineProperty(globalThis.crypto, 'randomUUID', {
+      configurable: true, value: original,
+    });
+  }
+}
+
 describe('Open Library explicit edition options', () => {
+  it('matches the captured v1 explicit golden after the refactor', async () => {
+    jest.useFakeTimers(); jest.setSystemTime(Date.parse(GOLDEN_CLOCK));
+    try {
+      const { adapter } = subject();
+      const result = await withFixedUuid(['44444444-4444-4444-8333-000000000001'],
+        () => adapter.lookupEditionOptions({
+          ...input(), correlationId: GOLDEN_LOOKUP_ID, attemptId: GOLDEN_ATTEMPT_ID,
+        }));
+      expect(JSON.parse(JSON.stringify(result))).toEqual(OL_V1_EXPLICIT_V1);
+    } finally { jest.useRealTimers(); }
+  });
   it('reads bounded edition records and their own authors, cover and publication fields', async () => {
     const { adapter, requests } = subject();
     const result = await adapter.lookupEditionOptions(input());

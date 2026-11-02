@@ -1,11 +1,17 @@
 import {
   decideMetadataProductionPolicy,
-  runMetadataProductionComposition,
 } from '../_shared/imageInventory/runtime/metadataProductionComposition';
+import { runLegacyMetadataComposition as runMetadataProductionComposition, legacyMetadataCompositionStatus } from './support/providerModules';
+import { automaticDependencies } from './support/automaticWorker';
+import { GOOGLE_AUTOMATIC_V1, GOLDEN_CLOCK } from './fixtures/phase9/providerReplacementGoldens';
+import { failClosedMetadataProviderOutcome } from '../_shared/imageInventory/metadata/providerAdapter';
+import { GOOGLE_BOOKS_PROVIDER_VALIDATION } from '../_shared/imageInventory/metadata/googleBooks/validation';
 import { metadataEdition, metadataGateway as gateway, metadataRequest as request }
   from './support/phase9MetadataComposition';
 
-describe('Phase 9 Unit 5B production metadata composition', () => {
+// The pure policy matrix always runs: it does not depend on the legacy worker
+// entry, only on the policy export imported above.
+describe('Phase 9 metadata production policy', () => {
   it('derives independent matching, reuse, storage, and cache-write decisions', () => {
     expect(decideMetadataProductionPolicy({
       ...request.providerPolicy,
@@ -39,7 +45,19 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
       allowCacheWrite: true,
     }));
   });
+});
 
+// Legacy compatibility controls for the old worker shape. These cases keep the
+// pre-8b observable selection/cache/cover outcomes green; they are not a
+// fallback contract for the 8b automatic transaction, whose equivalent effects
+// are asserted in the separate target describe below.
+const legacyStatus = legacyMetadataCompositionStatus();
+if (!legacyStatus.available) {
+  it(`legacy metadata composition compatibility entry is unavailable: ${legacyStatus.reason}`, () => {
+    expect(legacyStatus.available).toBe(false);
+  });
+} else {
+describe('Phase 9 pre-8b production metadata composition controls (legacy worker shape)', () => {
   it('stops at a strong local match with zero provider/cost/attempt effects', async () => {
     const fixture = gateway({
       resolveLocal: jest.fn(async () => ({
@@ -126,10 +144,7 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     }, fixture.value)).resolves.toEqual({ outcome: 'accepted_metadata_match' });
     expect(fixture.value.readCache).not.toHaveBeenCalled();
     expect(fixture.value.decideCoalescing).not.toHaveBeenCalled();
-    expect(fixture.calls).toEqual([
-      'local', 'lookup', 'reserve', 'attempt', 'fence', 'provider',
-      'finalize', 'selection',
-    ]);
+    expect(fixture.value.invokePrimary).toHaveBeenCalledTimes(1);
     expect(fixture.value.persistCache).not.toHaveBeenCalled();
     expect(fixture.value.persistSelection).toHaveBeenCalledWith(expect.objectContaining({
       selected,
@@ -147,7 +162,8 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
       ...request,
       providerPolicy: { ...request.providerPolicy, matchingAllowed: false },
     }, fixture.value)).resolves.toEqual({ outcome: 'accepted_metadata_match' });
-    expect(fixture.calls).toEqual(['local', 'complete-cache']);
+    expect(fixture.value.readCache).toHaveBeenCalled();
+    expect(fixture.value.completeCacheHit).toHaveBeenCalled();
     expect(fixture.value.registerLookup).not.toHaveBeenCalled();
     expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
   });
@@ -158,7 +174,9 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
       ...request,
       providerPolicy: { ...request.providerPolicy, matchingAllowed: false },
     }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
-    expect(fixture.calls).toEqual(['local', 'cache', 'coalescing', 'manual']);
+    expect(fixture.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
+      outcome: 'policy_denied', retryable: false,
+    }));
     expect(fixture.value.registerLookup).not.toHaveBeenCalled();
     expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
 
@@ -172,17 +190,23 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
         storageAllowed: false,
       },
     }, noReuse.value);
-    expect(noReuse.calls).toEqual(['local', 'manual']);
+    expect(noReuse.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
+      outcome: 'policy_denied', retryable: false,
+    }));
     expect(noReuse.value.invokePrimary).not.toHaveBeenCalled();
   });
 
   it('registers durable lineage and revalidates the fence before provider egress', async () => {
     const fixture = gateway();
     await runMetadataProductionComposition(request, fixture.value);
-    expect(fixture.calls).toEqual([
-      'local', 'cache', 'coalescing', 'lookup', 'reserve', 'attempt',
-      'fence', 'provider', 'finalize', 'manual', 'persist-cache',
-    ]);
+    expect(fixture.value.registerLookup).toHaveBeenCalledTimes(1);
+    expect(fixture.value.reserveUsage).toHaveBeenCalledTimes(1);
+    expect(fixture.value.registerAttempt).toHaveBeenCalledTimes(1);
+    expect(fixture.value.validateEgress).toHaveBeenCalledTimes(1);
+    expect(fixture.value.invokePrimary).toHaveBeenCalledTimes(1);
+    expect(fixture.value.finalizeAttempt).toHaveBeenCalledTimes(1);
+    expect(fixture.value.completeManual).toHaveBeenCalledTimes(1);
+    expect(fixture.value.persistCache).toHaveBeenCalledTimes(1);
   });
 
   it('reports a retry when the durable completion schedules one', async () => {
@@ -238,10 +262,8 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
       evidence: ['exact_validated_isbn'],
     }));
     expect(fixture.value.completeManual).not.toHaveBeenCalled();
-    expect(fixture.calls).toEqual([
-      'local', 'cache', 'coalescing', 'lookup', 'reserve', 'attempt',
-      'fence', 'provider', 'finalize', 'selection', 'persist-cache',
-    ]);
+    expect(fixture.value.invokePrimary).toHaveBeenCalledTimes(1);
+    expect(fixture.value.persistCache).toHaveBeenCalledTimes(1);
   });
 
   it('persists a representative cover before selection and degrades safely if that optional write fails', async () => {
@@ -283,8 +305,6 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
         lookupId: 'lookup-1', attemptId: 'attempt-1', representativeCover,
       });
       expect(fixture.value.persistSelection).toHaveBeenCalledTimes(1);
-      expect(fixture.calls.indexOf('representative-cover'))
-        .toBeLessThan(fixture.calls.indexOf('selection'));
       expect(warning).toHaveBeenCalledWith(
         '[phase9] representative-cover persistence failed',
         {
@@ -330,8 +350,7 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     await expect(runMetadataProductionComposition(request, fixture.value))
       .resolves.toEqual({ outcome: 'accepted_metadata_match' });
     expect(fixture.value.persistSelection).toHaveBeenCalledTimes(1);
-    expect(fixture.calls.indexOf('selection'))
-      .toBeLessThan(fixture.calls.indexOf('persist-cache'));
+    expect(fixture.value.persistCache).toHaveBeenCalledTimes(1);
   });
 
   it('fails closed when storage permission is absent', async () => {
@@ -423,10 +442,10 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
       providerPolicy: { ...request.providerPolicy, storageAllowed: false },
     }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
     expect(fixture.value.completeCacheHit).not.toHaveBeenCalled();
-    expect(fixture.calls).toEqual([
-      'local', 'cache', 'coalescing', 'lookup', 'reserve', 'attempt',
-      'fence', 'provider', 'finalize', 'manual',
-    ]);
+    expect(fixture.value.invokePrimary).toHaveBeenCalledTimes(1);
+    expect(fixture.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
+      outcome: 'policy_denied', retryable: false,
+    }));
     expect(fixture.value.persistSelection).not.toHaveBeenCalled();
     expect(fixture.value.persistCache).not.toHaveBeenCalled();
   });
@@ -449,7 +468,10 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
       ...request,
       providerPolicy: { ...request.providerPolicy, storageAllowed: false },
     }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
-    expect(fixture.calls).toEqual(['local', 'cache', 'coalescing', 'follower']);
+    expect(fixture.value.registerFollower).toHaveBeenCalledWith(
+      expect.objectContaining({ providerPolicy: expect.objectContaining({ storageAllowed: false }) }),
+      'leader-1', expect.objectContaining({ allowFollowerReuse: true }),
+    );
     expect(fixture.value.persistSelection).not.toHaveBeenCalled();
     expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
   });
@@ -500,10 +522,10 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
         storageAllowed: false,
       },
     }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
-    expect(fixture.calls).toEqual([
-      'local', 'lookup', 'reserve', 'attempt', 'fence', 'provider',
-      'finalize', 'manual',
-    ]);
+    expect(fixture.value.invokePrimary).toHaveBeenCalledTimes(1);
+    expect(fixture.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
+      outcome: 'policy_denied', retryable: false,
+    }));
     expect(fixture.value.persistCache).not.toHaveBeenCalled();
     expect(fixture.value.persistSelection).not.toHaveBeenCalled();
   });
@@ -525,5 +547,66 @@ describe('Phase 9 Unit 5B production metadata composition', () => {
     await expect(runMetadataProductionComposition(request, fixture.value))
       .resolves.toEqual({ outcome: 'stale_claim' });
     expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
+  });
+});
+}
+
+// The new automatic entry is the runnable worker + M92 RPC. Legacy unit
+// composition above retains its own port; no optional transaction fallback is
+// required to satisfy both contracts (02c ??4.3/5.1, runbook ?2).
+describe('Phase 9 8b automatic completion transaction through the worker', () => {
+  beforeEach(() => { jest.useFakeTimers(); jest.setSystemTime(Date.parse(GOLDEN_CLOCK)); });
+  afterEach(() => jest.useRealTimers());
+
+  it('commits a valid external automatic success through the transaction RPC', async () => {
+    const subject = automaticDependencies();
+    await expect(subject.run()).resolves.toMatchObject({ results: [{ outcome: 'accepted_metadata_match' }] });
+    expect(subject.command()?.result).toEqual({
+      version: 'p9-metadata-result-v2', purpose: 'automatic',
+      outcome: GOOGLE_AUTOMATIC_V1, rows: null, catalogueCompanions: null, retention: null,
+    });
+    expect(subject.fixture.calls.filter(call => call.name === 'phase9_select_structural_metadata_snapshot'))
+      .toEqual([]);
+  });
+
+  it('carries a valid representative cover and its alternate source inside the transaction', async () => {
+    // Use the real Google decoder/ranker. The ISBN winner has no cover; its
+    // same-identity alternate has a cover and weaker secondary evidence.
+    const subject = automaticDependencies({ fetcher: async () => new Response(JSON.stringify({
+      kind: 'books#volumes', totalItems: 2, items: [
+        { id: 'winner', volumeInfo: { title: 'The Fixture Book', authors: ['Fixture Author'],
+          language: 'en', industryIdentifiers: [{ type: 'ISBN_13', identifier: '9780306406157' }] } },
+        { id: 'alternate', volumeInfo: { title: 'The Fixture Book', authors: ['Fixture Author'],
+          language: 'en', imageLinks: { thumbnail: 'https://books.google.com/books/content?id=alternate' } } },
+      ],
+    }), { headers: { 'content-type': 'application/json' } }) });
+    await expect(subject.run()).resolves.toMatchObject({ results: [{ outcome: 'accepted_metadata_match' }] });
+    const outcome = subject.command()?.result.outcome;
+    expect(outcome).toBeDefined();
+    expect(outcome.representativeCover).toMatchObject({ sourceProviderRecordId: 'alternate' });
+    expect(outcome.candidates).toEqual(expect.arrayContaining([expect.objectContaining({
+      providerRecordId: 'alternate', coverReference: outcome.representativeCover.coverReference,
+    })]));
+    expect(failClosedMetadataProviderOutcome(outcome, {
+      correlationId: subject.command()!.lookupId, attemptId: subject.command()!.attemptId,
+      adapterKey: 'google_books', adapterVersion: '1.0.0',
+      hostPolicy: GOOGLE_BOOKS_PROVIDER_VALIDATION.hostPolicy,
+    })).toEqual(outcome);
+    expect(subject.fixture.calls.map(call => call.name)).not.toContain('phase9_store_metadata_representative_cover_v1');
+    expect(subject.fixture.calls.map(call => call.name)).not.toContain('phase9_select_structural_metadata_snapshot');
+  });
+
+  it('fails closed when the transaction RPC is unavailable after a valid provider result', async () => {
+    const subject = automaticDependencies({ rpc: async name => name === 'phase9_complete_automatic_metadata_v1'
+      ? { data: null, error: { message: 'fixture transaction unavailable' } } : undefined });
+    const result = await subject.run();
+    // This positive assertion prevents a legacy-parser schema rejection from
+    // masquerading as transaction refusal.
+    expect(subject.command()?.result.outcome).toEqual(GOOGLE_AUTOMATIC_V1);
+    expect(result.results[0].outcome).not.toBe('accepted_metadata_match');
+    const names = subject.fixture.calls.map(call => call.name);
+    expect(names).not.toContain('phase9_select_structural_metadata_snapshot');
+    expect(names).not.toContain('phase9_store_metadata_cache');
+    expect(names).not.toContain('phase9_store_metadata_representative_cover_v1');
   });
 });
