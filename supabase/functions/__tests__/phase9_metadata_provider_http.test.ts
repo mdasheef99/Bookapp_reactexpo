@@ -57,27 +57,50 @@ describe('Phase 9 ProviderHttpPort effects', () => {
   it('allows only one concurrent half-open probe and closes the breaker after its success', async () => {
     const clock = fakeClock(); let fetches = 0; let release!: () => void;
     const held = new Promise<void>(resolve => { release = resolve; });
-    const { port } = createPort(clock, { fetcher: async () => {
+    const sharedFetcher = async () => {
       fetches++;
       if (fetches <= policy.breakerFailures) return new Response('', { status: 503 });
       if (fetches === policy.breakerFailures + 1) await held;
       return jsonResponse();
-    } });
-    // Each breaker failure is the first GET of a separate claim; the port's
-    // breaker state is shared across those claims.
-    await expect(port.get(call(0))).rejects.toBeDefined();
-    await expect(port.get(call(0))).rejects.toBeDefined();
-    await expect(port.get(call(0))).rejects.toBeDefined();
+    };
+    // M91-valid distinct claim identities: each breaker failure is the first
+    // GET (search/sequence 0) of a separate claim with distinct claim, lookup
+    // and attempt UUIDs. Breaker state is shared via ONE object across claims.
+    const breakerState = {};
+    const leaseTokens = ['a'.repeat(64), 'b'.repeat(64), 'c'.repeat(64),
+      'd'.repeat(64), 'e'.repeat(64), 'f'.repeat(64)];
+    const pad12 = (n: number) => String(n).padStart(12, '0');
+    const claimPort = (index: number) => {
+      const lookupId = `00000000-0000-4000-8000-${pad12(110 + index)}`;
+      const attemptId = `00000000-0000-4000-8000-${pad12(210 + index)}`;
+      const jobId = `00000000-0000-4000-8000-${pad12(310 + index)}`;
+      const callId = `00000000-0000-4000-8000-${pad12(410 + index)}`;
+      const beforeRequest = jest.fn(async () => ({ callId, grantEpoch: 1n }));
+      const afterRequest = jest.fn(async (id: string) => ({ receiptId: id }));
+      return createTestHttpPort({
+        adapterKey: 'open_library', adapterVersion: '2.0.0',
+        policy, maxGets: 6, timeoutMs: 1000, maxResponseBytes: 64000,
+        now: clock.now, sleep: clock.sleep, fetcher: sharedFetcher,
+        beforeRequest, afterRequest,
+        lookupId, attemptId,
+        claim: { jobId, worker: 'metadata-worker-fixture-0001',
+          leaseToken: leaseTokens[index % leaseTokens.length], claimAttempt: 1 },
+        breakerState,
+      });
+    };
+    await expect(claimPort(0).get(call(0))).rejects.toBeDefined();
+    await expect(claimPort(1).get(call(0))).rejects.toBeDefined();
+    await expect(claimPort(2).get(call(0))).rejects.toBeDefined();
     expect(fetches).toBe(2);
     clock.advance(policy.breakerCooldownMs);
-    const probe = port.get(call(0));
+    const probe = claimPort(3).get(call(0));
     try {
       await until(() => fetches === 3);
       // The first probe is still in flight, so this really is concurrent.
-      await expect(port.get(call(0))).rejects.toBeDefined();
+      await expect(claimPort(4).get(call(0))).rejects.toBeDefined();
       expect(fetches).toBe(3);
     } finally { release(); await probe; }
-    await port.get(call(0));
+    await claimPort(5).get(call(0));
     expect(fetches).toBe(4);
   });
 

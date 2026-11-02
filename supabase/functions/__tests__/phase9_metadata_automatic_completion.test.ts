@@ -63,7 +63,12 @@ describe('Phase 9 automatic metadata completion transaction', () => {
       expect(names).not.toContain('phase9_select_structural_metadata_snapshot');
       // ??4.2?4.3 preserve this private selected-snapshot cache. Full-list
       // caching stays deferred: no rows/companions are passed to that RPC.
-      for (const call of subject.fixture.calls.filter(call => call.name === 'phase9_store_metadata_cache')) {
+      // Pre-existing worker RPC (migration 20260728000015): the selected-only
+      // cache effect must exist, otherwise a correct SDD implementation fails.
+      const cacheCalls = subject.fixture.calls.filter(
+        call => call.name === 'phase9_store_metadata_cache');
+      expect(cacheCalls).toHaveLength(1);
+      for (const call of cacheCalls) {
         expect(call.parameters.p_outcome).toBe('positive');
         expect(call.parameters.p_normalized_snapshot).toEqual(GOOGLE_AUTOMATIC_V1.selected);
         expect(call.parameters).not.toHaveProperty('rows');

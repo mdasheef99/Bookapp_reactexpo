@@ -1,20 +1,29 @@
 import {
   decideMetadataProductionPolicy,
 } from '../_shared/imageInventory/runtime/metadataProductionComposition';
-import { runLegacyMetadataComposition as runMetadataProductionComposition, legacyMetadataCompositionStatus } from './support/providerModules';
-import { automaticDependencies } from './support/automaticWorker';
-import { GOOGLE_AUTOMATIC_V1, GOLDEN_CLOCK } from './fixtures/phase9/providerReplacementGoldens';
+import { automaticDependencies, workerEnvironment, JOB_ID, CANDIDATE_ID } from './support/automaticWorker';
+import { worker as fixtureWorkerId } from './fixtures/phase9/editionOptionsWorker';
+import { bootstrapGoogle, observedInstalledManifest, runDescriptorWorker, testProviderManifest } from './support/providerModules';
+import { GOLDEN_ATTEMPT_ID, GOLDEN_CLOCK, GOLDEN_LOOKUP_ID, GOOGLE_AUTOMATIC_V1 } from './fixtures/phase9/providerReplacementGoldens';
 import { failClosedMetadataProviderOutcome } from '../_shared/imageInventory/metadata/providerAdapter';
 import { GOOGLE_BOOKS_PROVIDER_VALIDATION } from '../_shared/imageInventory/metadata/googleBooks/validation';
-import { metadataEdition, metadataGateway as gateway, metadataRequest as request }
-  from './support/phase9MetadataComposition';
 
-// The pure policy matrix always runs: it does not depend on the legacy worker
-// entry, only on the policy export imported above.
+const basePolicy = {
+  enabled: true,
+  adapterVersionCompatible: true,
+  capabilityVersionCompatible: true,
+  matchingAllowed: true,
+  storageAllowed: true,
+  reuseAllowed: true,
+  pricingPolicyCompatible: true,
+};
+
+// The pure policy matrix always runs: it does not depend on any worker entry,
+// only on the policy export imported above.
 describe('Phase 9 metadata production policy', () => {
   it('derives independent matching, reuse, storage, and cache-write decisions', () => {
     expect(decideMetadataProductionPolicy({
-      ...request.providerPolicy,
+      ...basePolicy,
       reuseAllowed: false,
     })).toEqual({
       allowCacheRead: false,
@@ -25,7 +34,7 @@ describe('Phase 9 metadata production policy', () => {
       requiredDegradationOutcome: 'policy_denied',
     });
     expect(decideMetadataProductionPolicy({
-      ...request.providerPolicy,
+      ...basePolicy,
       matchingAllowed: false,
     })).toEqual(expect.objectContaining({
       allowCacheRead: true,
@@ -35,7 +44,7 @@ describe('Phase 9 metadata production policy', () => {
       allowCacheWrite: true,
     }));
     expect(decideMetadataProductionPolicy({
-      ...request.providerPolicy,
+      ...basePolicy,
       storageAllowed: false,
     })).toEqual(expect.objectContaining({
       allowCacheRead: true,
@@ -47,513 +56,710 @@ describe('Phase 9 metadata production policy', () => {
   });
 });
 
-// Legacy compatibility controls for the old worker shape. These cases keep the
-// pre-8b observable selection/cache/cover outcomes green; they are not a
-// fallback contract for the 8b automatic transaction, whose equivalent effects
-// are asserted in the separate target describe below.
-const legacyStatus = legacyMetadataCompositionStatus();
-if (!legacyStatus.available) {
-  it(`legacy metadata composition compatibility entry is unavailable: ${legacyStatus.reason}`, () => {
-    expect(legacyStatus.available).toBe(false);
-  });
-} else {
-describe('Phase 9 pre-8b production metadata composition controls (legacy worker shape)', () => {
-  it('stops at a strong local match with zero provider/cost/attempt effects', async () => {
-    const fixture = gateway({
-      resolveLocal: jest.fn(async () => ({
-        outcome: 'matched' as const,
-        canonicalEditionId: 'edition-1',
-      })),
-    });
-    await expect(runMetadataProductionComposition(request, fixture.value))
-      .resolves.toEqual({ outcome: 'local_canonical_match' });
-    expect(fixture.value.readCache).not.toHaveBeenCalled();
-    expect(fixture.value.registerAttempt).not.toHaveBeenCalled();
-    expect(fixture.value.reserveUsage).not.toHaveBeenCalled();
-    expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
-  });
+// Stable worker-level behaviour controls. Every control drives the worker
+// through the supported seams (support/automaticWorker.ts for the runnable
+// worker + RPC mocks, support/providerModules.ts for the installed-manifest
+// observer and the Google bootstrap used to inject a stub adapter) and asserts
+// observable results and RPC effects. No control depends on the legacy
+// exported composition or gateway call shape; no such import remains, so a
+// missing legacy export neither passes vacuously nor turns red.
+describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => {
+  const emptyItemsFetcher = async () => new Response(JSON.stringify({
+    kind: 'books#volumes', totalItems: 0, items: [],
+  }), { headers: { 'content-type': 'application/json' } });
+  const callsNamed = (subject: ReturnType<typeof automaticDependencies>, name: string) =>
+    subject.fixture.calls.filter(call => call.name === name);
+  // A stub primary lets worker-level tests feed the exact malformed/hostile
+  // provider shapes the old gateway mocks injected, without touching
+  // production: the real Google validation still owns fail-closed. The stub
+  // bypasses the counting fetcher, so each stub test also asserts the stub
+  // was invoked exactly once to prove the zero-GET result is exercised
+  // rather than vacuous.
+  const stubProduction = (lookupResult: unknown) => {
+    let invocations = 0;
+    const production = bootstrapGoogle(workerEnvironment, emptyItemsFetcher);
+    (production.primary as unknown as { lookup: () => Promise<unknown> }).lookup =
+      async () => { invocations += 1; return lookupResult; };
+    return { production, invoked: () => invocations };
+  };
 
-  it('stops at a compatible cache hit and a coalesced follower without duplicate charge', async () => {
-    const cache = gateway({
-      readCache: jest.fn(async () => ({ outcome: 'hit' as const, normalizedOutcome: 'no_acceptable_match' as const })),
-    });
-    await expect(runMetadataProductionComposition(request, cache.value))
-      .resolves.toEqual({ outcome: 'manual_metadata_required' });
-    expect(cache.value.completeCacheHit).toHaveBeenCalled();
-    expect(cache.value.reserveUsage).not.toHaveBeenCalled();
-    expect(cache.value.invokePrimary).not.toHaveBeenCalled();
-
-    const follower = gateway({
-      decideCoalescing: jest.fn(async () => ({ mode: 'follower' as const, leaderLookupId: 'leader-1' })),
-    });
-    await expect(runMetadataProductionComposition(request, follower.value))
-      .resolves.toEqual({ outcome: 'coalesced_follower' });
-    expect(follower.value.registerFollower).toHaveBeenCalledWith(
-      request,
-      'leader-1',
-      expect.objectContaining({
-        allowFollowerReuse: true,
-        allowPositiveRetention: true,
-      }),
-    );
-    expect(follower.value.reserveUsage).not.toHaveBeenCalled();
-    expect(follower.value.invokePrimary).not.toHaveBeenCalled();
-    const positiveFollower = gateway({
-      decideCoalescing: jest.fn(async () => (
-        { mode: 'follower' as const, leaderLookupId: 'leader-2' }
-      )),
-      registerFollower: jest.fn(async () => ({
-        status: 'completed' as const,
-        normalizedOutcome: 'coherent_match',
-      })),
-    });
-    await expect(runMetadataProductionComposition(request, positiveFollower.value))
-      .resolves.toEqual({ outcome: 'accepted_metadata_match' });
-    expect(positiveFollower.value.invokePrimary).not.toHaveBeenCalled();
-  });
-
-  it('completes a positive cache hit durably without provider work', async () => {
-    const cache = gateway({
-      readCache: jest.fn(async () => ({
-        outcome: 'hit' as const,
-        normalizedOutcome: 'coherent_match' as const,
-      })),
-    });
-    await expect(runMetadataProductionComposition(request, cache.value))
-      .resolves.toEqual({ outcome: 'accepted_metadata_match' });
-    expect(cache.value.completeCacheHit).toHaveBeenCalled();
-    expect(cache.value.invokePrimary).not.toHaveBeenCalled();
-  });
-
-  it('skips reuse but preserves fresh matching, fencing, and snapshot retention', async () => {
-    const selected = metadataEdition();
-    const fixture = gateway({
-      invokePrimary: jest.fn(async () => (fixture.calls.push('provider'), {
-        outcome: 'coherent_match' as const,
-        candidates: [selected],
-        selected,
-        evidence: ['exact_validated_isbn'],
-        retryable: false,
-        secondaryEligible: false,
-        providerRequestId: 'safe-request-id',
-      })),
-    });
-    await expect(runMetadataProductionComposition({
-      ...request,
-      providerPolicy: { ...request.providerPolicy, reuseAllowed: false },
-    }, fixture.value)).resolves.toEqual({ outcome: 'accepted_metadata_match' });
-    expect(fixture.value.readCache).not.toHaveBeenCalled();
-    expect(fixture.value.decideCoalescing).not.toHaveBeenCalled();
-    expect(fixture.value.invokePrimary).toHaveBeenCalledTimes(1);
-    expect(fixture.value.persistCache).not.toHaveBeenCalled();
-    expect(fixture.value.persistSelection).toHaveBeenCalledWith(expect.objectContaining({
-      selected,
-    }));
-  });
-
-  it('permits compatible cache reuse under matching denial but makes zero fresh calls', async () => {
-    const fixture = gateway({
-      readCache: jest.fn(async () => ({
-        outcome: 'hit' as const,
-        normalizedOutcome: 'coherent_match',
-      })),
-    });
-    await expect(runMetadataProductionComposition({
-      ...request,
-      providerPolicy: { ...request.providerPolicy, matchingAllowed: false },
-    }, fixture.value)).resolves.toEqual({ outcome: 'accepted_metadata_match' });
-    expect(fixture.value.readCache).toHaveBeenCalled();
-    expect(fixture.value.completeCacheHit).toHaveBeenCalled();
-    expect(fixture.value.registerLookup).not.toHaveBeenCalled();
-    expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
-  });
-
-  it('denies a fresh call after a cache miss when matching is denied', async () => {
-    const fixture = gateway();
-    await expect(runMetadataProductionComposition({
-      ...request,
-      providerPolicy: { ...request.providerPolicy, matchingAllowed: false },
-    }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
-    expect(fixture.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
-      outcome: 'policy_denied', retryable: false,
-    }));
-    expect(fixture.value.registerLookup).not.toHaveBeenCalled();
-    expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
-
-    const noReuse = gateway();
-    await runMetadataProductionComposition({
-      ...request,
-      providerPolicy: {
-        ...request.providerPolicy,
-        matchingAllowed: false,
-        reuseAllowed: false,
-        storageAllowed: false,
+  it('completes a compatible cache hit through the worker without provider egress', async () => {
+    const subject = automaticDependencies({
+      rpc: async (name: string) => {
+        if (name === 'phase9_metadata_cache_reuse_context') {
+          return { data: { leaderLookupId: GOLDEN_LOOKUP_ID, normalizedOutcome: 'coherent_match' }, error: null };
+        }
+        if (name === 'phase9_complete_metadata_cache_reuse') {
+          return { data: { normalized_outcome: 'coherent_match' }, error: null };
+        }
+        return undefined;
       },
-    }, noReuse.value);
-    expect(noReuse.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
-      outcome: 'policy_denied', retryable: false,
-    }));
-    expect(noReuse.value.invokePrimary).not.toHaveBeenCalled();
+    });
+    const result = await subject.run();
+    expect(result.results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(subject.gets()).toBe(0);
+    const names = subject.fixture.calls.map(call => call.name);
+    expect(names).toContain('phase9_metadata_cache_reuse_context');
+    expect(names).toContain('phase9_complete_metadata_cache_reuse');
+    expect(callsNamed(subject, 'phase9_register_metadata_provider_call')).toHaveLength(0);
+    expect(callsNamed(subject, 'phase9_reserve_metadata_usage')).toHaveLength(0);
+  });
+
+  it('completes a non-positive cache hit as manual without provider egress (positive control: coherent hit is accepted)', async () => {
+    const hit = (normalizedOutcome: string) => automaticDependencies({
+      rpc: async (name: string) => {
+        if (name === 'phase9_metadata_cache_reuse_context') {
+          return { data: { leaderLookupId: GOLDEN_LOOKUP_ID, normalizedOutcome }, error: null };
+        }
+        if (name === 'phase9_complete_metadata_cache_reuse') {
+          return { data: { normalized_outcome: normalizedOutcome }, error: null };
+        }
+        return undefined;
+      },
+    });
+    const negative = hit('no_acceptable_match');
+    expect((await negative.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(negative.gets()).toBe(0);
+    expect(callsNamed(negative, 'phase9_complete_metadata_cache_reuse')).toHaveLength(1);
+    expect(callsNamed(negative, 'phase9_register_metadata_provider_call')).toHaveLength(0);
+    expect(callsNamed(negative, 'phase9_reserve_metadata_usage')).toHaveLength(0);
+    // Positive control differs only in the cached outcome.
+    const positive = hit('coherent_match');
+    expect((await positive.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(positive.gets()).toBe(0);
+  });
+
+  it('coalesces a follower through the worker without duplicate charge', async () => {
+    const seenGets: Array<{ url?: URL; stage?: string; sequence?: number }> = [];
+    const installed = observedInstalledManifest(testProviderManifest(), call => { seenGets.push(call); });
+    const subject = automaticDependencies({
+      rpc: async (name: string) => {
+        if (name === 'phase9_metadata_coalescing_context') {
+          return { data: { mode: 'follower', leaderLookupId: GOLDEN_LOOKUP_ID }, error: null };
+        }
+        return undefined;
+      },
+    });
+    const result = await runDescriptorWorker(subject.dependencies, installed);
+    expect(result.results).toEqual([{ outcome: 'coalesced_follower' }]);
+    expect(subject.gets()).toBe(0);
+    expect(seenGets).toEqual([]);
+    expect(callsNamed(subject, 'phase9_register_structural_metadata_lookup').length).toBeGreaterThan(0);
+    expect(callsNamed(subject, 'phase9_register_metadata_provider_call')).toHaveLength(0);
+    // completeReuse ignores the follower decision args: registerFollower
+    // forwards only (request, leader) (metadataProductionGateway.ts:135-143).
+    expect(callsNamed(subject, 'phase9_reserve_metadata_usage')).toHaveLength(0);
+  });
+
+  it('resolves a local canonical match with zero provider effects (positive control: no local match does a fresh GET)', async () => {
+    const local = automaticDependencies({
+      context: { localCanonicalEditionId: 'local-winner' },
+    });
+    expect((await local.run()).results).toEqual([{ outcome: 'local_canonical_match' }]);
+    expect(local.gets()).toBe(0);
+    expect(local.command()).toBeNull();
+    // The local short-circuit returns before any cache/coalescing/lineage
+    // work (metadataProductionComposition.ts: local check precedes cache).
+    expect(callsNamed(local, 'phase9_register_metadata_provider_call')).toHaveLength(0);
+    expect(callsNamed(local, 'phase9_register_structural_metadata_lookup')).toHaveLength(0);
+    expect(callsNamed(local, 'phase9_metadata_cache_reuse_context')).toHaveLength(0);
+    expect(callsNamed(local, 'phase9_metadata_coalescing_context')).toHaveLength(0);
+    expect(callsNamed(local, 'phase9_reserve_metadata_usage')).toHaveLength(0);
+    expect(callsNamed(local, 'phase9_register_structural_metadata_attempt')).toHaveLength(0);
+    // Positive control differs only in the local match.
+    const fresh = automaticDependencies();
+    expect((await fresh.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(fresh.gets()).toBe(1);
+  });
+
+  it('skips reuse but preserves fresh matching, fencing and snapshot retention', async () => {
+    const subject = automaticDependencies({
+      context: {
+        providerPolicies: [{
+          adapterKey: 'google_books', adapterVersion: '1.0.0', enabled: true,
+          matchingAllowed: true, storageAllowed: true, reuseAllowed: false, policyVersion: 1,
+        }],
+      },
+    });
+    expect((await subject.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(subject.gets()).toBe(1);
+    const names = subject.fixture.calls.map(call => call.name);
+    expect(names).not.toContain('phase9_metadata_cache_reuse_context');
+    expect(names).not.toContain('phase9_metadata_coalescing_context');
+    expect(callsNamed(subject, 'phase9_register_metadata_provider_call')).toHaveLength(1);
+    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+    expect(names).not.toContain('phase9_store_metadata_cache');
+    // The selection persists the accepted edition with its match evidence
+    // (metadataProductionGateway.ts:296-309).
+    const select = subject.fixture.calls.find(call => call.name === 'phase9_select_structural_metadata_snapshot');
+    expect(select?.parameters.p_coherent_edition).toEqual({
+      ...GOOGLE_AUTOMATIC_V1.selected,
+      fetchedAt: expect.any(String),
+    });
+    expect(select?.parameters.p_match_evidence).toEqual(GOOGLE_AUTOMATIC_V1.evidence);
+    // Positive control differs only in reuseAllowed: the default reuses the
+    // cache/coalescing boundary and persists the selected snapshot to cache.
+    const positive = automaticDependencies();
+    expect((await positive.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(positive.fixture.calls.map(call => call.name)).toContain('phase9_metadata_cache_reuse_context');
+    expect(callsNamed(positive, 'phase9_store_metadata_cache')).toHaveLength(1);
+  });
+
+  it('permits compatible cache reuse under matching denial with zero fresh calls', async () => {
+    const denied = automaticDependencies({
+      context: {
+        providerPolicies: [{
+          adapterKey: 'google_books', adapterVersion: '1.0.0', enabled: true,
+          matchingAllowed: false, storageAllowed: true, reuseAllowed: true, policyVersion: 1,
+        }],
+      },
+      rpc: async (name: string) => {
+        if (name === 'phase9_metadata_cache_reuse_context') {
+          return { data: { leaderLookupId: GOLDEN_LOOKUP_ID, normalizedOutcome: 'coherent_match' }, error: null };
+        }
+        if (name === 'phase9_complete_metadata_cache_reuse') {
+          return { data: { normalized_outcome: 'coherent_match' }, error: null };
+        }
+        return undefined;
+      },
+    });
+    expect((await denied.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(denied.gets()).toBe(0);
+    expect(callsNamed(denied, 'phase9_complete_metadata_cache_reuse')).toHaveLength(1);
+    expect(callsNamed(denied, 'phase9_register_structural_metadata_lookup')).toHaveLength(0);
+    expect(callsNamed(denied, 'phase9_register_metadata_provider_call')).toHaveLength(0);
+    expect(callsNamed(denied, 'phase9_reserve_metadata_usage')).toHaveLength(0);
+    // Positive control differs only in matchingAllowed: same hit, same
+    // accepted outcome, still zero fresh calls.
+    const allowed = automaticDependencies({
+      rpc: async (name: string) => {
+        if (name === 'phase9_metadata_cache_reuse_context') {
+          return { data: { leaderLookupId: GOLDEN_LOOKUP_ID, normalizedOutcome: 'coherent_match' }, error: null };
+        }
+        if (name === 'phase9_complete_metadata_cache_reuse') {
+          return { data: { normalized_outcome: 'coherent_match' }, error: null };
+        }
+        return undefined;
+      },
+    });
+    expect((await allowed.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(allowed.gets()).toBe(0);
+  });
+
+  it('denies a fresh call after a cache miss when matching is denied (positive control: matching allowed does fresh work)', async () => {
+    const denied = automaticDependencies({
+      context: {
+        providerPolicies: [{
+          adapterKey: 'google_books', adapterVersion: '1.0.0', enabled: true,
+          matchingAllowed: false, storageAllowed: true, reuseAllowed: true, policyVersion: 1,
+        }],
+      },
+    });
+    expect((await denied.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(denied.gets()).toBe(0);
+    expect(callsNamed(denied, 'phase9_register_structural_metadata_lookup')).toHaveLength(0);
+    expect(callsNamed(denied, 'phase9_register_metadata_provider_call')).toHaveLength(0);
+    const fail = denied.fixture.calls.find(call => call.name === 'phase9_fail_metadata_job');
+    expect(fail?.parameters).toMatchObject({ p_failure_kind: 'policy_denied', p_retryable: false });
+    // Positive control differs only in matchingAllowed.
+    const allowed = automaticDependencies();
+    expect((await allowed.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(allowed.gets()).toBe(1);
+  });
+
+  it('denies fresh calls when matching, reuse and storage are all denied', async () => {
+    const subject = automaticDependencies({
+      context: {
+        providerPolicies: [{
+          adapterKey: 'google_books', adapterVersion: '1.0.0', enabled: true,
+          matchingAllowed: false, storageAllowed: false, reuseAllowed: false, policyVersion: 1,
+        }],
+      },
+    });
+    expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(subject.gets()).toBe(0);
+    expect(callsNamed(subject, 'phase9_register_metadata_provider_call')).toHaveLength(0);
+    const fail = subject.fixture.calls.find(call => call.name === 'phase9_fail_metadata_job');
+    expect(fail?.parameters).toMatchObject({ p_failure_kind: 'policy_denied', p_retryable: false });
+    // Positive control differs only in the three flags: all allowed completes
+    // accepted with a fresh provider call.
+    const positive = automaticDependencies();
+    expect((await positive.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(positive.gets()).toBe(1);
   });
 
   it('registers durable lineage and revalidates the fence before provider egress', async () => {
-    const fixture = gateway();
-    await runMetadataProductionComposition(request, fixture.value);
-    expect(fixture.value.registerLookup).toHaveBeenCalledTimes(1);
-    expect(fixture.value.reserveUsage).toHaveBeenCalledTimes(1);
-    expect(fixture.value.registerAttempt).toHaveBeenCalledTimes(1);
-    expect(fixture.value.validateEgress).toHaveBeenCalledTimes(1);
-    expect(fixture.value.invokePrimary).toHaveBeenCalledTimes(1);
-    expect(fixture.value.finalizeAttempt).toHaveBeenCalledTimes(1);
-    expect(fixture.value.completeManual).toHaveBeenCalledTimes(1);
-    expect(fixture.value.persistCache).toHaveBeenCalledTimes(1);
+    const subject = automaticDependencies({ fetcher: emptyItemsFetcher });
+    expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    const order = subject.fixture.calls.map(call => call.name);
+    const indexOf = (name: string) => order.indexOf(name);
+    // The coalescing leader reserves the lookup, so no separate lookup
+    // registration RPC is issued on the fresh path; lineage runs
+    // reserve -> attempt -> grant -> physical finalize -> attempt finalize.
+    expect(indexOf('phase9_metadata_coalescing_context')).toBeGreaterThanOrEqual(0);
+    expect(indexOf('phase9_reserve_metadata_usage')).toBeGreaterThan(indexOf('phase9_metadata_coalescing_context'));
+    expect(indexOf('phase9_register_structural_metadata_attempt')).toBeGreaterThan(indexOf('phase9_reserve_metadata_usage'));
+    expect(indexOf('phase9_register_metadata_provider_call')).toBeGreaterThan(indexOf('phase9_register_structural_metadata_attempt'));
+    expect(indexOf('phase9_finalize_metadata_provider_call')).toBeGreaterThan(indexOf('phase9_register_metadata_provider_call'));
+    expect(indexOf('phase9_finalize_structural_metadata_attempt')).toBeGreaterThan(indexOf('phase9_finalize_metadata_provider_call'));
+    expect(callsNamed(subject, 'phase9_fail_metadata_job')).toHaveLength(1);
+    expect(callsNamed(subject, 'phase9_store_metadata_cache')).toHaveLength(1);
+    // Positive control differs only in the provider result: coherent success
+    // persists a selection and never fails the job.
+    const positive = automaticDependencies();
+    expect((await positive.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(callsNamed(positive, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+    expect(callsNamed(positive, 'phase9_fail_metadata_job')).toHaveLength(0);
   });
 
-  it('reports a retry when the durable completion schedules one', async () => {
-    const fixture = gateway({
-      invokePrimary: jest.fn(async () => {
-        throw new Error('controlled provider failure');
-      }),
-      completeManual: jest.fn(async () => ({
-        status: 'retry_scheduled' as const,
-      })) as any,
+  it('reports a retry when the durable completion schedules one (positive control: resolved failure stays manual)', async () => {
+    const throwing = async () => { throw new Error('controlled provider failure'); };
+    const retrying = automaticDependencies({
+      fetcher: throwing,
+      rpc: async (name: string) => name === 'phase9_fail_metadata_job'
+        ? { data: { status: 'retry_scheduled' }, error: null } : undefined,
     });
-
-    await expect(runMetadataProductionComposition(request, fixture.value))
-      .resolves.toEqual({ outcome: 'retry_scheduled' });
-    expect(fixture.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
-      outcome: 'provider_unavailable', retryable: true,
-    }));
+    expect((await retrying.run()).results).toEqual([{ outcome: 'retry_scheduled' }]);
+    expect(retrying.gets()).toBe(1);
+    const fail = retrying.fixture.calls.find(call => call.name === 'phase9_fail_metadata_job');
+    // The throwing fetcher surfaces through the real adapter as a retryable
+    // network failure; the durable completion decides retry vs manual.
+    expect(fail?.parameters).toMatchObject({ p_failure_kind: 'network_failure', p_retryable: true });
+    // Positive control differs only in the durable completion.
+    const manual = automaticDependencies({ fetcher: throwing });
+    expect((await manual.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(manual.gets()).toBe(1);
   });
 
-  it('makes zero provider calls after stale claim rejection', async () => {
-    const fixture = gateway({
-      validateEgress: jest.fn(async () => false),
+  it('makes zero provider calls after stale claim rejection (positive control: valid claim does fresh work)', async () => {
+    let jobContextCalls = 0;
+    let current: () => Record<string, unknown> = () => ({});
+    const subject = automaticDependencies({
+      rpc: async (name: string) => {
+        if (name === 'phase9_metadata_job_context') {
+          jobContextCalls += 1;
+          if (jobContextCalls === 3) {
+            return {
+              data: { ...current(), candidateId: '00000000-0000-4000-8000-000000000099' },
+              error: null,
+            };
+          }
+        }
+        return undefined;
+      },
     });
-    await expect(runMetadataProductionComposition(request, fixture.value))
-      .resolves.toEqual({ outcome: 'stale_claim' });
-    expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
-    expect(fixture.value.finalizeAttempt).toHaveBeenCalledWith(expect.objectContaining({
-      normalizedOutcome: 'policy_denied',
-      disposition: 'stale_rejected',
-    }));
+    current = subject.fixture.current as () => Record<string, unknown>;
+    expect((await subject.run()).results).toEqual([{ outcome: 'stale_claim' }]);
+    expect(subject.gets()).toBe(0);
+    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    // The stale fence writes the durable stale finalization before returning:
+    // physical p_status 'stale_rejected' and attempt p_disposition 'stale'
+    // with the production-written policy_denied outcome
+    // (metadataAttemptFinalization.ts:21,61-63).
+    const physical = subject.fixture.calls.find(call => call.name === 'phase9_finalize_metadata_provider_call');
+    expect(physical?.parameters).toMatchObject({ p_status: 'stale_rejected' });
+    const attempt = subject.fixture.calls.find(call => call.name === 'phase9_finalize_structural_metadata_attempt');
+    expect(attempt?.parameters).toMatchObject({ p_disposition: 'stale', p_normalized_outcome: 'policy_denied' });
+    // Positive control differs only in fence validity.
+    const positive = automaticDependencies();
+    expect((await positive.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(positive.gets()).toBe(1);
   });
 
   it('persists one coherent accepted snapshot and never invokes a secondary', async () => {
-    const selected = metadataEdition();
-    const fixture = gateway({
-      invokePrimary: jest.fn(async () => {
-        fixture.calls.push('provider');
-        return {
-          outcome: 'coherent_match' as const,
-          candidates: [selected],
-          selected,
-          evidence: ['exact_validated_isbn'],
-          retryable: false,
-          secondaryEligible: false,
-          providerRequestId: 'safe-request-id',
-        };
-      }),
+    const subject = automaticDependencies();
+    expect((await subject.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(subject.gets()).toBe(1);
+    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+    expect(callsNamed(subject, 'phase9_fail_metadata_job')).toHaveLength(0);
+    expect(callsNamed(subject, 'phase9_register_metadata_provider_call')).toHaveLength(1);
+    expect(callsNamed(subject, 'phase9_store_metadata_cache')).toHaveLength(1);
+    // The selection persists the accepted edition with its match evidence
+    // (metadataProductionGateway.ts:296-309).
+    const select = subject.fixture.calls.find(call => call.name === 'phase9_select_structural_metadata_snapshot');
+    expect(select?.parameters.p_coherent_edition).toEqual({
+      ...GOOGLE_AUTOMATIC_V1.selected,
+      fetchedAt: expect.any(String),
     });
-    await expect(runMetadataProductionComposition(request, fixture.value))
-      .resolves.toEqual({ outcome: 'accepted_metadata_match' });
-    expect(fixture.value.persistSelection).toHaveBeenCalledWith(expect.objectContaining({
-      selected,
-      evidence: ['exact_validated_isbn'],
-    }));
-    expect(fixture.value.completeManual).not.toHaveBeenCalled();
-    expect(fixture.value.invokePrimary).toHaveBeenCalledTimes(1);
-    expect(fixture.value.persistCache).toHaveBeenCalledTimes(1);
+    expect(select?.parameters.p_match_evidence).toEqual(GOOGLE_AUTOMATIC_V1.evidence);
+    // Negative control differs only in storage: denial keeps the same fresh
+    // call but persists nothing and stays manual.
+    const denied = automaticDependencies({
+      context: {
+        providerPolicies: [{
+          adapterKey: 'google_books', adapterVersion: '1.0.0', enabled: true,
+          matchingAllowed: true, storageAllowed: false, reuseAllowed: true, policyVersion: 1,
+        }],
+      },
+    });
+    expect((await denied.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(denied.gets()).toBe(1);
+    expect(callsNamed(denied, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
   });
 
   it('persists a representative cover before selection and degrades safely if that optional write fails', async () => {
-    const selected = metadataEdition({ providerRecordId: 'selected', coverReference: null });
-    const representativeCover = {
-      coverReference: 'https://books.google.com/books/content?id=alternate',
-      sourceRelation: 'representative_edition' as const,
-      sourceProviderRecordId: 'alternate',
-      selectionPolicyVersion: 'p9-representative-cover-v1' as const,
-      matchEvidence: ['exact_title', 'exact_author_set', 'language_compatible'],
-    };
-    const fixture = gateway({
-      providerValidation: {
-        adapterKey: 'recorded_metadata', adapterVersion: '1.0.0',
-        hostPolicy: {
-          adapterKey: 'recorded_metadata', policyVersion: 'recorded-hosts-v1',
-          approvedCoverHosts: ['books.google.com'],
-        },
-      },
-      invokePrimary: jest.fn(async () => ({
-        outcome: 'coherent_match' as const,
-        candidates: [selected, metadataEdition({
-          providerRecordId: 'alternate', isbn10: null, isbn13: null,
-          coverReference: representativeCover.coverReference,
-        })],
-        selected, representativeCover, evidence: ['exact_validated_isbn'],
-        retryable: false, secondaryEligible: false, providerRequestId: 'safe-request-id',
-      })),
-      persistRepresentativeCover: jest.fn(async () => {
-        fixture.calls.push('representative-cover');
-        throw new Error('https://token:secret@example.invalid/private-cover?signature=redact-me');
-      }),
-    });
+    const alternateFetcher = async () => new Response(JSON.stringify({
+      kind: 'books#volumes', totalItems: 2, items: [
+        { id: 'winner', volumeInfo: { title: 'The Fixture Book', authors: ['Fixture Author'],
+          language: 'en', industryIdentifiers: [{ type: 'ISBN_13', identifier: '9780306406157' }] } },
+        { id: 'alternate', volumeInfo: { title: 'The Fixture Book', authors: ['Fixture Author'],
+          language: 'en', imageLinks: { thumbnail: 'https://books.google.com/books/content?id=alternate' } } },
+      ],
+    }), { headers: { 'content-type': 'application/json' } });
     const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     try {
-      await expect(runMetadataProductionComposition(request, fixture.value))
-        .resolves.toEqual({ outcome: 'accepted_metadata_match' });
-      expect(fixture.value.persistRepresentativeCover).toHaveBeenCalledWith({
-        lookupId: 'lookup-1', attemptId: 'attempt-1', representativeCover,
+      const failing = automaticDependencies({
+        fetcher: alternateFetcher,
+        rpc: async (name: string) => name === 'phase9_store_metadata_representative_cover_v1'
+          ? Promise.reject(new Error('https://token:secret@example.invalid/private-cover?signature=redact-me'))
+          : undefined,
       });
-      expect(fixture.value.persistSelection).toHaveBeenCalledTimes(1);
+      expect((await failing.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+      expect(callsNamed(failing, 'phase9_store_metadata_representative_cover_v1')).toHaveLength(1);
+      expect(callsNamed(failing, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+      // The cover write precedes the selection and carries the fields the
+      // gateway sends (metadataRepresentativeCoverGateway.ts:16-27).
+      const failingOrder = failing.fixture.calls.map(call => call.name);
+      expect(failingOrder.indexOf('phase9_store_metadata_representative_cover_v1'))
+        .toBeLessThan(failingOrder.indexOf('phase9_select_structural_metadata_snapshot'));
+      const failingCover = failing.fixture.calls.find(call => call.name === 'phase9_store_metadata_representative_cover_v1');
+      expect(failingCover?.parameters).toEqual({
+        p_attempt_id: GOLDEN_ATTEMPT_ID,
+        p_lookup_id: GOLDEN_LOOKUP_ID,
+        p_job_id: JOB_ID,
+        p_worker: fixtureWorkerId,
+        p_lease_token: 'a'.repeat(64),
+        p_attempt_count: 1,
+        p_candidate_id: CANDIDATE_ID,
+        p_candidate_version: 1,
+        p_cover_reference: 'https://books.google.com/books/content?id=alternate',
+        p_source_provider_record_id: 'alternate',
+        p_source_relation: 'representative_edition',
+        p_selection_policy_version: 'p9-representative-cover-v1',
+        p_match_evidence: ['exact_title', 'exact_author_set', 'language_compatible'],
+      });
       expect(warning).toHaveBeenCalledWith(
         '[phase9] representative-cover persistence failed',
         {
-          lookupId: 'lookup-1', attemptId: 'attempt-1',
+          lookupId: GOLDEN_LOOKUP_ID,
+          attemptId: GOLDEN_ATTEMPT_ID,
           errorCode: 'P9_REPRESENTATIVE_COVER_PERSISTENCE_FAILED',
         },
       );
       expect(JSON.stringify(warning.mock.calls[0])).not.toContain('redact-me');
+      // Positive control differs only in cover-store health.
+      const healthy = automaticDependencies({
+        fetcher: alternateFetcher,
+        rpc: async (name: string) => name === 'phase9_store_metadata_representative_cover_v1'
+          ? { data: { status: 'stored' }, error: null } : undefined,
+      });
+      expect((await healthy.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+      expect(callsNamed(healthy, 'phase9_store_metadata_representative_cover_v1')).toHaveLength(1);
+      expect(callsNamed(healthy, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
     } finally {
       warning.mockRestore();
     }
   });
 
   it('resumes a durably finalized logical attempt without another physical call', async () => {
-    const fixture = gateway({
-      resumeFinalizedAttempt: jest.fn(async () => ({ outcome: 'accepted_metadata_match' })),
+    const subject = automaticDependencies({
+      context: {
+        currentLookupId: GOLDEN_LOOKUP_ID,
+        currentLookupAdapterKey: 'google_books',
+        currentLookupAdapterVersion: '1.0.0',
+        currentAttemptId: GOLDEN_ATTEMPT_ID,
+        currentAttemptAdapterKey: 'google_books',
+        currentAttemptDisposition: 'unresolved',
+        currentAttemptOutcome: 'coherent_match',
+        currentPhysicalStatus: 'finalized',
+        currentPhysicalClaimAttempt: 1,
+        currentPhysicalOutcome: 'coherent_match',
+        currentPhysicalLogicalOutcome: 'coherent_match',
+        currentPhysicalRetryable: false,
+        currentPhysicalCandidate: { providerRecordId: 'resumed' },
+        currentPhysicalEvidence: [],
+        currentPhysicalProviderRequestId: null,
+      },
     });
-    await expect(runMetadataProductionComposition(request, fixture.value))
-      .resolves.toEqual({ outcome: 'accepted_metadata_match' });
-    expect(fixture.value.resumeFinalizedAttempt).toHaveBeenCalledWith(
-      expect.objectContaining({ lookupId: 'lookup-1', attemptId: 'attempt-1' }),
-    );
-    expect(fixture.value.validateEgress).not.toHaveBeenCalled();
-    expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
-    expect(fixture.value.finalizeAttempt).not.toHaveBeenCalled();
+    expect((await subject.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(subject.gets()).toBe(0);
+    expect(callsNamed(subject, 'phase9_register_metadata_provider_call')).toHaveLength(0);
+    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+    // Positive control differs only in persisted evidence: a fresh job does a
+    // physical GET and registers a new grant.
+    const fresh = automaticDependencies();
+    expect((await fresh.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(fresh.gets()).toBe(1);
+    expect(callsNamed(fresh, 'phase9_register_metadata_provider_call')).toHaveLength(1);
   });
 
   it('does not strand a terminal accepted match when cache persistence fails', async () => {
-    const selected = metadataEdition();
-    const fixture = gateway({
-      invokePrimary: jest.fn(async () => ({
-        outcome: 'coherent_match' as const,
-        candidates: [selected], selected,
-        evidence: ['exact_validated_isbn'], retryable: false,
-        secondaryEligible: false,
-        providerRequestId: 'safe-request-id',
-      })),
-      persistCache: jest.fn(async () => {
-        fixture.calls.push('persist-cache');
-        throw new Error('cache unavailable');
-      }),
+    const failing = automaticDependencies({
+      rpc: async (name: string) => name === 'phase9_store_metadata_cache'
+        ? Promise.reject(new Error('cache unavailable')) : undefined,
     });
-    await expect(runMetadataProductionComposition(request, fixture.value))
-      .resolves.toEqual({ outcome: 'accepted_metadata_match' });
-    expect(fixture.value.persistSelection).toHaveBeenCalledTimes(1);
-    expect(fixture.value.persistCache).toHaveBeenCalledTimes(1);
+    expect((await failing.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(callsNamed(failing, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+    expect(callsNamed(failing, 'phase9_store_metadata_cache')).toHaveLength(1);
+    // The selection still carries the accepted edition even though the
+    // follow-on cache write fails (metadataProductionGateway.ts:296-309).
+    const failingSelect = failing.fixture.calls.find(call => call.name === 'phase9_select_structural_metadata_snapshot');
+    expect(failingSelect?.parameters.p_coherent_edition).toEqual({
+      ...GOOGLE_AUTOMATIC_V1.selected,
+      fetchedAt: expect.any(String),
+    });
+    expect(failingSelect?.parameters.p_match_evidence).toEqual(GOOGLE_AUTOMATIC_V1.evidence);
+    // Positive control differs only in cache-store health.
+    const healthy = automaticDependencies();
+    expect((await healthy.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(callsNamed(healthy, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
   });
 
   it('fails closed when storage permission is absent', async () => {
-    const selected = metadataEdition();
-    const fixture = gateway({
-      invokePrimary: jest.fn(async () => ({
-        outcome: 'coherent_match' as const,
-        candidates: [selected],
-        selected,
-        evidence: ['exact_validated_isbn'],
-        retryable: false,
-        secondaryEligible: false,
-        providerRequestId: null,
-      })),
+    const subject = automaticDependencies({
+      context: {
+        providerPolicies: [{
+          adapterKey: 'google_books', adapterVersion: '1.0.0', enabled: true,
+          matchingAllowed: true, storageAllowed: false, reuseAllowed: true, policyVersion: 1,
+        }],
+      },
     });
-    await expect(runMetadataProductionComposition({
-      ...request,
-      providerPolicy: { ...request.providerPolicy, storageAllowed: false },
-    }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
-    expect(fixture.value.persistCache).not.toHaveBeenCalled();
-    expect(fixture.value.persistSelection).not.toHaveBeenCalled();
-    expect(fixture.value.finalizeAttempt).toHaveBeenCalledWith(expect.objectContaining({
-      normalizedOutcome: 'coherent_match',
-      logicalOutcome: 'policy_denied',
-      disposition: 'rejected',
-      normalizedCandidate: null,
-      retryable: false,
-    }));
-    expect(fixture.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
-      outcome: 'policy_denied',
-    }));
+    expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    const names = subject.fixture.calls.map(call => call.name);
+    expect(names).not.toContain('phase9_select_structural_metadata_snapshot');
+    expect(names).not.toContain('phase9_store_metadata_cache');
+    // Production finalizes the storage-denied accepted outcome as rejected
+    // with the policy_denied logical outcome and no retained candidate, and
+    // fails the job the same way
+    // (metadataProductionComposition.ts:254-266, metadataAttemptFinalization.ts:27-30,63-67).
+    const physical = subject.fixture.calls.find(call => call.name === 'phase9_finalize_metadata_provider_call');
+    expect(physical?.parameters).toMatchObject({
+      p_normalized_outcome: 'coherent_match',
+      p_logical_outcome: 'policy_denied',
+      p_normalized_candidate: null,
+      p_retryable: false,
+    });
+    const attempt = subject.fixture.calls.find(call => call.name === 'phase9_finalize_structural_metadata_attempt');
+    expect(attempt?.parameters).toMatchObject({
+      p_disposition: 'rejected',
+      p_normalized_outcome: 'policy_denied',
+      p_normalized_candidate: null,
+    });
+    const fail = subject.fixture.calls.find(call => call.name === 'phase9_fail_metadata_job');
+    expect(fail?.parameters).toMatchObject({ p_failure_kind: 'policy_denied', p_retryable: false });
+    // Positive control differs only in storageAllowed (see the accepted
+    // snapshot test above, which persists a selection with storage allowed).
   });
 
   it.each([
     { outcome: 'coherent_match', selected: null, candidates: [] },
     { outcome: 'no_acceptable_match', selected: { providerRecordId: 'bad', attemptId: 'attempt-1' }, candidates: [] },
     { outcome: 'coherent_match', selected: {}, candidates: [{}] },
-  ])('fails malformed provider outcome combinations closed as schema_invalid', async (malformed) => {
-    const fixture = gateway({
-      invokePrimary: jest.fn(async () => ({
-        ...malformed,
-        evidence: [], retryable: false, secondaryEligible: true, providerRequestId: null,
-      } as any)),
+  ])('fails malformed provider outcome %p closed as schema_invalid (positive control: healthy provider is accepted)', async (malformed) => {
+    const stub = stubProduction({
+      ...malformed,
+      evidence: [], retryable: false, secondaryEligible: true, providerRequestId: null,
     });
-    await expect(runMetadataProductionComposition(request, fixture.value))
-      .resolves.toEqual({ outcome: 'manual_metadata_required' });
-    expect(fixture.value.finalizeAttempt).toHaveBeenCalledWith(expect.objectContaining({
-      normalizedOutcome: 'schema_invalid', disposition: 'rejected',
-      normalizedCandidate: null, retryable: false,
-    }));
-    expect(fixture.value.persistSelection).not.toHaveBeenCalled();
+    const subject = automaticDependencies({
+      production: stub.production,
+    });
+    expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(subject.gets()).toBe(0);
+    expect(stub.invoked()).toBe(1);
+    // The physical-call finalize keeps the normalized outcome; the structural
+    // attempt finalize carries the canonicalized form.
+    const physical = subject.fixture.calls.find(call => call.name === 'phase9_finalize_metadata_provider_call');
+    expect(physical?.parameters).toMatchObject({
+      p_normalized_outcome: 'schema_invalid',
+      p_normalized_candidate: null,
+      p_retryable: false,
+    });
+    const attempt = subject.fixture.calls.find(call => call.name === 'phase9_finalize_structural_metadata_attempt');
+    expect(attempt?.parameters).toMatchObject({ p_disposition: 'rejected' });
+    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    // Positive control differs only in provider health: the real adapter with
+    // the standard fixture returns an accepted coherent match (see the
+    // accepted snapshot test above).
   });
 
   it.each([null, {}, { outcome: 'unknown', candidates: [], selected: null,
     evidence: [], retryable: false, secondaryEligible: false, providerRequestId: null },
-  { outcome: 'coherent_match', candidates: [{ providerRecordId: 'v', attemptId: 'a' }],
-    selected: { providerRecordId: 'v', attemptId: 'a' }, evidence: [], retryable: true,
-    secondaryEligible: false, providerRequestId: null },
-  { outcome: 'timeout', candidates: [], selected: null, evidence: [], retryable: true,
-    secondaryEligible: false, providerRequestId: 'unsafe request id' }])(
-    'normalizes hostile provider value %p to non-retryable schema_invalid', async (value) => {
-      const fixture = gateway({ invokePrimary: jest.fn(async () => value as any) });
-      await runMetadataProductionComposition(request, fixture.value);
-      expect(fixture.value.finalizeAttempt).toHaveBeenCalledWith(expect.objectContaining({
-        normalizedOutcome: 'schema_invalid',retryable: false,normalizedCandidate: null,
-      }));
-    },
-  );
-
-  it('does not consume a positive cache hit when storage is denied and still permits fresh matching', async () => {
-    const selected = metadataEdition();
-    const fixture = gateway({
-      readCache: jest.fn(async () => (fixture.calls.push('cache'), {
-        outcome: 'hit' as const,
-        normalizedOutcome: 'coherent_match',
-      })),
-      invokePrimary: jest.fn(async () => (fixture.calls.push('provider'), {
-        outcome: 'coherent_match' as const,
-        candidates: [selected],
-        selected,
-        evidence: ['exact_validated_isbn'],
-        retryable: false,
-        secondaryEligible: false,
-        providerRequestId: 'safe-request-id',
-      })),
+  ])('normalizes hostile provider value %p to non-retryable schema_invalid', async (value) => {
+    const stub = stubProduction(value);
+    const subject = automaticDependencies({ production: stub.production });
+    expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(subject.gets()).toBe(0);
+    expect(stub.invoked()).toBe(1);
+    const physical = subject.fixture.calls.find(call => call.name === 'phase9_finalize_metadata_provider_call');
+    expect(physical?.parameters).toMatchObject({
+      p_normalized_outcome: 'schema_invalid',
+      p_normalized_candidate: null,
+      p_retryable: false,
     });
-    await expect(runMetadataProductionComposition({
-      ...request,
-      providerPolicy: { ...request.providerPolicy, storageAllowed: false },
-    }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
-    expect(fixture.value.completeCacheHit).not.toHaveBeenCalled();
-    expect(fixture.value.invokePrimary).toHaveBeenCalledTimes(1);
-    expect(fixture.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
-      outcome: 'policy_denied', retryable: false,
-    }));
-    expect(fixture.value.persistSelection).not.toHaveBeenCalled();
-    expect(fixture.value.persistCache).not.toHaveBeenCalled();
+    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    // Positive control differs only in provider health (see the accepted
+    // snapshot test above).
   });
 
-  it('degrades a positive follower completion when storage is denied', async () => {
-    const fixture = gateway({
-      decideCoalescing: jest.fn(async () => (
-        fixture.calls.push('coalescing'),
-        { mode: 'follower' as const, leaderLookupId: 'leader-1' }
-      )),
-      registerFollower: jest.fn(async () => {
-        fixture.calls.push('follower');
-        return {
-          status: 'manual_degradation' as const,
-          normalizedOutcome: 'coherent_match',
-        };
-      }),
+  it('normalizes a retryable coherent provider outcome to non-retryable schema_invalid', async () => {
+    const stub = stubProduction({
+      outcome: 'coherent_match', candidates: [{ providerRecordId: 'v', attemptId: 'a' }],
+      selected: { providerRecordId: 'v', attemptId: 'a' }, evidence: [], retryable: true,
+      secondaryEligible: false, providerRequestId: null,
     });
-    await expect(runMetadataProductionComposition({
-      ...request,
-      providerPolicy: { ...request.providerPolicy, storageAllowed: false },
-    }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
-    expect(fixture.value.registerFollower).toHaveBeenCalledWith(
-      expect.objectContaining({ providerPolicy: expect.objectContaining({ storageAllowed: false }) }),
-      'leader-1', expect.objectContaining({ allowFollowerReuse: true }),
-    );
-    expect(fixture.value.persistSelection).not.toHaveBeenCalled();
-    expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
+    const subject = automaticDependencies({
+      production: stub.production,
+    });
+    expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(subject.gets()).toBe(0);
+    expect(stub.invoked()).toBe(1);
+    const physical = subject.fixture.calls.find(call => call.name === 'phase9_finalize_metadata_provider_call');
+    expect(physical?.parameters).toMatchObject({
+      p_normalized_outcome: 'schema_invalid',
+      p_normalized_candidate: null,
+      p_retryable: false,
+    });
+    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    // Positive control differs only in provider health: the real adapter with
+    // the standard fixture returns an accepted coherent match (see the
+    // accepted snapshot test above).
+  });
+
+  it('normalizes an unsafe provider request id to non-retryable schema_invalid', async () => {
+    const shape = (providerRequestId: string | null) => {
+      const stub = stubProduction({
+        outcome: 'timeout', candidates: [], selected: null, evidence: [], retryable: true,
+        secondaryEligible: true, providerRequestId,
+      });
+      return stub;
+    };
+    const unsafe = shape('unsafe request id');
+    const subject = automaticDependencies({ production: unsafe.production });
+    expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(subject.gets()).toBe(0);
+    expect(unsafe.invoked()).toBe(1);
+    const physical = subject.fixture.calls.find(call => call.name === 'phase9_finalize_metadata_provider_call');
+    expect(physical?.parameters).toMatchObject({
+      p_normalized_outcome: 'schema_invalid',
+      p_normalized_candidate: null,
+      p_retryable: false,
+    });
+    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    // Positive control differs only in request-id safety.
+    const safeStub = shape(null);
+    const safe = automaticDependencies({ production: safeStub.production });
+    expect((await safe.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(safe.gets()).toBe(0);
+    expect(safeStub.invoked()).toBe(1);
+    const safePhysical = safe.fixture.calls.find(call => call.name === 'phase9_finalize_metadata_provider_call');
+    expect(safePhysical?.parameters).toMatchObject({
+      p_normalized_outcome: 'timeout',
+      p_normalized_candidate: null,
+      p_retryable: true,
+    });
+  });
+
+  it('does not consume a positive cache hit when storage is denied and still permits fresh matching', async () => {
+    const subject = automaticDependencies({
+      context: {
+        providerPolicies: [{
+          adapterKey: 'google_books', adapterVersion: '1.0.0', enabled: true,
+          matchingAllowed: true, storageAllowed: false, reuseAllowed: true, policyVersion: 1,
+        }],
+      },
+      rpc: async (name: string) => {
+        if (name === 'phase9_metadata_cache_reuse_context') {
+          return { data: { leaderLookupId: GOLDEN_LOOKUP_ID, normalizedOutcome: 'coherent_match' }, error: null };
+        }
+        return undefined;
+      },
+    });
+    expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(subject.gets()).toBe(1);
+    expect(callsNamed(subject, 'phase9_complete_metadata_cache_reuse')).toHaveLength(0);
+    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    expect(callsNamed(subject, 'phase9_store_metadata_cache')).toHaveLength(0);
+    // Same storage-denied finalization as the storage test above: the fresh
+    // coherent outcome is rejected with the policy_denied logical outcome and
+    // the job fails the same way.
+    const physical = subject.fixture.calls.find(call => call.name === 'phase9_finalize_metadata_provider_call');
+    expect(physical?.parameters).toMatchObject({
+      p_normalized_outcome: 'coherent_match',
+      p_logical_outcome: 'policy_denied',
+      p_normalized_candidate: null,
+      p_retryable: false,
+    });
+    const attempt = subject.fixture.calls.find(call => call.name === 'phase9_finalize_structural_metadata_attempt');
+    expect(attempt?.parameters).toMatchObject({
+      p_disposition: 'rejected',
+      p_normalized_outcome: 'policy_denied',
+      p_normalized_candidate: null,
+    });
+    const fail = subject.fixture.calls.find(call => call.name === 'phase9_fail_metadata_job');
+    expect(fail?.parameters).toMatchObject({ p_failure_kind: 'policy_denied', p_retryable: false });
+    // Positive control differs only in storageAllowed: the same hit with
+    // storage allowed completes from cache with zero fresh calls (see the
+    // compatible cache hit test above).
   });
 
   it.each(['ambiguous_match', 'timeout'])(
-    'degrades completed non-positive cache outcome %s when storage is denied',
+    'degrades completed non-positive cache outcome %s to manual without fresh calls (positive control: storage allowed is also manual)',
     async (normalizedOutcome) => {
-    const fixture = gateway({
-      readCache: jest.fn(async () => ({
-        outcome: 'hit' as const,
-        normalizedOutcome,
-      })),
-      completeCacheHit: jest.fn(async () => {
-        fixture.calls.push('complete-cache');
-        return {
-          status: 'completed' as const,
-          normalizedOutcome,
-        };
-      }),
-    });
-    await expect(runMetadataProductionComposition({
-      ...request,
-      providerPolicy: { ...request.providerPolicy, storageAllowed: false },
-    }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
-    expect(fixture.value.completeCacheHit).toHaveBeenCalled();
-    expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
+      const runWith = (storageAllowed: boolean) => automaticDependencies({
+        context: {
+          providerPolicies: [{
+            adapterKey: 'google_books', adapterVersion: '1.0.0', enabled: true,
+            matchingAllowed: true, storageAllowed, reuseAllowed: true, policyVersion: 1,
+          }],
+        },
+        rpc: async (name: string) => {
+          if (name === 'phase9_metadata_cache_reuse_context') {
+            return { data: { leaderLookupId: GOLDEN_LOOKUP_ID, normalizedOutcome }, error: null };
+          }
+          if (name === 'phase9_complete_metadata_cache_reuse') {
+            return { data: { normalized_outcome: normalizedOutcome }, error: null };
+          }
+          return undefined;
+        },
+      });
+      const denied = runWith(false);
+      expect((await denied.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+      expect(denied.gets()).toBe(0);
+      expect(callsNamed(denied, 'phase9_complete_metadata_cache_reuse')).toHaveLength(1);
+      expect(callsNamed(denied, 'phase9_register_metadata_provider_call')).toHaveLength(0);
+      // Positive control differs only in storageAllowed.
+      const allowed = runWith(true);
+      expect((await allowed.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+      expect(allowed.gets()).toBe(0);
     },
   );
 
   it('allows a fresh call without reuse or storage but retains no positive output', async () => {
-    const selected = metadataEdition();
-    const fixture = gateway({
-      invokePrimary: jest.fn(async () => (fixture.calls.push('provider'), {
-        outcome: 'coherent_match' as const,
-        candidates: [selected],
-        selected,
-        evidence: ['exact_validated_isbn'],
-        retryable: false,
-        secondaryEligible: false,
-        providerRequestId: null,
-      })),
-    });
-    await expect(runMetadataProductionComposition({
-      ...request,
-      providerPolicy: {
-        ...request.providerPolicy,
-        reuseAllowed: false,
-        storageAllowed: false,
+    const subject = automaticDependencies({
+      context: {
+        providerPolicies: [{
+          adapterKey: 'google_books', adapterVersion: '1.0.0', enabled: true,
+          matchingAllowed: true, storageAllowed: false, reuseAllowed: false, policyVersion: 1,
+        }],
       },
-    }, fixture.value)).resolves.toEqual({ outcome: 'manual_metadata_required' });
-    expect(fixture.value.invokePrimary).toHaveBeenCalledTimes(1);
-    expect(fixture.value.completeManual).toHaveBeenCalledWith(expect.objectContaining({
-      outcome: 'policy_denied', retryable: false,
-    }));
-    expect(fixture.value.persistCache).not.toHaveBeenCalled();
-    expect(fixture.value.persistSelection).not.toHaveBeenCalled();
-  });
-
-  it('maps rejected reuse completion to a stale claim without provider egress', async () => {
-    const fixture = gateway({
-      completeCacheHit: jest.fn(async () => {
-        fixture.calls.push('complete-cache');
-        return {
-          status: 'stale_rejected' as const,
-          normalizedOutcome: 'coherent_match',
-        };
-      }),
-      readCache: jest.fn(async () => ({
-        outcome: 'hit' as const,
-        normalizedOutcome: 'coherent_match',
-      })),
     });
-    await expect(runMetadataProductionComposition(request, fixture.value))
-      .resolves.toEqual({ outcome: 'stale_claim' });
-    expect(fixture.value.invokePrimary).not.toHaveBeenCalled();
+    expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(subject.gets()).toBe(1);
+    const fail = subject.fixture.calls.find(call => call.name === 'phase9_fail_metadata_job');
+    expect(fail?.parameters).toMatchObject({ p_failure_kind: 'policy_denied', p_retryable: false });
+    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    expect(callsNamed(subject, 'phase9_store_metadata_cache')).toHaveLength(0);
+    // Positive control differs only in reuse/storage: the default fresh run
+    // with both allowed persists the accepted selection (see the accepted
+    // snapshot test above).
   });
-});
-}
 
-// The new automatic entry is the runnable worker + M92 RPC. Legacy unit
-// composition above retains its own port; no optional transaction fallback is
-// required to satisfy both contracts (02c ??4.3/5.1, runbook ?2).
+  it.todo('completes a positive follower with a coherent retained outcome as accepted (worker completeReuse always returns coalesced_follower; the mocked coherent registerFollower shape is not producible via phase9_register_structural_metadata_lookup)');
+  it.todo('degrades a storage-denied follower via manual_degradation (worker completeReuse only returns completed/policy_denied; manual_degradation is not producible via RPCs)');
+  it.todo('maps a rejected reuse completion to stale_claim via a stale_rejected completeCacheHit (gateway completeCacheHit only returns completed/policy_denied; stale arises via fence revalidation or stale disposition instead)');
+});
+
+// The 8b automatic entry is the runnable worker + M92 RPC (02c §§4.3/5.1).
 describe('Phase 9 8b automatic completion transaction through the worker', () => {
   beforeEach(() => { jest.useFakeTimers(); jest.setSystemTime(Date.parse(GOLDEN_CLOCK)); });
   afterEach(() => jest.useRealTimers());

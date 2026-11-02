@@ -34,7 +34,17 @@ export const m93ReleaseReceipt = () => ({ status: 'released' });
 export const m93DeferReceipt = (blockedEpoch: number | null | undefined) => ({
   status: 'deferred', blockedEpoch: blockedEpoch ?? 0,
 });
-export const m93ScheduleRecheckReceipt = () => ({ status: 'finalized', round: 0 });
+export const m93ScheduleRecheckReceipt = (input: {
+  status?: 'finalized' | 'retry_scheduled'; round?: number; dueAt?: string;
+} = {}) => {
+  const status = input.status ?? 'finalized';
+  const round = input.round ?? 0;
+  if (status === 'retry_scheduled') {
+    if (input.dueAt === undefined) throw new Error('P9_SCHEDULE_RECHECK_DUEAT_REQUIRED');
+    return { status, round, dueAt: input.dueAt };
+  }
+  return input.dueAt === undefined ? { status, round } : { status, round, dueAt: input.dueAt };
+};
 
 export const workerEnvironment = {
   SUPABASE_URL: 'https://ahntbtktjjmvfosgkmgn.supabase.co',

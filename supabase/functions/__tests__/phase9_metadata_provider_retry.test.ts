@@ -51,12 +51,11 @@ describe('Phase 9 durable retry and recovery', () => {
     expect(subject.command()).toBeNull();
   });
 
-  it('schedules once per claim, replays without another attempt and stops at durable exhaustion', async () => {
-    let phase: 'first' | 'same-claim' | 'early-reclaim' | 'retry' | 'exhausted' = 'first';
+  it('schedules once per claim and retries only on a new claim after the durable due time', async () => {
+    const dueAt = new Date(stamp + policy.backoffBaseMs).toISOString();
+    let phase: 'first' | 'retry' | 'exhausted' = 'first';
     const beginReceipts = {
       first: { status: 'started', round: 0 },
-      'same-claim': { status: 'replayed', round: 0, runStatus: 'finalized' },
-      'early-reclaim': { status: 'recovery_only' },
       retry: { status: 'started', round: 1 },
       exhausted: { status: 'recovery_only' },
     };
@@ -64,11 +63,13 @@ describe('Phase 9 durable retry and recovery', () => {
       rpc: async (name: string) => {
         if (name === 'phase9_begin_automatic_provider_run_v1') return { data: beginReceipts[phase], error: null };
         if (name === 'phase9_finish_automatic_provider_run_v1') {
-          if (phase === 'first' || phase === 'same-claim') {
-            return { data: { status: 'retry_scheduled', round: 0,
-              dueAt: new Date(stamp + policy.backoffBaseMs).toISOString() }, error: null };
+          if (phase === 'first') {
+            return { data: { status: 'retry_scheduled', round: 0, dueAt }, error: null };
           }
-          return { data: { status: 'finalized', round: 1 }, error: null };
+          if (phase === 'retry') {
+            return { data: { status: 'finalized', round: 1 }, error: null };
+          }
+          return { data: { status: 'recovery_only' }, error: null };
         }
         if (name === 'phase9_complete_automatic_metadata_v1') return { data: {
           version: 'p9-auto-completion-v1', status: 'completed', lookupId: GOLDEN_LOOKUP_ID,
@@ -80,12 +81,12 @@ describe('Phase 9 durable retry and recovery', () => {
     await subject.run(); expect(subject.gets()).toBe(1);
     expect(finishes(subject)).toHaveLength(1);
     expect(grants(subject)).toHaveLength(1);
-    phase = 'same-claim'; await subject.run(); expect(subject.gets()).toBe(1);
-    // Same claim replays the durable receipt; it must not schedule again.
-    expect(finishes(subject)).toHaveLength(1);
-    expect(grants(subject)).toHaveLength(1);
-    phase = 'early-reclaim';
-    Object.assign(subject.fixture.current(), { attempt: 2, claimToken: 'b'.repeat(64),
+    // M93 clears the lease on retry_scheduled; the next attempt must be a NEW
+    // claim-v2 (new lease token) issued no earlier than the scheduled dueAt,
+    // never a same-claim begin. The next_attempt_at gate lives in M93 claim-v2
+    // SQL, so no mocked early-reclaim negative is asserted here.
+    const retryToken = 'b'.repeat(64);
+    Object.assign(subject.fixture.current(), { attempt: 2, claimToken: retryToken,
       currentLookupId: GOLDEN_LOOKUP_ID, currentLookupAdapterKey: 'google_books', currentLookupAdapterVersion: '1.0.0',
       currentAttemptId: GOLDEN_ATTEMPT_ID, currentAttemptAdapterKey: 'google_books',
       currentAttemptDisposition: 'unresolved', currentAttemptOutcome: null,
@@ -94,15 +95,15 @@ describe('Phase 9 durable retry and recovery', () => {
       currentPhysicalRetryable: true, currentPhysicalCandidate: null, currentPhysicalEvidence: [],
       currentPhysicalProviderRequestId: null,
     });
-    await subject.run(); expect(subject.gets()).toBe(1);
-    expect(finishes(subject)).toHaveLength(1);
-    expect(grants(subject)).toHaveLength(1);
+    jest.setSystemTime(Date.parse(dueAt));
+    expect(Date.now()).toBeGreaterThanOrEqual(Date.parse(dueAt));
     phase = 'retry';
-    // The retry claim is only eligible after the ledger's safe due time.
-    jest.setSystemTime(stamp + policy.backoffMaxMs + 60000);
     await subject.run(); expect(subject.gets()).toBe(2);
     expect(finishes(subject)).toHaveLength(2);
     expect(grants(subject)).toHaveLength(2);
+    // The retry run uses the mocked claim-v2 receipt with the new lease token.
+    const retryFinishes = finishes(subject);
+    expect(retryFinishes[1].parameters.f).toMatchObject({ claimAttempt: 2, leaseToken: retryToken });
     phase = 'exhausted';
     Object.assign(subject.fixture.current(), { attempt: 5, claimToken: 'e'.repeat(64), currentPhysicalClaimAttempt: 2 });
     const exhausted = await subject.run();

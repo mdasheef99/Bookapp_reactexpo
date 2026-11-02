@@ -177,46 +177,6 @@ export function descriptorOptionsGateway(fixture: AnyModule, descriptor: AnyModu
   });
 }
 
-// The old pure composition remains a compatibility entry; the new automatic
-// transaction is tested via the runnable worker + service RPC, never this port.
-export function runLegacyMetadataComposition(...args: unknown[]) {
-  const composition = require('../../_shared/imageInventory/runtime/metadataProductionComposition');
-  if (typeof composition.runMetadataProductionComposition !== 'function') {
-    throw new Error('P9_LEGACY_COMPOSITION_UNAVAILABLE');
-  }
-  return composition.runMetadataProductionComposition(...args);
-}
-
-// A compliant 8b refactor may move the legacy composition behind a different
-// internal entry. These old controls are optional compatibility evidence, not a
-// mandate that the pre-8b function/gateway shape survive unchanged.
-const LEGACY_COMPOSITION_ENTRY = '../../_shared/imageInventory/runtime/metadataProductionComposition';
-export type LegacyMetadataCompositionStatus =
-  | Readonly<{ available: true }>
-  | Readonly<{ available: false; reason: string }>;
-
-// Skip only the exact compatibility entry being absent or lacking its export.
-// A missing nested dependency, syntax error or runtime error must surface.
-export function legacyMetadataCompositionStatus(): LegacyMetadataCompositionStatus {
-  let resolved: string;
-  try {
-    resolved = require.resolve(LEGACY_COMPOSITION_ENTRY);
-  } catch (error) {
-    const failure = error as { code?: string; message?: string };
-    if (failure.code === 'MODULE_NOT_FOUND'
-      && (failure.message ?? '').includes(LEGACY_COMPOSITION_ENTRY)) {
-      return { available: false, reason: `legacy entry ${LEGACY_COMPOSITION_ENTRY} is absent` };
-    }
-    throw error;
-  }
-  const composition = require(resolved) as AnyModule;
-  if (typeof composition.runMetadataProductionComposition !== 'function') {
-    return { available: false,
-      reason: `legacy entry ${LEGACY_COMPOSITION_ENTRY} lacks runMetadataProductionComposition` };
-  }
-  return { available: true };
-}
-
 export function bootstrapOpenLibraryOnly(environment: Record<string, string | undefined>, fetcher: typeof fetch) {
   const { loadMetadataWorkerEnvironment } = require('../../../../workers/phase9-runtime/environment');
   const { createMetadataProductionDependencies } = require('../../../../workers/phase9-metadata-worker/bootstrap');
