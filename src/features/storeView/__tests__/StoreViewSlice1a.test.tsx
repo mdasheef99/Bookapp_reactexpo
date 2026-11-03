@@ -175,6 +175,7 @@ describe('Slice 1a attention rows', () => {
         const screen = showReason('damage_evidence_required');
         expect(screen.getByText('Add damage details')).toBeTruthy();
         expect(screen.queryByText('Add damage photo')).toBeNull();
+        expect(read.mock.calls.length).toBeGreaterThan(0);
         expect(read.mock.calls.every((call: any[]) => call[2] === false)).toBe(true);
         read.mockRestore();
     });
