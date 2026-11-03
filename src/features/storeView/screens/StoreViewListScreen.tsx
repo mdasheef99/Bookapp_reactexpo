@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import type { ImageInventoryIdentity } from '@/features/imageInventory/queries/ownerUxQueries';
@@ -8,11 +9,12 @@ import { useTheme } from '@/hooks/useTheme';
 import { StoreViewCard } from '../components/StoreViewCard';
 import { FILTER_LABELS } from '../components/storeViewPresentation';
 import { STORE_VIEW_FILTERS, type StoreViewFilter } from '../contracts/storeViewContracts';
-import { useStoreViewPage } from '../queries/storeViewQueries';
+import { storeViewKeys, useStoreViewPage } from '../queries/storeViewQueries';
 import { StoreViewAccessBoundary } from './StoreViewAccessBoundary';
 import { createStoreViewFilterSession, createStoreViewSummarySession } from '../state/storeViewFilterPreference';
 import { StoreViewSummaryPanel } from '../components/StoreViewSummaryPanel';
-import { useStoreViewSummary } from '../queries/storeViewSummaryQueries';
+import { storeViewSummaryKeys, useStoreViewSummary } from '../queries/storeViewSummaryQueries';
+import { isEditAccessLost } from '../state/storeViewEditRebase';
 
 function StateCard({ title, body, onRetry }: { title: string; body: string; onRetry?: () => void }) {
     const { colors } = useTheme();
@@ -51,6 +53,7 @@ function StoreViewIdentityList({ identity }: { identity: ImageInventoryIdentity 
     const [summaryOpen, setSummaryOpen] = useState(false);
     const [summaryPreference] = useState(() => createStoreViewSummarySession(identity));
     const summaryToggled = useRef(false);
+    const [accessLost, setAccessLost] = useState(false);
     useEffect(() => {
         let active = true;
         void preference.read().then((stored) => { if (active && !tapped.current) setFilter(stored); });
@@ -82,6 +85,58 @@ function StoreViewIdentityList({ identity }: { identity: ImageInventoryIdentity 
     }, [refetchSummary, refetchPage]));
     const initialLoading = query.isPending && query.items.length === 0;
     const initialError = query.isError && query.items.length === 0;
+    // The screen can render without a QueryClient in unit tests; the
+    // access-lost removal below simply skips when none is available.
+    let queryClient: ReturnType<typeof useQueryClient> | null = null;
+    try {
+        queryClient = useQueryClient();
+    } catch {
+        queryClient = null;
+    }
+    const handleStoreViewAccessLost = () => {
+        // Cached owner-only rows must not linger after the owner loses
+        // store access. Same removal path as the detail screen, scoped to
+        // the list caches (every server filter page plus the summary).
+        for (const value of STORE_VIEW_FILTERS) {
+            queryClient?.removeQueries({ queryKey: storeViewKeys.page(identity, value) });
+        }
+        queryClient?.removeQueries({ queryKey: storeViewSummaryKeys.summary(identity) });
+        setAccessLost(true);
+    };
+    // Access loss on either the page or the summary read — initial or
+    // background — routes to the access-lost path. Temporary errors keep
+    // the current behaviour (the last good data stays on screen).
+    // This effect (and the handler above) must stay before the early
+    // return: when access is lost the next render takes the unavailable
+    // branch, and hooks after an early return would break hook order.
+    const pageError = query.error as { code?: unknown; httpStatus?: unknown } | null | undefined;
+    const summaryError = summary.error as { code?: unknown; httpStatus?: unknown } | null | undefined;
+    useEffect(() => {
+        for (const queryError of [pageError, summaryError]) {
+            if (!queryError) continue;
+            const code = typeof queryError.code === 'string' ? queryError.code : null;
+            const rawStatus = queryError.httpStatus;
+            if (isEditAccessLost({
+                code,
+                httpStatus: typeof rawStatus === 'number' ? rawStatus : null,
+            })) {
+                handleStoreViewAccessLost();
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageError, summaryError]);
+    if (accessLost) {
+        return (
+            <ScreenBackground>
+                <View style={{ padding: 20 }}>
+                    <StateCard
+                        title="Store View unavailable"
+                        body="Active Store Owner access is required. No private inventory details were shown."
+                    />
+                </View>
+            </ScreenBackground>
+        );
+    }
 
     return (
         <ScreenBackground>

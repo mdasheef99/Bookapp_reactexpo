@@ -1,5 +1,7 @@
 import {
+    buildEditedChanges,
     buildStoreViewChanges,
+    computeEditedSet,
     createStoreViewEditDraft,
     validateStoreViewEditDraft,
 } from '../forms/storeViewEditForm';
@@ -52,5 +54,41 @@ describe('Unit 7C WU3 Store View edit form', () => {
         draft.damageTypes = ['cover'];
         draft.damageNote = 'Scuffed cover';
         expect(validateStoreViewEditDraft(draft)).toBeNull();
+    });
+
+    it('lets an untouched null language save with only a title edit', () => {
+        const nullLanguage = {
+            ...detail,
+            presentation: { ...detail.presentation, language: null },
+        } as any;
+        const draft = createStoreViewEditDraft(nullLanguage);
+        expect(draft.language).toBe('');
+        draft.title = 'Updated title';
+        const edited = computeEditedSet(nullLanguage, draft);
+        expect([...edited]).toEqual(['title']);
+        expect(validateStoreViewEditDraft(draft, edited)).toBeNull();
+        expect(buildEditedChanges(nullLanguage, draft, edited)).toEqual({ title: 'Updated title' });
+    });
+
+    it('still rejects a typed invalid language', () => {
+        const draft = createStoreViewEditDraft(detail);
+        draft.language = 'xx!';
+        const edited = computeEditedSet(detail, draft);
+        expect(edited.has('language')).toBe(true);
+        expect(validateStoreViewEditDraft(draft, edited)).toMatch(/valid language code/i);
+    });
+
+    it('rejects clearing a language that was set', () => {
+        const draft = createStoreViewEditDraft(detail);
+        draft.language = '';
+        const edited = computeEditedSet(detail, draft);
+        expect(edited.has('language')).toBe(true);
+        expect(validateStoreViewEditDraft(draft, edited)).toMatch(/valid language code/i);
+    });
+
+    it('keeps rejecting an empty language when no edited set is passed', () => {
+        const draft = createStoreViewEditDraft(detail);
+        draft.language = '';
+        expect(validateStoreViewEditDraft(draft)).toMatch(/valid language code/i);
     });
 });
