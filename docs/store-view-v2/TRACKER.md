@@ -67,6 +67,18 @@ review in this lane.
 
 ## Log
 
+### 2026-11-04 — Receipt-path (M57–59) coverage for remove-after-replace
+
+- The remove-after-replace PGlite suite now also runs with migrations 57–59
+  loaded: `PHASE9_REMOVEFIX_RECEIPTS=1 node --test supabase/tests/phase9/phase9StoreViewRemoveAfterReplace.integration.test.mjs`.
+  Shared helper `completePublicCopyDerivative` (unit7bFixture.mjs) now calls
+  `phase9_prepare_media_validation_outputs` when it exists (required from M57).
+- Verified by Haiku: suite 11/11 in both modes; MediaCorrection, Slice0b,
+  Summary and MediaDuplicateCompletion suites 76/76. Only those four suites were
+  rerun after the helper change; the other suites that import unit7bFixture do
+  not load M57, so the new branch is not taken there.
+- DB changes: none. Nothing applied live.
+
 ### 2026-11-04 — Whole-branch review and three small fixes
 
 - Read-only reviews of `main...feature/store-view-v2` (65 files) by Muse 1.3 in
@@ -101,9 +113,7 @@ review in this lane.
   the server error above, which led to the revert. After the revert: tsc 0,
   Jest `src/features/storeView` 28 suites / 346 tests. The list access-lost fix
   (2) is unit-tested only, not browser-checked.
-- Still open from the review (not fixed): PGlite fixtures stop at migration 51 so
-  the output-intent/receipt path (M57–59) is untested for remove-after-replace;
-  E2E gaps (list refresh after edit, two photo changes, conflict flow, remembered
+- Still open from the review (not fixed): E2E gaps (list refresh after edit, two photo changes, conflict flow, remembered
   filter; summary smoke test is an unexecuted checklist); stock modal checks
   against possibly stale stock; accessibility labels on photo/edit buttons and
   switches; damage-details button decision for SDD §4.2.

@@ -1,7 +1,7 @@
 // Remove-after-replace integration + migration-text coverage.
-// Known limitation (review finding): the sanitization-completes-after-removal
-// case drives the older direct-snapshot validation path from migration 40,
-// not the later output-intent/completion-receipt path.
+// Run again with PHASE9_REMOVEFIX_RECEIPTS=1 to cover the output-intent /
+// completion-receipt path (migrations 57-59); the default run uses the older
+// migration 40 validation path.
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
@@ -15,14 +15,24 @@ import {
   storeViewMedia, unit7cMediaState,
 } from './unit7cFixture.mjs';
 import { createStoreViewSlice0bDatabase, SLICE0B } from './storeViewSlice0bFixture.mjs';
+import { mediaCorrectionMigrations } from './mediaCorrectionFixture.mjs';
 
 const REMOVEFIX = '20261103100000_store_view_remove_after_replace.sql';
 const preMigration = process.env.PHASE9_REMOVEFIX_PRE_MIGRATION === '1';
+// PHASE9_REMOVEFIX_RECEIPTS=1 loads migrations 57-59 (media output intents,
+// completion receipts, cleanup) first, so the same cases run on the database
+// shape the live project has. The default stays the older path.
+const withReceipts = process.env.PHASE9_REMOVEFIX_RECEIPTS === '1';
 const migrationSql = () => fs.readFileSync(migrationPath(REMOVEFIX), 'utf8');
 
 async function withDb(run, { includeFix = true } = {}) {
   const db = await createStoreViewSlice0bDatabase({ includeFix: false });
   try {
+    if (withReceipts) {
+      for (const name of mediaCorrectionMigrations) {
+        await db.exec(fs.readFileSync(migrationPath(name), 'utf8'));
+      }
+    }
     // Always include Slice 0b, even if its own pre-migration switch is set.
     await db.exec(fs.readFileSync(migrationPath(SLICE0B), 'utf8'));
     if (includeFix && !preMigration) await db.exec(migrationSql());
