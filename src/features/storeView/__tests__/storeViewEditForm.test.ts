@@ -56,7 +56,10 @@ describe('Unit 7C WU3 Store View edit form', () => {
         expect(validateStoreViewEditDraft(draft)).toBeNull();
     });
 
-    it('lets an untouched null language save with only a title edit', () => {
+    // The save RPC rejects a proposed row with no language (P9_REQUEST_INVALID,
+    // seen live 2026-11-04), so a title-only edit of a book with no language
+    // must ask for a language instead of sending a request that fails.
+    it('asks for a language before a book with no language can be saved', () => {
         const nullLanguage = {
             ...detail,
             presentation: { ...detail.presentation, language: null },
@@ -65,9 +68,12 @@ describe('Unit 7C WU3 Store View edit form', () => {
         expect(draft.language).toBe('');
         draft.title = 'Updated title';
         const edited = computeEditedSet(nullLanguage, draft);
-        expect([...edited]).toEqual(['title']);
-        expect(validateStoreViewEditDraft(draft, edited)).toBeNull();
-        expect(buildEditedChanges(nullLanguage, draft, edited)).toEqual({ title: 'Updated title' });
+        expect(validateStoreViewEditDraft(draft, edited)).toMatch(/valid language code/i);
+        draft.language = 'en';
+        const withLanguage = computeEditedSet(nullLanguage, draft);
+        expect(validateStoreViewEditDraft(draft, withLanguage)).toBeNull();
+        expect(buildEditedChanges(nullLanguage, draft, withLanguage))
+            .toEqual({ title: 'Updated title', language: 'en' });
     });
 
     it('still rejects a typed invalid language', () => {

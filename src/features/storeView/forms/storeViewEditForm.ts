@@ -66,8 +66,10 @@ export function validateStoreViewEditDraft(
     if (parsedAuthors.length > 20 || parsedAuthors.some((author) => author.length > 256)) {
         return 'Enter at most 20 authors, separated by commas.';
     }
-    if ((!editedSet || editedSet.has('language'))
-        && !languagePattern.test(draft.language.trim().replaceAll('_', '-'))) {
+    // Checked even when language was not edited: the save RPC validates the
+    // whole proposed row, so a book with no language cannot be saved at all
+    // until one is entered (migration 20260816000046, `language IS NULL`).
+    if (!languagePattern.test(draft.language.trim().replaceAll('_', '-'))) {
         return 'Enter a valid language code, such as en or hi-Latn.';
     }
     if ((!editedSet || editedSet.has('sellingPriceMinor'))
@@ -153,14 +155,7 @@ export function normalizeEditField(field: StoreViewEditField, draft: StoreViewEd
     switch (field) {
         case 'title': return btrimLike(draft.title);
         case 'authors': return normalizedAuthors(draft.authors);
-        case 'language': {
-            // An untouched null language prefills as '' and must compare
-            // equal, the same empty-as-null idiom as the nullable text
-            // fields below. A cleared language still differs from a stored
-            // value, so it stays edited and the validation gate rejects it.
-            const normalized = btrimLike(draft.language).replaceAll('_', '-');
-            return normalized === '' ? null : normalized;
-        }
+        case 'language': return btrimLike(draft.language).replaceAll('_', '-');
         case 'publicDescription': return nullableNormalized(draft.publicDescription);
         case 'sellingPriceMinor': {
             // Exact prefilled paise comparison, without floating-point multiplication.
