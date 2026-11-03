@@ -427,6 +427,9 @@ try {
               Sort-Object Name | ForEach-Object { $_.FullName })
             & node --experimental-vm-modules --test --test-concurrency=1 @providerTests
             if ($LASTEXITCODE -ne 0) { throw 'Slice 8 provider-replacement M88 baseline tests failed (inspect behavioral RED versus setup)' }
+            # 8b U5 (M94): automatic preparation election/lease-expiry on real connections.
+            & node (Join-Path $PSScriptRoot 'phase9AutomaticPreparationConcurrency.postgres.mjs') $Port $cacheDbName
+            if ($LASTEXITCODE -ne 0) { throw 'Slice 8b M94 automatic preparation native concurrency failed' }
           } finally {
             $env:PHASE9_PROVIDER_NATIVE_PORT = $savedProviderPort
             $env:PHASE9_PROVIDER_NATIVE_DATABASE = $savedProviderDatabase
