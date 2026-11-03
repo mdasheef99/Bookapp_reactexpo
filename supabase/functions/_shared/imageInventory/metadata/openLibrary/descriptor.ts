@@ -10,6 +10,7 @@ import type {
 } from '../providerDescriptor';
 import { PROVIDER_RESULT_VERSION } from '../providerDescriptor';
 import type { OpenLibraryEditionOptionsAdapter } from './adapter';
+import { invokeOpenLibraryV2 } from './automatic';
 import { OPEN_LIBRARY_ADAPTER_VERSION } from './normalizer';
 
 export const OPEN_LIBRARY_RETENTION_CONTRACT = 'open-library-options-v1';
@@ -119,6 +120,52 @@ export function createOpenLibraryV1Descriptor(
         catalogueCompanions: retention === null ? null : (result.catalogueCompanions ?? []),
         retention,
       };
+    },
+  };
+}
+
+export type OpenLibraryV2DescriptorOptions = Readonly<{
+  // Port-only descriptor (02c §5.1, OQ-B): no adapter instance. The ONLY
+  // egress of invoke() is input.http.get. policyVersion is the verified
+  // per-job registry policy bound by the caller (worker route time in
+  // production, explicit test setup in tests); null leaves the descriptor
+  // unbound (retentionReady false), mirroring the v1 boot entry. NEVER
+  // default a production policyVersion here.
+  policyVersion?: number | null;
+}>;
+
+export function createOpenLibraryV2Descriptor(
+  options: OpenLibraryV2DescriptorOptions = {},
+): ProviderDescriptor {
+  const policyVersion = options.policyVersion !== undefined
+    && options.policyVersion !== null
+    && Number.isSafeInteger(options.policyVersion)
+    && options.policyVersion > 0 ? options.policyVersion : null;
+  const purposes: readonly Purpose[] = ['automatic', 'edition_options'];
+
+  return {
+    adapterKey: 'open_library',
+    adapterVersion: '2.0.0',
+    capabilityVersion: 'open-library-capability-v2',
+    normalizerVersion: 'p9-bibliographic-normalizer-v1',
+    payloadSchemaVersion: 'p9-metadata-v1',
+    lookupSchemaVersion: 'p9-metadata-foundation-v1',
+    validationContract: 'open-library-v2',
+    hostPolicyVersion: 'open-library-hosts-v1',
+    retentionContract: OPEN_LIBRARY_RETENTION_CONTRACT,
+    protocol: { kind: 'fanout', maxGets: 6 },
+    purposes,
+    // Open Library needs no credential: v2 is always credential-ready.
+    credentialsReady: () => true,
+    retentionReady: (purpose) => purposes.includes(purpose) && policyVersion !== null,
+    async invoke(input: LookupInput): Promise<MetadataResultV2> {
+      if (input.purpose !== 'automatic' && input.purpose !== 'edition_options') {
+        throw new Error('P9_PROVIDER_PURPOSE_UNSUPPORTED');
+      }
+      return invokeOpenLibraryV2({
+        ...input, version: PROVIDER_RESULT_VERSION,
+        policyVersion, retentionContract: OPEN_LIBRARY_RETENTION_CONTRACT,
+      });
     },
   };
 }

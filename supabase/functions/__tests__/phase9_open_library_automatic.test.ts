@@ -78,9 +78,18 @@ function subject(specs: readonly EditionSpec[], responseHeaders: (stage: string)
 async function invoke(specs: readonly EditionSpec[], publisherClue: string | null = null,
   purpose: 'automatic' | 'edition_options' = 'automatic',
   responseHeaders = (_stage: string): Record<string, string> => ({ 'cache-control': 'max-age=86400' })) {
-  const descriptor = installedDescriptor('open_library', '2.0.0');
-  expect(descriptor).toBeDefined();
-  expect(descriptor?.invoke).toEqual(expect.any(Function));
+  // The static manifest installs the (unbound) v2 descriptor; this suite
+  // binds it explicitly: policyVersion 1 stands in for the registry row's
+  // per-job policy (DB default 1; the worker binds it in production, U6).
+  // Lazy require: openLibrary/descriptor and providerDescriptor form a
+  // load cycle that resolves only when entered via providerDescriptor
+  // (as installedDescriptor above does); a top-level descriptor import
+  // would evaluate the v1 factory against an unbound normalizer binding.
+  expect(installedDescriptor('open_library', '2.0.0')).toBeDefined();
+  const { createOpenLibraryV2Descriptor } =
+    require('../_shared/imageInventory/metadata/openLibrary/descriptor');
+  const descriptor = createOpenLibraryV2Descriptor({ policyVersion: 1 });
+  expect(descriptor.invoke).toEqual(expect.any(Function));
   const { entries, http, calls } = subject(specs, responseHeaders);
   const result = await withUuidSequence(Array.from({ length: 10 }, (_, i) =>
     `44444444-4444-4444-8333-${String(i + 1).padStart(12, '0')}`), () => descriptor!.invoke({

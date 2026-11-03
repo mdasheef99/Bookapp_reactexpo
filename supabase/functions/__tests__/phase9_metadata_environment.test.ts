@@ -169,7 +169,7 @@ describe('Phase 9 metadata worker server-only environment', () => {
     expect(dependencies.editionFallback).toBeDefined();
     expect(dependencies.installed?.has('google_books@1.0.0')).toBe(true);
     expect(dependencies.installed?.has('open_library@1.0.0')).toBe(true);
-    expect(dependencies.installed?.has('open_library@2.0.0')).toBe(false);
+    expect(dependencies.installed?.has('open_library@2.0.0')).toBe(true);
     expect(dependencies.installed?.get('google_books@1.0.0')?.credentialsReady()).toBe(false);
     expect(dependencies.installed?.get('open_library@1.0.0')?.credentialsReady()).toBe(true);
   });

@@ -34,3 +34,19 @@ export const OPEN_LIBRARY_PROVIDER_VALIDATION: ProviderOwnedValidation = Object.
     RECORD.test(providerRecordId)
     && (workExternalId === null || WORK.test(workExternalId)),
 });
+
+// 02c §5.1 / M90: v2 owns the same record, work, book-link and cover
+// grammars under the open-library-v2 contract.
+export const OPEN_LIBRARY_V2_PROVIDER_VALIDATION: ProviderOwnedValidation = Object.freeze({
+  adapterKey: 'open_library',
+  adapterVersion: '2.0.0',
+  validationContract: 'open-library-v2',
+  hostPolicyVersion: OPEN_LIBRARY_HOST_POLICY.policyVersion,
+  hostPolicy: OPEN_LIBRARY_HOST_POLICY as ProviderHostPolicy,
+  validProviderRecordId: (value: string) => RECORD.test(value),
+  validBookUrl,
+  validCoverReference: (value: string | null) => value === null || COVER.test(value),
+  validCompanionRecord: (providerRecordId: string, workExternalId: string | null) =>
+    RECORD.test(providerRecordId)
+    && (workExternalId === null || WORK.test(workExternalId)),
+});

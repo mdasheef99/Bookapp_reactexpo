@@ -114,7 +114,7 @@ export function openLibraryIdentityPriority(value: unknown, query: MetadataQuery
 }
 function decode(value: unknown, authors: ReadonlyMap<string,string>, context: Readonly<{
   correlationId: string; attemptId: string; fetchedAt: string;
-}>, workAuthors: OpenLibraryWorkAuthors): MetadataEdition | null {
+}>, workAuthors: OpenLibraryWorkAuthors, adapterVersion: '1.0.0' | '2.0.0' = OPEN_LIBRARY_ADAPTER_VERSION): MetadataEdition | null {
   const parsed = ownFacts(value, workAuthors);
   if (!parsed) return null;
   try {
@@ -125,7 +125,7 @@ function decode(value: unknown, authors: ReadonlyMap<string,string>, context: Re
     });
     return parseNormalizedMetadataEdition({
       contractVersion: PHASE9_CONTRACT_VERSION, schemaVersion: PHASE9_METADATA_SCHEMA_VERSION,
-      adapterKey: 'open_library', adapterVersion: OPEN_LIBRARY_ADAPTER_VERSION,
+      adapterKey: 'open_library', adapterVersion,
       normalizerVersion: 'p9-bibliographic-normalizer-v1', ...context, ...parsed.facts,
       authors: names, description: null, script: null, series: null, volume: null, categories: [],
       matchRationale: 'confirmation_required_text_evidence', confidence: 0,
@@ -134,10 +134,11 @@ function decode(value: unknown, authors: ReadonlyMap<string,string>, context: Re
 }
 export function normalizeOpenLibraryRows(entries: readonly unknown[], authors: ReadonlyMap<string,string>,
   context: Readonly<{ correlationId:string; attemptId:string; fetchedAt:string }>,
-  query: MetadataQueryIdentity, workAuthors: OpenLibraryWorkAuthors = []): readonly StoredEditionRow[] {
+  query: MetadataQueryIdentity, workAuthors: OpenLibraryWorkAuthors = [],
+  adapterVersion: '1.0.0' | '2.0.0' = OPEN_LIBRARY_ADAPTER_VERSION): readonly StoredEditionRow[] {
   if (entries.length > 10) throw new Error('P9_METADATA_MALFORMED_RESPONSE');
   const rows = entries.map((entry,ordinal): StoredEditionRow => {
-    const metadata = decode(entry,authors,context,workAuthors);
+    const metadata = decode(entry,authors,context,workAuthors,adapterVersion);
     return { optionId: globalThis.crypto.randomUUID(), ordinal,
       googleBooksUrl: metadata ? 'https://openlibrary.org/books/' + metadata.providerRecordId : null,
       eligibility: metadata ? evaluateEditionOption(query,metadata,OPEN_LIBRARY_HOST_POLICY) : 'unavailable', metadata };

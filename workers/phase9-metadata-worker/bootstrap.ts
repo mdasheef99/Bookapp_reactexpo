@@ -5,7 +5,7 @@ import {
   GOOGLE_BOOKS_CAPABILITY,
 } from '../../supabase/functions/_shared/imageInventory/metadata/googleBooks';
 import { createGoogleBooksDescriptor } from '../../supabase/functions/_shared/imageInventory/metadata/googleBooks/descriptor';
-import { createOpenLibraryV1Descriptor } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary/descriptor';
+import { createOpenLibraryV1Descriptor, createOpenLibraryV2Descriptor } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary/descriptor';
 import {
   providerManifestKey,
   type ProviderDescriptor,
@@ -38,9 +38,9 @@ const OPEN_LIBRARY_ONLY_TIMEOUT_MS = 10_000;
 const OPEN_LIBRARY_ONLY_MAX_RESPONSE_BYTES = 262_144;
 
 // U3 installed descriptor manifest from the descriptors that exist today:
-// google_books@1.0.0 and open_library@1.0.0. open_library@2.0.0 does not
-// exist yet (U4 adds it): it is NOT stubbed or faked here. U4 adds its entry
-// in this function and nowhere else.
+// google_books@1.0.0, open_library@1.0.0 and (U4) port-only
+// open_library@2.0.0, unbound here like the v1 entry: no per-job registry
+// policy is known at boot, so v2 retention stays not ready until U6 binds it.
 export function createInstalledDescriptorManifest(input: Readonly<{
   google: GoogleBooksAdapter | null;
   openLibrary: OpenLibraryEditionOptionsAdapter;
@@ -60,9 +60,11 @@ export function createInstalledDescriptorManifest(input: Readonly<{
     // route time (index.ts). Unbound entries are never used for execution.
     policyVersion: null,
   });
+  const openLibraryV2Descriptor = createOpenLibraryV2Descriptor({ policyVersion: null });
   return new Map<string, ProviderDescriptor>([
     [providerManifestKey(googleDescriptor.adapterKey, googleDescriptor.adapterVersion), googleDescriptor],
     [providerManifestKey(openLibraryDescriptor.adapterKey, openLibraryDescriptor.adapterVersion), openLibraryDescriptor],
+    [providerManifestKey(openLibraryV2Descriptor.adapterKey, openLibraryV2Descriptor.adapterVersion), openLibraryV2Descriptor],
   ]);
 }
 

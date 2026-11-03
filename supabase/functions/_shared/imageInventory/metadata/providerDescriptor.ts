@@ -3,7 +3,7 @@ import type { StoredEditionRow } from '../contracts/ownerEditionPicker';
 import type { MetadataQueryIdentity } from './queryIdentity';
 import type { MetadataProviderOutcome } from './providerAdapter';
 import { createGoogleBooksDescriptor } from './googleBooks/descriptor';
-import { createOpenLibraryV1Descriptor } from './openLibrary/descriptor';
+import { createOpenLibraryV1Descriptor, createOpenLibraryV2Descriptor } from './openLibrary/descriptor';
 
 export type Purpose = 'automatic' | 'edition_options';
 export type RetentionContractId = string;
@@ -89,6 +89,9 @@ export const PHASE9_METADATA_INSTALLED_PROVIDERS: ReadonlyMap<string, ProviderDe
   new Map<string, ProviderDescriptor>([
     [providerManifestKey('google_books', '1.0.0'), createGoogleBooksDescriptor({ adapter: null })],
     [providerManifestKey('open_library', '1.0.0'), createOpenLibraryV1Descriptor({ adapter: null })],
+    // U4: port-only v2, unbound at boot (no per-job registry policy known
+    // here, so retention stays not ready). NEVER a default policyVersion.
+    [providerManifestKey('open_library', '2.0.0'), createOpenLibraryV2Descriptor({ policyVersion: null })],
   ]);
 
 // 02c §5.1 route block (U2). The resolver runs before any network call and
