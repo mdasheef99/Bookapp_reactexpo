@@ -48,8 +48,10 @@ Open Library-only runtime: Google reports credentials-not-ready, so no Google
 egress occurs, while startup proceeds. With a key present, the timeout and
 max-bytes values stay required with their existing bounds (100–300000 ms,
 16384–2000000 bytes); transport values without a key are rejected, as is any
-Google value in `fixture` mode. Open Library needs no credential and keeps its
-in-code transport limits. The safe contact identity comes from the registry
+Google value in `fixture` mode. Open Library needs no credential. With a Google
+key it shares the configured timeout and max-bytes values; in an Open
+Library-only boot it uses the bootstrap's operational defaults (10000 ms,
+262144 bytes). The safe contact identity comes from the registry
 protection policy, never from the environment: no contact email or other
 contact detail may be added anywhere.
 
