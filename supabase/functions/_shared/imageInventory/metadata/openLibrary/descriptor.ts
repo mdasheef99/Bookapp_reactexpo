@@ -14,6 +14,8 @@ import { invokeOpenLibraryV2 } from './automatic';
 import { OPEN_LIBRARY_ADAPTER_VERSION } from './normalizer';
 
 export const OPEN_LIBRARY_RETENTION_CONTRACT = 'open-library-options-v1';
+// U6: named installed versions so worker binding compares constants, never literals.
+export const OPEN_LIBRARY_V2_ADAPTER_VERSION = '2.0.0';
 
 const secondaryEligibleOutcomes = new Set<MetadataNormalizedOutcome>([
   'no_acceptable_match', 'ambiguous_match', 'material_conflict',
@@ -145,7 +147,7 @@ export function createOpenLibraryV2Descriptor(
 
   return {
     adapterKey: 'open_library',
-    adapterVersion: '2.0.0',
+    adapterVersion: OPEN_LIBRARY_V2_ADAPTER_VERSION,
     capabilityVersion: 'open-library-capability-v2',
     normalizerVersion: 'p9-bibliographic-normalizer-v1',
     payloadSchemaVersion: 'p9-metadata-v1',

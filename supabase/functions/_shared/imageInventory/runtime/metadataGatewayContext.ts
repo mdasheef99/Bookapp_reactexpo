@@ -9,6 +9,24 @@ import type { MetadataProductionRequest } from './metadataProductionComposition'
 import { CATALOGUE_WRITE_VERSION } from '../contracts/catalogueWrite';
 import type { EditionOptionsCacheVersions } from './metadataEditionOptionsBoundary';
 
+export type ExplicitHttpConfig = Readonly<{
+  policy: unknown;
+  requestHosts?: readonly string[];
+  requestValidator?: (url: URL, stage: string, sequence: number) => void;
+  timeoutMs: number;
+  maxResponseBytes: number;
+  fetcher?: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+  sharedProtection?: object | null;
+  // Verified registry row policy version for retention binding, carried
+  // from route.policyVersions (worker) or the test row (R1 seam).
+  retentionPolicyVersion?: number | null;
+  // Row URL validation policy for the port arm (worker supplies the bound
+  // adapter's host policy when its key matches the elected descriptor;
+  // absent for synthetic/test-only descriptors, whose rows must then carry
+  // no cover references).
+  rowHostPolicy?: import('../contracts/providerReuse').ProviderHostPolicy | null;
+}>;
+
 export type MetadataGatewayConfiguration = Readonly<{
   worker: string;
   context: MetadataJobContext;
@@ -30,6 +48,34 @@ export type MetadataGatewayConfiguration = Readonly<{
   // including resumed historical identity. The legacy context policy lookup by
   // key cannot see history, so routed calls carry it explicitly.
   selectedPolicyVersion?: number;
+  // U6: descriptor-driven explicit execution binding. Set by the worker (from
+  // the verified route) or the R1 test seam; absent for legacy adapter
+  // callers, which keep the instanceof path. Not a descriptor schema field.
+  explicitDescriptor?: Readonly<{
+    descriptor: import('../metadata/providerDescriptor').ProviderDescriptor;
+    // Live adapter for adapter-backed descriptors (v1/Google); absent for
+    // port-native descriptors (v2/synthetic), which execute via a port.
+    adapter?: MetadataProviderAdapter | null;
+    fallbackAdapter?: MetadataProviderAdapter | null;
+    // Elected secondary route versions for fallback registration (U6); absent
+    // for legacy callers, which keep the historical OL versions.
+    fallbackRoute?: Readonly<{
+      adapterKey: string; adapterVersion: string; capabilityVersion: string;
+      // U6 fix2 (G6): secondary attempt identity. schemaVersion uses the
+      // secondary LOOKUP schema (never payloadSchemaVersion); the structural
+      // attempt RPC has no lookup-contract argument.
+      normalizerVersion: string; lookupSchemaVersion: string;
+    }> | null;
+    // U6 fix1 (F6): the elected secondary descriptor itself.
+    fallbackDescriptor?: import('../metadata/providerDescriptor').ProviderDescriptor | null;
+    // U6 fix1 (F6): secondary port/validation parameters from the secondary
+    // registry row (never the primary's configuration).
+    fallbackExplicitHttp?: ExplicitHttpConfig | undefined;
+  }>;
+  // U6: fenced-port construction parameters for port-native descriptors.
+  // Absent (or null policy) selects legacy fencing-only behaviour; no port
+  // arm is constructed without a non-null policy.
+  explicitHttp?: ExplicitHttpConfig;
   editionOptions?: Readonly<{ request: MetadataProductionRequest;
     boundary: import('./metadataEditionOptionsBoundary').MetadataEditionOptionsBoundary }>;
 }>;

@@ -9,6 +9,7 @@ import {
 import type { OpenLibraryWorkAuthors } from './normalizer';
 import { normalizeOpenLibraryCompanions } from './catalogueWrite';
 import { OpenLibraryFailure } from './transport';
+import { ProviderHttpError } from '../providerHttp';
 import { boundOptionsRetentionEvidence } from '../googleBooks/editionOptions';
 import { normalizeIsbnClue } from '../../domain/isbn';
 
@@ -33,13 +34,18 @@ export type OpenLibraryFetchedBundle = Readonly<{
   workKey: string;
   workAuthors: OpenLibraryWorkAuthors;
   authorNames: ReadonlyMap<string, string>;
+  // U6 fix1 (F1): verified row policy forwarded on the TYPED response
+  // channel (ProviderHttpResponse.retentionPolicyVersion, port-populated from
+  // verified internal configuration). First value wins; absent without a
+  // fencing port. Response headers NEVER identify policy (only bound duration).
+  retentionPolicyVersion?: number | null;
 }>;
 
 export type OpenLibraryFetched =
   // C1: isbn strategy without a normalized ISBN makes zero GETs, so no
   // fetchedAt is minted and no retention is fabricated for it.
   | Readonly<{ kind: 'zero-get' }>
-  | Readonly<{ kind: 'no-list'; fetchedAt: string; retention: OptionsRetentionEvidence }>
+  | Readonly<{ kind: 'no-list'; fetchedAt: string; retention: OptionsRetentionEvidence; retentionPolicyVersion?: number | null }>
   | (OpenLibraryFetchedBundle & Readonly<{ kind: 'list' }>);
 
 export async function fetchOpenLibraryBundle(input: Readonly<{
@@ -53,13 +59,37 @@ export async function fetchOpenLibraryBundle(input: Readonly<{
   const fetchedAt = new Date().toISOString();
   let retention: OptionsRetentionEvidence = { storagePermissionVerified: true,
     permittedDeadlineAt: new Date(Date.parse(fetchedAt) + 86_400_000).toISOString() };
+  // U6 fix1 (F1): first TYPED policy value wins (constant per claim in
+  // practice). Headers are never read for policy identity.
+  let retentionPolicyVersion: number | null = null;
   let sequence = 0;
   const get = async (url: URL, stage: string) => {
     if (sequence >= 6) throw new OpenLibraryFailure('schema_invalid');
     const current = sequence++;
-    const envelope = await input.get(url, stage, current);
-    const bounded = boundOptionsRetentionEvidence(fetchedAt, retention, envelope.headers);
-    retention = bounded; return object(envelope.raw);
+    try {
+      const envelope = await input.get(url, stage, current);
+      const bounded = boundOptionsRetentionEvidence(fetchedAt, retention, envelope.headers);
+      retention = bounded;
+      if (retentionPolicyVersion === null) {
+        const carried: unknown = (envelope as { retentionPolicyVersion?: unknown }).retentionPolicyVersion;
+        if (typeof carried === 'number' && Number.isSafeInteger(carried) && carried > 0) {
+          retentionPolicyVersion = carried;
+        }
+      }
+      return object(envelope.raw);
+    } catch (error) {
+      // O1 (U6, R2): bound retention from ACTUAL failed-response headers
+      // BEFORE author-failure isolation, for both shared-fetch callers (v1
+      // transport failures via OpenLibraryFailure, v2/port failures via
+      // ProviderHttpError). A denial is sticky: later permissive responses
+      // cannot reopen it (boundOptionsRetentionEvidence re-denies).
+      const headers = error instanceof OpenLibraryFailure ? error.headers
+        : error instanceof ProviderHttpError ? error.headers : null;
+      if (headers !== null) {
+        retention = boundOptionsRetentionEvidence(fetchedAt, retention, headers);
+      }
+      throw error;
+    }
   };
   const search = new URL('https://openlibrary.org/search.json');
   search.searchParams.set('limit', '1'); search.searchParams.set('fields', isbnMode
@@ -70,7 +100,7 @@ export async function fetchOpenLibraryBundle(input: Readonly<{
   const found = await get(search, 'search');
   if (!found || !Array.isArray(found.docs) || found.docs.length > 1) throw new OpenLibraryFailure('malformed_response');
   const key = object(found.docs[0])?.key;
-  if (found.docs.length === 0) return { kind: 'no-list', fetchedAt, retention };
+  if (found.docs.length === 0) return { kind: 'no-list', fetchedAt, retention, retentionPolicyVersion };
   if (typeof key !== 'string' || !/^\/works\/OL[1-9][0-9]*W$/u.test(key)) throw new OpenLibraryFailure('malformed_response');
   // The work's author references, used only by editions that list no authors of their own.
   const workKeys = object(found.docs[0])?.author_key;
@@ -86,7 +116,7 @@ export async function fetchOpenLibraryBundle(input: Readonly<{
         && Array.isArray(entry.isbn) && entry.isbn.some(value => typeof value === 'string'
           && normalizeIsbnClue(value).isbn13 === input.query.normalizedIsbn13);
     }) : null;
-    if (!matching) return { kind: 'no-list', fetchedAt, retention };
+    if (!matching) return { kind: 'no-list', fetchedAt, retention, retentionPolicyVersion };
     page = { entries: [await get(new URL('https://openlibrary.org' + matching.key + '.json'), 'edition')] };
   } else {
     const editions = new URL('https://openlibrary.org' + key + '/editions.json');
@@ -118,11 +148,23 @@ export async function fetchOpenLibraryBundle(input: Readonly<{
       }
     } catch (error) {
       // Known nonretryable author-content failures affect dependent rows; transport/config/fence failures still stop.
-      if (!(error instanceof OpenLibraryFailure) || error.retryable || !['no_acceptable_match', 'malformed_response', 'unsupported_content_type', 'response_too_large'].includes(error.outcome)) throw error;
+      // S2: port failures (ProviderHttpError) isolate exactly like transport
+      // failures with the same outcome/retryability, so v2 author handling
+      // matches v1 and existing catches keep working.
+      const outcome = error instanceof OpenLibraryFailure ? error.outcome
+        : error instanceof ProviderHttpError ? error.outcome : null;
+      const retryable = error instanceof OpenLibraryFailure ? error.retryable
+        : error instanceof ProviderHttpError ? error.retryable : null;
+      if ((error instanceof OpenLibraryFailure || error instanceof ProviderHttpError)
+        && retryable === false && outcome !== null
+        && ['no_acceptable_match', 'malformed_response', 'unsupported_content_type', 'response_too_large'].includes(outcome)) {
+        continue;
+      }
+      throw error;
     }
   }
   return {
-    kind: 'list', fetchedAt, retention,
+    kind: 'list', fetchedAt, retention, retentionPolicyVersion,
     entries: page.entries, workKey: key, workAuthors, authorNames: authors,
   };
 }

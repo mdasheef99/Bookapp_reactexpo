@@ -167,13 +167,63 @@ export function executeDescriptorOptions(context: unknown, gateway: unknown, des
     .executeEditionOptionsLookup(context, gateway, descriptor, new AbortController().signal);
 }
 
-export function descriptorOptionsGateway(fixture: AnyModule, descriptor: AnyModule) {
+export function descriptorOptionsGateway(
+  fixture: AnyModule,
+  descriptor: AnyModule,
+  // U6 fix1 (F14): optional registry request hosts from the test's registry
+  // row. The frozen two-argument callers keep working (documented default
+  // below); new tests pass the row's hosts explicitly for intersection and
+  // negative controls.
+  options: AnyModule = {},
+) {
+  // R1 (U6, Owner-approved narrowly): the synthetic descriptor's
+  // request-host/path/stage validator is INJECTED here as an explicit test
+  // dependency, bound to the descriptor's EXACT approved tuple plus the
+  // registry row hosts. No global mutable validator registry; production
+  // never contains or recognises `synthetic_catalogue`. Identifiers and
+  // registry hosts alone never define compiled trust: this validator
+  // independently declares the exact trusted tuple (HTTPS, path /discover,
+  // stage discover, sequence 0, no credentials/port/fragment) for THIS
+  // descriptor instance, and the port intersects registry hosts afterwards.
+  // F14: exact values verified against the synthetic descriptor
+  // (phase9_metadata_edition_options_worker.test.ts:216-221).
+  const hostPolicyVersion = descriptor.hostPolicyVersion;
+  const validationContract = descriptor.validationContract;
+  if (hostPolicyVersion !== 'synthetic-hosts-v1'
+    || validationContract !== 'synthetic-catalogue-v1') {
+    throw new Error('P9_PROVIDER_CONFIGURATION_INVALID');
+  }
+  // The frozen two-argument callers declare catalogue.example.test in their
+  // registry rows (phase9_metadata_edition_options_worker.test.ts:243-244);
+  // that documented default is preserved for them. Callers proving
+  // intersection pass the row's hosts explicitly.
+  const declaredHosts: readonly string[] = Array.isArray(options?.registryRequestHosts)
+    && (options.registryRequestHosts as unknown[]).every((host) => typeof host === 'string')
+    ? [...(options.registryRequestHosts as string[])]
+    : ['catalogue.example.test'];
+  const requestValidator = (url: URL, stage: string, sequence: number) => {
+    if (url.protocol !== 'https:' || url.username !== '' || url.password !== ''
+      || url.port !== '' || url.hash !== '') {
+      throw new Error('insufficient_query');
+    }
+    if (!declaredHosts.includes(url.hostname) || url.pathname !== '/discover'
+      || stage !== 'discover' || sequence !== 0) {
+      throw new Error('insufficient_query');
+    }
+  };
   return fixture.direct({
     adapterKey: descriptor.adapterKey, adapterVersion: descriptor.adapterVersion,
     capabilityVersion: descriptor.capabilityVersion,
     normalizerVersion: descriptor.normalizerVersion,
     schemaVersion: descriptor.lookupSchemaVersion,
     primary: descriptor,
+    explicitDescriptor: { descriptor, adapter: null, fallbackAdapter: null },
+    explicitHttp: {
+      policy: require('./providerProtection').TEST_ONLY_PROTECTION_POLICY,
+      requestValidator, requestHosts: [...declaredHosts],
+      timeoutMs: 1000, maxResponseBytes: 64000,
+      retentionPolicyVersion: 1,
+    },
   });
 }
 

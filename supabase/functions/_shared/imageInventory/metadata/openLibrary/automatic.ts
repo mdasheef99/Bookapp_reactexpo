@@ -24,6 +24,20 @@ import { OpenLibraryFailure } from './transport';
 // policy_denied, legal_launch_denied, cost_quota_denied, provider_disabled,
 // cancelled) yield false. The canonical parser (providerAdapter.ts:126-127)
 // rejects any disagreement, so an every-outcome agreement test pins this.
+// U6 fix2 (G8): native v2 port failures carry the same outcome/retryability as
+// the v1 transport. Structural detection avoids a value import cycle
+// (providerDescriptor -> openLibrary/descriptor -> this module) and never
+// matches a P9_ configuration/state error, which has none of these fields.
+type ProviderHttpFailureShape = Readonly<{
+  outcome: string; retryable: boolean; physicalStatus: string; egressStarted: boolean;
+}>;
+function isProviderHttpFailure(error: unknown): error is ProviderHttpFailureShape {
+  if (!(error instanceof Error)) return false;
+  const row = error as unknown as Partial<ProviderHttpFailureShape>;
+  return typeof row.outcome === 'string' && typeof row.retryable === 'boolean'
+    && typeof row.physicalStatus === 'string' && typeof row.egressStarted === 'boolean';
+}
+
 const secondaryEligibleOutcomes = new Set<MetadataNormalizedOutcome>([
   'no_acceptable_match', 'ambiguous_match', 'material_conflict',
   'provider_unavailable', 'timeout', 'network_failure', 'rate_limited',
@@ -110,14 +124,30 @@ const retainedListEvidence = (
 // module must stay load-cycle free, since ./descriptor imports it for the
 // v2 factory. The result version and retention contract arrive as explicit
 // factory-supplied parameters (single source: the v2 factory).
+//
+// U6 fix1 (F1): the row policyVersion arrives via the factory closure when
+// the worker bound it at route time. Otherwise it arrives ONLY on the typed
+// response channel (ProviderHttpResponse.retentionPolicyVersion, populated by
+// the port from verified internal configuration and forwarded through the
+// bundle); response headers NEVER identify policy, and the port object itself
+// is never read for it. Never defaulted, never inferred.
+function effectivePolicyVersion(input: Readonly<{
+  policyVersion: number | null;
+}>): number | null {
+  return input.policyVersion;
+}
 export async function invokeOpenLibraryV2(input: LookupInput & Readonly<{
   version: ProviderResultVersion;
   policyVersion: number | null;
   retentionContract: string;
 }>): Promise<MetadataResultV2> {
+  const boundPolicy = effectivePolicyVersion(input);
   const get = async (url: URL, stage: string, sequence: number) => {
     const response = await input.http.get({ url, stage, sequence, signal: input.signal });
-    return { raw: response.json, headers: response.headers };
+    // F1: the TYPED policy channel is carried through this response mapping
+    // (the observation wrapper preserves the returned response object).
+    return { raw: response.json, headers: response.headers,
+      retentionPolicyVersion: response.retentionPolicyVersion };
   };
   try {
     const bundle = await fetchOpenLibraryBundle({ query: input.query, signal: input.signal, get });
@@ -133,7 +163,8 @@ export async function invokeOpenLibraryV2(input: LookupInput & Readonly<{
     }
     if (bundle.kind === 'no-list') {
       const retention = retainedListEvidence(
-        bundle.fetchedAt, bundle.retention, input.policyVersion, input.retentionContract);
+        bundle.fetchedAt, bundle.retention,
+        boundPolicy ?? bundle.retentionPolicyVersion ?? null, input.retentionContract);
       return {
         version: input.version, purpose: input.purpose,
         outcome: failureOutcome('no_acceptable_match', false),
@@ -147,7 +178,8 @@ export async function invokeOpenLibraryV2(input: LookupInput & Readonly<{
       query: input.query, adapterVersion: '2.0.0',
     });
     const retention = retainedListEvidence(
-      bundle.fetchedAt, bundle.retention, input.policyVersion, input.retentionContract);
+      bundle.fetchedAt, bundle.retention,
+      boundPolicy ?? bundle.retentionPolicyVersion ?? null, input.retentionContract);
     if (input.purpose === 'automatic') {
       const ranked = rankAutomaticRows(summary.rows, input.query);
       const selected = ranked.selected;
@@ -182,13 +214,28 @@ export async function invokeOpenLibraryV2(input: LookupInput & Readonly<{
       retention,
     };
   } catch (error) {
-    if (!(error instanceof OpenLibraryFailure)) throw error;
-    return {
-      version: input.version, purpose: input.purpose,
-      outcome: failureOutcome(error.outcome, error.retryable),
-      rows: null,
-      catalogueCompanions: null,
-      retention: null,
-    };
+    if (error instanceof OpenLibraryFailure) {
+      return {
+        version: input.version, purpose: input.purpose,
+        outcome: failureOutcome(error.outcome, error.retryable),
+        rows: null,
+        catalogueCompanions: null,
+        retention: null,
+      };
+    }
+    // G8: a native v2 ProviderHttpError (timeout/rate_limited/network/...)
+    // keeps its own outcome and retryability. Physical accounting finalized
+    // it already; unknown P9_ errors stay non-authorizing (no shape).
+    if (isProviderHttpFailure(error)) {
+      return {
+        version: input.version, purpose: input.purpose,
+        outcome: failureOutcome(
+          error.outcome as MetadataProviderOutcome['outcome'], error.retryable),
+        rows: null,
+        catalogueCompanions: null,
+        retention: null,
+      };
+    }
+    throw error;
   }
 }

@@ -9,9 +9,22 @@ export type OpenLibraryConfiguration = Readonly<{
   fetcher:(input:string | URL | Request,init?:RequestInit)=>Promise<Response>;
   timeoutMs:number; maxResponseBytes:number; retentionAllowed?:boolean;
   waitForRequest?: (signal:AbortSignal)=>Promise<OpenLibraryRequestPermit>;
+  // U6 fix2 (G4): called immediately before the fetcher invocation, so the
+  // owning port can record provider contact and release the start clock only
+  // at the actual send (never at a pre-send permit/abort check).
+  onFetchStart?: () => void;
 }>;
 export class OpenLibraryFailure extends Error {
-  constructor(readonly outcome:MetadataNormalizedOutcome,readonly retryable=false) { super(outcome); }
+  // O1 (U6): actual failed-response headers travel with the failure so shared
+  // fetch (fetch.ts) can bound retention BEFORE author-failure isolation.
+  // U6 fix1 (F2): fetch-started/response-received flags let the port bridge
+  // finalize pre-send cancellation as proven-unsent, post-start/no-response
+  // as outcome-unknown, and received responses as finalized — mirroring the
+  // transport's own accounting (line ~86). Outcome/retryability mapping is
+  // unchanged; headers/flags default to absent where no fetch/response exists,
+  // so existing throw sites keep compiling and behaving.
+  constructor(readonly outcome:MetadataNormalizedOutcome,readonly retryable=false,readonly headers: Headers | null = null,
+    readonly fetchStarted = false, readonly responseReceived = false) { super(outcome); }
 }
 export async function getOpenLibraryJson(url:URL,configuration:OpenLibraryConfiguration,
   call:EditionHttpCall,hooks?:EditionHttpHooks):Promise<{raw:unknown;headers:Headers}> {
@@ -35,45 +48,55 @@ export async function getOpenLibraryJson(url:URL,configuration:OpenLibraryConfig
   let response:Response | null = null;
   let raw:unknown;
   let attempted = false;
+  let fetchStarted = false;
+  let responseReceived = false;
   try {
     attempted = true;
     let fetching:Promise<Response>;
+    // U6 fix2 (G4): the fetch is considered started BEFORE the fetcher is
+    // invoked (a synchronously-throwing fetcher has still started the send),
+    // and the owner's contact callback fires immediately before invocation.
+    fetchStarted = true;
     try {
+      configuration.onFetchStart?.();
       fetching=configuration.fetcher(url,{signal:controller.signal,redirect:'error',
         headers:{Accept:'application/json','User-Agent':'BookConnect edition lookup'}});
     } finally { release?.(true); }
     response=await fetching;
+    responseReceived = true;
     if (!response.ok) {
+      const headers = response.headers;
       await response.body?.cancel();
       throw new OpenLibraryFailure(response.status === 429 ? 'rate_limited'
         : response.status >= 500 ? 'provider_unavailable' : response.status === 404 ? 'no_acceptable_match' : 'authentication_configuration_failure',
-      response.status === 429 || response.status >= 500);
+      response.status === 429 || response.status >= 500, headers, true, true);
     }
     if (!/^application\/json(?:\s*;|$)/iu.test(response.headers.get('content-type') ?? '')) {
-      await response.body?.cancel(); throw new OpenLibraryFailure('unsupported_content_type');
+      await response.body?.cancel(); throw new OpenLibraryFailure('unsupported_content_type', false, response.headers, true, true);
     }
     const length = response.headers.get('content-length');
     if (length && (!/^\d+$/u.test(length) || Number(length) > configuration.maxResponseBytes)) {
-      await response.body?.cancel(); throw new OpenLibraryFailure('response_too_large');
+      await response.body?.cancel(); throw new OpenLibraryFailure('response_too_large', false, response.headers, true, true);
     }
     const reader = response.body?.getReader();
-    if (!reader) throw new OpenLibraryFailure('malformed_response');
+    if (!reader) throw new OpenLibraryFailure('malformed_response', false, response.headers, true, true);
     const chunks:Uint8Array[]=[]; let size=0;
     try {
       while (true) {
         const chunk = await reader.read(); if (chunk.done) break;
         size += chunk.value.byteLength;
-        if (size > configuration.maxResponseBytes) throw new OpenLibraryFailure('response_too_large');
+        if (size > configuration.maxResponseBytes) throw new OpenLibraryFailure('response_too_large', false, response.headers, true, true);
         chunks.push(chunk.value);
       }
       const bytes=new Uint8Array(size);let offset=0;
       for (const chunk of chunks) { bytes.set(chunk,offset);offset+=chunk.byteLength; }
       try { raw=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)); }
-      catch { throw new OpenLibraryFailure('malformed_response'); }
+      catch { throw new OpenLibraryFailure('malformed_response', false, response.headers, true, true); }
     } finally { await reader.cancel().catch(()=>{}); }
   } catch (error) {
     failure = error instanceof OpenLibraryFailure ? error
-      : new OpenLibraryFailure(call.signal.aborted ? 'cancelled' : controller.signal.aborted ? 'timeout' : 'network_failure',!call.signal.aborted);
+      : new OpenLibraryFailure(call.signal.aborted ? 'cancelled' : controller.signal.aborted ? 'timeout' : 'network_failure',!call.signal.aborted,
+        null, fetchStarted, responseReceived);
   } finally {
     clearTimeout(timer); call.signal.removeEventListener('abort',abort);
   }

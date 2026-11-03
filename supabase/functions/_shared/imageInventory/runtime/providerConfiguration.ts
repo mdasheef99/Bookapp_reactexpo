@@ -228,6 +228,12 @@ function parseRow(value: unknown): RegistryProviderRow {
     acceptedAdapterVersions: accepted,
     versionContracts: contracts,
     policyVersion: policyVersion as number,
+    // U6 seam: the already-parsed compiled trust + protection numbers, no
+    // longer dropped. Null-preserving; the port treats null as legacy mode.
+    approvedRequestHosts: requestHosts,
+    approvedBookHosts: bookHosts,
+    approvedCoverHosts: coverHosts,
+    protectionPolicy: parseProtectionPolicy(protectionPolicy),
   });
 }
 

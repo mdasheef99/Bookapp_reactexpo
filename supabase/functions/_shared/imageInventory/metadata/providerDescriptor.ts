@@ -14,6 +14,12 @@ export type ProviderHttpResponse = Readonly<{
   json: unknown;
   headers: Headers;
   receiptId: string;
+  // U6 fix1 (F1): verified row policy carried on the TYPED response channel,
+  // populated by the port ONLY from verified internal configuration
+  // (route.policyVersions). The observation wrapper preserves the returned
+  // response object, so this survives; response HEADERS may only bound
+  // retention duration, never identify policy. Absent/null means unbound.
+  retentionPolicyVersion?: number | null;
 }>;
 
 export type ProviderHttpPort = Readonly<{
@@ -122,6 +128,13 @@ export type RegistryProviderRow = Readonly<{
   acceptedAdapterVersions: readonly string[];
   versionContracts: RegistryVersionContracts;
   policyVersion: number;
+  // U6 seam: compiled request trust + protection numbers, parsed from the
+  // service DTO (providerConfiguration.ts) and consumed by the explicit port.
+  // Older/test snapshots may omit them; consumers must null-tolerate.
+  approvedRequestHosts: readonly string[];
+  approvedBookHosts: readonly string[];
+  approvedCoverHosts: readonly string[];
+  protectionPolicy: Readonly<Record<string, unknown>> | null;
 }>;
 
 export type RegistrySnapshot = Readonly<{

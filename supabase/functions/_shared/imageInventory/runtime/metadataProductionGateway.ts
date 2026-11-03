@@ -49,6 +49,11 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
   readonly editionOptions;
   readonly editionProviderCalls;
   readonly providerValidation;
+  // U6: descriptor-driven explicit binding carried from the gateway
+  // configuration (worker route or R1 test seam). S8: editionProviderCalls
+  // stays purpose-gated to edition_options; these fields only carry data.
+  readonly explicitDescriptor: MetadataGatewayConfiguration['explicitDescriptor'];
+  readonly explicitHttp: MetadataGatewayConfiguration['explicitHttp'];
   private readonly providerCalls = new Map<string, string>();
   private reusableLookup: string | null = null;
   private reservedLookup: string | null = null;
@@ -56,6 +61,8 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
     private readonly client: MetadataRpcClient,
     private readonly configuration: MetadataGatewayConfiguration,
   ) {
+    this.explicitDescriptor = configuration.explicitDescriptor;
+    this.explicitHttp = configuration.explicitHttp;
     this.editionOptions = configuration.editionOptions ? {
       ...configuration.editionOptions,
       cacheVersions: () => buildEditionOptionsCacheVersions(configuration),
