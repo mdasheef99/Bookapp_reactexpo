@@ -448,6 +448,10 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                 kind: 'remove', inventoryId, inventoryVersion: confirmedVersion, linkId,
             });
             if (!isCurrentOpening(generation)) return;
+            // A removed link has no pending replacement: drop a replace
+            // pending-upload for it so "Check processing status" is gone.
+            setPendingUpload((current) => (current && current.operationKind === 'replace'
+                && current.targetLinkId === linkId ? null : current));
             await settleCommandSuccess(generation, result.inventoryVersion, 'Photo removed.');
         } catch (failure) {
             if (!isCurrentOpening(generation)) return;

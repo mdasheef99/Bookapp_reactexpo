@@ -426,3 +426,20 @@ it('F8 old recovery timeout cannot unlock inputs or Save during a newer recovery
     await flush();
     expect(editing.screen.getByTestId('store-view-edit-title').props.editable).toBe(true);
 });
+
+it('Removefix remove clears a replace pending-upload for that link', async () => {
+    // A processing replacement sets a pending upload for its target link;
+    // removing that link must drop it so "Check processing status" is gone.
+    (publicationService.preparePublicCopyUpload as jest.Mock).mockResolvedValue({ capabilityId: 'cap',
+        upload: () => ({ promise: Promise.resolve() }), complete: async () => ({ state: 'processing', mediaAssetId: 'asset' }) });
+    (publicationService.readPublicCopyStatus as jest.Mock).mockResolvedValue({ state: 'processing', mediaAssetId: 'asset' });
+    const { screen } = photoModal();
+    await flush();
+    fireEvent.press(screen.getByTestId('store-view-media-replace-0'));
+    await flush();
+    expect(screen.getByTestId('store-view-media-check-status')).toBeTruthy();
+    remove(screen);
+    await flush();
+    expect(screen.queryByTestId('store-view-media-check-status')).toBeNull();
+    expect(screen.getByText('Photo removed.')).toBeTruthy();
+});
