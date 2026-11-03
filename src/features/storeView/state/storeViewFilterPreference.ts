@@ -3,6 +3,7 @@ import type { ImageInventoryIdentity } from '@/features/imageInventory/queries/o
 import { STORE_VIEW_FILTERS, type StoreViewFilter } from '../contracts/storeViewContracts';
 
 const PREFIX = 'storeView_lastFilter:v1:';
+const SUMMARY_PREFIX = 'storeView_summaryOpen:v1:';
 const PENDING_CLEANUP_KEY = `${PREFIX}pendingCleanup`;
 const CLEANUP_TIMEOUT_MS = 3_000;
 const queues = new Map<string, Promise<unknown>>();
@@ -28,26 +29,42 @@ function serialize<T>(key: string, work: () => Promise<T>): Promise<T> {
 
 /** Each mounted identity owns a session; cleanup permanently fences its old handles. */
 export function createStoreViewFilterSession(identity: ImageInventoryIdentity) {
-    const key = `${PREFIX}${identity.userId}:${identity.storeId}`;
+    return createPreferenceSession(identity, PREFIX, 'all' as StoreViewFilter,
+        (value): value is StoreViewFilter => (STORE_VIEW_FILTERS as readonly (string | null)[]).includes(value));
+}
+
+export function createStoreViewSummarySession(identity: ImageInventoryIdentity) {
+    const session = createPreferenceSession(identity, SUMMARY_PREFIX, 'false',
+        (value): value is string => value === 'true' || value === 'false');
+    return {
+        read: async () => (await session.read()) === 'true',
+        write: (open: boolean) => session.write(String(open)),
+    };
+}
+
+function createPreferenceSession<T extends string>(
+    identity: ImageInventoryIdentity, prefix: string, fallback: T,
+    valid: (value: string | null) => value is T,
+) {
+    const key = `${prefix}${identity.userId}:${identity.storeId}`;
     const state = userState(identity.userId);
     const revision = state.revision;
     const startedDuringCleanup = state.cleaning;
     const current = () => !startedDuringCleanup && !state.cleaning && revision === state.revision;
     return {
-        async read(): Promise<StoreViewFilter> {
-            if (!current()) return 'all';
+        async read(): Promise<T> {
+            if (!current()) return fallback;
             try {
                 const value = await serialize(key, () => current() ? AsyncStorage.getItem(key) : Promise.resolve(null));
-                return current() && (STORE_VIEW_FILTERS as readonly (string | null)[]).includes(value)
-                    ? value as StoreViewFilter : 'all';
-            } catch { return 'all'; }
+                return current() && valid(value) ? value : fallback;
+            } catch { return fallback; }
         },
-        async write(filter: StoreViewFilter): Promise<void> {
+        async write(value: T): Promise<void> {
             if (!current()) return;
             try {
                 await serialize(key, async () => {
                     if (!current()) return;
-                    await AsyncStorage.setItem(key, filter);
+                    await AsyncStorage.setItem(key, value);
                     // A storage write may finish after cleanup's deadline. Retract it
                     // inside this queue, before any new session can write the same key.
                     if (!current()) await AsyncStorage.removeItem(key);
@@ -91,7 +108,8 @@ export async function clearStoreViewFilterPreferences(userId: string): Promise<v
             // Record retries before waiting: a timeout or process exit must not lose them.
             await persist();
             if (!active) return;
-            const prefixes = [...targets].map((target) => `${PREFIX}${target}:`);
+            const prefixes = [...targets].flatMap((target) =>
+                [PREFIX, SUMMARY_PREFIX].map((prefix) => `${prefix}${target}:`));
             await Promise.allSettled([...queues].filter(([key]) => prefixes.some((prefix) => key.startsWith(prefix))).map(([, queued]) => queued));
             if (!active) return;
             const keys = (await AsyncStorage.getAllKeys()).filter((key) => prefixes.some((prefix) => key.startsWith(prefix)));

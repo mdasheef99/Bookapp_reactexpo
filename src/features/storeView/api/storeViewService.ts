@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { decodeStoreViewSummaryResponse, STORE_VIEW_SUMMARY_CONTRACT_VERSION, type StoreViewSummary } from '../contracts/storeViewSummaryContracts';
 import { supabase } from '@/lib/supabase';
 import {
     decodeStoreViewResponse,
@@ -94,17 +95,20 @@ async function normalizeError(error: unknown): Promise<StoreViewClientError> {
 }
 
 async function invoke(
-    action: 'read_store_view_page' | 'read_store_view_detail',
+    action: 'read_store_view_page' | 'read_store_view_detail' | 'read_store_view_summary',
     body: Record<string, unknown>,
     signal?: AbortSignal,
 ): Promise<unknown> {
     try {
         const result = await supabase.functions.invoke('phase9-owner-ingestion', {
-            body: { action, contractVersion: STORE_VIEW_CONTRACT_VERSION, ...body },
+            body: { action, contractVersion: action === 'read_store_view_summary'
+                ? STORE_VIEW_SUMMARY_CONTRACT_VERSION : STORE_VIEW_CONTRACT_VERSION, ...body },
             ...(signal ? { signal } : {}),
         });
         if (result.error) throw await normalizeError(result.error);
-        return decodeStoreViewResponse(action, result.data);
+        return action === 'read_store_view_summary'
+            ? decodeStoreViewSummaryResponse(result.data)
+            : decodeStoreViewResponse(action, result.data);
     } catch (error) {
         if (error instanceof StoreViewClientError) throw error;
         if (error instanceof Error && error.name === 'AbortError') throw error;
@@ -116,6 +120,9 @@ async function invoke(
 }
 
 export const storeViewService = {
+    async summary(signal?: AbortSignal): Promise<StoreViewSummary> {
+        return invoke('read_store_view_summary', {}, signal) as Promise<StoreViewSummary>;
+    },
     async page(request: StoreViewPageRequest = {}, signal?: AbortSignal): Promise<StoreViewPage> {
         const parsed = pageRequest.safeParse(request);
         if (!parsed.success) throw clientError('P9_REQUEST_INVALID');

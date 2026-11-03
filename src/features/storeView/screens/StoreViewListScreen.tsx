@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
@@ -9,7 +10,9 @@ import { FILTER_LABELS } from '../components/storeViewPresentation';
 import { STORE_VIEW_FILTERS, type StoreViewFilter } from '../contracts/storeViewContracts';
 import { useStoreViewPage } from '../queries/storeViewQueries';
 import { StoreViewAccessBoundary } from './StoreViewAccessBoundary';
-import { createStoreViewFilterSession } from '../state/storeViewFilterPreference';
+import { createStoreViewFilterSession, createStoreViewSummarySession } from '../state/storeViewFilterPreference';
+import { StoreViewSummaryPanel } from '../components/StoreViewSummaryPanel';
+import { useStoreViewSummary } from '../queries/storeViewSummaryQueries';
 
 function StateCard({ title, body, onRetry }: { title: string; body: string; onRetry?: () => void }) {
     const { colors } = useTheme();
@@ -45,18 +48,46 @@ function StoreViewIdentityList({ identity }: { identity: ImageInventoryIdentity 
     const [filter, setFilter] = useState<StoreViewFilter>('all');
     const [preference] = useState(() => createStoreViewFilterSession(identity));
     const tapped = useRef(false);
+    const [summaryOpen, setSummaryOpen] = useState(false);
+    const [summaryPreference] = useState(() => createStoreViewSummarySession(identity));
+    const summaryToggled = useRef(false);
     useEffect(() => {
         let active = true;
         void preference.read().then((stored) => { if (active && !tapped.current) setFilter(stored); });
         return () => { active = false; };
     }, [preference]);
+    useEffect(() => {
+        let active = true;
+        void summaryPreference.read().then(stored => {
+            if (active && !summaryToggled.current) setSummaryOpen(stored);
+        });
+        return () => { active = false; };
+    }, [summaryPreference]);
+    const selectFilter = (value: StoreViewFilter) => {
+        tapped.current = true;
+        setFilter(value);
+        void preference.write(value);
+    };
     const query = useStoreViewPage(identity, filter);
+    const summary = useStoreViewSummary(identity);
+    const { refetch: refetchSummary } = summary;
+    const { refetch: refetchPage } = query;
+    const firstFocus = useRef(true);
+    useFocusEffect(useCallback(() => {
+        // The mount fetch is already in flight; only refetch on later focuses
+        // so the counts and the cached list cannot disagree.
+        if (firstFocus.current) { firstFocus.current = false; return; }
+        void refetchSummary();
+        void refetchPage();
+    }, [refetchSummary, refetchPage]));
     const initialLoading = query.isPending && query.items.length === 0;
     const initialError = query.isError && query.items.length === 0;
 
     return (
         <ScreenBackground>
             <FlatList
+                refreshing={Boolean(query.isRefetching || summary.isRefetching)}
+                onRefresh={() => { void query.refetch(); void refetchSummary(); }}
                 contentInsetAdjustmentBehavior="automatic"
                 data={query.items}
                 keyExtractor={(item) => item.identity.inventoryId}
@@ -65,9 +96,23 @@ function StoreViewIdentityList({ identity }: { identity: ImageInventoryIdentity 
                 contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
                 ListHeaderComponent={(
                     <View style={{ gap: 14, paddingBottom: 14 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Text accessibilityRole="header" style={{ color: colors.textPrimary, fontSize: 22, fontWeight: '800' }}>Store View</Text>
+                            <Pressable testID="store-view-summary-button" accessibilityRole="button"
+                                accessibilityLabel={summaryOpen ? 'Hide summary' : 'Summary'} accessibilityState={{ expanded: summaryOpen }}
+                                onPress={() => {
+                                    summaryToggled.current = true;
+                                    setSummaryOpen(!summaryOpen);
+                                    void summaryPreference.write(!summaryOpen);
+                                }} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12 }}>
+                                <Text style={{ color: colors.accent, fontWeight: '700' }}>{summaryOpen ? 'Hide summary' : 'Summary'}</Text>
+                            </Pressable>
+                        </View>
                         <Text selectable style={{ color: colors.textSecondary, lineHeight: 20 }}>
                             Manage committed books. Filters are applied by the server before pagination.
                         </Text>
+                        {summaryOpen ? <StoreViewSummaryPanel data={summary.data} pending={summary.isPending}
+                            paused={summary.fetchStatus === 'paused'} error={summary.isError} onRetry={() => void refetchSummary()} onSelect={selectFilter} /> : null}
                         <View accessibilityRole="tablist" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                             {STORE_VIEW_FILTERS.map((value) => {
                                 const selected = value === filter;
@@ -77,7 +122,7 @@ function StoreViewIdentityList({ identity }: { identity: ImageInventoryIdentity 
                                         testID={`store-view-filter-${value}`}
                                         accessibilityRole="tab"
                                         accessibilityState={{ selected }}
-                                        onPress={() => { tapped.current = true; setFilter(value); void preference.write(value); }}
+                                        onPress={() => selectFilter(value)}
                                         style={{ borderWidth: 1, borderColor: selected ? colors.accent : colors.border, backgroundColor: selected ? colors.accent : colors.bgCard, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 }}
                                     >
                                         <Text style={{ color: selected ? '#FFFFFF' : colors.textPrimary, fontWeight: '700', fontSize: 13 }}>

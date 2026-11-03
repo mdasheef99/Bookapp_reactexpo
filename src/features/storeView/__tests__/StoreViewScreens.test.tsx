@@ -5,7 +5,11 @@ import { StoreViewListContent } from '../screens/StoreViewListScreen';
 import { useStoreViewDetail, useStoreViewPage } from '../queries/storeViewQueries';
 
 jest.mock('expo-router', () => ({
+    useFocusEffect: jest.fn(),
     Link: jest.fn(({ children }: { children: React.ReactNode }) => <>{children}</>),
+}));
+jest.mock('../queries/storeViewSummaryQueries', () => ({
+    useStoreViewSummary: () => ({ isPending: false, isError: false, refetch: jest.fn() }),
 }));
 jest.mock('expo-image', () => ({ Image: 'Image' }));
 jest.mock('../queries/storeViewQueries', () => ({

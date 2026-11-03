@@ -5,6 +5,10 @@ import { useStoreViewPage } from '../queries/storeViewQueries';
 import { clearStoreViewFilterPreferences, createStoreViewFilterSession } from '../state/storeViewFilterPreference';
 
 jest.mock('../queries/storeViewQueries', () => ({ useStoreViewPage: jest.fn() }));
+jest.mock('expo-router', () => ({ useFocusEffect: jest.fn() }));
+jest.mock('../queries/storeViewSummaryQueries', () => ({
+    useStoreViewSummary: () => ({ isPending: false, isError: false, refetch: jest.fn() }),
+}));
 jest.mock('../screens/StoreViewAccessBoundary', () => ({ StoreViewAccessBoundary: 'Boundary' }));
 jest.mock('../components/StoreViewCard', () => ({ StoreViewCard: 'Card' }));
 jest.mock('@/components/ui/ScreenBackground', () => ({ ScreenBackground: ({ children }: any) => children }));

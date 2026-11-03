@@ -10,6 +10,7 @@ import { STORE_VIEW_FILTERS } from '../contracts/storeViewContracts';
 import { useStoreViewManagementCommands } from '../queries/storeViewManagementQueries';
 import { useStoreViewMediaCommands } from '../queries/storeViewMediaCommands';
 import { storeViewKeys } from '../queries/storeViewQueries';
+import { storeViewSummaryKeys } from '../queries/storeViewSummaryQueries';
 import { storeViewMediaKeys } from '../queries/storeViewMediaQueries';
 import { storeViewHistoryKeys } from '../queries/storeViewHistoryQueries';
 import { storeViewFamilyPrefixes } from '../queries/storeViewInvalidation';
@@ -58,6 +59,9 @@ function seedQueries(wrapper: (props: PropsWithChildren) => ReactElement) {
     const keys: ReadonlyArray<readonly unknown[]> = [
         ...STORE_VIEW_FILTERS.map((filter) => storeViewKeys.page(identity, filter)),
         storeViewKeys.detail(identity, inventoryId),
+        storeViewSummaryKeys.summary(identity),
+        storeViewSummaryKeys.summary(otherIdentity),
+        storeViewSummaryKeys.summary(unresolved),
         storeViewMediaKeys.detail(identity, inventoryId),
         storeViewHistoryKeys.detail(identity, inventoryId),
         ownerInventoryReadKeys.list(identity, {}),
@@ -89,6 +93,11 @@ function seedQueries(wrapper: (props: PropsWithChildren) => ReactElement) {
     );
     return {
         calls: (queryKey: readonly unknown[]) => counters.get(JSON.stringify(queryKey))!.mock.calls.length,
+        expectSummaryRefresh: (times = 2) => {
+            expect(counters.get(JSON.stringify(storeViewSummaryKeys.summary(identity)))).toHaveBeenCalledTimes(times);
+            expect(counters.get(JSON.stringify(storeViewSummaryKeys.summary(otherIdentity)))).toHaveBeenCalledTimes(1);
+            expect(counters.get(JSON.stringify(storeViewSummaryKeys.summary(unresolved)))).toHaveBeenCalledTimes(1);
+        },
         unmount: () => tree.unmount(),
     };
 }
@@ -131,6 +140,7 @@ describe('Slice 0a §3.1 identity-scoped Store View invalidation', () => {
         expect(seeded.calls(storeViewKeys.detail(otherIdentity, otherInventoryId))).toBe(1);
         expect(seeded.calls(ownerInventoryReadKeys.list(otherIdentity, {}))).toBe(1);
         expect(seeded.calls(storeViewKeys.page(unresolved, 'all'))).toBe(1);
+        seeded.expectSummaryRefresh();
         hook.unmount();
         seeded.unmount();
         client.clear();
@@ -150,6 +160,7 @@ describe('Slice 0a §3.1 identity-scoped Store View invalidation', () => {
         expect(seeded.calls(storeViewKeys.detail(identity, inventoryId))).toBeGreaterThan(1);
         expect(seeded.calls(ownerInventoryReadKeys.list(identity, {}))).toBeGreaterThan(1);
         expect(seeded.calls(storeViewKeys.detail(otherIdentity, otherInventoryId))).toBe(1);
+        seeded.expectSummaryRefresh();
         hook.unmount();
         seeded.unmount();
         client.clear();
@@ -172,6 +183,7 @@ describe('Slice 0a §3.1 identity-scoped Store View invalidation', () => {
         expect(seeded.calls(ownerInventoryReadKeys.list(identity, {}))).toBeGreaterThan(1);
         expect(seeded.calls(storeViewMediaKeys.detail(otherIdentity, otherInventoryId))).toBe(1);
         expect(seeded.calls(storeViewHistoryKeys.detail(unresolved, 'unresolved'))).toBe(1);
+        seeded.expectSummaryRefresh();
         hook.unmount();
         seeded.unmount();
         client.clear();
@@ -190,6 +202,7 @@ describe('Slice 0a §3.1 identity-scoped Store View invalidation', () => {
             seeded.calls(storeViewMediaKeys.detail(identity, inventoryId)),
         ).toBeGreaterThan(1));
         expect(seeded.calls(ownerInventoryReadKeys.list(identity, {}))).toBeGreaterThan(1);
+        seeded.expectSummaryRefresh();
         await act(async () => hook.result.current.mutateAsync({
             kind: 'replace', inventoryId, inventoryVersion: 6,
             capabilityId: '00000000-0000-4000-8000-000000000005',
@@ -200,6 +213,7 @@ describe('Slice 0a §3.1 identity-scoped Store View invalidation', () => {
             seeded.calls(storeViewHistoryKeys.detail(identity, inventoryId)),
         ).toBeGreaterThan(2));
         expect(seeded.calls(storeViewMediaKeys.detail(otherIdentity, otherInventoryId))).toBe(1);
+        seeded.expectSummaryRefresh(3);
         hook.unmount();
         seeded.unmount();
         client.clear();
