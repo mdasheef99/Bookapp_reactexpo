@@ -184,7 +184,7 @@ export function bootstrapOpenLibraryOnly(environment: Record<string, string | un
   // the real loader, including its credential/target validation; never cast a
   // fabricated configuration or implement a bootstrap fallback in this helper.
   const configuration = loadMetadataWorkerEnvironment({
-    ...environment, PHASE9_METADATA_PROVIDER_MODE: 'open_library',
+    ...environment, PHASE9_METADATA_PROVIDER_MODE: 'real',
   });
   return createMetadataProductionDependencies(configuration, fetcher);
 }

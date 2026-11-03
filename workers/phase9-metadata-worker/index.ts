@@ -4,7 +4,9 @@ import { OPEN_LIBRARY_CAPABILITY } from '../../supabase/functions/_shared/imageI
 import { createGoogleBooksDescriptor } from '../../supabase/functions/_shared/imageInventory/metadata/googleBooks/descriptor';
 import { createOpenLibraryV1Descriptor } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary/descriptor';
 import type { ProviderDescriptor } from '../../supabase/functions/_shared/imageInventory/metadata/providerDescriptor';
+import type { RegistrySnapshot } from '../../supabase/functions/_shared/imageInventory/metadata/providerDescriptor';
 import { providerManifestKey } from '../../supabase/functions/_shared/imageInventory/metadata/providerDescriptor';
+import { OPEN_LIBRARY_ADAPTER_VERSION } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary/normalizer';
 import { parseProviderConfigurationSnapshot } from '../../supabase/functions/_shared/imageInventory/runtime/providerConfiguration';
 import { GoogleBooksAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/googleBooks/adapter';
 import { executeEditionOptionsLookup } from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptions';
@@ -89,6 +91,35 @@ async function resolveSupersededEditionJob(
     // Keep the stale outcome when claim-fenced cleanup cannot be confirmed.
     return false;
   }
+}
+
+// Binds the verified per-job registry policyVersion to the installed OL
+// descriptor. Only a row the resolver may route can confer readiness: the
+// single enabled metadata row for open_library@1.0.0 whose accepted versions
+// contain it. Zero or more-than-one qualifying rows bind nothing, so a
+// disabled, non-metadata, or duplicate row never makes an entry ready, and
+// election and completion behaviour are unchanged.
+export function bindVerifiedRegistryPolicy(
+  installed: ReadonlyMap<string, ProviderDescriptor>,
+  registry: RegistrySnapshot,
+  openLibrary: OpenLibraryEditionOptionsAdapter | null,
+): ReadonlyMap<string, ProviderDescriptor> {
+  if (openLibrary === null) return installed;
+  const qualifying = registry.providers.filter((row) =>
+    row.providerKind === 'metadata'
+    && row.enabled
+    && row.adapterKey === 'open_library'
+    && row.adapterVersion === OPEN_LIBRARY_ADAPTER_VERSION
+    && row.acceptedAdapterVersions.includes(OPEN_LIBRARY_ADAPTER_VERSION));
+  if (qualifying.length !== 1) return installed;
+  const row = qualifying[0];
+  const key = providerManifestKey(row.adapterKey, row.adapterVersion);
+  if (!installed.has(key)) return installed;
+  const next = new Map(installed);
+  next.set(key, createOpenLibraryV1Descriptor({
+    adapter: openLibrary, policyVersion: row.policyVersion,
+  }));
+  return next;
 }
 
 async function processRoutedClaim(
@@ -220,10 +251,21 @@ async function processRoutedClaim(
   const registry = parseProviderConfigurationSnapshot(
     (configuration as { data?: unknown }).data,
   );
+  // U3 narrow binding: the boot manifest carries no per-job registry policy,
+  // so OL retention readiness is false there (openLibrary/descriptor.ts
+  // requires a non-null policy version). Rebind the OL descriptor with this
+  // job's verified registry policyVersion before routing. The version comes
+  // from the parsed service-only snapshot (a validated safe integer >= 1),
+  // never a dummy; the adapter is the production fallback instance, never a
+  // stub. Unbound entries (Google without a key) stay not-ready and the
+  // resolver still refuses them; no manifest entry is forced ready.
+  const boundInstalled = bindVerifiedRegistryPolicy(
+    installed, registry, dependencies.editionFallback ?? null,
+  );
   // Automatic and explicit share the same resolved route; invalid routes
   // throw before any egress. Existing context/claim checks are unchanged.
   // Evidence is absent here, so resumed is always null: fresh routing only.
-  const route = editionProviderRoute({ context, registry, installed });
+  const route = editionProviderRoute({ context, registry, installed: boundInstalled });
   if ('manual' in route) {
     if (context.purpose === 'edition_options' && dependencies.editionOptionsBoundary) {
       return completionResult(await dependencies.editionOptionsBoundary.fail({
@@ -375,8 +417,9 @@ async function processMetadataClaim(
     if (dependencies.installed !== undefined) {
       return await processRoutedClaim(claim,dependencies,context,dependencies.installed);
     }
-    // Pre-8b compatibility for callers without an installed manifest (legacy
-    // fixtures and production until U3 binds runnable descriptors). Owned by
+    // Fixture mode and old callers without an installed manifest keep the
+    // legacy capability route. Real mode always supplies the manifest from
+    // production bootstrap, so production never takes this path. Owned by
     // later units; the routed path above is the 8b behavior.
     const job: MetadataJobContext = context;
     const google = dependencies.primary instanceof GoogleBooksAdapter ? dependencies.primary : null;

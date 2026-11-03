@@ -23,6 +23,8 @@ import {
   UUID_CANDIDATE_ID,
 } from './fixtures/phase9/editionOptionsWorker';
 import { OpenLibraryEditionOptionsAdapter } from '../_shared/imageInventory/metadata/openLibrary';
+import { createOpenLibraryV1Descriptor } from '../_shared/imageInventory/metadata/openLibrary/descriptor';
+import { bindVerifiedRegistryPolicy } from '../../../workers/phase9-metadata-worker';
 import { decodeMetadataJobContext } from '../_shared/imageInventory/runtime/metadataJobContext';
 import { editionOptionsFence } from '../_shared/imageInventory/runtime/metadataEditionOptionsBoundary';
 import {
@@ -428,5 +430,66 @@ describe('Phase 9 provider route worker evidence and binding', () => {
     const names = subject.fixture.calls.map((call) => call.name);
     expect(names).not.toContain('phase9_register_structural_metadata_attempt');
     expect(subject.gets()).toBe(0);
+  });
+
+  // U3 fix pass 1: the per-job OL policy binding confers readiness only from
+  // a row the resolver may route. Each negative below carries a positive
+  // control differing only in the defect.
+  const olFallbackAdapter = () => new OpenLibraryEditionOptionsAdapter({
+    fetcher: async () => new Response(JSON.stringify({}), {
+      headers: { 'content-type': 'application/json' },
+    }),
+    timeoutMs: 1000, maxResponseBytes: 64000, retentionAllowed: true,
+  });
+  const unboundInstalled = () => new Map([
+    ['open_library@1.0.0', createOpenLibraryV1Descriptor({ adapter: null, policyVersion: null })],
+  ]);
+  const bindOl = (snapshot: unknown) => bindVerifiedRegistryPolicy(
+    unboundInstalled(),
+    parseProviderConfigurationSnapshot(snapshot),
+    olFallbackAdapter(),
+  );
+  const olReadiness = (snapshot: unknown) =>
+    bindOl(snapshot).get('open_library@1.0.0')?.retentionReady('edition_options') === true;
+
+  it('binds retention readiness only from the single eligible metadata OL row', () => {
+    expect(unboundInstalled().get('open_library@1.0.0')
+      ?.retentionReady('edition_options')).toBe(false);
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { policyVersion: 7 }),
+    ]))).toBe(true);
+  });
+
+  it('never confers readiness from a non-metadata OL row', () => {
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { providerKind: 'alias', policyVersion: 7 }),
+    ]))).toBe(false);
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { policyVersion: 7 }),
+    ]))).toBe(true);
+  });
+
+  it('never confers readiness from a disabled OL row', () => {
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', {
+        enabled: false, matchingAllowed: false, storageAllowed: false,
+        automaticLookupAllowed: false, explicitSearchAllowed: false,
+        automaticRole: null, automaticOrder: null,
+        explicitRole: null, explicitOrder: null, policyVersion: 7,
+      }),
+    ]))).toBe(false);
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { policyVersion: 7 }),
+    ]))).toBe(true);
+  });
+
+  it('binds nothing when duplicate OL rows qualify', () => {
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { policyVersion: 7 }),
+      providerConfigurationRow('open_library', '1.0.0', { policyVersion: 9 }),
+    ]))).toBe(false);
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { policyVersion: 7 }),
+    ]))).toBe(true);
   });
 });

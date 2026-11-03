@@ -29,12 +29,39 @@ when the worker exits. Use a separate, minimal environment for the invoker so it
 The worker requires `SUPABASE_URL` with the exact origin
 `https://ahntbtktjjmvfosgkmgn.supabase.co`, the matching service-role credential,
 `PHASE9_METADATA_WORKER_ID`, `PHASE9_METADATA_WORKER_INGRESS_TOKEN`,
-`PHASE9_WORKER_HOST`, `PHASE9_WORKER_PORT`, `PHASE9_WORKER_CONCURRENCY=1`, and,
-for real provider mode, `PHASE9_METADATA_PROVIDER_MODE=google_books` plus
-`PHASE9_GOOGLE_BOOKS_API_KEY`, `PHASE9_GOOGLE_BOOKS_TIMEOUT_MS`, and
-`PHASE9_GOOGLE_BOOKS_MAX_RESPONSE_BYTES`. Metadata has no peer worker and does
-not accept `PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256`; the media/vision mutual
+`PHASE9_WORKER_HOST`, `PHASE9_WORKER_PORT`, `PHASE9_WORKER_CONCURRENCY=1`, and
+`PHASE9_METADATA_PROVIDER_MODE`, which accepts exactly `fixture` (the default),
+`real`, or the legacy `google_books` alias. The alias keeps the complete Google
+set: key, timeout and max-bytes are all required with their existing bounds.
+Keyless Open Library-only boot uses the `real` spelling. Any other mode is
+rejected, as is any unknown `PHASE9_*`/`SUPABASE_*` name. Provider transport
+reuses only the existing `PHASE9_GOOGLE_BOOKS_API_KEY`,
+`PHASE9_GOOGLE_BOOKS_TIMEOUT_MS`, and `PHASE9_GOOGLE_BOOKS_MAX_RESPONSE_BYTES`;
+no new environment variable names exist and no contact input is accepted here.
+Metadata has no peer worker and does not accept
+`PHASE9_PEER_WORKER_INGRESS_TOKEN_SHA256`; the media/vision mutual
 peer-distinctness requirement remains unchanged.
+
+In `real` mode the Google key is optional, and a whitespace-only Google value
+counts as absent. Without a key the worker boots an
+Open Library-only runtime: Google reports credentials-not-ready, so no Google
+egress occurs, while startup proceeds. With a key present, the timeout and
+max-bytes values stay required with their existing bounds (100–300000 ms,
+16384–2000000 bytes); transport values without a key are rejected, as is any
+Google value in `fixture` mode. Open Library needs no credential and keeps its
+in-code transport limits. The safe contact identity comes from the registry
+protection policy, never from the environment: no contact email or other
+contact detail may be added anywhere.
+
+The production service hands the worker the installed descriptor manifest
+(`google_books@1.0.0`, `open_library@1.0.0`; `open_library@2.0.0` arrives in a
+later unit) unconditionally in `real` mode. The registry snapshot plus the
+manifest resolver elect the provider per job; bootstrap performs no startup
+database or network mutation and contains no provider-specific route branch.
+Google is the automatic primary in 8b. After the 8c switch disables Google for
+automatic use, rollback is recovery to the recorded 8b worker build with Google
+disabled in the registry — never a v1 relabel. This 8b worker build is the
+recorded rollback floor for that post-8c state.
 
 On Windows, use a dedicated terminal and hidden prompts rather than literal
 secret assignments that enter shell history. This pattern keeps values scoped to
@@ -56,7 +83,10 @@ try {
   $env:PHASE9_WORKER_HOST = '127.0.0.1'
   $env:PHASE9_WORKER_PORT = '8093'
   $env:PHASE9_WORKER_CONCURRENCY = '1'
-  $env:PHASE9_METADATA_PROVIDER_MODE = 'google_books'
+  $env:PHASE9_METADATA_PROVIDER_MODE = 'real'
+  # Google-primary configuration (`real` or the `google_books` alias): keep all
+  # three lines. Open Library-only boot (`real` only): omit all three lines
+  # (no Google egress, startup still proceeds).
   $env:PHASE9_GOOGLE_BOOKS_API_KEY = Read-ProcessSecret 'Google Books API key'
   $env:PHASE9_GOOGLE_BOOKS_TIMEOUT_MS = '10000'
   $env:PHASE9_GOOGLE_BOOKS_MAX_RESPONSE_BYTES = '262144'

@@ -75,6 +75,17 @@ export type VisionWorkerEnvironment = WorkerNetworkEnvironment & (
 export type MetadataWorkerEnvironment = WorkerNetworkEnvironment & (
   | Readonly<{ providerMode: 'fixture' }>
   | Readonly<{
+    providerMode: 'real';
+    apiKey: string | null;
+    timeoutMs: number | null;
+    maxResponseBytes: number | null;
+  }>
+  // Bounded legacy alias for one release: 'google_books' keeps exactly
+  // today's meaning — the complete Google set is required with today's
+  // bounds — and then boots like `real` with a key. Only `real` may boot
+  // keyless (OL-only). The supplied spelling is preserved so existing
+  // Google-primary configuration keeps today's behaviour.
+  | Readonly<{
     providerMode: 'google_books';
     apiKey: string;
     timeoutMs: number;
@@ -231,14 +242,40 @@ export function loadMetadataWorkerEnvironment(
       || environment.PHASE9_GOOGLE_BOOKS_MAX_RESPONSE_BYTES) invalid();
     return { ...common, providerMode };
   }
-  if (providerMode !== 'google_books') invalid();
-  const apiKey = validateSecret(required(environment, 'PHASE9_GOOGLE_BOOKS_API_KEY'));
-  const timeoutText = required(environment, 'PHASE9_GOOGLE_BOOKS_TIMEOUT_MS');
-  const bytesText = required(environment, 'PHASE9_GOOGLE_BOOKS_MAX_RESPONSE_BYTES');
-  if (!/^[1-9][0-9]{2,5}$/u.test(timeoutText)
-    || !/^[1-9][0-9]{4,6}$/u.test(bytesText)) invalid();
-  const timeoutMs = Number(timeoutText);
-  const maxResponseBytes = Number(bytesText);
+  // Bounded legacy alias (Owner ruling, U3 fix pass 1): 'google_books' keeps
+  // exactly today's meaning — the complete Google set (key + timeout +
+  // max-bytes, today's bounds) is required — and then boots like `real` with
+  // a key. Only `real` may boot keyless (OL-only): an absent key means Google
+  // is not ready (no Google egress) without preventing startup. A whitespace-
+  // only Google value counts as absent. No OL env names: an OL-only boot uses
+  // the bootstrap's OL-only operational defaults (bootstrap.ts).
+  if (providerMode === 'google_books') {
+    const apiKey = validateSecret(required(environment, 'PHASE9_GOOGLE_BOOKS_API_KEY'));
+    const timeoutText = required(environment, 'PHASE9_GOOGLE_BOOKS_TIMEOUT_MS');
+    const bytesText = required(environment, 'PHASE9_GOOGLE_BOOKS_MAX_RESPONSE_BYTES');
+    if (!/^[1-9][0-9]{2,5}$/u.test(timeoutText)
+      || !/^[1-9][0-9]{4,6}$/u.test(bytesText)) invalid();
+    const timeoutMs = Number(timeoutText);
+    const maxResponseBytes = Number(bytesText);
+    if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 300_000
+      || !Number.isInteger(maxResponseBytes)
+      || maxResponseBytes < 16_384 || maxResponseBytes > 2_000_000) invalid();
+    return { ...common, providerMode, apiKey, timeoutMs, maxResponseBytes };
+  }
+  if (providerMode !== 'real') invalid();
+  const rawApiKey = environment.PHASE9_GOOGLE_BOOKS_API_KEY?.trim() || null;
+  const rawTimeoutText = environment.PHASE9_GOOGLE_BOOKS_TIMEOUT_MS?.trim() || null;
+  const rawBytesText = environment.PHASE9_GOOGLE_BOOKS_MAX_RESPONSE_BYTES?.trim() || null;
+  if (rawApiKey === null) {
+    if (rawTimeoutText !== null || rawBytesText !== null) invalid();
+    return { ...common, providerMode, apiKey: null, timeoutMs: null, maxResponseBytes: null };
+  }
+  if (rawTimeoutText === null || rawBytesText === null) invalid();
+  const apiKey = validateSecret(rawApiKey);
+  if (!/^[1-9][0-9]{2,5}$/u.test(rawTimeoutText)
+    || !/^[1-9][0-9]{4,6}$/u.test(rawBytesText)) invalid();
+  const timeoutMs = Number(rawTimeoutText);
+  const maxResponseBytes = Number(rawBytesText);
   if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 300_000
     || !Number.isInteger(maxResponseBytes)
     || maxResponseBytes < 16_384 || maxResponseBytes > 2_000_000) invalid();
