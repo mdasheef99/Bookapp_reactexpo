@@ -492,4 +492,48 @@ describe('Phase 9 provider route worker evidence and binding', () => {
       providerConfigurationRow('open_library', '1.0.0', { policyVersion: 7 }),
     ]))).toBe(true);
   });
+
+  it('never confers readiness from an OL row with matchingAllowed:false', () => {
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { matchingAllowed: false, policyVersion: 7 }),
+    ]))).toBe(false);
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { policyVersion: 7 }),
+    ]))).toBe(true);
+  });
+
+  it('never confers readiness from an OL row with storageAllowed:false', () => {
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { storageAllowed: false, policyVersion: 7 }),
+    ]))).toBe(false);
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { policyVersion: 7 }),
+    ]))).toBe(true);
+  });
+
+  it('never confers readiness from an OL row without an explicit role', () => {
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', {
+        explicitRole: null, explicitOrder: null, policyVersion: 7,
+      }),
+    ]))).toBe(false);
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { policyVersion: 7 }),
+    ]))).toBe(true);
+  });
+
+  it('never confers readiness from an OL row whose version tuple diverges', () => {
+    const base = (providerConfigurationRow('open_library', '1.0.0') as {
+      versionContracts: Record<string, Record<string, string>>;
+    }).versionContracts['1.0.0'];
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', {
+        policyVersion: 7,
+        versionContracts: { '1.0.0': { ...base, capabilityVersion: 'open-library-capability-v9' } },
+      }),
+    ]))).toBe(false);
+    expect(olReadiness(providerConfigurationSnapshot([
+      providerConfigurationRow('open_library', '1.0.0', { policyVersion: 7 }),
+    ]))).toBe(true);
+  });
 });

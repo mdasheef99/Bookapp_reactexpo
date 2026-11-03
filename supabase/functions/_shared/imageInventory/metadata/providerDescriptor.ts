@@ -251,7 +251,7 @@ const CONTRACT_TUPLE_KEYS = [
   'normalizerVersion', 'payloadSchemaVersion', 'lookupSchemaVersion',
 ] as const;
 
-function tupleMatches(
+export function tupleMatches(
   descriptor: ProviderDescriptor,
   tuple: unknown,
 ): boolean {

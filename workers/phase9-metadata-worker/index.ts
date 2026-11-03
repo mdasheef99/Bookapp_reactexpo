@@ -5,7 +5,7 @@ import { createGoogleBooksDescriptor } from '../../supabase/functions/_shared/im
 import { createOpenLibraryV1Descriptor } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary/descriptor';
 import type { ProviderDescriptor } from '../../supabase/functions/_shared/imageInventory/metadata/providerDescriptor';
 import type { RegistrySnapshot } from '../../supabase/functions/_shared/imageInventory/metadata/providerDescriptor';
-import { providerManifestKey } from '../../supabase/functions/_shared/imageInventory/metadata/providerDescriptor';
+import { providerManifestKey, tupleMatches } from '../../supabase/functions/_shared/imageInventory/metadata/providerDescriptor';
 import { OPEN_LIBRARY_ADAPTER_VERSION } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary/normalizer';
 import { parseProviderConfigurationSnapshot } from '../../supabase/functions/_shared/imageInventory/runtime/providerConfiguration';
 import { GoogleBooksAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/googleBooks/adapter';
@@ -94,26 +94,38 @@ async function resolveSupersededEditionJob(
 }
 
 // Binds the verified per-job registry policyVersion to the installed OL
-// descriptor. Only a row the resolver may route can confer readiness: the
-// single enabled metadata row for open_library@1.0.0 whose accepted versions
-// contain it. Zero or more-than-one qualifying rows bind nothing, so a
-// disabled, non-metadata, or duplicate row never makes an entry ready, and
-// election and completion behaviour are unchanged.
+// descriptor. A row qualifies only when it is an enabled metadata
+// open_library@1.0.0 row whose accepted versions contain it, with
+// matchingAllowed, storageAllowed, explicitSearchAllowed === true,
+// explicitRole !== null, and whose versionContracts entry for 1.0.0 matches
+// the installed OL v1 descriptor tuple. Zero or more-than-one qualifying rows
+// bind nothing, as does a missing installed OL v1 entry (fail closed).
+// Complete route election and the remaining descriptor checks stay
+// resolver-owned (e.g. a secondary without a primary still cannot route), so
+// a bound row is not guaranteed routable; election and completion behaviour
+// are unchanged.
 export function bindVerifiedRegistryPolicy(
   installed: ReadonlyMap<string, ProviderDescriptor>,
   registry: RegistrySnapshot,
   openLibrary: OpenLibraryEditionOptionsAdapter | null,
 ): ReadonlyMap<string, ProviderDescriptor> {
   if (openLibrary === null) return installed;
+  const key = providerManifestKey('open_library', OPEN_LIBRARY_ADAPTER_VERSION);
+  const installedDescriptor = installed.get(key);
+  if (installedDescriptor === undefined) return installed;
   const qualifying = registry.providers.filter((row) =>
     row.providerKind === 'metadata'
     && row.enabled
+    && row.matchingAllowed
+    && row.storageAllowed
+    && row.explicitSearchAllowed === true
+    && row.explicitRole !== null
     && row.adapterKey === 'open_library'
     && row.adapterVersion === OPEN_LIBRARY_ADAPTER_VERSION
-    && row.acceptedAdapterVersions.includes(OPEN_LIBRARY_ADAPTER_VERSION));
+    && row.acceptedAdapterVersions.includes(OPEN_LIBRARY_ADAPTER_VERSION)
+    && tupleMatches(installedDescriptor, row.versionContracts[OPEN_LIBRARY_ADAPTER_VERSION]));
   if (qualifying.length !== 1) return installed;
   const row = qualifying[0];
-  const key = providerManifestKey(row.adapterKey, row.adapterVersion);
   if (!installed.has(key)) return installed;
   const next = new Map(installed);
   next.set(key, createOpenLibraryV1Descriptor({
