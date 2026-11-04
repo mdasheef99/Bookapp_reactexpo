@@ -1,6 +1,9 @@
 # Marketplace current state
 
-Recorded state: 2026-11-02. Slice 8 package 8a ordered apply of M89..M93 to
+Recorded state: 2026-11-04. Slice 8 package 8b is built as 12 local commits
+(`db5434f..02a0f34`, branch `phase9/slice8-providers`); nothing is pushed or
+deployed, and migration M94 is a local file, not applied. Earlier, slice 8
+package 8a ordered apply of M89..M93 to
 the dev project `ahntbtktjjmvfosgkmgn` is done under the Owner's standing
 apply permission, after the review cycle (commit `ebb613c`, M93 sha256
 `80d496a173c9f6fe30f42d3714c0c787488ced2669024be18d2090c9bea34c5e`). The
@@ -13,8 +16,23 @@ dated evidence belongs in trackers.
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
-- Active slice/work unit: **slice 8, package 8a applied (M89..M93 live); next 8b worker**.
-- Completed milestone: **8a ordered apply of M89..M93 is applied** (2026-11-02).
+- Active slice/work unit: **slice 8, package 8b built locally (U1-U4, U6, U5
+  steps A/B1/B2); worker not deployed; M94 not applied**.
+- M94 `20261104000094_marketplace_phase9_automatic_worker_prerequisites.sql`
+  (231 lines, sha256 `a0b7de6288107a405852feda3cc392b718e988b7b557c1fd6b5a69d3153690e2`):
+  local file, NOT applied, no live version. It adds the fence reader
+  `phase9_automatic_edition_fence_v1` and the atomic preparation RPC
+  `phase9_prepare_automatic_metadata_v1`. The 8b worker calls the fence for
+  every automatic claim with no fallback, so **M94 must be applied before the
+  8b worker is deployed**; without it the worker fails closed (`stale_claim`,
+  no provider egress) and automatic processing stops.
+- Completed milestone: **8b built and committed locally** (2026-11-04; 12
+  local commits; not pushed, not deployed). Final whole-8b review done:
+  Luna (two passes), plus DeepSeek and Muse targeted units; fix round 2 committed
+  locally; final DeepSeek sweep clean apart from two fail-safe Lows (tracker 40). Record: [tracker 40](phase-9-image-inventory/trackers/40-package8b-worker-evidence.md);
+  [implementation log](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-11-04---slice-8-package-8b-worker-built-locally-m94-local-file-not-applied);
+  [ledger M94](phase-9-image-inventory/supporting/database-current-vs-target.md#2026-11-04-slice-8-package-8b-built-locally-m94-local-file-not-applied).
+- Earlier completed milestone: **8a ordered apply of M89..M93 is applied** (2026-11-02).
   Review cycle closed first (whole-8a review, LEGACY-LIVE-1/2 fixed in M93,
   final regression; [whole-8a record](phase-9-image-inventory/trackers/39-package8a5-contract-review.md#2026-11-02--whole-8a-review-of-m89m93-fixes-preflight-and-final-regression)).
   Apply record: [tracker 39 apply section](phase-9-image-inventory/trackers/39-package8a5-contract-review.md#2026-11-02--ordered-apply-of-m89m93-ledger-note-rows-and-post-apply-verification)
@@ -99,15 +117,21 @@ dated evidence belongs in trackers.
   8b worker deployed and before 8c.
 - Dev-server launch config `.claude/launch.json` (expo web on port 8081)
   was created for this test and is uncommitted.
-- Exact next authorized action: **check/recover stuck job 4ffe137d, then
-  start 8b worker** (adapter, validators, registry row). 8c switch
-  (includes the WHOLE-1 null-safe flag plus drain) and 02d prefill follow.
-  No `db push` (frozen).
+- Exact next authorized action: **Owner approval to apply M94, then deploy
+  the 8b worker.** Neither step is authorized by this file. No `db push`
+  (frozen).
+- Other gated actions, each needing its own Owner approval (none authorized
+  here): check or recover stuck job `4ffe137d-5ff5-4ef6-9a24-27a2911c027c`
+  (`in_progress`, attempt 5/5, lease expired 2026-10-12); push the 8b commits
+  and deploy the 8b worker only after M94 is applied; live smoke with the 8b
+  worker (the 2026-11-02 smoke covered the legacy path only); then 8c (protection
+  policy, WHOLE-1 null-safe flag, drain) and 02d prefill.
 
 ## Mutation authority now
 
-- This task authorized this documentation update only: no code, no
-  migrations, no git writes, no Supabase writes. The M89..M93 application
+- 2026-11-04: the Owner authorized finishing 8b and committing it locally
+  (code, the M94 migration file, docs and CODEBASE_MAP). No push, no
+  deployment, no Supabase, Storage or Render writes, and M94 not applied. The M89..M93 application
   above was performed under the Owner's standing apply permission
   (M89..M91 via `apply_migration`, M92/M93 by the Owner via the dashboard,
   ledger note rows Owner-approved); this session itself performs no
@@ -152,8 +176,24 @@ operational readback.
 
 ## Open items, blockers and residual risks
 
+- Blocker for the 8b deploy: M94 is not applied, and the worker fails closed
+  without it (release order above). Applying M94 and deploying the worker each
+  need Owner approval. The final whole-8b review and fix round 2 are recorded in tracker 40.
+- 8b residual risks (detail in [tracker 40](phase-9-image-inventory/trackers/40-package8b-worker-evidence.md#residual-risks-and-follow-ups)):
+  (1) terminal fallbacks use the legacy `phase9_fail_metadata_job`, which can
+  leave an M93 run row `running` or `unknown`; (2) a breaker refusal on a run
+  that already holds a lookup is terminal `policy_denied`, not retried;
+  (3) uncertain prepare, finish or complete states return manual without a
+  terminal write and may need operator recovery; (4) evidence without M94
+  lineage terminalizes as `policy_denied` (Low; only legacy mid-flight jobs at
+  deploy time); (5) the installed-automatic catch-all maps every escaping error
+  to `stale_claim`, which hides programming errors.
+- One scaffolding Jest test ("worker HTTP service rejects a second processing
+  request") failed once under full-suite load and passed in isolation; reviewers
+  judged it a 20 ms timing race unrelated to B2. It passed in the three later full
+  Phase 9 Jest runs (two by the fix session, one by the orchestrator).
 - M89..M93 are applied (live versions above); M92/M93 ledger rows are
-  note-only bookkeeping rows, not the migration SQL. Before 8b/8c:
+  note-only bookkeeping rows, not the migration SQL. Before the 8b deploy and 8c:
   check/recover the `metadata_enrich` candidate job `4ffe137d` (`in_progress`,
   attempt 5/5, lease expired 2026-10-12); the 02c-1 drain must handle the
   three stale August reservations.

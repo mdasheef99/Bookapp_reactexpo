@@ -1,3 +1,13 @@
+## 2026-11-04 - Slice 8 package 8b worker built locally; M94 local file not applied
+
+Package 8b (slice 8 automatic worker and provider replacement) is built as 12 local commits, `db5434f..02a0f34` on branch `phase9/slice8-providers` (85 files, +16964/-684). Nothing is pushed or deployed, and `db push` stays frozen. Units: package 4 tests (`d8477b5`), U1 (`8e47515`), U2 (`fb97eea`), package 4 fix 6 (`3c326ab`), U3 (`2c3df38`, `72357e5`, `6a6290e`), U4 (`9fd60d2`), U6 (`a52f2be`), U5 steps A/B1/B2 (`8d93685`, `620160b`, `02a0f34`).
+
+Migration M94 is a local file only: `supabase/migrations/20261104000094_marketplace_phase9_automatic_worker_prerequisites.sql` (231 lines, sha256 `a0b7de6288107a405852feda3cc392b718e988b7b557c1fd6b5a69d3153690e2`). It is NOT applied to any Supabase project and has no live version. Release order: M94 must be applied before the 8b worker is deployed, because the worker has no fallback and fails closed without it.
+
+The B2 review (Luna stopped on the Codex usage limit with no findings; Muse; paid DeepSeek; Haiku xhigh) produced confirmed items that were all fixed in one round by the same DeepSeek session. Orchestrator re-run after the fixes: worker tsc clean; Phase 9 Jest 1835 passed, 0 failed, 3 todo; PGlite `phase9AutomaticWorker` 18/18, `phase9AutomaticPreparation` 27/27, `phase9AutomaticEditionFence` 31/31. The native concurrency suite was not re-run for B2 (no SQL change in B2).
+
+Detail, unit list, verification limits and residual risks: [tracker 40](./40-package8b-worker-evidence.md). Ledger: [M94 row](../supporting/database-current-vs-target.md#2026-11-04-slice-8-package-8b-built-locally-m94-local-file-not-applied). Final whole-8b review and fix round 2: see tracker 40 (Luna two passes; DeepSeek and Muse targeted units; fixes L1, L2 and D1–D7; Phase 9 Jest 1840/0; PGlite 85/85). Docs validator: M94 was added to the authorized local forward-file list in `validate-phase9-migration-set.ps1`; `PHASE9_CONTINUITY_CHECK=PASS`. Mutation authority this session: none (no Supabase, Storage, deployment or push). Next authorized action: Owner approval to apply M94, then deploy the 8b worker; see [ACTIVE.md](../../ACTIVE.md).
+
 ## 2026-10-31 - Slice 8 package 8a-2 provider validation file complete (not applied)
 
 Phase 9 / slice 8 (Open Library first, replaceable providers) remains active. Branch `phase9/slice8-providers` holds the 8a-2 migration file locally; it was not committed at the time of writing (the orchestrator commits it after this docs pass); nothing is pushed.

@@ -104,7 +104,7 @@ manual equivalent; it reads `PHASE9_<SERVICE>_WORKER_URL` and
 | --- | --- |
 | `phase9-media-validation-worker` | Validate, re-encode and strip uploaded images (ImageMagick WASM); also runs media-output cleanup (`runtime/mediaOutputCleanup.ts`), which removes abandoned Storage objects |
 | `phase9-vision-analysis-worker` | Read book spines from images (Gemini, or recorded fixtures) |
-| `phase9-metadata-worker` | Automatic enrichment uses Google Books. Open Library is used only for explicit Owner edition searches (`edition_options` jobs for the edition picker); its adapter rejects automatic lookup |
+| `phase9-metadata-worker` | Automatic enrichment uses Google Books as primary. Open Library 1.0.0 serves explicit Owner edition searches (`edition_options` jobs for the edition picker); Open Library 2.0.0 can also run automatic lookup, but only when its registry row names it automatic primary and carries a protection policy |
 | `phase9-publication-worker` | Retry public listing publication |
 | `phase9-runtime` | Shared environment, HTTP and request-security helpers |
 
@@ -112,15 +112,16 @@ manual equivalent; it reads `PHASE9_<SERVICE>_WORKER_URL` and
 
 Paths below are relative to `supabase/functions/_shared/imageInventory/` unless noted.
 
-- **Worker entry:** `workers/phase9-metadata-worker/index.ts` — claims jobs, loads fenced context and dispatches by purpose; `bootstrap.ts` installs adapters and the SQL boundary.
-- **Provider choice:** `workers/phase9-metadata-worker/editionProviderRoute.ts` — explicit-search routing from registry policy, retention permission and resumed provider lineage.
+- **Worker entry:** `workers/phase9-metadata-worker/index.ts` — claims jobs, loads fenced context and dispatches by purpose; `bootstrap.ts` installs adapters, the installed-descriptor manifest (`createInstalledDescriptorManifest`) and the SQL boundary. `getWorkerProtectionState` holds the process-local pacing/breaker state per provider.
+- **Provider choice:** `metadata/providerDescriptor.ts` defines provider descriptors, the strict result v2 and `resolveProviderRoute`; `workers/phase9-metadata-worker/editionProviderRoute.ts` applies it from the registry snapshot, installed descriptors and resumed lineage (for automatic jobs, the lineage read from the automatic fence).
 - **Adapters:** `metadata/googleBooks/` and `metadata/openLibrary/` — bounded HTTP, decoding and normalization behind the shared contract.
+- **Provider HTTP and protection:** `metadata/providerHttp.ts` (`createProviderHttpPort`) registers and fences every fan-out GET; `runtime/providerProtection.ts` supplies the start permit (pacing), the circuit breaker and `isBreakerFailure` (which outcomes count as breaker failures; a 429 never does). Order: permit → breaker → register/fence → GET.
 - **Shared contract:** `metadata/providerAdapter.ts` validates provider-neutral outcomes; `routing.ts` defines sequential primary/secondary routing; `queryIdentity.ts` builds normalized query and provider-cache identities.
-- **Automatic enrichment:** `runtime/metadataProductionComposition.ts` — local resolution → automatic cache/coalescing → usage reservation and provider attempt → coherent snapshot or manual fallback; `metadataProductionGateway.ts` supplies RPCs.
+- **Automatic enrichment:** `runtime/metadataProductionComposition.ts` resolves local first, then hands automatic jobs to `runtime/metadataAutomaticExecution.ts`: recover a saved receipt → cache → SQL prepare (admission and coalescing) → permit/breaker → lookup, reservation and attempt → provider call → SQL run finish (retry decision) → one atomic completion command. Helpers: `metadataAutomaticEditionFence.ts` (fence read and RPC error class), `metadataAutomaticPreparation.ts`, `metadataAutomaticCompletion.ts` (command, receipt, recovery). `metadataProductionGateway.ts` supplies RPCs. `workers/phase9-metadata-worker/legacyAutomaticRetry.ts` reads the original receipt for the single bounded NULL-policy legacy resume.
 - **Explicit edition options:** `runtime/metadataEditionOptions.ts` — recover saved completion → try edition-list cache → on miss reserve usage and call the routed provider → complete options. It never selects an edition for the Owner.
 - **SQL boundary:** `runtime/metadataEditionOptionsBoundary.ts` defines the worker port; `metadataEditionOptionsRpc.ts` transports recovery, cache reuse, companion-aware completion and failure.
 - **Catalogue companions:** `contracts/catalogueWrite.ts` validates separate provider facts; `metadata/openLibrary/catalogueWrite.ts` extracts them beside option rows. SQL completion owns catalogue writes and cache publication.
-- **Provider registry:** `public.phase9_provider_registry` — enablement, adapter identity, matching/storage/display permissions, retention and source notes; checked by job context and SQL admission. It does not install adapters or replace bootstrap wiring.
+- **Provider registry:** `public.phase9_provider_registry` — enablement, adapter identity, matching/storage/display permissions, explicit and automatic roles, protection policy (pacing/breaker numbers; NULL keeps the legacy path), retention and source notes; checked by job context and SQL admission. It does not install adapters or replace bootstrap wiring.
 
 | RPC family | Used for |
 | --- | --- |
@@ -128,6 +129,7 @@ Paths below are relative to `supabase/functions/_shared/imageInventory/` unless 
 | `phase9_owner_candidate_edition_choices*`, `phase9_request_candidate_edition_options*`, `phase9_set_candidate_isbn*`, `phase9_select_candidate_edition*` | Read choices, request search, save typed ISBN and confirm selection; `runtime/ownerEditionPickerGateway.ts` |
 | `claim_phase9_metadata_jobs`, `phase9_metadata_job_context*`, `phase9_register_*`, `phase9_reserve_metadata_usage`, `phase9_finalize_*` | Worker claims, authority, logical lookups/attempts, reservations and physical-call accounting |
 | `phase9_*local_metadata_match`, `phase9_*metadata_cache*`, `phase9_select_structural_metadata_snapshot` | Automatic local/cache reuse and accepted metadata snapshots |
+| `phase9_automatic_edition_fence_v1`, `phase9_prepare_automatic_metadata_v1`, `phase9_begin_automatic_provider_run_v1`, `phase9_finish_automatic_provider_run_v1`, `phase9_schedule_automatic_provider_recheck_v1`, `phase9_complete_automatic_metadata_v1`, `phase9_recover_automatic_metadata_v1` | Automatic path: fence read, admission/coalescing, provider-run rounds and retry, atomic completion and receipt recovery (fence and prepare come from migration `20261104000094`) |
 | `phase9_recover_candidate_edition_options*`, `phase9_reuse_candidate_edition_cache*`, `phase9_complete_candidate_edition_options*`, `phase9_fail_candidate_edition_options*` | Service-only explicit-search recovery, edition-list reuse, atomic completion and failure |
 | `marketplace_sec.phase9_catalogue_*`, `marketplace_sec.phase9_edition_*` | Private SQL helpers for admission, identity, Add linkage, selection effects, statistics, cache scope/payload and receipts; reached through controlled RPCs |
 
