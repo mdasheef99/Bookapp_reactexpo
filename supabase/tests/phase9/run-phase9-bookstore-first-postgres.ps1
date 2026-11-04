@@ -12,14 +12,14 @@ param(
   [string]$ProviderPrefix = 'm88',
   [ValidateSet('', 'duplicate-confirmation', 'media-correction', 'edition-picker', 'open-library',
     'bookstore-first', 'storefront-detail', 'catalogue-link', 'lean-catalogue-identity',
-    'edition-first-save', 'lean-catalogue-completion', 'lean-catalogue-local-hook', 'lean-catalogue-cache', 'provider-replacement')]
+    'edition-first-save', 'lean-catalogue-completion', 'lean-catalogue-local-hook', 'lean-catalogue-cache', 'provider-replacement', '8c-1b')]
   [string]$OnlyGroup = ''
 )
 
 $ErrorActionPreference = 'Stop'
 if ($IncludeMediaCorrection) { $IncludeUnit6gBaseline = $true }
 if ($IncludeDuplicateConfirmation) { $IncludeMediaCorrection = $true; $IncludeUnit6gBaseline = $true }
-if ($OnlyGroup -eq 'provider-replacement') { $IncludeProviderReplacement = $true }
+if ($OnlyGroup -in @('provider-replacement', '8c-1b')) { $IncludeProviderReplacement = $true }
 if ($IncludeProviderReplacement) { $IncludeOpenLibrary = $true }
 if ($IncludeOpenLibrary) { $IncludeEditionPicker = $true }
 if ($IncludeEditionPicker) { $IncludeUnit6gBaseline = $true }
@@ -434,6 +434,35 @@ try {
             $env:PHASE9_PROVIDER_NATIVE_PORT = $savedProviderPort
             $env:PHASE9_PROVIDER_NATIVE_DATABASE = $savedProviderDatabase
             $env:PHASE9_PROVIDER_PREFIX = $savedProviderPrefix
+          }
+        }
+      }
+      # 02c §9 / Owner 8c-1b: append an isolated focused group; no broad provider suites.
+      if ($OnlyGroup -eq '8c-1b') {
+        Invoke-NativeGroup '8c-1b' {
+          if (-not $cacheDatabaseCreated) {
+            Invoke-PsqlCommand 'postgres' "CREATE DATABASE $cacheDbName TEMPLATE $catalogueDbName" | Out-Null
+            $script:cacheDatabaseCreated = $true
+            Invoke-PsqlFile $cacheDbName $catalogueM84[0].FullName | Out-Null
+            foreach ($number in @('85','86','87','88')) {
+              $files = @(Get-ChildItem -LiteralPath (Join-Path $root 'supabase\migrations') -File |
+                Where-Object { $_.Name -match "^[0-9]{8}0000${number}_marketplace_phase9_[a-z0-9_]+\.sql$" })
+              if ($files.Count -ne 1) { throw "8c-1b baseline needs exactly one M$number" }
+              Invoke-PsqlFile $cacheDbName $files[0].FullName | Out-Null
+            }
+          }
+          $previousPort = $env:PHASE9_PROVIDER_NATIVE_PORT
+          $previousDatabase = $env:PHASE9_PROVIDER_NATIVE_DATABASE
+          try {
+            $env:PHASE9_PROVIDER_NATIVE_PORT = "$Port"
+            $env:PHASE9_PROVIDER_NATIVE_DATABASE = $cacheDbName
+            & node --experimental-vm-modules --test --test-concurrency=1 `
+              (Join-Path $PSScriptRoot 'phase9FinalAttemptSweep8c.integration.test.mjs') `
+              (Join-Path $PSScriptRoot 'phase9OperatorSwitch8c.integration.test.mjs')
+            if ($LASTEXITCODE -ne 0) { throw '8c-1b focused native acceptance failed' }
+          } finally {
+            $env:PHASE9_PROVIDER_NATIVE_PORT = $previousPort
+            $env:PHASE9_PROVIDER_NATIVE_DATABASE = $previousDatabase
           }
         }
       }
