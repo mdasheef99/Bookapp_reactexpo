@@ -1,8 +1,9 @@
 # Marketplace current state
 
 Recorded state: 2026-11-05. Slice 8 package 8c code is built and committed
-locally (`26c73bf` M95, `2ce9615` M96 + operator scripts; not pushed, not
-applied); evidence in
+(`26c73bf` M95, `2ce9615` M96 + operator scripts), pushed to `main`
+(`e36e6e9`) and M95/M96 applied to the dev project 2026-11-05 (live
+`20261104213313`, `20261104213343`); evidence in
 [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md).
 Slice 8 package 8b is built (`db5434f..02a0f34`,
 branch `phase9/slice8-providers`), pushed to `main` (`6e0df90`) and deployed to
@@ -22,8 +23,7 @@ dated evidence belongs in trackers.
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
 - Active slice/work unit: **slice 8, package 8c: 8c-1a (M95 null-safe
   routing + stuck-pending read model) and 8c-1b (M96 exhausted-job sweep +
-  operator scripts `scripts/8c/01..06`) committed locally 2026-11-05; not
-  pushed, M95/M96 not applied**. Protection values decided (Owner
+  operator scripts `scripts/8c/01..06`) pushed and M95/M96 applied 2026-11-05**. Protection values decided (Owner
   delegation, 15-store pilot) and recorded in tracker 41; the Open Library
   switch itself runs later, at the pilot.
 - Earlier work unit: package 8b built locally (U1-U4, U6, U5
@@ -139,9 +139,8 @@ dated evidence belongs in trackers.
   covered: admission/fair-queue path (needs a policy, 8c), inventory commit.
 - Dev-server launch config `.claude/launch.json` (expo web on port 8081)
   was created for this test and is uncommitted.
-- Exact next authorized action: **Owner approval to push the local commits
-  (`a8e673b`, `26c73bf`, `2ce9615`, 8c docs) and to apply M95 then M96 to
-  `ahntbtktjjmvfosgkmgn`**. Not authorized by this file. No `db push`
+- Exact next authorized action: **none pending; the Open Library switch
+  (scripts 01-05) runs at the 15-store pilot on a separate Owner approval**. Not authorized by this file. No `db push`
   (frozen).
 - Other gated actions, each needing its own Owner approval (none authorized
   here): running the 8c operator scripts at the pilot (placeholders: contact
@@ -164,8 +163,10 @@ dated evidence belongs in trackers.
 - 2026-11-05: the Owner authorized building 8c and committing it locally.
   Dev data only (Owner: "quash them"): the three stale August `reserved`
   usage reservations `f20a5804`, `b03047ff`, `d43d737e` were set to
-  `released` (`actual_cost_units` 0). No migration applied, no push, no
-  deployment.
+  `released` (`actual_cost_units` 0). Then (Owner: "Yes, push and apply")
+  pushed `main` and the branch to `e36e6e9` (no runtime code changed, no
+  deploy) and applied M95 (`20261104213313`) then M96 (`20261104213343`)
+  via `apply_migration`; stored statements equal the files.
 - Shared database/migration application: **M94 plus the one-row
   `4ffe137d` dead-letter (2026-11-04)**;
   Storage: **none**; deployment: **8b worker `dep-dblielugekts738gov3g`
@@ -216,9 +217,9 @@ operational readback.
 
 ## Open items, blockers and residual risks
 
-- Blockers: none beyond the Owner approvals in the next action. 8c residual
+- Blockers: none. 8c residual
   risks: [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#residual-risks).
-- FIXED LOCALLY in M95 (not yet applied): pre-8b read-model bug (found in the smoke, not 8b): candidate `ac712fe6`
+- FIXED in M95 (applied 2026-11-05): pre-8b read-model bug (found in the smoke, not 8b): candidate `ac712fe6`
   (Bleak House) shows "Finding edition…" forever. Its newest lookup is
   `accepted_metadata_match` but its selected snapshot is the older ambiguous
   one and the edition state's `source_lookup_id` is NULL (options expired), so
