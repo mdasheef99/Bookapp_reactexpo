@@ -1,8 +1,8 @@
 # Marketplace current state
 
-Recorded state: 2026-11-04. Slice 8 package 8b is built as 12 local commits
-(`db5434f..02a0f34`, branch `phase9/slice8-providers`); nothing is pushed or
-deployed. Migration M94 was applied to the dev project on 2026-11-04
+Recorded state: 2026-11-04. Slice 8 package 8b is built (`db5434f..02a0f34`,
+branch `phase9/slice8-providers`), pushed to `main` (`6e0df90`) and deployed to
+Render (`dep-dblielugekts738gov3g`, live 12:41:25 UTC); 8b live smoke passed. Migration M94 was applied to the dev project on 2026-11-04
 (live version `20261104121322`, Owner-approved). Earlier, slice 8
 package 8a ordered apply of M89..M93 to
 the dev project `ahntbtktjjmvfosgkmgn` is done under the Owner's standing
@@ -10,15 +10,14 @@ apply permission, after the review cycle (commit `ebb613c`, M93 sha256
 `80d496a173c9f6fe30f42d3714c0c787488ced2669024be18d2090c9bea34c5e`). The
 migration ledger now ends at `20261101230501` and lists M89..M93 (M92/M93
 rows are Owner-approved note-only bookkeeping rows, not the migration SQL).
-A legacy-explicit-path live smoke passed 2026-11-02 ~23:34-23:36 UTC. No
-push, deployment or data writes. This file is rewritten at session close;
+A legacy-explicit-path live smoke passed 2026-11-02 ~23:34-23:36 UTC. This file is rewritten at session close;
 dated evidence belongs in trackers.
 
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
 - Active slice/work unit: **slice 8, package 8b built locally (U1-U4, U6, U5
-  steps A/B1/B2); M94 applied 2026-11-04; worker not deployed**.
+  steps A/B1/B2); M94 applied, pushed, worker deployed and live-smoked 2026-11-04**.
 - M94 `20261104000094_marketplace_phase9_automatic_worker_prerequisites.sql`
   (231 lines, sha256 `a0b7de6288107a405852feda3cc392b718e988b7b557c1fd6b5a69d3153690e2`):
   **APPLIED 2026-11-04** to `ahntbtktjjmvfosgkmgn`, live version `20261104121322`; the live
@@ -28,8 +27,8 @@ dated evidence belongs in trackers.
   every automatic claim with no fallback, so M94 had to be applied before the
   8b worker is deployed (release order now satisfied); without it the worker
   fails closed (`stale_claim`, no provider egress).
-- Completed milestone: **8b built and committed locally** (2026-11-04; 12
-  local commits; not pushed, not deployed). Final whole-8b review done:
+- Completed milestone: **8b built, pushed, deployed and live-smoked**
+  (2026-11-04). Final whole-8b review done:
   Luna (two passes), plus DeepSeek and Muse targeted units; fix round 2 committed
   locally; final DeepSeek sweep clean apart from two fail-safe Lows (tracker 40). Record: [tracker 40](phase-9-image-inventory/trackers/40-package8b-worker-evidence.md);
   [implementation log](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-11-04---slice-8-package-8b-worker-built-locally-m94-local-file-not-applied);
@@ -117,16 +116,25 @@ dated evidence belongs in trackers.
   and an automatic Google lookup on the legacy path. This closes the "smoke
   test before 8c" item for the legacy explicit path; re-run once with the
   8b worker deployed and before 8c.
+- 8b live smoke PASSED (2026-11-04 ~12:51-12:53 UTC, dev project, 8b worker
+  deploy `dep-dblielugekts738gov3g`): Inventory > scan `4ad4f6c0` > Find or
+  change edition on "The Adventures of Robin Hood" > Search by ISBN
+  9780141321028 > job `0e629ff9-47f9-4aad-b393-41a5a8462fcf` created 12:51:38,
+  worker `invocation_accepted` 12:52:01 (claimed 1, outcome
+  `edition_options_available`, 9 s), job resolved attempt 1 at 12:52:10; 3
+  provider calls; admissions and automatic runs stayed 0 (NULL-policy legacy
+  path); no `P9_` error. The ISBN was a tester error (it is The Wizard of Oz,
+  Puffin Classics); the result was selected in the UI (selection
+  `443a3dd5`, `edition_option`, 12:52:47) as allowed dev test data. Not
+  covered: admission/fair-queue path (needs a policy, 8c), inventory commit.
 - Dev-server launch config `.claude/launch.json` (expo web on port 8081)
   was created for this test and is uncommitted.
-- Exact next authorized action: **Owner approval to push and deploy the 8b
-  worker** (M94 is applied). Not authorized by this file. No `db push`
+- Exact next authorized action: **Owner approval to start 8c** (protection
+  policy, WHOLE-1 null-safe flag, drain, final-attempt sweep). Not authorized by this file. No `db push`
   (frozen).
 - Other gated actions, each needing its own Owner approval (none authorized
-  here): push the 8b commits
-  and deploy the 8b worker (M94 applied 2026-11-04); live smoke with the 8b
-  worker (the 2026-11-02 smoke covered the legacy path only); then 8c (protection
-  policy, WHOLE-1 null-safe flag, drain) and 02d prefill.
+  here): 8c and 02d prefill; a fix for the stuck "Finding edition…" read
+  model (open items).
 
 ## Mutation authority now
 
@@ -144,7 +152,9 @@ dated evidence belongs in trackers.
   (mirrors M75's exhausted-job close; record in tracker 40).
 - Shared database/migration application: **M94 plus the one-row
   `4ffe137d` dead-letter (2026-11-04)**;
-  Storage: **none**; deployment: **none**; no push.
+  Storage: **none**; deployment: **8b worker `dep-dblielugekts738gov3g`
+  (Owner: "Deploy, then test")**; pushed `main` and the branch to `6e0df90`;
+  dev test-data writes during the smoke (Owner: dev data may be freely changed).
 - Do not run `db push` (frozen). Any future ledger repair or migration work
   needs its own Owner approval.
 
@@ -182,15 +192,22 @@ operational readback.
   the legacy NULL-policy path with 3 finalized provider calls and 1 usage
   reservation; admissions/automatic runs stayed 0 rows; deployed worker is
   Render commit `3fdc0c44` (slice 7b-2 build, 2026-10-29), not slice 8.
-- Deployed worker: recorded `phase9-metadata-worker` deploy `dep-dbhmr07b9u1s73f8qjpg`
-  (slice 7b-2 build); no slice 8 worker deployed.
+- Deployed worker: `phase9-metadata-worker` deploy `dep-dblielugekts738gov3g`
+  (commit `6e0df90`, 8b build, live 2026-11-04 12:41:25 UTC; Render env
+  unchanged). Rollback target: `dep-dbhmr07b9u1s73f8qjpg` (`3fdc0c44`, 7b-2).
 - Latest relevant recorded commit on `main`: closeout `0d240ef`;
   [publication evidence](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#49-slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes-2026-10-29).
 
 ## Open items, blockers and residual risks
 
-- Blocker for the 8b deploy: none on the database side (M94 applied
-  2026-11-04). Pushing and deploying the worker need Owner approval. The final whole-8b review and fix round 2 are recorded in tracker 40.
+- Blockers: none for 8c start beyond Owner approval. The final whole-8b review,
+  fix round 2, deploy and smoke are recorded in tracker 40.
+- Pre-8b read-model bug (found in the smoke, not 8b): candidate `ac712fe6`
+  (Bleak House) shows "Finding edition…" forever. Its newest lookup is
+  `accepted_metadata_match` but its selected snapshot is the older ambiguous
+  one and the edition state's `source_lookup_id` is NULL (options expired), so
+  `phase9_edition_legacy_metadata_state` falls to `pending`; the picker then
+  disables search, so the owner cannot recover. Needs a bounded fix.
 - 8b residual risks (detail in [tracker 40](phase-9-image-inventory/trackers/40-package8b-worker-evidence.md#residual-risks-and-follow-ups)):
   (1) terminal fallbacks use the legacy `phase9_fail_metadata_job`, which can
   leave an M93 run row `running` or `unknown`; (2) a breaker refusal on a run

@@ -123,8 +123,8 @@ A final paid-DeepSeek sweep of the fix diff confirmed no new egress path, an at-
 
 ## Mutation record
 
-- Supabase, Storage, deployment and Render: none in package 8b.
-- Git: local commits only, from `db5434f` up to and including the fix round 2 commit; nothing pushed.
+- Supabase, Storage, deployment and Render: none during the 8b build; after it, see the M94, stuck-job and deploy sections.
+- Git: local commits only, from `db5434f` up to and including the fix round 2 commit; pushed 2026-11-04 with the docs commits (`6e0df90`).
 - `db push`: frozen.
 - M94: local file during 8b; applied 2026-11-04 afterwards (live version `20261104121322`).
 
@@ -147,8 +147,8 @@ Each needs its own Owner approval. Nothing here is authorized by this record.
 
 1. ~~Apply M94~~ done 2026-11-04 (live version `20261104121322`; ledger M94 section).
 2. ~~Check or recover stuck job `4ffe137d`~~ done 2026-11-04 (section below).
-3. Push and deploy the 8b worker, only after step 1.
-4. Live smoke with the 8b worker.
+3. ~~Push and deploy the 8b worker~~ done 2026-11-04 (section below).
+4. ~~Live smoke with the 8b worker~~ passed 2026-11-04 (section below).
 5. Then 8c: protection policy, WHOLE-1 null-safe flag, and drain.
 
 ## Stuck job 4ffe137d diagnosis and recovery (2026-11-04)
@@ -160,8 +160,17 @@ Each needs its own Owner approval. Nothing here is authorized by this record.
 - Recovery (Owner approval "Yes, dead-letter it"): one guarded `UPDATE public.image_extraction_jobs` (id, `metadata_enrich`/candidate, `in_progress`, attempt 5/5, lease expired) setting `dead_letter`, `P9_METADATA_ATTEMPTS_EXHAUSTED`/`metadata`, lease fields NULL and `completed_at`/`dead_lettered_at`/`updated_at` to the transaction time, mirroring M75's close branch. Run 2026-11-04 12:24:50 UTC via Supabase MCP `execute_sql` on `ahntbtktjjmvfosgkmgn`; exactly 1 row returned.
 - Readback: candidate `f387251c` unchanged (`needs_review`, version 1, metadata_revision 4, review_version NULL); edition state unchanged (request_generation 0, options_version 0, request_id still this job, which the picker reads as failed); admissions 0, so the M93 triggers had nothing to release; 0 exhausted stuck jobs remain. No other database, Storage or deployment write.
 
+## 8b deploy and live smoke (2026-11-04)
+
+- Push (Owner approval): `origin/main` and `origin/phase9/slice8-providers` at `6e0df90`.
+- Deploy (Owner: "Deploy, then test"): Render MCP `trigger_deploy` on `srv-d9sqfdvqj5pc73dc66fg`; deploy `dep-dblielugekts738gov3g`, commit `6e0df90`, live 12:41:25 UTC, `service_started` 12:41:21. Env unchanged (8b keeps the variable names; `google_books` mode needs the same three Google variables). Rollback target `dep-dbhmr07b9u1s73f8qjpg` (`3fdc0c44`).
+- First smoke attempt (Haiku, ~12:42-12:47 UTC, Bleak House card `ac712fe6`): stalled on "Searching books…"; no request reached the server (0 new jobs, 0 calls, no worker invocation). Cause is a pre-8b read-model bug: newest lookup `accepted_metadata_match`, selected snapshot still the older ambiguous one, edition-state `source_lookup_id` NULL after options expired, so `phase9_edition_legacy_metadata_state` returns `pending` and the picker disables search. Recorded as an open item in ACTIVE.md; no data repaired.
+- Second smoke (orchestrator, Robin Hood card `5c3355cc`): Search by ISBN 9780141321028 created job `0e629ff9-47f9-4aad-b393-41a5a8462fcf` at 12:51:38; worker `invocation_accepted` 12:52:01 (batch 15, claimed 1, outcome `edition_options_available`, 9046 ms); job resolved attempt 1 at 12:52:10; 3 provider calls (total 265 -> 268); `metadata_enrich` jobs 250 -> 251; `phase9_metadata_admissions` and `phase9_automatic_provider_runs` 0 rows (NULL-policy legacy path); no `P9_` error. The ISBN was a tester error (it maps to The Wizard of Oz, Puffin Classics). The UI showed 1 selectable edition, which was selected (selection `443a3dd5`, `edition_option`, 12:52:47) as dev test data under the Owner's dev-data rule.
+- Console: four 403s from `store_inventory?select=visibility_status,quantity_available` (not a worker path; cause not investigated).
+- Not covered: admission/fair-queue path and automatic Google lookup (need a protection policy, 8c); inventory commit.
+
 ## Facts not recorded
 
 - Per-unit file counts and per-finding reviewer IDs: not recorded.
 - The operating-number values (pacing, circuit thresholds): not recorded; they are unconfigured (OQ8-3).
-- Whether the 8b worker has been deployed to any environment: not deployed, per the commit messages.
+- Render build duration and image digest for `dep-dblielugekts738gov3g`: not recorded.
