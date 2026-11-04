@@ -94,16 +94,18 @@ action live in [ACTIVE.md](../../ACTIVE.md); this file holds dated evidence.
 
 ### Database and data changes
 
-- No migration applied. M95 and M96 are local files only.
+- M95 and M96 applied 2026-11-05 (see "Remaining before the switch").
 - Dev data (Owner: "quash them"): the three stale August `reserved`
   usage reservations `f20a5804`, `b03047ff`, `d43d737e` were set to
   `released` with `actual_cost_units` 0 on `ahntbtktjjmvfosgkmgn`.
 
 ### Remaining before the switch
 
-1. Owner approval to push `a8e673b`, `26c73bf`, `2ce9615` (and the docs commit).
-2. Owner approval to apply M95 then M96 to the dev project.
-3. At pilot time: fill the script placeholders (the values above, the
+1. Done 2026-11-05 (Owner: "Yes, push and apply"): pushed `main` and the
+   branch to `e36e6e9`; applied M95 (live `20261104213313`) then M96 (live
+   `20261104213343`); stored statement sha256 equals each file; function
+   owner, `search_path` and EXECUTE grants read back as designed.
+2. At pilot time: fill the script placeholders (the values above, the
    contact email, the reviewed manifest hash, the smoke cohort) and run the
    scripts in order 01-05; 06 is the rollback.
 
