@@ -44,7 +44,7 @@ Totals for `db5434f..02a0f34`: 85 files, +16964/-684 (from `git diff --numstat`)
 
 - Local file `supabase/migrations/20261104000094_marketplace_phase9_automatic_worker_prerequisites.sql`, 231 lines, sha256 `a0b7de6288107a405852feda3cc392b718e988b7b557c1fd6b5a69d3153690e2`.
 - Adds `phase9_automatic_edition_fence_v1` (the fence reader) and `phase9_prepare_automatic_metadata_v1` (admission plus coalescing election in one call).
-- Status: local file, NOT applied to any Supabase project. No live version. Ledger row: [database-current-vs-target, 2026-11-04 M94 section](../supporting/database-current-vs-target.md#2026-11-04-slice-8-package-8b-built-locally-m94-local-file-not-applied).
+- Status: **APPLIED 2026-11-04** to `ahntbtktjjmvfosgkmgn`, live version `20261104121322` (Owner: "ok apply the m94"; Haiku read-only preflight READY; statement sha256 equals the file; owners, SECURITY DEFINER/INVOKER, `search_path` and service_role-only grants read back). Before that it was a local file only. Ledger row: [database-current-vs-target, 2026-11-04 M94 section](../supporting/database-current-vs-target.md#2026-11-04-slice-8-package-8b-built-locally-m94-local-file-not-applied).
 - Commit-recorded verification (`8d93685`): static 6/6, PGlite 58/58, native provider-replacement 291/0 plus M94 concurrency 4/4.
 - **Release order.** M94 must be applied BEFORE the 8b worker is deployed. The B2 worker calls the M94 fence for every automatic claim and has no fallback. Without M94 it fails closed (`stale_claim`, no provider egress), and automatic processing stops.
 - Applying M94 needs separate Owner approval and exact-project verification of `ahntbtktjjmvfosgkmgn` before and after, per the repository database rule.
@@ -126,7 +126,7 @@ A final paid-DeepSeek sweep of the fix diff confirmed no new egress path, an at-
 - Supabase, Storage, deployment and Render: none in package 8b.
 - Git: local commits only, from `db5434f` up to and including the fix round 2 commit; nothing pushed.
 - `db push`: frozen.
-- M94: local file, not applied.
+- M94: local file during 8b; applied 2026-11-04 afterwards (live version `20261104121322`).
 
 ## Residual risks and follow-ups
 
@@ -145,7 +145,7 @@ A final paid-DeepSeek sweep of the fix diff confirmed no new egress path, an at-
 
 Each needs its own Owner approval. Nothing here is authorized by this record.
 
-1. Apply M94 to dev project `ahntbtktjjmvfosgkmgn`, after exact-project verification.
+1. ~~Apply M94~~ done 2026-11-04 (live version `20261104121322`; ledger M94 section).
 2. Check or recover stuck job `4ffe137d-5ff5-4ef6-9a24-27a2911c027c`.
 3. Push and deploy the 8b worker, only after step 1.
 4. Live smoke with the 8b worker.

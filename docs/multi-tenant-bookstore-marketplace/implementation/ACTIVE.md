@@ -2,7 +2,8 @@
 
 Recorded state: 2026-11-04. Slice 8 package 8b is built as 12 local commits
 (`db5434f..02a0f34`, branch `phase9/slice8-providers`); nothing is pushed or
-deployed, and migration M94 is a local file, not applied. Earlier, slice 8
+deployed. Migration M94 was applied to the dev project on 2026-11-04
+(live version `20261104121322`, Owner-approved). Earlier, slice 8
 package 8a ordered apply of M89..M93 to
 the dev project `ahntbtktjjmvfosgkmgn` is done under the Owner's standing
 apply permission, after the review cycle (commit `ebb613c`, M93 sha256
@@ -17,15 +18,16 @@ dated evidence belongs in trackers.
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
 - Active slice/work unit: **slice 8, package 8b built locally (U1-U4, U6, U5
-  steps A/B1/B2); worker not deployed; M94 not applied**.
+  steps A/B1/B2); M94 applied 2026-11-04; worker not deployed**.
 - M94 `20261104000094_marketplace_phase9_automatic_worker_prerequisites.sql`
   (231 lines, sha256 `a0b7de6288107a405852feda3cc392b718e988b7b557c1fd6b5a69d3153690e2`):
-  local file, NOT applied, no live version. It adds the fence reader
+  **APPLIED 2026-11-04** to `ahntbtktjjmvfosgkmgn`, live version `20261104121322`; the live
+  statement sha256 equals the file. It adds the fence reader
   `phase9_automatic_edition_fence_v1` and the atomic preparation RPC
   `phase9_prepare_automatic_metadata_v1`. The 8b worker calls the fence for
-  every automatic claim with no fallback, so **M94 must be applied before the
-  8b worker is deployed**; without it the worker fails closed (`stale_claim`,
-  no provider egress) and automatic processing stops.
+  every automatic claim with no fallback, so M94 had to be applied before the
+  8b worker is deployed (release order now satisfied); without it the worker
+  fails closed (`stale_claim`, no provider egress).
 - Completed milestone: **8b built and committed locally** (2026-11-04; 12
   local commits; not pushed, not deployed). Final whole-8b review done:
   Luna (two passes), plus DeepSeek and Muse targeted units; fix round 2 committed
@@ -117,13 +119,13 @@ dated evidence belongs in trackers.
   8b worker deployed and before 8c.
 - Dev-server launch config `.claude/launch.json` (expo web on port 8081)
   was created for this test and is uncommitted.
-- Exact next authorized action: **Owner approval to apply M94, then deploy
-  the 8b worker.** Neither step is authorized by this file. No `db push`
+- Exact next authorized action: **Owner approval to push and deploy the 8b
+  worker** (M94 is applied). Not authorized by this file. No `db push`
   (frozen).
 - Other gated actions, each needing its own Owner approval (none authorized
   here): check or recover stuck job `4ffe137d-5ff5-4ef6-9a24-27a2911c027c`
   (`in_progress`, attempt 5/5, lease expired 2026-10-12); push the 8b commits
-  and deploy the 8b worker only after M94 is applied; live smoke with the 8b
+  and deploy the 8b worker (M94 applied 2026-11-04); live smoke with the 8b
   worker (the 2026-11-02 smoke covered the legacy path only); then 8c (protection
   policy, WHOLE-1 null-safe flag, drain) and 02d prefill.
 
@@ -136,7 +138,11 @@ dated evidence belongs in trackers.
   (M89..M91 via `apply_migration`, M92/M93 by the Owner via the dashboard,
   ledger note rows Owner-approved); this session itself performs no
   database, Storage, deployment or git mutation.
-- Shared database/migration application: **none in this session**;
+- 2026-11-04 (later): the Owner approved applying M94 ("ok apply the m94").
+  Applied via Supabase MCP `apply_migration` after exact-project verification
+  and a read-only Haiku preflight (verdict READY). No other database write;
+  the stuck job `4ffe137d` was only read.
+- Shared database/migration application: **M94 only (2026-11-04)**;
   Storage: **none**; deployment: **none**; no push.
 - Do not run `db push` (frozen). Any future ledger repair or migration work
   needs its own Owner approval.
@@ -154,6 +160,12 @@ operational readback.
   M92/M93 ledger rows hold a one-line dashboard-apply note, not the
   migration SQL.
   [Ledger](phase-9-image-inventory/supporting/database-current-vs-target.md#2026-11-02-slice-8-package-8a-applied-m89m93).
+- M94 (2026-11-04): live version `20261104121322`, name
+  `marketplace_phase9_automatic_worker_prerequisites`, statement sha256
+  `a0b7de62...3690e2` equals the file. Readback: both functions in
+  `marketplace_sec` (SECURITY DEFINER) and `public` (SECURITY INVOKER
+  wrappers), owner postgres, `search_path=''`, EXECUTE postgres and
+  service_role only.
 - Registry: `google_books` and `open_library` both enabled with
   `protection_policy` NULL (2026-11-02 post-apply readback); automatic runs
   return `configuration_required` until a policy is set (8c).
@@ -176,9 +188,8 @@ operational readback.
 
 ## Open items, blockers and residual risks
 
-- Blocker for the 8b deploy: M94 is not applied, and the worker fails closed
-  without it (release order above). Applying M94 and deploying the worker each
-  need Owner approval. The final whole-8b review and fix round 2 are recorded in tracker 40.
+- Blocker for the 8b deploy: none on the database side (M94 applied
+  2026-11-04). Pushing and deploying the worker need Owner approval. The final whole-8b review and fix round 2 are recorded in tracker 40.
 - 8b residual risks (detail in [tracker 40](phase-9-image-inventory/trackers/40-package8b-worker-evidence.md#residual-risks-and-follow-ups)):
   (1) terminal fallbacks use the legacy `phase9_fail_metadata_job`, which can
   leave an M93 run row `running` or `unknown`; (2) a breaker refusal on a run
