@@ -123,8 +123,7 @@ dated evidence belongs in trackers.
   worker** (M94 is applied). Not authorized by this file. No `db push`
   (frozen).
 - Other gated actions, each needing its own Owner approval (none authorized
-  here): check or recover stuck job `4ffe137d-5ff5-4ef6-9a24-27a2911c027c`
-  (`in_progress`, attempt 5/5, lease expired 2026-10-12); push the 8b commits
+  here): push the 8b commits
   and deploy the 8b worker (M94 applied 2026-11-04); live smoke with the 8b
   worker (the 2026-11-02 smoke covered the legacy path only); then 8c (protection
   policy, WHOLE-1 null-safe flag, drain) and 02d prefill.
@@ -140,9 +139,11 @@ dated evidence belongs in trackers.
   database, Storage, deployment or git mutation.
 - 2026-11-04 (later): the Owner approved applying M94 ("ok apply the m94").
   Applied via Supabase MCP `apply_migration` after exact-project verification
-  and a read-only Haiku preflight (verdict READY). No other database write;
-  the stuck job `4ffe137d` was only read.
-- Shared database/migration application: **M94 only (2026-11-04)**;
+  and a read-only Haiku preflight (verdict READY). Then, on a second Owner approval ("Yes, dead-letter it"), one guarded
+  single-row `UPDATE` dead-lettered stuck job `4ffe137d` 2026-11-04 12:24:50 UTC
+  (mirrors M75's exhausted-job close; record in tracker 40).
+- Shared database/migration application: **M94 plus the one-row
+  `4ffe137d` dead-letter (2026-11-04)**;
   Storage: **none**; deployment: **none**; no push.
 - Do not run `db push` (frozen). Any future ledger repair or migration work
   needs its own Owner approval.
@@ -204,10 +205,12 @@ operational readback.
   judged it a 20 ms timing race unrelated to B2. It passed in the three later full
   Phase 9 Jest runs (two by the fix session, one by the orchestrator).
 - M89..M93 are applied (live versions above); M92/M93 ledger rows are
-  note-only bookkeeping rows, not the migration SQL. Before the 8b deploy and 8c:
-  check/recover the `metadata_enrich` candidate job `4ffe137d` (`in_progress`,
-  attempt 5/5, lease expired 2026-10-12); the 02c-1 drain must handle the
-  three stale August reservations.
+  note-only bookkeeping rows, not the migration SQL. Stuck job `4ffe137d` is
+  dead-lettered 2026-11-04 12:24:50 UTC on Owner approval. General gap (for 8c): a metadata job whose worker dies on its
+  final attempt is never reclaimed or dead-lettered (claims need
+  `attempt_count<max_attempts`, failure needs the lost lease token; only M75
+  in an active session closes edition-options jobs); 8c should add a bounded
+  sweep. The 02c-1 drain must handle the three stale August reservations.
 - Native fairness AC8-6 remains NOT natively proven (gated on unset OQ8-3);
   no explicit 40P01 assertion. Two Low test-evidence notes stay open, not
   blockers: Capacity test 181-202 would not catch a reverted post-lock clock

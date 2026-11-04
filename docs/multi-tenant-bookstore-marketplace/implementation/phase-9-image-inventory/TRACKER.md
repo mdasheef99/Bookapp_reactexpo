@@ -33,8 +33,8 @@ error) passed 2026-11-02. Apply record:
 [tracker 39 apply section](./trackers/39-package8a5-contract-review.md#2026-11-02--ordered-apply-of-m89m93-ledger-note-rows-and-post-apply-verification),
 [implementation log](./trackers/02-implementation-and-verification.md#2026-11-02---ordered-apply-of-m89m93-post-apply-verification-and-legacy-smoke),
 [ledger](./supporting/database-current-vs-target.md#2026-11-02-slice-8-package-8a-applied-m89m93).
-ACTIVE.md owns the current work unit (8b worker), next action
-(check/recover stuck job 4ffe137d first) and authority.
+ACTIVE.md owns the current work unit (8b worker), next action and authority.
+Stuck job 4ffe137d was dead-lettered 2026-11-04 (tracker 40).
 
 ## 2026-11-02 whole-8a review and fixes
 

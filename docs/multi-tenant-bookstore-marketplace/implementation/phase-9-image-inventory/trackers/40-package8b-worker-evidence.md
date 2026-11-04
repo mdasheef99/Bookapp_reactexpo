@@ -135,7 +135,7 @@ A final paid-DeepSeek sweep of the fix diff confirmed no new egress path, an at-
 3. Uncertain prepare, finish and complete states return manual without a terminal write, so they may need operator recovery.
 4. Evidence without M94 lineage now terminalizes as `policy_denied`. HEAD first tried `resumeFinalizedAttempt` (legacy finalized-attempt resume). Only legacy jobs that are mid-flight at deploy time are affected. Severity: Low.
 5. The installed-automatic catch-all maps every escaping error to `stale_claim`. That is safe, since there is no generic retry, but it hides programming errors.
-6. Carried from 8a and still open: stuck job `4ffe137d-5ff5-4ef6-9a24-27a2911c027c`; WHOLE-1; native AC8-6; operating numbers unconfigured; registry `protection_policy` NULL until 8c. See [ACTIVE.md open items](../../ACTIVE.md#open-items-blockers-and-residual-risks).
+6. Carried from 8a and still open: WHOLE-1; native AC8-6; operating numbers unconfigured; registry `protection_policy` NULL until 8c. See [ACTIVE.md open items](../../ACTIVE.md#open-items-blockers-and-residual-risks).
 7. If both the finalize and the reconcile transport fail after a send, the job is terminalized `policy_denied`, while the call can stay `outcome_unknown` and the run `running`. There is no extra egress. Low.
 8. If finalization throws after a port half-open probe receives a 429 or 2xx, the breaker is settled as failed, adding one extra cooldown. This applies only with a protection policy, and there is no egress. Low.
 9. A NULL-policy legacy resume whose original adapter version is still accepted but is no longer the live version is terminalized `policy_denied` instead of retried. There is no egress. Low.
@@ -146,10 +146,19 @@ A final paid-DeepSeek sweep of the fix diff confirmed no new egress path, an at-
 Each needs its own Owner approval. Nothing here is authorized by this record.
 
 1. ~~Apply M94~~ done 2026-11-04 (live version `20261104121322`; ledger M94 section).
-2. Check or recover stuck job `4ffe137d-5ff5-4ef6-9a24-27a2911c027c`.
+2. ~~Check or recover stuck job `4ffe137d`~~ done 2026-11-04 (section below).
 3. Push and deploy the 8b worker, only after step 1.
 4. Live smoke with the 8b worker.
 5. Then 8c: protection policy, WHOLE-1 null-safe flag, and drain.
+
+## Stuck job 4ffe137d diagnosis and recovery (2026-11-04)
+
+- Diagnosis: read-only DeepSeek (opencode, deepseek-v4.1-flash max) investigation, key points re-checked by the orchestrator against code and live reads.
+- Cause: the worker died on attempt 5 of 5 (crash cause not established; Render logs not read). Every claim path requires `attempt_count<max_attempts` (M15 claim; M93 v2 claim, `20261101000093_*.sql` lines 335/344/351; wake dispatcher). Worker failure/completion needs the claim's plaintext lease token, which is never stored (only its hash). M75's exhausted-job close needs an active Owner session, and this session was closed 2026-10-12. No reaper exists.
+- Impact (live, before recovery): 0 admissions, 0 automatic runs, 0 lookups, 0 reservations, 0 provider calls for the job; it was the only `in_progress` exhausted job with an expired lease. It did not block claims, store admission or coalescing.
+- General gap (8c follow-up): any metadata job whose worker dies on its final attempt is never reclaimed or dead-lettered. Only edition-options jobs in an active session have a way out (M75). 8c should add a bounded sweep.
+- Recovery (Owner approval "Yes, dead-letter it"): one guarded `UPDATE public.image_extraction_jobs` (id, `metadata_enrich`/candidate, `in_progress`, attempt 5/5, lease expired) setting `dead_letter`, `P9_METADATA_ATTEMPTS_EXHAUSTED`/`metadata`, lease fields NULL and `completed_at`/`dead_lettered_at`/`updated_at` to the transaction time, mirroring M75's close branch. Run 2026-11-04 12:24:50 UTC via Supabase MCP `execute_sql` on `ahntbtktjjmvfosgkmgn`; exactly 1 row returned.
+- Readback: candidate `f387251c` unchanged (`needs_review`, version 1, metadata_revision 4, review_version NULL); edition state unchanged (request_generation 0, options_version 0, request_id still this job, which the picker reads as failed); admissions 0, so the M93 triggers had nothing to release; 0 exhausted stuck jobs remain. No other database, Storage or deployment write.
 
 ## Facts not recorded
 
