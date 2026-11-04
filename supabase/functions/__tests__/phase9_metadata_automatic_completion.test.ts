@@ -57,7 +57,7 @@ describe('Phase 9 automatic metadata completion transaction', () => {
       // is reached only after the existing cache/coalescing boundary was read.
       expect(names).toEqual(expect.arrayContaining([
         'phase9_metadata_cache_reuse_context',
-        'phase9_metadata_coalescing_context',
+        'phase9_prepare_automatic_metadata_v1',
       ]));
       expect(names).not.toContain('phase9_finalize_structural_metadata_attempt');
       expect(names).not.toContain('phase9_select_structural_metadata_snapshot');

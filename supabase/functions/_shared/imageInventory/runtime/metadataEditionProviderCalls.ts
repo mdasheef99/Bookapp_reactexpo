@@ -8,6 +8,8 @@ import {OpenLibraryFailure} from '../metadata/openLibrary/transport';
 import type {EditionHttpHooks} from '../metadata/openLibrary/transport';
 import {OPEN_LIBRARY_CAPABILITY} from '../metadata/openLibrary';
 import {markProviderHttpUnregistered} from '../metadata/providerHttp';
+import { buildAutomaticFence, loadAutomaticEditionFence } from './metadataAutomaticEditionFence';
+import { canonicalMetadataJson } from './metadataGatewayContext';
 
 // Picker §9: every fan-out GET is registered and freshly fenced; HTTP receipts contain no alternatives.
 //
@@ -28,6 +30,19 @@ export function createEditionProviderCalls(client:MetadataRpcClient,configuratio
       leaseToken:configuration.context.claimToken,attempt:configuration.context.attempt,
     });
     const original=configuration.context;
+    if (configuration.automatic !== undefined) {
+      const read = await loadAutomaticEditionFence(client, { jobId: original.jobId,
+        worker: configuration.worker, leaseToken: original.claimToken, attempt: original.attempt });
+      const fence = buildAutomaticFence(context, configuration.worker, read);
+      if (canonicalMetadataJson(fence) !== canonicalMetadataJson(configuration.automatic.fence)) {
+        throw new Error('P9_METADATA_STALE_PHYSICAL_CALL');
+      }
+      const descriptor = configuration.automatic.descriptor;
+      const row = context.providerPolicies.find(item => item.adapterKey === descriptor.adapterKey
+        && item.adapterVersion === descriptor.adapterVersion);
+      if (!row?.enabled || !row.matchingAllowed || !row.storageAllowed) throw new OpenLibraryFailure('provider_disabled');
+      return;
+    }
     // U6: routed calls check the elected descriptor's key/version; legacy
     // callers without a binding keep the exact historical check. U6 fix1
     // (F6): fallback calls pass the SECONDARY binding so registration and

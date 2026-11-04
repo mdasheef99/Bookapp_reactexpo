@@ -71,6 +71,7 @@ export type MetadataManualCompletion =
   }>;
 
 export type MetadataProductionGateway = Readonly<{
+  automaticExecution?: (request: MetadataProductionRequest, signal: AbortSignal) => Promise<MetadataCompositionResult>;
   editionProviderCalls?: ReturnType<typeof import('./metadataEditionProviderCalls').createEditionProviderCalls>;
   editionOptions?: Readonly<{
     request: MetadataProductionRequest;
@@ -163,6 +164,7 @@ export async function runMetadataProductionComposition(
   let reservedLookupId: string | null = null;
   const local = await gateway.resolveLocal(request);
   if (local.outcome === 'matched') return { outcome: 'local_canonical_match' };
+  if (gateway.automaticExecution) return gateway.automaticExecution(request, signal);
 
   const policy = decideMetadataProductionPolicy(request.providerPolicy);
   if (policy.allowCacheRead) {

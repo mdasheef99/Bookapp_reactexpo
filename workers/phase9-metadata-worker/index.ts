@@ -1,3 +1,5 @@
+import { buildAutomaticFence, loadAutomaticEditionFence } from '../../supabase/functions/_shared/imageInventory/runtime/metadataAutomaticEditionFence';
+import { recoverAutomaticMetadata } from '../../supabase/functions/_shared/imageInventory/runtime/metadataAutomaticExecution';
 import { editionProviderRoute, hasPersistedEvidence } from './editionProviderRoute';
 import type { OpenLibraryEditionOptionsAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary';
 import { OPEN_LIBRARY_CAPABILITY } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary';
@@ -126,8 +128,8 @@ async function resolveSupersededEditionJob(
 // Binds the verified per-job registry policyVersion to the installed OL
 // descriptors (U6: v1 AND v2). A row qualifies only when it is an enabled
 // metadata row for that exact installed version whose accepted versions
-// contain it, with matchingAllowed, storageAllowed, explicitSearchAllowed
-// === true, explicitRole !== null, and whose versionContracts entry matches
+// contain it, with matchingAllowed/storageAllowed and an authorized explicit
+// role or v2 automatic primary role, and whose versionContracts entry matches
 // the installed descriptor tuple. Zero or more-than-one qualifying rows bind
 // nothing for that version, as does a missing installed entry (fail closed).
 // Complete route election and the remaining descriptor checks stay
@@ -154,8 +156,8 @@ export function bindVerifiedRegistryPolicy(
       && row.enabled
       && row.matchingAllowed
       && row.storageAllowed
-      && row.explicitSearchAllowed === true
-      && row.explicitRole !== null
+      && ((row.explicitSearchAllowed === true && row.explicitRole !== null)
+        || (version === OPEN_LIBRARY_V2_ADAPTER_VERSION && row.automaticLookupAllowed && row.automaticRole === 'primary'))
       && row.adapterKey === 'open_library'
       && row.adapterVersion === version
       && row.acceptedAdapterVersions.includes(version)
@@ -173,13 +175,13 @@ export function bindVerifiedRegistryPolicy(
     }
     const bound = installedDescriptor;
     const copy = new Map(next);
-    // U6 fix1 (F8): v2 readiness flips ONLY for edition_options. Automatic
-    // readiness stays as before U6 (unbound/false) — U5 owns automatic, and
-    // result validation (providerResult.ts) consults retentionReady(purpose).
+    // U5: bind readiness independently for each registry-authorized purpose.
     copy.set(key, {
       ...bound,
       retentionReady: (purpose: Parameters<ProviderDescriptor['retentionReady']>[0]) =>
-        purpose === 'edition_options' && bound.purposes.includes(purpose),
+        bound.purposes.includes(purpose) && (purpose === 'edition_options'
+          ? qualifying[0].explicitSearchAllowed && qualifying[0].explicitRole !== null
+          : qualifying[0].automaticLookupAllowed && qualifying[0].automaticRole === 'primary'),
     });
     next = copy;
   }
@@ -234,17 +236,14 @@ async function processRoutedClaim(
   installed: ReadonlyMap<string, ProviderDescriptor>,
 ): Promise<MetadataWorkerResult> {
   // Receipt-first local short-circuit (02c §3.2: resolve local first). A
-  // durable local canonical edition resolves without any provider route or
-  // egress, so it is checked before the registry read. The provisional
-  // gateway needs a real configured primary (its type requires one); with no
-  // primary the claim fails closed below instead of inventing gateway config.
-  if (context.purpose === 'automatic' && context.localCanonicalEditionId !== null
-    && dependencies.primary !== null && dependencies.primaryCapability !== null) {
+  // durable local canonical edition resolves before registry/route reads,
+  // including keyless runtimes. Local persistence does not require an adapter.
+  if (context.purpose === 'automatic' && context.localCanonicalEditionId !== null) {
     const provisional = new SupabaseMetadataProductionGateway(dependencies.serviceClient, {
       worker: dependencies.workerId, context, primary: dependencies.primary,
-      adapterKey: dependencies.primaryCapability.adapterKey,
-      adapterVersion: dependencies.primaryCapability.adapterVersion,
-      capabilityVersion: dependencies.primaryCapability.capabilityVersion,
+      adapterKey: dependencies.primaryCapability?.adapterKey ?? '',
+      adapterVersion: dependencies.primaryCapability?.adapterVersion ?? '',
+      capabilityVersion: dependencies.primaryCapability?.capabilityVersion ?? '',
       schemaVersion: 'p9-metadata-foundation-v1',
       lookupContractVersion: 'p9-metadata-lookup-v1',
       normalizerVersion: 'p9-bibliographic-normalizer-v1',
@@ -265,17 +264,28 @@ async function processRoutedClaim(
     });
     if (local.outcome === 'matched') return { outcome: 'local_canonical_match' };
   }
-  // Persisted evidence (a registered lookup, attempt, or physical call, or a
-  // known attempt disposition) means a previous provider flow touched this
-  // job: it is not fresh. Run receipt-first recovery, then refuse new egress.
-  // The resolver is never called with resumed:null over an existing attempt,
-  // so no fresh route can execute against old lookup/attempt identity — for
-  // unknown or registered sends this stays recovery-only (02c §5.1). An
-  // M93-authorized next-claim retry cannot be distinguished here (the round
-  // allowance is private to M93; neither an older claim number nor
-  // retryable=true proves authorization), so its round-1 execution is a U5
-  // dependency; U2 preserves every receipt U5 needs to complete it.
-  if (hasPersistedEvidence(context)) {
+  const automaticRead = context.purpose === 'automatic'
+    ? await loadAutomaticEditionFence(dependencies.serviceClient, { jobId: context.jobId,
+      worker: dependencies.workerId, leaseToken: context.claimToken, attempt: context.attempt }) : null;
+  const automaticFence = automaticRead === null ? null : buildAutomaticFence(context, dependencies.workerId, automaticRead);
+  if (context.purpose === 'automatic' && hasPersistedEvidence(context)) {
+    const recovered = await recoverAutomaticMetadata(dependencies.serviceClient, automaticFence);
+    if (recovered !== null) return recovered;
+    if (automaticRead?.lineage == null) {
+      // H: a lost command with no lineage cannot be resumed; terminalize it rather
+      // than leaving the job permanently in_progress across reclaims.
+      const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
+        p_job_id: context.jobId,p_worker: dependencies.workerId,
+        p_lease_token: context.claimToken,p_attempt_count: context.attempt,
+        p_candidate_id: context.candidateId,p_candidate_version: context.candidateVersion,
+        p_query_identity: context.queryIdentity,p_failure_kind: 'policy_denied',
+        p_retryable: false,
+      });
+      if (failed.error) throw new Error('P9_METADATA_COMPLETION_FAILED');
+      return completionResult(failed.data);
+    }
+  }
+  if (context.purpose === 'edition_options' && hasPersistedEvidence(context)) {
     if (context.purpose === 'edition_options') {
       if (dependencies.editionOptionsBoundary === undefined) {
         return { outcome: 'manual_metadata_required' };
@@ -302,48 +312,8 @@ async function processRoutedClaim(
         ...fence, outcome: 'provider_disabled', retryable: false,
       }));
     }
-    // Automatic: receipt-first through the existing finalized-attempt path
-    // when the old lookup/attempt identity exists; otherwise fail closed.
-    // No new fetch is issued from this branch.
-    if (context.currentLookupId !== null && context.currentAttemptId !== null
-      && dependencies.primary !== null && dependencies.primaryCapability !== null) {
-      const provisional = new SupabaseMetadataProductionGateway(dependencies.serviceClient, {
-        worker: dependencies.workerId, context, primary: dependencies.primary,
-        adapterKey: dependencies.primaryCapability.adapterKey,
-        adapterVersion: dependencies.primaryCapability.adapterVersion,
-        capabilityVersion: dependencies.primaryCapability.capabilityVersion,
-        schemaVersion: 'p9-metadata-foundation-v1',
-        lookupContractVersion: 'p9-metadata-lookup-v1',
-        normalizerVersion: 'p9-bibliographic-normalizer-v1',
-        routingPolicyVersion: 'p9-metadata-routing-v1',
-        selectionPolicyVersion: 'p9-metadata-selection-v1',
-        snapshotVersion: 'p9-selected-metadata-v1', cachePolicyVersion: 'p9-metadata-cache-v1',
-        cacheNamespace: 'metadata-v1', pricingPolicyVersion: 'metadata-zero-cost-v1',
-        revalidationSeconds: 86400,
-      });
-      const resumed = await provisional.resumeFinalizedAttempt({
-        ...requestFromMetadataContext(context), claimWorker: dependencies.workerId,
-        providerPolicy: {
-          enabled: false, adapterVersionCompatible: false,
-          capabilityVersionCompatible: false,
-          matchingAllowed: false, storageAllowed: false,
-          reuseAllowed: false, pricingPolicyCompatible: true,
-        },
-        lookupId: context.currentLookupId, attemptId: context.currentAttemptId,
-      });
-      if (resumed !== null) return resumed;
-    }
-    const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
-      p_job_id: context.jobId,p_worker: dependencies.workerId,
-      p_lease_token: context.claimToken,p_attempt_count: context.attempt,
-      p_candidate_id: context.candidateId,p_candidate_version: context.candidateVersion,
-      p_query_identity: context.queryIdentity,p_failure_kind: 'provider_disabled',
-      p_retryable: false,
-    });
-    if (failed.error) throw new Error('P9_METADATA_COMPLETION_FAILED');
-    return completionResult(failed.data);
   }
-  // Service-only registry read for genuinely fresh jobs only. A failed read
+  // Service-only registry read for fresh jobs and M94-bound resumes. A failed read
   // never falls back to legacy election: the claim fails closed below.
   const configuration = await dependencies.serviceClient.rpc(
     'phase9_provider_configuration_v1',
@@ -372,8 +342,8 @@ async function processRoutedClaim(
   );
   // Automatic and explicit share the same resolved route; invalid routes
   // throw before any egress. Existing context/claim checks are unchanged.
-  // Evidence is absent here, so resumed is always null: fresh routing only.
-  const route = editionProviderRoute({ context, registry, installed: boundInstalled });
+  // M94 supplies historical routing evidence; begin still owns retry authority.
+  const route = editionProviderRoute({ context, registry, installed: boundInstalled, resumed: automaticRead?.lineage ?? null });
   if ('manual' in route) {
     if (context.purpose === 'edition_options' && dependencies.editionOptionsBoundary) {
       return completionResult(await dependencies.editionOptionsBoundary.fail({
@@ -507,7 +477,7 @@ async function processRoutedClaim(
     worker: dependencies.workerId, context, primary,
     adapterKey: capability.adapterKey, adapterVersion: capability.adapterVersion,
     capabilityVersion: capability.capabilityVersion,
-    schemaVersion: 'p9-metadata-foundation-v1',
+    schemaVersion: route.primary.lookupSchemaVersion,
     lookupContractVersion: 'p9-metadata-lookup-v1',
     normalizerVersion: route.primary.normalizerVersion,
     routingPolicyVersion: 'p9-metadata-routing-v1',
@@ -515,11 +485,14 @@ async function processRoutedClaim(
     snapshotVersion: 'p9-selected-metadata-v1', cachePolicyVersion: 'p9-metadata-cache-v1',
     cacheNamespace: 'metadata-v1', pricingPolicyVersion: 'metadata-zero-cost-v1',
     revalidationSeconds: 86400,
-    // The resolver's selected row policy for this fresh key/version. (Only
-    // direct resolver callers carry resumed historical identity; the worker
-    // never manufactures lineage, so this is always the current row policy.)
+    // Resolver-selected policy: current on fresh routes, M94 lookup policy on resumes.
     selectedPolicyVersion:
       route.policyVersions[providerManifestKey(capability.adapterKey, capability.adapterVersion)],
+    automatic: automaticRead !== null && automaticFence !== null ? {
+      read: automaticRead, fence: automaticFence, descriptor: route.primary, installed: boundInstalled,
+      policy: selectedRow?.protectionPolicy ?? null,
+      sharedProtection: getWorkerProtectionState(capability.adapterKey),
+    } : undefined,
     // U6: descriptor-driven explicit binding from the verified route. Row
     // hosts/policy ride the parsed snapshot (older/test snapshots omit them:
     // null-tolerated). Transport bounds come from the installed OL adapter's
@@ -604,21 +577,6 @@ async function processRoutedClaim(
     }, new AbortController().signal);
     if (result.outcome === 'stale_claim') await resolveSupersededEditionJob(claim,dependencies);
     return result;
-  }
-  // U6 fix1 (F8): U6 owns explicit only. A port-native automatic election has
-  // no descriptor executor yet (U5 owns automatic): fail closed exactly like
-  // HEAD's rebound mismatch (provider_disabled), without invoking
-  // composition. Adapter-bound automatic flows are unchanged.
-  if (bound.kind === 'port') {
-    const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
-      p_job_id: context.jobId,p_worker: dependencies.workerId,
-      p_lease_token: context.claimToken,p_attempt_count: context.attempt,
-      p_candidate_id: context.candidateId,p_candidate_version: context.candidateVersion,
-      p_query_identity: context.queryIdentity,p_failure_kind: 'provider_disabled',
-      p_retryable: false,
-    });
-    if (failed.error) throw new Error('P9_METADATA_COMPLETION_FAILED');
-    return completionResult(failed.data);
   }
   return await runMetadataProductionComposition(request,gateway);
 }
@@ -716,6 +674,12 @@ async function processMetadataClaim(
     }
     return await runMetadataProductionComposition(request, gateway);
   } catch (error) {
+    if (context?.purpose === 'automatic' && dependencies.installed !== undefined) {
+      // No generic fail/retry after an automatic routed operation. This also
+      // intentionally hides programming errors behind stale_claim; the error
+      // remains at the throwing boundary, never in the worker result.
+      return { outcome: 'stale_claim' };
+    }
     if (context?.purpose === 'edition_options' || context === null) {
       if (await resolveSupersededEditionJob(claim, dependencies)) return { outcome: 'stale_claim' };
       if (context?.purpose === 'edition_options'

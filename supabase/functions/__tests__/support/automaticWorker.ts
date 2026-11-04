@@ -97,6 +97,9 @@ export function automaticDependencies(options: {
   let command: Record<string, any> | null = null;
   let gets = 0;
   let physicalCalls = 0;
+  let run: { lookupId: string | null; attemptId: string | null } | null = null;
+  let lineage: Record<string, any> | null = null;
+  let lookupSpec: Record<string, any> | null = null;
   const baseRpc = fixture.dependencies.serviceClient.rpc;
   const rpc = async (name: string, parameters: Record<string, any>): Promise<RpcResult> => {
     fixture.calls.push({ name, parameters });
@@ -109,6 +112,22 @@ export function automaticDependencies(options: {
         leaseToken: fixture.current().claimToken }]),
     );
     if (name === 'phase9_metadata_job_context') return ok(fixture.current());
+    if (name === 'phase9_automatic_edition_fence_v1') return ok({
+      candidateVersion: fixture.current().candidateVersion, requestGeneration: 0,
+      capturedRequestId: null, lineage: run?.lookupId == null ? null : lineage,
+    });
+    if (name === 'phase9_prepare_automatic_metadata_v1') {
+      lookupSpec = parameters.p_lookup;
+      // M94 creates the run; M32 elects the leader lookup before the grant.
+      run = run ?? { lookupId: null, attemptId: null };
+      if (lineage !== null) lineage.claimAttempt = fixture.current().attempt;
+      Object.assign(fixture.current(), {
+        currentLookupId: GOLDEN_LOOKUP_ID,
+        currentLookupAdapterKey: lookupSpec.adapter_key,
+        currentLookupAdapterVersion: lookupSpec.adapter_version,
+      });
+      return ok({ admission: m93BeginReceipt(), coalescing: { mode: 'leader', lookupId: GOLDEN_LOOKUP_ID } });
+    }
     if (name === 'phase9_provider_configuration_v1') return ok(providerConfigurationSnapshot([
       providerConfigurationRow('google_books', '1.0.0', { protectionPolicy: TEST_ONLY_PROTECTION_POLICY }),
       providerConfigurationRow('open_library', '1.0.0'),
@@ -120,7 +139,11 @@ export function automaticDependencies(options: {
       }));
     }
     if (name === 'phase9_recover_automatic_metadata_v1') return ok({ status: 'missing' });
-    if (name === 'phase9_begin_automatic_provider_run_v1') return ok(m93BeginReceipt());
+    if (name === 'phase9_begin_automatic_provider_run_v1') {
+      run = run ?? { lookupId: null, attemptId: null };
+      if (lineage !== null) lineage.claimAttempt = fixture.current().attempt;
+      return ok(m93BeginReceipt());
+    }
     if (name === 'phase9_finish_automatic_provider_run_v1') return ok(m93FinishReceipt());
     if (name === 'phase9_reserve_metadata_provider_round_v1') return ok(m93ReserveReceipt());
     if (name === 'phase9_release_metadata_provider_round_v1') return ok(m93ReleaseReceipt());
@@ -129,12 +152,37 @@ export function automaticDependencies(options: {
     }
     if (name === 'phase9_schedule_automatic_provider_recheck_v1') return ok(m93ScheduleRecheckReceipt());
     if (name === 'phase9_metadata_cache_reuse_context') return ok({ leaderLookupId: null, normalizedOutcome: null });
-    if (name === 'phase9_metadata_coalescing_context') return ok({ mode: 'leader', lookupId: GOLDEN_LOOKUP_ID });
-    if (name === 'phase9_register_structural_metadata_lookup') return ok({ lookup_id: GOLDEN_LOOKUP_ID });
+    if (name === 'phase9_metadata_coalescing_context') {
+      Object.assign(fixture.current(), { currentLookupId: GOLDEN_LOOKUP_ID,
+        currentLookupAdapterKey: parameters.p_adapter_key,
+        currentLookupAdapterVersion: parameters.p_adapter_version });
+      return ok({ mode: 'leader', lookupId: GOLDEN_LOOKUP_ID });
+    }
+    if (name === 'phase9_register_structural_metadata_lookup') {
+      Object.assign(fixture.current(), { currentLookupId: GOLDEN_LOOKUP_ID,
+        currentLookupAdapterKey: parameters.p_adapter_key,
+        currentLookupAdapterVersion: parameters.p_adapter_version });
+      return ok({ lookup_id: GOLDEN_LOOKUP_ID });
+    }
     if (name === 'phase9_reserve_metadata_usage') return ok({ reservation_id: RESERVATION_ID });
-    if (name === 'phase9_register_structural_metadata_attempt') return ok({ attempt_id: GOLDEN_ATTEMPT_ID });
+    if (name === 'phase9_register_structural_metadata_attempt') {
+      Object.assign(fixture.current(), { currentAttemptId: GOLDEN_ATTEMPT_ID,
+        currentAttemptAdapterKey: parameters.p_adapter_key,
+        currentAttemptDisposition: 'unresolved' });
+      return ok({ attempt_id: GOLDEN_ATTEMPT_ID });
+    }
     if (name === 'phase9_register_metadata_provider_call'
       || name === 'phase9_register_edition_options_provider_call_v1') {
+      run = run ?? { lookupId: null, attemptId: null };
+      run.lookupId = GOLDEN_LOOKUP_ID;
+      run.attemptId = GOLDEN_ATTEMPT_ID;
+      lineage = { adapterKey: lookupSpec?.adapter_key ?? parameters.p_adapter_key ?? 'google_books',
+        adapterVersion: lookupSpec?.adapter_version ?? parameters.p_adapter_version ?? '1.0.0',
+        purpose: 'automatic', role: 'primary', sequence: 1,
+        lookupId: GOLDEN_LOOKUP_ID, attemptId: GOLDEN_ATTEMPT_ID, claimAttempt: parameters.p_attempt_count,
+        policyVersion: Number(lookupSpec?.reuse_policy_version ?? 1) };
+      Object.assign(fixture.current(), { currentLookupId: GOLDEN_LOOKUP_ID,
+        currentAttemptId: GOLDEN_ATTEMPT_ID, currentAttemptDisposition: 'unresolved' });
       physicalCalls += 1;
       return ok({ status: 'registered', provider_call_id: physicalCalls === 1 ? CALL_ID
         : `00000000-0000-4000-8000-${String(physicalCalls + 100).padStart(12, '0')}`, grant_epoch: 1 });

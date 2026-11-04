@@ -394,14 +394,17 @@ describe('Phase 9 provider route worker evidence and binding', () => {
     }
   });
 
-  it('X1 M93 next-claim retry preserves identity without new egress (positive execution is U5)', async () => {
-    // A finalized retryable round-0 attempt under a new, larger claim: the
-    // worker must not register a new attempt or perform GETs. Authorizing and
-    // executing the round-1 provider round needs U5's begin/reserve/finish
-    // wiring; no M93 allowance interface exists for U2 to read.
+  it('X1 M93 next-claim retry preserves identity and requires SQL started authority', async () => {
+    // Mutation caught: treating historical lineage as retry authority or registering a second logical attempt.
     const subject = automaticDependencies({
-      fetcher: async () => {
-        throw new Error('no provider egress is authorized on the U2 path');
+      rpc: async name => {
+        if (name === 'phase9_automatic_edition_fence_v1') return { data: { candidateVersion: 1,
+          requestGeneration: 0, capturedRequestId: null, lineage: { adapterKey: 'google_books', adapterVersion: '1.0.0',
+            purpose: 'automatic', role: 'primary', sequence: 1, lookupId: GOLDEN_LOOKUP_ID,
+            attemptId: GOLDEN_ATTEMPT_ID, claimAttempt: 1, policyVersion: 1 } }, error: null };
+        if (name === 'phase9_prepare_automatic_metadata_v1') return { data: { admission: { status: 'started', round: 1 }, coalescing: null }, error: null };
+        if (name === 'phase9_finish_automatic_provider_run_v1') return { data: { status: 'finalized', round: 1 }, error: null };
+        return undefined;
       },
       context: {
         attempt: 2,
@@ -425,11 +428,19 @@ describe('Phase 9 provider route worker evidence and binding', () => {
         currentPhysicalProviderRequestId: 'test-request-id',
       },
     });
-    const result = await runDescriptorWorker(subject.dependencies, installed());
-    expect(result.results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    const result = await runDescriptorWorker(subject.dependencies, subject.dependencies.installed);
+    expect(result.results).toEqual([{ outcome: 'accepted_metadata_match' }]);
     const names = subject.fixture.calls.map((call) => call.name);
     expect(names).not.toContain('phase9_register_structural_metadata_attempt');
-    expect(subject.gets()).toBe(0);
+    expect(subject.gets()).toBe(1);
+    expect(names).not.toContain('phase9_reserve_metadata_usage');
+    const before = subject.gets();
+    const deniedRpc = subject.dependencies.serviceClient.rpc;
+    const denied = await runDescriptorWorker({ ...subject.dependencies, serviceClient: { rpc: async (name: string, p: Record<string, unknown>) =>
+      name === 'phase9_prepare_automatic_metadata_v1'
+        ? { data: { admission: { status: 'recovery_only' }, coalescing: null }, error: null } : deniedRpc(name, p) } }, subject.dependencies.installed);
+    expect(denied.results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(subject.gets()).toBe(before);
   });
 
   // U3 fix pass 1: the per-job OL policy binding confers readiness only from

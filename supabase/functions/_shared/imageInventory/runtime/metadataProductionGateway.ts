@@ -1,4 +1,5 @@
 import { createEditionProviderCalls } from './metadataEditionProviderCalls';
+import { executeAutomaticMetadata, registerAutomaticSingleCall } from './metadataAutomaticExecution';
 import { randomUUID } from 'node:crypto';
 import {
   MetadataNormalizedOutcome,
@@ -46,6 +47,7 @@ function sameEditionRequest(
 }
 
 export class SupabaseMetadataProductionGateway implements MetadataProductionGateway {
+  readonly automaticExecution;
   readonly editionOptions;
   readonly editionProviderCalls;
   readonly providerValidation;
@@ -62,6 +64,9 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
     private readonly configuration: MetadataGatewayConfiguration,
   ) {
     this.explicitDescriptor = configuration.explicitDescriptor;
+    this.automaticExecution = configuration.automatic === undefined ? undefined
+      : (request: MetadataProductionRequest, signal: AbortSignal) =>
+        executeAutomaticMetadata(client, configuration, this, request, signal);
     this.explicitHttp = configuration.explicitHttp;
     this.editionOptions = configuration.editionOptions ? {
       ...configuration.editionOptions,
@@ -72,7 +77,7 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
     this.providerValidation = Object.freeze({
       adapterKey: configuration.adapterKey,
       adapterVersion: configuration.adapterVersion,
-      hostPolicy: configuration.primary.normalizedEditionHostPolicy,
+      hostPolicy: configuration.primary?.normalizedEditionHostPolicy,
     });
   }
   async resolveLocal(request: MetadataProductionRequest) {
@@ -249,7 +254,7 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
     });
     return resultForManualCompletion(completion);
   }
-  async validateEgress(input: MetadataProductionRequest & { attemptId: string }) {
+  async validateEgress(input: MetadataProductionRequest & { lookupId: string; attemptId: string }) {
     const context = await loadMetadataJobContext(this.client, {
       jobId: input.jobId,worker: input.claimWorker,
       leaseToken: input.claimLeaseToken,attempt: input.claimAttempt,
@@ -258,12 +263,14 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
       ? !sameEditionRequest(this.configuration, input, context)
       : context.candidateId !== input.candidateId) return false;
     const physicalIdentity = randomUUID();
-    const registered = object(await metadataGatewayRpc(this.client, 'phase9_register_metadata_provider_call', {
+    const parameters = {
       p_attempt_id: input.attemptId,p_job_id: input.jobId,p_worker: input.claimWorker,
       p_lease_token: input.claimLeaseToken,p_attempt_count: input.claimAttempt,
       p_physical_call_identity: physicalIdentity,
-    }));
-    this.providerCalls.set(input.attemptId, text(registered.provider_call_id));
+    };
+    const callId = this.configuration.automatic ? await registerAutomaticSingleCall(this.client, this.configuration, input)
+      : text(object(await metadataGatewayRpc(this.client, 'phase9_register_metadata_provider_call', parameters)).provider_call_id);
+    this.providerCalls.set(input.attemptId, callId);
     const revalidated = await loadMetadataJobContext(this.client, {
       jobId: input.jobId,worker: input.claimWorker,
       leaseToken: input.claimLeaseToken,attempt: input.claimAttempt,
@@ -273,11 +280,13 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
       : revalidated.candidateId === input.candidateId;
   }
   invokePrimary(input: Parameters<MetadataProviderAdapter['lookup']>[0]) {
+    if (this.configuration.primary === null) throw new Error('P9_PROVIDER_DESCRIPTOR_UNAVAILABLE');
     return this.configuration.primary.lookup(input);
   }
   async finalizeAttempt(input: MetadataAttemptFinalization) {
     await finalizeMetadataProductionAttempt(
       this.client, this.configuration, this.providerCalls.get(input.attemptId), input,
+      this.configuration.automatic ? 'automatic_transaction' : 'legacy',
     );
   }
   async persistCache(input: Readonly<{ lookupId: string; attemptId: string;

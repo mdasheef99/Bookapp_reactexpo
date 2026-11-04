@@ -30,7 +30,7 @@ export type ExplicitHttpConfig = Readonly<{
 export type MetadataGatewayConfiguration = Readonly<{
   worker: string;
   context: MetadataJobContext;
-  primary: MetadataProviderAdapter;
+  primary: MetadataProviderAdapter | null;
   adapterKey: string;
   adapterVersion: string;
   capabilityVersion: string;
@@ -48,6 +48,15 @@ export type MetadataGatewayConfiguration = Readonly<{
   // including resumed historical identity. The legacy context policy lookup by
   // key cannot see history, so routed calls carry it explicitly.
   selectedPolicyVersion?: number;
+  // 02c §§4.3/5.1: immutable M94 read and elected binding, never context-v2 extensions.
+  automatic?: Readonly<{
+    fence: import('./metadataAutomaticEditionFence').AutoFence;
+    read: import('./metadataAutomaticEditionFence').AutomaticEditionFenceRead;
+    descriptor: import('../metadata/providerDescriptor').ProviderDescriptor;
+    installed: ReadonlyMap<string, import('../metadata/providerDescriptor').ProviderDescriptor>;
+    policy: unknown;
+    sharedProtection: object;
+  }>;
   // U6: descriptor-driven explicit execution binding. Set by the worker (from
   // the verified route) or the R1 test seam; absent for legacy adapter
   // callers, which keep the instanceof path. Not a descriptor schema field.

@@ -4,11 +4,12 @@ import { buildMetadataQueryIdentity } from '../../../_shared/imageInventory/meta
 import { decodeMetadataJobContext } from '../../../_shared/imageInventory/runtime/metadataJobContext';
 import { SupabaseMetadataProductionGateway, requestFromMetadataContext }
   from '../../../_shared/imageInventory/runtime/metadataProductionGateway';
-import { runMetadataWorkerBatch } from '../../../../../workers/phase9-metadata-worker';
+import { getWorkerProtectionState, runMetadataWorkerBatch } from '../../../../../workers/phase9-metadata-worker';
+import { createProtectionState } from '../../../_shared/imageInventory/runtime/providerProtection';
 import type { MetadataEditionOptionsBoundary, EditionOptionsCompletionInput }
   from '../../../_shared/imageInventory/runtime/metadataEditionOptionsBoundary';
 import { googleBooksMultipleVolumes } from './googleBooksResponses';
-import { m93BeginReceipt, m93ClaimReceipt, m93DeferReceipt, m93FinishReceipt,
+import { completedReceipt, m93BeginReceipt, m93ClaimReceipt, m93DeferReceipt, m93FinishReceipt,
   m93ReleaseReceipt, m93ReserveReceipt } from '../../support/automaticWorker';
 
 // Picker §§4.1-4.3/5/9: recorded transport + disposable in-memory boundary.
@@ -63,6 +64,8 @@ export const tenPositions = {
 type RawContext = Record<string, unknown>;
 type Call = { name: string; parameters: Record<string, any> };
 export function editionWorkerFixture(count = 1) {
+  // Isolate process-local observations between tests, retaining sharing within each worker batch.
+  for (const key of ['google_books', 'open_library']) Object.assign(getWorkerProtectionState(key), createProtectionState());
   const contexts = new Map<string, RawContext>();
   const queue: string[] = [];
   for (let index = 1; index <= count; index += 1) {
@@ -94,6 +97,7 @@ export function editionWorkerFixture(count = 1) {
   let maximumActive = 0;
   let active = 0;
   const controls = {
+    automaticLineage: null as null | Record<string, unknown>,
     payload: tenPositions as unknown, status: 200, ownerActive: true, uncommitted: true,
     loseCompletionResponse: false, failPersistence: false, rejectPhysical: false,
     denyPhysicalRegistration: false,
@@ -146,6 +150,18 @@ export function editionWorkerFixture(count = 1) {
   };
   const rpc = async (name: string, parameters: Record<string, any>) => {
     calls.push({ name, parameters });
+    if (name === 'phase9_metadata_cache_reuse_context') return { data: { leaderLookupId: null, normalizedOutcome: null }, error: null };
+    if (name === 'phase9_store_metadata_cache') return { data: { cache_id: idAt(400) }, error: null };
+    if (name === 'phase9_automatic_edition_fence_v1') return { data: {
+      candidateVersion: current().candidateVersion, requestGeneration: 0, capturedRequestId: null,
+      lineage: controls.automaticLineage,
+    }, error: null };
+    if (name === 'phase9_prepare_automatic_metadata_v1') return { data: {
+      admission: m93BeginReceipt(), coalescing: { mode: 'leader', lookupId: lookupIdFor(current().jobId as string) },
+    }, error: null };
+    if (name === 'phase9_complete_automatic_metadata_v1') return {
+      data: completedReceipt(parameters.p_command), error: null };
+    if (name === 'phase9_recover_automatic_metadata_v1') return { data: { status: 'missing' }, error: null };
     if (name === 'phase9_reuse_candidate_edition_cache_v1') {
       return { data: { status: 'miss' }, error: null };
     }

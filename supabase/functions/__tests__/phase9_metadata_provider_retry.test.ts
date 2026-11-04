@@ -20,9 +20,9 @@ describe('Phase 9 durable retry and recovery', () => {
   it.each([
     ['120', stamp + 120000],
     ['Mon, 02 Nov 2026 12:01:00 GMT', stamp + 60000],
-    // An expired HTTP date may safely be forwarded or normalised to null; both
-    // leave M93's bounded step as the effective floor.
-    ['Wed, 21 Oct 2015 07:28:00 GMT', stamp - 31782720000],
+    // An expired HTTP date is forwarded exactly; M93's max(bounded step, floor)
+    // keeps it from moving the schedule earlier.
+    ['Wed, 21 Oct 2015 07:28:00 GMT', Date.parse('2015-10-21T07:28:00.000Z')],
     ['not-a-date', null], ['-1', null], ['999999999999999999999999', null],
   ] as const)('passes safe Retry-After %s to the durable run ledger without depending on an exception shape', async (header, floor) => {
     const subject = automaticDependencies({ fetcher: async () => new Response('', {
@@ -40,13 +40,7 @@ describe('Phase 9 durable retry and recovery', () => {
     expect(finish[0].parameters.p_version).toBe('1.0.0');
     expect(finish[0].parameters.f).toMatchObject({ claimAttempt: 1 });
     const forwarded = finish[0].parameters.p_not_before ?? null;
-    if (floor === null || floor < stamp) {
-      // Past/invalid headers must not move the persisted floor before now; M93
-      // takes max(bounded step, floor) either way.
-      expect(forwarded === null || Date.parse(forwarded) <= stamp).toBe(true);
-    } else {
-      expect(Date.parse(forwarded)).toBe(floor);
-    }
+    expect(forwarded === null ? null : Date.parse(forwarded)).toBe(floor);
     expect(result.results).toEqual([{ outcome: 'retry_scheduled' }]);
     expect(subject.command()).toBeNull();
   });
@@ -61,7 +55,7 @@ describe('Phase 9 durable retry and recovery', () => {
     };
     const subject = automaticDependencies({ fetcher: async () => new Response('', { status: 503 }),
       rpc: async (name: string) => {
-        if (name === 'phase9_begin_automatic_provider_run_v1') return { data: beginReceipts[phase], error: null };
+        if (name === 'phase9_prepare_automatic_metadata_v1') return { data: { admission: beginReceipts[phase], coalescing: null }, error: null };
         if (name === 'phase9_finish_automatic_provider_run_v1') {
           if (phase === 'first') {
             return { data: { status: 'retry_scheduled', round: 0, dueAt }, error: null };
@@ -98,7 +92,9 @@ describe('Phase 9 durable retry and recovery', () => {
     jest.setSystemTime(Date.parse(dueAt));
     expect(Date.now()).toBeGreaterThanOrEqual(Date.parse(dueAt));
     phase = 'retry';
-    await subject.run(); expect(subject.gets()).toBe(2);
+    const retrying = subject.run();
+    await jest.advanceTimersByTimeAsync(policy.minIntervalMs);
+    await retrying; expect(subject.gets()).toBe(2);
     expect(finishes(subject)).toHaveLength(2);
     expect(grants(subject)).toHaveLength(2);
     // The retry run uses the mocked claim-v2 receipt with the new lease token.
@@ -134,7 +130,7 @@ describe('Phase 9 durable retry and recovery', () => {
     });
     const rpc = subject.dependencies.serviceClient.rpc;
     await runMetadataWorkerBatch(1, { ...subject.dependencies, serviceClient: { rpc: async (name: string, p: Record<string, unknown>) =>
-      name === 'phase9_begin_automatic_provider_run_v1' ? { data: { status: 'recovery_only' }, error: null } : rpc(name, p) } });
+      name === 'phase9_prepare_automatic_metadata_v1' ? { data: { admission: { status: 'recovery_only' }, coalescing: null }, error: null } : rpc(name, p) } });
     expect(subject.gets()).toBe(1);
     expect(subject.command()).toBeNull();
   });

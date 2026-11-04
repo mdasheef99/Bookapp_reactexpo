@@ -1,7 +1,7 @@
 import {
   decideMetadataProductionPolicy,
 } from '../_shared/imageInventory/runtime/metadataProductionComposition';
-import { automaticDependencies, workerEnvironment, JOB_ID, CANDIDATE_ID } from './support/automaticWorker';
+import { completedReceipt, automaticDependencies, workerEnvironment, JOB_ID, CANDIDATE_ID } from './support/automaticWorker';
 import { worker as fixtureWorkerId } from './fixtures/phase9/editionOptionsWorker';
 import { bootstrapGoogle, observedInstalledManifest, runDescriptorWorker, testProviderManifest } from './support/providerModules';
 import { GOLDEN_ATTEMPT_ID, GOLDEN_CLOCK, GOLDEN_LOOKUP_ID, GOOGLE_AUTOMATIC_V1 } from './fixtures/phase9/providerReplacementGoldens';
@@ -20,6 +20,10 @@ const basePolicy = {
 
 // The pure policy matrix always runs: it does not depend on any worker entry,
 // only on the policy export imported above.
+const selectedCompletions = (subject: ReturnType<typeof automaticDependencies>) =>
+  subject.fixture.calls.filter(call => call.name === 'phase9_complete_automatic_metadata_v1'
+    && call.parameters.p_command.result.outcome.selected !== null);
+
 describe('Phase 9 metadata production policy', () => {
   it('derives independent matching, reuse, storage, and cache-write decisions', () => {
     expect(decideMetadataProductionPolicy({
@@ -79,7 +83,10 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     let invocations = 0;
     const production = bootstrapGoogle(workerEnvironment, emptyItemsFetcher);
     (production.primary as unknown as { lookup: () => Promise<unknown> }).lookup =
-      async () => { invocations += 1; return lookupResult; };
+      async (input: any) => { invocations += 1;
+        input.observeAutomaticHttp?.({ kind: 'send_started', at: Date.now() });
+        input.observeAutomaticHttp?.({ kind: 'response_received', at: Date.now(), status: 200, retryAfter: null });
+        return lookupResult; };
     return { production, invoked: () => invocations };
   };
 
@@ -134,8 +141,8 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     const installed = observedInstalledManifest(testProviderManifest(), call => { seenGets.push(call); });
     const subject = automaticDependencies({
       rpc: async (name: string) => {
-        if (name === 'phase9_metadata_coalescing_context') {
-          return { data: { mode: 'follower', leaderLookupId: GOLDEN_LOOKUP_ID }, error: null };
+        if (name === 'phase9_prepare_automatic_metadata_v1') {
+          return { data: { admission: null, coalescing: { mode: 'follower', leaderLookupId: GOLDEN_LOOKUP_ID } }, error: null };
         }
         return undefined;
       },
@@ -187,16 +194,16 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     expect(names).not.toContain('phase9_metadata_cache_reuse_context');
     expect(names).not.toContain('phase9_metadata_coalescing_context');
     expect(callsNamed(subject, 'phase9_register_metadata_provider_call')).toHaveLength(1);
-    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+    expect(selectedCompletions(subject)).toHaveLength(1);
     expect(names).not.toContain('phase9_store_metadata_cache');
     // The selection persists the accepted edition with its match evidence
     // (metadataProductionGateway.ts:296-309).
-    const select = subject.fixture.calls.find(call => call.name === 'phase9_select_structural_metadata_snapshot');
-    expect(select?.parameters.p_coherent_edition).toEqual({
+    const select = subject.fixture.calls.find(call => call.name === 'phase9_complete_automatic_metadata_v1');
+    expect(select?.parameters.p_command.result.outcome.selected).toEqual({
       ...GOOGLE_AUTOMATIC_V1.selected,
       fetchedAt: expect.any(String),
     });
-    expect(select?.parameters.p_match_evidence).toEqual(GOOGLE_AUTOMATIC_V1.evidence);
+    expect(select?.parameters.p_command.result.outcome.evidence).toEqual(GOOGLE_AUTOMATIC_V1.evidence);
     // Positive control differs only in reuseAllowed: the default reuses the
     // cache/coalescing boundary and persists the selected snapshot to cache.
     const positive = automaticDependencies();
@@ -296,39 +303,40 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     // The coalescing leader reserves the lookup, so no separate lookup
     // registration RPC is issued on the fresh path; lineage runs
     // reserve -> attempt -> grant -> physical finalize -> attempt finalize.
-    expect(indexOf('phase9_metadata_coalescing_context')).toBeGreaterThanOrEqual(0);
-    expect(indexOf('phase9_reserve_metadata_usage')).toBeGreaterThan(indexOf('phase9_metadata_coalescing_context'));
+    expect(indexOf('phase9_prepare_automatic_metadata_v1')).toBeGreaterThanOrEqual(0);
+    expect(indexOf('phase9_reserve_metadata_usage')).toBeGreaterThan(indexOf('phase9_prepare_automatic_metadata_v1'));
     expect(indexOf('phase9_register_structural_metadata_attempt')).toBeGreaterThan(indexOf('phase9_reserve_metadata_usage'));
     expect(indexOf('phase9_register_metadata_provider_call')).toBeGreaterThan(indexOf('phase9_register_structural_metadata_attempt'));
     expect(indexOf('phase9_finalize_metadata_provider_call')).toBeGreaterThan(indexOf('phase9_register_metadata_provider_call'));
-    expect(indexOf('phase9_finalize_structural_metadata_attempt')).toBeGreaterThan(indexOf('phase9_finalize_metadata_provider_call'));
-    expect(callsNamed(subject, 'phase9_fail_metadata_job')).toHaveLength(1);
+    expect(indexOf('phase9_complete_automatic_metadata_v1')).toBeGreaterThan(indexOf('phase9_finalize_metadata_provider_call'));
+    expect(indexOf('phase9_finalize_structural_metadata_attempt')).toBe(-1);
+    expect(callsNamed(subject, 'phase9_complete_automatic_metadata_v1')).toHaveLength(1);
+    expect(callsNamed(subject, 'phase9_fail_metadata_job')).toHaveLength(0);
     expect(callsNamed(subject, 'phase9_store_metadata_cache')).toHaveLength(1);
     // Positive control differs only in the provider result: coherent success
     // persists a selection and never fails the job.
     const positive = automaticDependencies();
     expect((await positive.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
-    expect(callsNamed(positive, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+    expect(selectedCompletions(positive)).toHaveLength(1);
     expect(callsNamed(positive, 'phase9_fail_metadata_job')).toHaveLength(0);
   });
 
-  it('reports a retry when the durable completion schedules one (positive control: resolved failure stays manual)', async () => {
-    const throwing = async () => { throw new Error('controlled provider failure'); };
-    const retrying = automaticDependencies({
-      fetcher: throwing,
-      rpc: async (name: string) => name === 'phase9_fail_metadata_job'
-        ? { data: { status: 'retry_scheduled' }, error: null } : undefined,
-    });
+  // Mutation caught: scheduling retry in fetch or retrying an unproved send.
+  it('reports the received-failure retry chosen by M93 and keeps unknown sends recovery-only', async () => {
+    const retrying = automaticDependencies({ fetcher: async () => new Response('', { status: 503 }),
+      rpc: async name => name === 'phase9_finish_automatic_provider_run_v1'
+        ? { data: { status: 'retry_scheduled', round: 0, dueAt: new Date().toISOString() }, error: null } : undefined });
     expect((await retrying.run()).results).toEqual([{ outcome: 'retry_scheduled' }]);
     expect(retrying.gets()).toBe(1);
-    const fail = retrying.fixture.calls.find(call => call.name === 'phase9_fail_metadata_job');
-    // The throwing fetcher surfaces through the real adapter as a retryable
-    // network failure; the durable completion decides retry vs manual.
-    expect(fail?.parameters).toMatchObject({ p_failure_kind: 'network_failure', p_retryable: true });
-    // Positive control differs only in the durable completion.
-    const manual = automaticDependencies({ fetcher: throwing });
-    expect((await manual.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
-    expect(manual.gets()).toBe(1);
+    expect(callsNamed(retrying, 'phase9_finish_automatic_provider_run_v1')).toHaveLength(1);
+    expect(callsNamed(retrying, 'phase9_fail_metadata_job')).toHaveLength(0);
+    const unknown = automaticDependencies({ fetcher: async () => { throw new Error('unknown send'); },
+      rpc: async name => name === 'phase9_finish_automatic_provider_run_v1'
+        ? { data: { status: 'recovery_only' }, error: null } : undefined });
+    expect((await unknown.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(unknown.gets()).toBe(1);
+    expect(callsNamed(unknown, 'phase9_finalize_metadata_provider_call')[0].parameters.p_status).toBe('outcome_unknown');
+    expect(unknown.command()).toBeNull();
   });
 
   it('makes zero provider calls after stale claim rejection (positive control: valid claim does fresh work)', async () => {
@@ -338,7 +346,7 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
       rpc: async (name: string) => {
         if (name === 'phase9_metadata_job_context') {
           jobContextCalls += 1;
-          if (jobContextCalls === 3) {
+          if (jobContextCalls === 4) {
             return {
               data: { ...current(), candidateId: '00000000-0000-4000-8000-000000000099' },
               error: null,
@@ -351,7 +359,7 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     current = subject.fixture.current as () => Record<string, unknown>;
     expect((await subject.run()).results).toEqual([{ outcome: 'stale_claim' }]);
     expect(subject.gets()).toBe(0);
-    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    expect(selectedCompletions(subject)).toHaveLength(0);
     // The stale fence writes the durable stale finalization before returning:
     // physical p_status 'stale_rejected' and attempt p_disposition 'stale'
     // with the production-written policy_denied outcome
@@ -359,7 +367,8 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     const physical = subject.fixture.calls.find(call => call.name === 'phase9_finalize_metadata_provider_call');
     expect(physical?.parameters).toMatchObject({ p_status: 'stale_rejected' });
     const attempt = subject.fixture.calls.find(call => call.name === 'phase9_finalize_structural_metadata_attempt');
-    expect(attempt?.parameters).toMatchObject({ p_disposition: 'stale', p_normalized_outcome: 'policy_denied' });
+    expect(attempt).toBeUndefined();
+    expect(subject.command()).toBeNull();
     // Positive control differs only in fence validity.
     const positive = automaticDependencies();
     expect((await positive.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
@@ -370,18 +379,18 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     const subject = automaticDependencies();
     expect((await subject.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
     expect(subject.gets()).toBe(1);
-    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+    expect(selectedCompletions(subject)).toHaveLength(1);
     expect(callsNamed(subject, 'phase9_fail_metadata_job')).toHaveLength(0);
     expect(callsNamed(subject, 'phase9_register_metadata_provider_call')).toHaveLength(1);
     expect(callsNamed(subject, 'phase9_store_metadata_cache')).toHaveLength(1);
     // The selection persists the accepted edition with its match evidence
     // (metadataProductionGateway.ts:296-309).
-    const select = subject.fixture.calls.find(call => call.name === 'phase9_select_structural_metadata_snapshot');
-    expect(select?.parameters.p_coherent_edition).toEqual({
+    const select = subject.fixture.calls.find(call => call.name === 'phase9_complete_automatic_metadata_v1');
+    expect(select?.parameters.p_command.result.outcome.selected).toEqual({
       ...GOOGLE_AUTOMATIC_V1.selected,
       fetchedAt: expect.any(String),
     });
-    expect(select?.parameters.p_match_evidence).toEqual(GOOGLE_AUTOMATIC_V1.evidence);
+    expect(select?.parameters.p_command.result.outcome.evidence).toEqual(GOOGLE_AUTOMATIC_V1.evidence);
     // Negative control differs only in storage: denial keeps the same fresh
     // call but persists nothing and stays manual.
     const denied = automaticDependencies({
@@ -394,10 +403,11 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     });
     expect((await denied.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
     expect(denied.gets()).toBe(1);
-    expect(callsNamed(denied, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    expect(selectedCompletions(denied)).toHaveLength(0);
   });
 
-  it('persists a representative cover before selection and degrades safely if that optional write fails', async () => {
+  // Mutation caught: writing cover/selection separately or caching an unconfirmed transaction.
+  it('carries cover and selection atomically and refuses unconfirmed completion', async () => {
     const alternateFetcher = async () => new Response(JSON.stringify({
       kind: 'books#volumes', totalItems: 2, items: [
         { id: 'winner', volumeInfo: { title: 'The Fixture Book', authors: ['Fixture Author'],
@@ -408,61 +418,35 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     }), { headers: { 'content-type': 'application/json' } });
     const warning = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     try {
-      const failing = automaticDependencies({
-        fetcher: alternateFetcher,
-        rpc: async (name: string) => name === 'phase9_store_metadata_representative_cover_v1'
-          ? Promise.reject(new Error('https://token:secret@example.invalid/private-cover?signature=redact-me'))
-          : undefined,
+      const failing = automaticDependencies({ fetcher: alternateFetcher,
+        rpc: async name => name === 'phase9_complete_automatic_metadata_v1'
+          ? { data: null, error: { message: 'https://token:secret@example.invalid/private-cover?signature=redact-me' } } : undefined });
+      expect((await failing.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
+      expect(failing.command()!.result.outcome.representativeCover).toMatchObject({
+        sourceProviderRecordId: 'alternate', coverReference: 'https://books.google.com/books/content?id=alternate',
+        sourceRelation: 'representative_edition', selectionPolicyVersion: 'p9-representative-cover-v1',
+        matchEvidence: ['exact_title', 'exact_author_set', 'language_compatible'],
       });
-      expect((await failing.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
-      expect(callsNamed(failing, 'phase9_store_metadata_representative_cover_v1')).toHaveLength(1);
-      expect(callsNamed(failing, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
-      // The cover write precedes the selection and carries the fields the
-      // gateway sends (metadataRepresentativeCoverGateway.ts:16-27).
-      const failingOrder = failing.fixture.calls.map(call => call.name);
-      expect(failingOrder.indexOf('phase9_store_metadata_representative_cover_v1'))
-        .toBeLessThan(failingOrder.indexOf('phase9_select_structural_metadata_snapshot'));
-      const failingCover = failing.fixture.calls.find(call => call.name === 'phase9_store_metadata_representative_cover_v1');
-      expect(failingCover?.parameters).toEqual({
-        p_attempt_id: GOLDEN_ATTEMPT_ID,
-        p_lookup_id: GOLDEN_LOOKUP_ID,
-        p_job_id: JOB_ID,
-        p_worker: fixtureWorkerId,
-        p_lease_token: 'a'.repeat(64),
-        p_attempt_count: 1,
-        p_candidate_id: CANDIDATE_ID,
-        p_candidate_version: 1,
-        p_cover_reference: 'https://books.google.com/books/content?id=alternate',
-        p_source_provider_record_id: 'alternate',
-        p_source_relation: 'representative_edition',
-        p_selection_policy_version: 'p9-representative-cover-v1',
-        p_match_evidence: ['exact_title', 'exact_author_set', 'language_compatible'],
-      });
-      expect(warning).toHaveBeenCalledWith(
-        '[phase9] representative-cover persistence failed',
-        {
-          lookupId: GOLDEN_LOOKUP_ID,
-          attemptId: GOLDEN_ATTEMPT_ID,
-          errorCode: 'P9_REPRESENTATIVE_COVER_PERSISTENCE_FAILED',
-        },
-      );
-      expect(JSON.stringify(warning.mock.calls[0])).not.toContain('redact-me');
-      // Positive control differs only in cover-store health.
-      const healthy = automaticDependencies({
-        fetcher: alternateFetcher,
-        rpc: async (name: string) => name === 'phase9_store_metadata_representative_cover_v1'
-          ? { data: { status: 'stored' }, error: null } : undefined,
-      });
+      expect(callsNamed(failing, 'phase9_store_metadata_representative_cover_v1')).toHaveLength(0);
+      expect(callsNamed(failing, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+      expect(callsNamed(failing, 'phase9_store_metadata_cache')).toHaveLength(0);
+      expect(warning).not.toHaveBeenCalled();
+      expect(JSON.stringify(warning.mock.calls)).not.toContain('redact-me');
+      const healthy = automaticDependencies({ fetcher: alternateFetcher });
       expect((await healthy.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
-      expect(callsNamed(healthy, 'phase9_store_metadata_representative_cover_v1')).toHaveLength(1);
-      expect(callsNamed(healthy, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
-    } finally {
-      warning.mockRestore();
-    }
+      expect(healthy.command()!.result.outcome.representativeCover).toEqual(failing.command()!.result.outcome.representativeCover);
+      expect(selectedCompletions(healthy)).toHaveLength(1);
+      expect(callsNamed(healthy, 'phase9_store_metadata_representative_cover_v1')).toHaveLength(0);
+    } finally { warning.mockRestore(); }
   });
 
-  it('resumes a durably finalized logical attempt without another physical call', async () => {
+  it('recovers a durable atomic receipt without reconstructing metadata or another physical call', async () => {
     const subject = automaticDependencies({
+      rpc: async name => name === 'phase9_recover_automatic_metadata_v1' ? { data: {
+        version: 'p9-auto-completion-v1', status: 'replayed', lookupId: GOLDEN_LOOKUP_ID,
+        snapshotId: '00000000-0000-4000-8000-000000000005', outcome: 'accepted_metadata_match', selectedOptionId: null,
+        prefill: { status: 'skipped', reason: 'not_installed' },
+      }, error: null } : undefined,
       context: {
         currentLookupId: GOLDEN_LOOKUP_ID,
         currentLookupAdapterKey: 'google_books',
@@ -484,7 +468,8 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     expect((await subject.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
     expect(subject.gets()).toBe(0);
     expect(callsNamed(subject, 'phase9_register_metadata_provider_call')).toHaveLength(0);
-    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+    expect(selectedCompletions(subject)).toHaveLength(0);
+    expect(callsNamed(subject, 'phase9_recover_automatic_metadata_v1')).toHaveLength(1);
     // Positive control differs only in persisted evidence: a fresh job does a
     // physical GET and registers a new grant.
     const fresh = automaticDependencies();
@@ -499,20 +484,20 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
         ? Promise.reject(new Error('cache unavailable')) : undefined,
     });
     expect((await failing.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
-    expect(callsNamed(failing, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+    expect(selectedCompletions(failing)).toHaveLength(1);
     expect(callsNamed(failing, 'phase9_store_metadata_cache')).toHaveLength(1);
     // The selection still carries the accepted edition even though the
     // follow-on cache write fails (metadataProductionGateway.ts:296-309).
-    const failingSelect = failing.fixture.calls.find(call => call.name === 'phase9_select_structural_metadata_snapshot');
-    expect(failingSelect?.parameters.p_coherent_edition).toEqual({
+    const failingSelect = failing.fixture.calls.find(call => call.name === 'phase9_complete_automatic_metadata_v1');
+    expect(failingSelect?.parameters.p_command.result.outcome.selected).toEqual({
       ...GOOGLE_AUTOMATIC_V1.selected,
       fetchedAt: expect.any(String),
     });
-    expect(failingSelect?.parameters.p_match_evidence).toEqual(GOOGLE_AUTOMATIC_V1.evidence);
+    expect(failingSelect?.parameters.p_command.result.outcome.evidence).toEqual(GOOGLE_AUTOMATIC_V1.evidence);
     // Positive control differs only in cache-store health.
     const healthy = automaticDependencies();
     expect((await healthy.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
-    expect(callsNamed(healthy, 'phase9_select_structural_metadata_snapshot')).toHaveLength(1);
+    expect(selectedCompletions(healthy)).toHaveLength(1);
   });
 
   it('fails closed when storage permission is absent', async () => {
@@ -540,13 +525,11 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
       p_retryable: false,
     });
     const attempt = subject.fixture.calls.find(call => call.name === 'phase9_finalize_structural_metadata_attempt');
-    expect(attempt?.parameters).toMatchObject({
-      p_disposition: 'rejected',
-      p_normalized_outcome: 'policy_denied',
-      p_normalized_candidate: null,
-    });
+    expect(attempt).toBeUndefined();
+    expect(subject.command()?.result.outcome).toMatchObject({ outcome: 'policy_denied', selected: null, retryable: false });
     const fail = subject.fixture.calls.find(call => call.name === 'phase9_fail_metadata_job');
-    expect(fail?.parameters).toMatchObject({ p_failure_kind: 'policy_denied', p_retryable: false });
+    expect(fail).toBeUndefined();
+    expect(subject.command()?.result.outcome).toMatchObject({ outcome: 'policy_denied', selected: null, retryable: false });
     // Positive control differs only in storageAllowed (see the accepted
     // snapshot test above, which persists a selection with storage allowed).
   });
@@ -575,8 +558,9 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
       p_retryable: false,
     });
     const attempt = subject.fixture.calls.find(call => call.name === 'phase9_finalize_structural_metadata_attempt');
-    expect(attempt?.parameters).toMatchObject({ p_disposition: 'rejected' });
-    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    expect(attempt).toBeUndefined();
+    expect(subject.command()?.result.outcome.outcome).toBe('schema_invalid');
+    expect(selectedCompletions(subject)).toHaveLength(0);
     // Positive control differs only in provider health: the real adapter with
     // the standard fixture returns an accepted coherent match (see the
     // accepted snapshot test above).
@@ -596,7 +580,7 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
       p_normalized_candidate: null,
       p_retryable: false,
     });
-    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    expect(selectedCompletions(subject)).toHaveLength(0);
     // Positive control differs only in provider health (see the accepted
     // snapshot test above).
   });
@@ -619,7 +603,7 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
       p_normalized_candidate: null,
       p_retryable: false,
     });
-    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    expect(selectedCompletions(subject)).toHaveLength(0);
     // Positive control differs only in provider health: the real adapter with
     // the standard fixture returns an accepted coherent match (see the
     // accepted snapshot test above).
@@ -644,7 +628,7 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
       p_normalized_candidate: null,
       p_retryable: false,
     });
-    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    expect(selectedCompletions(subject)).toHaveLength(0);
     // Positive control differs only in request-id safety.
     const safeStub = shape(null);
     const safe = automaticDependencies({ production: safeStub.production });
@@ -677,7 +661,7 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
     expect(subject.gets()).toBe(1);
     expect(callsNamed(subject, 'phase9_complete_metadata_cache_reuse')).toHaveLength(0);
-    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    expect(selectedCompletions(subject)).toHaveLength(0);
     expect(callsNamed(subject, 'phase9_store_metadata_cache')).toHaveLength(0);
     // Same storage-denied finalization as the storage test above: the fresh
     // coherent outcome is rejected with the policy_denied logical outcome and
@@ -690,13 +674,11 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
       p_retryable: false,
     });
     const attempt = subject.fixture.calls.find(call => call.name === 'phase9_finalize_structural_metadata_attempt');
-    expect(attempt?.parameters).toMatchObject({
-      p_disposition: 'rejected',
-      p_normalized_outcome: 'policy_denied',
-      p_normalized_candidate: null,
-    });
+    expect(attempt).toBeUndefined();
+    expect(subject.command()?.result.outcome).toMatchObject({ outcome: 'policy_denied', selected: null, retryable: false });
     const fail = subject.fixture.calls.find(call => call.name === 'phase9_fail_metadata_job');
-    expect(fail?.parameters).toMatchObject({ p_failure_kind: 'policy_denied', p_retryable: false });
+    expect(fail).toBeUndefined();
+    expect(subject.command()?.result.outcome).toMatchObject({ outcome: 'policy_denied', selected: null, retryable: false });
     // Positive control differs only in storageAllowed: the same hit with
     // storage allowed completes from cache with zero fresh calls (see the
     // compatible cache hit test above).
@@ -746,8 +728,9 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
     expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
     expect(subject.gets()).toBe(1);
     const fail = subject.fixture.calls.find(call => call.name === 'phase9_fail_metadata_job');
-    expect(fail?.parameters).toMatchObject({ p_failure_kind: 'policy_denied', p_retryable: false });
-    expect(callsNamed(subject, 'phase9_select_structural_metadata_snapshot')).toHaveLength(0);
+    expect(fail).toBeUndefined();
+    expect(subject.command()?.result.outcome).toMatchObject({ outcome: 'policy_denied', selected: null, retryable: false });
+    expect(selectedCompletions(subject)).toHaveLength(0);
     expect(callsNamed(subject, 'phase9_store_metadata_cache')).toHaveLength(0);
     // Positive control differs only in reuse/storage: the default fresh run
     // with both allowed persists the accepted selection (see the accepted

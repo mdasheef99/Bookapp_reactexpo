@@ -128,10 +128,9 @@ describe('Phase 9 fix1 F6: secondary fallback through the worker', () => {
   });
 });
 
-describe('Phase 9 fix1 F8: v2 automatic stays unready', () => {
-  it('fails closed on an eligible v2 automatic row with Google off (same as HEAD)', async () => {
-    // Mutation caught: executing port-native automatic through composition
-    // (v1 adapter lookup() throws) instead of HEAD-identical manual.
+describe('Phase 9 U5 replaces F8: fenced v2 automatic execution', () => {
+  it('executes an eligible v2 automatic row with Google off, refusing the disabled control', async () => {
+    // Mutation caught: retaining the temporary U6 refusal or executing a disabled automatic row.
     const fixture = editionWorkerFixture();
     Object.keys(fixture.current()).forEach((key) => { delete fixture.current()[key]; });
     Object.assign(fixture.current(), automaticContext, {
@@ -167,10 +166,61 @@ describe('Phase 9 fix1 F8: v2 automatic stays unready', () => {
       primary: null, primaryCapability: null,
       editionFallback: library, installed,
     });
-    expect(result.results).toEqual([{ outcome: 'manual_metadata_required' }]);
-    expect(urls).toEqual([]);
-    expect(fixture.calls.some((call) => call.name === 'phase9_fail_metadata_job'
+    expect(result.results).toEqual([{ outcome: 'accepted_metadata_match' }]);
+    expect(urls).toEqual(['/search.json', '/works/OL1W/editions.json', '/authors/OL1A.json']);
+    expect(fixture.calls.filter(call => call.name === 'phase9_register_edition_options_provider_call_v1')).toHaveLength(3);
+    expect(fixture.calls.some(call => call.name === 'phase9_complete_automatic_metadata_v1')).toBe(true);
+    urls.length = 0;
+    fixture.requeue();
+    const disabledRpc = async (name: string, p: Record<string, unknown>) => {
+      if (name === 'phase9_provider_configuration_v1') return { data: providerConfigurationSnapshot([
+        providerConfigurationRow('open_library', '2.0.0', { automaticLookupAllowed: false,
+          automaticRole: null, automaticOrder: null, explicitSearchAllowed: false, explicitRole: null, explicitOrder: null }),
+      ]), error: null };
+      return baseRpc(name, p);
+    };
+    expect((await runMetadataWorkerBatch(1, { ...fixture.dependencies, serviceClient: { rpc: disabledRpc },
+      primary: null, primaryCapability: null, editionFallback: library, installed })).results)
+      .toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(fixture.calls.some(call => call.name === 'phase9_fail_metadata_job'
       && call.parameters.p_failure_kind === 'provider_disabled')).toBe(true);
+    expect(urls).toEqual([]);
+  });
+  it('finishes the fan-out run when a hook throws', async () => {
+    // M1: a non-OL hook throw must settle the run, not escape before finish.
+    const fixture = editionWorkerFixture();
+    Object.keys(fixture.current()).forEach((key) => { delete fixture.current()[key]; });
+    Object.assign(fixture.current(), automaticContext, {
+      localCanonicalEditionId: null,
+      providerPolicies: [{ adapterKey: 'open_library', adapterVersion: '2.0.0',
+        enabled: true, matchingAllowed: true, storageAllowed: true,
+        reuseAllowed: true, policyVersion: 1 }],
+    });
+    fixture.useUuidLineage();
+    const urls: string[] = [];
+    const library = olAdapter(urls);
+    const installed = createInstalledDescriptorManifest({ google: null, openLibrary: library });
+    const baseRpc = fixture.dependencies.serviceClient.rpc;
+    const rpc = async (name: string, parameters: Record<string, unknown>) => {
+      if (name === 'phase9_provider_configuration_v1') {
+        return { data: providerConfigurationSnapshot([
+          providerConfigurationRow('open_library', '2.0.0', {
+            automaticLookupAllowed: true, automaticRole: 'primary', automaticOrder: 1,
+            explicitSearchAllowed: false, explicitRole: null, explicitOrder: null,
+            protectionPolicy: TEST_ONLY_PROTECTION_POLICY,
+          }),
+        ]), error: null };
+      }
+      if (name === 'phase9_register_edition_options_provider_call_v1') {
+        throw new Error('P9_HOOK_FAILURE');
+      }
+      return baseRpc(name, parameters);
+    };
+    const result = await runMetadataWorkerBatch(1, { ...fixture.dependencies, serviceClient: { rpc },
+      primary: null, primaryCapability: null, editionFallback: library, installed });
+    expect(result.results).toEqual([{ outcome: 'manual_metadata_required' }]);
+    expect(fixture.calls.some(call => call.name === 'phase9_finish_automatic_provider_run_v1')).toBe(true);
+    expect(urls).toEqual([]);
   });
 });
 
