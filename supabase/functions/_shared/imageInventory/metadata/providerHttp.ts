@@ -21,6 +21,7 @@
 import {
   acquireStartPermit,
   checkBreaker,
+  isBreakerFailure,
   parseProtectionPolicyOrNull,
   parseRetryAfterMs,
   recordBreakerFailure,
@@ -289,22 +290,24 @@ export function createProviderHttpPort(config: ProviderHttpPortConfig): Readonly
     try {
       let isProbe = false;
       try {
-        isProbe = checkBreaker(policy, state, now());
-      } catch (error) {
-        if (error instanceof ProviderProtectionRefusal) {
-          throw new ProviderHttpError('circuit_breaker_open', false, 'stale_rejected', false, null, null);
-        }
-        throw error;
-      }
-      try {
-        const response = await serveFenced(input, track, () => permit.done(true));
+        const response = await serveFenced(input, track, () => permit.done(true), () => {
+          // FIX2 D4: the legacy limiter may wait while another request opens the breaker.
+          try { isProbe = checkBreaker(policy, state, now()); }
+          catch (error) {
+            if (error instanceof ProviderProtectionRefusal) {
+              throw new ProviderHttpError('circuit_breaker_open', false, 'stale_rejected', false, null, null);
+            }
+            throw error;
+          }
+        });
         if (isProbe) settleHalfOpenProbe(state, true, now());
         return response;
       } catch (error) {
         // F4: a pre-send refusal releases the probe WITHOUT counting a
         // failure; only provider contact settles it as failure.
         if (isProbe) {
-          if (track.contacted) settleHalfOpenProbe(state, false, now());
+          if (track.contacted) settleHalfOpenProbe(state,
+            error instanceof ProviderHttpError && !isBreakerFailure(error.outcome), now());
           else releaseHalfOpenProbe(state);
         }
         throw error;
@@ -317,6 +320,7 @@ export function createProviderHttpPort(config: ProviderHttpPortConfig): Readonly
   async function serveFenced(
     input: ProviderHttpCall, track: { granted: boolean; contacted: boolean; unregistered: boolean; hookEntered: boolean },
     markStarted: () => void,
+    beforeRegister: () => void = () => {},
   ): Promise<ProviderHttpResponse> {
     // Compiled request trust (S1/F14): the injected validator decides first,
     // but configured registry hosts are ALWAYS intersected afterwards — a
@@ -339,6 +343,7 @@ export function createProviderHttpPort(config: ProviderHttpPortConfig): Readonly
       if (config.acquireLimiter !== undefined) {
         permitBox.permit = await config.acquireLimiter(input.signal);
       }
+      beforeRegister();
       return await serveRegistered(input, permitBox, track, markStarted);
     } finally {
       permitBox.permit?.(false);
@@ -556,12 +561,6 @@ export function createProviderHttpPort(config: ProviderHttpPortConfig): Readonly
       return new ProviderHttpError('cancelled', false, 'outcome_unknown', true, null, null);
     }
     return new ProviderHttpError('network_failure', true, 'outcome_unknown', true, null, null);
-  }
-
-  function isBreakerFailure(outcome: string): boolean {
-    // 503-shaped server-side failures only (the breaker test uses 503s).
-    // 429 carries its own Retry-After pacing and never trips the breaker.
-    return outcome === 'provider_unavailable' || outcome === 'network_failure' || outcome === 'timeout';
   }
 
   function toSendFailure(

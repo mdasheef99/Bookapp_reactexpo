@@ -78,7 +78,22 @@ export async function automaticWorkerFixture(db, { provider = 'google_books', fe
     timeoutMs: 1000, maxResponseBytes: 64000, fetcher: recorded }) : null;
   const library = new OpenLibraryEditionOptionsAdapter({ timeoutMs: 1000, maxResponseBytes: 64000, fetcher: recorded });
   const dependencies = { workerId: 'metadata-worker-sql-u5', workerAuthToken: 'local-fixture-only',
-    serviceClient: { rpc: databaseRpc(db, calls, errors, after) }, primary: google,
+    serviceClient: { rpc: databaseRpc(db, calls, errors, after),
+      // Exact PostgREST read used by FIX2 L1, backed by the real SQL rows, never fabricated lineage.
+      from(table) {
+        assert.equal(table, 'metadata_enrichment_attempts');
+        return { select: () => ({ eq: (key, id) => {
+          assert.equal(key, 'id');
+          return { maybeSingle: async () => {
+            const rows = (await db.query(`SELECT to_jsonb(a)||jsonb_build_object(
+              'lookup',(SELECT to_jsonb(l) FROM public.phase9_metadata_lookups l WHERE l.id=a.lookup_id),
+              'calls',(SELECT coalesce(jsonb_agg(to_jsonb(pc)),'[]') FROM public.phase9_metadata_provider_calls pc
+                WHERE pc.logical_attempt_id=a.id)) AS result FROM public.metadata_enrichment_attempts a WHERE a.id=$1`, [id])).rows;
+            return { data: rows[0]?.result ?? null, error: null };
+          } };
+        } }) };
+      },
+    }, primary: google,
     primaryCapability: google === null ? null : GOOGLE_BOOKS_CAPABILITY, editionFallback: library,
     installed: createInstalledDescriptorManifest({ google, openLibrary: library }) };
   return { ...card, jobId, calls, errors, urls, dependencies,

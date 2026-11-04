@@ -357,7 +357,7 @@ describe('Phase 9 8b worker behaviour for pre-8b controls (stable seam)', () => 
       },
     });
     current = subject.fixture.current as () => Record<string, unknown>;
-    expect((await subject.run()).results).toEqual([{ outcome: 'stale_claim' }]);
+    expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
     expect(subject.gets()).toBe(0);
     expect(selectedCompletions(subject)).toHaveLength(0);
     // The stale fence writes the durable stale finalization before returning:

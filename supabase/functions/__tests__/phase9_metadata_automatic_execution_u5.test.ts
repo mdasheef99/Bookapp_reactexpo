@@ -55,7 +55,7 @@ describe('U5 automatic admission and execution (02c §4.3)', () => {
   });
   // Mutation caught: treating an error's message as certain rollback without the real SQLSTATE.
   it.each([
-    ['P9_STATE_CONFLICT', 'P0001', 'stale_claim'],
+    ['P9_STATE_CONFLICT', 'P0001', 'manual_metadata_required'],
     ['P9_STATE_CONFLICT', undefined, 'manual_metadata_required'],
     ['P9_REQUEST_INVALID', 'P0001', 'manual_metadata_required'],
     ['P9_EXTERNAL_ADMISSION_PAUSED', 'P0001', 'manual_metadata_required'],
@@ -64,7 +64,8 @@ describe('U5 automatic admission and execution (02c §4.3)', () => {
       ? { data: null, error: { message, code } } : undefined });
     expect((await subject.run()).results).toEqual([{ outcome }]);
     expect(subject.gets()).toBe(0);
-    expect(subject.fixture.calls.map(call => call.name)).not.toContain('phase9_fail_metadata_job');
+    expect(subject.fixture.calls.some(call => call.name === 'phase9_fail_metadata_job'))
+      .toBe(message === 'P9_STATE_CONFLICT' && code === 'P0001');
     const positive = automaticDependencies();
     expect((await positive.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
     expect(positive.gets()).toBe(1);
@@ -107,13 +108,13 @@ describe('U5 automatic admission and execution (02c §4.3)', () => {
       }
       return undefined;
     } });
-    expect((await subject.run()).results).toEqual([{ outcome: 'stale_claim' }]);
+    expect((await subject.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
     expect(subject.gets()).toBe(0);
     const receipts = subject.fixture.calls.filter(call => call.name === 'phase9_finalize_metadata_provider_call');
     expect(receipts).toHaveLength(1);
     expect(receipts[0].parameters).toMatchObject({ p_status: 'stale_rejected', p_normalized_candidate: null });
     expect(subject.command()).toBeNull();
-    expect(subject.fixture.calls.map(call => call.name)).not.toContain('phase9_fail_metadata_job');
+    expect(subject.fixture.calls.map(call => call.name)).toContain('phase9_fail_metadata_job');
     const positive = automaticDependencies();
     expect((await positive.run()).results).toEqual([{ outcome: 'accepted_metadata_match' }]);
     expect(positive.gets()).toBe(1);

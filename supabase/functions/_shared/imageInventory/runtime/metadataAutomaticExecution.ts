@@ -14,7 +14,7 @@ import { AutomaticCompletionUncertainError, buildAutomaticCompletion,
 import type { AutoReceipt, AutomaticRecovery } from './metadataAutomaticCompletion';
 import { decideMetadataProductionPolicy, resultForManualCompletion } from './metadataProductionComposition';
 import type { MetadataCompositionResult, MetadataProductionGateway, MetadataProductionRequest } from './metadataProductionComposition';
-import { resultForReuseCompletion, isCacheableOutcome } from './metadataProductionPolicy';
+import { resultForReuseCompletion, isCacheableOutcome, isPositiveOutcome } from './metadataProductionPolicy';
 import type { MetadataResultV2, VerifiedRetention, ProviderHttpPort } from '../metadata/providerDescriptor';
 import { canonicalizeMetadataOutcome } from '../metadata/providerAdapter';
 import { failureOutcome } from '../metadata/openLibrary/automatic';
@@ -23,7 +23,7 @@ import { boundOptionsRetentionEvidence } from '../metadata/googleBooks/editionOp
 import { createProviderHttpPort, ProviderHttpError } from '../metadata/providerHttp';
 import { createEditionProviderCalls } from './metadataEditionProviderCalls';
 import { acquireStartPermit, checkBreaker, parseProtectionPolicyOrNull, parseRetryAfterMs,
-  recordBreakerFailure, releaseHalfOpenProbe, settleHalfOpenProbe, useSharedProtectionState } from './providerProtection';
+  recordBreakerFailure, releaseHalfOpenProbe, settleHalfOpenProbe, useSharedProtectionState, isBreakerFailure } from './providerProtection';
 
 const round = z.union([z.literal(0), z.literal(1)]);
 const finishSchema = z.discriminatedUnion('status', [
@@ -138,11 +138,13 @@ export async function executeAutomaticMetadata(
     if (historical) {
       const recovered = await boundary.recover(fence);
       if (recovered.status !== 'missing') return receiptResult(recovered);
-      if (binding.read.lineage === null) return manual();
+      // FIX2 L2 (02c §4.3): protected history can never downgrade to legacy retries.
+      if (binding.read.lineage !== null && protection === null) return await terminal('policy_denied');
+      if (binding.read.lineage === null && !binding.legacyRetry) return manual();
     }
     if (!historical && policy.allowCacheRead) {
       const cached = await gateway.readCache(request);
-      if (cached.outcome === 'hit' && (cached.normalizedOutcome !== 'coherent_match' || policy.allowPositiveRetention)) {
+      if (cached.outcome === 'hit' && (!isPositiveOutcome(cached.normalizedOutcome) || policy.allowPositiveRetention)) {
         return resultForReuseCompletion(await gateway.completeCacheHit(request, cached.normalizedOutcome, policy), policy);
       }
     }
@@ -187,7 +189,7 @@ export async function executeAutomaticMetadata(
         await gateway.deferFollower(request, election.leaderLookupId));
       lookupId = election.lookupId ?? null;
     }
-    const lineage = binding.read.lineage;
+    const lineage = binding.read.lineage ?? binding.legacyRetry ?? null;
     const startedAt = new Date().toISOString();
     const headers: Headers[] = [];
     let firstGetAt: number | null = null, retryFloor: number | null = null;
@@ -251,21 +253,22 @@ export async function executeAutomaticMetadata(
         deniedRetention = outcome.selected !== null && !policy.allowPositiveRetention;
         // A normalized network error does not prove a received provider response.
         const unknown = invocationFailed || sent && !responded;
+        // FIX2 D1/D3: observe transport before fallible SQL finalization; every sent probe settles.
+        if (protection !== null && sent) {
+          const failed = isBreakerFailure(outcome.outcome);
+          if (probe) settleHalfOpenProbe(state, !failed, Date.now());
+          else if (failed) recordBreakerFailure(protection, state, Date.now());
+        }
         await gateway.finalizeAttempt({ lookupId, attemptId, normalizedOutcome: outcome.outcome,
           disposition: sent || unknown ? 'rejected' : 'stale_rejected', providerRequestId: outcome.providerRequestId,
           normalizedCandidate: deniedRetention ? null : outcome.selected, evidence: deniedRetention ? [] : outcome.evidence,
           logicalOutcome: deniedRetention ? 'policy_denied' : undefined, retryable: outcome.retryable,
           physicalStatus: unknown ? 'outcome_unknown' : 'finalized' });
-        if (protection !== null && sent) {
-          const failed = outcome.retryable;
-          if (probe) settleHalfOpenProbe(state, !failed, Date.now());
-          else if (failed) recordBreakerFailure(protection, state, Date.now());
-        }
         // F2: a proven-unsent, known outcome must terminalize, never recovery-loop.
         if (!sent && !unknown) return await terminal(outcome.outcome);
         // F5: NULL-policy unknown send keeps HEAD's retryable manual completion.
         if (unknown && protection === null) return resultForManualCompletion(await gateway.completeManual({
-          lookupId, attemptId, outcome: 'provider_unavailable', retryable: true }));
+          lookupId, attemptId, outcome: 'provider_unavailable', retryable: !binding.legacyRetry }));
         if (deniedRetention) result = { version: 'p9-metadata-result-v2', purpose: 'automatic',
           outcome: failureOutcome('policy_denied', false), rows: null, catalogueCompanions: null, retention: null };
       } else {
@@ -311,7 +314,7 @@ export async function executeAutomaticMetadata(
       if (deniedRetention && descriptor.protocol.kind !== 'single') return await terminal('policy_denied');
     } else if (result.outcome.retryable) {
       return resultForManualCompletion(await gateway.completeManual({ lookupId, attemptId,
-        outcome: result.outcome.outcome, retryable: true }));
+        outcome: result.outcome.outcome, retryable: !binding.legacyRetry }));
     }
     const validation = installedProviderValidation(descriptor.adapterKey, descriptor.adapterVersion,
       descriptor.validationContract, descriptor.hostPolicyVersion);

@@ -56,6 +56,7 @@ export type MetadataGatewayConfiguration = Readonly<{
     installed: ReadonlyMap<string, import('../metadata/providerDescriptor').ProviderDescriptor>;
     policy: unknown;
     sharedProtection: object;
+    legacyRetry?: import('../metadata/providerDescriptor').Lineage | null;
   }>;
   // U6: descriptor-driven explicit execution binding. Set by the worker (from
   // the verified route) or the R1 test seam; absent for legacy adapter

@@ -249,6 +249,11 @@ export function releaseHalfOpenProbe(state: ProtectionState): void {
   state.halfOpenProbeInFlight = false;
 }
 
+// 02c §5.4: rate limiting has its own pacing; only transport/server outages trip the breaker.
+export function isBreakerFailure(outcome: string): boolean {
+  return outcome === 'provider_unavailable' || outcome === 'network_failure' || outcome === 'timeout';
+}
+
 export function settleHalfOpenProbe(state: ProtectionState, ok: boolean, nowMs: number): void {
   state.halfOpenProbeInFlight = false;
   if (ok) {

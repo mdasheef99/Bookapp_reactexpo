@@ -19,7 +19,7 @@ describe('U5 selected-only cache (02c §4.3)', () => {
   it('writes no cache after a stale rejection or an uncertain completion', async () => {
     const stale = automaticDependencies({ rpc: async name => name === 'phase9_complete_automatic_metadata_v1'
       ? { data: { status: 'stale_rejected' }, error: null } : undefined });
-    expect((await stale.run()).results).toEqual([{ outcome: 'stale_claim' }]);
+    expect((await stale.run()).results).toEqual([{ outcome: 'manual_metadata_required' }]);
     expect(stale.fixture.calls.map(call => call.name)).not.toContain('phase9_store_metadata_cache');
     const uncertain = automaticDependencies({ rpc: async name => name === 'phase9_complete_automatic_metadata_v1'
       ? { data: null, error: { message: 'lost completion' } } : undefined });

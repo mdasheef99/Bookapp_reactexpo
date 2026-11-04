@@ -56,8 +56,8 @@ protection policy, never from the environment: no contact email or other
 contact detail may be added anywhere.
 
 The production service hands the worker the installed descriptor manifest
-(`google_books@1.0.0`, `open_library@1.0.0`; `open_library@2.0.0` arrives in a
-later unit) unconditionally in `real` mode. The registry snapshot plus the
+(`google_books@1.0.0`, `open_library@1.0.0`, and port-only `open_library@2.0.0`,
+unbound until per-job registry policy binding) unconditionally in `real` mode. The registry snapshot plus the
 manifest resolver elect the provider per job; bootstrap performs no startup
 database or network mutation and contains no provider-specific route branch.
 Google is the automatic primary in 8b. After the 8c switch disables Google for

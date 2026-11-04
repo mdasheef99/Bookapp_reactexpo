@@ -346,6 +346,7 @@ export function resolveProviderRoute(input: RouteInput): Route | { manual: true 
     // A resumed version the active registry row has not accepted is rejected.
     // A non-metadata row is never routable by this worker: manual, not a route.
     if (row === undefined || !row.acceptedAdapterVersions.includes(resumed.adapterVersion)) {
+      if (purpose === 'automatic') return { manual: true };
       invalidRoute();
     }
     if (row.providerKind !== 'metadata') return { manual: true };

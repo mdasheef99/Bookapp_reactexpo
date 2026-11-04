@@ -1,5 +1,6 @@
-import { buildAutomaticFence, loadAutomaticEditionFence } from '../../supabase/functions/_shared/imageInventory/runtime/metadataAutomaticEditionFence';
+import { buildAutomaticFence, loadAutomaticEditionFence, MetadataAutomaticRpcError } from '../../supabase/functions/_shared/imageInventory/runtime/metadataAutomaticEditionFence';
 import { recoverAutomaticMetadata } from '../../supabase/functions/_shared/imageInventory/runtime/metadataAutomaticExecution';
+import { legacyAutomaticRetry } from './legacyAutomaticRetry';
 import { editionProviderRoute, hasPersistedEvidence } from './editionProviderRoute';
 import type { OpenLibraryEditionOptionsAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary';
 import { OPEN_LIBRARY_CAPABILITY } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary';
@@ -229,6 +230,19 @@ export function bindGoogleRetentionPolicy(
   return next;
 }
 
+// FIX2 D5/D6: durable refusal with the original claim; SQL rejects a lost lease.
+async function failAutomaticClaim(context: MetadataJobContext, dependencies: MetadataWorkerDependencies,
+  failureKind: 'policy_denied' | 'provider_disabled' = 'policy_denied') {
+  const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
+    p_job_id: context.jobId, p_worker: dependencies.workerId,
+    p_lease_token: context.claimToken, p_attempt_count: context.attempt,
+    p_candidate_id: context.candidateId, p_candidate_version: context.candidateVersion,
+    p_query_identity: context.queryIdentity, p_failure_kind: failureKind, p_retryable: false,
+  });
+  if (failed.error) throw new Error('P9_METADATA_COMPLETION_FAILED');
+  return completionResult(failed.data);
+}
+
 async function processRoutedClaim(
   claim: MetadataClaim,
   dependencies: MetadataWorkerDependencies,
@@ -271,19 +285,6 @@ async function processRoutedClaim(
   if (context.purpose === 'automatic' && hasPersistedEvidence(context)) {
     const recovered = await recoverAutomaticMetadata(dependencies.serviceClient, automaticFence);
     if (recovered !== null) return recovered;
-    if (automaticRead?.lineage == null) {
-      // H: a lost command with no lineage cannot be resumed; terminalize it rather
-      // than leaving the job permanently in_progress across reclaims.
-      const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
-        p_job_id: context.jobId,p_worker: dependencies.workerId,
-        p_lease_token: context.claimToken,p_attempt_count: context.attempt,
-        p_candidate_id: context.candidateId,p_candidate_version: context.candidateVersion,
-        p_query_identity: context.queryIdentity,p_failure_kind: 'policy_denied',
-        p_retryable: false,
-      });
-      if (failed.error) throw new Error('P9_METADATA_COMPLETION_FAILED');
-      return completionResult(failed.data);
-    }
   }
   if (context.purpose === 'edition_options' && hasPersistedEvidence(context)) {
     if (context.purpose === 'edition_options') {
@@ -340,10 +341,18 @@ async function processRoutedClaim(
     bindVerifiedRegistryPolicy(installed, registry, dependencies.editionFallback ?? null),
     registry, dependencies.primary, dependencies.primaryCapability,
   );
+  let legacyRetry: Awaited<ReturnType<typeof legacyAutomaticRetry>> = null;
+  if (context.purpose === 'automatic' && hasPersistedEvidence(context) && automaticRead?.lineage == null) {
+    legacyRetry = await legacyAutomaticRetry(dependencies.serviceClient, context);
+    const retryKey = legacyRetry?.adapterKey;
+    const row = registry.providers.find(item => item.adapterKey === retryKey);
+    const descriptor = legacyRetry === null ? null : boundInstalled.get(providerManifestKey(legacyRetry.adapterKey, legacyRetry.adapterVersion));
+    if (!legacyRetry || !row || row.protectionPolicy !== null || descriptor?.protocol.kind !== 'single') return failAutomaticClaim(context, dependencies);
+  }
   // Automatic and explicit share the same resolved route; invalid routes
   // throw before any egress. Existing context/claim checks are unchanged.
   // M94 supplies historical routing evidence; begin still owns retry authority.
-  const route = editionProviderRoute({ context, registry, installed: boundInstalled, resumed: automaticRead?.lineage ?? null });
+  const route = editionProviderRoute({ context, registry, installed: boundInstalled, resumed: automaticRead?.lineage ?? legacyRetry });
   if ('manual' in route) {
     if (context.purpose === 'edition_options' && dependencies.editionOptionsBoundary) {
       return completionResult(await dependencies.editionOptionsBoundary.fail({
@@ -354,15 +363,7 @@ async function processRoutedClaim(
     if (context.purpose === 'edition_options') {
       return { outcome: 'manual_metadata_required' };
     }
-    const failed = await dependencies.serviceClient.rpc('phase9_fail_metadata_job', {
-      p_job_id: context.jobId,p_worker: dependencies.workerId,
-      p_lease_token: context.claimToken,p_attempt_count: context.attempt,
-      p_candidate_id: context.candidateId,p_candidate_version: context.candidateVersion,
-      p_query_identity: context.queryIdentity,p_failure_kind: 'provider_disabled',
-      p_retryable: false,
-    });
-    if (failed.error) throw new Error('P9_METADATA_COMPLETION_FAILED');
-    return completionResult(failed.data);
+    return failAutomaticClaim(context, dependencies, 'provider_disabled');
   }
   // The unbound manifest is never the execution map. Execution binding is
   // version-equality plus a live-adapter contract recheck (F9), never
@@ -489,7 +490,7 @@ async function processRoutedClaim(
     selectedPolicyVersion:
       route.policyVersions[providerManifestKey(capability.adapterKey, capability.adapterVersion)],
     automatic: automaticRead !== null && automaticFence !== null ? {
-      read: automaticRead, fence: automaticFence, descriptor: route.primary, installed: boundInstalled,
+      read: automaticRead, fence: automaticFence, descriptor: route.primary, installed: boundInstalled, legacyRetry,
       policy: selectedRow?.protectionPolicy ?? null,
       sharedProtection: getWorkerProtectionState(capability.adapterKey),
     } : undefined,
@@ -592,7 +593,9 @@ async function processMetadataClaim(
       leaseToken: claim.lease_token,attempt: claim.attempt_count,
     });
     if (dependencies.installed !== undefined) {
-      return await processRoutedClaim(claim,dependencies,context,dependencies.installed);
+      const result = await processRoutedClaim(claim,dependencies,context,dependencies.installed);
+      return context.purpose === 'automatic' && result.outcome === 'stale_claim'
+        ? await failAutomaticClaim(context, dependencies) : result;
     }
     // Fixture mode and old callers without an installed manifest keep the
     // legacy capability route. Real mode always supplies the manifest from
@@ -675,6 +678,10 @@ async function processMetadataClaim(
     return await runMetadataProductionComposition(request, gateway);
   } catch (error) {
     if (context?.purpose === 'automatic' && dependencies.installed !== undefined) {
+      if (error instanceof MetadataAutomaticRpcError && !error.uncertain && error.message === 'P9_STATE_CONFLICT'
+        || error instanceof Error && error.message === 'P9_PROVIDER_ROUTE_INVALID') {
+        try { return await failAutomaticClaim(context, dependencies); } catch { return { outcome: 'stale_claim' }; }
+      }
       // No generic fail/retry after an automatic routed operation. This also
       // intentionally hides programming errors behind stale_claim; the error
       // remains at the throwing boundary, never in the worker result.

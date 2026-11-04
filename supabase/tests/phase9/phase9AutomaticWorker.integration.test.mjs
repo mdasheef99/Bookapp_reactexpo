@@ -6,10 +6,14 @@ import { automaticWorkerFixture, createAutomaticWorkerDatabase, TEST_ONLY_POLICY
 import { setActor } from './providerReplacementFixture.mjs';
 import { getWorkerProtectionState } from '../../../.phase9-dist/workers/phase9-metadata-worker/index.js';
 import { receivingCard } from './providerAutomaticReviewFixture.mjs';
+import { automaticLegacyRetryCases } from './automaticLegacyRetryCases.mjs';
+import { automaticFix2Cases } from './automaticFix2Cases.mjs';
 let db;
 before(async () => { db = await createAutomaticWorkerDatabase(); });
 beforeEach(async () => { await clean(db); });
 after(async () => { await db.close(); });
+automaticLegacyRetryCases(() => db);
+automaticFix2Cases(() => db);
 
 // Mutation caught: separate logical finalization/selection replaces the atomic completion RPC.
 test('Google success submits the exact automatic command and settles one physical round', async () => {
@@ -196,7 +200,7 @@ test('breaker schedules one unsent recheck and SQL proves terminal completion on
   await resetActor(db);
   assert.equal(await value(db, 'SELECT status FROM public.image_extraction_jobs WHERE id=$1', [f.jobId]), 'dead_letter'); // M93:1401 terminal technical failure.
 });
-// Mutation caught: converting a real P0001 stale-fence refusal into permission or a generic retry.
+// FIX2 D6: a known generation refusal terminalizes the original claim, never retries egress.
 test('a bumped generation between read and preparation refuses before all provider lineage', async () => {
   let bumped = false;
   let f;
@@ -211,14 +215,15 @@ test('a bumped generation between read and preparation refuses before all provid
     }
     return result;
   } });
-  assert.deepEqual((await f.run()).results, [{ outcome: 'stale_claim' }]);
+  assert.deepEqual((await f.run()).results, [{ outcome: 'manual_metadata_required' }]);
   assert.equal(f.urls.length, 0);
   assert.equal(f.errors.length, 1);
   assert.equal(f.errors[0].name, 'phase9_prepare_automatic_metadata_v1');
   assert.equal(f.errors[0].error.code, 'P0001');
   assert.equal(f.errors[0].error.message, 'P9_STATE_CONFLICT');
-  assert.deepEqual(await f.counts(), { runs: 0, lookups: 0, reservations: 0, calls: 0, attempts: 0 });
-  assert.equal(f.calls.some(call => call.name === 'phase9_fail_metadata_job'), false);
+  assert.deepEqual(await f.counts(), { runs: 0, lookups: 1, reservations: 0, calls: 0, attempts: 0 });
+  assert.equal(f.calls.some(call => call.name === 'phase9_fail_metadata_job' && call.parameters.p_retryable === false), true);
+  assert.equal(await value(db, 'SELECT status FROM public.image_extraction_jobs WHERE id=$1', [f.jobId]), 'resolved');
 });
 // Mutation caught: NULL-policy callers silently opt into protected admission or lose atomic non-retryable completion.
 test('NULL-policy legacy election and Google primary remain compatible with atomic completion', async () => {
