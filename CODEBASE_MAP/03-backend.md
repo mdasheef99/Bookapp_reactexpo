@@ -94,7 +94,9 @@ recorded in the Phase 9 tracker, not here.
 **What wakes them:** a Postgres cron dispatcher (`pg_net`) POSTs `/run` to each
 stage that has due jobs. It was added in Phase 9 M36
 (`20260810000036_marketplace_phase9_worker_wake_dispatcher.sql`) and extended in
-M40 and M56; design in
+M40, M56 and M69; M96 makes it first run
+`phase9_sweep_exhausted_metadata_jobs_v1`, which dead-letters exhausted
+metadata jobs that hold nothing (also callable by service_role); design in
 `docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/automatic-worker-wake-dispatcher-sdd.md`.
 `npm run invoke:phase9:worker -- <media|vision|metadata|publication>` is the
 manual equivalent; it reads `PHASE9_<SERVICE>_WORKER_URL` and
@@ -130,6 +132,7 @@ Paths below are relative to `supabase/functions/_shared/imageInventory/` unless 
 | `claim_phase9_metadata_jobs`, `phase9_metadata_job_context*`, `phase9_register_*`, `phase9_reserve_metadata_usage`, `phase9_finalize_*` | Worker claims, authority, logical lookups/attempts, reservations and physical-call accounting |
 | `phase9_*local_metadata_match`, `phase9_*metadata_cache*`, `phase9_select_structural_metadata_snapshot` | Automatic local/cache reuse and accepted metadata snapshots |
 | `phase9_automatic_edition_fence_v1`, `phase9_prepare_automatic_metadata_v1`, `phase9_begin_automatic_provider_run_v1`, `phase9_finish_automatic_provider_run_v1`, `phase9_schedule_automatic_provider_recheck_v1`, `phase9_complete_automatic_metadata_v1`, `phase9_recover_automatic_metadata_v1` | Automatic path: fence read, admission/coalescing, provider-run rounds and retry, atomic completion and receipt recovery (fence and prepare come from migration `20261104000094`) |
+| `phase9_sweep_exhausted_metadata_jobs_v1` | Service-only bounded close of exhausted metadata jobs holding no reservation, run, admission or unknown call (M96); also run first by the wake dispatcher |
 | `phase9_recover_candidate_edition_options*`, `phase9_reuse_candidate_edition_cache*`, `phase9_complete_candidate_edition_options*`, `phase9_fail_candidate_edition_options*` | Service-only explicit-search recovery, edition-list reuse, atomic completion and failure |
 | `marketplace_sec.phase9_catalogue_*`, `marketplace_sec.phase9_edition_*` | Private SQL helpers for admission, identity, Add linkage, selection effects, statistics, cache scope/payload and receipts; reached through controlled RPCs |
 

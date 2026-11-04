@@ -1,3 +1,7 @@
+## 2026-11-05 - Slice 8 package 8c built locally; M95 and M96 local files not applied
+
+8c-1a (`26c73bf`, M95 `20261104000095_marketplace_phase9_8c_null_safe_and_pending_state.sql`) makes a NULL `operation_version` automatic in six routing functions and fixes the stuck "Finding edition…" read model. 8c-1b (`2ce9615`, M96 `20261104000096_marketplace_phase9_8c_final_attempt_sweep.sql`) adds a service_role-only sweep that closes exhausted metadata jobs holding nothing (M75 terminal fields), runs it first in the wake dispatcher, and adds operator scripts `scripts/8c/01..06` (pause, drain check, switch, smoke, resume, rollback). Luna and Muse reviewed 8c-1b; two fix rounds. Verification: native `8c-1b` group 39/39; full `test:phase9:db` 1956 tests, 25 failures = the 24 pre-existing plus one harness-guard regression from 8c-1b, fixed in the docs commit (see tracker 41). Dev data: three stale August reservations released. Nothing pushed or applied. Detail: [tracker 41](./41-package8c-switch-evidence.md).
+
 ## 2026-11-04 - Slice 8 package 8b worker built locally; M94 local file not applied
 
 Package 8b (slice 8 automatic worker and provider replacement) is built as 12 local commits, `db5434f..02a0f34` on branch `phase9/slice8-providers` (85 files, +16964/-684). Nothing is pushed or deployed, and `db push` stays frozen. Units: package 4 tests (`d8477b5`), U1 (`8e47515`), U2 (`fb97eea`), package 4 fix 6 (`3c326ab`), U3 (`2c3df38`, `72357e5`, `6a6290e`), U4 (`9fd60d2`), U6 (`a52f2be`), U5 steps A/B1/B2 (`8d93685`, `620160b`, `02a0f34`).

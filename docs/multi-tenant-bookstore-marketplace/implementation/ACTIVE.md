@@ -1,6 +1,10 @@
 # Marketplace current state
 
-Recorded state: 2026-11-04. Slice 8 package 8b is built (`db5434f..02a0f34`,
+Recorded state: 2026-11-05. Slice 8 package 8c code is built and committed
+locally (`26c73bf` M95, `2ce9615` M96 + operator scripts; not pushed, not
+applied); evidence in
+[tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md).
+Slice 8 package 8b is built (`db5434f..02a0f34`,
 branch `phase9/slice8-providers`), pushed to `main` (`6e0df90`) and deployed to
 Render (`dep-dblielugekts738gov3g`, live 12:41:25 UTC); 8b live smoke passed. Migration M94 was applied to the dev project on 2026-11-04
 (live version `20261104121322`, Owner-approved). Earlier, slice 8
@@ -16,8 +20,14 @@ dated evidence belongs in trackers.
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
-- Active slice/work unit: **slice 8, package 8b built locally (U1-U4, U6, U5
-  steps A/B1/B2); M94 applied, pushed, worker deployed and live-smoked 2026-11-04**.
+- Active slice/work unit: **slice 8, package 8c: 8c-1a (M95 null-safe
+  routing + stuck-pending read model) and 8c-1b (M96 exhausted-job sweep +
+  operator scripts `scripts/8c/01..06`) committed locally 2026-11-05; not
+  pushed, M95/M96 not applied**. Protection values decided (Owner
+  delegation, 15-store pilot) and recorded in tracker 41; the Open Library
+  switch itself runs later, at the pilot.
+- Earlier work unit: package 8b built locally (U1-U4, U6, U5
+  steps A/B1/B2); M94 applied, pushed, worker deployed and live-smoked 2026-11-04.
 - M94 `20261104000094_marketplace_phase9_automatic_worker_prerequisites.sql`
   (231 lines, sha256 `a0b7de6288107a405852feda3cc392b718e988b7b557c1fd6b5a69d3153690e2`):
   **APPLIED 2026-11-04** to `ahntbtktjjmvfosgkmgn`, live version `20261104121322`; the live
@@ -129,12 +139,13 @@ dated evidence belongs in trackers.
   covered: admission/fair-queue path (needs a policy, 8c), inventory commit.
 - Dev-server launch config `.claude/launch.json` (expo web on port 8081)
   was created for this test and is uncommitted.
-- Exact next authorized action: **Owner approval to start 8c** (protection
-  policy, WHOLE-1 null-safe flag, drain, final-attempt sweep). Not authorized by this file. No `db push`
+- Exact next authorized action: **Owner approval to push the local commits
+  (`a8e673b`, `26c73bf`, `2ce9615`, 8c docs) and to apply M95 then M96 to
+  `ahntbtktjjmvfosgkmgn`**. Not authorized by this file. No `db push`
   (frozen).
 - Other gated actions, each needing its own Owner approval (none authorized
-  here): 8c and 02d prefill; a fix for the stuck "Finding edition…" read
-  model (open items).
+  here): running the 8c operator scripts at the pilot (placeholders: contact
+  email, reviewed manifest hash, smoke cohort); 02d prefill.
 
 ## Mutation authority now
 
@@ -150,6 +161,11 @@ dated evidence belongs in trackers.
   and a read-only Haiku preflight (verdict READY). Then, on a second Owner approval ("Yes, dead-letter it"), one guarded
   single-row `UPDATE` dead-lettered stuck job `4ffe137d` 2026-11-04 12:24:50 UTC
   (mirrors M75's exhausted-job close; record in tracker 40).
+- 2026-11-05: the Owner authorized building 8c and committing it locally.
+  Dev data only (Owner: "quash them"): the three stale August `reserved`
+  usage reservations `f20a5804`, `b03047ff`, `d43d737e` were set to
+  `released` (`actual_cost_units` 0). No migration applied, no push, no
+  deployment.
 - Shared database/migration application: **M94 plus the one-row
   `4ffe137d` dead-letter (2026-11-04)**;
   Storage: **none**; deployment: **8b worker `dep-dblielugekts738gov3g`
@@ -200,9 +216,9 @@ operational readback.
 
 ## Open items, blockers and residual risks
 
-- Blockers: none for 8c start beyond Owner approval. The final whole-8b review,
-  fix round 2, deploy and smoke are recorded in tracker 40.
-- Pre-8b read-model bug (found in the smoke, not 8b): candidate `ac712fe6`
+- Blockers: none beyond the Owner approvals in the next action. 8c residual
+  risks: [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#residual-risks).
+- FIXED LOCALLY in M95 (not yet applied): pre-8b read-model bug (found in the smoke, not 8b): candidate `ac712fe6`
   (Bleak House) shows "Finding edition…" forever. Its newest lookup is
   `accepted_metadata_match` but its selected snapshot is the older ambiguous
   one and the edition state's `source_lookup_id` is NULL (options expired), so

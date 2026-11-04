@@ -19,7 +19,8 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($IncludeMediaCorrection) { $IncludeUnit6gBaseline = $true }
 if ($IncludeDuplicateConfirmation) { $IncludeMediaCorrection = $true; $IncludeUnit6gBaseline = $true }
-if ($OnlyGroup -in @('provider-replacement', '8c-1b')) { $IncludeProviderReplacement = $true }
+if ($OnlyGroup -eq 'provider-replacement') { $IncludeProviderReplacement = $true }
+if ($OnlyGroup -eq '8c-1b') { $IncludeProviderReplacement = $true }
 if ($IncludeProviderReplacement) { $IncludeOpenLibrary = $true }
 if ($IncludeOpenLibrary) { $IncludeEditionPicker = $true }
 if ($IncludeEditionPicker) { $IncludeUnit6gBaseline = $true }

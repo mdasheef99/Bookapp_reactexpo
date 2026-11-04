@@ -18,6 +18,8 @@ they do not override ACTIVE.md. Repeated status copies moved to the
 
 ## 2026-11-04 slice 8 package 8b built locally; M94 not applied
 
+Package 8c is built and committed locally (2026-11-05): `26c73bf` (M95) and `2ce9615` (M96 + `scripts/8c/01..06`); not pushed, M95/M96 not applied. Owner decisions, reviews, fix rounds, verification and residual risks: [tracker 41](./trackers/41-package8c-switch-evidence.md).
+
 Package 8b is built (`db5434f..02a0f34`, branch `phase9/slice8-providers`), pushed (`6e0df90`), deployed (`dep-dblielugekts738gov3g`) and live-smoked on 2026-11-04. Migration M94 is a local file (`20261104000094_marketplace_phase9_automatic_worker_prerequisites.sql`, sha256 `a0b7de62...153690e2`) and was applied on 2026-11-04 (live version `20261104121322`, Owner-approved; readback in the ledger M94 section), so the release order before the 8b worker deploy is satisfied. Unit list, B2 review and fix round, verification and residual risks: [tracker 40](./trackers/40-package8b-worker-evidence.md); implementation log: [02 entry](./trackers/02-implementation-and-verification.md#2026-11-04---slice-8-package-8b-worker-built-locally-m94-local-file-not-applied); ledger: [M94 row](./supporting/database-current-vs-target.md#2026-11-04-slice-8-package-8b-built-locally-m94-local-file-not-applied). Current work unit and the next authorized action are in ACTIVE.md.
 
 ## 2026-11-02 slice 8 package 8a applied (M89..M93) and legacy smoke passed
