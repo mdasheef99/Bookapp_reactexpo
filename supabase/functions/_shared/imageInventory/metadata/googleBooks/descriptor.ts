@@ -110,6 +110,7 @@ export function createGoogleBooksDescriptor(
         const raw = await adapter.lookup({
           query: input.query, correlationId: input.correlationId,
           attemptId: input.attemptId, signal: input.signal,
+          ...(input.observeAutomaticHttp === undefined ? {} : { observeAutomaticHttp: input.observeAutomaticHttp }),
         });
         const outcome = failClosedMetadataProviderOutcome(raw, {
           correlationId: input.correlationId,

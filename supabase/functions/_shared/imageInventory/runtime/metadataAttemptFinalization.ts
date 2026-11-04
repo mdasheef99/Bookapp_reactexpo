@@ -16,7 +16,15 @@ export type MetadataAttemptFinalization = Readonly<{
 export async function finalizeMetadataProductionAttempt(
   client: MetadataRpcClient, configuration: MetadataGatewayConfiguration,
   providerCallId: string | undefined, input: MetadataAttemptFinalization,
+  mode: 'legacy' | 'automatic_transaction' = 'legacy',
 ): Promise<void> {
+  // 02c §4.3: opt-in physical-only mode; all existing callers keep legacy semantics.
+  const automatic = mode === 'automatic_transaction';
+  if ((mode !== 'legacy' && !automatic) || (automatic
+    && (configuration.context.purpose !== 'automatic' || typeof providerCallId !== 'string'
+      || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/iu.test(providerCallId)))) {
+    throw new Error('P9_METADATA_PHYSICAL_RECONCILIATION_CONFLICT');
+  }
   if (providerCallId !== undefined) {
     const physicalStatus = input.disposition === 'stale_rejected' ? 'stale_rejected'
       : input.physicalStatus ?? 'finalized';
@@ -32,16 +40,24 @@ export async function finalizeMetadataProductionAttempt(
     let rejected = false;
     try {
       const result = await metadataGatewayRpc(client, 'phase9_finalize_metadata_provider_call', physicalFinalization);
-      rejected = configuration.context.purpose === 'edition_options' && object(result).status === 'stale_rejected';
+      rejected = (automatic || configuration.context.purpose === 'edition_options') && object(result).status === 'stale_rejected';
+      if (automatic && (object(result).provider_call_id !== providerCallId
+        || (!rejected && object(result).status !== physicalStatus))) {
+        throw new Error('P9_METADATA_PHYSICAL_RECONCILIATION_CONFLICT');
+      }
     } catch (error) {
-      if (physicalStatus === 'stale_rejected') throw error;
+      if (physicalStatus === 'stale_rejected' && !automatic) throw error;
       const durable = object(await metadataGatewayRpc(client, 'phase9_reconcile_metadata_provider_call', {
         p_provider_call_id: providerCallId, p_job_id: configuration.context.jobId,
         p_worker: configuration.worker, p_lease_token: configuration.context.claimToken,
         p_attempt_count: configuration.context.attempt,
       }));
-      rejected = configuration.context.purpose === 'edition_options' && durable.status === 'stale_rejected';
-      if (!rejected && !(durable.status === physicalStatus && durable.normalized_outcome === input.normalizedOutcome
+      rejected = (automatic || configuration.context.purpose === 'edition_options') && durable.status === 'stale_rejected';
+      if (automatic && durable.provider_call_id !== providerCallId) {
+        throw new Error('P9_METADATA_PHYSICAL_RECONCILIATION_CONFLICT');
+      }
+      if ((!rejected || (automatic && physicalStatus === 'stale_rejected'))
+        && !(durable.status === physicalStatus && durable.normalized_outcome === input.normalizedOutcome
         && durable.logical_outcome === (input.logicalOutcome ?? input.normalizedOutcome)
         && durable.provider_request_id === input.providerRequestId && durable.retryable === input.retryable
         && canonicalMetadataJson(durable.normalized_candidate) === canonicalMetadataJson(input.normalizedCandidate)
@@ -53,7 +69,7 @@ export async function finalizeMetadataProductionAttempt(
     if (rejected && input.disposition !== 'stale_rejected') throw new Error('P9_METADATA_STALE_PHYSICAL_CALL');
   }
   // Explicit logical completion belongs to the options transaction, never automatic selection/failure.
-  if (configuration.context.purpose === 'edition_options' || input.retryable) return;
+  if (automatic || configuration.context.purpose === 'edition_options' || input.retryable) return;
   await metadataGatewayRpc(client, 'phase9_finalize_structural_metadata_attempt', {
     p_attempt_id: input.attemptId, p_job_id: configuration.context.jobId,
     p_worker: configuration.worker, p_lease_token: configuration.context.claimToken,

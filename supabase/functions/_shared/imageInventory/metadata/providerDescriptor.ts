@@ -31,6 +31,11 @@ export type ProviderHttpPort = Readonly<{
   }>): Promise<ProviderHttpResponse>;
 }>;
 
+// 02c §§4.3/5.1: per-invocation observations, never URLs, credentials or scheduling authority.
+export type AutomaticHttpObservation =
+  | Readonly<{ kind: 'send_started'; at: number }>
+  | Readonly<{ kind: 'response_received'; at: number; status: number; retryAfter: string | null }>;
+
 export type LookupInput = Readonly<{
   query: MetadataQueryIdentity;
   correlationId: string;
@@ -38,6 +43,7 @@ export type LookupInput = Readonly<{
   signal: AbortSignal;
   purpose: Purpose;
   http: ProviderHttpPort;
+  observeAutomaticHttp?: (event: AutomaticHttpObservation) => void;
 }>;
 
 export type RetainedList = Readonly<{

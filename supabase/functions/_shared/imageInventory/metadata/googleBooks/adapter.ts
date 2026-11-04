@@ -8,6 +8,7 @@ import { decodeGoogleBooksResponse, googleBooksSeriesRecordIds, GOOGLE_BOOKS_EDI
 import { normalizeGoogleEditionRows, boundOptionsRetentionEvidence } from './editionOptions';
 import { rankGoogleBooksEditions } from './ranking';
 import { selectRepresentativeEditionCover } from '../representativeCover';
+import type { AutomaticHttpObservation } from '../providerDescriptor';
 
 type Fetcher = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 type Configuration = Readonly<{
@@ -22,6 +23,7 @@ type Configuration = Readonly<{
 }>;
 type Lookup = Readonly<{
   query: MetadataQueryIdentity; correlationId: string; attemptId: string; signal: AbortSignal;
+  observeAutomaticHttp?: (event: AutomaticHttpObservation) => void;
 }>;
 type ResponseEnvelope = Readonly<{
   raw: unknown; fetchedAt: string; headers: Headers; providerRequestId: string | null;
@@ -41,13 +43,18 @@ const outcome = (value: GoogleBooksOutcome['outcome'], retryable = false): Googl
 const safeRequestId = (value: string | null): string | null =>
   value !== null && /^[A-Za-z0-9._:-]{1,128}$/u.test(value) ? value : null;
 
+function observe(observer: Lookup['observeAutomaticHttp'], event: AutomaticHttpObservation): void {
+  try { observer?.(Object.freeze(event)); }
+  catch { /* Observation cannot turn a received response into a transport failure. */ }
+}
+
 export class GoogleBooksAdapter implements MetadataProviderAdapter {
   readonly normalizedEditionHostPolicy = GOOGLE_BOOKS_EDITION_HOST_POLICY;
   constructor(private readonly configuration: Configuration) {}
   get optionsRetentionConfigured(): boolean { return this.configuration.verifyOptionsRetention !== undefined; }
 
   async lookup(input: Lookup): Promise<GoogleBooksOutcome> {
-    const response = await this.request(input);
+    const response = await this.request(input, input.observeAutomaticHttp);
     if (!('raw' in response)) return response;
     let candidates: MetadataEdition[];
     try {
@@ -103,7 +110,7 @@ export class GoogleBooksAdapter implements MetadataProviderAdapter {
   }
 
   // Shared request/configuration/limits/timeout/cancellation preserve the automatic path.
-  private async request(input: Lookup): Promise<ResponseEnvelope | GoogleBooksOutcome> {
+  private async request(input: Lookup, observer?: Lookup['observeAutomaticHttp']): Promise<ResponseEnvelope | GoogleBooksOutcome> {
     if (this.configuration.mode !== 'real' || !this.configuration.apiKey) return outcome('authentication_configuration_failure');
     if (input.signal.aborted) return outcome('cancelled');
     let request;
@@ -114,9 +121,12 @@ export class GoogleBooksAdapter implements MetadataProviderAdapter {
     input.signal.addEventListener('abort', onAbort, { once: true });
     const timeout = setTimeout(() => controller.abort('timeout'), this.configuration.timeoutMs);
     try {
+      observe(observer, { kind: 'send_started', at: Date.now() });
       const response = await this.configuration.fetcher(request.url, {
         method: 'GET', signal: controller.signal, headers: { accept: 'application/json' },
       });
+      observe(observer, { kind: 'response_received', at: Date.now(),
+        status: response.status, retryAfter: response.headers.get('retry-after') });
       const fetchedAt = new Date().toISOString();
       const requestId = response.headers.get('x-request-id');
       if (response.status === 429) return { ...outcome('rate_limited', true), providerRequestId: requestId };
