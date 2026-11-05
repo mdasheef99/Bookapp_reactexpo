@@ -266,6 +266,11 @@ complicated, just make bounded correct").
    a non-NULL protection policy must be mapped, or every claim falls back
    to manual. The real address is confirmed with the Owner at switch time
    and is never written to a repo file or script.
+   Done 2026-11-05 (Owner: "set the variable here"): set on
+   `phase9-metadata-worker` through the dashboard with "Save only" (no
+   deploy; latest deploy still `dep-dblielugekts738gov3g`). The value maps
+   `bookconnect-dev` to the Owner-confirmed address, kept on Render only.
+   The new worker reads it on its next deploy.
 3. Deploy the updated worker before the switch (runbook 02c-1). Pause and
    drain before tuning protection values. Confirm the Render worker runs as
    a single instance.
