@@ -9,6 +9,7 @@ import { createProtectionState } from '../../../_shared/imageInventory/runtime/p
 import type { MetadataEditionOptionsBoundary, EditionOptionsCompletionInput }
   from '../../../_shared/imageInventory/runtime/metadataEditionOptionsBoundary';
 import { googleBooksMultipleVolumes } from './googleBooksResponses';
+import { TEST_ONLY_PROVIDER_CONTACTS } from '../../support/providerProtection';
 import { completedReceipt, m93BeginReceipt, m93ClaimReceipt, m93DeferReceipt, m93FinishReceipt,
   m93ReleaseReceipt, m93ReserveReceipt } from '../../support/automaticWorker';
 
@@ -258,6 +259,9 @@ export function editionWorkerFixture(count = 1) {
   const dependencies = {
     workerId: worker, workerAuthToken: 'fixture-worker-ingress', serviceClient: { rpc },
     primary: adapter, primaryCapability: GOOGLE_BOOKS_CAPABILITY, editionOptionsBoundary: boundary,
+    // Unit B: fake server-side contact map for the fixture contactId. Fake
+    // values only; never a real email.
+    providerContacts: TEST_ONLY_PROVIDER_CONTACTS,
   };
   const direct = (configurationOverrides: Record<string, unknown> = {}) => {
     const context = decodeMetadataJobContext(current());

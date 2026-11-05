@@ -343,6 +343,10 @@ export function createBridgedPort(opts: Readonly<{
   // F3: provider-scoped shared protection state (worker-owned); all ports
   // for one provider share pacing/breaker observations.
   sharedProtection?: object | null;
+  // Unit B: transient server-configuration contact for the identifying
+  // User-Agent. Never logged, persisted or returned. NULL selects the
+  // fixed legacy literal.
+  providerContact?: string | null;
 }>): ProviderHttpPort {
   return createProviderHttpPort({
     adapterKey: opts.adapterKey, adapterVersion: opts.adapterVersion,
@@ -350,11 +354,13 @@ export function createBridgedPort(opts: Readonly<{
     timeoutMs: opts.binding.timeoutMs, maxResponseBytes: opts.binding.maxResponseBytes,
     fetcher: opts.binding.fetcher,
     lookupId: opts.lookupId, attemptId: opts.attemptId, claim: opts.claim,
+    providerContact: opts.providerContact ?? null,
     acquireLimiter: opts.binding.acquireLimiter,
     transportSend: async (url, call, permit, onSendStart) => {
       const envelope = await getOpenLibraryJson(url, {
         fetcher: opts.binding.fetcher, timeoutMs: opts.binding.timeoutMs,
         maxResponseBytes: opts.binding.maxResponseBytes,
+        providerContact: opts.providerContact ?? null,
         waitForRequest: async () => permit as OpenLibraryRequestPermit,
         onFetchStart: onSendStart,
       }, { sequence: call.sequence, stage: call.stage, signal: call.signal });
@@ -455,6 +461,7 @@ export async function executeDescriptorEditionOptions(
           adapterVersion: descriptor.adapterVersion, binding,
           maxGets: descriptor.protocol.maxGets, policy: http?.policy ?? null,
           requestHosts: http?.requestHosts, lookupId, attemptId, claim, hooks,
+          providerContact: http?.providerContact ?? null,
           sharedProtection: http?.sharedProtection ?? null });
         try {
           provider = await adapter.lookupEditionOptions({
@@ -514,6 +521,7 @@ export async function executeDescriptorEditionOptions(
         timeoutMs: http.timeoutMs, maxResponseBytes: http.maxResponseBytes,
         fetcher: http.fetcher, lookupId, attemptId, claim,
         retentionPolicyVersion: http.retentionPolicyVersion,
+        providerContact: http.providerContact ?? null,
         beforeRequest: async (call) => hooks.beforeRequest(call),
         afterRequest: async (callId, settled) => hooks.afterRequest(callId,
           { outcome: settled.outcome, retryable: settled.retryable,
@@ -593,10 +601,12 @@ export async function executeDescriptorEditionOptions(
               const secondaryProtection = secondaryHttp === undefined ? {
                 policy: http?.policy ?? null,
                 requestHosts: http?.requestHosts,
+                providerContact: http?.providerContact ?? null,
                 sharedProtection: http?.sharedProtection ?? null,
               } : {
                 policy: secondaryHttp.policy,
                 requestHosts: secondaryHttp.requestHosts,
+                providerContact: secondaryHttp.providerContact ?? null,
                 sharedProtection: secondaryHttp.sharedProtection ?? null,
               };
               const bridge = createBridgedPort({ adapterKey: secondaryDescriptor?.adapterKey ?? descriptor.adapterKey,
@@ -607,6 +617,7 @@ export async function executeDescriptorEditionOptions(
                 requestHosts: secondaryProtection.requestHosts,
                 lookupId, attemptId, claim,
                 hooks: calls.createPortHooks(lookupId, attemptId, secondaryBinding),
+                providerContact: secondaryProtection.providerContact,
                 sharedProtection: secondaryProtection.sharedProtection });
               provider = await fallbackAdapter.lookupEditionOptions({
                 query: request.query, correlationId: lookupId, attemptId, signal, httpPort: bridge,
@@ -633,6 +644,7 @@ export async function executeDescriptorEditionOptions(
               timeoutMs: secondaryHttp.timeoutMs, maxResponseBytes: secondaryHttp.maxResponseBytes,
               fetcher: secondaryHttp.fetcher, lookupId, attemptId, claim,
               retentionPolicyVersion: secondaryHttp.retentionPolicyVersion,
+              providerContact: secondaryHttp.providerContact ?? null,
               beforeRequest: async (call) => hooks2.beforeRequest(call),
               afterRequest: async (callId, settled) => hooks2.afterRequest(callId,
                 { outcome: settled.outcome, retryable: settled.retryable,

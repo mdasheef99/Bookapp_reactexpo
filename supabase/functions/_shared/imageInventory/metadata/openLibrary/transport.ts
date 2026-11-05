@@ -13,6 +13,10 @@ export type OpenLibraryConfiguration = Readonly<{
   // owning port can record provider contact and release the start clock only
   // at the actual send (never at a pre-send permit/abort check).
   onFetchStart?: () => void;
+  // Unit B: transient server-configuration contact for the identifying
+  // User-Agent. Never logged, persisted or returned. NULL/undefined keeps
+  // the fixed legacy literal byte-identical.
+  providerContact?: string | null;
 }>;
 export class OpenLibraryFailure extends Error {
   // O1 (U6): actual failed-response headers travel with the failure so shared
@@ -59,8 +63,13 @@ export async function getOpenLibraryJson(url:URL,configuration:OpenLibraryConfig
     fetchStarted = true;
     try {
       configuration.onFetchStart?.();
+      // Unit B: the identifying User-Agent carries the resolved server
+      // contact when configured; the legacy path keeps the fixed literal
+      // byte-identical.
+      const userAgent = configuration.providerContact == null ? 'BookConnect edition lookup'
+        : `BookConnect edition lookup (${configuration.providerContact})`;
       fetching=configuration.fetcher(url,{signal:controller.signal,redirect:'error',
-        headers:{Accept:'application/json','User-Agent':'BookConnect edition lookup'}});
+        headers:{Accept:'application/json','User-Agent':userAgent}});
     } finally { release?.(true); }
     response=await fetching;
     responseReceived = true;

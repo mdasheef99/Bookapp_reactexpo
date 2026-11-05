@@ -112,6 +112,10 @@ export type ProviderHttpPortConfig = Readonly<{
   // Compiled request-host intersection. When absent, the default Open Library
   // origin grammar applies (transport.ts:18 — cited existing trust, not new).
   requestHosts?: readonly string[];
+  // Unit B: transient server-configuration contact for the identifying
+  // provider User-Agent. Never logged, persisted or returned. NULL selects
+  // the fixed legacy literal. A non-NULL policy requires it (fail closed).
+  providerContact?: string | null;
   // Injected request validator (R1/S1: test-owned, descriptor-bound). Takes
   // precedence over the default grammar; identifiers/hosts alone never define
   // compiled trust.
@@ -205,6 +209,14 @@ export function createProviderHttpPort(config: ProviderHttpPortConfig): Readonly
 }> & Readonly<{ retentionPolicyVersion: number | null }> {
   const policy = parseProtectionPolicyOrNull(config.policy);
   if (policy !== null && policy.mode !== 'single_instance') {
+    throw new Error(P9_PROVIDER_CONFIGURATION_INVALID);
+  }
+  // Unit B: a non-NULL policy without a resolved contact cannot identify
+  // its User-Agent, so the port refuses at construction (fail closed). The
+  // worker claim-level check normally fires first; this is defence in depth.
+  if (policy !== null
+    && (config.providerContact === null || config.providerContact === undefined
+      || config.providerContact.length === 0)) {
     throw new Error(P9_PROVIDER_CONFIGURATION_INVALID);
   }
   if (!Number.isSafeInteger(config.maxGets) || config.maxGets < 1 || config.maxGets > 6) {
@@ -625,9 +637,14 @@ export function createProviderHttpPort(config: ProviderHttpPortConfig): Readonly
   }
 
   async function fetchOnce(input: ProviderHttpCall, scope: GetScope): Promise<Response> {
+    // Unit B: the identifying User-Agent carries the resolved server contact
+    // when a non-NULL policy authorized this port; NULL policy (legacy
+    // fencing-only mode) keeps the fixed literal byte-identical.
+    const userAgent = config.providerContact == null ? 'BookConnect edition lookup'
+      : `BookConnect edition lookup (${config.providerContact})`;
     return fetcher(input.url, {
       signal: scope.signal, redirect: 'error',
-      headers: { Accept: 'application/json', 'User-Agent': 'BookConnect edition lookup' },
+      headers: { Accept: 'application/json', 'User-Agent': userAgent },
     });
   }
 

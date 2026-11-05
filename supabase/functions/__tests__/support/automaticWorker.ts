@@ -53,6 +53,9 @@ export const workerEnvironment = {
   PHASE9_WORKER_CONCURRENCY: '1',
   PHASE9_METADATA_WORKER_ID: 'metadata-worker-fixture-0001',
   PHASE9_METADATA_WORKER_INGRESS_TOKEN: 'metadata-ingress-secret-A7z.49_xYp-001',
+  // Unit B: fake server-side contact map for the fixture contactId. Fake
+  // values only; never a real email.
+  PHASE9_PROVIDER_CONTACTS: '{"fixture-contact":"ops@example.invalid"}',
 };
 const summaryFor = (outcome: string): string => {
   if (outcome === 'coherent_match') return 'accepted_metadata_match';

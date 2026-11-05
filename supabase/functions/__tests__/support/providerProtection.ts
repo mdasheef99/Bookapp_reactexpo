@@ -6,6 +6,12 @@ export const TEST_ONLY_PROTECTION_POLICY = Object.freeze({
   halfOpenMax: 1, mode: 'single_instance' as const, contactId: 'fixture-contact',
 });
 
+// Unit B: fake server-side contact map for the fixture contactId. Fake
+// values only; never a real email.
+export const TEST_ONLY_PROVIDER_CONTACTS = Object.freeze({
+  'fixture-contact': 'ops@example.invalid',
+});
+
 export function fakeClock(start = 0) {
   let current = start;
   return { now: () => current,

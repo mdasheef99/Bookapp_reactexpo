@@ -23,6 +23,9 @@ export type MetadataProductionDependencies = Readonly<{
   primaryCapability: ProviderCapabilityDeclaration | null;
   secondary: null;
   editionFallback?: OpenLibraryEditionOptionsAdapter;
+  // Unit B: server-side contact map (contactId -> contact) for identifying
+  // provider User-Agent values. Never logged, persisted or returned.
+  providerContacts: Readonly<Record<string, string>>;
   // U3 installed manifest, keyed by providerManifestKey(adapterKey,
   // adapterVersion). Present in every real boot ('real' and the legacy
   // 'google_books' alias); absent in fixture mode, which keeps the legacy
@@ -77,6 +80,7 @@ export function createMetadataProductionDependencies(
       primary: null,
       primaryCapability: null,
       secondary: null,
+      providerContacts: Object.freeze({}),
     });
   }
   // Real boot is provider-neutral: 'real' and the bounded legacy
@@ -103,6 +107,7 @@ export function createMetadataProductionDependencies(
       editionFallback: openLibraryOnly,
       installed: createInstalledDescriptorManifest({ google: null, openLibrary: openLibraryOnly }),
       secondary: null,
+      providerContacts: environment.providerContacts,
     });
   }
   const openLibrary = new OpenLibraryEditionOptionsAdapter({
@@ -125,6 +130,7 @@ export function createMetadataProductionDependencies(
     editionFallback: openLibrary,
     installed,
     secondary: null,
+    providerContacts: environment.providerContacts,
   });
 }
 
@@ -146,6 +152,7 @@ export function createPhase9MetadataService(environment: MetadataWorkerEnvironme
     primary: dependencies.primary,
     primaryCapability: dependencies.primaryCapability,
     editionFallback: dependencies.editionFallback,
+    providerContacts: dependencies.providerContacts,
     // Unconditional in real mode: the routed path is the production path and
     // no fallback to legacy routing hides a manifest failure. Fixture mode
     // carries no manifest and keeps the legacy route for old callers.

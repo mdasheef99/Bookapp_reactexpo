@@ -17,6 +17,10 @@ export type ExplicitHttpConfig = Readonly<{
   maxResponseBytes: number;
   fetcher?: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
   sharedProtection?: object | null;
+  // Unit B: transient server-configuration contact for the identifying
+  // provider User-Agent. Never logged, persisted or returned. NULL selects
+  // the fixed legacy literal.
+  providerContact?: string | null;
   // Verified registry row policy version for retention binding, carried
   // from route.policyVersions (worker) or the test row (R1 seam).
   retentionPolicyVersion?: number | null;
@@ -56,6 +60,8 @@ export type MetadataGatewayConfiguration = Readonly<{
     installed: ReadonlyMap<string, import('../metadata/providerDescriptor').ProviderDescriptor>;
     policy: unknown;
     sharedProtection: object;
+    // Unit B: transient server-configuration contact (see ExplicitHttpConfig).
+    providerContact?: string | null;
     legacyRetry?: import('../metadata/providerDescriptor').Lineage | null;
   }>;
   // U6: descriptor-driven explicit execution binding. Set by the worker (from

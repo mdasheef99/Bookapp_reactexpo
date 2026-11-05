@@ -1,7 +1,7 @@
 // 02c ??5.1/5.4/9 AC8-5/11. Port tests observe GET/fencing effects;
 // retry scheduling is tested at the durable worker/RPC boundary separately.
 import { createTestHttpPort } from './support/providerModules';
-import { TEST_ONLY_PROTECTION_POLICY as policy, fakeClock } from './support/providerProtection';
+import { TEST_ONLY_PROTECTION_POLICY as policy, TEST_ONLY_PROVIDER_CONTACTS, fakeClock } from './support/providerProtection';
 import { CALL_ID } from './support/automaticWorker';
 
 // M91 stage/sequence grammar: search=0, editions/edition=1, authors=2..5.
@@ -27,7 +27,8 @@ function createPort(clock: ReturnType<typeof fakeClock>, overrides: Record<strin
   const afterRequest = jest.fn(async (callId: string) => ({ receiptId: callId }));
   const port = createTestHttpPort({
     adapterKey: 'open_library', adapterVersion: '2.0.0',
-    policy, maxGets: 6, timeoutMs: 1000, maxResponseBytes: 64000,
+    policy, providerContact: TEST_ONLY_PROVIDER_CONTACTS['fixture-contact'],
+    maxGets: 6, timeoutMs: 1000, maxResponseBytes: 64000,
     now: clock.now, sleep: clock.sleep, fetcher: async () => jsonResponse(),
     beforeRequest, afterRequest, ...overrides,
   });
@@ -79,7 +80,8 @@ describe('Phase 9 ProviderHttpPort effects', () => {
       const afterRequest = jest.fn(async (id: string) => ({ receiptId: id }));
       return createTestHttpPort({
         adapterKey: 'open_library', adapterVersion: '2.0.0',
-        policy, maxGets: 6, timeoutMs: 1000, maxResponseBytes: 64000,
+        policy, providerContact: TEST_ONLY_PROVIDER_CONTACTS['fixture-contact'],
+        maxGets: 6, timeoutMs: 1000, maxResponseBytes: 64000,
         now: clock.now, sleep: clock.sleep, fetcher: sharedFetcher,
         beforeRequest, afterRequest,
         lookupId, attemptId,

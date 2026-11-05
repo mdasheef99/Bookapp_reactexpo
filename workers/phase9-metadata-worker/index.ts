@@ -12,7 +12,8 @@ import { providerManifestKey, tupleMatches } from '../../supabase/functions/_sha
 import { OPEN_LIBRARY_ADAPTER_VERSION } from '../../supabase/functions/_shared/imageInventory/metadata/openLibrary/normalizer';
 import { parseProviderConfigurationSnapshot } from '../../supabase/functions/_shared/imageInventory/runtime/providerConfiguration';
 import type { ProtectionState } from '../../supabase/functions/_shared/imageInventory/runtime/providerProtection';
-import { createProtectionState } from '../../supabase/functions/_shared/imageInventory/runtime/providerProtection';
+import { createProtectionState, resolveProtectionContact } from '../../supabase/functions/_shared/imageInventory/runtime/providerProtection';
+import type { ParsedProtectionPolicy } from '../../supabase/functions/_shared/imageInventory/runtime/providerProtection';
 import { GoogleBooksAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/googleBooks/adapter';
 import { executeDescriptorEditionOptions, executeEditionOptionsLookup } from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptions';
 import type { MetadataEditionOptionsBoundary } from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptionsBoundary';
@@ -47,6 +48,9 @@ export type MetadataWorkerDependencies = Readonly<{
   installed?: ReadonlyMap<string, ProviderDescriptor>;
   // Trusted composition port; production bootstrap installs the M68 RPC implementation.
   editionOptionsBoundary?: MetadataEditionOptionsBoundary;
+  // Unit B: worker-server contact map (contactId -> contact) for identifying
+  // provider User-Agent values. Never logged, persisted or returned.
+  providerContacts: Readonly<Record<string, string>>;
 }>;
 
 const headers = { 'content-type': 'application/json', 'cache-control': 'no-store', pragma: 'no-cache' };
@@ -327,6 +331,39 @@ async function processRoutedClaim(
   const registry = parseProviderConfigurationSnapshot(
     (configuration as { data?: unknown }).data,
   );
+  // Unit B (contact identity): every configured protection contactId must
+  // resolve against worker-server configuration BEFORE any admission,
+  // begin, reservation or lookup is created. An unresolvable contact reuses
+  // the existing route-manual handling (no egress, manual fallback, no new
+  // outcome codes).
+  const providerContacts = dependencies.providerContacts ?? {};
+  {
+    // F1: own-key lookup only. An unmapped contactId that names an
+    // inherited property ('toString', 'constructor', ...) must miss here
+    // and take the route-manual handling below, never the resolver throw
+    // (which would surface as stale_claim via the catch-all).
+    const missing = registry.providers.some((row) => {
+      if (row.protectionPolicy === null) return false;
+      const contactId = (row.protectionPolicy as { contactId?: unknown }).contactId;
+      if (typeof contactId !== 'string' || !Object.hasOwn(providerContacts, contactId)) {
+        return true;
+      }
+      const contact = (providerContacts as Record<string, unknown>)[contactId];
+      return typeof contact !== 'string' || contact.length === 0;
+    });
+    if (missing) {
+      if (context.purpose === 'edition_options' && dependencies.editionOptionsBoundary) {
+        return completionResult(await dependencies.editionOptionsBoundary.fail({
+          ...editionOptionsFence(context, dependencies.workerId),
+          outcome: 'provider_disabled', retryable: false,
+        }));
+      }
+      if (context.purpose === 'edition_options') {
+        return { outcome: 'manual_metadata_required' };
+      }
+      return failAutomaticClaim(context, dependencies, 'provider_disabled');
+    }
+  }
   // U3 narrow binding: the boot manifest carries no per-job registry policy,
   // so OL retention readiness is false there (openLibrary/descriptor.ts
   // requires a non-null policy version). Rebind the OL descriptor with this
@@ -435,6 +472,18 @@ async function processRoutedClaim(
   const secondaryRow = route.secondary === null ? null : (registry.providers.find((row) =>
     row.adapterKey === route.secondary!.adapterKey
     && row.adapterVersion === route.secondary!.adapterVersion) ?? null);
+  // Unit B: resolved transient contacts for the identifying User-Agent,
+  // carried OUTSIDE the registry policy objects (which pass through
+  // unchanged). NULL policy resolves to NULL (legacy literal); the
+  // claim-level check above guarantees every non-NULL policy resolves here.
+  const primaryContact = resolveProtectionContact(
+    (selectedRow?.protectionPolicy ?? null) as unknown as ParsedProtectionPolicy | null,
+    providerContacts,
+  );
+  const secondaryContact = resolveProtectionContact(
+    (secondaryRow?.protectionPolicy ?? null) as unknown as ParsedProtectionPolicy | null,
+    providerContacts,
+  );
   const capability = {
     adapterKey: route.primary.adapterKey,
     adapterVersion: route.primary.adapterVersion,
@@ -492,6 +541,7 @@ async function processRoutedClaim(
     automatic: automaticRead !== null && automaticFence !== null ? {
       read: automaticRead, fence: automaticFence, descriptor: route.primary, installed: boundInstalled, legacyRetry,
       policy: selectedRow?.protectionPolicy ?? null,
+      providerContact: primaryContact,
       sharedProtection: getWorkerProtectionState(capability.adapterKey),
     } : undefined,
     // U6: descriptor-driven explicit binding from the verified route. Row
@@ -532,6 +582,7 @@ async function processRoutedClaim(
               route.secondary.adapterKey, route.secondary.adapterVersion)],
           rowHostPolicy: fallbackPolicy !== null
             && fallbackPolicy.adapterKey === route.secondary.adapterKey ? fallbackPolicy : null,
+          providerContact: secondaryContact,
           // G1: provider-scoped (adapterKey only); v1/v2/fallback for the
           // same provider share one pacing/breaker object.
           sharedProtection: getWorkerProtectionState(route.secondary.adapterKey),
@@ -558,6 +609,7 @@ async function processRoutedClaim(
           route.policyVersions[providerManifestKey(capability.adapterKey, capability.adapterVersion)],
         rowHostPolicy: fallbackPolicy !== null
           && fallbackPolicy.adapterKey === route.primary.adapterKey ? fallbackPolicy : null,
+        providerContact: primaryContact,
         // F3/G1: provider-scoped shared protection state (worker-owned), keyed
         // by adapterKey only so every version of one provider shares it.
         sharedProtection: getWorkerProtectionState(capability.adapterKey),

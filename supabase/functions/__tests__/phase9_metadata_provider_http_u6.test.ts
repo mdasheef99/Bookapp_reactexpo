@@ -6,7 +6,7 @@ import {
   parseRetryAfterMs,
   createProtectionState,
 } from '../_shared/imageInventory/runtime/providerProtection';
-import { TEST_ONLY_PROTECTION_POLICY as policy, fakeClock } from './support/providerProtection';
+import { TEST_ONLY_PROTECTION_POLICY as policy, TEST_ONLY_PROVIDER_CONTACTS, fakeClock } from './support/providerProtection';
 import { CALL_ID } from './support/automaticWorker';
 
 const staged = [
@@ -23,7 +23,8 @@ const jsonResponse = () => new Response(JSON.stringify({ docs: [] }), {
 });
 const baseConfig = (clock: ReturnType<typeof fakeClock>, overrides: Record<string, unknown> = {}) => ({
   adapterKey: 'open_library', adapterVersion: '2.0.0',
-  policy, maxGets: 6, timeoutMs: 1000, maxResponseBytes: 64000,
+  policy, providerContact: TEST_ONLY_PROVIDER_CONTACTS['fixture-contact'],
+  maxGets: 6, timeoutMs: 1000, maxResponseBytes: 64000,
   now: clock.now, sleep: clock.sleep, fetcher: async () => jsonResponse(),
   lookupId: '00000000-0000-4000-8000-000000000101',
   attemptId: '00000000-0000-4000-8000-000000000201',
@@ -200,5 +201,45 @@ describe('Phase 9 provider protection parsing', () => {
     expect(parseRetryAfterMs('-1', 1000)).toBeNull();
     expect(parseRetryAfterMs('999999999999999999999999', 1000)).toBeNull();
     expect(parseRetryAfterMs(null, 1000)).toBeNull();
+  });
+});
+
+// Unit B: identifying User-Agent with the resolved server contact (NEW
+// describes only; no existing test touched).
+describe('Phase 9 Unit B identifying User-Agent on the native port egress', () => {
+  it('carries the resolved contact on the native port egress (T1)', async () => {
+    // Mutation caught: reverting fetchOnce to the fixed literal UA.
+    const clock = fakeClock();
+    let captured: Record<string, string> = {};
+    const fetcher = jest.fn(async (_input: unknown, init?: { headers?: Record<string, string> }) => {
+      captured = { ...(init?.headers ?? {}) };
+      return jsonResponse();
+    });
+    const beforeRequest = jest.fn(async () => ({ callId: CALL_ID, grantEpoch: null }));
+    const afterRequest = jest.fn(async (callId: string) => ({ receiptId: callId }));
+    const port = createProviderHttpPort(baseConfig(clock, { fetcher, beforeRequest, afterRequest }));
+    await expect(port.get(call(0))).resolves.toMatchObject({ receiptId: CALL_ID });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(beforeRequest).toHaveBeenCalledTimes(1);
+    expect(afterRequest).toHaveBeenCalledTimes(1);
+    expect(captured['User-Agent']).toBe('BookConnect edition lookup (ops@example.invalid)');
+  });
+
+  it('keeps the legacy literal byte-identical when the policy is NULL (T4 port half)', async () => {
+    // Mutation caught: appending the contact (or any suffix) on the legacy path.
+    const clock = fakeClock();
+    let captured: Record<string, string> = {};
+    const fetcher = jest.fn(async (_input: unknown, init?: { headers?: Record<string, string> }) => {
+      captured = { ...(init?.headers ?? {}) };
+      return jsonResponse();
+    });
+    const beforeRequest = jest.fn(async () => ({ callId: CALL_ID, grantEpoch: null }));
+    const afterRequest = jest.fn(async (callId: string) => ({ receiptId: callId }));
+    const port = createProviderHttpPort(baseConfig(clock, {
+      policy: null, providerContact: null, fetcher, beforeRequest, afterRequest,
+    }));
+    await expect(port.get(call(0))).resolves.toMatchObject({ receiptId: CALL_ID });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(captured['User-Agent']).toBe('BookConnect edition lookup');
   });
 });

@@ -4,12 +4,13 @@ import { automaticContext } from './fixtures/phase9/editionOptionsWorker';
 import { getWorkerProtectionState } from '../../../workers/phase9-metadata-worker';
 import { createProtectionState, checkBreaker } from '../_shared/imageInventory/runtime/providerProtection';
 import { createTestHttpPort } from './support/providerModules';
-import { TEST_ONLY_PROTECTION_POLICY as policy, fakeClock } from './support/providerProtection';
+import { TEST_ONLY_PROTECTION_POLICY as policy, TEST_ONLY_PROVIDER_CONTACTS, fakeClock } from './support/providerProtection';
 
 const call = () => ({ url: new URL('https://openlibrary.org/search.json'), stage: 'search', sequence: 0,
   signal: new AbortController().signal });
 const port = (clock: ReturnType<typeof fakeClock>, state: object, extra: Record<string, unknown> = {}) =>
-  createTestHttpPort({ adapterKey: 'open_library', adapterVersion: '2.0.0', policy, maxGets: 6,
+  createTestHttpPort({ adapterKey: 'open_library', adapterVersion: '2.0.0', policy,
+    providerContact: TEST_ONLY_PROVIDER_CONTACTS['fixture-contact'], maxGets: 6,
     timeoutMs: 1000, maxResponseBytes: 64000, now: clock.now, sleep: clock.sleep, breakerState: state,
     beforeRequest: async () => ({ callId: '00000000-0000-4000-8000-000000000007' }),
     afterRequest: async (id: string) => ({ receiptId: id }), ...extra });

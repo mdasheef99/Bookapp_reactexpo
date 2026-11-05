@@ -3,7 +3,7 @@
 import { buildMetadataQueryIdentity } from '../_shared/imageInventory/metadata/queryIdentity';
 import { invokeOpenLibraryV2 } from '../_shared/imageInventory/metadata/openLibrary/automatic';
 import { createProviderHttpPort, markProviderHttpUnregistered } from '../_shared/imageInventory/metadata/providerHttp';
-import { TEST_ONLY_PROTECTION_POLICY as policy, fakeClock } from './support/providerProtection';
+import { TEST_ONLY_PROTECTION_POLICY as policy, TEST_ONLY_PROVIDER_CONTACTS, fakeClock } from './support/providerProtection';
 import { CALL_ID } from './support/automaticWorker';
 
 const query = buildMetadataQueryIdentity({
@@ -65,7 +65,8 @@ const jsonResponse = () => new Response(JSON.stringify({ docs: [] }), {
 const fix1Port = (clock: ReturnType<typeof fakeClock>, overrides: Record<string, unknown> = {}) => {
   const base = {
     adapterKey: 'open_library', adapterVersion: '2.0.0',
-    policy, maxGets: 6, timeoutMs: 1000, maxResponseBytes: 64000,
+    policy, providerContact: TEST_ONLY_PROVIDER_CONTACTS['fixture-contact'],
+    maxGets: 6, timeoutMs: 1000, maxResponseBytes: 64000,
     now: clock.now, sleep: clock.sleep, fetcher: async () => jsonResponse(),
     lookupId: '00000000-0000-4000-8000-000000000101',
     attemptId: '00000000-0000-4000-8000-000000000201',
@@ -880,6 +881,7 @@ describe('Phase 9 fix1 F14: tuple-bound validator with registry intersection', (
     const port = createProviderHttpPort({
       adapterKey: 'synthetic_catalogue', adapterVersion: '1.0.0',
       policy: require('./support/providerProtection').TEST_ONLY_PROTECTION_POLICY,
+      providerContact: require('./support/providerProtection').TEST_ONLY_PROVIDER_CONTACTS['fixture-contact'],
       maxGets: 6, timeoutMs: 1000, maxResponseBytes: 64000,
       now: clock.now, sleep: clock.sleep,
       fetcher: async () => jsonResponse(),
@@ -1280,7 +1282,8 @@ describe('Phase 9 fix2 G4: bridge contact is recorded at the actual send', () =>
   const bridge = (fetcher: (input: string | URL | Request, init?: RequestInit) => Promise<Response>,
     shared: object, hooks: ReturnType<typeof hooksFor>) => createBridgedPort({
     adapterKey: 'open_library', adapterVersion: '1.0.0', binding: bindingFor(fetcher),
-    maxGets: 6, policy: policy, lookupId: 'g4-lookup', attemptId: 'g4-attempt',
+    maxGets: 6, policy: policy, providerContact: TEST_ONLY_PROVIDER_CONTACTS['fixture-contact'],
+    lookupId: 'g4-lookup', attemptId: 'g4-attempt',
     claim, hooks, sharedProtection: shared,
   });
   const resetPacing = (shared: Record<string, unknown>) => {

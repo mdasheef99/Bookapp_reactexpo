@@ -69,7 +69,8 @@ describe('Phase 9 metadata worker server-only environment', () => {
       const url = new URL(address instanceof Request ? address.url : String(address)); urls.push(url.hostname);
       return new Response(JSON.stringify({ docs: [] }), { headers: { 'content-type': 'application/json' } });
     });
-    const production = bootstrapOpenLibraryOnly(base, fetcher);
+    const production = bootstrapOpenLibraryOnly({ ...base,
+      PHASE9_PROVIDER_CONTACTS: '{"fixture-contact":"ops@example.invalid"}' }, fetcher);
     // The OL-only runtime is the production bootstrap; the automatic fixture
     // receives it directly and must not construct a Google adapter or key.
     const subject = automaticDependencies({ production, context: { providerPolicies: [{
@@ -118,6 +119,7 @@ describe('Phase 9 metadata worker server-only environment', () => {
       primary: null,
       primaryCapability: null,
       secondary: null,
+      providerContacts: {},
     });
     const real = loadMetadataWorkerEnvironment({
       ...base,

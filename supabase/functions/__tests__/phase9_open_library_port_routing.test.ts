@@ -5,7 +5,7 @@ import { buildMetadataQueryIdentity } from '../_shared/imageInventory/metadata/q
 import { OpenLibraryEditionOptionsAdapter } from '../_shared/imageInventory/metadata/openLibrary/adapter';
 import { invokeOpenLibraryV2 } from '../_shared/imageInventory/metadata/openLibrary/automatic';
 import { createProviderHttpPort, ProviderHttpError } from '../_shared/imageInventory/metadata/providerHttp';
-import { TEST_ONLY_PROTECTION_POLICY, fakeClock } from './support/providerProtection';
+import { TEST_ONLY_PROTECTION_POLICY, TEST_ONLY_PROVIDER_CONTACTS, fakeClock } from './support/providerProtection';
 
 const query = buildMetadataQueryIdentity({
   strategy: 'bibliographic', title: 'The Fixture Book', authors: ['Fixture Author'],
@@ -206,7 +206,8 @@ describe('Phase 9 fix1 T5: denial stays sticky across later permissive responses
     const run = async (badHeaders: Record<string, string>) => {
       const http = createProviderHttpPort({
         adapterKey: 'open_library', adapterVersion: '2.0.0',
-        policy: TEST_ONLY_PROTECTION_POLICY, maxGets: 6, timeoutMs: 1000,
+        policy: TEST_ONLY_PROTECTION_POLICY,
+        providerContact: TEST_ONLY_PROVIDER_CONTACTS['fixture-contact'], maxGets: 6, timeoutMs: 1000,
         maxResponseBytes: 64000, now: clock.now, sleep: clock.sleep,
         fetcher: twoAuthorFetcher(badHeaders) as never,
         lookupId: 't5-lookup', attemptId: 't5-attempt',

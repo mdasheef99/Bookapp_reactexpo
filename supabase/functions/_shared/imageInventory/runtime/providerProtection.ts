@@ -61,6 +61,31 @@ export function parseProtectionPolicyOrNull(value: unknown): ParsedProtectionPol
   return Object.freeze({ ...(row as unknown as ParsedProtectionPolicy) });
 }
 
+// Unit B: resolves a parsed protection policy's contactId against
+// worker-server configuration WITHOUT touching the policy object (the
+// resolved value never enters registry/DTO/output shapes). NULL policy
+// (legacy fencing-only mode) resolves to NULL, selecting the fixed
+// literal User-Agent. A non-NULL policy whose contactId has no mapping
+// throws P9_PROVIDER_CONFIGURATION_INVALID (fail closed before any fetch).
+export function resolveProtectionContact(
+  policy: ParsedProtectionPolicy | null,
+  contacts: Readonly<Record<string, string>>,
+): string | null {
+  if (policy === null) return null;
+  // F1: own-key lookup only. An inherited name ('toString',
+  // 'constructor', ...) must miss even on a plain-object map, and a
+  // non-string/empty own value must fail closed like a miss.
+  if (typeof policy.contactId !== 'string'
+    || !Object.hasOwn(contacts, policy.contactId)) {
+    throw new Error(P9_PROVIDER_CONFIGURATION_INVALID);
+  }
+  const contact = (contacts as Record<string, unknown>)[policy.contactId];
+  if (typeof contact !== 'string' || contact.length === 0) {
+    throw new Error(P9_PROVIDER_CONFIGURATION_INVALID);
+  }
+  return contact;
+}
+
 // Process-local observation state. Durable multi-instance correctness is NOT
 // claimed here (SDD §5.4:756-758); 8b runs the approved single-instance
 // mechanism only. Production shares ONE state object per provider across

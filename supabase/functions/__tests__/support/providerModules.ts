@@ -220,6 +220,9 @@ export function descriptorOptionsGateway(
     explicitDescriptor: { descriptor, adapter: null, fallbackAdapter: null },
     explicitHttp: {
       policy: require('./providerProtection').TEST_ONLY_PROTECTION_POLICY,
+      // Unit B: fake resolved contact for the fixture contactId. Fake values
+      // only; never a real email.
+      providerContact: require('./providerProtection').TEST_ONLY_PROVIDER_CONTACTS['fixture-contact'],
       requestValidator, requestHosts: [...declaredHosts],
       timeoutMs: 1000, maxResponseBytes: 64000,
       retentionPolicyVersion: 1,
