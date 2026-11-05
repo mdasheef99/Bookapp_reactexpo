@@ -96,7 +96,8 @@ stage that has due jobs. It was added in Phase 9 M36
 (`20260810000036_marketplace_phase9_worker_wake_dispatcher.sql`) and extended in
 M40, M56 and M69; M96 makes it first run
 `phase9_sweep_exhausted_metadata_jobs_v1`, which dead-letters exhausted
-metadata jobs that hold nothing (also callable by service_role); design in
+metadata jobs that hold nothing (also callable by service_role; since M97 it
+also closes the zero-call crash shape, one savepoint per job); design in
 `docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/automatic-worker-wake-dispatcher-sdd.md`.
 `npm run invoke:phase9:worker -- <media|vision|metadata|publication>` is the
 manual equivalent; it reads `PHASE9_<SERVICE>_WORKER_URL` and
@@ -106,7 +107,7 @@ manual equivalent; it reads `PHASE9_<SERVICE>_WORKER_URL` and
 | --- | --- |
 | `phase9-media-validation-worker` | Validate, re-encode and strip uploaded images (ImageMagick WASM); also runs media-output cleanup (`runtime/mediaOutputCleanup.ts`), which removes abandoned Storage objects |
 | `phase9-vision-analysis-worker` | Read book spines from images (Gemini, or recorded fixtures) |
-| `phase9-metadata-worker` | Automatic enrichment uses Google Books as primary. Open Library 1.0.0 serves explicit Owner edition searches (`edition_options` jobs for the edition picker); Open Library 2.0.0 can also run automatic lookup, but only when its registry row names it automatic primary and carries a protection policy |
+| `phase9-metadata-worker` | Optional env `PHASE9_PROVIDER_CONTACTS` (JSON `{contactId: contact}`, parsed in `workers/phase9-runtime/environment.ts`) resolves a protection policy's `contactId` into the provider User-Agent `BookConnect edition lookup (<contact>)`; an unmapped `contactId` sends the claim to manual. Automatic enrichment uses Google Books as primary. Open Library 1.0.0 serves explicit Owner edition searches (`edition_options` jobs for the edition picker); Open Library 2.0.0 can also run automatic lookup, but only when its registry row names it automatic primary and carries a protection policy |
 | `phase9-publication-worker` | Retry public listing publication |
 | `phase9-runtime` | Shared environment, HTTP and request-security helpers |
 
@@ -129,9 +130,10 @@ Paths below are relative to `supabase/functions/_shared/imageInventory/` unless 
 | --- | --- |
 | `phase9_owner_*`, `phase9_update_candidate_review*`, `phase9_add_candidate_to_inventory*` | Authenticated Owner reads, review saves and create-only Add; routed by `runtime/ownerUxRpcRoutes.ts` and `ownerBatchReviewIngestion.ts` |
 | `phase9_owner_candidate_edition_choices*`, `phase9_request_candidate_edition_options*`, `phase9_set_candidate_isbn*`, `phase9_select_candidate_edition*` | Read choices, request search, save typed ISBN and confirm selection; `runtime/ownerEditionPickerGateway.ts` |
-| `claim_phase9_metadata_jobs`, `phase9_metadata_job_context*`, `phase9_register_*`, `phase9_reserve_metadata_usage`, `phase9_finalize_*` | Worker claims, authority, logical lookups/attempts, reservations and physical-call accounting |
+| `claim_phase9_metadata_jobs`, `phase9_metadata_job_context*`, `phase9_register_*`, `phase9_reserve_metadata_usage`, `phase9_finalize_*` | Worker claims (the worker uses this legacy claim, not v2; since M98 it skips jobs deferred in the current gate epoch), authority, logical lookups/attempts, reservations and physical-call accounting |
+| `phase9_defer_paused_metadata_admission_v1` | Service-only pause deferral the worker calls on `P9_EXTERNAL_ADMISSION_PAUSED` (M98); reads the gate epoch itself and delegates to `phase9_defer_metadata_admission_v1` |
 | `phase9_*local_metadata_match`, `phase9_*metadata_cache*`, `phase9_select_structural_metadata_snapshot` | Automatic local/cache reuse and accepted metadata snapshots |
-| `phase9_automatic_edition_fence_v1`, `phase9_prepare_automatic_metadata_v1`, `phase9_begin_automatic_provider_run_v1`, `phase9_finish_automatic_provider_run_v1`, `phase9_schedule_automatic_provider_recheck_v1`, `phase9_complete_automatic_metadata_v1`, `phase9_recover_automatic_metadata_v1` | Automatic path: fence read, admission/coalescing, provider-run rounds and retry, atomic completion and receipt recovery (fence and prepare come from migration `20261104000094`) |
+| `phase9_automatic_edition_fence_v1`, `phase9_prepare_automatic_metadata_v1`, `phase9_begin_automatic_provider_run_v1`, `phase9_finish_automatic_provider_run_v1`, `phase9_schedule_automatic_provider_recheck_v1`, `phase9_complete_automatic_metadata_v1`, `phase9_recover_automatic_metadata_v1` | Automatic path: fence read, admission/coalescing, provider-run rounds and retry, atomic completion and receipt recovery (fence and prepare come from migration `20261104000094`; since M98 the four-argument finish schedules no retry when Retry-After exceeds the policy's `backoffMaxMs`) |
 | `phase9_sweep_exhausted_metadata_jobs_v1` | Service-only bounded close of exhausted metadata jobs holding no reservation, run, admission or unknown call (M96); also run first by the wake dispatcher |
 | `phase9_recover_candidate_edition_options*`, `phase9_reuse_candidate_edition_cache*`, `phase9_complete_candidate_edition_options*`, `phase9_fail_candidate_edition_options*` | Service-only explicit-search recovery, edition-list reuse, atomic completion and failure |
 | `marketplace_sec.phase9_catalogue_*`, `marketplace_sec.phase9_edition_*` | Private SQL helpers for admission, identity, Add linkage, selection effects, statistics, cache scope/payload and receipts; reached through controlled RPCs |

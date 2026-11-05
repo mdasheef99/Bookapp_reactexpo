@@ -220,6 +220,8 @@ $draftMigrationNames = @(
     '20261104000094_marketplace_phase9_automatic_worker_prerequisites.sql'
     '20261104000095_marketplace_phase9_8c_null_safe_and_pending_state.sql'
     '20261104000096_marketplace_phase9_8c_final_attempt_sweep.sql'
+    '20261105000097_marketplace_phase9_8c_sweep_recovery.sql'
+    '20261105000098_marketplace_phase9_8c_pause_defer_and_retry_bound.sql'
 ) | Select-Object -Unique
 $phase9Migrations = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot 'supabase/migrations') -Filter '*marketplace_phase9*.sql')
 $wu1AppliedStatus = ($tracker.Contains('**Implementation status:** `wu1_owner_inventory_read_boundary_applied_runtime_deferred`') -or

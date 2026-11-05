@@ -68,7 +68,12 @@ and service phase9_defer_metadata_admission_v1(fence jsonb,epoch bigint), 8a-5-o
 Only no-lookup/no-reservation/no-call work may release lease/durably defer without
 provider spend/allowance; existing authority returns drain_required, never a
 neutral defer. Claim excludes current blocked epoch, avoiding repeated five-claim
-burn. AutoFence or explicit fence is purpose/scope re-proved; no fake explicit job.
+burn. (Built 2026-11-05, M98: the worker keeps the legacy claim, which now
+excludes the current blocked epoch, and calls the service-only
+phase9_defer_paused_metadata_admission_v1(fence); drain scripts exempt only
+proven current-pause deferrals. Before the switch: deploy that worker with
+PHASE9_PROVIDER_CONTACTS mapping every policy contactId; confirm one worker
+instance; pause and drain before tuning protection values. Evidence: tracker 41.) AutoFence or explicit fence is purpose/scope re-proved; no fake explicit job.
 
 **Exhaustive drain report (design; read-only queries in the future script):**
 Root captured_ids LEFT JOIN image_extraction_jobs j preserves every captured ID;

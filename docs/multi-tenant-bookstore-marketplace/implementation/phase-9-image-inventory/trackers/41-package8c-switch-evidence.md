@@ -109,13 +109,185 @@ action live in [ACTIVE.md](../../ACTIVE.md); this file holds dated evidence.
    contact email, the reviewed manifest hash, the smoke cohort) and run the
    scripts in order 01-05; 06 is the rollback.
 
+## 2026-11-05: 8c follow-up after the flow-stage review (M97, M98, worker contact)
+
+### Why
+
+A review of slice 8 by flow stage (DeepSeek T1, Muse T2, Luna whole-8c)
+found pilot-blocking defects, each verified against code. The Owner
+approved fixing them ("ok pleae go ahead ... fix please", "Yes, add M98";
+"use sol if you find anything complicated"; "dont make anything
+complicated, just make bounded correct").
+
+- A worker that crashes after begin but before any provider call left a job
+  whose admission still held slots. The M96 sweep skipped it forever and it
+  blocked the drain.
+- A scanned card with no lookup whose job was dead-lettered stayed
+  `pending` in the read model, so the picker never offered a search.
+- During a pause (or smoke mode, for jobs outside the cohort), automatic
+  requests were lost. The worker claims with the legacy
+  `claim_phase9_metadata_jobs` (M15, no gate filter); on
+  `P9_EXTERNAL_ADMISSION_PAUSED` it returned manual with no write, so each
+  reclaim burned an attempt until the sweep dead-lettered the job. M93's
+  `phase9_defer_metadata_admission_v1` had no caller, the worker cannot read
+  the gate epoch (M91 closes it to service_role), and switching to the v2
+  claim would break NULL-policy lookups (v2 creates admission markers).
+- An unbounded `Retry-After` parked a job far in the future
+  (`due:=greatest(due,p_not_before)`), with the card stuck pending.
+- The protection policy's `contactId` was validated but never sent; both
+  egress sites used the literal `BookConnect edition lookup`.
+
+### Commits (local, not pushed, nothing applied or deployed)
+
+- `65167b4` Unit A, M97
+  `20261105000097_marketplace_phase9_8c_sweep_recovery.sql`.
+  - The sweep now treats only admissions with `slots_remaining>0` as
+    blocking, except the zero-call crash shape: in_progress, lease expired
+    or absent, a queued/running run matching the admission's claim tuple,
+    no provider calls for the job and no reserved reservation.
+  - Each candidate closes in its own savepoint
+    (`P9_SWEEP_CANDIDATE_SKIPPED`, SQLSTATE `P9S01`), so one changed row
+    cannot abort the batch. The block detaches the stale lease, finalizes
+    the crash run (`retry_allowed=false`, receipt digest), zeroes slots,
+    wakes the store and dead-letters with the M75 fields.
+  - `phase9_owner_ux_metadata_state` gains one `ambiguous` branch for a
+    scanned card with no lookup whose metadata job is dead-lettered.
+  - Picker recovery Jest test for that state. The M96 test S5 is
+    deliberately superseded (it now expects the crash shape to close).
+- `dacffae` Unit C, M98
+  `20261105000098_marketplace_phase9_8c_pause_defer_and_retry_bound.sql`
+  plus a worker change and an edit to scripts 02/03/05/06. Built by Sol
+  from DeepSeek's plan plus Sol's plan check (four corrections).
+  - New `marketplace_sec.phase9_defer_paused_metadata_admission_v1(jsonb)`
+    (SECURITY DEFINER) and a `public` SECURITY INVOKER wrapper, EXECUTE
+    service_role only. It reads the gate without a lock and raises
+    `P9_STATE_CONFLICT` if the gate is open or missing; otherwise it
+    delegates to the unchanged M93 defer, which locks the job, then the
+    gate, and rechecks. A gate move in between gives a conflict, never a
+    deferral under an open gate.
+  - `claim_phase9_metadata_jobs`: M15 body plus one predicate that skips a
+    job whose `phase9_job_admission_wait.blocked_epoch` equals the current
+    gate epoch (the v2 rule, M93:328-353). After resume (05) bumps the
+    epoch, the job is claimable again. Owner, ACL and search_path kept.
+  - Four-argument `phase9_finish_automatic_provider_run_v1`: M93 body plus
+    one bound. If `p_not_before` is later than now + `backoffMaxMs`, no
+    retry is scheduled (the run finalizes with `retry_allowed=false`; the
+    worker then completes the job through its normal path, and the card
+    shows `temporarily_unavailable`, not `pending`). The floor is never
+    capped and nothing retries before `Retry-After`. A replay returns the
+    persisted state. The three-argument overload is unchanged.
+  - Worker (`metadataAutomaticExecution.ts`): on a known
+    `P9_EXTERNAL_ADMISSION_PAUSED` (SQLSTATE P0001 only) it always calls the
+    defer RPC and lets SQL decide. `deferred` returns `retry_scheduled`
+    with no write; `drain_required` takes the existing
+    `terminal('policy_denied')` fallback; a conflict, uncertain error or
+    malformed receipt returns manual with no write.
+  - Scripts 02/03/05/06 (byte-identical edit): a job proven deferred in the
+    current pause no longer blocks. It must be `retry_scheduled` with a
+    NULL lease, a current-epoch wait row, no lookup, reservation, call or
+    positive admission slots, and only a neutral queued run whose identity
+    matches the persisted admission fence. Every other obligation still
+    blocks.
+- `4b29935` Unit B, worker contact (no migration). Built by Muse; one fix
+  round.
+  - Optional worker env `PHASE9_PROVIDER_CONTACTS`: a JSON map
+    `{contactId: contact}`, validated at startup in every provider mode.
+    Only own keys count (a null-prototype map; a `__proto__` key is
+    rejected). The raw value must be printable ASCII (0x20-0x7E) before
+    trimming and 1-200 characters after; an empty value is rejected. If the
+    variable is absent, the map is `{}`.
+  - Both egress sites send `BookConnect edition lookup (<contact>)` when the
+    protection policy is non-NULL. With a NULL policy the literal is
+    byte-identical to before.
+  - Per-claim check right after the configuration read: if any non-NULL
+    policy's `contactId` is unmapped, the claim takes the existing
+    route-manual handling (no egress, admission, begin or lookup), never
+    `stale_claim`. The check covers every provider row with a policy, not
+    only the routed one.
+  - The resolved contact travels as a transient field; it is never in the
+    policy objects, logs, RPC data or results.
+
+### Reviews and fix rounds
+
+- M97: Sol reviewed the brief. Fix round 1 made test T16 able to detect a
+  run update escaping the savepoint (mutation proven). Luna: no code
+  defects.
+- M98: Sol's plan check returned FIX FIRST. Accepted: no gate lock in the
+  wrapper (lock order); a defer conflict returns manual instead of
+  `stale_claim` (`failAutomaticClaim` would terminalize a live job); the
+  script exemption was too wide; test gaps. Luna's build review: COMMIT, no
+  implementation defects, one Low test gap (residual risks).
+- Unit B: Luna returned FIX FIRST with five findings. All five fixed in
+  fix round 1: inherited-key lookup; CR/LF hidden by trimming; privacy and
+  wiring tests through the real worker; fixture mode skipping validation.
+  Checked with a Haiku rerun and my diff read.
+
+### Verification actually run
+
+- M97: PGlite new suite 17 pass / 1 native-only skip; S5 file 18/1;
+  NullSafe 19/19; OperatorSwitch 20/20; native group `8c-1b` 57/57; picker
+  Jest suites 367 pass; guard 6/6.
+- M98 (Sol): new SQL suite 73 pass / 1 skip; combined 8c SQL 128 pass /
+  3 native-only skips; worker Jest 32/32; full metadata Jest 551 pass;
+  worker build clean. Five mutations each turned a named test red.
+- M98 (Haiku, outside the sandbox): native group `8c-1b` 131/131, including
+  the two-session gate race (a conflict, no deadlock); PGlite five 8c
+  files: 147 pass, 0 fail, 3 native-only skips.
+- Unit B after fix round 1 (Haiku): full metadata Jest 38 suites, 570 pass,
+  3 todo, 0 fail; pause-defer and bootstrap suites 12/12; worker build
+  exit 0. The Unit B diff and new tests contain no real email address.
+  Muse's mutation checks: 4 + 4, all red as intended.
+
+### Database and deployment
+
+None. M97 and M98 are local files only; nothing pushed, applied or
+deployed.
+
+### Remaining before the switch (after this follow-up)
+
+1. Owner approval: push the three commits; apply M97 then M98 to
+   `ahntbtktjjmvfosgkmgn`; deploy the worker.
+2. Before the switch, set `PHASE9_PROVIDER_CONTACTS` on the Render worker,
+   in the form `{"bookconnect-dev":"<contact>"}`. Every `contactId` used by
+   a non-NULL protection policy must be mapped, or every claim falls back
+   to manual. The real address is confirmed with the Owner at switch time
+   and is never written to a repo file or script.
+3. Deploy the updated worker before the switch (runbook 02c-1). Pause and
+   drain before tuning protection values. Confirm the Render worker runs as
+   a single instance.
+
 ### Residual risks
+
+- Pause coverage boundary (recorded, not fixed): NULL-policy automatic
+  requests that already created lookup, reservation or attempt history get
+  `drain_required` and end through the existing terminal fallback. Explicit
+  edition-options requests during a pause still end as
+  `provider_unavailable`. Not every paused request is queued.
+- A defer conflict (the gate reopened mid-defer) keeps the lease and
+  consumes the current attempt; at max attempts the sweep may close the
+  job.
+- M98 test gap (Luna, Low): the scripts' fence-identity checks (candidate
+  version, captured request, generation) are not each covered by a
+  one-field mismatch test; only the query identity is. The checks are
+  present in all four scripts.
+- The worker's per-claim contact check covers all provider rows with a
+  policy, so an unmapped `contactId` on any provider sends every claim to
+  manual (fails closed).
+- The per-store fair queue is unused, because the worker keeps the legacy
+  claim (accepted). Editing the policy while a job is mid-flight can break
+  holds: pause and drain before tuning. `backoffMaxMs` is now used only as
+  the Retry-After bound and the jitter cap.
+- The deployed worker reads `phase9_provider_configuration_v1` on every
+  claim (`index.ts` ~:319-329), so a policy change needs no restart. This
+  answers the earlier open question.
+
+### Residual risks (8c-1a / 8c-1b)
 
 - Jobs that hold unknown spend (reserved reservation, unknown run or call)
   are never closed by the sweep; they block the drain until reconciled by an
   operator.
-- Whether the deployed worker picks up a changed `protection_policy` without
-  a restart is unverified; check before tuning values during the pilot.
+- Answered 2026-11-05: the worker reads the policy per claim (see the
+  follow-up section), so no restart is needed.
 - Native `8c-1b` group is intermittently red: `57014` statement timeouts in the shared `providerReplacementFixture.mjs` clean hook (TRUNCATE CASCADE). Fix round 1 removed one cause; another remains. Test infrastructure only; M96 assertions pass whenever the hook does.
 - The 24 pre-existing failing tests (8a provider-gate group) are unchanged
   and untriaged.
