@@ -1,13 +1,18 @@
 // 02c §§4.3/7/8/9; M75:14–20,110–113; Owner's empty-obligation sweep.
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {before,after,beforeEach,test} from 'node:test';
 import {database,clean,resetActor,value,job,row,sweep,installed,nativeConnection,footprint} from './finalAttemptSweep8cFixture.mjs';
 import {automaticGoogleCommand,setActor} from './providerReplacementFixture.mjs';
+import {migrationPath} from './databaseHarness.mjs';
+const M97='20261105000097_marketplace_phase9_8c_sweep_recovery.sql';
+const hasM97=fs.existsSync(migrationPath(M97));
 let db;
-before(async()=>{db=await database();});
+before(async()=>{db=await database();if(installed()&&hasM97)await db.exec(fs.readFileSync(migrationPath(M97),'utf8'));});
 beforeEach(async()=>{await clean(db);});
 after(async()=>{await db?.close();});
 const feature={skip:!installed()?'M96 not installed; not a behavioural RED':false};
+const feature97={skip:!installed()||!hasM97?'M97 not installed; not a behavioural RED':false};
 for(const explicit of [false,true])test(`S1 exhausted-only dispatcher closes ${explicit?'explicit':'automatic'} job`,async()=>{
  const f=await job(db,{version:explicit?'p9-owner-edition-options-v1':null});
  await value(db,'SELECT marketplace_sec.dispatch_phase9_worker_wakes()');
@@ -45,11 +50,21 @@ test('S4 bound, held-head progress and second-run no-op',feature,async()=>{
  const before=await footprint(db);assert.equal((await sweep(db)).closed,0);assert.deepEqual(await footprint(db),before);
  assert.equal((await row(db,held.id)).status,'open');assert.equal((await row(db,a.id)).status,'dead_letter');assert.equal((await row(db,b.id)).status,'dead_letter');
 });
-test('S5 reserved and matching zero-slot admission leave all rows unchanged',feature,async()=>{
+test('S5 M97 supersedes the zero-slot marker: the stale job closes and the trigger still rejects a live claim',feature97,async()=>{
  const f=await job(db,{status:'in_progress',lease:'2000-01-01T00:00:00Z'});
  await db.query(`INSERT INTO marketplace_sec.phase9_metadata_admissions(job_id,claim_attempt_number,claim_worker,claim_lease_token_hash)
  VALUES($1,5,'8c-fixture-worker-0001',$2)`,[f.id,'a'.repeat(64)]);
- const before=await footprint(db);assert.equal((await sweep(db)).closed,0);assert.deepEqual(await footprint(db),before);
+ const before=await footprint(db);
+ assert.equal((await sweep(db)).closed,1);
+ const after=await row(db,f.id);
+ assert.equal(after.status,'dead_letter');
+ for(const k of ['lease_owner','lease_token_hash','lease_expires_at'])assert.equal(after[k],null);
+ const expected=structuredClone(before);
+ expected['public.image_extraction_jobs']=expected['public.image_extraction_jobs'].map(j=>j.id===f.id?after:j);
+ assert.deepEqual(await footprint(db),expected,'only the exact closed job row changes');
+ // M93:108-110 needs OLD in_progress; restore the same stale claim for the unchanged trigger proof.
+ await resetActor(db);
+ await db.query("UPDATE public.image_extraction_jobs SET status='in_progress',lease_owner='8c-fixture-worker-0001',lease_token_hash=repeat('a',64),lease_expires_at='2000-01-01T00:00:00Z' WHERE id=$1",[f.id]);
  // The unchanged BEFORE trigger really rejects this identity under service_role.
  await resetActor(db);await db.exec("SELECT set_config('request.jwt.claim.role','service_role',false)");
  await assert.rejects(db.query("UPDATE public.image_extraction_jobs SET status='dead_letter' WHERE id=$1",[f.id]),/P9_STATE_CONFLICT/);
