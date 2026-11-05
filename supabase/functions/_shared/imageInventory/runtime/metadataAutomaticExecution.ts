@@ -360,6 +360,23 @@ export async function executeAutomaticMetadata(
     }
     return receiptResult(receipt);
   } catch (error) {
+    // 02c §4.3 / 02c-1 §2: SQL alone decides neutral pause eligibility (K3).
+    if (error instanceof MetadataAutomaticRpcError && !error.uncertain
+      && error.message === 'P9_EXTERNAL_ADMISSION_PAUSED') {
+      try {
+        const deferred = z.discriminatedUnion('status', [
+          z.object({ status: z.literal('deferred'), blockedEpoch: z.number().int().nonnegative() }).strict(),
+          z.object({ status: z.literal('drain_required') }).strict(),
+        ]).parse(await automaticRpc(client, 'phase9_defer_paused_metadata_admission_v1', { f: fence }));
+        if (deferred.status === 'deferred') return { outcome: 'retry_scheduled' };
+        return await terminal('policy_denied');
+      } catch {
+        // P2: reopen conflicts keep the lease for expiry/reclaim. Never return
+        // stale_claim: the batch turns that into a terminal policy_denied write.
+        // Lost/malformed defer receipts are likewise recovery-only (K6).
+        return manual();
+      }
+    }
     // No generic fail/requeue may follow an uncertain admission/send/completion.
     if (error instanceof MetadataAutomaticRpcError && !error.uncertain && error.message === 'P9_STATE_CONFLICT'
       || error instanceof Error && error.message === 'P9_METADATA_STALE_PHYSICAL_CALL') {

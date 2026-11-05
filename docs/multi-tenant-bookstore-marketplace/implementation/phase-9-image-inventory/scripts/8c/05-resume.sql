@@ -56,8 +56,27 @@ BEGIN
    WHERE a.id IS NULL OR l.id IS NULL OR j.id IS NULL OR l.job_id IS DISTINCT FROM pc.job_id
     OR pc.store_id IS DISTINCT FROM j.store_id OR pc.candidate_id IS DISTINCT FROM j.entity_id
     OR a.store_id IS DISTINCT FROM pc.store_id OR a.candidate_id IS DISTINCT FROM pc.candidate_id
+ ), deferred AS (
+  SELECT j.id FROM public.image_extraction_jobs j
+  WHERE j.job_kind='metadata_enrich' AND j.status='retry_scheduled'
+   AND j.lease_owner IS NULL AND j.lease_token_hash IS NULL AND j.lease_expires_at IS NULL
+   AND EXISTS(SELECT 1 FROM marketplace_sec.phase9_job_admission_wait w
+    WHERE w.job_id=j.id AND w.blocked_epoch=g.epoch)
+   AND NOT EXISTS(SELECT 1 FROM public.phase9_metadata_lookups l WHERE l.job_id=j.id)
+   AND NOT EXISTS(SELECT 1 FROM public.phase9_usage_reservations u WHERE u.job_id=j.id)
+   AND NOT EXISTS(SELECT 1 FROM public.phase9_metadata_provider_calls pc WHERE pc.job_id=j.id)
+   AND NOT EXISTS(SELECT 1 FROM marketplace_sec.phase9_metadata_admissions a WHERE a.job_id=j.id AND a.slots_remaining>0)
+   -- M93:391-400 neutral queued shape and identity; M93:312 persists f without its secret token.
+   AND NOT EXISTS(SELECT 1 FROM marketplace_sec.phase9_automatic_provider_runs r
+    LEFT JOIN marketplace_sec.phase9_metadata_admissions a ON a.job_id=r.job_id
+    WHERE r.job_id=j.id AND (r.round<>0 OR r.status<>'queued' OR r.retry_allowed OR r.no_egress_recheck
+     OR r.lookup_id IS NOT NULL OR r.primary_attempt_id IS NOT NULL OR a.fence IS NULL
+     OR r.query_identity_hash IS DISTINCT FROM encode(extensions.digest(a.fence->>'queryIdentity','sha256'),'hex')
+     OR r.candidate_version IS DISTINCT FROM (a.fence->>'candidateVersion')::integer
+     OR r.captured_request_id IS DISTINCT FROM (a.fence->>'capturedRequestId')::uuid
+     OR r.request_generation IS DISTINCT FROM (a.fence->>'requestGeneration')::integer))
  ), captured AS (
-  SELECT id,true AS blocking FROM roots
+  SELECT id,id NOT IN(SELECT id FROM deferred) AS blocking FROM roots
   UNION SELECT pc.job_id,false FROM public.phase9_metadata_provider_calls pc
    WHERE pc.grant_epoch<g.epoch AND NOT EXISTS(SELECT 1 FROM roots WHERE roots.id=pc.job_id)
  )
