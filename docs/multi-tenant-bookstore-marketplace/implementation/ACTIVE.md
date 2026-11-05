@@ -4,9 +4,11 @@ Recorded state: 2026-11-05. Slice 8 package 8c code is built and committed
 (`26c73bf` M95, `2ce9615` M96 + operator scripts), pushed to `main`
 (`e36e6e9`) and M95/M96 applied to the dev project 2026-11-05 (live
 `20261104213313`, `20261104213343`). The 8c follow-up from the flow-stage
-review is committed locally only (`65167b4` M97 sweep recovery, `dacffae`
-M98 pause deferral and Retry-After bound, `4b29935` worker contact
-User-Agent): not pushed, M97/M98 not applied, worker not deployed. Evidence in
+review (`65167b4` M97 sweep recovery, `dacffae` M98 pause deferral and
+Retry-After bound, `4b29935` worker contact User-Agent, docs `9faee42`) is
+pushed to `main` and the branch (`9faee42`) and M97/M98 applied to the dev
+project 2026-11-05 (live `20261105161532`, `20261105161642`); the worker
+is NOT redeployed (live worker is still the 8b build `6e0df90`). Evidence in
 [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md).
 Slice 8 package 8b is built (`db5434f..02a0f34`,
 branch `phase9/slice8-providers`), pushed to `main` (`6e0df90`) and deployed to
@@ -27,7 +29,7 @@ dated evidence belongs in trackers.
 - Active slice/work unit: **slice 8, package 8c: 8c-1a (M95 null-safe
   routing + stuck-pending read model) and 8c-1b (M96 exhausted-job sweep +
   operator scripts `scripts/8c/01..06`) pushed and M95/M96 applied 2026-11-05;
-  8c follow-up (M97, M98, worker contact env) committed locally 2026-11-05**.
+  8c follow-up (M97, M98, worker contact env) pushed and M97/M98 applied 2026-11-05; worker not yet redeployed**.
   Protection values decided (Owner delegation, 15-store pilot) and recorded
   in tracker 41; the Open Library switch itself runs later, at the pilot.
 - Earlier work unit: package 8b built locally (U1-U4, U6, U5
@@ -143,9 +145,8 @@ dated evidence belongs in trackers.
   covered: admission/fair-queue path (needs a policy, 8c), inventory commit.
 - Dev-server launch config `.claude/launch.json` (expo web on port 8081)
   was created for this test and is uncommitted.
-- Exact next authorized action: **Owner approval to push `65167b4`,
-  `dacffae`, `4b29935` (and the docs commit), apply M97 then M98 to
-  `ahntbtktjjmvfosgkmgn`, and deploy the updated metadata worker**. Not
+- Exact next authorized action: **Owner approval to deploy the updated
+  metadata worker (commit `9faee42` or later) to Render**. Not
   authorized by this file. No `db push` (frozen).
 - Other gated actions, each needing its own Owner approval (none authorized
   here): setting `PHASE9_PROVIDER_CONTACTS` on Render
@@ -176,9 +177,13 @@ dated evidence belongs in trackers.
   deploy) and applied M95 (`20261104213313`) then M96 (`20261104213343`)
   via `apply_migration`; stored statements equal the files.
 - 2026-11-05 (later): the Owner approved fixing the flow-stage review
-  defects and adding M98 ("Yes, add M98"). Local commits only (`65167b4`,
-  `dacffae`, `4b29935`); no push, no apply, no deployment, no database or
-  Storage write.
+  defects and adding M98 ("Yes, add M98"). Local commits `65167b4`,
+  `dacffae`, `4b29935`, `9faee42`. Then (Owner: "Push the four commits,
+  apply M97 then M98 to dev") pushed `main` and the branch to `9faee42` and
+  applied M97 (`20261105161532`) then M98 (`20261105161642`) via
+  `apply_migration`; stored statements equal the committed files. Render
+  did not auto-deploy (live deploy still `dep-dblielugekts738gov3g`). No
+  Storage write, no data change.
 - Shared database/migration application: **M94 plus the one-row
   `4ffe137d` dead-letter (2026-11-04)**;
   Storage: **none**; deployment: **8b worker `dep-dblielugekts738gov3g`
@@ -229,7 +234,7 @@ operational readback.
 
 ## Open items, blockers and residual risks
 
-- Blockers: none beyond the Owner approvals in the next action. 8c residual
+- Blockers: none beyond the Owner approval in the next action. 8c residual
   risks (pause coverage boundary for NULL-policy/explicit requests,
   defer-conflict attempt use, one Low M98 test gap, unmapped contactId sends
   every claim to manual, fair queue unused):

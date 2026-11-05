@@ -240,13 +240,27 @@ complicated, just make bounded correct").
 
 ### Database and deployment
 
-None. M97 and M98 are local files only; nothing pushed, applied or
-deployed.
+- 2026-11-05 (Owner: "Push the four commits, apply M97 then M98 to dev"):
+  pushed `main` and the branch from `85953a9` to `9faee42`. Render did not
+  auto-deploy; the live worker is still `dep-dblielugekts738gov3g` (8b,
+  `6e0df90`).
+- Applied M97 (live `20261105161532`) then M98 (live `20261105161642`) to
+  `ahntbtktjjmvfosgkmgn` via `apply_migration` after verifying the project
+  and that the ledger ended at M96. Stored statements equal the committed
+  files without their trailing newline (M97 `454ad659...8a787360`, M98
+  `8ee0adc1...dbf7aefc`). A first M98 hash check failed because the working
+  copy had CRLF on 29 lines copied from M15; the committed blob is LF
+  (`.gitattributes`), so live equals the repo. Function owners, security
+  mode, `search_path` and EXECUTE grants read back as designed.
+- Safe with the old worker: the 8b worker never calls the defer RPC, the
+  claim filter only matches jobs with a current-epoch wait row (none exist),
+  and the Retry-After bound only applies with a non-NULL protection policy
+  (both registry rows are still NULL).
 
 ### Remaining before the switch (after this follow-up)
 
-1. Owner approval: push the three commits; apply M97 then M98 to
-   `ahntbtktjjmvfosgkmgn`; deploy the worker.
+1. Done 2026-11-05: pushed and applied (above). Still needs Owner
+   approval: deploy the updated worker.
 2. Before the switch, set `PHASE9_PROVIDER_CONTACTS` on the Render worker,
    in the form `{"bookconnect-dev":"<contact>"}`. Every `contactId` used by
    a non-NULL protection policy must be mapped, or every claim falls back
