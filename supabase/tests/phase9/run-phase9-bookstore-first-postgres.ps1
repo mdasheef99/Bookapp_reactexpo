@@ -463,6 +463,8 @@ try {
               (Join-Path $PSScriptRoot 'phase9OperatorSwitch8c.integration.test.mjs')
             if ($LASTEXITCODE -ne 0) { throw '8c-1b focused native acceptance failed' }
             & node --experimental-vm-modules --test --test-concurrency=1 (Join-Path $PSScriptRoot 'phase9PauseDeferRetryBound8c.integration.test.mjs'); if ($LASTEXITCODE -ne 0) { throw '8c-1b pause defer/retry bound native acceptance failed' }
+            & node --experimental-vm-modules --test --test-concurrency=1 (Join-Path $PSScriptRoot 'phase9FixRound8c.integration.test.mjs')
+            if ($LASTEXITCODE -ne 0) { throw '8c M99 fix-round native acceptance failed' }
           } finally {
             $env:PHASE9_PROVIDER_NATIVE_PORT = $previousPort
             $env:PHASE9_PROVIDER_NATIVE_DATABASE = $previousDatabase
