@@ -1,15 +1,25 @@
 # Marketplace current state
 
-Recorded state: 2026-11-05. Slice 8 package 8c code is built and committed
-(`26c73bf` M95, `2ce9615` M96 + operator scripts), pushed to `main`
-(`e36e6e9`) and M95/M96 applied to the dev project 2026-11-05 (live
-`20261104213313`, `20261104213343`). The 8c follow-up from the flow-stage
-review (`65167b4` M97 sweep recovery, `dacffae` M98 pause deferral and
-Retry-After bound, `4b29935` worker contact User-Agent, docs `9faee42`) is
-pushed to `main` and the branch (`9faee42`) and M97/M98 applied to the dev
-project 2026-11-05 (live `20261105161532`, `20261105161642`); the worker
-is NOT redeployed (live worker is still the 8b build `6e0df90`). Evidence in
-[tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md).
+Recorded state: 2026-11-07. Slice 8 package 8c fix round (defects D1-D6
+from the post-M97/M98 live dev re-test) is built and committed locally on
+branch `phase9/slice8-providers` (HEAD `0b00441`): Unit 1 M99
+`20261106000099_marketplace_phase9_8c_fix_round.sql` (commit `56b676b`,
+amended in `0b00441` per Owner decision so the dashboard count RPC is
+store-scoped; 538 lines, sha256
+`9a10dc3ae760b256757b5f57bdc2ab2688b7d748ca52bcda5d0e5eff4af9e80c`;
+NOT APPLIED to dev `ahntbtktjjmvfosgkmgn`), Unit 2 metadata worker
+(commit `c64c2fb`: M93 explicit-round admission + sanitized
+`metadata_rpc_failed` logging), Unit 3 app (commit `0b00441`:
+store-scoped RPC counts, error card with Retry, picker copy,
+`P9_STATE_CONFLICT` lookup message). Nothing is pushed, M99 is not
+applied, and the worker is NOT redeployed (live worker is still the 8b
+build `dep-dblielugekts738gov3g`). Evidence in
+[tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-07-8c-fix-round-m99-worker-admission--rpc-logging-app).
+M95-M98 stay applied (live `20261104213313`, `20261104213343`,
+`20261105161532`, `20261105161642`); external admission gate open
+(epoch 6); stuck reserved usage holds from the earlier failures await a
+reviewed one-time cleanup after the M99 apply. This file is rewritten at
+session close; dated evidence belongs in trackers.
 Slice 8 package 8b is built (`db5434f..02a0f34`,
 branch `phase9/slice8-providers`), pushed to `main` (`6e0df90`) and deployed to
 Render (`dep-dblielugekts738gov3g`, live 12:41:25 UTC); 8b live smoke passed. Migration M94 was applied to the dev project on 2026-11-04
@@ -26,10 +36,13 @@ dated evidence belongs in trackers.
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
-- Active slice/work unit: **slice 8, package 8c: 8c-1a (M95 null-safe
-  routing + stuck-pending read model) and 8c-1b (M96 exhausted-job sweep +
-  operator scripts `scripts/8c/01..06`) pushed and M95/M96 applied 2026-11-05;
-  8c follow-up (M97, M98, worker contact env) pushed and M97/M98 applied 2026-11-05; worker not yet redeployed**.
+- Active slice/work unit: **slice 8, package 8c fix round (D1-D6): Unit 1 M99
+  (commits `56b676b`, amended `0b00441`), Unit 2 worker (`c64c2fb`),
+  Unit 3 app (`0b00441`) — all committed locally on
+  `phase9/slice8-providers` (HEAD `0b00441`), not pushed; M99 not applied;
+  worker not redeployed**.
+  M95-M98 stay applied 2026-11-05; the 8c operator scripts and the Open
+  Library switch still run at the pilot.
   Protection values decided (Owner delegation, 15-store pilot) and recorded
   in tracker 41; the Open Library switch itself runs later, at the pilot.
 - Earlier work unit: package 8b built locally (U1-U4, U6, U5
@@ -145,9 +158,12 @@ dated evidence belongs in trackers.
   covered: admission/fair-queue path (needs a policy, 8c), inventory commit.
 - Dev-server launch config `.claude/launch.json` (expo web on port 8081)
   was created for this test and is uncommitted.
-- Exact next authorized action: **Owner approval to deploy the updated
-  metadata worker (commit `9faee42` or later) to Render**. Not
-  authorized by this file. No `db push` (frozen).
+- Exact next authorized action: **Owner approval to apply the amended M99
+  (sha256 `9a10dc3a...f4af9e80c`) to dev `ahntbtktjjmvfosgkmgn`**. Not
+  authorized by this file. After that, each needs its own Owner approval:
+  push, then the single metadata worker Render deploy, then the dev
+  re-test (explicit Search Books, drain checks 02/05) and the reviewed
+  one-time cleanup of stuck reserved holds. No `db push` (frozen).
 - Other gated actions, each needing its own Owner approval (none authorized
   here): setting `PHASE9_PROVIDER_CONTACTS` on Render
   (`{"bookconnect-dev":"<contact>"}`; real address confirmed with the Owner
@@ -234,11 +250,19 @@ operational readback.
 
 ## Open items, blockers and residual risks
 
-- Blockers: none beyond the Owner approval in the next action. 8c residual
+- Blockers: M99 apply approval (the one exact next action); Codex/Luna
+  out of usage until 2026-11-09 22:06 IST (Qwen3.8 Flash covered the fix
+  round); Gemini billing (prepay, restore the key; a free-tier key exposed
+  in chat must be rotated, never recorded). Owner decisions pending: the
+  02d parking question and `wip/state-machines-audit` (`bc5a829`,
+  unreviewed, not Phase 9). 8c residual
   risks (pause coverage boundary for NULL-policy/explicit requests,
   defer-conflict attempt use, one Low M98 test gap, unmapped contactId sends
   every claim to manual, fair queue unused):
   [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#residual-risks).
+  Fix-round residuals (admission-fake hardening in ~20 older suites,
+  picker/lookup copy, stuck reserved holds):
+  [tracker 41 fix round](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-07-8c-fix-round-m99-worker-admission--rpc-logging-app).
 - FIXED in M95 (applied 2026-11-05): pre-8b read-model bug (found in the smoke, not 8b): candidate `ac712fe6`
   (Bleak House) shows "Finding edition…" forever. Its newest lookup is
   `accepted_metadata_match` but its selected snapshot is the older ambiguous

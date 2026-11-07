@@ -310,3 +310,152 @@ complicated, just make bounded correct").
 - Native `8c-1b` group is intermittently red: `57014` statement timeouts in the shared `providerReplacementFixture.mjs` clean hook (TRUNCATE CASCADE). Fix round 1 removed one cause; another remains. Test infrastructure only; M96 assertions pass whenever the hook does.
 - The 24 pre-existing failing tests (8a provider-gate group) are unchanged
   and untriaged.
+
+## 2026-11-07: 8c fix round (M99, worker admission + RPC logging, app)
+
+### Context and Owner approval
+
+The 8c live dev re-test (after M97/M98) found defects D1-D6. The Owner
+approved a bounded three-unit fix round (commits below, all local; nothing
+pushed, applied, or deployed):
+
+- D1: the metadata worker did not reserve the M93 explicit round before
+  registering explicit provider calls (live symptom:
+  `P9_PROVIDER_RUN_NOT_ADMITTED`, job dead-lettered).
+- D2: owner edition-choices read took locks (made lock-free).
+- D3: dashboard inventory counts read `store_inventory` directly in the app
+  (row-limited, wrong for large stores).
+- D4: terminal failures left usage reservations `reserved` (terminal
+  settlement added).
+- D5: exhaustion label: `P9_METADATA_ATTEMPTS_EXHAUSTED` only when
+  `attempt_count>=max_attempts`, else `P9_METADATA_TECHNICAL_FAILURE`.
+- D6: the worker swallowed RPC errors without a safe log line (sanitized
+  `metadata_rpc_failed` logging added).
+
+### Unit 1 - migration M99 (D2, D3, D4, D5)
+
+- File: `supabase/migrations/20261106000099_marketplace_phase9_8c_fix_round.sql`.
+- Commit `56b676b`, then AMENDED in commit `0b00441` per Owner decision
+  2026-11-07: the dashboard count RPC is store-scoped.
+- Current file (commit `0b00441`): 538 lines, sha256
+  `9a10dc3ae760b256757b5f57bdc2ab2688b7d748ca52bcda5d0e5eff4af9e80c`.
+  The earlier `56b676b` sha256
+  `bd43dc9d16ca3a7c74ca8f91d9eb46c1b819da46779982103135c9da4bc5a4fa`
+  is superseded.
+- NOT APPLIED to dev (`ahntbtktjjmvfosgkmgn`).
+- Contents:
+  - `marketplace_sec.phase9_settle_terminal_usage_v1` (terminal usage
+    settlement: proven-unsent stays `released` 0; complete known cost is
+    consumed; unknown cost stays reserved for reconciliation).
+  - Lock-free `public.phase9_owner_candidate_edition_choices_v1`.
+  - `public.phase9_owner_dashboard_inventory_counts_v1(p_store_id uuid)`
+    (NULL store id fails first with `P9_REQUEST_INVALID`;
+    ownership/eligibility via `marketplace_sec.phase9_owner_store`;
+    returns total, published, draft, paused, lowStock, outOfStock;
+    authenticated only).
+  - D5 code in `phase9_fail_metadata_job_automatic` and
+    `phase9_fail_candidate_edition_options_v1`.
+  - Vision fail/mark changes (settlement only in the terminal branch;
+    identical replay is a no-op).
+- Tests: `supabase/tests/phase9/phase9FixRound8c.integration.test.mjs`
+  (+ `fixRound8cFixture.mjs`, `fixRound8cMutations.mjs`): PGlite 125 tests
+  (124 pass, 1 native-only skip); native group `8c-1b` 125/125 PASS; every
+  named mutation fails its intended test (including the new
+  dashboard-null-fallback and dashboard-first-store mutations); baseline
+  with M99 skipped had 59 behavioural reds; migration-set and continuity
+  validators PASS.
+- Reviews: Luna (no blocker/major; 1 minor fixed). Qwen3.8 Flash
+  (Unit 3 amendment): clean.
+
+### Unit 2 - metadata worker (D1, D6), commit `c64c2fb`
+
+- Both edition-options executors reserve the M93 explicit round
+  (`phase9_reserve_metadata_provider_round_v1`) before any lookup, usage,
+  attempt, provider-call, or provider-call lineage, for primary and
+  secondary providers; release (`phase9_release_metadata_provider_round_v1`)
+  before every lease-clearing transition.
+- `capacity_wait`, `recovery_only`, `uncertain`, `configuration_required`
+  and `drain_required` are no-egress outcomes. Legacy bypass only with a
+  single NULL-policy registry row. Strict 1|6 slot receipts. One replay on
+  lost transport only.
+- D6: a per-claim observed RPC client logs `metadata_rpc_failed` (rpc,
+  sqlstate, exact safe-code allowlist, jobId, attempt, stage, durationMs,
+  uncertainty, submissionKind); never params, raw messages, tokens, or
+  contacts.
+- `metadataEditionOptions.ts` was split into
+  `metadataDescriptorEditionOptions.ts`, `metadataExplicitDenials.ts`,
+  `metadataExplicitTransport.ts`, `metadataExplicitLifecycle.ts`, and
+  `metadataExplicitRound.ts`
+  (`supabase/functions/_shared/imageInventory/runtime/`), plus
+  `workers/phase9-runtime/metadataRpcLogging.ts`.
+- Built by Sol (partial) then paid DeepSeek v4.1 flash (completion plan
+  95%; 12 defects in the partial code fixed). Briefs were reviewed by
+  Sonnet in place of Sol (Codex limit).
+- Evidence: red-first on a HEAD build; the compiled worker against real
+  M93..M99 SQL recorded `P9_PROVIDER_RUN_NOT_ADMITTED`, 0 admissions, job
+  dead-letter. Green: new suite
+  `supabase/tests/phase9/phase9ProviderExplicitWorkerRound8c.integration.test.mjs`
+  14/14; native provider-replacement group PASS (336 TAP tests, 305 pass,
+  0 fail); full phase9 Jest 3321 pass, only the 3 pre-existing CRLF
+  migration byte checks fail (marketplacePhase9CacheReuse M83/M84 bytes;
+  marketplacePhase9EditionChoiceFirstSave x2); worker and root tsc clean.
+- Review: Qwen3.8 Flash (Codex/Luna out of usage until 2026-11-09 22:06
+  IST) found 2 Minors, fixed in fix round 1 (configuration_required
+  failure written once; three suites now assert the test fake's
+  unknown-binding count is 0).
+- Residual: about 20 older test suites use the admission fake without
+  asserting `unknownBindingCount()===0` (list in
+  `.claude/w2-review-qwen.md` Q7b); test-hardening follow-up, no production
+  impact.
+- Deployment: requires the single metadata worker Render deploy
+  (`srv-d9sqfdvqj5pc73dc66fg`) AFTER the M99 apply; no vision worker deploy
+  needed.
+
+### Unit 3 - app, commit `0b00441`
+
+- `src/features/stores/services/storeDashboardService.ts` reads counts via
+  RPC `phase9_owner_dashboard_inventory_counts_v1` with `p_store_id` and a
+  strict six-integer parser; no `store_inventory` read, no fallback.
+- `StoreDashboardScreen` shows "Dashboard details are unavailable." plus
+  Retry on error.
+- `CandidateEditionPicker`: "Alternatives are missing or expired. Your
+  current choice is kept." only when `choices.selection != null`,
+  otherwise "Alternatives are missing or expired. Search Books to find
+  editions."
+- "This book changed" trace: on Search Books, `P9_STATE_CONFLICT` (raised
+  for a stale/expired session, a non-editable candidate, an in-flight
+  replay, review blockers) now shows the registered "The item state
+  changed. Refresh and try again."; `P9_VERSION_CONFLICT`,
+  `P9_CANDIDATE_VERSION_CONFLICT`, and
+  `OWNER_CANDIDATE_AUTHORITY_CHANGED` keep "This book changed...".
+  Residuals unchanged: authority-changed lookup copy, selection-path
+  `P9_STATE_CONFLICT` copy, Add-path copy.
+- Tests: stores 118 -> 132 pass, imageInventory 1076 -> 1080 pass, tsc
+  clean. Review Qwen3.8 Flash: clean.
+- Rollout order: apply M99 before this app code is used (it fails closed
+  with the error card otherwise).
+
+### Other state recorded 2026-11-07
+
+- Unreviewed work from another Claude session ("App state machines
+  documentation") was parked on local branch `wip/state-machines-audit`
+  (commit `bc5a829`, parent `56b676b`): migrations
+  `20261107000100_exchange_state_machine_integrity.sql` and
+  `20261107000101_phase6_delivery_claim_crash_recovery.sql`, Edge Function
+  changes, tests, `docs/STATE-MACHINES.md`. Unreviewed, not applied, not
+  part of Phase 9; the Owner decides.
+- Owner to-dos: Gemini billing (prepay, restore the key); rotate a
+  free-tier Gemini key that was exposed in chat (never record the key);
+  decide the 02d parking question; decide `wip/state-machines-audit`.
+- Live dev state is unchanged by this round: the deployed metadata worker
+  still runs the 8b build; M95-M98 applied; external admission gate open
+  (epoch 6); stuck reserved usage holds from the earlier failures need a
+  reviewed one-time cleanup after the M99 apply.
+
+### Rollout order (each step needs its own Owner approval)
+
+1. Apply the amended M99 to dev.
+2. Push.
+3. Single metadata worker Render deploy.
+4. Dev re-test (explicit Search Books, drain checks 02/05).
+5. Reviewed one-time cleanup of stuck reserved holds.

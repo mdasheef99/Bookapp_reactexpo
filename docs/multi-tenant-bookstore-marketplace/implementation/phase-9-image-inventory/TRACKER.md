@@ -16,6 +16,20 @@ they do not override ACTIVE.md. Repeated status copies moved to the
 **Implementation authority:** See ACTIVE.md and the Owner's explicit scope.
 **Migration creation/application authority:** See ACTIVE.md; prior approvals are historical.
 
+## 2026-11-07 slice 8 package 8c fix round (M99 local file, not applied)
+
+Fix round for re-test defects D1-D6: Unit 1 M99 (lock-free choices read,
+store-scoped dashboard counts, terminal usage settlement, exhaustion
+label; `56b676b`, amended `0b00441`), Unit 2 worker (explicit-round
+admission + sanitized RPC logging; `c64c2fb`), Unit 3 app (RPC counts,
+error card, picker copy, `P9_STATE_CONFLICT` lookup message;
+`0b00441`). All committed locally (HEAD `0b00441`), not pushed; M99 not
+applied; worker not redeployed. Evidence:
+[tracker 41 fix round](./trackers/41-package8c-switch-evidence.md#2026-11-07-8c-fix-round-m99-worker-admission--rpc-logging-app);
+[implementation log](./trackers/02-implementation-and-verification.md#2026-11-07---slice-8-package-8c-fix-round-built-locally-m99-local-file-not-applied);
+[ledger M99 row](./supporting/database-current-vs-target.md#2026-11-07-slice-8-package-8c-fix-round-m99-local-file-not-applied).
+Current work unit and the next authorized action are in ACTIVE.md.
+
 ## 2026-11-04 slice 8 package 8b built locally; M94 not applied
 
 Package 8c is built and committed locally (2026-11-05): `26c73bf` (M95) and `2ce9615` (M96 + `scripts/8c/01..06`); pushed (`e36e6e9`); M95/M96 applied 2026-11-05 (live `20261104213313`, `20261104213343`). The 8c follow-up (`65167b4` M97, `dacffae` M98 + worker pause deferral + scripts 02/03/05/06, `4b29935` worker contact env) is pushed (`9faee42`) and M97/M98 applied 2026-11-05 (live `20261105161532`, `20261105161642`); worker not yet redeployed. Owner decisions, reviews, fix rounds, verification and residual risks: [tracker 41](./trackers/41-package8c-switch-evidence.md).
