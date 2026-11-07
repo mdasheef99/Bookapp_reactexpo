@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { ScreenBackground } from '@/components/ui/ScreenBackground';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { useStoreOwnerGate } from '../hooks/useStoreOwnerGate';
@@ -182,7 +183,14 @@ export default function StoreDashboardScreen() {
                 <Text style={[styles.eyebrow, { color: colors.textSecondary }]}>Store Owner Console</Text>
                 <Text style={[styles.screenTitle, { color: colors.textPrimary }]}>{gateState.storeName}</Text>
 
-                {dashboardQuery.isLoading ? (
+                {dashboardQuery.isError ? (
+                    <GlassCard padding={20} borderRadius={16}>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                            Dashboard details are unavailable.
+                        </Text>
+                        <Button title="Retry" onPress={() => { void dashboardQuery.refetch(); }} />
+                    </GlassCard>
+                ) : dashboardQuery.isLoading ? (
                     <View style={styles.centered}>
                         <ActivityIndicator size="large" color={colors.accent} />
                     </View>

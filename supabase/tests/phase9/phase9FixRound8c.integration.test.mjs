@@ -57,34 +57,55 @@ for(const headers of [{},{'x-client-info':'bookconnect/edition-reasons-v1'},{'x-
   const expected=await value(db,'SELECT marketplace_sec.phase9_edition_choices(c) FROM public.image_extraction_candidates c WHERE id=$1',[f.candidateId]);
   await setActor(db,f.ownerId);assert.deepEqual(await choices(f),expected);
  });
-async function inventory(f,rows){await resetActor(db);for(const [visibility,quantity] of rows)
+async function inventoryFor(storeId,ownerId,rows){await resetActor(db);for(const [visibility,quantity] of rows)
  await db.query(`INSERT INTO public.store_inventory(id,store_id,title,authors,condition,selling_price_minor,
   quantity_total,quantity_available,visibility_status,publication_status,created_by)
-  VALUES(gen_random_uuid(),$1,'M99 count fixture',ARRAY['Fixture'],'good',100,$2,$2,$3,'private',$4)`,[f.storeId,quantity,visibility,f.ownerId]);}
+  VALUES(gen_random_uuid(),$1,'M99 count fixture',ARRAY['Fixture'],'good',100,$2,$2,$3,'private',$4)`,[storeId,quantity,visibility,ownerId]);}
+async function inventory(f,rows){await inventoryFor(f.storeId,f.ownerId,rows);}
+async function addStore(ownerId,name='M99 second store'){await resetActor(db);const storeId=randomUUID();
+ await db.query('INSERT INTO public.stores(id,display_name) VALUES($1,$2)',[storeId,name]);
+ await db.query("INSERT INTO public.store_administrators(store_id,user_id,role,status) VALUES($1,$2,'owner','active')",[storeId,ownerId]);
+ return {storeId,ownerId};}
 test('D3 all six row counts overlap stock and include other visibility states; direct select denied',async()=>{
  const f=await seedCard(db);await inventory(f,[['published',2],['published',1],['draft',0],['draft',3],['paused',1],['blocked',0],['needs_review',4],['out_of_stock',0]]);
- await setActor(db,f.ownerId);assert.deepEqual(await rpc(db,counts,[]),{total:8,published:2,draft:2,paused:1,lowStock:2,outOfStock:3});
+ await setActor(db,f.ownerId);assert.deepEqual(await rpc(db,counts,[f.storeId]),{total:8,published:2,draft:2,paused:1,lowStock:2,outOfStock:3});
  await assert.rejects(db.query('SELECT visibility_status,quantity_available FROM public.store_inventory'),{code:'42501'});
 });
 test('D3 two owners receive only their own counts and empty owner receives zeros',async()=>{
  const a=await seedCard(db),b=await seedCard(db),empty=await seedCard(db);await inventory(a,[['draft',1]]);await inventory(b,[['paused',0],['published',2]]);
- await setActor(db,a.ownerId);assert.deepEqual(await rpc(db,counts,[]),{total:1,published:0,draft:1,paused:0,lowStock:1,outOfStock:0});
- await setActor(db,b.ownerId);assert.deepEqual(await rpc(db,counts,[]),{total:2,published:1,draft:0,paused:1,lowStock:0,outOfStock:1});
- await setActor(db,empty.ownerId);assert.deepEqual(await rpc(db,counts,[]),{total:0,published:0,draft:0,paused:0,lowStock:0,outOfStock:0});
+ await setActor(db,a.ownerId);assert.deepEqual(await rpc(db,counts,[a.storeId]),{total:1,published:0,draft:1,paused:0,lowStock:1,outOfStock:0});
+ await setActor(db,b.ownerId);assert.deepEqual(await rpc(db,counts,[b.storeId]),{total:2,published:1,draft:0,paused:1,lowStock:0,outOfStock:1});
+ await setActor(db,empty.ownerId);assert.deepEqual(await rpc(db,counts,[empty.storeId]),{total:0,published:0,draft:0,paused:0,lowStock:0,outOfStock:0});
 });
-for(const change of ["status='suspended'","setup_status='incomplete'","selling_status='blocked'"])
+test('D3 null store is rejected before any fallback',async()=>{
+ const f=await seedCard(db);await inventory(f,[['draft',1]]);await setActor(db,f.ownerId);
+ await assert.rejects(rpc(db,counts,[null]),/P9_REQUEST_INVALID/);
+});
+test('D3 another owner store id is rejected',async()=>{
+ const a=await seedCard(db),b=await seedCard(db);await setActor(db,a.ownerId);
+ await assert.rejects(rpc(db,counts,[b.storeId]),/P9_OWNER_NOT_AUTHORIZED/);
+});
+test('D3 owner of two eligible stores receives each store\'s own counts',async()=>{
+ const f=await seedCard(db),second=await addStore(f.ownerId);
+ await inventoryFor(f.storeId,f.ownerId,[['draft',1]]);
+ await inventoryFor(second.storeId,f.ownerId,[['published',2],['paused',0]]);
+ await setActor(db,f.ownerId);
+ assert.deepEqual(await rpc(db,counts,[f.storeId]),{total:1,published:0,draft:1,paused:0,lowStock:1,outOfStock:0});
+ assert.deepEqual(await rpc(db,counts,[second.storeId]),{total:2,published:1,draft:0,paused:1,lowStock:0,outOfStock:1});
+});
+for(const change of ["status='suspended'","setup_status='incomplete'","selling_status='not_allowed'"])
  test('D3 eligible owner capability required '+change,async()=>{
   const f=await seedCard(db);await resetActor(db);await db.query('UPDATE public.stores SET '+change+' WHERE id=$1',[f.storeId]);
-  await setActor(db,f.ownerId);await assert.rejects(rpc(db,counts,[]),/P9_OWNER_NOT_AUTHORIZED/);
+  await setActor(db,f.ownerId);await assert.rejects(rpc(db,counts,[f.storeId]),/P9_OWNER_NOT_AUTHORIZED/);
  });
 test('D3 inactive owner, nonowner and missing identity rejected',async()=>{
  const f=await seedCard(db);await resetActor(db);await db.query("UPDATE public.store_administrators SET status='inactive' WHERE store_id=$1",[f.storeId]);
- await setActor(db,f.ownerId);await assert.rejects(rpc(db,counts,[]),/P9_OWNER_NOT_AUTHORIZED/);
- await setActor(db,randomUUID());await assert.rejects(rpc(db,counts,[]),/P9_OWNER_NOT_AUTHORIZED/);
- await setActor(db,'');await assert.rejects(rpc(db,counts,[]),/P9_AUTH_REQUIRED/);
+ await setActor(db,f.ownerId);await assert.rejects(rpc(db,counts,[f.storeId]),/P9_OWNER_NOT_AUTHORIZED/);
+ await setActor(db,randomUUID());await assert.rejects(rpc(db,counts,[f.storeId]),/P9_OWNER_NOT_AUTHORIZED/);
+ await setActor(db,'');await assert.rejects(rpc(db,counts,[f.storeId]),/P9_AUTH_REQUIRED/);
 });
 for(const role of ['anon','service_role'])test('D3 counts denies '+role,async()=>{
- await setActor(db,'',role);await assert.rejects(rpc(db,counts,[]),{code:'42501'});
+ await setActor(db,'',role);await assert.rejects(rpc(db,counts,[randomUUID()]),{code:'42501'});
 });
 
 for(const path of paths) {
@@ -238,12 +259,12 @@ test('C9 identical marked sent receipt replay preserves all evidence',async()=>{
 });
 test('R6 new RPC and private helper have literal owner security search_path and grants',async()=>{
  await resetActor(db);
- for(const [signature,security,volatility] of [[helper,false,'v'],['public.'+counts+'()',true,'s']]) {
+ for(const [signature,security,volatility] of [[helper,false,'v'],['public.'+counts+'(uuid)',true,'s']]) {
   const attrs=await value(db,`SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'security',prosecdef,
    'volatility',provolatile,'config',proconfig) FROM pg_proc WHERE oid=$1::regprocedure`,[signature]);
   assert.deepEqual(attrs,{owner:'postgres',security,volatility,config:['search_path=""']});
  }
- const f=await seedCard(db);assert.deepEqual(await rpc(db,counts,[]),{total:0,published:0,draft:0,paused:0,lowStock:0,outOfStock:0});
+ const f=await seedCard(db);assert.deepEqual(await rpc(db,counts,[f.storeId]),{total:0,published:0,draft:0,paused:0,lowStock:0,outOfStock:0});
  await resetActor(db);await fail(db,await fresh(db,'automatic')); // Execute the helper through its real authorized terminal caller.
 });
 for(const path of ['automatic','explicit'])test(`D4 ${path} job call linked to a foreign reservation blocks unsent proof`,async()=>{

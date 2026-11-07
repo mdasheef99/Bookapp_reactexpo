@@ -3,6 +3,8 @@ import { storeDashboardService } from '../storeDashboardService';
 
 jest.mock('@/lib/supabase');
 
+const ZERO_COUNTS = { total: 0, published: 0, draft: 0, paused: 0, lowStock: 0, outOfStock: 0 };
+
 function createBuilder(response: { data: unknown; error: Error | null }) {
     const builder: any = {
         select: jest.fn(() => builder),
@@ -22,29 +24,28 @@ describe('storeDashboardService', () => {
     });
 
     function mockQueries({
-        inventory = { data: [], error: null },
+        rpc = { data: ZERO_COUNTS, error: null },
         entitlements = { data: [], error: null },
         usage = { data: [], error: null },
         subscription = { data: null, error: null },
         plan = { data: null, error: null },
         store = { data: null, error: null },
     }: {
-        inventory?: { data: unknown; error: Error | null };
+        rpc?: { data: unknown; error: Error | null };
         entitlements?: { data: unknown; error: Error | null };
         usage?: { data: unknown; error: Error | null };
         subscription?: { data: unknown; error: Error | null };
         plan?: { data: unknown; error: Error | null };
         store?: { data: unknown; error: Error | null };
     } = {}) {
-        const inventoryBuilder = createBuilder(inventory);
         const entitlementBuilder = createBuilder(entitlements);
         const usageBuilder = createBuilder(usage);
         const subscriptionBuilder = createBuilder(subscription);
         const planBuilder = createBuilder(plan);
         const storeBuilder = createBuilder(store);
 
+        (supabase.rpc as jest.Mock).mockResolvedValue(rpc);
         (supabase.from as jest.Mock).mockImplementation((table: string) => {
-            if (table === 'store_inventory') return inventoryBuilder;
             if (table === 'store_entitlements') return entitlementBuilder;
             if (table === 'store_usage_counters') return usageBuilder;
             if (table === 'store_subscriptions') return subscriptionBuilder;
@@ -53,45 +54,60 @@ describe('storeDashboardService', () => {
             return createBuilder({ data: null, error: null });
         });
 
-        return { inventoryBuilder, entitlementBuilder, usageBuilder, subscriptionBuilder, planBuilder, storeBuilder };
+        return { entitlementBuilder, usageBuilder, subscriptionBuilder, planBuilder, storeBuilder };
     }
 
     describe('getDashboardData', () => {
-        it('aggregates inventory counts by visibility status from the owner store', async () => {
-            const { inventoryBuilder } = mockQueries({
-                inventory: {
-                    data: [
-                        { visibility_status: 'published', quantity_available: 5 },
-                        { visibility_status: 'published', quantity_available: 1 },
-                        { visibility_status: 'draft', quantity_available: 3 },
-                        { visibility_status: 'paused', quantity_available: 2 },
-                        { visibility_status: 'published', quantity_available: 0 },
-                    ],
-                    error: null,
-                },
-            });
+        it('returns the server inventory counts unchanged, including quantity/visibility overlap', async () => {
+            const payload = { total: 5, published: 3, draft: 1, paused: 1, lowStock: 2, outOfStock: 1 };
+            mockQueries({ rpc: { data: payload, error: null } });
 
             const result = await storeDashboardService.getDashboardData('store-1');
 
-            expect(result.inventoryCounts).toEqual({
-                total: 5,
-                published: 3,
-                draft: 1,
-                paused: 1,
-                lowStock: 1,
-                outOfStock: 1,
-            });
+            expect(result.inventoryCounts).toEqual(payload);
         });
 
-        it('queries store_inventory scoped to the store owner', async () => {
-            const { inventoryBuilder } = mockQueries();
+        it('passes the gate store id to the dashboard counts RPC exactly once and never reads store_inventory', async () => {
+            mockQueries();
 
             await storeDashboardService.getDashboardData('store-1');
 
-            expect(supabase.from).toHaveBeenCalledWith('store_inventory');
-            expect(inventoryBuilder.eq).toHaveBeenCalledWith('store_id', 'store-1');
-            expect(inventoryBuilder.select).toHaveBeenCalledWith('visibility_status, quantity_available');
+            expect(supabase.rpc).toHaveBeenCalledTimes(1);
+            expect((supabase.rpc as jest.Mock).mock.calls[0]).toEqual([
+                'phase9_owner_dashboard_inventory_counts_v1',
+                { p_store_id: 'store-1' },
+            ]);
+            expect(supabase.from).not.toHaveBeenCalledWith('store_inventory');
         });
+
+        const malformedCounts: Array<[string, unknown]> = [
+            ['null', null],
+            ['an array', []],
+            ['a string', 'counts'],
+            ['a Date', new Date()],
+            ['a missing key', { total: 0, published: 0, draft: 0, paused: 0, lowStock: 0 }],
+            ['an extra key', { ...ZERO_COUNTS, extra: 0 }],
+            ['a negative count', { ...ZERO_COUNTS, draft: -1 }],
+            ['a fractional count', { ...ZERO_COUNTS, draft: 1.5 }],
+            ['NaN', { ...ZERO_COUNTS, draft: Number.NaN }],
+            ['Infinity', { ...ZERO_COUNTS, draft: Number.POSITIVE_INFINITY }],
+            ['a numeric string', { ...ZERO_COUNTS, draft: '0' }],
+        ];
+        it.each(malformedCounts)('rejects a malformed dashboard counts payload: %s', async (_label, payload) => {
+            mockQueries({ rpc: { data: payload, error: null } });
+
+            await expect(storeDashboardService.getDashboardData('store-1')).rejects.toThrow();
+        });
+
+        it.each(['P9_OWNER_NOT_AUTHORIZED', 'P9_AUTH_REQUIRED', 'P9_INTERNAL_ERROR'] as const)(
+            'rethrows the %s RPC error unchanged',
+            async (message) => {
+                const error = new Error(message);
+                mockQueries({ rpc: { data: null, error } });
+
+                await expect(storeDashboardService.getDashboardData('store-1')).rejects.toBe(error);
+            },
+        );
 
         it('reads limits from store_entitlements scoped to the owner store', async () => {
             const { entitlementBuilder } = mockQueries({
@@ -188,21 +204,6 @@ describe('storeDashboardService', () => {
             const result = await storeDashboardService.getDashboardData('store-1');
 
             expect(result.subscriptionStatus.planName).toBe('Founding Trial');
-        });
-
-        it('never selects private inventory columns in the dashboard query', async () => {
-            const { inventoryBuilder } = mockQueries({
-                inventory: { data: [], error: null },
-            });
-
-            await storeDashboardService.getDashboardData('store-1');
-
-            const selectedColumns = inventoryBuilder.select.mock.calls[0]?.[0] ?? '';
-            expect(selectedColumns).not.toContain('acquisition_cost_minor');
-            expect(selectedColumns).not.toContain('shelf_location');
-            expect(selectedColumns).not.toContain('internal_notes');
-            expect(selectedColumns).not.toContain('metadata_confidence');
-            expect(selectedColumns).not.toContain('duplicate_resolution_state');
         });
 
         it('returns compliance blockers from store readiness fields', async () => {

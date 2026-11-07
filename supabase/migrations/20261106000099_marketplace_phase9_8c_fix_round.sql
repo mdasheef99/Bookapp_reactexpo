@@ -151,13 +151,16 @@ REVOKE ALL ON FUNCTION public.phase9_owner_candidate_edition_choices_v1(uuid,uui
  FROM PUBLIC,anon,authenticated,service_role;
 GRANT EXECUTE ON FUNCTION public.phase9_owner_candidate_edition_choices_v1(uuid,uuid) TO authenticated;
 
--- WU1 section 6 / M31: no client store hint; full active Owner capability.
+-- WU1 section 6 / M31; Owner decision 2026-11-07: the gate's store is explicit and server-validated.
 -- These six counts are row counts; quantity predicates overlap visibility.
-CREATE FUNCTION public.phase9_owner_dashboard_inventory_counts_v1()
+-- The null guard runs first: phase9_owner_store(NULL) would fall back to the first eligible store.
+DROP FUNCTION IF EXISTS public.phase9_owner_dashboard_inventory_counts_v1();
+CREATE FUNCTION public.phase9_owner_dashboard_inventory_counts_v1(p_store_id uuid)
 RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
 DECLARE v_store uuid; result jsonb;
 BEGIN
- v_store:=marketplace_sec.phase9_owner_ux_assert_owner();
+ IF p_store_id IS NULL THEN RAISE EXCEPTION 'P9_REQUEST_INVALID'; END IF;
+ v_store:=marketplace_sec.phase9_owner_store(p_store_id);
  SELECT jsonb_build_object('total',count(*),
   'published',count(*) FILTER(WHERE visibility_status='published'),
   'draft',count(*) FILTER(WHERE visibility_status='draft'),
@@ -167,12 +170,12 @@ BEGIN
  FROM public.store_inventory WHERE store_id=v_store;
  RETURN result;
 EXCEPTION WHEN others THEN
- IF SQLERRM=ANY(ARRAY['P9_AUTH_REQUIRED','P9_OWNER_NOT_AUTHORIZED','P9_INTERNAL_ERROR']) THEN RAISE; END IF;
+ IF SQLERRM=ANY(ARRAY['P9_AUTH_REQUIRED','P9_OWNER_NOT_AUTHORIZED','P9_REQUEST_INVALID','P9_INTERNAL_ERROR']) THEN RAISE; END IF;
  RAISE EXCEPTION 'P9_INTERNAL_ERROR';
 END$$;
-ALTER FUNCTION public.phase9_owner_dashboard_inventory_counts_v1() OWNER TO postgres;
-REVOKE ALL ON FUNCTION public.phase9_owner_dashboard_inventory_counts_v1() FROM PUBLIC,anon,authenticated,service_role;
-GRANT EXECUTE ON FUNCTION public.phase9_owner_dashboard_inventory_counts_v1() TO authenticated;
+ALTER FUNCTION public.phase9_owner_dashboard_inventory_counts_v1(uuid) OWNER TO postgres;
+REVOKE ALL ON FUNCTION public.phase9_owner_dashboard_inventory_counts_v1(uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.phase9_owner_dashboard_inventory_counts_v1(uuid) TO authenticated;
 
 CREATE OR REPLACE FUNCTION marketplace_sec.phase9_fail_metadata_job_automatic(
   p_job_id uuid,p_worker text,p_lease_token text,p_attempt_count integer,

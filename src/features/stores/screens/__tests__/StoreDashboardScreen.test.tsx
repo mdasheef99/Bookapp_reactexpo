@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import StoreDashboardScreen from '../StoreDashboardScreen';
 import { useStoreOwnerGate } from '../../hooks/useStoreOwnerGate';
@@ -92,6 +92,17 @@ describe('StoreDashboardScreen', () => {
 
         await waitFor(() => expect(getByText('Compliance')).toBeTruthy());
         expect(getByText('Payout account not ready')).toBeTruthy();
+    });
+
+    it('shows an error card and retries when the dashboard query fails', async () => {
+        (storeDashboardService.getDashboardData as jest.Mock).mockRejectedValueOnce(new Error('P9_OWNER_NOT_AUTHORIZED'));
+
+        const { getByText, queryByText } = renderWithProviders(<StoreDashboardScreen />);
+
+        await waitFor(() => expect(getByText('Dashboard details are unavailable.')).toBeTruthy());
+        expect(queryByText('Inventory Health')).toBeNull();
+        fireEvent.press(getByText('Retry'));
+        await waitFor(() => expect(storeDashboardService.getDashboardData).toHaveBeenCalledTimes(2));
     });
 
     it('blocks access for non-active owner states', () => {

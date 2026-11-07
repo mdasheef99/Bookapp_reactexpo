@@ -8,7 +8,8 @@ import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
 import { ownerUxService } from '../api/ownerUxService';
 import { resetImageInventoryIdentityForTests, imageInventoryKeys } from '../queries/ownerUxQueries';
 import { ownerEditionPickerKeys } from '../queries/ownerEditionPickerKeys';
-import { deferred, pickerChoices, selectedChoices, pickerIdentity, pickerCard, pickerDetail, pickerReview } from '../testing/editionPickerClientFixtures';
+import { deferred, pickerChoices, selectedChoices, pickerIdentity, pickerCard, pickerDetail, pickerReview, pickerSnapshot } from '../testing/editionPickerClientFixtures';
+import { testUuid } from '../testing/ownerUxTestFixtures';
 
 jest.mock('expo-image', () => ({ Image: (props: object) => {
   const React = require('react'); const { View } = require('react-native'); return React.createElement(View, props);
@@ -55,6 +56,28 @@ it('expiry reveals explicit Search Books without searching or erasing the held s
   expect(view.getByText('Search Books')).toBeTruthy();
   expect(view.getByText('Current: Chosen edition')).toBeTruthy(); expect(lookup).not.toHaveBeenCalled();
 });
+it('invites Search Books when alternatives are missing and no edition is held', async () => {
+  read.mockResolvedValue(pickerChoices({ optionsExpiresAt: null, rows: [], lookupStatus: 'idle' }));
+  const view = mount();
+  await waitFor(() => expect(view.queryByText('Alternatives are missing or expired. Search Books to find editions.')).toBeTruthy());
+  expect(view.queryByText('Alternatives are missing or expired. Your current choice is kept.')).toBeNull();
+});
+it('keeps the held-choice wording for a current suggestion whose option id is null', async () => {
+  read.mockResolvedValue(pickerChoices({
+    selection: { selectionId: testUuid(30), source: 'current_suggestion', optionId: null,
+      snapshot: pickerSnapshot, confirmedByOwner: true },
+    optionsExpiresAt: null, rows: [], lookupStatus: 'idle',
+  }));
+  const view = mount();
+  await waitFor(() => expect(view.queryByText('Alternatives are missing or expired. Your current choice is kept.')).toBeTruthy());
+  expect(view.queryByText('Alternatives are missing or expired. Search Books to find editions.')).toBeNull();
+});
+it('keeps the held-choice wording for an edition-option selection', async () => {
+  read.mockResolvedValue(selectedChoices({ optionsExpiresAt: null, rows: [], lookupStatus: 'idle' }));
+  const view = mount();
+  await waitFor(() => expect(view.queryByText('Alternatives are missing or expired. Your current choice is kept.')).toBeTruthy());
+  expect(view.queryByText('Alternatives are missing or expired. Search Books to find editions.')).toBeNull();
+});
 it.each(['idle', 'failed'] as const)('%s alternatives keep explicit search available without an automatic lookup', async lookupStatus => {
   read.mockResolvedValue(selectedChoices({ lookupStatus, optionsExpiresAt: null, rows: [] }));
   const view = mount(); await waitFor(() => expect(view.queryByText('Search Books')).toBeTruthy());
@@ -93,6 +116,16 @@ it('a superseded option cannot be presented as an automatic suggestion to confir
   read.mockResolvedValue(selectedChoices({ selection: { ...selectedChoices().selection!, confirmedByOwner: false } }));
   const view = mount(); await waitFor(() => expect(view.queryByText('Current: Chosen edition')).toBeTruthy());
   expect(view.queryByText('Confirm current suggestion')).toBeNull();
+});
+it('reports P9_STATE_CONFLICT as an item state change, not a book change', async () => {
+  const registered = require('../api/ownerUxTransport').registeredOwnerUxError;
+  read.mockResolvedValue(pickerChoices({ optionsExpiresAt: null, rows: [], lookupStatus: 'idle' }));
+  lookup.mockRejectedValueOnce(registered('P9_STATE_CONFLICT'));
+  const view = mount();
+  await waitFor(() => expect(view.queryByText('Search Books')).toBeTruthy());
+  fireEvent.press(view.getByText('Search Books'));
+  await waitFor(() => expect(view.getByText('The item state changed. Refresh and try again.')).toBeTruthy());
+  expect(view.queryByText("This book changed. Check the card's details, then search again.")).toBeNull();
 });
 it('failed lookup preserves prior fresh rows while announcing its failure', async () => {
   read.mockResolvedValue(selectedChoices({ lookupStatus: 'failed' }));

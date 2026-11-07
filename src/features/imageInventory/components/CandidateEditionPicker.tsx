@@ -11,7 +11,7 @@ import { versionsRegress, type CandidateVersions } from '../queries/ownerCandida
 import { createEditionLookupCommand, createEditionSelectionCommand } from '../api/ownerEditionPickerCommands';
 import { EditionOptionList } from './EditionOptionList';
 import type { OwnerCandidateDetail } from '../contracts/ownerUxContracts';
-import { editionSelectionRecovery } from '../review/editionSelectionRecovery';
+import { editionLookupRecovery, editionSelectionRecovery } from '../review/editionSelectionRecovery';
 import { CandidateEditionIsbnSearch } from './CandidateEditionIsbnSearch';
 
 // SDD-1 §4: the card owns identity edits; the picker only searches and selects.
@@ -69,10 +69,8 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
     }
     catch (error) {
       if (kind === 'selection') { setMessage(editionSelectionRecovery(error).message); return; }
-      const recovery = editionSelectionRecovery(error);
-      setMessage(recovery.kind === 'refresh'
-        ? "This book changed. Check the card's details, then search again."
-        : recovery.message);
+      const recovery = editionLookupRecovery(error);
+      setMessage(recovery.message);
     }
   };
   const select = (row: EditionRow) => {
@@ -102,7 +100,10 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
       {identityChanged && !cardDraft?.request ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>
         Complete the card's details to search with the new title
       </Text> : !identityChanged ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{choices.lookupStatus === 'failed'
-        ? 'Edition search failed. Search again when ready.' : 'Alternatives are missing or expired. Your current choice is kept.'}</Text> : null}
+        ? 'Edition search failed. Search again when ready.'
+        : choices.selection != null
+          ? 'Alternatives are missing or expired. Your current choice is kept.'
+          : 'Alternatives are missing or expired. Search Books to find editions.'}</Text> : null}
       {!isbnMode ? <Button title={identityChanged && !cardDraft?.request ? 'Search with saved title' : 'Search Books'} disabled={blocked} onPress={() => {
         if (blocked) return;
         void act('lookup', () => {

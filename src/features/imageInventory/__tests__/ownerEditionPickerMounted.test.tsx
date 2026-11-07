@@ -334,7 +334,8 @@ it('a refused lookup after saving offers Search Books with a fresh lookup and no
   await fireEventAsync.press(view.getByText('Find or change edition'));
   expect(await view.findByText('Search Books')).toBeTruthy();
   await fireEventAsync.press(view.getByText('Search Books'));
-  expect(await view.findByText("This book changed. Check the card's details, then search again.")).toBeTruthy();
+  expect(await view.findByText('The item state changed. Refresh and try again.')).toBeTruthy();
+  expect(view.queryByText("This book changed. Check the card's details, then search again.")).toBeNull();
   expect(view.queryByText('Retry search')).toBeNull();
   await view.rerenderAsync(cardScreen({ ...pickerCard(authority, request.review), metadataState: 'manual', metadataSummary: null }));
   expect(await view.findByRole('button', { name: 'Search Books', disabled: false })).not.toBeDisabled();

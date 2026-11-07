@@ -13,3 +13,15 @@ export function editionSelectionRecovery(error: unknown): SelectionRecovery {
   if (error instanceof Error && error.message === 'OWNER_CANDIDATE_AUTHORITY_CHANGED') return changed();
   return { kind: 'retry', message: 'The action could not be confirmed. Your current choice and selling details are preserved.' };
 }
+
+// Search Books uses its own refresh copy: P9_STATE_CONFLICT also covers stale/closed sessions,
+// in-flight replays and invalid review details, so it must not claim the book changed.
+export function editionLookupRecovery(error: unknown): SelectionRecovery {
+  if (error instanceof OwnerUxClientError && error.code === 'P9_STATE_CONFLICT') {
+    return { kind: 'refresh', message: registeredOwnerUxError('P9_STATE_CONFLICT').message };
+  }
+  const recovery = editionSelectionRecovery(error);
+  return recovery.kind === 'refresh'
+    ? { kind: 'refresh', message: "This book changed. Check the card's details, then search again." }
+    : recovery;
+}
