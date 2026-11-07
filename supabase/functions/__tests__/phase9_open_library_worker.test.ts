@@ -2,7 +2,7 @@
 import {OpenLibraryEditionOptionsAdapter} from '../_shared/imageInventory/metadata/openLibrary';
 import {GoogleBooksAdapter} from '../_shared/imageInventory/metadata/googleBooks';
 import {runMetadataWorkerBatch} from '../../../workers/phase9-metadata-worker';
-import {editionWorkerFixture, CANDIDATE_ID, UUID_CANDIDATE_ID} from './fixtures/phase9/editionOptionsWorker';
+import {editionWorkerFixture, CANDIDATE_ID, UUID_CANDIDATE_ID, createdFixtures} from './fixtures/phase9/editionOptionsWorker';
 import {installedProviderDescriptors, providerConfigurationRow, providerConfigurationSnapshot}
  from './fixtures/phase9/providerConfiguration';
 import {buildMetadataQueryIdentity} from '../_shared/imageInventory/metadata/queryIdentity';
@@ -12,6 +12,13 @@ import { OL_V1_EXPLICIT_V1, GOLDEN_CLOCK, GOLDEN_LOOKUP_ID, GOLDEN_ATTEMPT_ID } 
 import { decodeMetadataJobContext } from '../_shared/imageInventory/runtime/metadataJobContext';
 import { editionOptionsFence } from '../_shared/imageInventory/runtime/metadataEditionOptionsBoundary';
 import { TEST_ONLY_PROTECTION_POLICY } from './support/providerProtection';
+
+afterEach(() => {
+  for (const fixture of createdFixtures.splice(0)) {
+    expect(fixture.admissions.unknownBindingCount()).toBe(0);
+  }
+});
+
 
 function setup(verifiedGoogle=true,isbnMode=false) {
  const fixture=editionWorkerFixture();
@@ -58,7 +65,7 @@ function setup(verifiedGoogle=true,isbnMode=false) {
  };
  const unverified=new GoogleBooksAdapter({mode:'real',apiKey:'fixture',timeoutMs:1000,maxResponseBytes:64000,
   fetcher:async()=>{throw new Error('Unverified Google must not be called');}});
- const dependencies={...fixture.dependencies,serviceClient:{rpc},editionFallback:adapter,
+ const dependencies={...fixture.dependencies,serviceClient:{rpc:fixture.admissions.wrap(rpc)},editionFallback:adapter,
   primary:verifiedGoogle?fixture.adapter:unverified};
  return {fixture,dependencies,urls,run:()=>runMetadataWorkerBatch(1,dependencies)};
 }
@@ -76,8 +83,8 @@ const postSwitch = () => providerConfigurationSnapshot([
 ]);
 const switchDependencies = (f:ReturnType<typeof setup>) => {
  const baseRpc=f.dependencies.serviceClient.rpc;
- return {...f.dependencies,serviceClient:{rpc:async(name:string,p:Record<string,unknown>)=>
-  name==='phase9_provider_configuration_v1'?{data:postSwitch(),error:null}:baseRpc(name,p)}};
+ return {...f.dependencies,serviceClient:{rpc:f.fixture.admissions.wrap(async(name:string,p:Record<string,unknown>)=>
+  name==='phase9_provider_configuration_v1'?{data:postSwitch(),error:null}:baseRpc(name,p))}};
 };
 // One observation point for every installed-descriptor GET, whichever HTTP
 // transport the worker chooses; zero-egress resumes must show an empty log.

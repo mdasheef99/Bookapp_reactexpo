@@ -5,9 +5,16 @@ import { GoogleBooksAdapter } from '../_shared/imageInventory/metadata/googleBoo
 import { GOOGLE_BOOKS_CAPABILITY } from '../_shared/imageInventory/metadata/googleBooks';
 import { createInstalledDescriptorManifest } from '../../../workers/phase9-metadata-worker/bootstrap';
 import { getWorkerProtectionState, runMetadataWorkerBatch } from '../../../workers/phase9-metadata-worker';
-import { editionWorkerFixture, automaticContext } from './fixtures/phase9/editionOptionsWorker';
+import { editionWorkerFixture, automaticContext, createdFixtures } from './fixtures/phase9/editionOptionsWorker';
 import { providerConfigurationRow, providerConfigurationSnapshot } from './fixtures/phase9/providerConfiguration';
 import { TEST_ONLY_PROTECTION_POLICY } from './support/providerProtection';
+
+afterEach(() => {
+  for (const fixture of createdFixtures.splice(0)) {
+    expect(fixture.admissions.unknownBindingCount()).toBe(0);
+  }
+});
+
 
 const OL_POLICY = {
   adapterKey: 'open_library', adapterVersion: '1.0.0', enabled: true,
@@ -65,7 +72,7 @@ describe('Phase 9 fix1 F6: secondary fallback through the worker', () => {
       return baseRpc(name, parameters);
     };
     const result = await runMetadataWorkerBatch(1, {
-      ...fixture.dependencies, serviceClient: { rpc },
+      ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(rpc) },
       primary: fixture.adapter, primaryCapability: GOOGLE_BOOKS_CAPABILITY,
       editionFallback: library, installed,
     });
@@ -119,7 +126,7 @@ describe('Phase 9 fix1 F6: secondary fallback through the worker', () => {
       return baseRpc(name, parameters);
     };
     const result = await runMetadataWorkerBatch(1, {
-      ...fixture.dependencies, serviceClient: { rpc },
+      ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(rpc) },
       primary: fixture.adapter, primaryCapability: GOOGLE_BOOKS_CAPABILITY,
       editionFallback: library, installed,
     });
@@ -162,7 +169,7 @@ describe('Phase 9 U5 replaces F8: fenced v2 automatic execution', () => {
       return baseRpc(name, parameters);
     };
     const result = await runMetadataWorkerBatch(1, {
-      ...fixture.dependencies, serviceClient: { rpc },
+      ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(rpc) },
       primary: null, primaryCapability: null,
       editionFallback: library, installed,
     });
@@ -179,7 +186,7 @@ describe('Phase 9 U5 replaces F8: fenced v2 automatic execution', () => {
       ]), error: null };
       return baseRpc(name, p);
     };
-    expect((await runMetadataWorkerBatch(1, { ...fixture.dependencies, serviceClient: { rpc: disabledRpc },
+    expect((await runMetadataWorkerBatch(1, { ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(disabledRpc) },
       primary: null, primaryCapability: null, editionFallback: library, installed })).results)
       .toEqual([{ outcome: 'manual_metadata_required' }]);
     expect(fixture.calls.some(call => call.name === 'phase9_fail_metadata_job'
@@ -216,7 +223,7 @@ describe('Phase 9 U5 replaces F8: fenced v2 automatic execution', () => {
       }
       return baseRpc(name, parameters);
     };
-    const result = await runMetadataWorkerBatch(1, { ...fixture.dependencies, serviceClient: { rpc },
+    const result = await runMetadataWorkerBatch(1, { ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(rpc) },
       primary: null, primaryCapability: null, editionFallback: library, installed });
     expect(result.results).toEqual([{ outcome: 'manual_metadata_required' }]);
     expect(fixture.calls.some(call => call.name === 'phase9_finish_automatic_provider_run_v1')).toBe(true);
@@ -275,7 +282,7 @@ describe('Phase 9 fix1 F9: live-adapter contract recheck', () => {
         return baseRpc(name, parameters);
       };
       const result = await runMetadataWorkerBatch(1, {
-        ...fixture.dependencies, serviceClient: { rpc },
+        ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(rpc) },
         primary: null, primaryCapability: null,
         editionFallback: library, installed,
       });
@@ -307,7 +314,7 @@ describe('Phase 9 fix1 F12: routed Google egress parity', () => {
       const google = fixture.adapter;
       const invoke = routed
         ? () => executeDescriptorEditionOptions(context, gateway, {
-          descriptor: { adapterKey: 'google_books', adapterVersion: '1.0.0' },
+          descriptor: { adapterKey: 'google_books', adapterVersion: '1.0.0', protocol: { kind: 'single', maxGets: 1 } },
           adapter: google, fallbackAdapter: null,
         }, new AbortController().signal)
         : () => executeEditionOptionsLookup(
@@ -366,13 +373,13 @@ describe('Phase 9 fix1 F3: worker shares one protection state per provider', () 
           }),
           providerConfigurationRow('open_library', '2.0.0', {
             explicitSearchAllowed: true, explicitRole: 'primary', explicitOrder: 1,
-            protectionPolicy: TEST_ONLY_PROTECTION_POLICY,
+            protectionPolicy: { ...TEST_ONLY_PROTECTION_POLICY, storeMaxGets: 20 },
           }),
         ]), error: null };
       }
       return baseRpc(name, parameters);
     };
-    const dependencies = { ...fixture.dependencies, serviceClient: { rpc },
+    const dependencies = { ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(rpc) },
       primary: null, primaryCapability: null,
       editionFallback: failing, installed: installedManifest() };
     // TEST_ONLY breakerFailures is 2: two failing claims trip the shared

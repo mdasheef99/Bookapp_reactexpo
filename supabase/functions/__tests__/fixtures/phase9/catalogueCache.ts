@@ -99,8 +99,9 @@ export function catalogueCacheWorkerFixture(
       return new Response(JSON.stringify(body), { status: body ? 200 : 404,
         headers: { 'content-type': 'application/json' } });
     } });
-  const dependencies = { ...base.dependencies, primary: null, serviceClient: { rpc }, editionFallback: adapter,
-    editionOptionsBoundary: createMetadataEditionOptionsBoundary({ rpc }) };
-  return { base, calls, urls, rpc, adapter, dependencies, durableReceipt: () => durable,
+  const guardedRpc = base.admissions.wrap(rpc);
+  const dependencies = { ...base.dependencies, primary: null, serviceClient: { rpc: guardedRpc }, editionFallback: adapter,
+    editionOptionsBoundary: createMetadataEditionOptionsBoundary({ rpc: guardedRpc }) };
+  return { base, calls, urls, rpc: guardedRpc, adapter, dependencies, durableReceipt: () => durable,
     run: () => runMetadataWorkerBatch(1, dependencies) };
 }

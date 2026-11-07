@@ -2,11 +2,19 @@ import { runMetadataWorkerBatch } from '../../../workers/phase9-metadata-worker'
 import { decodeMetadataJobContext } from '../_shared/imageInventory/runtime/metadataJobContext';
 import { executeDescriptorOptions, descriptorOptionsGateway } from './support/providerModules';
 import { providerConfigurationRow, providerConfigurationSnapshot } from './fixtures/phase9/providerConfiguration';
-import { editionWorkerFixture, explicitContext, automaticContext, CANDIDATE_ID }
+import { editionWorkerFixture, explicitContext, automaticContext, CANDIDATE_ID, createdFixtures }
  from './fixtures/phase9/editionOptionsWorker';
 import { TEST_ONLY_PROTECTION_POLICY } from './support/providerProtection';
 import { m93BeginReceipt, m93ClaimReceipt, m93DeferReceipt, m93FinishReceipt,
+
   m93ReleaseReceipt, m93ReserveReceipt } from './support/automaticWorker';
+
+afterEach(() => {
+  for (const fixture of createdFixtures.splice(0)) {
+    expect(fixture.admissions.unknownBindingCount()).toBe(0);
+  }
+});
+
 
 // RED targets: incorrect purpose dispatch/early winner exit, false ready, stale acceptance,
 // repeated egress on replay, incorrect per-request billing, and missing concurrency refill.
@@ -40,9 +48,9 @@ describe('Task 4 explicit metadata worker (picker §§4.1-4.3/5/9)', () => {
       jobId: lineage.jobId, worker: fixture.dependencies.workerId,
       leaseToken: fixture.current().claimToken, claimAttempt: fixture.current().attempt,
       candidateId: lineage.candidateId, storeId: lineage.storeId, sessionId: lineage.sessionId,
-      candidateVersion: fixture.current().candidateVersion,
+      requestId: lineage.jobId,
       queryIdentity: fixture.current().queryIdentity,
-      capturedRequestId: null, requestGeneration: fixture.current().requestGeneration,
+      requestGeneration: fixture.current().requestGeneration,
     };
     const claim = await rpc('phase9_claim_metadata_jobs_v2', {
       p_batch_size: 1, p_worker: fixture.dependencies.workerId,
@@ -50,21 +58,33 @@ describe('Task 4 explicit metadata worker (picker §§4.1-4.3/5/9)', () => {
     expect(claim.error).toBeNull();
     expect(claim.data).toEqual(m93ClaimReceipt([{ id: lineage.jobId,
       attemptCount: fixture.current().attempt, leaseToken: fixture.current().claimToken }]));
+    fixture.admissions.registry(providerConfigurationSnapshot([providerConfigurationRow('google_books','1.0.0', {
+      protectionPolicy: TEST_ONLY_PROTECTION_POLICY,
+    })]));
+    const automatic = editionWorkerFixture();
+    automatic.useUuidLineage();
+    Object.assign(automatic.current(), { purpose:'automatic', candidateState:'processing' });
+    automatic.admissions.registry(providerConfigurationSnapshot([providerConfigurationRow('google_books','1.0.0', {
+      protectionPolicy: TEST_ONLY_PROTECTION_POLICY,
+    })]));
+    const { requestId: _requestId, ...scope } = fence;
+    const autoFence = { ...scope, candidateVersion: automatic.current().candidateVersion, capturedRequestId:null };
+    const automaticRpc = automatic.dependencies.serviceClient.rpc;
+    const provider = { p_key:'google_books', p_version:'1.0.0' };
     const receipts = [
-      ['phase9_begin_automatic_provider_run_v1', m93BeginReceipt()],
-      ['phase9_reserve_metadata_provider_round_v1', m93ReserveReceipt()],
-      ['phase9_finish_automatic_provider_run_v1', m93FinishReceipt()],
-      ['phase9_release_metadata_provider_round_v1', m93ReleaseReceipt()],
-      ['phase9_defer_metadata_admission_v1', m93DeferReceipt(7)],
+      [rpc, 'phase9_reserve_metadata_provider_round_v1', { f:fence, ...provider }, m93ReserveReceipt(1)],
+      [rpc, 'phase9_release_metadata_provider_round_v1', { f:fence, ...provider }, m93ReleaseReceipt()],
+      [rpc, 'phase9_defer_metadata_admission_v1', { f:fence, p_epoch:7 }, m93DeferReceipt(7)],
+      [automaticRpc, 'phase9_begin_automatic_provider_run_v1', { f:autoFence, ...provider }, m93BeginReceipt()],
+      [automaticRpc, 'phase9_finish_automatic_provider_run_v1', { f:autoFence, ...provider, p_not_before:null }, m93FinishReceipt()],
     ] as const;
-    for (const [name, receipt] of receipts) {
-      const result = await rpc(name, { f: fence, p_key: 'google_books',
-        p_version: '1.0.0', p_not_before: null, p_epoch: 7 });
+    for (const [submit, name, parameters, receipt] of receipts) {
+      const result = await submit(name, parameters);
       expect(result.error).toBeNull();
       expect(result.data).toEqual(receipt);
     }
-    expect(fixture.calls.map(call => call.name)).toEqual([
-      'phase9_claim_metadata_jobs_v2', ...receipts.map(([name]) => name),
+    expect([...fixture.calls, ...automatic.calls].map(call => call.name)).toEqual([
+      'phase9_claim_metadata_jobs_v2', ...receipts.map(([,name]) => name),
     ]);
   });
   it.each([

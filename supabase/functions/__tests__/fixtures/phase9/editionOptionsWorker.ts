@@ -10,6 +10,8 @@ import type { MetadataEditionOptionsBoundary, EditionOptionsCompletionInput }
   from '../../../_shared/imageInventory/runtime/metadataEditionOptionsBoundary';
 import { googleBooksMultipleVolumes } from './googleBooksResponses';
 import { TEST_ONLY_PROVIDER_CONTACTS } from '../../support/providerProtection';
+import { metadataAdmissionFake } from '../../support/metadataAdmissionFake';
+import { providerConfigurationRow, providerConfigurationSnapshot } from './providerConfiguration';
 import { completedReceipt, m93BeginReceipt, m93ClaimReceipt, m93DeferReceipt, m93FinishReceipt,
   m93ReleaseReceipt, m93ReserveReceipt } from '../../support/automaticWorker';
 
@@ -64,6 +66,8 @@ export const tenPositions = {
 };
 type RawContext = Record<string, unknown>;
 type Call = { name: string; parameters: Record<string, any> };
+// Worker/explicit tests drain this after each test and assert unknown-binding count 0.
+export const createdFixtures: any[] = [];
 export function editionWorkerFixture(count = 1) {
   // Isolate process-local observations between tests, retaining sharing within each worker batch.
   for (const key of ['google_books', 'open_library']) Object.assign(getWorkerProtectionState(key), createProtectionState());
@@ -82,6 +86,11 @@ export function editionWorkerFixture(count = 1) {
   const lookupIdFor = (jobId: string) => idAt(100 + ordinalFor(jobId));
   const attemptIdFor = (jobId: string) => idAt(200 + ordinalFor(jobId));
   const calls: Call[] = [];
+  const admissions = metadataAdmissionFake(jobId => [...contexts.values()]
+    .find(context => context.jobId === jobId), (name, parameters) => calls.push({ name, parameters }));
+  admissions.registry(providerConfigurationSnapshot([
+    providerConfigurationRow('google_books', '1.0.0'), providerConfigurationRow('open_library', '1.0.0'),
+  ]));
   const physicalCalls: Array<{ jobId: string; attempt: number; finalized: boolean;
     sequence?: number; stage?: string }> = [];
   // SQL provider_call_id is uuid; the port's beforeRequest returns the same UUID.
@@ -151,6 +160,12 @@ export function editionWorkerFixture(count = 1) {
   };
   const rpc = async (name: string, parameters: Record<string, any>) => {
     calls.push({ name, parameters });
+    if (name === 'phase9_provider_configuration_v1') return { data: providerConfigurationSnapshot(
+      (current().providerPolicies as Array<Record<string, any>>).map(policy => providerConfigurationRow(
+        policy.adapterKey, policy.adapterVersion, { enabled: policy.enabled,
+          matchingAllowed: policy.matchingAllowed, storageAllowed: policy.storageAllowed,
+          explicitSearchAllowed: true, explicitRole: policy.adapterKey === 'google_books' ? 'primary' : 'secondary',
+          explicitOrder: policy.adapterKey === 'google_books' ? 1 : 2 }))), error: null };
     if (name === 'phase9_metadata_cache_reuse_context') return { data: { leaderLookupId: null, normalizedOutcome: null }, error: null };
     if (name === 'phase9_store_metadata_cache') return { data: { cache_id: idAt(400) }, error: null };
     if (name === 'phase9_automatic_edition_fence_v1') return { data: {
@@ -181,13 +196,13 @@ export function editionWorkerFixture(count = 1) {
       return { data: m93BeginReceipt(), error: null };
     }
     if (name === 'phase9_reserve_metadata_provider_round_v1') {
-      return { data: m93ReserveReceipt(), error: null };
+      return admissions.reserve(parameters);
     }
     if (name === 'phase9_finish_automatic_provider_run_v1') {
       return { data: m93FinishReceipt(), error: null };
     }
     if (name === 'phase9_release_metadata_provider_round_v1') {
-      return { data: m93ReleaseReceipt(), error: null };
+      return admissions.release(parameters);
     }
     if (name === 'phase9_defer_metadata_admission_v1') {
       return { data: m93DeferReceipt(parameters.p_epoch), error: null };
@@ -203,7 +218,8 @@ export function editionWorkerFixture(count = 1) {
       return { data: { reservation_id: idAt(300 + ordinalFor(parameters.p_job_id)) }, error: null };
     }
     if (name === 'phase9_register_structural_metadata_attempt') {
-      return { data: { attempt_id: attemptIdFor(parameters.p_job_id) }, error: null };
+      return { data: { attempt_id: parameters.p_provider_role === 'secondary'
+        ? idAt(220 + ordinalFor(parameters.p_job_id)) : attemptIdFor(parameters.p_job_id) }, error: null };
     }
     if (name === 'phase9_register_metadata_provider_call') {
       const providerCallId = registerPhysicalCall({
@@ -225,13 +241,13 @@ export function editionWorkerFixture(count = 1) {
     if (name === 'phase9_finalize_edition_options_provider_call_v1') {
       const index = physicalCallIds.get(String(parameters.p_provider_call_id));
       if (index !== undefined) physicalCalls[index].finalized = true;
-      return { data: { status: controls.rejectPhysical ? 'stale_rejected' : 'finalized',
+      return { data: { status: controls.rejectPhysical ? 'stale_rejected' : parameters.p_status,
         provider_call_id: parameters.p_provider_call_id }, error: null };
     }
     if (name === 'phase9_finalize_metadata_provider_call') {
       const index = physicalCallIds.get(String(parameters.p_provider_call_id));
       if (index !== undefined) physicalCalls[index].finalized = true;
-      return { data: { status: controls.rejectPhysical ? 'stale_rejected' : 'finalized',
+      return { data: { status: controls.rejectPhysical ? 'stale_rejected' : parameters.p_status,
         provider_call_id: parameters.p_provider_call_id }, error: null };
     }
     if (name === 'phase9_finalize_structural_metadata_attempt'
@@ -256,8 +272,10 @@ export function editionWorkerFixture(count = 1) {
       } finally { active -= 1; }
     },
   });
+  let activeRpc = admissions.wrap(rpc);
+  const serviceClient = { get rpc() { return activeRpc; }, set rpc(value) { activeRpc = admissions.wrap(value); } };
   const dependencies = {
-    workerId: worker, workerAuthToken: 'fixture-worker-ingress', serviceClient: { rpc },
+    workerId: worker, workerAuthToken: 'fixture-worker-ingress', serviceClient,
     primary: adapter, primaryCapability: GOOGLE_BOOKS_CAPABILITY, editionOptionsBoundary: boundary,
     // Unit B: fake server-side contact map for the fixture contactId. Fake
     // values only; never a real email.
@@ -303,8 +321,10 @@ export function editionWorkerFixture(count = 1) {
     activeKey = id;
     return id;
   };
-  return { newRequest, adapter, boundary, dependencies, contexts, current, calls, controls, saved, selections,
+  const api = { newRequest, adapter, boundary, dependencies, contexts, current, calls, controls, saved, selections, admissions,
     physicalCalls, direct, requeue, lookupIdFor, attemptIdFor, useUuidLineage: promoteLineage,
     run: (budget = count) => runMetadataWorkerBatch(budget, dependencies),
     stats: () => ({ providerRequests, maximumActive, active }) };
+  createdFixtures.push(api);
+  return api;
 }

@@ -77,6 +77,7 @@ export type MetadataProductionGateway = Readonly<{
     request: MetadataProductionRequest;
     boundary: import('./metadataEditionOptionsBoundary').MetadataEditionOptionsBoundary;
     cacheVersions(): import('./metadataEditionOptionsBoundary').EditionOptionsCacheVersions;
+    round: import('./metadataExplicitRound').ExplicitRound;
   }>;
   providerValidation?: Omit<MetadataProviderValidationContext, 'correlationId' | 'attemptId'>;
   resolveLocal(request: MetadataProductionRequest): Promise<
