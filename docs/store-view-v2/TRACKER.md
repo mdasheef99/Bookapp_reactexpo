@@ -56,14 +56,30 @@ Current state and next action for the Store View v2 lane (branch
 
 ## Next action
 
-Polish pass and pre-merge review fixes merged and verified (2026-11-07). The
-branch is ready for the user's decision on merging to `main` (and pushing). Slice 2 SDD §5 waits for the user's §5.6 decisions. Also open: (1) the user decides on one more
+Merged to local `main` (`8c63750`, 2026-11-07), not pushed; pushing needs the
+user's yes. Slice 2 SDD §5 waits for the user's §5.6 decisions. Also open: (1) the user decides on one more
 Edge deploy to fix a regex line in `validation.ts` (see 2026-11-03 entry);
 (2) the user tells the Phase 9 lane about the changed media functions
 (reorder, guard, reader, submit_v2), the dropped FK and the Edge v19;
 (3) the §4.2 damage-button decision.
 
 ## Log
+
+### 2026-11-07 — Merged into `main` (local, not pushed)
+
+- Local `main` was 57 commits behind `origin/main` (Phase 9 lane work up to
+  M98); fast-forwarded to `origin/main` `1b4cdfa`, then merged
+  `feature/store-view-v2` → `8c63750`. No Phase 9 migration touches a
+  function, table or trigger that the Store View migrations change. One doc
+  conflict (`CODEBASE_MAP/README.md`), resolved by keeping Phase 9's rows and
+  the Store View row. `ACTIVE.md` got one Store View note under "Last recorded
+  live state".
+- **Verified by Haiku before commit:** tsc pass; all Store View Jest and PGlite
+  suites pass; Phase 9 continuity validator PASS. Other failures (Phase 9
+  catalogue/provider PGlite, `marketplacePhase9CacheReuse` byte check) fail the
+  same way on clean `origin/main`, so they are pre-existing; library/club UI
+  failures in the whole-repo parallel run pass when run alone on both trees.
+- DB changes: none.
 
 ### 2026-11-07 — Pre-merge review of the whole branch, and fixes
 
