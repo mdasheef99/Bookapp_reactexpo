@@ -88,6 +88,11 @@ Edge deploy to fix a regex line in `validation.ts` (see 2026-11-03 entry);
   before any commit.
 - **Verified by Haiku:** tsc pass; Store View Jest 32/32 suites, 360/360 tests.
   Fail-first: all 7 new/changed tests fail on the old code.
+- **Review of the fix commit `63e2399` (Muse, read-only):** one LOW finding —
+  history keeps a body `retryable: true` even for an access-loss code. Not
+  changed: the server always sends `retryable: false` for those codes
+  (`ownerUxErrors.ts` 17–21); worst case one wasted retry. DeepSeek was tried
+  first and hung with no output for 77 minutes; stopped.
 - DB changes: none.
 
 ### 2026-11-07 — Polish pass, Slice 1a browser checks, Slice 2 SDD draft
