@@ -68,7 +68,7 @@ describe('Unit 7C WU3 Store View edit form', () => {
         expect(draft.language).toBe('');
         draft.title = 'Updated title';
         const edited = computeEditedSet(nullLanguage, draft);
-        expect(validateStoreViewEditDraft(draft, edited)).toMatch(/valid language code/i);
+        expect(validateStoreViewEditDraft(draft, edited)).toMatch(/language is needed to save/i);
         draft.language = 'en';
         const withLanguage = computeEditedSet(nullLanguage, draft);
         expect(validateStoreViewEditDraft(draft, withLanguage)).toBeNull();
@@ -89,12 +89,12 @@ describe('Unit 7C WU3 Store View edit form', () => {
         draft.language = '';
         const edited = computeEditedSet(detail, draft);
         expect(edited.has('language')).toBe(true);
-        expect(validateStoreViewEditDraft(draft, edited)).toMatch(/valid language code/i);
+        expect(validateStoreViewEditDraft(draft, edited)).toMatch(/language is needed to save/i);
     });
 
     it('keeps rejecting an empty language when no edited set is passed', () => {
         const draft = createStoreViewEditDraft(detail);
         draft.language = '';
-        expect(validateStoreViewEditDraft(draft)).toMatch(/valid language code/i);
+        expect(validateStoreViewEditDraft(draft)).toMatch(/language is needed to save/i);
     });
 });
