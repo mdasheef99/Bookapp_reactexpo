@@ -138,6 +138,16 @@ How it behaves:
   Publication commands also send `expectedPublicationIntentVersion`. A
   `P9_VERSION_CONFLICT` response makes the detail screen refetch and ask the Owner
   to retry. There is no bulk action; each command targets one `inventoryId`.
+  The stock modal checks only that the change is a whole number in range; the
+  server decides whether available stock would go negative
+  (`P9_QUANTITY_INVARIANT_FAILED`), and the detail screen then refetches.
+- **Access loss clears everything.** HTTP 401/403 or an access-lost code from any
+  read or command on either screen calls `removeStoreViewCachesForIdentity`
+  (`queries/storeViewInvalidation.ts`), which removes every Store View page,
+  detail, summary, media and history cache for that user and store.
+- **Activity is shown once per action.** Each command writes an audit row and an
+  event row with the same `commandId`; `filterStoreViewActivity`
+  (`StoreViewHistorySection.tsx`) hides the event when its audit is present.
 - **Private versus public fields.** `shelfLocation` and `internalNotes` appear only
   in the detail response (`privateOperations`), labelled "Owner only"; they never
   reach consumer screens (see 05).

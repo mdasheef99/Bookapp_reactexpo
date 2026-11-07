@@ -24,8 +24,8 @@ Current state and next action for the Store View v2 lane (branch
   filter cleanup, strict rupee input, dashboard definitions/security, approval
   gates, and a PGlite check that adding a damage photo clears the warning.
   Awaiting the user's approval.
-- **Code (updated 2026-11-04):** Slices 0a, 0b, 1a, 1b and the
-  remove-after-replace fix are merged into `feature/store-view-v2` (nothing
+- **Code (updated 2026-11-07):** Slices 0a, 0b, 1a, 1b, the
+  remove-after-replace fix and the polish pass are merged into `feature/store-view-v2` (nothing
   pushed). Live database: migrations `store_view_slice0b_media_fixes`,
   `store_view_slice1b_summary` and `store_view_remove_after_replace` applied;
   Edge `phase9-owner-ingestion` is v19. See the log below for each.
@@ -56,16 +56,70 @@ Current state and next action for the Store View v2 lane (branch
 
 ## Next action
 
-Slices 0b and 1b are applied/deployed live and 0a, 0b, 1a, 1b are merged into
-`feature/store-view-v2` (nothing pushed). Open: (1) the user decides on one more
+Polish pass and pre-merge review fixes merged and verified (2026-11-07). The
+branch is ready for the user's decision on merging to `main` (and pushing). Slice 2 SDD §5 waits for the user's §5.6 decisions. Also open: (1) the user decides on one more
 Edge deploy to fix a regex line in `validation.ts` (see 2026-11-03 entry);
 (2) the user tells the Phase 9 lane about the changed media functions
 (reorder, guard, reader, submit_v2), the dropped FK and the Edge v19;
-(3) remove-after-replace fix is applied live and merged (see 2026-11-03 entry). The "Code: nothing built" line above is
-stale; refresh with the CODEBASE_MAP edits. Before any merge to main: full PR
-review in this lane.
+(3) the §4.2 damage-button decision.
 
 ## Log
+
+### 2026-11-07 — Pre-merge review of the whole branch, and fixes
+
+- **Review (read-only):** server side by Muse (space-bunny-free failed twice
+  with a provider error) — "ready to merge"; app side by Muse — 6 findings.
+  Each checked in code:
+  - Fixed (merged `656a01e`): publication and stock failures now route access
+    loss; access loss clears every Store View cache for the identity from either
+    screen (list pages, details, summary, media, history); history errors keep
+    the server's `retryable` flag. Also fixed by me: conflict buttons read field
+    names, not internal keys, to screen readers.
+  - Not fixed: photo *add* sends no inventory version (existing Phase 9 submit
+    function takes none; an add does not conflict with a details save);
+    filter-preference session started during sign-out cleanup stays fenced for
+    that one mount (narrow); authors text with a comma inside one name (by
+    design, comma-separated).
+  - Server note, not fixed: Edge `unwrap` masks `P9_PUBLIC_MEDIA_ORDER_REQUIRED`
+    as `P9_INTERNAL_ERROR`. Pre-existing since M51, only on internal faults;
+    fixing needs a shared Edge deploy (user's call).
+- **Process slip, recorded:** the polish pass was committed before the re-run
+  of my two follow-up edits; the run after merge passed. From now on tests pass
+  before any commit.
+- **Verified by Haiku:** tsc pass; Store View Jest 32/32 suites, 360/360 tests.
+  Fail-first: all 7 new/changed tests fail on the old code.
+- DB changes: none.
+
+### 2026-11-07 — Polish pass, Slice 1a browser checks, Slice 2 SDD draft
+
+- **Polish (Muse built, merged `754b5f0`):** empty-language message says a
+  language is needed to save; Activity hides the event row that duplicates an
+  audit row (same `commandId`); photo reorder blocked while an upload is pending
+  (not for a failed one); a pending replacement shows the target's current
+  position; accessibility roles/labels on photo, edit, detail and stock controls;
+  stock modal no longer blocks on possibly stale stock — server
+  `P9_QUANTITY_INVARIANT_FAILED` (M43 line 420) shows a message and refetches;
+  edit Cancel disabled while saving. Cancel stays enabled during a recovery
+  refresh on purpose (R12: a hung refresh must not trap the Owner) — I changed
+  Muse's version, which also blocked it during recovery and broke R12.
+- **Verified by Haiku:** tsc pass; Store View Jest 29/29 suites, 354/354 in band
+  and in parallel; imageInventory + Store View 1355 pass, 4 skipped. Fail-first:
+  10 new/changed tests fail on the old code (the "failed upload doesn't block"
+  test passes on old code by design).
+- **Jest open handles:** Round2 now clears its QueryClients; `--detectOpenHandles`
+  in band is clean. The parallel-only "worker failed to exit" warning still
+  appears after `StoreViewLiveFixes` (92 s suite, already clears its clients);
+  harmless, not chased further.
+- **Slice 1a live browser checks (Haiku, user signed in once):** Needs Attention
+  filter, "Mark as sellable" and "Add damage details" open the right sheet,
+  rupee price label, Private filter remembered after reload — all PASS. Not
+  checkable: logout filter cleanup (needs a sign-out), Retry / View plan buttons
+  (no data produces those reasons). Dev data on two books set and restored
+  (both back at version 1).
+- **Old worktrees removed** (seven; diffs backed up in the session scratchpad).
+- **SDD:** §4.4 count-name wording fixed; §5 Slice 2 (search, sort, more
+  filters) drafted — not approved, decisions in §5.6.
+- DB changes: none. Nothing applied or deployed.
 
 ### 2026-11-04 — Receipt-path (M57–59) coverage for remove-after-replace
 
