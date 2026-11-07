@@ -69,6 +69,9 @@ export function validateStoreViewEditDraft(
     // Checked even when language was not edited: the save RPC validates the
     // whole proposed row, so a book with no language cannot be saved at all
     // until one is entered (migration 20260816000046, `language IS NULL`).
+    if (!draft.language.trim()) {
+        return 'Enter the book\'s language code, such as en or hi-Latn. A language is needed to save any change.';
+    }
     if (!languagePattern.test(draft.language.trim().replaceAll('_', '-'))) {
         return 'Enter a valid language code, such as en or hi-Latn.';
     }

@@ -237,6 +237,11 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                 await refetch();
                 return;
             }
+            if (code === 'P9_QUANTITY_INVARIANT_FAILED') {
+                setStockError('This change would make available stock negative. Latest stock was refreshed; review and try again.');
+                await refetch();
+                return;
+            }
             setStockError(failure instanceof Error ? failure.message : 'Stock was not changed.');
         }
     });
@@ -319,6 +324,8 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                     {item.capabilities.includes('manage_photos') ? (
                         <Pressable
                             testID="store-view-manage-photos"
+                            accessibilityRole="button"
+                            accessibilityLabel="Manage Photos"
                             disabled={busy}
                             onPress={() => setPhotosOpen(true)}
                             style={{ minHeight: 44, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent }}

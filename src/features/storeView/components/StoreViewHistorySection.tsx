@@ -57,6 +57,29 @@ function activityLabel(entry: StoreViewHistoryActivity): string {
     return 'Publication retry scheduled';
 }
 
+/** Drops an `event` entry when an `audit` entry in the same array shares its
+ * non-empty `commandId`. Every command writes one audit row and one event
+ * row, so without this the Activity list shows each action twice. Keeps the
+ * original order: audits, events with no commandId, events whose commandId
+ * has no audit, and all `publication_retry` entries. */
+export function filterStoreViewActivity(
+    activity: ReadonlyArray<StoreViewHistoryActivity>,
+): StoreViewHistoryActivity[] {
+    const auditCommandIds = new Set<string>();
+    for (const entry of activity) {
+        if (entry.kind === 'audit') {
+            const commandId = entry.details.commandId;
+            if (typeof commandId === 'string' && commandId !== '') auditCommandIds.add(commandId);
+        }
+    }
+    return activity.filter((entry) => {
+        if (entry.kind !== 'event') return true;
+        const commandId = entry.payload.commandId;
+        if (typeof commandId !== 'string' || commandId === '') return true;
+        return !auditCommandIds.has(commandId);
+    });
+}
+
 function formatDate(value: string): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
@@ -108,7 +131,7 @@ export function StoreViewHistorySection({ identity, inventoryId }: {
                 </Text>
                 {activity.length === 0 ? (
                     <Text style={{ color: colors.textSecondary }}>No activity recorded yet.</Text>
-                ) : activity.map((entry, index) => (
+                ) : filterStoreViewActivity(activity).map((entry, index) => (
                     <View key={`${entry.kind}-${index}`} testID="store-view-activity-entry" style={{ gap: 2 }}>
                         <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>{activityLabel(entry)}</Text>
                         <Text style={{ color: colors.textSecondary }}>{formatDate(entry.createdAt)}</Text>

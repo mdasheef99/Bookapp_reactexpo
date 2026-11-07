@@ -642,6 +642,9 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
     const addOrder = freeOrder();
     const ready = confirmState === 'ready';
     const disabled = busy || commands.isPending || !ready;
+    const reorderBlocked = pendingUpload !== null
+        || pendingReplacements.some((pending) => pending.state === 'upload_pending'
+            || pending.state === 'processing' || pending.state === 'approved');
 
     return (
         <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onDismiss}>
@@ -669,6 +672,8 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                             </Text>
                             <Pressable
                                 testID="store-view-media-retry"
+                                accessibilityRole="button"
+                                accessibilityLabel="Retry loading photos"
                                 disabled={busy}
                                 onPress={() => void confirm()}
                                 style={[styles.done, { borderColor: colors.border }]}
@@ -706,7 +711,9 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                                 <View style={styles.rowActions}>
                                     <Pressable
                                         testID={`store-view-media-up-${index}`}
-                                        disabled={disabled || index === 0}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`Move ${MEDIA_ROLE_LABELS[record.role]} photo ${record.publicOrder} up`}
+                                        disabled={disabled || reorderBlocked || index === 0}
                                         onPress={() => reorder(record.linkId, -1)}
                                         style={[styles.smallAction, { borderColor: colors.border }]}
                                     >
@@ -714,7 +721,9 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                                     </Pressable>
                                     <Pressable
                                         testID={`store-view-media-down-${index}`}
-                                        disabled={disabled || index === records.length - 1}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`Move ${MEDIA_ROLE_LABELS[record.role]} photo ${record.publicOrder} down`}
+                                        disabled={disabled || reorderBlocked || index === records.length - 1}
                                         onPress={() => reorder(record.linkId, 1)}
                                         style={[styles.smallAction, { borderColor: colors.border }]}
                                     >
@@ -722,6 +731,8 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                                     </Pressable>
                                     <Pressable
                                         testID={`store-view-media-replace-${index}`}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`Replace ${MEDIA_ROLE_LABELS[record.role]} photo ${record.publicOrder}`}
                                         disabled={disabled}
                                         onPress={() => void runLocked((generation) => pickAndUpload(
                                             generation,
@@ -734,6 +745,8 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                                     </Pressable>
                                     <Pressable
                                         testID={`store-view-media-remove-${index}`}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={`Remove ${MEDIA_ROLE_LABELS[record.role]} photo ${record.publicOrder}`}
                                         disabled={disabled}
                                         onPress={() => setConfirmRemove(record.linkId)}
                                         style={[styles.smallAction, { borderColor: colors.border }]}
@@ -749,13 +762,23 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                             No approved public photos yet. Add the first photo below.
                         </Text>
                     ) : null}
+                    {reorderBlocked && ready ? (
+                        <Text testID="store-view-media-reorder-blocked" style={[styles.body, { color: colors.textSecondary }]}>
+                            Finish the pending photo before changing the order.
+                        </Text>
+                    ) : null}
 
-                    {pendingReplacements.map((pending) => (
+                    {pendingReplacements.map((pending) => {
+                        const displayOrder = pending.operationKind === 'replace' && pending.targetLinkId
+                            ? records.find((record) => record.linkId === pending.targetLinkId)?.publicOrder
+                                ?? pending.order
+                            : pending.order;
+                        return (
                         <View key={pending.capabilityId} style={[styles.row, { borderColor: colors.border }]}>
                             <View style={styles.rowBody}>
                                 <Text style={{ color: colors.textPrimary, fontWeight: '800' }}>
                                     {pending.operationKind === 'replace' ? 'Replacement for' : 'Add photo'}{' '}
-                                    {MEDIA_ROLE_LABELS[pending.role]} · Position {pending.order}
+                                    {MEDIA_ROLE_LABELS[pending.role]} · Position {displayOrder}
                                 </Text>
                                 <Text style={{ color: colors.textSecondary }}>
                                     {pendingStatusLabel(pending)}
@@ -763,6 +786,8 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                                 {pending.state === 'approved' && pending.mediaAssetId ? (
                                     <Pressable
                                         testID={`store-view-media-install-${pending.capabilityId}`}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={pending.operationKind === 'replace' ? 'Install approved replacement' : 'Add approved photo'}
                                         disabled={disabled}
                                         onPress={() => {
                                             const mediaAssetId = pending.mediaAssetId;
@@ -795,11 +820,14 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                                 ) : null}
                             </View>
                         </View>
-                    ))}
+                        );
+                    })}
 
                     {pendingUpload ? (
                         <Pressable
                             testID="store-view-media-check-status"
+                            accessibilityRole="button"
+                            accessibilityLabel="Check processing status"
                             disabled={disabled}
                             onPress={checkPendingStatus}
                             style={[styles.action, { backgroundColor: colors.accent }]}
@@ -814,6 +842,9 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                             <Pressable
                                 key={role}
                                 testID={`store-view-media-add-role-${role}`}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Add ${MEDIA_ROLE_LABELS[role]} photo`}
+                                accessibilityState={{ selected: addRole === role }}
                                 disabled={disabled}
                                 onPress={() => setAddRole(role)}
                                 style={[styles.role, { borderColor: addRole === role ? colors.accent : colors.border }]}
@@ -824,6 +855,8 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                     </View>
                     <Pressable
                         testID="store-view-media-add-photo"
+                        accessibilityRole="button"
+                        accessibilityLabel="Add photo"
                         disabled={disabled || addOrder === 0}
                         onPress={() => void runLocked((generation) => pickAndUpload(
                             generation,
@@ -849,6 +882,8 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                             </Text>
                             <Pressable
                                 testID="store-view-media-confirm-remove"
+                                accessibilityRole="button"
+                                accessibilityLabel="Confirm removal"
                                 disabled={disabled}
                                 onPress={() => remove(confirmRemove)}
                                 style={[styles.action, { backgroundColor: colors.accent }]}
@@ -857,6 +892,8 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                             </Pressable>
                             <Pressable
                                 testID="store-view-media-cancel-remove"
+                                accessibilityRole="button"
+                                accessibilityLabel="Cancel removal"
                                 disabled={disabled}
                                 onPress={() => setConfirmRemove(null)}
                                 style={[styles.done, { borderColor: colors.border }]}
@@ -867,6 +904,8 @@ export function StoreViewManagePhotosModal({ identity, inventoryId, visible, onD
                     ) : null}
                     <Pressable
                         testID="close-store-view-manage-photos"
+                        accessibilityRole="button"
+                        accessibilityLabel="Done"
                         disabled={busy || commands.isPending}
                         onPress={onDismiss}
                         style={[styles.done, { borderColor: colors.border }]}

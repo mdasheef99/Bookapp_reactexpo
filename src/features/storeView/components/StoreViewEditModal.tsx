@@ -443,10 +443,10 @@ export function StoreViewEditModal({
                             {`Changed by someone else to ${remoteFieldLabel(field, baseline ?? detail)}`}
                         </Text>
                         <View style={{ flexDirection: 'row', gap: 8 }}>
-                            <Pressable testID={`store-view-edit-keep-mine-${field}`} onPress={() => resolve(field, 'mine')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+                            <Pressable testID={`store-view-edit-keep-mine-${field}`} accessibilityRole="button" accessibilityLabel={`Keep my ${field}`} onPress={() => resolve(field, 'mine')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
                                 <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Keep mine</Text>
                             </Pressable>
-                            <Pressable testID={`store-view-edit-use-theirs-${field}`} onPress={() => resolve(field, 'theirs')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+                            <Pressable testID={`store-view-edit-use-theirs-${field}`} accessibilityRole="button" accessibilityLabel={`Use theirs for ${field}`} onPress={() => resolve(field, 'theirs')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
                                 <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Use theirs</Text>
                             </Pressable>
                         </View>
@@ -463,10 +463,10 @@ export function StoreViewEditModal({
                             Damage details were changed by someone else. Choose which version to keep.
                         </Text>
                         <View style={{ flexDirection: 'row', gap: 8 }}>
-                            <Pressable testID="store-view-edit-keep-mine-damage" onPress={() => resolve('damageNote', 'mine')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+                            <Pressable testID="store-view-edit-keep-mine-damage" accessibilityRole="button" accessibilityLabel="Keep my damage details" onPress={() => resolve('damageNote', 'mine')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
                                 <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Keep mine</Text>
                             </Pressable>
-                            <Pressable testID="store-view-edit-use-theirs-damage" onPress={() => resolve('damageNote', 'theirs')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+                            <Pressable testID="store-view-edit-use-theirs-damage" accessibilityRole="button" accessibilityLabel="Use theirs for damage details" onPress={() => resolve('damageNote', 'theirs')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
                                 <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Use theirs</Text>
                             </Pressable>
                         </View>
@@ -476,12 +476,12 @@ export function StoreViewEditModal({
                     <View style={{ gap: 8 }}>
                         <Text testID="store-view-edit-refresh-error" selectable style={{ color: colors.error, fontWeight: '700' }}>{refreshError}</Text>
                         <View style={{ flexDirection: 'row', gap: 8 }}>
-                             <Pressable testID="store-view-edit-retry-refresh" disabled={recovering} onPress={() => void retryRefresh()} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center', opacity: recovering ? 0.5 : 1 }}>
-                                <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Retry</Text>
-                            </Pressable>
-                            <Pressable testID="store-view-edit-close" onPress={onDismiss} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
-                                <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Close</Text>
-                            </Pressable>
+                              <Pressable testID="store-view-edit-retry-refresh" accessibilityRole="button" accessibilityLabel="Retry" disabled={recovering} onPress={() => void retryRefresh()} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center', opacity: recovering ? 0.5 : 1 }}>
+                                 <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Retry</Text>
+                             </Pressable>
+                             <Pressable testID="store-view-edit-close" accessibilityRole="button" accessibilityLabel="Close" onPress={onDismiss} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+                                 <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Close</Text>
+                             </Pressable>
                         </View>
                     </View>
                 ) : null}
@@ -494,7 +494,7 @@ export function StoreViewEditModal({
                     <Text selectable style={{ color: colors.textSecondary, fontWeight: '700' }}>Condition</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                         {CONDITIONS.map((condition) => (
-                            <Pressable key={condition} testID={`store-view-condition-${condition}`} disabled={inputsLocked} onPress={() => update({ condition })} style={{ borderWidth: 1, borderColor: draft.condition === condition ? colors.accent : colors.border, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 8 }}>
+                            <Pressable key={condition} testID={`store-view-condition-${condition}`} accessibilityRole="button" accessibilityLabel={`Condition ${condition.replaceAll('_', ' ')}`} accessibilityState={{ selected: draft.condition === condition }} disabled={inputsLocked} onPress={() => update({ condition })} style={{ borderWidth: 1, borderColor: draft.condition === condition ? colors.accent : colors.border, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 8 }}>
                                 <Text style={{ color: colors.textPrimary }}>{condition.replaceAll('_', ' ')}</Text>
                             </Pressable>
                         ))}
@@ -503,7 +503,7 @@ export function StoreViewEditModal({
                 <Input multiline label="Public condition note" testID="store-view-edit-public-condition-note" value={draft.publicConditionNote} onChangeText={(publicConditionNote) => update({ publicConditionNote })} editable={!inputsLocked} />
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                     <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>Has damage</Text>
-                    <Switch testID="store-view-edit-has-damage" disabled={inputsLocked} value={draft.hasDamage} onValueChange={(hasDamage) => update({ hasDamage, ...(hasDamage ? {} : { damageTypes: [], damageNote: '' }) })} />
+                    <Switch testID="store-view-edit-has-damage" accessibilityLabel="Has damage" disabled={inputsLocked} value={draft.hasDamage} onValueChange={(hasDamage) => update({ hasDamage, ...(hasDamage ? {} : { damageTypes: [], damageNote: '' }) })} />
                 </View>
                 {draft.hasDamage ? (
                     <View style={{ gap: 10 }}>
@@ -512,7 +512,7 @@ export function StoreViewEditModal({
                             {DAMAGE_TYPES.map((damageType) => {
                                 const selected = draft.damageTypes.includes(damageType);
                                 return (
-                                    <Pressable key={damageType} testID={`store-view-damage-${damageType}`} disabled={inputsLocked} onPress={() => update({ damageTypes: selected ? draft.damageTypes.filter((value) => value !== damageType) : [...draft.damageTypes, damageType] })} style={{ borderWidth: 1, borderColor: selected ? colors.accent : colors.border, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 8 }}>
+                                    <Pressable key={damageType} testID={`store-view-damage-${damageType}`} accessibilityRole="button" accessibilityLabel={`Damage type ${damageType.replaceAll('_', ' ')}`} accessibilityState={{ selected }} disabled={inputsLocked} onPress={() => update({ damageTypes: selected ? draft.damageTypes.filter((value) => value !== damageType) : [...draft.damageTypes, damageType] })} style={{ borderWidth: 1, borderColor: selected ? colors.accent : colors.border, borderRadius: 18, paddingHorizontal: 12, paddingVertical: 8 }}>
                                         <Text style={{ color: colors.textPrimary }}>{damageType.replaceAll('_', ' ')}</Text>
                                     </Pressable>
                                 );
@@ -523,13 +523,14 @@ export function StoreViewEditModal({
                 ) : null}
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                     <Text selectable style={{ color: colors.textPrimary, fontWeight: '700' }}>Sellable</Text>
-                    <Switch testID="store-view-edit-sellable" disabled={inputsLocked} value={draft.isSellable} onValueChange={(isSellable) => update({ isSellable })} />
+                    <Switch testID="store-view-edit-sellable" accessibilityLabel="Sellable" disabled={inputsLocked} value={draft.isSellable} onValueChange={(isSellable) => update({ isSellable })} />
                 </View>
                 <Input label="Shelf / location" ownerOnly testID="store-view-edit-shelf-location" value={draft.shelfLocation} onChangeText={(shelfLocation) => update({ shelfLocation })} editable={!inputsLocked} />
                 <Input multiline label="Internal notes" ownerOnly testID="store-view-edit-internal-notes" value={draft.internalNotes} onChangeText={(internalNotes) => update({ internalNotes })} editable={!inputsLocked} />
                 {shownError ? <Text testID="store-view-edit-error" selectable style={{ color: colors.error, fontWeight: '700' }}>{shownError}</Text> : null}
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <Pressable accessibilityRole="button" disabled={submitting} onPress={onDismiss} style={{ flex: 1, minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Cancel</Text></Pressable>
+                    {/* Not blocked by `recovering`: a conflict refresh can hang, and the owner must still be able to close (R12). */}
+                    <Pressable accessibilityRole="button" accessibilityLabel="Cancel" accessibilityState={{ disabled: submitting || saving }} disabled={submitting || saving} onPress={onDismiss} style={{ flex: 1, minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Cancel</Text></Pressable>
                     <Pressable testID="store-view-save-changes" accessibilityRole="button" accessibilityState={{ disabled: saveDisabled || !hasChanges }} disabled={saveDisabled || !hasChanges} onPress={() => void submit()} style={{ flex: 1, minHeight: 48, borderRadius: 10, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, opacity: saveDisabled || !hasChanges ? 0.5 : 1 }}>
                         {saving || recovering ? <ActivityIndicator color="#fff" /> : null}
                         <Text style={{ color: '#fff', fontWeight: '800' }}>{saving ? 'Saving…' : recovering ? 'Refreshing…' : 'Save Changes'}</Text>
