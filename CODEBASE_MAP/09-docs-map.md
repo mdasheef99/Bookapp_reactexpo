@@ -48,7 +48,7 @@ Root specifications:
 - `phase-9-image-inventory/` — the Phase 9 folder (check `ACTIVE.md` for which phase is active):
   - `SESSION-START.md` (protocol, reading order, update matrix and rules), `TRACKER.md` (local decisions and implementation evidence; current state links to ACTIVE.md), `README.md`;
   - `00`–`06` SDDs (master, data/metadata, extraction pipeline, Owner review/commit, media security, marketplace display, customer photo requests);
-  - `work-units/` — per-unit SDDs and plans (06g batch review, 06h duplicates, 07a commit, 07b publication, 07c Store View, 08 bookstore-first, owner edition picker, …); `post-scan-rework/` holds its overview/decision register and domain SDDs;
+  - `work-units/` — per-unit SDDs and plans (06g batch review, 06h duplicates, 07a commit, 07b publication, [07c Store View](../docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/work-units/07c-owner-store-view-post-commit-inventory-management-sdd.md), 08 bookstore-first, owner edition picker, …); `post-scan-rework/` holds its overview/decision register and domain SDDs;
   - `trackers/` — numbered evidence logs;
   - `supporting/` — data dictionary, current-vs-target database audit, requirements traceability, scope register;
   - `scripts/` — documentation validators.

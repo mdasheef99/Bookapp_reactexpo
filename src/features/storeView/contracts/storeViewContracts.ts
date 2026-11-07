@@ -10,12 +10,14 @@ const count = z.number().int().nonnegative().safe();
 const version = z.number().int().positive().safe();
 const nullableText = z.string().max(10_000).nullable();
 const condition = z.enum(['new', 'like_new', 'very_good', 'good', 'acceptable']);
-const attentionReason = z.enum([
+export const STORE_VIEW_ATTENTION_REASONS = [
     'missing_metadata', 'missing_price', 'missing_condition', 'damage_evidence_required',
     'not_sellable', 'moderation_blocked', 'store_policy_blocked',
     'subscription_restricted', 'entitlement_blocked',
     'active_listing_limit_reached', 'publication_failed',
-]);
+] as const;
+// Future reason codes are explanation-only in the UI; never infer capabilities.
+const attentionReason = z.string().min(1).max(80).regex(/^[a-z][a-z0-9_]*$/);
 const capability = z.enum([
     'edit_details', 'adjust_stock', 'manage_photos', 'publish', 'pause',
     'republish', 'make_private', 'retry_publication',

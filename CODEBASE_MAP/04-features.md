@@ -63,7 +63,8 @@ let the server read spines and look up metadata, review each detected book
 | `components/` | Review cards and fields, edition picker (`CandidateEditionPicker`, `EditionOptionList`, `CandidateMetadataSheet`), confirmation dialogs, post-scan summary |
 | `testing/` | Shared test fixtures |
 
-Every Owner screen is wrapped in `InventoryAccessBoundary`. Server code for this
+Every Image inventory Owner screen is wrapped in `InventoryAccessBoundary`
+(Store View has its own `StoreViewAccessBoundary`, below). Server code for this
 feature is in `supabase/functions/_shared/imageInventory/` and `workers/` (see 03).
 Source-scanning architecture tests restrict what code may do in this module
 (see 06 "Architecture guard tests").
@@ -82,10 +83,101 @@ Review design: [SDD-1 §§2–7](../docs/multi-tenant-bookstore-marketplace/impl
 
 Management of books already added to inventory: list, detail, edit, stock
 adjustments, photos, history and publication to the marketplace. Routes are
-`app/(store-owner)/store-view/`. Screens are wrapped in `StoreViewAccessBoundary`.
-API calls also go through `phase9-owner-ingestion`.
+`app/(store-owner)/store-view/` (`index` → `StoreViewListScreen`,
+`[inventoryId]` → `StoreViewDetailScreen`; the route validates the id as a UUID,
+and `navigation/storeViewRoutes.ts` builds the paths).
 
 Rule of thumb: **Inventory acquires and reviews; Store View manages what was committed.**
+
+| Folder | Contents |
+| --- | --- |
+| `api/` | One service per contract family, all calling `phase9-owner-ingestion`: `storeViewService` (page, detail), `storeViewManagementService` (save details, adjust stock), `storeViewMediaService` (read, reorder, remove, replace photos), `storeViewHistoryService` |
+| `contracts/` | Zod schemas and `decode…Response` for each family; each family has its own `…_CONTRACT_VERSION` constant. Item, filter, attention-reason and capability enums live in `storeViewContracts.ts` |
+| `queries/` | TanStack Query hooks, query keys and mutation hooks (`storeViewQueries`, `storeViewManagementQueries`, `storeViewMediaQueries`/`storeViewMediaCommands`, `storeViewHistoryQueries`) |
+| `forms/` | `storeViewEditForm.ts`: draft, validation and the diff that builds the `changes` payload |
+| `components/` | `StoreViewCard`, `StoreViewActions`, the edit, stock and manage-photos modals, `StoreViewHistorySection`, and `storeViewPresentation.ts` (labels, `formatPrice`, `stockLabel`) |
+| `screens/` | `StoreViewListScreen`, `StoreViewDetailScreen`, `StoreViewAccessBoundary` |
+
+Server actions the module calls (the RPC behind each is dispatched in
+`supabase/functions/_shared/imageInventory/runtime/ownerIngestion.ts`, with the
+Store View branches in `runtime/storeView*.ts`):
+
+| Action | RPC |
+| --- | --- |
+| `read_store_view_page` | `phase9_store_view_page_v2` |
+| `read_store_view_detail` | `phase9_store_view_detail_v1` |
+| `read_store_view_media` / `reorder_` / `remove_` / `replace_store_view_media` | `phase9_store_view_media_v1` / `phase9_reorder_` / `phase9_remove_` / `phase9_replace_store_view_media_v1` |
+| `read_store_view_history` | `phase9_store_view_history_v1` |
+| `update_store_inventory_details` | `phase9_update_store_inventory_details_v1` |
+| `adjust_inventory_stock` | `phase9_adjust_inventory_stock_v2` |
+| `set_publication_state` (intent `publish`, `pause` or `private`), `retry_publication` | `phase9_set_publication_state_v2`, `phase9_retry_publication_owner_v1`: reused from Image inventory (`imageInventory/api/publicationService.ts`, `queries/publicationQueries.ts`), not duplicated here |
+| `authorize_public_copy` (with `operationKind`, for photo replace/add) | `phase9_authorize_store_view_media_upload_v1`, then a signed Storage upload |
+
+How it behaves:
+
+- **Server decides what is shown and allowed.** The list filter (`all`, `private`,
+  `live`, `paused`, `needs_attention`, `out_of_stock`) is applied by the server
+  before cursor pagination (page size 20 from the app). Each item carries
+  `lifecycle` states, `attention.attentionReasons` and a `capabilities` array
+  (`edit_details`, `adjust_stock`, `manage_photos`, `publish`, `pause`,
+  `republish`, `make_private`, `retry_publication`); `StoreViewActions` renders
+  only the buttons the server allows. Attention reasons are a server enum
+  (for example `missing_price`, `damage_evidence_required`,
+  `active_listing_limit_reached`, `publication_failed`); the list card shows only
+  a "Needs attention" badge, and the detail screen lists the reasons as text with
+  no per-reason fix action.
+- **Prices are integer paise.** `sellingPriceMinor` is paise; the edit form takes a
+  whole non-negative paise value and `formatPrice` shows INR using `en-IN`.
+- **Every write is versioned and idempotent.** Save, stock and photo commands send
+  `expectedInventoryVersion`, an `idempotencyKey` and a `commandId` (made by
+  `createCaptureAttempt` from Image inventory), and refuse to run while offline.
+  Publication commands also send `expectedPublicationIntentVersion`. A
+  `P9_VERSION_CONFLICT` response makes the detail screen refetch and ask the Owner
+  to retry. There is no bulk action; each command targets one `inventoryId`.
+  The stock modal checks only that the change is a whole number in range; the
+  server decides whether available stock would go negative
+  (`P9_QUANTITY_INVARIANT_FAILED`), and the detail screen then refetches.
+- **Access loss clears everything.** HTTP 401/403 or an access-lost code from any
+  read or command on either screen calls `removeStoreViewCachesForIdentity`
+  (`queries/storeViewInvalidation.ts`), which removes every Store View page,
+  detail, summary, media and history cache for that user and store.
+- **Activity is shown once per action.** Each command writes an audit row and an
+  event row with the same `commandId`; `filterStoreViewActivity`
+  (`StoreViewHistorySection.tsx`) hides the event when its audit is present.
+- **Private versus public fields.** `shelfLocation` and `internalNotes` appear only
+  in the detail response (`privateOperations`), labelled "Owner only"; they never
+  reach consumer screens (see 05).
+- **Search, sort, sale prices, promotions and campaigns are not in this module.**
+  The only list controls are the filter chips and "Load more".
+
+Query keys and cache:
+
+- Store View, media and history keys are built in `queries/*Queries.ts` from
+  `imageInventoryKeys.identity(identity)` plus a family segment and contract
+  version, so they live under the Image inventory root and are removed by
+  `clearImageInventoryPrivateQueries` on user switch or logout (see 02).
+- Each file also exports an `all` key (`[...imageInventoryKeys.all, 'storeView',
+  version]`) used for invalidation after commands. TanStack Query matches
+  invalidation keys **by prefix**, and stored keys start
+  `[...imageInventoryKeys.all, 'identity', userId, storeId, …]`. When you add a
+  query or change an invalidation, check that the key you invalidate is a
+  prefix of the keys actually stored.
+- Detail-screen commands: save/stock invalidate Store View and
+  `ownerInventoryReadKeys`; photo commands invalidate Store View, media and
+  history; publication commands invalidate `imageInventoryKeys.all`,
+  `ownerInventoryReadKeys.all` and `['marketplace']`.
+
+Access and guards:
+
+- `StoreViewAccessBoundary` wraps `useImageInventoryIdentity` (the same Owner
+  identity as Image inventory) and passes `identity` to the list and detail
+  content; it shows a loading state, then "Store View unavailable" for anyone
+  without active Store Owner access.
+- `__tests__/storeViewManagementArchitecture.test.ts` follows the imports from the
+  detail route and requires them to include `storeViewManagementService`,
+  `publicationQueries` and `publicationService`, to exclude the legacy
+  `storeInventoryService`, and to forbid direct `store_inventory` /
+  `marketplace_book_listings` table access. See 06.
 
 ### Marketplace discovery — `src/features/marketplace/`
 

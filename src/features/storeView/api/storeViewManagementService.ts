@@ -8,6 +8,7 @@ import {
     type StoreViewSaveResult,
     type StoreViewStockResult,
 } from '../contracts/storeViewManagementContracts';
+import { httpStatusOf, isAccessLostHttpStatus } from './storeViewHttpStatus';
 
 const uuid = z.string().uuid();
 const idempotencyKey = z.string().min(16).max(128).regex(/^[A-Za-z0-9._:-]+$/u);
@@ -37,13 +38,16 @@ const safeError = z.object({
 export type StoreViewManagementErrorCode = z.infer<typeof safeError>['error'] | 'P9_RESPONSE_INVALID';
 
 export class StoreViewManagementClientError extends Error {
+    readonly httpStatus: number | null;
     constructor(
         readonly code: StoreViewManagementErrorCode,
         readonly retryable: boolean,
         message: string,
+        httpStatus: number | null = null,
     ) {
         super(message);
         this.name = 'StoreViewManagementClientError';
+        this.httpStatus = httpStatus;
     }
 }
 
@@ -81,9 +85,16 @@ async function invoke<Action extends 'update_store_inventory_details' | 'adjust_
             body: { action, contractVersion: STORE_VIEW_MANAGEMENT_CONTRACT_VERSION, ...body },
         });
         if (result.error) {
+            const status = httpStatusOf(result.error);
+            if (isAccessLostHttpStatus(status)) {
+                throw new StoreViewManagementClientError(
+                    'P9_AUTH_REQUIRED', false, messages.P9_AUTH_REQUIRED, status,
+                );
+            }
             const parsed = safeError.safeParse(await errorBody(result.error));
             if (parsed.success) throw new StoreViewManagementClientError(
                 parsed.data.error, parsed.data.retryable, messages[parsed.data.error],
+                status,
             );
             throw clientError('P9_RESPONSE_INVALID');
         }

@@ -34,7 +34,9 @@ missing methods there when a new test needs them.
 
 Inside the Edge Function, `_shared/imageInventory/runtime/ownerIngestion.ts`
 dispatches each request. Batch review, Store View and publication requests have
-their own branches there; the standard Owner UX actions map to SQL RPCs in
+their own branches there (Store View: `runtime/storeView*.ts` plus the
+`read_store_view_page` / `read_store_view_detail` branch; the action-to-RPC list is
+in 04 "Store View"); the standard Owner UX actions map to SQL RPCs in
 `_shared/imageInventory/runtime/ownerUxRpcRoutes.ts` (for example
 `add_candidate_to_inventory` → `phase9_add_candidate_to_inventory_v1`). Start at
 `ownerIngestion.ts` to find which RPC, and so which migration, serves an action.

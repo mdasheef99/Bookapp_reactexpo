@@ -229,6 +229,16 @@ operational readback.
 - Deployed worker: `phase9-metadata-worker` deploy `dep-dblielugekts738gov3g`
   (commit `6e0df90`, 8b build, live 2026-11-04 12:41:25 UTC; Render env
   unchanged). Rollback target: `dep-dbhmr07b9u1s73f8qjpg` (`3fdc0c44`, 7b-2).
+- Store View v2 lane (separate lane, merged to `main` 2026-11-07): three
+  migrations applied live earlier with the Owner's approval —
+  `store_view_slice0b_media_fixes` (2026-11-02), `store_view_slice1b_summary`
+  (2026-11-03), `store_view_remove_after_replace`. They change
+  `phase9_reorder_store_view_media_v1`, `validate_inventory_media_link`,
+  `phase9_owner_media_records_v1`, `phase9_submit_public_copy_media_v2`, add
+  `phase9_store_view_summary_v1`, and drop FK
+  `phase9_upload_capabilities_target_media_link_id_fkey`. Edge
+  `phase9-owner-ingestion` v19 carries the Store View actions.
+  Details: [Store View tracker](../../store-view-v2/TRACKER.md).
 - Latest relevant recorded commit on `main`: closeout `0d240ef`;
   [publication evidence](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#49-slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes-2026-10-29).
 

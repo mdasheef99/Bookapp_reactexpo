@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { parseStoreViewSummaryRequest, StoreViewSummaryRequest } from './storeViewSummary.ts';
 import { assertNoPrivacySensitiveKeys } from './privacy.ts';
 import { OwnerUxRequest, parseOwnerUxRequest } from './ownerUx.ts';
 import {
@@ -82,7 +83,7 @@ const dedicatedMetadataWorkerRequest = z.object({
 export type OwnerIngestionRequest = z.infer<typeof ownerRequest> | OwnerUxRequest
   | OwnerBatchReviewRequest
   | PublicationRequest | StoreViewRequest | StoreViewManagementRequest
-  | StoreViewMediaRequest | StoreViewHistoryRequest;
+  | StoreViewMediaRequest | StoreViewHistoryRequest | StoreViewSummaryRequest;
 export type WorkerIngestionRequest = z.infer<typeof workerRequest>;
 export type DedicatedWorkerRequest = z.infer<typeof dedicatedWorkerRequest>;
 export type DedicatedMetadataWorkerRequest = z.infer<typeof dedicatedMetadataWorkerRequest>;
@@ -111,6 +112,7 @@ export function parseOwnerIngestionRequest(value: unknown): OwnerIngestionReques
     if (isStoreViewManagementAction(action)) return parseStoreViewManagementRequest(value);
     if (isStoreViewMediaAction(action)) return parseStoreViewMediaRequest(value);
     if (action === 'read_store_view_history') return parseStoreViewHistoryRequest(value);
+    if (action === 'read_store_view_summary') return parseStoreViewSummaryRequest(value);
     if (isStoreViewAction(action)) return parseStoreViewRequest(value);
     if (isPublicationAction(action)) return parsePublicationRequest(value);
     const unknown = result.error.issues.some((issue) => issue.code === 'unrecognized_keys');

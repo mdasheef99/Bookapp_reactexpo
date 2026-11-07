@@ -1,10 +1,9 @@
 import { onlineManager, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createCaptureAttempt } from '@/features/imageInventory/capture/captureIds';
-import { ownerInventoryReadKeys } from '@/features/imageInventory/queries/ownerInventoryReadQueries';
 import type { ImageInventoryIdentity } from '@/features/imageInventory/queries/ownerUxQueries';
 import { storeViewManagementService } from '../api/storeViewManagementService';
 import type { StoreViewChanges } from '../contracts/storeViewManagementContracts';
-import { storeViewKeys } from './storeViewQueries';
+import { invalidateStoreViewAfterSave } from './storeViewInvalidation';
 
 type SaveCommand = Readonly<{
     kind: 'save';
@@ -42,9 +41,8 @@ export function useStoreViewManagementCommands(identity: ImageInventoryIdentity)
                 ? storeViewManagementService.save({ ...common, changes: command.changes })
                 : storeViewManagementService.adjustStock({ ...common, delta: command.delta });
         },
-        onSuccess: async () => {
-            await client.invalidateQueries({ queryKey: storeViewKeys.all });
-            await client.invalidateQueries({ queryKey: ownerInventoryReadKeys.all });
+        onSuccess: () => {
+            void invalidateStoreViewAfterSave(client, identity);
         },
         retry: false,
     });

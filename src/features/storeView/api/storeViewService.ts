@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { decodeStoreViewSummaryResponse, STORE_VIEW_SUMMARY_CONTRACT_VERSION, type StoreViewSummary } from '../contracts/storeViewSummaryContracts';
 import { supabase } from '@/lib/supabase';
 import {
     decodeStoreViewResponse,
@@ -8,6 +9,7 @@ import {
     type StoreViewFilter,
     type StoreViewPage,
 } from '../contracts/storeViewContracts';
+import { httpStatusOf, isAccessLostHttpStatus } from './storeViewHttpStatus';
 
 const uuid = z.string().uuid();
 const pageRequest = z.object({
@@ -34,13 +36,16 @@ export type StoreViewPageRequest = Readonly<{
 export type StoreViewErrorCode = z.infer<typeof safeError>['error'] | 'P9_RESPONSE_INVALID';
 
 export class StoreViewClientError extends Error {
+    readonly httpStatus: number | null;
     constructor(
         readonly code: StoreViewErrorCode,
         readonly retryable: boolean,
         message: string,
+        httpStatus: number | null = null,
     ) {
         super(message);
         this.name = 'StoreViewClientError';
+        this.httpStatus = httpStatus;
     }
 }
 
@@ -65,13 +70,21 @@ async function errorBody(error: unknown): Promise<unknown> {
     const json = (context as { json?: unknown }).json;
     if (typeof json !== 'function') return null;
     try {
-        return await (json as () => Promise<unknown>)();
+        // R7: call json() as a method so the Response receiver is kept;
+        // detaching it throws "Illegal invocation" on a native Response.
+        return await (context as { json: () => Promise<unknown> }).json();
     } catch {
         return null;
     }
 }
 
 async function normalizeError(error: unknown): Promise<StoreViewClientError> {
+    // Read the HTTP status first: a 401/403 without the app error body still
+    // means access was lost, never a retryable internal error.
+    const status = httpStatusOf(error);
+    if (isAccessLostHttpStatus(status)) {
+        return new StoreViewClientError('P9_AUTH_REQUIRED', false, messages.P9_AUTH_REQUIRED, status);
+    }
     const result = safeError.safeParse(await errorBody(error));
     if (!result.success) return clientError('P9_INTERNAL_ERROR', true);
     const code = result.data.error;
@@ -82,17 +95,20 @@ async function normalizeError(error: unknown): Promise<StoreViewClientError> {
 }
 
 async function invoke(
-    action: 'read_store_view_page' | 'read_store_view_detail',
+    action: 'read_store_view_page' | 'read_store_view_detail' | 'read_store_view_summary',
     body: Record<string, unknown>,
     signal?: AbortSignal,
 ): Promise<unknown> {
     try {
         const result = await supabase.functions.invoke('phase9-owner-ingestion', {
-            body: { action, contractVersion: STORE_VIEW_CONTRACT_VERSION, ...body },
+            body: { action, contractVersion: action === 'read_store_view_summary'
+                ? STORE_VIEW_SUMMARY_CONTRACT_VERSION : STORE_VIEW_CONTRACT_VERSION, ...body },
             ...(signal ? { signal } : {}),
         });
         if (result.error) throw await normalizeError(result.error);
-        return decodeStoreViewResponse(action, result.data);
+        return action === 'read_store_view_summary'
+            ? decodeStoreViewSummaryResponse(result.data)
+            : decodeStoreViewResponse(action, result.data);
     } catch (error) {
         if (error instanceof StoreViewClientError) throw error;
         if (error instanceof Error && error.name === 'AbortError') throw error;
@@ -104,6 +120,9 @@ async function invoke(
 }
 
 export const storeViewService = {
+    async summary(signal?: AbortSignal): Promise<StoreViewSummary> {
+        return invoke('read_store_view_summary', {}, signal) as Promise<StoreViewSummary>;
+    },
     async page(request: StoreViewPageRequest = {}, signal?: AbortSignal): Promise<StoreViewPage> {
         const parsed = pageRequest.safeParse(request);
         if (!parsed.success) throw clientError('P9_REQUEST_INVALID');

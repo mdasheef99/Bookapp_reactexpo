@@ -45,7 +45,7 @@ describe('Unit 7C WU2 client Store View contracts', () => {
         ['version', { contractVersion: 'phase9-store-view-read-v999' }],
         ['lifecycle', { data: { items: [{ ...item, lifecycle: { ...item.lifecycle, publicationState: 'invented' } }], pageInfo: { hasNextPage: false, nextCursor: null } } }],
         ['effective state', { data: { items: [{ ...item, lifecycle: { ...item.lifecycle, effectiveState: 'invented' } }], pageInfo: { hasNextPage: false, nextCursor: null } } }],
-        ['attention reason', { data: { items: [{ ...item, attention: { attentionState: 'action_required', attentionReasons: ['invented'] } }], pageInfo: { hasNextPage: false, nextCursor: null } } }],
+        ['malformed attention reason', { data: { items: [{ ...item, attention: { attentionState: 'action_required', attentionReasons: ['invalid reason!'] } }], pageInfo: { hasNextPage: false, nextCursor: null } } }],
         ['capability', { data: { items: [{ ...item, capabilities: ['invented'] }], pageInfo: { hasNextPage: false, nextCursor: null } } }],
     ])('rejects invalid %s', (_label, replacement) => {
         const valid = {
