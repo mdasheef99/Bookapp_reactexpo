@@ -115,6 +115,10 @@ function waitFor(expectation: () => void) {
 // Tests chain several 8s waits; the 5s Jest default cut them off under load.
 jest.setTimeout(30000);
 
+// Cleared after each test: a live client keeps TanStack's gcTime timers open
+// and Jest reports them as open handles (the "failed to exit" warning).
+const clients: QueryClient[] = [];
+
 function renderDetail() {
     const client = new QueryClient({
         defaultOptions: {
@@ -122,6 +126,7 @@ function renderDetail() {
             mutations: { retry: false },
         },
     });
+    clients.push(client);
     const screen = render(
         <QueryClientProvider client={client}>
             <StoreViewDetailContent identity={identity} inventoryId={inventoryId} />
@@ -212,6 +217,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    for (const client of clients.splice(0)) client.clear();
     jest.restoreAllMocks();
     jest.useRealTimers();
 });

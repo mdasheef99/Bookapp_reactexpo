@@ -3,8 +3,9 @@
 **Status:** draft v4 (revised after three Terra reviews, 2026-10-29). Not
 approved.
 **Covers:** scope, lane rules, Slice 0 (bug fixes) and Slice 1 (Store
-View-only features). Later slices (search/sort, bulk, sale price, campaigns,
-Deals shelf) are not designed here.
+View-only features), and a first draft of Slice 2 (search, sort, filters;
+§5, not approved). Later slices (bulk, sale price, campaigns, Deals shelf)
+are not designed here.
 
 Current state and next action live in [TRACKER.md](./TRACKER.md). How Store
 View works today is in `CODEBASE_MAP/04-features.md` § Store View.
@@ -565,8 +566,10 @@ function returns the numbers in one call.
   label, how to read the number from the response, and the filter it selects);
   adding or removing a tile is one entry. The SQL computes every count with
   one `COUNT(*) FILTER (...)` line each over a single pass, so a new count is
-  one added line plus one contract field. The response keeps `counts` keyed by
-  filter id so new filters extend it without reshaping.
+  one added line plus one contract field. The response keeps one `counts`
+  entry per filter, named in camelCase (`all`, `private`, `live`, `paused`,
+  `needsAttention`, `outOfStock`; the filter ids are snake_case, e.g.
+  `needs_attention`), so new filters extend it without reshaping.
 - **Cost.** Counts are computed in one pass by a narrow aggregate that must
   give the same answer as the page RPC's classification (proved by the
   page-by-page equality test above). No search scope in 1b. Measure on a large
@@ -597,3 +600,87 @@ function returns the numbers in one call.
       dashboard counts match the filter results.
 - [ ] `CODEBASE_MAP/04-features.md` § Store View and `02-auth-session.md`
       updated.
+
+---
+
+## 5. Slice 2 — Find books: search, sort, more filters (draft, not approved)
+
+Features 1 (search and sorting) and 2 (more filters and saved views). Written
+2026-11-07. Open decisions for the user are in §5.6; nothing here is built.
+
+### 5.1 What the owner gets
+- A search box at the top of the Store View list. It matches title, any
+  author, ISBN-10/13 and shelf location, case-insensitive, anywhere in the
+  text. ISBN input ignores spaces and hyphens. Results update ~300 ms after
+  typing stops; clearing the box returns to the normal list.
+- A sort control: **Recently updated** (today's order, default), **Recently
+  added**, **Title A–Z**, **Price low–high**, **Price high–low**, **Available
+  stock low–high**. Books with no price sort last in both price orders.
+- Search, sort and the filter chips combine: e.g. "Needs attention" + "Title
+  A–Z" + "dickens".
+- New filter chips (proposal, see §5.6): **No photos**, **Damaged**,
+  **Low stock** (available 1–2, a fixed rule until feature 11 adds per-book
+  thresholds).
+- The last sort is remembered on the device, like the filter (§4.3). The search
+  text is not remembered.
+
+### 5.2 Server
+- New read function `public.phase9_store_view_page_v3(p_page_size, p_cursor,
+  p_filter, p_query, p_sort)`, same security as v2 (`SECURITY DEFINER`,
+  `search_path=''`, owner's store from `marketplace_sec.phase9_owner_store`,
+  `EXECUTE` to `authenticated` only). v2 stays unchanged so nothing else
+  breaks; the app moves to v3.
+- **Search runs on table columns before the item JSON is built** (v2 builds
+  the JSON for every row first, which is the expensive part). The query is
+  trimmed, 2–100 characters, `%`, `_` and `\` escaped, matched with `ILIKE`
+  against `title`, `array_to_string(authors,' ')`, `shelf_location`, and
+  digits-only `isbn_10`/`isbn_13` when the query has ≥ 4 digits. No index in
+  this slice; measured on 2,000 books in PGlite like the summary (§4.4) and on
+  the live store. A `pg_trgm` index is the fallback if it is slow.
+- **Sort and paging.** Each sort orders by its key and then `id`, so ties page
+  correctly. The cursor carries the version tag, filter, sort, a SHA-256 of the
+  normalised query, user, store, the last row's sort key and id. Any mismatch
+  → `P9_CURSOR_INVALID` (same as v2). Price sorts put `NULL` last.
+- **Filters.** `p_filter` adds `no_photos`, `damaged`, `low_stock` (if
+  approved). They must classify exactly like the item JSON shows them.
+- **Summary counts** (§4.4) gain the new filters only if the user wants tiles
+  for them; otherwise unchanged.
+- **Edge.** `read_store_view_page` gains optional `query` and `sort`, under a
+  new contract version; the old request shape keeps working. This needs a
+  `phase9-owner-ingestion` deploy (user's yes, Phase 9 lane told).
+
+### 5.3 App
+- `useStoreViewPage(identity, filter, sort, query)`: the query key includes
+  all three; changing any starts from page 1. Invalidation after changes uses
+  the prefix, so every search/sort page refreshes (same rule as Slice 0a).
+- Search box: debounce 300 ms; under 2 characters is treated as empty; while a
+  search is loading, the old results stay with a small spinner.
+- Empty states: "No books match "{query}"" with a Clear search button; a
+  filter + search with no results says both.
+- Sort control: one button opening a short list (no new library).
+- Saved views (feature 2's second half): see §5.6.
+
+### 5.4 Tests (written to fail first)
+- PGlite: every sort pages through 45 books with tied keys and no duplicates or
+  gaps; search hits title, author, shelf and hyphenated ISBN; `%` and `_` are
+  literal; a query under 2 characters is rejected; the cursor from one
+  query/sort/filter is rejected for another; another store's books never
+  appear; each new filter matches the item JSON classification on every row;
+  2,000-book timing recorded.
+- Edge contract tests: old request shape still valid; new fields validated.
+- Jest: debounce; key changes reset paging; remembered sort; empty states;
+  invalidation hits search pages.
+- Haiku browser checklist after deploy.
+
+### 5.5 Gates
+Migration file, PGlite run, apply to the shared project, and the Edge deploy
+each need the user's yes; the Phase 9 lane is told before the deploy.
+
+### 5.6 Decisions for the user
+1. **New filters:** No photos, Damaged, Low stock (1–2 available)? Add or drop
+   any.
+2. **Saved views:** (a) on this device only, no server change (recommended
+   for now), or (b) on the server so they follow the owner across devices (one
+   new table with per-store security), or (c) skip saved views for now.
+3. **Summary tiles** for the new filters: yes or no.
+4. **Sort list** as in §5.1: OK, or add/remove any.
