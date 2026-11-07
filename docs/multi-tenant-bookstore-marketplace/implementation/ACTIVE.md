@@ -7,12 +7,12 @@ branch `phase9/slice8-providers` (HEAD `0b00441`): Unit 1 M99
 amended in `0b00441` per Owner decision so the dashboard count RPC is
 store-scoped; 538 lines, sha256
 `9a10dc3ae760b256757b5f57bdc2ab2688b7d748ca52bcda5d0e5eff4af9e80c`;
-NOT APPLIED to dev `ahntbtktjjmvfosgkmgn`), Unit 2 metadata worker
+APPLIED to dev `ahntbtktjjmvfosgkmgn` on 2026-11-08, live version `20261107192440`), Unit 2 metadata worker
 (commit `c64c2fb`: M93 explicit-round admission + sanitized
 `metadata_rpc_failed` logging), Unit 3 app (commit `0b00441`:
 store-scoped RPC counts, error card with Retry, picker copy,
-`P9_STATE_CONFLICT` lookup message). Nothing is pushed, M99 is not
-applied, and the worker is NOT redeployed (live worker is still the 8b
+`P9_STATE_CONFLICT` lookup message). Nothing is pushed, M99 is
+applied to dev, and the worker is NOT redeployed (live worker is still the 8b
 build `dep-dblielugekts738gov3g`). Evidence in
 [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-07-8c-fix-round-m99-worker-admission--rpc-logging-app).
 M95-M98 stay applied (live `20261104213313`, `20261104213343`,
@@ -39,7 +39,7 @@ dated evidence belongs in trackers.
 - Active slice/work unit: **slice 8, package 8c fix round (D1-D6): Unit 1 M99
   (commits `56b676b`, amended `0b00441`), Unit 2 worker (`c64c2fb`),
   Unit 3 app (`0b00441`) — all committed locally on
-  `phase9/slice8-providers` (HEAD `0b00441`), not pushed; M99 not applied;
+  `phase9/slice8-providers` (HEAD `0b00441`), not pushed; M99 applied to dev 2026-11-08 (live `20261107192440`);
   worker not redeployed**.
   M95-M98 stay applied 2026-11-05; the 8c operator scripts and the Open
   Library switch still run at the pilot.
@@ -158,10 +158,11 @@ dated evidence belongs in trackers.
   covered: admission/fair-queue path (needs a policy, 8c), inventory commit.
 - Dev-server launch config `.claude/launch.json` (expo web on port 8081)
   was created for this test and is uncommitted.
-- Exact next authorized action: **Owner approval to apply the amended M99
-  (sha256 `9a10dc3a...f4af9e80c`) to dev `ahntbtktjjmvfosgkmgn`**. Not
-  authorized by this file. After that, each needs its own Owner approval:
-  push, then the single metadata worker Render deploy, then the dev
+- Exact next authorized action: **Owner approval to push the fix-round
+  commits and run the single metadata worker Render deploy**
+  (`srv-d9sqfdvqj5pc73dc66fg`). Not authorized by this file. M99 was
+  applied to dev 2026-11-08 (Owner-approved; live `20261107192440`). After
+  the deploy, each needs its own Owner approval: the dev
   re-test (explicit Search Books, drain checks 02/05) and the reviewed
   one-time cleanup of stuck reserved holds. No `db push` (frozen).
 - Other gated actions, each needing its own Owner approval (none authorized
@@ -250,7 +251,7 @@ operational readback.
 
 ## Open items, blockers and residual risks
 
-- Blockers: M99 apply approval (the one exact next action); Codex/Luna
+- Blockers: push + metadata worker deploy approval (the one exact next action); Codex/Luna
   out of usage until 2026-11-09 22:06 IST (Qwen3.8 Flash covered the fix
   round); Gemini billing (prepay, restore the key; a free-tier key exposed
   in chat must be rotated, never recorded). Owner decisions pending: the

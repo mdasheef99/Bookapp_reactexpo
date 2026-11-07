@@ -459,3 +459,22 @@ pushed, applied, or deployed):
 3. Single metadata worker Render deploy.
 4. Dev re-test (explicit Search Books, drain checks 02/05).
 5. Reviewed one-time cleanup of stuck reserved holds.
+
+### 2026-11-08: M99 applied to dev
+
+Owner approved ("Apply M99"). Project re-verified (`ahntbtktjjmvfosgkmgn`;
+last live migration before apply `20261105161642` M98; no M99 function
+present). Applied through Supabase MCP `apply_migration` as
+`marketplace_phase9_8c_fix_round`, live version `20261107192440`. Readback:
+stored statement md5 `e88843173596c4a28ca3840688ef4f9c`, 34,225 chars, equal
+to the local file (sha256 `9a10dc3a...f4af9e80c`) without its trailing
+newline. `public.phase9_owner_dashboard_inventory_counts_v1(p_store_id uuid)`
+exists with no no-arg overload, EXECUTE for `authenticated` only;
+`marketplace_sec.phase9_settle_terminal_usage_v1` has no grants; the two
+metadata fail functions call settlement and carry the D5 label; the vision
+fail function calls settlement; the vision mark function has the replay
+no-op; the Owner choices read takes no lock; 0 phase9 functions executable
+by PUBLIC. Live data: 6 usage reservations are still `reserved` on terminal
+jobs (all 6 reserved rows) - these are the stuck holds for the reviewed
+one-time cleanup; M99 settles only future terminal transitions. Worker not
+redeployed; nothing pushed.
