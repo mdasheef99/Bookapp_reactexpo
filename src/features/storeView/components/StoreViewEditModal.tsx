@@ -31,6 +31,15 @@ import {
 } from '../state/storeViewEditRebase';
 import { STORE_VIEW_DAMAGE_GROUP as DAMAGE_GROUP } from '../forms/storeViewEditForm';
 
+// Spoken names for the conflict buttons (screen readers), not internal keys.
+const CONFLICT_FIELD_NAMES: Record<StoreViewEditField, string> = {
+    title: 'title', authors: 'authors', language: 'language',
+    publicDescription: 'description', sellingPriceMinor: 'price',
+    condition: 'condition', publicConditionNote: 'condition note',
+    hasDamage: 'damage details', damageTypes: 'damage details', damageNote: 'damage details',
+    isSellable: 'sellable setting', shelfLocation: 'shelf location', internalNotes: 'internal notes',
+};
+
 const CONDITIONS = ['new', 'like_new', 'very_good', 'good', 'acceptable'] as const;
 const DAMAGE_TYPES = [
     'cover', 'binding', 'pages', 'water', 'staining', 'writing',
@@ -443,10 +452,10 @@ export function StoreViewEditModal({
                             {`Changed by someone else to ${remoteFieldLabel(field, baseline ?? detail)}`}
                         </Text>
                         <View style={{ flexDirection: 'row', gap: 8 }}>
-                            <Pressable testID={`store-view-edit-keep-mine-${field}`} accessibilityRole="button" accessibilityLabel={`Keep my ${field}`} onPress={() => resolve(field, 'mine')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+                            <Pressable testID={`store-view-edit-keep-mine-${field}`} accessibilityRole="button" accessibilityLabel={`Keep my ${CONFLICT_FIELD_NAMES[field]}`} onPress={() => resolve(field, 'mine')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
                                 <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Keep mine</Text>
                             </Pressable>
-                            <Pressable testID={`store-view-edit-use-theirs-${field}`} accessibilityRole="button" accessibilityLabel={`Use theirs for ${field}`} onPress={() => resolve(field, 'theirs')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+                            <Pressable testID={`store-view-edit-use-theirs-${field}`} accessibilityRole="button" accessibilityLabel={`Use theirs for ${CONFLICT_FIELD_NAMES[field]}`} onPress={() => resolve(field, 'theirs')} style={{ flex: 1, minHeight: 40, borderWidth: 1, borderColor: colors.border, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
                                 <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>Use theirs</Text>
                             </Pressable>
                         </View>
