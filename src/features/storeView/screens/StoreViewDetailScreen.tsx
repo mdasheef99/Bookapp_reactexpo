@@ -16,9 +16,7 @@ import { StoreViewActions } from '../components/StoreViewActions';
 import { StoreViewAttentionReasons } from '../components/StoreViewAttentionReasons';
 import { StoreViewEditModal, type StoreViewSaveOutcome } from '../components/StoreViewEditModal';
 import { isEditAccessLost, refreshEditBaseline, type EditRefreshResult } from '../state/storeViewEditRebase';
-import { storeViewKeys } from '../queries/storeViewQueries';
-import { storeViewMediaKeys } from '../queries/storeViewMediaQueries';
-import { storeViewHistoryKeys } from '../queries/storeViewHistoryQueries';
+import { removeStoreViewCachesForIdentity } from '../queries/storeViewInvalidation';
 import { StoreViewHistorySection } from '../components/StoreViewHistorySection';
 import { StoreViewManagePhotosModal } from '../components/StoreViewManagePhotosModal';
 import { StoreViewStockModal } from '../components/StoreViewStockModal';
@@ -92,11 +90,9 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
     }
     const handleStoreViewAccessLost = () => {
         // Owner-only shelf location and internal notes must not linger.
-        // Uses the inventoryId prop (not `item`, which is uninitialized on
-        // early-return renders where the R6a effect can also fire).
-        queryClient?.removeQueries({ queryKey: storeViewKeys.detail(identity, inventoryId) });
-        queryClient?.removeQueries({ queryKey: storeViewMediaKeys.detail(identity, inventoryId) });
-        queryClient?.removeQueries({ queryKey: storeViewHistoryKeys.detail(identity, inventoryId) });
+        // Clears every Store View cache for this identity (a book cached
+        // earlier keeps private fields otherwise), not just this detail.
+        removeStoreViewCachesForIdentity(queryClient, identity);
         setEditOpen(false);
         setPhotosOpen(false);
         setAccessLost(true);
@@ -231,6 +227,13 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
             setStockOpen(false);
             void refreshAfterChange('Stock updated.');
         } catch (failure) {
+            if (failure instanceof StoreViewManagementClientError && isEditAccessLost({
+                code: failure.code, httpStatus: failure.httpStatus ?? null,
+            })) {
+                setStockOpen(false);
+                handleStoreViewAccessLost();
+                return;
+            }
             const code = failure instanceof StoreViewManagementClientError ? failure.code : null;
             if (code === 'P9_VERSION_CONFLICT') {
                 setStockError('This book changed. Latest stock was refreshed; review and try again.');
@@ -264,6 +267,12 @@ export function StoreViewDetailContent({ identity, inventoryId }: { identity: Im
                 ? 'Publication retry requested.'
                 : 'Publication state updated.');
         } catch (failure) {
+            if (failure instanceof PublicationClientError && isEditAccessLost({
+                code: failure.code, httpStatus: failure.httpStatus ?? null,
+            })) {
+                handleStoreViewAccessLost();
+                return;
+            }
             const conflict = failure instanceof PublicationClientError
                 && (failure.code === 'P9_VERSION_CONFLICT' || failure.code === 'P9_STATE_CONFLICT');
             if (conflict) {

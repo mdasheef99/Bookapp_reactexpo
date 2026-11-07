@@ -22,6 +22,25 @@ export function storeViewFamilyPrefixes(identity: ImageInventoryIdentity) {
 
 export type StoreViewFamilyPrefixes = ReturnType<typeof storeViewFamilyPrefixes>;
 
+/**
+ * Removes every cached Store View query for an identity after access loss:
+ * pages, details, summary (all under the `storeView` prefix), media, and
+ * history. TanStack matches `queryKey` by prefix, so these three prefixes
+ * cover `storeViewKeys`, `storeViewSummaryKeys`, `storeViewMediaKeys`, and
+ * `storeViewHistoryKeys` for the identity. A null client (unit-test render
+ * without a provider) is a no-op.
+ */
+export function removeStoreViewCachesForIdentity(
+    client: QueryClient | null | undefined,
+    identity: ImageInventoryIdentity,
+): void {
+    if (!client) return;
+    const prefixes = storeViewFamilyPrefixes(identity);
+    client.removeQueries({ queryKey: prefixes.storeView });
+    client.removeQueries({ queryKey: prefixes.storeViewMedia });
+    client.removeQueries({ queryKey: prefixes.storeViewHistory });
+}
+
 /** After a successful save or stock adjustment: page + detail, history, owner-read. */
 export async function invalidateStoreViewAfterSave(
     client: QueryClient,

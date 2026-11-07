@@ -427,7 +427,8 @@ describe('Slice 0a §3.2 edit session keeps the owner draft', () => {
         expect(client.getQueryState(storeViewKeys.detail(identity, inventoryId))).toBeUndefined();
         expect(client.getQueryState(storeViewMediaKeys.detail(identity, inventoryId))).toBeUndefined();
         expect(client.getQueryState(storeViewHistoryKeys.detail(identity, inventoryId))).toBeUndefined();
-        expect(client.getQueryState(storeViewKeys.page(identity, 'all'))).toBeDefined();
+        // Access loss clears every Store View cache for the identity, list pages too.
+        expect(client.getQueryState(storeViewKeys.page(identity, 'all'))).toBeUndefined();
         client.clear();
     });
 

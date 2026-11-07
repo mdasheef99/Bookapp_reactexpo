@@ -271,6 +271,9 @@ describe('R2 edited set stays fixed across rebases', () => {
         // the same value), so both are marked; the owner's values are kept.
         expect(screen.getByTestId('store-view-edit-conflict-title')).toBeTruthy();
         expect(screen.getByDisplayValue('T1')).toBeTruthy();
+        // Screen readers hear a readable field name, not the internal key.
+        expect(screen.getByLabelText('Keep my price')).toBeTruthy();
+        expect(screen.getByLabelText('Use theirs for title')).toBeTruthy();
         fireEvent.press(screen.getByTestId('store-view-edit-keep-mine-sellingPriceMinor'));
         fireEvent.press(screen.getByTestId('store-view-edit-keep-mine-title'));
         fireEvent.press(screen.getByTestId('store-view-save-changes'));

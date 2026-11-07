@@ -9,11 +9,12 @@ import { useTheme } from '@/hooks/useTheme';
 import { StoreViewCard } from '../components/StoreViewCard';
 import { FILTER_LABELS } from '../components/storeViewPresentation';
 import { STORE_VIEW_FILTERS, type StoreViewFilter } from '../contracts/storeViewContracts';
-import { storeViewKeys, useStoreViewPage } from '../queries/storeViewQueries';
+import { useStoreViewPage } from '../queries/storeViewQueries';
 import { StoreViewAccessBoundary } from './StoreViewAccessBoundary';
 import { createStoreViewFilterSession, createStoreViewSummarySession } from '../state/storeViewFilterPreference';
 import { StoreViewSummaryPanel } from '../components/StoreViewSummaryPanel';
-import { storeViewSummaryKeys, useStoreViewSummary } from '../queries/storeViewSummaryQueries';
+import { useStoreViewSummary } from '../queries/storeViewSummaryQueries';
+import { removeStoreViewCachesForIdentity } from '../queries/storeViewInvalidation';
 import { isEditAccessLost } from '../state/storeViewEditRebase';
 
 function StateCard({ title, body, onRetry }: { title: string; body: string; onRetry?: () => void }) {
@@ -95,12 +96,10 @@ function StoreViewIdentityList({ identity }: { identity: ImageInventoryIdentity 
     }
     const handleStoreViewAccessLost = () => {
         // Cached owner-only rows must not linger after the owner loses
-        // store access. Same removal path as the detail screen, scoped to
-        // the list caches (every server filter page plus the summary).
-        for (const value of STORE_VIEW_FILTERS) {
-            queryClient?.removeQueries({ queryKey: storeViewKeys.page(identity, value) });
-        }
-        queryClient?.removeQueries({ queryKey: storeViewSummaryKeys.summary(identity) });
+        // store access. Same removal path as the detail screen: every
+        // Store View cache for this identity (a detail cached earlier
+        // keeps private fields otherwise), not just the list caches.
+        removeStoreViewCachesForIdentity(queryClient, identity);
         setAccessLost(true);
     };
     // Access loss on either the page or the summary read — initial or

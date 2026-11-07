@@ -37,9 +37,13 @@ export async function storeViewHistoryService(
                 'P9_AUTH_REQUIRED', 'P9_OWNER_NOT_AUTHORIZED', 'P9_REQUEST_INVALID',
                 'P9_NOT_FOUND', 'P9_INTERNAL_ERROR',
             ]);
+            const retryable = body && typeof body === 'object' && 'retryable' in body
+                && typeof (body as { retryable?: unknown }).retryable === 'boolean'
+                ? (body as { retryable: boolean }).retryable
+                : false;
             throw new StoreViewMediaClientError(
                 known.has(code) ? code as never : 'P9_INTERNAL_ERROR',
-                false,
+                retryable,
                 'Activity history is unavailable.',
             );
         }
