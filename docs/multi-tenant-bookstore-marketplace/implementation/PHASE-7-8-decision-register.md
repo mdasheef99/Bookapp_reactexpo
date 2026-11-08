@@ -1,6 +1,6 @@
 # Phase 7/8 Business Decision Register
 
-**Version:** 4 (2026-11-08) — owner decisions D-01 to D-45 recorded; consistency and review passes applied
+**Version:** 4 (2026-11-08) — owner decisions D-01 to D-46 recorded; consistency and review passes applied
 **Base:** owner's "Decision Register" of 05 November 2026 (v1, sources S1–S4 and chat)
 **Status:** `DECIDED` rows are current owner direction. `PROPOSED` rows still need owner
 approval. This register is not a source specification and grants no implementation,
@@ -232,6 +232,7 @@ delivery. Rows below that apply only to a later courier option say so.
 | D-43 | **Photo check before handover (owner decision, 2026-11-09; amends D-25):** when a customer pays while her photo request is still open, the store accepts the order as usual (D-04) and must send the photos within the same 24 hours; if it cannot, the order is refunded automatically as unavailable. The order then waits in "waiting for the customer to check photos": the store may not hand it over and delivery is not booked. The customer has 24 hours to respond. Approved or no response: the order continues (pickup notice and the Q71 three days start then, or delivery is booked per D-17). Rejected: full refund including the delivery charge (D-26). Fault: photos that do not match the listing are a store fault (D-21); a rejection when the book matches the listing counts against nobody (as Q45). The photo request itself still never reserves the book (BC-07); only payment does. The same-day estimate (D-34) shows the extra wait. Both 24-hour limits are settings. | DECIDED |
 | D-44 | **Pickup rules (owner decision, 2026-11-09; settles Q73):** authorized bookstore staff may verify the pickup OTP and hand over the book; anyone presenting the customer's valid OTP may collect. Before marking an order ready, the store checks the book is present and matches the edition and condition listed. The customer may refuse a damaged, wrong, or missing book at pickup: she gets a full refund, and when the book does not match the listing it is a store fault (D-21; the store bears the D-27 fee). Resending the pickup notice is allowed; it does not reset the Q71 three days and creates no second order or delivery. For pickup orders, the Q60 condition-reporting window starts at the verified OTP handover, not when the store marks the order ready. | DECIDED |
 | D-45 | **Store-requested refunds (owner decision, 2026-11-09):** a store may raise a refund request for an order through BookConnect (for example a problem it found after accepting). The refund itself is executed only through BookConnect's controlled refund process (D-22, D-29), recorded in the ledger and audit trail; stores never refund customers directly. Approval: automatic up to ₹1,000, admin approval with a typed reason above (as D-29); the store bears the cost (Cashfree fee and any delivery charge). | DECIDED |
+| D-46 | **Planning order and schedule rules (owner decision, 2026-11-09):** (1) D-03 reading: the SDD set (handoff §11) is written and reviewed before the fresh folder is created, in the docs worktree on branch `docs/phase7-8-planning`, outside the Phase 9 working folder; the fresh folder starts from approved SDDs. Writing SDDs is documentation only: no DOC-13, ACTIVE.md, or AGENTS.md status changes, no product code, no database or provider writes. (2) The lane's working week is Monday to Saturday (4 weeks = 24 working days). (3) If the week-4 milestone is at risk, the owner and Claude decide at that time what to cut or move; there is no pre-agreed cut list. | DECIDED |
 
 Clarifications for the specifications (no owner decision needed):
 
@@ -277,7 +278,7 @@ owner on 2026-11-08 with the recommended option and are recorded as D-26 to D-37
 Four final-read owner questions (F-01, F-02, F-03, F-14) were answered on 2026-11-08 with the
 recommended option and are recorded as D-38 to D-41.
 On 2026-11-09 the owner reviewed a further list of pickup and cancellation questions:
-new answers are D-42 to D-45; "cancellation before packing: full refund, no handling
+new answers are D-42 to D-45 (D-46 records the planning order); "cancellation before packing: full refund, no handling
 charge" and "book unavailable: refund by default" confirm Q45 and Q65; a proposed
 "warning at 3, suspension at 5" rule was considered and D-21 was kept unchanged.
 

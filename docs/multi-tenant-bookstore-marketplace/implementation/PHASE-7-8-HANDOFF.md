@@ -9,11 +9,11 @@ live-payment authority.
 
 **Start prompt for a fresh session (the owner pastes it):** "Read AGENTS.md, then
 docs/multi-tenant-bookstore-marketplace/implementation/PHASE-7-8-HANDOFF.md in full, then
-follow its §1 reading order. Until the handoff §10 recording step (step 3) is done, Phase 9 is still the active
+follow its §1 reading order. Until the handoff §10 recording step (step 4) is done, Phase 9 is still the active
 phase in ACTIVE.md; the Phase 7/8 lane is approved (handoff §3) but has only the authority
 stated in §10. State the phase, active work unit, next authorized action, blockers, and
 database-mutation authority back to me before acting. I will tell you in the same message
-whether day 1 is today; if I do not, do only steps 1-2 of §10, report, and wait."
+whether day 1 is today; if I do not, do only step 3 of §10, report, and wait."
 
 This document carries everything settled in the 2026-10-16 to 2026-11-07 planning
 conversations that is not already in the decision register. A new session in a fresh
@@ -26,7 +26,7 @@ memory are not available there.
 
 1. [AGENTS.md](../../../AGENTS.md): repository rules and authorization boundaries.
 2. [ACTIVE.md](./ACTIVE.md) and [DOC-13](../DOC-13-implementation-tracker.md): global status.
-   Until the §3 approvals are recorded in DOC-13 and ACTIVE.md (§10 step 3), Phase 9
+   Until the §3 approvals are recorded in DOC-13 and ACTIVE.md (§10 step 4), Phase 9
    remains the only active phase and Phases 7 and 8 stay `deferred` (register Q120).
 3. **This document.**
 4. [Decision register](./PHASE-7-8-decision-register.md): the owner's business decisions
@@ -40,13 +40,15 @@ memory are not available there.
    Their goals and scopes predate the decisions (see §9).
 9. Root specifications, read in full during the documentation pass: DOC-0, 1, 2, 5, 6, 7, 8,
    9, 10, 12, 14, 15, 16 (all appear in the §9 conflict map).
+10. [Phase 6 pay-first impact check](./PHASE-7-8-phase6-impact-check.md) (2026-11-08, read-only)
+    and §9 "Photo-request rework": stage 0 findings made before day 1.
 
 ## 2. Where things stand (2026-11-07)
 
 - **Owner approvals:** all seven §3 items approved on 2026-11-07.
 
 - **Business decisions:** recorded in the register; D-01 to D-25 were taken on
-  2026-11-07, D-26 to D-41 on 2026-11-08, and D-42 to D-45 on 2026-11-09. Remaining open items are in register §10: pilot stores and dates, bike-provider
+  2026-11-07, D-26 to D-41 on 2026-11-08, and D-42 to D-46 on 2026-11-09. Remaining open items are in register §10: pilot stores and dates, bike-provider
   choice, support staffing, P-4, offline stock sync, and the CA and lawyer items. The 12 review owner questions were answered on 2026-11-08 (D-26 to D-37), and four final-read questions the same day (D-38 to D-41).
 - **Provider facts:** several Cashfree and delivery facts are unconfirmed (register §9).
   SDDs must treat them as settings or as both-branch designs, never as fixed rules.
@@ -80,7 +82,7 @@ arbitrates any conflict.
 
 ## 4. Timeline (D-01, Option A)
 
-Day 1 is the date the §3 approvals are recorded in DOC-13 and ACTIVE.md (§10 step 3), not
+Day 1 is the date the §3 approvals are recorded in DOC-13 and ACTIVE.md (§10 step 4), not
 the date they were given; week 1 starts on day 1. "Done" means working with Cashfree test
 money, not live.
 
@@ -96,6 +98,13 @@ money, not live.
 Milestones (one plan): payments and pickup in test mode by the end of week 4 (D-01); bike
 delivery by about week 5.5–6 (D-01); integrated acceptance in weeks 6–7, so about 6 weeks,
 possibly 7 (admin proposal §5).
+
+**Schedule rules (D-46, 2026-11-09):** the SDD set is written and reviewed before day 1
+(§10 step 1), so the "SDDs written and reviewed" part of weeks 1–2 is mostly done before
+the clock starts and weeks 1–2 go to root-document updates, the rest of stage 0, and
+slice 1. The working week is Monday to Saturday (24 working days in 4 weeks). If week 4 is
+at risk, the owner and Claude decide at that time what to cut or move. Still open: how much
+owner time the running Phase 9 lane takes in these weeks (affects review speed).
 
 **Checkpoints where the estimate is re-stated to the owner:** after the Phase 6 impact
 check (week 1) and after SDD approval (end of week 2).
@@ -346,7 +355,8 @@ billing; test or sandbox access.
 
 ## 8. Stage 0 checks (week 1, read-only unless authorized)
 
-1. Phase 6 pay-first impact: which states, tables, screens, and tests change (sizes the
+1. Phase 6 pay-first impact (done early on 2026-11-08: [impact check](./PHASE-7-8-phase6-impact-check.md),
+   about 3.5–4.5 working days of rework; re-confirm on day 1): which states, tables, screens, and tests change (sizes the
    rework; first timeline checkpoint).
 2. Store hours: data quality of `operating_hours`/`special_hours`, holiday handling,
    timezone.
@@ -414,7 +424,7 @@ pilot by D-24).
 | DOC-13 | ~1830 | Global Blocker: "Payment provider not selected." | Cashfree selected (Q4) |
 | Phase 8 tracker | 5, 84 | Pickup before third-party delivery; pickup as the proof point before aggregator integration | Pickup and bike delivery launch together (Q26, P-5, D-24) |
 | Phase 10 tracker | 21 | Shiprocket/Shipmozo/NimbusPost adapter, weight disputes | Pilot local bike-delivery adapter (D-24); courier scope deferred |
-| DOC-13 | ~1822 | Phase 10 row: "Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators" | D-24 local bike-delivery adapter; change it in the same edit that adds "resumed" (§10 step 3) |
+| DOC-13 | ~1822 | Phase 10 row: "Provider adapter for Shiprocket/Shipmozo/NimbusPost-style aggregators" | D-24 local bike-delivery adapter; change it in the same edit that adds "resumed" (§10 step 4) |
 | Research brief | 26, 167, 213 | Orders must finish within about 45 days; six-month refund window; eligibility date = pickup + return window | Mark the 45-day and refund-window claims withdrawn or UNVERIFIED (register §9, §12); eligibility per Q50a, Q50b, P-3, D-28 |
 
 The documentation pass must still read each root document in full and record any further
@@ -467,7 +477,7 @@ Fix plan (Phase 9 lane owns the code; this lane does not edit Phase 9 files):
 
 ## 10. Next authorized action and day-1 steps
 
-**Approvals:** given 2026-11-07 (§3). Recording them in DOC-13 and ACTIVE.md (step 3)
+**Approvals:** given 2026-11-07 (§3). Recording them in DOC-13 and ACTIVE.md (step 4)
 starts the documentation pass and read-only stage 0 work. Product code, migration files,
 and dev database changes follow D-33: code per slice once its SDD and test list are
 approved, and a standing authorization for test-mode migrations on the dev project for
@@ -475,12 +485,21 @@ approved slices; live payments stay gated by BC-43.
 
 Steps, in the order they happen:
 
-1. **Owner:** chooses the route to `origin/main` for the planning files; Claude prepares the
-   commit or pull request only when the owner asks (AGENTS.md).
-2. **Owner, or Claude on request:** create the fresh folder from the latest `origin/main`
-   (D-03), then confirm these files exist there: the handoff, decision register, admin
-   proposal, question bank, and research brief. If any is missing, stop and tell the owner.
-3. **Claude, when the owner says day 1 is today, in the fresh folder:** record the
+1. **Before the fresh folder (D-46), Claude in the docs worktree** (branch
+   `docs/phase7-8-planning`, folder `Bookconnect-p78-docs`, never the Phase 9 working folder):
+   create `implementation/phase-7-8-payments-fulfillment/` with `README.md`, `TRACKER.md` (with
+   a "Migration ledger" section: local filename, live version, project ref verified,
+   effects, readback result) and the SDD set (§11); review each SDD per §5; the owner
+   approves each SDD and its test list. Documentation and read-only checks only.
+2. **Owner:** chooses the route to `origin/main` for the planning files and approved SDDs;
+   Claude commits, pushes, or opens a pull request only when the owner asks (AGENTS.md).
+3. **Owner, or Claude on request:** create the fresh folder from the latest `origin/main`
+   (D-03, D-46), then confirm these exist there: the handoff, decision register, admin
+   proposal, question bank, research brief, Phase 6 impact check, and the
+   `phase-7-8-payments-fulfillment/` folder with the approved SDDs. If any is missing, stop
+   and tell the owner. After the merge, the uncommitted copies of these files in the Phase 9
+   working folder are deleted there, or Git will refuse to merge `main` into that branch.
+4. **Claude, when the owner says day 1 is today, in the fresh folder:** record the
    approvals (documentation only):
    - DOC-13: Phase 7, 8, and 10 rows get "resumed <date>: documentation pass and stage 0"
      and a link to this handoff, in the notes column only: keep the status value `deferred`
@@ -499,12 +518,11 @@ Steps, in the order they happen:
      sentence: for this lane, D-33 is the owner's explicit authorization for test-mode
      migrations on the dev project (slice approved, project verified, ledger entry);
      production and live money stay gated by BC-43;
-   - create `implementation/phase-7-8-payments-fulfillment/` with `README.md` and
-     `TRACKER.md`; TRACKER.md has a "Migration ledger" section (local filename, live version,
-     project ref verified, effects, readback result) used for every migration of this lane.
+   - add a dated day-1 entry to `phase-7-8-payments-fulfillment/TRACKER.md` (created in
+     step 1) and use its Migration ledger for every migration of this lane.
    ACTIVE.md and DOC-13 must agree with each other (AGENTS.md stop rule).
-4. **Claude:** start stage 0 (§8) and draft the Cashfree and CA messages for the owner to
-   send (§6).
+5. **Claude:** finish the remaining stage 0 checks (§8), send drafts of any Cashfree, CA,
+   and lawyer messages not yet sent (§6), and start slice 1 under D-33.
 
 ## 11. Planned SDD set and what the SDDs must specify
 
