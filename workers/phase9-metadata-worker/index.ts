@@ -1,4 +1,7 @@
 import { buildAutomaticFence, loadAutomaticEditionFence, MetadataAutomaticRpcError } from '../../supabase/functions/_shared/imageInventory/runtime/metadataAutomaticEditionFence';
+import { observeMetadataRpc } from '../phase9-runtime/metadataRpcLogging';
+import type { MetadataRpcLog } from '../phase9-runtime/metadataRpcLogging';
+import type { MetadataRpcClient } from '../../supabase/functions/_shared/imageInventory/runtime/metadataJobContext';
 import { recoverAutomaticMetadata } from '../../supabase/functions/_shared/imageInventory/runtime/metadataAutomaticExecution';
 import { legacyAutomaticRetry } from './legacyAutomaticRetry';
 import { editionProviderRoute, hasPersistedEvidence } from './editionProviderRoute';
@@ -48,6 +51,8 @@ export type MetadataWorkerDependencies = Readonly<{
   installed?: ReadonlyMap<string, ProviderDescriptor>;
   // Trusted composition port; production bootstrap installs the M68 RPC implementation.
   editionOptionsBoundary?: MetadataEditionOptionsBoundary;
+  editionOptionsBoundaryFactory?: (client: MetadataRpcClient) => MetadataEditionOptionsBoundary;
+  rpcLog?: MetadataRpcLog;
   // Unit B: worker-server contact map (contactId -> contact) for identifying
   // provider User-Agent values. Never logged, persisted or returned.
   providerContacts: Readonly<Record<string, string>>;
@@ -538,6 +543,7 @@ async function processRoutedClaim(
     // Resolver-selected policy: current on fresh routes, M94 lookup policy on resumes.
     selectedPolicyVersion:
       route.policyVersions[providerManifestKey(capability.adapterKey, capability.adapterVersion)],
+    explicitRegistry: registry,
     automatic: automaticRead !== null && automaticFence !== null ? {
       read: automaticRead, fence: automaticFence, descriptor: route.primary, installed: boundInstalled, legacyRetry,
       policy: selectedRow?.protectionPolicy ?? null,
@@ -765,7 +771,8 @@ async function claimMetadataJobs(
   batchSize: number,
   dependencies: MetadataWorkerDependencies,
 ): Promise<readonly MetadataClaim[]> {
-  const claimed = await dependencies.serviceClient.rpc('claim_phase9_metadata_jobs', {
+  const client = observeMetadataRpc(dependencies.serviceClient, { jobId: null, attempt: null }, dependencies.rpcLog);
+  const claimed = await client.rpc('claim_phase9_metadata_jobs', {
     p_batch_size: batchSize,p_worker: dependencies.workerId,
   });
   if (claimed.error || !Array.isArray(claimed.data)
@@ -785,8 +792,13 @@ export async function runMetadataWorkerBatch(
   let claimFailure: unknown;
 
   const launch = (claim: MetadataClaim, resultIndex: number) => {
+    const serviceClient = observeMetadataRpc(dependencies.serviceClient,
+      { jobId: claim.id, attempt: claim.attempt_count }, dependencies.rpcLog);
+    const claimDependencies = { ...dependencies, serviceClient,
+      editionOptionsBoundary: dependencies.editionOptionsBoundaryFactory?.(serviceClient)
+        ?? dependencies.editionOptionsBoundary };
     let task: Promise<void>;
-    task = processMetadataClaim(claim, dependencies)
+    task = processMetadataClaim(claim, claimDependencies)
       .then((result) => { results[resultIndex] = result; })
       .finally(() => { active.delete(task); });
     active.add(task);

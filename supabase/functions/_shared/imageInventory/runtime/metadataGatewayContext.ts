@@ -52,6 +52,8 @@ export type MetadataGatewayConfiguration = Readonly<{
   // including resumed historical identity. The legacy context policy lookup by
   // key cannot see history, so routed calls carry it explicitly.
   selectedPolicyVersion?: number;
+  // Verified service registry read, separate from transport availability and context's seven-key policies.
+  explicitRegistry?: import('../metadata/providerDescriptor').RegistrySnapshot;
   // 02c §§4.3/5.1: immutable M94 read and elected binding, never context-v2 extensions.
   automatic?: Readonly<{
     fence: import('./metadataAutomaticEditionFence').AutoFence;

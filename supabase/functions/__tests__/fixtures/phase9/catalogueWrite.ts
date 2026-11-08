@@ -125,8 +125,9 @@ export function catalogueWriteWorkerFixture(loseResponse = false, corrupt?: (com
     }
     return fixture.dependencies.serviceClient.rpc(name,parameters);
   };
-  const dependencies = {...fixture.dependencies,serviceClient:{rpc},primary,editionFallback:adapter,
-    editionOptionsBoundary:createMetadataEditionOptionsBoundary({rpc})};
+  const guardedRpc = fixture.admissions.wrap(rpc);
+  const dependencies = {...fixture.dependencies,serviceClient:{rpc:guardedRpc},primary,editionFallback:adapter,
+    editionOptionsBoundary:createMetadataEditionOptionsBoundary({rpc:guardedRpc})};
   return { fixture,adapter,boundary:dependencies.editionOptionsBoundary,urls,completions,recoveries,recoveryControls,committedReceipt:() => receipt,
     run:() => runMetadataWorkerBatch(1,dependencies) };
 }

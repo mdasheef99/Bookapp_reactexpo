@@ -7,6 +7,9 @@ import { requestFromMetadataContext, SupabaseMetadataProductionGateway }
 import type { MetadataGatewayConfiguration } from '../_shared/imageInventory/runtime/metadataGatewayContext';
 import * as catalogueContract from '../_shared/imageInventory/contracts/catalogueWrite';
 import { catalogueCacheWorkerFixture, cacheReuseRpc, cacheVersions } from './fixtures/phase9/catalogueCache';
+import { createdFixtures } from './fixtures/phase9/editionOptionsWorker';
+import { providerConfigurationRow, providerConfigurationSnapshot } from './fixtures/phase9/providerConfiguration';
+import { parseProviderConfigurationSnapshot } from '../_shared/imageInventory/runtime/providerConfiguration';
 
 beforeAll(() => {
   if (!globalThis.crypto?.randomUUID) Object.defineProperty(globalThis, 'crypto', {
@@ -14,6 +17,12 @@ beforeAll(() => {
   });
 });
 afterEach(() => jest.restoreAllMocks());
+afterEach(() => {
+  for (const fixture of createdFixtures.splice(0)) {
+    expect(fixture.admissions.unknownBindingCount()).toBe(0);
+  }
+});
+
 
 type Fixture = ReturnType<typeof catalogueCacheWorkerFixture>;
 const recoverRpc = 'phase9_recover_candidate_edition_options_v1';
@@ -171,6 +180,20 @@ test.each(versionDrift)('#5: changed %s reaches the RPC in exactly the nine-key 
   } else if (field === 'companionVersion') {
     restoreCompanion = jest.replaceProperty(catalogueContract, 'CATALOGUE_WRITE_VERSION',
       value as typeof catalogueContract.CATALOGUE_WRITE_VERSION).restore;
+  } else if (field === 'adapterVersion' || field === 'adapterKey') {
+    Object.assign(changes, { [field]: value });
+    // Admission identifies the elected provider by key/version; the drift case must
+    // carry matching registry evidence (NULL policy = positive legacy control).
+    const key = field === 'adapterKey' ? 'google_books' : cacheVersions.adapterKey;
+    const version = field === 'adapterVersion' ? String(value) : cacheVersions.adapterVersion;
+    const template = providerConfigurationRow(key, cacheVersions.adapterVersion);
+    const contract = (template as any).versionContracts?.[cacheVersions.adapterVersion];
+    changes.explicitRegistry = parseProviderConfigurationSnapshot(providerConfigurationSnapshot([
+      providerConfigurationRow(key, version, { acceptedAdapterVersions: [version],
+        versionContracts: { [version]: contract } }),
+    ]));
+    // Keep the shared fake's admission registry consistent with the elected evidence.
+    f.base.admissions.registry(changes.explicitRegistry);
   } else Object.assign(changes, { [field]: value });
   try {
     expect(await direct(f, changes)()).toEqual({ outcome: 'edition_options_available' });

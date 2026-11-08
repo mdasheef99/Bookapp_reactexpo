@@ -26,8 +26,8 @@ export const m93ClaimReceipt = (claims: ReadonlyArray<{
   id: claim.id, attempt_count: claim.attemptCount, lease_token: claim.leaseToken,
 }));
 export const m93BeginReceipt = () => ({ status: 'started', round: 0 });
-export const m93ReserveReceipt = () => ({
-  status: 'reserved', slots: TEST_ONLY_PROTECTION_POLICY.storeMaxGets,
+export const m93ReserveReceipt = (slots: 1 | 6 = 1) => ({
+  status: 'reserved', slots,
 });
 export const m93FinishReceipt = () => ({ status: 'finalized', round: 0 });
 export const m93ReleaseReceipt = () => ({ status: 'released' });
@@ -210,7 +210,7 @@ export function automaticDependencies(options: {
       headers: { 'content-type': 'application/json', 'x-request-id': 'golden-google-automatic-request' },
     });
   });
-  const dependencies = { ...fixture.dependencies, ...production, serviceClient: { rpc } };
+  const dependencies = { ...fixture.dependencies, ...production, serviceClient: { rpc: fixture.admissions.wrap(rpc) } };
   return { fixture, dependencies, command: () => command, receipt: () => command === null ? null : completedReceipt(command),
     gets: () => gets, run: () => runMetadataWorkerBatch(1, dependencies) };
 }

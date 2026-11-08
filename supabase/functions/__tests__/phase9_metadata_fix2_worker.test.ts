@@ -5,10 +5,17 @@ import { OpenLibraryEditionOptionsAdapter } from '../_shared/imageInventory/meta
 import { createInstalledDescriptorManifest } from '../../../workers/phase9-metadata-worker/bootstrap';
 import { runMetadataWorkerBatch } from '../../../workers/phase9-metadata-worker';
 import { GOOGLE_BOOKS_CAPABILITY } from '../_shared/imageInventory/metadata/googleBooks';
-import { editionWorkerFixture } from './fixtures/phase9/editionOptionsWorker';
+import { editionWorkerFixture, createdFixtures } from './fixtures/phase9/editionOptionsWorker';
 import { providerConfigurationRow, providerConfigurationSnapshot } from './fixtures/phase9/providerConfiguration';
 import { TEST_ONLY_PROTECTION_POLICY } from './support/providerProtection';
 import { installedManifest } from './support/providerModules';
+
+afterEach(() => {
+  for (const fixture of createdFixtures.splice(0)) {
+    expect(fixture.admissions.unknownBindingCount()).toBe(0);
+  }
+});
+
 
 const OL_V1 = {
   adapterKey: 'open_library', adapterVersion: '1.0.0', enabled: true,
@@ -42,7 +49,7 @@ describe('Phase 9 fix2 G1: worker protection state is provider-scoped', () => {
       providerConfigurationRow('google_books', '1.0.0', DISABLED_GOOGLE),
       providerConfigurationRow('open_library', '1.0.0', {
         explicitSearchAllowed: true, explicitRole: 'primary', explicitOrder: 1,
-        protectionPolicy: TEST_ONLY_PROTECTION_POLICY,
+        protectionPolicy: { ...TEST_ONLY_PROTECTION_POLICY, storeMaxGets: 20 },
       }),
     ];
     const baseRpc = fixture.dependencies.serviceClient.rpc;
@@ -53,7 +60,7 @@ describe('Phase 9 fix2 G1: worker protection state is provider-scoped', () => {
       return baseRpc(name, parameters);
     };
     const dependencies = {
-      ...fixture.dependencies, serviceClient: { rpc },
+      ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(rpc) },
       primary: null, primaryCapability: null,
       editionFallback: library, installed,
     };
@@ -67,7 +74,7 @@ describe('Phase 9 fix2 G1: worker protection state is provider-scoped', () => {
       providerConfigurationRow('google_books', '1.0.0', DISABLED_GOOGLE),
       providerConfigurationRow('open_library', '2.0.0', {
         explicitSearchAllowed: true, explicitRole: 'primary', explicitOrder: 1,
-        protectionPolicy: TEST_ONLY_PROTECTION_POLICY,
+        protectionPolicy: { ...TEST_ONLY_PROTECTION_POLICY, storeMaxGets: 20 },
       }),
     ];
     fixture.requeue({ providerPolicies: [OL_V2] });
@@ -101,7 +108,7 @@ describe('Phase 9 fix2 H6: explicit Google retention through the worker', () => 
       return baseRpc(name, parameters);
     };
     const result = await runMetadataWorkerBatch(1, {
-      ...fixture.dependencies, serviceClient: { rpc },
+      ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(rpc) },
       primary: fixture.adapter, primaryCapability: GOOGLE_BOOKS_CAPABILITY,
       editionFallback: library, installed,
     });
@@ -183,7 +190,7 @@ describe('Phase 9 fix2 H5: bindExecution refuses a live adapter at a different v
       return baseRpc(name, parameters);
     };
     const result = await runMetadataWorkerBatch(1, {
-      ...fixture.dependencies, serviceClient: { rpc },
+      ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(rpc) },
       primary: live as never,
       primaryCapability: { ...GOOGLE_BOOKS_CAPABILITY, adapterVersion: '2.0.0' },
       editionFallback: null as never, installed,

@@ -7,11 +7,6 @@ import type {
     StoreDashboardData,
 } from '../types';
 
-type InventoryCountRow = {
-    visibility_status: string;
-    quantity_available: number;
-};
-
 type EntitlementRow = {
     feature_key: string;
     limit_value: number | null;
@@ -45,10 +40,8 @@ const ENTITLEMENT_KEYS = ['inventory_item_limit', 'monthly_image_extraction_limi
 
 export const storeDashboardService = {
     async getDashboardData(storeId: string): Promise<StoreDashboardData> {
-        const { data: inventoryRows, error: inventoryError } = await supabase
-            .from('store_inventory')
-            .select('visibility_status, quantity_available')
-            .eq('store_id', storeId);
+        const { data: inventoryCounts, error: inventoryError } = await supabase
+            .rpc('phase9_owner_dashboard_inventory_counts_v1', { p_store_id: storeId });
 
         if (inventoryError) throw inventoryError;
 
@@ -102,7 +95,7 @@ export const storeDashboardService = {
 
         return {
             storeId,
-            inventoryCounts: computeInventoryCounts((inventoryRows ?? []) as InventoryCountRow[]),
+            inventoryCounts: parseDashboardInventoryCounts(inventoryCounts),
             quotaUsage: computeQuotaUsage(
                 (entitlementRows ?? []) as EntitlementRow[],
                 (usageRows ?? []) as UsageCounterRow[],
@@ -118,26 +111,31 @@ export const storeDashboardService = {
     },
 };
 
-function computeInventoryCounts(rows: InventoryCountRow[]): DashboardInventoryCounts {
-    const counts: DashboardInventoryCounts = {
-        total: rows.length,
-        published: 0,
-        draft: 0,
-        paused: 0,
-        lowStock: 0,
-        outOfStock: 0,
-    };
+const DASHBOARD_INVENTORY_COUNT_KEYS =
+    ['total', 'published', 'draft', 'paused', 'lowStock', 'outOfStock'] as const;
 
-    rows.forEach((row) => {
-        const vs = row.visibility_status;
-        if (vs === 'published') counts.published++;
-        else if (vs === 'draft') counts.draft++;
-        else if (vs === 'paused') counts.paused++;
-
-        if (row.quantity_available === 0) counts.outOfStock++;
-        else if (row.quantity_available === 1) counts.lowStock++;
-    });
-
+function parseDashboardInventoryCounts(value: unknown): DashboardInventoryCounts {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+        throw new Error('Invalid dashboard inventory counts.');
+    }
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) {
+        throw new Error('Invalid dashboard inventory counts.');
+    }
+    const record = value as Record<string, unknown>;
+    if (Object.keys(record).length !== DASHBOARD_INVENTORY_COUNT_KEYS.length
+        || !DASHBOARD_INVENTORY_COUNT_KEYS.every(
+            (key) => Object.prototype.hasOwnProperty.call(record, key))) {
+        throw new Error('Invalid dashboard inventory counts.');
+    }
+    const counts = {} as DashboardInventoryCounts;
+    for (const key of DASHBOARD_INVENTORY_COUNT_KEYS) {
+        const count = record[key];
+        if (typeof count !== 'number' || !Number.isSafeInteger(count) || count < 0) {
+            throw new Error('Invalid dashboard inventory counts.');
+        }
+        counts[key] = count;
+    }
     return counts;
 }
 

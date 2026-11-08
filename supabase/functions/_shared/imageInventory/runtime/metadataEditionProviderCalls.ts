@@ -20,6 +20,19 @@ import { canonicalMetadataJson } from './metadataGatewayContext';
 // registration never returns an epoch; server-side fencing stays
 // authoritative, so none is synthesized or required).
 export function createEditionProviderCalls(client:MetadataRpcClient,configuration:MetadataGatewayConfiguration) {
+  const settlements = new Map<string, 'pending' | 'finalized' | 'unsent' | 'unknown'>();
+  // Defect 3: one unresolved registration submission must keep the claim uncertain
+  // forever. Only the exact replay of the SAME identity resolves that submission;
+  // a later successful submission never clears an earlier unresolved one.
+  let unresolvedRegistrationSubmissions = 0;
+  function settled(result: unknown, callId: string, outcome: string, retryable: boolean,
+    status: string, egressStarted: boolean) {
+    const receipt = object(result);
+    if (receipt.provider_call_id !== callId || receipt.status !== status) return;
+    settlements.set(callId, status === 'finalized' ? 'finalized'
+      : status === 'stale_rejected' && !egressStarted && outcome === 'cancelled' && !retryable
+        ? 'unsent' : 'unknown');
+  }
   const claim=metadataClaimParameters({
     jobId:configuration.context.jobId,claimWorker:configuration.worker,
     claimLeaseToken:configuration.context.claimToken,claimAttempt:configuration.context.attempt,
@@ -80,6 +93,7 @@ export function createEditionProviderCalls(client:MetadataRpcClient,configuratio
       result=await metadataGatewayRpc(client,'phase9_finalize_edition_options_provider_call_v1',parameters);
     }
     if (object(result).status==='stale_rejected' && egressStarted) throw new Error('P9_METADATA_STALE_PHYSICAL_CALL');
+    settled(result,callId,outcome,retryable,status,egressStarted);
   }
   // S0: maps the SQL finalization `{provider_call_id, status}` (M92:1189-1192
   // -> M68:439-451; no SQL receiptId field exists or is required) to the
@@ -105,6 +119,7 @@ export function createEditionProviderCalls(client:MetadataRpcClient,configuratio
       || (receipt.status !== status && receipt.status !== 'stale_rejected')) {
       throw new Error('P9_METADATA_STALE_PHYSICAL_CALL');
     }
+    settled(result,callId,outcome,retryable,status,egressStarted);
     return {receiptId:callId};
   }
   async function register(
@@ -128,12 +143,28 @@ export function createEditionProviderCalls(client:MetadataRpcClient,configuratio
       result=object(await metadataGatewayRpc(client,'phase9_register_edition_options_provider_call_v1',parameters));
     } catch(error) {
       // Registration may have committed. Replay exactly once; HTTP never begins on this uncertain path.
-      const recovered=object(await metadataGatewayRpc(client,'phase9_register_edition_options_provider_call_v1',parameters));
-      if (recovered.status==='registered') await finalize(text(recovered.provider_call_id),'cancelled',false,'stale_rejected',false);
+      let recovered;
+      try {
+        recovered=object(await metadataGatewayRpc(client,'phase9_register_edition_options_provider_call_v1',parameters));
+      } catch(replayError) {
+        unresolvedRegistrationSubmissions+=1;
+        throw replayError;
+      }
+      if (recovered.status==='registered') {
+        const recoveredId = text(recovered.provider_call_id);
+        settlements.set(recoveredId,'pending');
+        await finalize(recoveredId,'cancelled',false,'stale_rejected',false);
+      } else {
+        unresolvedRegistrationSubmissions+=1;
+      }
       throw error;
     }
-    if (result.status!=='registered') throw new Error('P9_METADATA_STALE_PHYSICAL_CALL');
+    if (result.status!=='registered') {
+      unresolvedRegistrationSubmissions+=1;
+      throw new Error('P9_METADATA_STALE_PHYSICAL_CALL');
+    }
     const id=text(result.provider_call_id);
+    settlements.set(id,'pending');
     try {await fresh(binding);}
     catch(error) {
       await finalize(id,'cancelled',false,'stale_rejected',false);
@@ -142,6 +173,10 @@ export function createEditionProviderCalls(client:MetadataRpcClient,configuratio
     return id;
   }
   return {
+    onlyProvenUnsent() {
+      return unresolvedRegistrationSubmissions === 0 && [...settlements.values()].includes('unsent')
+        && [...settlements.values()].every(status => status === 'unsent' || status === 'finalized');
+    },
     createHooks(lookupId:string,attemptId:string):EditionHttpHooks {
       const calls=new Map<number,string>();
       return {

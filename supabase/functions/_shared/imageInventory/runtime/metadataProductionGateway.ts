@@ -1,4 +1,6 @@
 import { createEditionProviderCalls } from './metadataEditionProviderCalls';
+import { createExplicitRound } from './metadataExplicitRound';
+import { editionOptionsFence } from './metadataEditionOptionsBoundary';
 import { executeAutomaticMetadata, registerAutomaticSingleCall } from './metadataAutomaticExecution';
 import { randomUUID } from 'node:crypto';
 import {
@@ -71,6 +73,8 @@ export class SupabaseMetadataProductionGateway implements MetadataProductionGate
     this.editionOptions = configuration.editionOptions ? {
       ...configuration.editionOptions,
       cacheVersions: () => buildEditionOptionsCacheVersions(configuration),
+      round: createExplicitRound(client, editionOptionsFence(configuration.context, configuration.worker),
+        configuration.explicitRegistry),
     } : undefined;
     this.editionProviderCalls = configuration.context.purpose === 'edition_options'
       ? createEditionProviderCalls(client,configuration) : undefined;

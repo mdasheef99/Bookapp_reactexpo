@@ -20,7 +20,9 @@ Store Owner gate, onboarding and console basics.
 - Services: `storeOwnerService` (gate reads of `store_administrators` /
   `store_verification_requests`; application via `store-application`),
   `storeProfileService` (direct `stores` reads; updates via `store-profile`),
-  `storeDashboardService` and `storeSubscriptionService` (direct table reads).
+  `storeDashboardService` and `storeSubscriptionService` (direct table reads;
+  the dashboard's inventory counts instead come from the store-scoped RPC
+  `phase9_owner_dashboard_inventory_counts_v1(p_store_id)`).
 - **Shared Owner gate:** `hooks/useStoreOwnerGate.ts`. Image inventory identity,
   the Owner orders screen and nearly every Store Owner console screen (gate,
   onboarding, review status, setup checklist, dashboard, profile, subscription)

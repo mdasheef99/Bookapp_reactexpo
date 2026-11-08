@@ -15,7 +15,7 @@ import {
 } from '../../../workers/phase9-metadata-worker';
 import { createInstalledDescriptorManifest } from '../../../workers/phase9-metadata-worker/bootstrap';
 import { OpenLibraryEditionOptionsAdapter } from '../_shared/imageInventory/metadata/openLibrary/adapter';
-import { editionWorkerFixture, automaticContext } from './fixtures/phase9/editionOptionsWorker';
+import { editionWorkerFixture, automaticContext, createdFixtures } from './fixtures/phase9/editionOptionsWorker';
 import { providerConfigurationRow, providerConfigurationSnapshot } from './fixtures/phase9/providerConfiguration';
 import { automaticDependencies, workerEnvironment } from './support/automaticWorker';
 import { bootstrapOpenLibraryOnly } from './support/providerModules';
@@ -88,6 +88,13 @@ const assertPrivacy = (
   }
   expect(expectedUa).toContain('BookConnect edition lookup (');
 };
+
+
+afterEach(() => {
+  for (const fixture of createdFixtures.splice(0)) {
+    expect(fixture.admissions.unknownBindingCount()).toBe(0);
+  }
+});
 
 describe('Phase 9 Unit B worker-flow privacy (F3)', () => {
   const started: Array<ReturnType<typeof createPhase9WorkerHttpService>> = [];
@@ -221,7 +228,7 @@ describe('Phase 9 Unit B worker-flow privacy (F3)', () => {
     const dependencies = {
       ...fixture.dependencies,
       providerContacts: Object.freeze({ 'explicit-contact': EXPLICIT_FAKE }),
-      serviceClient: { rpc: recordingRpc(rpcCalls, rpc) },
+      serviceClient: { rpc: fixture.admissions.wrap(recordingRpc(rpcCalls, rpc)) },
       primary: null, primaryCapability: null, editionFallback: library, installed,
     };
     const service = createPhase9WorkerHttpService({

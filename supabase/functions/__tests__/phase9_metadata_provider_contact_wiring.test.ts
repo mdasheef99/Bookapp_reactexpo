@@ -9,7 +9,7 @@ import { runMetadataWorkerBatch } from '../../../workers/phase9-metadata-worker'
 import { OpenLibraryEditionOptionsAdapter } from '../_shared/imageInventory/metadata/openLibrary/adapter';
 import { GoogleBooksAdapter } from '../_shared/imageInventory/metadata/googleBooks/adapter';
 import { GOOGLE_BOOKS_CAPABILITY } from '../_shared/imageInventory/metadata/googleBooks';
-import { editionWorkerFixture, automaticContext } from './fixtures/phase9/editionOptionsWorker';
+import { editionWorkerFixture, automaticContext, createdFixtures } from './fixtures/phase9/editionOptionsWorker';
 import { providerConfigurationRow, providerConfigurationSnapshot } from './fixtures/phase9/providerConfiguration';
 import { automaticDependencies, workerEnvironment } from './support/automaticWorker';
 import { bootstrapOpenLibraryOnly } from './support/providerModules';
@@ -56,7 +56,15 @@ const userAgents = (calls: FetchCall[]) =>
     return String(header![1]);
   });
 
-const policyWith = (contactId: string) => ({ ...TEST_ONLY_PROTECTION_POLICY, contactId });
+// Primary + protected secondary both hold slots in the fallback case; keep the
+// fixture store cap above the sum (the admission budget itself stays 1/6).
+const policyWith = (contactId: string) => ({ ...TEST_ONLY_PROTECTION_POLICY, storeMaxGets: 20, contactId });
+afterEach(() => {
+  for (const fixture of createdFixtures.splice(0)) {
+    expect(fixture.admissions.unknownBindingCount()).toBe(0);
+  }
+});
+
 
 describe('Phase 9 Unit B worker-level contact wiring (F5)', () => {
   it('explicit OL v1 primary sends its own mapped value', async () => {
@@ -84,7 +92,7 @@ describe('Phase 9 Unit B worker-level contact wiring (F5)', () => {
       return baseRpc(name, parameters);
     };
     const result = await runMetadataWorkerBatch(1, {
-      ...fixture.dependencies, serviceClient: { rpc },
+      ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(rpc) },
       providerContacts: CONTACTS,
       primary: null, primaryCapability: null, editionFallback: library, installed,
     });
@@ -171,7 +179,7 @@ describe('Phase 9 Unit B worker-level contact wiring (F5)', () => {
       return baseRpc(name, parameters);
     };
     const result = await runMetadataWorkerBatch(1, {
-      ...fixture.dependencies, serviceClient: { rpc },
+      ...fixture.dependencies, serviceClient: { rpc: fixture.admissions.wrap(rpc) },
       providerContacts: CONTACTS,
       primary: fixture.adapter, primaryCapability: GOOGLE_BOOKS_CAPABILITY,
       editionFallback: library, installed,

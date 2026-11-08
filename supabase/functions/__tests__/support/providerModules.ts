@@ -2,6 +2,10 @@
 // paths but not every exported symbol (installed manifest, validator). Keep
 // every such name here so the builder can rename it in one place later.
 // These are not Owner decisions.
+import { providerConfigurationRow, providerConfigurationSnapshot } from '../fixtures/phase9/providerConfiguration';
+import { TEST_ONLY_PROTECTION_POLICY, TEST_ONLY_PROVIDER_CONTACTS } from './providerProtection';
+import { parseProviderConfigurationSnapshot } from '../../_shared/imageInventory/runtime/providerConfiguration';
+
 type AnyModule = Record<string, any>;
 
 function load(path: string): AnyModule | null {
@@ -211,7 +215,20 @@ export function descriptorOptionsGateway(
       throw new Error('insufficient_query');
     }
   };
+  // An explicit test registry is the admission authority, independently of the HTTP config.
+  const snapshot = providerConfigurationSnapshot([providerConfigurationRow(descriptor.adapterKey, descriptor.adapterVersion, {
+    automaticLookupAllowed: false, automaticRole: null, automaticOrder: null,
+    explicitSearchAllowed: true, explicitRole: 'primary', explicitOrder: 1,
+    acceptedAdapterVersions: [descriptor.adapterVersion], validationContract, hostPolicyVersion,
+    versionContracts: { [descriptor.adapterVersion]: { validationContract, hostPolicyVersion,
+      capabilityVersion: descriptor.capabilityVersion, normalizerVersion: descriptor.normalizerVersion,
+      payloadSchemaVersion: descriptor.payloadSchemaVersion, lookupSchemaVersion: descriptor.lookupSchemaVersion } },
+    approvedRequestHosts: declaredHosts, approvedBookHosts: declaredHosts, approvedCoverHosts: declaredHosts,
+    protectionPolicy: TEST_ONLY_PROTECTION_POLICY,
+  })]);
+  fixture.admissions.registry(snapshot);
   return fixture.direct({
+    explicitRegistry: parseProviderConfigurationSnapshot(snapshot),
     adapterKey: descriptor.adapterKey, adapterVersion: descriptor.adapterVersion,
     capabilityVersion: descriptor.capabilityVersion,
     normalizerVersion: descriptor.normalizerVersion,
@@ -219,10 +236,10 @@ export function descriptorOptionsGateway(
     primary: descriptor,
     explicitDescriptor: { descriptor, adapter: null, fallbackAdapter: null },
     explicitHttp: {
-      policy: require('./providerProtection').TEST_ONLY_PROTECTION_POLICY,
+      policy: TEST_ONLY_PROTECTION_POLICY,
       // Unit B: fake resolved contact for the fixture contactId. Fake values
       // only; never a real email.
-      providerContact: require('./providerProtection').TEST_ONLY_PROVIDER_CONTACTS['fixture-contact'],
+      providerContact: TEST_ONLY_PROVIDER_CONTACTS['fixture-contact'],
       requestValidator, requestHosts: [...declaredHosts],
       timeoutMs: 1000, maxResponseBytes: 64000,
       retentionPolicyVersion: 1,

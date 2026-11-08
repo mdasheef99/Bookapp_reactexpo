@@ -14,6 +14,8 @@ import { MetadataWorkerEnvironment } from '../phase9-runtime/environment';
 import { MetadataProviderAdapter } from '../../supabase/functions/_shared/imageInventory/metadata/providerAdapter';
 import { ProviderCapabilityDeclaration } from '../../supabase/functions/_shared/imageInventory/metadata/contracts';
 import { createClient } from '@supabase/supabase-js';
+import { createJsonOperationalLogger } from '../phase9-runtime/httpService';
+import type { MetadataRpcFailureEvent, MetadataRpcLog } from '../phase9-runtime/metadataRpcLogging';
 import { handlePhase9MetadataWorker } from './index';
 import { createMetadataEditionOptionsBoundary }
   from '../../supabase/functions/_shared/imageInventory/runtime/metadataEditionOptionsRpc';
@@ -134,17 +136,12 @@ export function createMetadataProductionDependencies(
   });
 }
 
-export function createPhase9MetadataService(environment: MetadataWorkerEnvironment) {
+export function createPhase9MetadataService(environment: MetadataWorkerEnvironment,
+  rpcLog: MetadataRpcLog = createJsonOperationalLogger<MetadataRpcFailureEvent>()) {
   const serviceClient = createClient(environment.supabaseUrl, environment.supabaseServiceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   const dependencies = createMetadataProductionDependencies(environment);
-  const editionOptionsBoundary = createMetadataEditionOptionsBoundary({
-    rpc: async (name, parameters) => {
-      const { data, error } = await serviceClient.rpc(name, parameters);
-      return { data, error };
-    },
-  });
   return (request: Request) => handlePhase9MetadataWorker(request, {
     workerId: environment.workerId,
     workerAuthToken: environment.workerAuthToken,
@@ -157,6 +154,7 @@ export function createPhase9MetadataService(environment: MetadataWorkerEnvironme
     // no fallback to legacy routing hides a manifest failure. Fixture mode
     // carries no manifest and keeps the legacy route for old callers.
     installed: dependencies.installed,
-    editionOptionsBoundary: editionOptionsBoundary,
+    editionOptionsBoundaryFactory: createMetadataEditionOptionsBoundary,
+    rpcLog,
   });
 }
