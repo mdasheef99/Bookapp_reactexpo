@@ -25,5 +25,9 @@
     "../../supabase/functions/_shared/imageInventory/contracts/**/*.ts",
     "../../supabase/functions/_shared/imageInventory/domain/visionPolicy.ts",
     "../../supabase/functions/_shared/imageInventory/runtime/visionAnalysisWorker.ts"
+  ],
+  "exclude": [
+    "../../supabase/functions/_shared/imageInventory/**/__tests__/**",
+    "../../supabase/functions/_shared/imageInventory/**/*.test.ts"
   ]
 }
