@@ -23,5 +23,9 @@
     "../../supabase/functions/_shared/imageInventory/domain/**/*.ts",
     "../../supabase/functions/_shared/imageInventory/metadata/**/*.ts",
     "../../supabase/functions/_shared/imageInventory/runtime/metadata*.ts"
+  ],
+  "exclude": [
+    "../../supabase/functions/_shared/imageInventory/**/__tests__/**",
+    "../../supabase/functions/_shared/imageInventory/**/*.test.ts"
   ]
 }
