@@ -1,6 +1,6 @@
 # Marketplace current state
 
-Recorded state: 2026-11-07. Slice 8 package 8c fix round (defects D1-D6
+Recorded state: 2026-11-08. Slice 8 package 8c fix round (defects D1-D6
 from the post-M97/M98 live dev re-test) is built and committed locally on
 branch `phase9/slice8-providers` (HEAD `0b00441`): Unit 1 M99
 `20261106000099_marketplace_phase9_8c_fix_round.sql` (commit `56b676b`,
@@ -11,9 +11,10 @@ APPLIED to dev `ahntbtktjjmvfosgkmgn` on 2026-11-08, live version `2026110719244
 (commit `c64c2fb`: M93 explicit-round admission + sanitized
 `metadata_rpc_failed` logging), Unit 3 app (commit `0b00441`:
 store-scoped RPC counts, error card with Retry, picker copy,
-`P9_STATE_CONFLICT` lookup message). Nothing is pushed, M99 is
-applied to dev, and the worker is NOT redeployed (live worker is still the 8b
-build `dep-dblielugekts738gov3g`). Evidence in
+`P9_STATE_CONFLICT` lookup message). 2026-11-08: pushed (`main`
+`2584f98`, branch `56e6eb5`, including worker tsconfig test excludes
+`2a1d970`/`56e6eb5` after a failed first build) and the metadata worker is
+deployed (`dep-dbob845g1s2s73en12fg`, live 17:41:31 UTC). Evidence in
 [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-07-8c-fix-round-m99-worker-admission--rpc-logging-app).
 M95-M98 stay applied (live `20261104213313`, `20261104213343`,
 `20261105161532`, `20261105161642`); external admission gate open
@@ -158,13 +159,12 @@ dated evidence belongs in trackers.
   covered: admission/fair-queue path (needs a policy, 8c), inventory commit.
 - Dev-server launch config `.claude/launch.json` (expo web on port 8081)
   was created for this test and is uncommitted.
-- Exact next authorized action: **Owner approval to push the fix-round
-  commits and run the single metadata worker Render deploy**
-  (`srv-d9sqfdvqj5pc73dc66fg`). Not authorized by this file. M99 was
-  applied to dev 2026-11-08 (Owner-approved; live `20261107192440`). After
-  the deploy, each needs its own Owner approval: the dev
-  re-test (explicit Search Books, drain checks 02/05) and the reviewed
-  one-time cleanup of stuck reserved holds. No `db push` (frozen).
+- Exact next authorized action: **Owner approval for the post-deploy dev
+  re-test (explicit Search Books, drain checks 02/05)**. Not authorized by
+  this file. M99 is applied (live `20261107192440`) and the 8c fix-round
+  worker is deployed (`dep-dbob845g1s2s73en12fg`, 2026-11-08). The reviewed
+  one-time cleanup of the 6 stuck reserved holds needs its own Owner
+  approval. No `db push` (frozen).
 - Other gated actions, each needing its own Owner approval (none authorized
   here): setting `PHASE9_PROVIDER_CONTACTS` on Render
   (`{"bookconnect-dev":"<contact>"}`; real address confirmed with the Owner
@@ -201,6 +201,12 @@ dated evidence belongs in trackers.
   `apply_migration`; stored statements equal the committed files. Render
   did not auto-deploy (live deploy still `dep-dblielugekts738gov3g`). No
   Storage write, no data change.
+- 2026-11-08: Owner approved "Apply M99" (applied, live `20261107192440`)
+  and then "Push and deploy" plus "Yes, fix both" (worker tsconfig test
+  excludes). Pushed `main` `2584f98` and the branch `56e6eb5`; metadata
+  worker deployed `dep-dbob845g1s2s73en12fg` (first attempt
+  `dep-dboag1rrjlhs73as85e0` failed at build, nothing changed live). No
+  Storage or data change.
 - Shared database/migration application: **M94 plus the one-row
   `4ffe137d` dead-letter (2026-11-04)**;
   Storage: **none**; deployment: **8b worker `dep-dblielugekts738gov3g`
@@ -243,15 +249,18 @@ operational readback.
   the legacy NULL-policy path with 3 finalized provider calls and 1 usage
   reservation; admissions/automatic runs stayed 0 rows; deployed worker is
   Render commit `3fdc0c44` (slice 7b-2 build, 2026-10-29), not slice 8.
-- Deployed worker: `phase9-metadata-worker` deploy `dep-dblielugekts738gov3g`
-  (commit `6e0df90`, 8b build, live 2026-11-04 12:41:25 UTC; Render env
-  unchanged). Rollback target: `dep-dbhmr07b9u1s73f8qjpg` (`3fdc0c44`, 7b-2).
+- Deployed worker: `phase9-metadata-worker` deploy `dep-dbob845g1s2s73en12fg`
+  (commit `2584f98`, 8c fix-round build, live 2026-11-08 17:41:31 UTC;
+  Render env unchanged). Rollback target: `dep-dblielugekts738gov3g`
+  (`6e0df90`, 8b).
+- Store View lane: live migration `20261108143327` `store_view_slice2_page_v3`
+  is applied to dev but not yet in git (Store View lane to commit it).
 - Latest relevant recorded commit on `main`: closeout `0d240ef`;
   [publication evidence](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#49-slice-7b-2-pushed-deployed-and-live-smoked-whole-slice-terra-review-test-infra-fixes-2026-10-29).
 
 ## Open items, blockers and residual risks
 
-- Blockers: push + metadata worker deploy approval (the one exact next action); Codex/Luna
+- Blockers: dev re-test approval (the one exact next action); Codex/Luna
   out of usage until 2026-11-09 22:06 IST (Qwen3.8 Flash covered the fix
   round); Gemini billing (prepay, restore the key; a free-tier key exposed
   in chat must be rotated, never recorded). Owner decisions pending: the

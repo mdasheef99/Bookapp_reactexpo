@@ -478,3 +478,39 @@ by PUBLIC. Live data: 6 usage reservations are still `reserved` on terminal
 jobs (all 6 reserved rows) - these are the stuck holds for the reviewed
 one-time cleanup; M99 settles only future terminal transitions. Worker not
 redeployed; nothing pushed.
+
+### 2026-11-08: pushed and metadata worker deployed
+
+Owner approved ("Push and deploy"). Pushed the branch (`1b4cdfa..01ad338`)
+and merged it into `main` without a checkout as `b1911a0`
+(`5323e32..b1911a0`); that merge brought in the Store View v2 lane's commits
+already on `main`. First Render deploy `dep-dboag1rrjlhs73as85e0` (commit
+`b1911a0`) **failed at build**: Store View Slice 1b (`b2f599b`) added
+`supabase/functions/_shared/imageInventory/contracts/__tests__/storeViewSummary.test.ts`,
+and both worker tsconfigs include `contracts/**/*.ts`, so `tsc` compiled a
+Jest file without Jest types (TS2304/TS2593). The 8b deploy stayed live.
+Deviation: the merged tree was not built locally before that deploy; the
+build-before-deploy check is now mandatory for this lane.
+
+Fix (Owner: "Yes, fix both"): commits `2a1d970` (metadata worker) and
+`56e6eb5` (vision worker) add an `exclude` for `imageInventory/**/__tests__/**`
+and `**/*.test.ts`. Red: `origin/main` tree with the original tsconfig fails
+with the same TS2304 errors. Green: the exact merge tree (`c146cdc5`) built
+with `tsc` for both workers exit 0; branch builds
+`build:phase9:metadata-worker` and `build:phase9:vision-worker` exit 0.
+Merge `2584f98` pushed to `main` (`b1911a0..2584f98`); branch pushed
+(`01ad338..56e6eb5`).
+
+Deploy `dep-dbob845g1s2s73en12fg` (commit `2584f98`) **live** 2026-11-08
+17:41:31 UTC; runtime log shows `service_started`, no errors (two
+`invocation_denied` 404 `invalid_route` lines are root-path probes). Render
+env unchanged. Rollback target: `dep-dblielugekts738gov3g` (`6e0df90`, 8b).
+No vision worker deploy. No database, Storage or data change in this step.
+
+Store View cross-check (read-only): the three Store View migrations on
+`main` (live `20261102140933`, `20261103140304`, `20261103150536`) redefine
+no function touched by M93-M99, and M93-M99 redefine none of the helpers
+they call. Live migration `20261108143327` `store_view_slice2_page_v3`
+(adds `public.phase9_store_view_page_v3` only) is applied to dev but is not
+in any git ref yet; it belongs to the Store View lane and must be committed
+from that tree.
