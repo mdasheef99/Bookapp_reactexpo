@@ -96,5 +96,28 @@ No Phase 7 implementation or verification has started. Deferred by product decis
 
 ## Handoff Notes
 
+2026-10-16 research input (no status change, no implementation authority): the
+[Cashfree, tax, and compliance research brief](./PHASE-7-research-cashfree-tax-compliance.md)
+records web research on Cashfree Payment Gateway/Easy Split, GST, income-tax TDS on
+e-commerce, RBI PA Directions 2025, and the E-Commerce Rules, plus questions for the CA and
+Cashfree. It is input to the future Phase 7/8 documentation pass, not a source specification.
+
+2026-11-04 research input (no status change, no implementation authority): the
+[Phase 7/8 pre-build question bank](./PHASE-7-8-question-bank.md) merges the 132 open
+planning questions with 30 questions drawn from published marketplace/payments patterns
+(Stripe Connect, Razorpay Route, Modern Treasury, Airbnb, Shopify pickup, PCI SAQ A). No
+question is classified or answered yet; that happens in the documentation pass.
+
+2026-11-07 decision input (no status change, no implementation authority): the
+[Phase 7/8 decision register](./PHASE-7-8-decision-register.md) (v2 draft at the time; see its header for the current version) consolidates the
+owner's business decisions for Phases 7/8 and initial Bengaluru delivery, with proposals
+P-1 to P-6 (current status in the register) and unverified Cashfree facts kept separate.
+
+2026-11-07 handoff (no status change, no implementation authority): the
+[Phase 7/8 handoff and session start](./PHASE-7-8-HANDOFF.md) is the entry point for the
+Phase 7/8 lane. It holds the approvals needed before day 1, timeline, review process,
+Cashfree/CA/lawyer questions, security baseline, stage-0 checks, and known documentation
+conflicts (including this tracker's pre-BC-08 goal and acceptance text). See the register header for its current version and decision range.
+
 Do not begin Phase 7 without separate authorization. Do not enable production payments without
 platform ops refund/reconciliation readiness and the required provider/legal/accounting reviews.
