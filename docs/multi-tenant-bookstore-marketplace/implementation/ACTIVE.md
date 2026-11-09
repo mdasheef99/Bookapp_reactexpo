@@ -1,6 +1,6 @@
 # Marketplace current state
 
-Recorded state: 2026-11-08. Slice 8 package 8c fix round (defects D1-D6
+Recorded state: 2026-11-09. Slice 8 package 8c fix round (defects D1-D6
 from the post-M97/M98 live dev re-test) is built and committed locally on
 branch `phase9/slice8-providers` (HEAD `0b00441`): Unit 1 M99
 `20261106000099_marketplace_phase9_8c_fix_round.sql` (commit `56b676b`,
@@ -159,12 +159,14 @@ dated evidence belongs in trackers.
   covered: admission/fair-queue path (needs a policy, 8c), inventory commit.
 - Dev-server launch config `.claude/launch.json` (expo web on port 8081)
   was created for this test and is uncommitted.
-- Exact next authorized action: **Owner approval for the post-deploy dev
-  re-test (explicit Search Books, drain checks 02/05)**. Not authorized by
-  this file. M99 is applied (live `20261107192440`) and the 8c fix-round
-  worker is deployed (`dep-dbob845g1s2s73en12fg`, 2026-11-08). The reviewed
-  one-time cleanup of the 6 stuck reserved holds needs its own Owner
-  approval. No `db push` (frozen).
+- 2026-11-08/09 post-deploy re-test (explicit Search Books) PASSED on dev
+  after a Render free-instance outage (~18:00-20:03 UTC): 2 jobs
+  `edition_options_available`, 6 finalized `open_library` calls, 2 holds
+  reserved then consumed, no `P9_PROVIDER_RUN_NOT_ADMITTED`; cards clear.
+  [Evidence](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-0809-post-deploy-dev-re-test-explicit-search-books).
+- Exact next authorized action: **Owner approval for the reviewed one-time
+  cleanup of the 6 stuck reserved holds, then drain checks 02/05 (needs
+  pause)**. Not authorized by this file. No `db push` (frozen).
 - Other gated actions, each needing its own Owner approval (none authorized
   here): setting `PHASE9_PROVIDER_CONTACTS` on Render
   (`{"bookconnect-dev":"<contact>"}`; real address confirmed with the Owner
@@ -206,7 +208,9 @@ dated evidence belongs in trackers.
   excludes). Pushed `main` `2584f98` and the branch `56e6eb5`; metadata
   worker deployed `dep-dbob845g1s2s73en12fg` (first attempt
   `dep-dboag1rrjlhs73as85e0` failed at build, nothing changed live). No
-  Storage or data change.
+  Storage or data change. Then "Run the re-test" (Owner Search Books test
+  data only) and "Yes, restart it" (Render restart of the metadata worker,
+  no build, 19:00:32 UTC).
 - Shared database/migration application: **M94 plus the one-row
   `4ffe137d` dead-letter (2026-11-04)**;
   Storage: **none**; deployment: **8b worker `dep-dblielugekts738gov3g`
@@ -260,7 +264,10 @@ operational readback.
 
 ## Open items, blockers and residual risks
 
-- Blockers: dev re-test approval (the one exact next action); Codex/Luna
+- Blockers: stuck-hold cleanup approval (the one exact next action); Render
+  free instances failed to start for ~2 h on 2026-11-08 with no stated
+  cause (watch); undocumented Render deploy `dep-dbmbe461egvs73btn1dg`
+  (2026-11-05) to confirm with the Owner; Codex/Luna
   out of usage until 2026-11-09 22:06 IST (Qwen3.8 Flash covered the fix
   round); Gemini billing (prepay, restore the key; a free-tier key exposed
   in chat must be rotated, never recorded). Owner decisions pending: the

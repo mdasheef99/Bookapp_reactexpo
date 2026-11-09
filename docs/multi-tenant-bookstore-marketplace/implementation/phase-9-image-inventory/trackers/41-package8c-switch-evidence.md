@@ -514,3 +514,43 @@ they call. Live migration `20261108143327` `store_view_slice2_page_v3`
 (adds `public.phase9_store_view_page_v3` only) is applied to dev but is not
 in any git ref yet; it belongs to the Store View lane and must be committed
 from that tree.
+
+### 2026-11-08/09: post-deploy dev re-test (explicit Search Books)
+
+Owner approved ("Run the re-test"); drain checks 02/05 were left out (they
+need a pause, write, and the 6 stuck holds block 02). Baseline 18:23 UTC:
+gate open epoch 6, `google_books` disabled, `open_library` enabled with a
+policy (explicit round path); reservations consumed 214 / released 10 /
+reserved 6.
+
+- Browser (Haiku, Owner signed in): dashboard counts 43/4/39/0, no error
+  card. Search Books on scan session `55ac9844` for "The Dancing Wu Li
+  Masters" and "The Laws of the Spirit World" created jobs `5c9ab7e2`
+  (18:26:58) and `42cba1a5` (18:28:38); the cards showed the stale-card
+  message while the jobs waited.
+- Render outage, not code: from about 18:00 to 20:03 UTC no Phase 9 free
+  service started on wake (metadata, media sanitation, fixture vision,
+  publication all timed out; 120/95 wake dispatches `network_failed`; no
+  CPU, memory or app logs). Dashboard (read by Haiku): free hours 6.45/750,
+  nothing suspended, no event explaining it. Owner-approved "Restart
+  service" (no build) at 19:00:32 UTC did not start an instance either.
+- Recovery 20:03:03 UTC (`service_started`): the 20:02 wake ran
+  (`invocation_accepted`, `claimed: 2`, outcomes
+  `edition_options_available` x2, 15.3 s); a parallel wake got the expected
+  409 `busy`. No `P9_PROVIDER_RUN_NOT_ADMITTED`, no `metadata_rpc_failed`.
+- DB readback: 6 `open_library` provider calls (search, editions, author per
+  job), all `finalized`, `grant_epoch` 6; 2 lookups; reservations consumed
+  216 (+2, settled 20:03:35), reserved 6 (unchanged old holds), released 10.
+- App after recovery (Haiku, read-only, 2026-11-09): both cards show
+  "Needs attention" with no "Edition search failed" or "This book changed"
+  text; BOOK 1 "No edition chosen", BOOK 2 "Edition chosen". The edition
+  list behind "Find or change edition" was not opened.
+- All four workers answer `/health` again (2026-11-09 06:20 UTC, 32-42 s
+  cold start).
+
+Result: the M93 explicit round reserve/settle path works on dev with the
+8c worker. Not covered: drain checks 02/05, the stuck-hold cleanup. Writes:
+none by this session beyond the Render restart; the two jobs are the
+Owner's Search Books test data. Also seen in Render events: an undocumented
+successful deploy `dep-dbmbe461egvs73btn1dg` on 2026-11-05 (not the
+rollback target recorded here; to confirm with the Owner).
