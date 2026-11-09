@@ -183,6 +183,11 @@ the owner's behalf.
 | Delivery provider | API check (below) | Weeks 1–2 | Fall back to a courier aggregator (D-24) |
 | Pilot stores | Five stores, hours, bank and KYC documents | Before live | Blocks live only |
 
+**Ready-to-send versions (2026-11-09):** [Cashfree](./PHASE-7-8-questions-cashfree.md),
+[CA](./PHASE-7-8-questions-ca.md), [lawyer](./PHASE-7-8-questions-lawyer.md). They merge
+§6.1–6.3, the research brief, the question bank and the register, with a source for every
+question. Where they differ from §6.1–6.3, the ready-to-send files win.
+
 **Cashfree account:** the owner creates the test account and requests Easy Split in test
 mode before week 1. Secret keys go only into server secrets, never into chat or the repo.
 
