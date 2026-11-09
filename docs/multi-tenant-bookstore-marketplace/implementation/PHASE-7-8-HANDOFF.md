@@ -259,6 +259,8 @@ mode before week 1. Secret keys go only into server secrets, never into chat or 
 
 ### 6.4 Delivery provider API check (weeks 1–2, D-24)
 
+Ready-to-send questions: [delivery-provider questions](./PHASE-7-8-questions-delivery-provider.md) (2026-11-10).
+
 For Shiprocket Quick, Porter, Borzo, or another provider, confirm in their official
 documentation or with sales: quote by pickup and drop address; booking; status webhooks
 or polling; cancellation and its charge; failed-delivery and return-to-store handling and

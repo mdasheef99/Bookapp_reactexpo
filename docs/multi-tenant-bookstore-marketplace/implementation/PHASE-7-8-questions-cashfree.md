@@ -24,6 +24,9 @@ and each store's share is settled to the store's bank account. BookConnect's own
 payment would be the delivery charge, which we pay on to the delivery provider. We plan to accept UPI and cards only, with no
 cash on delivery, and to use one vendor per order.
 
+**Most urgent** (they shape our design): questions 1, 2, 4, 5a, 6, 7 and 8. Fees (13, 14) can
+follow within a few weeks; going live (20) is needed before launch.
+
 ### Easy Split setup and payout timing
 
 1. Please enable Easy Split for our test account, and later for production, with Split
@@ -34,13 +37,16 @@ cash on delivery, and to use one vendor per order.
 2. We want to hold each store's share until we release it. Our plan is to release it 3 days
    after the store hands the book over, in the next weekly Monday payout. Can the release
    date be set or changed for each order by API after payment (we have seen
-   `settlementEligibilityDateUpdate`)? What happens to a held share when its limit is reached?
+   `settlementEligibilityDateUpdate`)? Your v2 settlement-eligibility API says a date can be
+   set only within the maximum deferral window: what is that window for our account? What
+   happens to a held share when its limit is reached?
 3. Can each store be paid once a week, on Mondays? Which settlement types does our account
    have (instant, standard, on-demand)? Which settlement timelines apply to marketplace
    vendors under the RBI Payment Aggregator Directions, 2025?
 4. Please describe where the customer's money sits between payment and settlement, and who
    holds it. We do not want BookConnect to hold pooled customer money. Is Easy Split suitable
-   for that, given that the delivery-charge part of each payment goes to BookConnect?
+   for that, given that the delivery-charge part of each payment goes to BookConnect? Could
+   the delivery provider instead be added as a vendor, so its share is split to it directly?
 
 ### Store (vendor) onboarding
 
@@ -49,7 +55,9 @@ cash on delivery, and to use one vendor per order.
    enough? How long does activation take, why can it be rejected, and how is a store
    re-verified when it changes its bank details?
 5a. Can we pause one store's settlements at any time (for example during a fraud review or
-   while the store owes us money) and release them later?
+   while the store owes us money) and release them later? If you suspend or freeze a
+   store's vendor account yourselves, how are we told, and what happens to its held money
+   and to refunds on its orders?
 
 ### Refunds
 
@@ -86,9 +94,12 @@ cash on delivery, and to use one vendor per order.
 
 13. What are your fees for each payment method (UPI, cards), the Easy Split fee per split
     (we have seen 0.2% and 0.25%), vendor payouts, refunds (standard and instant) and bank
-    account verification? Is there startup or promotional pricing?
+    account verification? Is there startup or promotional pricing? [We saw an offer of zero
+   fees on the first ₹20 lakh until 31 March 2027: does it apply to our account, and does
+   it cover Easy Split?]
 14. Can the payment fee be reported per transaction (for example through the payment
-    charges webhook), so we can deduct it from that store's share?
+    charges webhook), so we can deduct it from that store's share? How is that webhook
+    enabled for our account?
 
 ### Payments and checkout
 
@@ -125,11 +136,11 @@ Source keys:
 | # | Sources | Decision it affects |
 |---|---|---|
 | 1 | HO 6.1 #1; RB §7 #1, §4.4; REG §9 "Easy Split settlement hold"; QB §0.2 #4 | P-3, D-28 |
-| 2 | HO 6.1 #1; REG P-3, D-28, Q51 | D-28 payout timing |
+| 2 | HO 6.1 #1; REG P-3, D-28, Q51; Cashfree v2 eligibility API page (deferral window) | D-28 payout timing |
 | 3 | RB §7 #6, §3.1, §4.4 (settlement types); REG Q51, P-3 | Q51 Monday payouts |
-| 4 | REG Q3; RB §1 #1 | Q3 no pooled funds |
+| 4 | REG Q3; RB §1 #1; owner research 2026-11-10 (provider as a split recipient) | Q3 no pooled funds, BC-28 |
 | 5 | HO 6.1 #5; RB §7 #3, §4.4 (activation asynchronous); QB Q46; REG BC-41 ("provider KYC rules to verify"); HO §7 (re-verify changed bank details) | store onboarding |
-| 5a | QB E5; REG D-21 (pause at once for suspected fraud or unpaid debt) | D-21 |
+| 5a | QB E5; REG D-21, D-63; coverage review M-8 (vendor suspended by Cashfree) | D-21, D-63 |
 | 6 | HO 6.1 #2; RB §7 #4; RB §5 #9 (`PENDING_APPROVAL`/`ONHOLD`); QB E8, "Still open" (multiple partial refunds) | D-14, D-26, D-39 |
 | 7 | HO 6.1 #3; RB §7 #4; QB E1, E9; REG §9 chargebacks row | D-14 store debt |
 | 8 | QB E2, Q82; sandbox probe 2026-11-09 (refunds `ONHOLD`) | D-08, D-14, D-54 |
@@ -137,8 +148,8 @@ Source keys:
 | 10 | HO 6.1 #9 | refund failure handling |
 | 11 | HO 6.1 #10; QB Q64 | D-27 |
 | 12 | HO 6.1 #4; RB §7 #5; QB E3; HO §11 #6 (chargeback fee treatment, reversal) | D-08, D-14 |
-| 13 | HO 6.1 #7; HO §6 table (fees, week 4); RB §7 #2; QB Q17, §0.2 #28 | D-13, D-27 |
-| 14 | HO 6.1 #8 | D-13 |
+| 13 | HO 6.1 #7; HO §6 table (fees, week 4); RB §7 #2; QB Q17, §0.2 #28; owner research 2026-11-10 (festive offer) | D-13, D-27, D-47 |
+| 14 | HO 6.1 #8; RB (fee webhook needs subscription); coverage review M-9 | D-13 |
 | 15 | HO 6.1 #11 | D-29 |
 | 16 | RB §7 #8; REG Q36, BC-10 (payment still processing at expiry), D-06 | Q36 10-minute reservation |
 | 17 | RB §7 #7, §4.6; QB E27, E28, Q35; HO §7 (hosted checkout, SAQ A) | security baseline |
@@ -158,4 +169,5 @@ Source keys:
 **Left out on purpose:**
 - QB Q47 (who registers the vendor): the research brief already answers it from Cashfree's
   pages (the platform adds vendors by dashboard or API).
-- Delivery-provider questions: these go to the bike provider, not Cashfree (handoff §6.4).
+- Delivery-provider questions: these go to the bike provider
+  ([delivery-provider questions](./PHASE-7-8-questions-delivery-provider.md)).

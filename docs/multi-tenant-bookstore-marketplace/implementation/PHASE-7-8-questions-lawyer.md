@@ -10,7 +10,8 @@ come from owner decisions taken after the first draft (D-38 to D-45). Part B sho
 source.
 
 Related: [Cashfree questions](./PHASE-7-8-questions-cashfree.md) ·
-[CA questions](./PHASE-7-8-questions-ca.md)
+[CA questions](./PHASE-7-8-questions-ca.md) ·
+[Delivery-provider questions](./PHASE-7-8-questions-delivery-provider.md)
 
 ---
 
@@ -65,19 +66,28 @@ independent Bengaluru bookstores sell new and used books.
      is kept and the missing books are refunded.
    - When a delivery fails, or is cancelled after collection, because of the customer, we
      deduct delivery costs. The refund is the amount paid minus the quoted delivery charge
-     minus the actual return-trip cost, never below zero.
+     minus the actual return-trip cost, never below zero. Is this allowed under the 2020
+     E-Commerce Rules' limits on cancellation charges? If a customer misses a return pickup
+     twice, the second failed trip's cost is deducted and the customer must bring the book
+     to the store.
+   - A pickup customer may cancel for a full refund until the store marks the order ready.
+   - If no rider accepts a delivery, it is rebooked for the next day; the customer may
+     cancel for a full refund.
    - A returned book is refunded only after the store inspects it.
    - No change-of-mind returns for new or used books, only for defects, damage, a wrong
      edition, missing pages or misdescription.
    - A 48-hour target for reporting condition problems. This target is not a cutoff on
      legal rights.
-   - A 3-day pickup window; a missed pickup is cancelled and fully refunded.
+   - A 3-day pickup window, counting only days the store is open; a missed pickup is
+     cancelled and fully refunded.
    - Same-day delivery is shown as an estimate ("expected today"), with no compensation if
      late.
 5. Privacy (Digital Personal Data Protection Act, 2023): we share customers' phone numbers
    and addresses with stores, the delivery provider and Cashfree. What must the privacy
    policy say? Must it name Cashfree and the delivery provider as processors? We also hold
-   stores' KYC and bank details: what must we tell stores about that data?
+   stores' KYC and bank details: what must we tell stores about that data? Our ledger
+   cannot be edited, and we keep evidence photos and finance records: how do these sit with
+   a deletion request, and how long must or may we keep them?
 6. Consumer Protection (E-Commerce) Rules, 2020:
    - Which seller details must we display?
    - May the owner be the grievance officer?
@@ -87,6 +97,8 @@ independent Bengaluru bookstores sell new and used books.
      contact)?
    - Must we obtain a written undertaking from each store that its listings are accurate,
      and which exact clauses of Rules 5 and 6 apply to us and to the stores?
+   - We read that E-Commerce Amendment Rules, 2026 take effect on 1 January 2027. Which of
+     their duties apply to us?
 
 ### Delivery
 
@@ -115,8 +127,9 @@ independent Bengaluru bookstores sell new and used books.
     the order is cancelled with a full refund. Is that fine, and what must the terms say?
 12. **Returns and disputes.** Every return and dispute needs BookConnect admin approval. An
     approved return is refunded after the store's inspection passes; a failed inspection
-    becomes a dispute. Is that consistent with consumer rights? What must the customer terms
-    say?
+    becomes a dispute. If the customer does not hand the book over within 5 days of
+    approval, the return closes without a refund. Is that consistent with consumer rights?
+    What must the customer terms say?
 13. **Store-side clauses.** Should the store agreement contain these?
     - A ban on settling price differences or payments with customers outside BookConnect.
     - A rule that a store may ask for a refund only through BookConnect, never refunding
@@ -137,15 +150,15 @@ Source keys:
 | 1 | HO 6.3 #1; REG Q2; QB §0.3 (seller of record) | Q2 |
 | 2 | HO 6.3 #2; QB E7, Q100, §0.3 (store agreement and recovery clauses); REG D-13, D-14, D-20, D-21, D-23, D-27, Q67; BC-38 ("subject to enforceable terms"), D-09, D-31, D-41 (delivery-cost bullet); Claude's additions: D-15, D-37, D-28 (last two bullets) | store agreement |
 | 3 | HO 6.3 #7, #8; REG D-14, D-21; REG Q3 (IN PRINCIPLE, no pooled customer funds), D-28 | D-14, Q3 |
-| 4 | HO 6.3 #3; REG D-61 (missing books); QB §0.3 (cancellation deductions, customer rights); REG BC-08, Q36, D-04, Q65, D-09, D-39, Q45b, BC-38, D-10, D-12, Q61, Q60, Q71, Q72; D-34 (Claude's addition) | customer terms |
-| 5 | HO 6.3 #5; QB Q99; RB §5 #7; store data is Claude's addition | privacy policy |
-| 6 | HO 6.3 #4; QB Q96, Q97, Q98; RB §3.2 (seller undertakings; "confirm the exact clauses"); REG D-19 | marketplace disclosures |
+| 4 | HO 6.3 #3; REG D-61 (missing books), D-67, D-71, D-73, D-77; owner research 2026-11-10 (cancellation-charge limits); QB §0.3 (cancellation deductions, customer rights); REG BC-08, Q36, D-04, Q65, D-09, D-39, Q45b, BC-38, D-10, D-12, Q61, Q60, Q71, Q72; D-34 (Claude's addition) | customer terms |
+| 5 | HO 6.3 #5; QB Q99; RB §5 #7; store data is Claude's addition; retention vs deletion is coverage review M-17 | privacy policy |
+| 6 | HO 6.3 #4; QB Q96, Q97, Q98; RB §3.2 (seller undertakings; "confirm the exact clauses"); REG D-19; owner research 2026-11-10 (2027 amendment rules) | marketplace disclosures |
 | 7 | HO 6.3 #6; REG BC-28 | BC-28, D-09 |
 | 8 | HO 6.3 #9; HO 6.1 #9; RB §3.1 (original method unless the payer instructs otherwise) | refund failure handling |
 | 9 | REG §9 "Refund window" ("legally compliant, provider-approved alternative") | refund rules |
 | 10 | REG D-44 (added) | D-44 |
 | 11 | REG D-43, D-53 (added) | D-43, D-53 |
-| 12 | REG D-38, D-10 (added) | D-38 |
+| 12 | REG D-38, D-10, D-72 (added) | D-38, D-72 |
 | 13 | REG D-42, D-45 (added) | D-42, D-45 |
 
 **Coverage check:**

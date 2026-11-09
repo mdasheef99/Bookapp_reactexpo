@@ -41,13 +41,19 @@ independent Bengaluru bookstores sell new and used printed books to customers.
    commentary says printed books stayed exempt. One news report said 18%. We found no
    ruling on used books.]
 2. The delivery charge: BookConnect collects the bike-delivery provider's quote from the
-   customer and pays the provider, with no markup. Please cover:
-   - What GST applies?
+   customer and pays the provider, with no markup. [Tax commentary says that from
+   1 November 2026, delivery of goods ordered through an e-commerce operator is taxed at 5%
+   without input tax credit, and the operator is liable when the provider need not register
+   (Notifications 06/2026 and 09/2026-Central Tax (Rate)); we have not read the gazette
+   text.] Please cover:
+   - What GST applies, and are we liable to pay it under those notifications?
    - Is it BookConnect's own supply or a pass-through?
    - What should BookConnect invoice for delivery, and to whom?
    - If a customer causes a failed delivery, we keep the quoted delivery charge and the return
      trip cost out of the refund; if the failure is not the customer's fault, we refund the
-     delivery charge in full. How should each case be invoiced or credited?
+     delivery charge in full. When a delivered book is returned because of the store, we
+     refund the delivery charge and recover it from the store. How should each case be
+     invoiced or credited?
    - Can BookConnect claim input tax credit on the delivery provider's invoice?
    - Do our payments to the delivery provider need income-tax deduction (TDS)?
 3. E-commerce TCS (section 52): does it apply if the books are exempt but the delivery and
@@ -70,7 +76,8 @@ independent Bengaluru bookstores sell new and used printed books to customers.
    - Is the base the book amount only, or does it include delivery?
    - How does the ₹5 lakh exemption for individual or HUF sellers work?
    - When must we deduct: at the split or credit, or at payout?
-   - Do we need a TAN, and which return and certificate forms apply?
+   - Do we need a TAN, and which return and certificate forms apply? [Our research read
+     Forms 140 and 131 under the new Act; please confirm.]
    - Is it acceptable to deduct the tax from the store's Easy Split share?
 
 ### Invoices and receipts
@@ -117,11 +124,11 @@ Source keys:
 | # | Sources | Decision it affects |
 |---|---|---|
 | 1 | HO 6.2 #1; RB §6 #1, §2.1; QB Q87 | tax fields (DOC-15) |
-| 2 | HO 6.2 #2, #7 (delivery part); HO §6 table (GST on delivery, week 5); REG BC-28, BC-22, §10; sub-bullets 4–6 are Claude's additions from REG D-26, D-39 | BC-22, BC-28, D-26, D-39 |
+| 2 | HO 6.2 #2, #7 (delivery part); HO §6 table (GST on delivery, week 5); REG BC-28, BC-22, §10; sub-bullets 4–6 are Claude's additions from REG D-26, D-39, D-70; owner research 2026-11-10 (1 November 2026 notifications) | BC-22, BC-28, D-26, D-39, D-70 |
 | 3 | HO 6.2 #3; RB §6 #2, §2.2 (rate and GSTR-8 marked "confirm"); QB Q88 | registration |
 | 4 | HO 6.2 #4; RB §6 #3, §2.3; QB Q89 | store onboarding |
 | 5 | HO 6.2 #6; RB §6 #5, §2.5; QB Q92, Q94; REG Q6, D-23 | future pricing |
-| 6 | HO 6.2 #5; RB §6 #4, §2.4 (exempt goods: "inference from base"); QB Q90, Q91 | settlement amounts |
+| 6 | HO 6.2 #5; RB §6 #4, §2.4 (exempt goods: "inference from base"); QB Q90, Q91; owner research 2026-11-10 (forms) | settlement amounts |
 | 7 | HO 6.2 #7; RB §6 #6; QB Q93 | receipts |
 | 8 | HO 6.2 #8; REG D-08, D-13, D-14, D-27, D-31, D-41 | ledger design |
 | 9 | HO 6.2 #9; REG D-14 | store debt |

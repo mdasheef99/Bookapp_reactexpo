@@ -175,6 +175,10 @@ no change: the handoff's schedule rules (D-46) right below the timeline already 
   the only list, and it does not clearly ask about reverse pickup from the customer (D-32). A
   short document should be written in week 1.
 
+**Status 2026-11-10:** M-8 and M-9 were added to Cashfree Q5a and Q14, M-17 to lawyer Q5, and
+M-11 became the [delivery-provider questions](./PHASE-7-8-questions-delivery-provider.md).
+M-10 was already asked in CA Q6 (base and timing), so it was a false gap.
+
 **SDD detail (record in handoff §11 when the SDD skeletons are written):**
 - M-12. Production key custody and rotation of the API secret (SDD 09).
 - M-13. Rollback drill for live payments (SDD 09).
