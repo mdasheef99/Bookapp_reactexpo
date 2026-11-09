@@ -71,6 +71,18 @@ What is left is in three groups:
 - O-15 restart after a pause → D-68;
 - O-16 unclear-fault chargebacks → D-69.
 
+**Also decided on 2026-11-10 (D-70 to D-77), from §6:**
+- M-1 → D-70;
+- M-2 → D-71;
+- M-3 → D-72;
+- M-4 → D-73;
+- M-5 → D-74;
+- M-6 → D-75;
+- M-7 → D-76;
+- M-16 → D-77.
+
+D-61 conflicts fixed: register Q65 and its clarification note, and lawyer Q4.
+
 **Still open; each waits on an outside answer:**
 
 | # | Question | Waits on |

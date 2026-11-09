@@ -1,6 +1,6 @@
 # Phase 7/8 Business Decision Register
 
-**Version:** 4 (2026-11-08) — owner decisions D-01 to D-69 recorded; consistency and review passes applied
+**Version:** 4 (2026-11-08) — owner decisions D-01 to D-77 recorded; consistency and review passes applied
 **Base:** owner's "Decision Register" of 05 November 2026 (v1, sources S1–S4 and chat)
 **Status:** `DECIDED` rows are current owner direction. `PROPOSED` rows would need owner
 approval (none at present). This register is not a source specification and grants no implementation,
@@ -95,7 +95,7 @@ N10 → D-08, N14 → D-07.
 | BC-13 | Missing the target triggers follow-up and escalation, not immediate cancellation. The final deadline is D-04. | DECIDED |
 | BC-14 | Orders received at least two hours before closing are prepared the same business day; later orders the next business day. | DECIDED |
 | Q55 | If the store cannot fulfil any of a paid order, the customer gets a full refund. | DECIDED |
-| Q65 | One item unavailable: keep the rest, notify the customer, automatically refund that item's price. | DECIDED |
+| Q65 | One item unavailable: keep the rest, notify the customer, automatically refund that item's price. | DECIDED (amended by D-61: the store calls the customer first and records the outcome in the app) |
 | BC-15 | Retries and delayed provider responses must never cause double charges or double fulfilment. | DECIDED |
 
 ## 4. Delivery
@@ -256,11 +256,19 @@ delivery. Rows below that apply only to a later courier option say so.
 | D-67 | **Pickup cancellation (owner decision, 2026-11-10; Q45):** a pickup customer may cancel for a full refund until the store marks the order ready. After that, an uncollected order is refunded in full at the Q71 deadline (Q72). | DECIDED |
 | D-68 | **Restart after a pause (owner decision, 2026-11-10; QB §0.2 #35, D-55):** only the owner (admin) restarts payments, after reconciliation shows no stuck or mismatched payments; the restart and its reason are logged. | DECIDED |
 | D-69 | **Platform-error and unclear-fault chargebacks (owner decision, 2026-11-10; extends Q68):** BookConnect bears them, counted toward the D-08 monthly loss cap. | DECIDED |
+| D-70 | **Store-fault return of a delivered book (owner decision, 2026-11-10; extends D-26):** the customer is refunded the book price and the forward delivery charge; the store bears that charge and the reverse pickup (BC-34, D-09). | DECIDED |
+| D-71 | **Failed return pickup (owner decision, 2026-11-10; extends D-32):** if the customer is not available for the reverse pickup, one free rebooking is made. If that also fails, the customer must bring the book to the store. The cost of a failed trip the customer caused is deducted from the refund (D-09). | DECIDED |
+| D-72 | **Return never handed over (owner decision, 2026-11-10; extends D-10):** the customer has 5 days from approval to hand the book over (reverse pickup or drop-off), with a reminder on day 4. After that the return closes without a refund and the customer is told in the app. Both numbers are settings. | DECIDED |
+| D-73 | **Pickup window and closed days (owner decision, 2026-11-10; refines Q71):** the three-day pickup window counts only days on which the store is open, per its set hours and closures. The customer sees the actual last pickup date. | DECIDED |
+| D-74 | **Proof of delivery (owner decision, 2026-11-10; Q50b):** use a customer delivery OTP if the provider supports it; otherwise the provider's "delivered" event with time, location and rider photo. A provider offering neither is not chosen (handoff §6.4). | DECIDED |
+| D-75 | **Photo request before payment (owner decision, 2026-11-10; extends D-43):** target reply within 24 of the store's business hours; after that the request expires with an in-app note. The customer may still buy at any time. No penalty for the store. | DECIDED |
+| D-76 | **Drop-out at the delivery price (owner decision, 2026-11-10; D-24, D-36):** track the share of checkouts that see the delivery price and then leave without paying or switching to pickup. The owner reviews it at the end of pilot month 1; no fixed trigger. | DECIDED |
+| D-77 | **No rider available (owner decision, 2026-11-10; D-24, D-17):** if no rider accepts a delivery booking, it is rebooked for the next day and the customer is told in the app. The customer may cancel for a full refund including the delivery charge. Not counted against the store; any extra cost is BookConnect's (D-08). | DECIDED |
 
 Clarifications for the specifications (no owner decision needed):
 
-- Q65 and Q57 do not conflict: automatic partial refunds execute predefined
-  BookConnect-approved rules (D-22); no staff approval is needed for each qualifying case.
+- Q65 and Q57 do not conflict: partial refunds for missing books run automatically once the
+  store records the outcome under D-61 (D-22 rules); no staff approval is needed for each case.
 - BC-12 and BC-14 require reliable store operating hours, closures, holidays, and timezone.
   Hours exist (`operating_hours`, `special_hours`, Store Profile screen); holiday handling
   and data quality are unverified (week-1 check). D-04 uses elapsed hours, so it does not
@@ -299,7 +307,7 @@ Owner decisions still open:
 - Refund balance amount (D-54), after Cashfree question 8.
 
 The 2026-11-10 coverage review ([decision coverage](./PHASE-7-8-decision-coverage.md)) lists
-every question-bank item with its status. Its owner items were decided as D-58 to D-69, except
+every question-bank item with its status. Its owner items were decided as D-58 to D-77, except
 these, which wait on outside answers: the fallback if Cashfree cannot hold store money
 (Cashfree Q1–Q2), web checkout or the native SDK (Cashfree Q17), delivery GST and the refund
 balance amount (above). Before live: production Supabase timing (Q119), the real-money test

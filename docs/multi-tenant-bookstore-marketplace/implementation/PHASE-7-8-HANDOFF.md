@@ -48,7 +48,7 @@ memory are not available there.
 - **Owner approvals:** all seven §3 items approved on 2026-11-07.
 
 - **Business decisions:** recorded in the register; D-01 to D-25 were taken on
-  2026-11-07, D-26 to D-41 on 2026-11-08, D-42 to D-46 on 2026-11-09, and D-47 to D-69 on 2026-11-10. Remaining open items are in register §10: pilot stores and dates, bike-provider
+  2026-11-07, D-26 to D-41 on 2026-11-08, D-42 to D-46 on 2026-11-09, and D-47 to D-77 on 2026-11-10. Remaining open items are in register §10: pilot stores and dates, bike-provider
   choice, support staffing, P-4, offline stock sync, and the CA and lawyer items. The 12 review owner questions were answered on 2026-11-08 (D-26 to D-37), and four final-read questions the same day (D-38 to D-41).
 - **Provider facts:** several Cashfree and delivery facts are unconfirmed (register §9).
   SDDs must treat them as settings or as both-branch designs, never as fixed rules.
@@ -609,3 +609,8 @@ and test plan.
     release (D-63), risk alerts as settings (D-64), cap on book total (D-65), held money in
     the unsettled cap (D-66, settles item 23), pickup cancel until ready (D-67), logged
     restart after reconciliation (D-68), unclear-fault chargebacks (D-69).
+31. D-70 to D-77 (2026-11-10): store-fault return refund including delivery (D-70), one
+    return rebook then drop-off (D-71), 5-day return lapse with day-4 reminder (D-72), pickup
+    window on open days with the shown last date (D-73), proof-of-delivery rule in the
+    provider check (D-74), pre-payment photo request expiry (D-75), drop-out metric (D-76),
+    next-day rebook when no rider accepts (D-77).
