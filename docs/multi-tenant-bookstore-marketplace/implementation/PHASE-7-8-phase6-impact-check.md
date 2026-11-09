@@ -11,9 +11,8 @@ tests against pay-first (BC-08, D-04, D-06, D-15, D-22, D-35); Claude re-read th
 - In `20260716000012`, holds are created at store confirm by `create_bucket_transfer_holds`
   (line ~99); line ~121–122 is the release on rejection.
 
-**Open for SDD 01:** whether paid orders pause during an emergency closure (recommended: no;
-the D-04 24-hour clock runs and unaccepted paid orders are refunded automatically);
-late-payment re-reserve design (D-06); whether paid orders stay in `store_order_requests` or
+**Open for SDD 01:** emergency pause is now settled by D-55 (paid orders continue; the D-04
+clock runs and unaccepted paid orders are refunded automatically); late-payment re-reserve design (D-06); whether paid orders stay in `store_order_requests` or
 move to a separate orders table.
 
 ---

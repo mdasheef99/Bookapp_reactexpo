@@ -108,8 +108,8 @@ independent Bengaluru bookstores sell new and used books.
 11. **Photo check before handover.** If a customer pays while their request for extra photos
     is still open, the store must send the photos within the same 24 hours it has to accept
     the order, or the order is refunded automatically. The order is not handed over until the
-    customer approves or 24 hours pass. If the customer rejects the photos, we refund in full.
-    Is it enforceable to treat silence as approval?
+    customer approves. If the customer rejects the photos, or does not reply within 24 hours,
+    the order is cancelled with a full refund. Is that fine, and what must the terms say?
 12. **Returns and disputes.** Every return and dispute needs BookConnect admin approval. An
     approved return is refunded after the store's inspection passes; a failed inspection
     becomes a dispute. Is that consistent with consumer rights? What must the customer terms
@@ -141,7 +141,7 @@ Source keys:
 | 8 | HO 6.3 #9; HO 6.1 #9; RB §3.1 (original method unless the payer instructs otherwise) | refund failure handling |
 | 9 | REG §9 "Refund window" ("legally compliant, provider-approved alternative") | refund rules |
 | 10 | REG D-44 (added) | D-44 |
-| 11 | REG D-43 (added) | D-43 |
+| 11 | REG D-43, D-53 (added) | D-43, D-53 |
 | 12 | REG D-38, D-10 (added) | D-38 |
 | 13 | REG D-42, D-45 (added) | D-42, D-45 |
 

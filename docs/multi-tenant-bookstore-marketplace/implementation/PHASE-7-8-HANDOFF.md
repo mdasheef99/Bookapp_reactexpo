@@ -48,7 +48,7 @@ memory are not available there.
 - **Owner approvals:** all seven §3 items approved on 2026-11-07.
 
 - **Business decisions:** recorded in the register; D-01 to D-25 were taken on
-  2026-11-07, D-26 to D-41 on 2026-11-08, and D-42 to D-46 on 2026-11-09. Remaining open items are in register §10: pilot stores and dates, bike-provider
+  2026-11-07, D-26 to D-41 on 2026-11-08, D-42 to D-46 on 2026-11-09, and D-47 to D-57 on 2026-11-10. Remaining open items are in register §10: pilot stores and dates, bike-provider
   choice, support staffing, P-4, offline stock sync, and the CA and lawyer items. The 12 review owner questions were answered on 2026-11-08 (D-26 to D-37), and four final-read questions the same day (D-38 to D-41).
 - **Provider facts:** several Cashfree and delivery facts are unconfirmed (register §9).
   SDDs must treat them as settings or as both-branch designs, never as fixed rules.
@@ -594,9 +594,13 @@ and test plan.
 24. D-34 wording when the store is closed the next day ("expected next opening day").
 25. Reliable store-alert channel (D-02) and the interim BC-13 escalation target before the
     admin console exists (for example an owner notice in test mode).
-26. D-43 photo check: order state, both 24-hour timers as settings, auto-continue on silence,
+26. D-43 photo check: order state, both 24-hour timers as settings, cancel and refund on silence (D-53),
     refund and fault on rejection, and the D-34 estimate text.
 27. D-44 pickup refusal (full refund, store fault) and D-45 store-requested refunds (automatic
     up to ₹1,000, store bears the cost): states, ledger entries, and worked examples.
 28. D-42: no off-platform settlement; the store screen offers only "unavailable" (refund),
     never a substitute price.
+29. D-47 to D-57 (2026-11-10): fee deductions per settlement line (D-47), standard refunds
+    (D-48), printed-books-only listing check (D-49), receipt email (D-50), ticket numbers and
+    support email (D-51), pause scope (D-55), ₹5,000 order cap as a setting (D-56), pickup
+    reminder (D-57), and `ONHOLD` refunds with the refund balance (D-54).

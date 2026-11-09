@@ -62,7 +62,9 @@ cash on delivery, and to use one vendor per order.
    refund blocked, does BookConnect's balance pay, or is it recovered from the store's later
    settlements?
 8. Can BookConnect keep a refund reserve or float with Cashfree, to fund refunds and
-   chargebacks when a store's balance is short?
+   chargebacks when a store's balance is short? In sandbox, refunds went `ONHOLD` with
+   "insufficient account balance" right after a paid order: how is refund funding handled on a
+   live account, and how do we top up that balance?
 9. Refund time limit: your API page says six months, the merchant terms say 180 days, and
    the grievance policy says 120 days. Which applies to our account? After that limit, what
    compliant way do you support to refund a customer who is still entitled to a refund?
@@ -130,7 +132,7 @@ Source keys:
 | 5a | QB E5; REG D-21 (pause at once for suspected fraud or unpaid debt) | D-21 |
 | 6 | HO 6.1 #2; RB §7 #4; RB §5 #9 (`PENDING_APPROVAL`/`ONHOLD`); QB E8, "Still open" (multiple partial refunds) | D-14, D-26, D-39 |
 | 7 | HO 6.1 #3; RB §7 #4; QB E1, E9; REG §9 chargebacks row | D-14 store debt |
-| 8 | QB E2, Q82 | D-08, D-14 |
+| 8 | QB E2, Q82; sandbox probe 2026-11-09 (refunds `ONHOLD`) | D-08, D-14, D-54 |
 | 9 | HO 6.1 #6; REG §9 "Refund window"; QB Q69 | refund rules |
 | 10 | HO 6.1 #9 | refund failure handling |
 | 11 | HO 6.1 #10; QB Q64 | D-27 |
