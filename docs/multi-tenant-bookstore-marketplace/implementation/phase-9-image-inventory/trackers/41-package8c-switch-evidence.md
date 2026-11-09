@@ -554,3 +554,49 @@ none by this session beyond the Render restart; the two jobs are the
 Owner's Search Books test data. Also seen in Render events: an undocumented
 successful deploy `dep-dbmbe461egvs73btn1dg` on 2026-11-05 (not the
 rollback target recorded here; to confirm with the Owner).
+
+### 2026-11-09: stuck-hold cleanup and drain checks 02/05 on dev
+
+Owner: "proceed step by step and complete" (dev data free to change).
+
+- Hold cleanup: the 6 `reserved` usage holds (`661687aa`, `db5f3611`,
+  `45a68d02`, `4fa93481`, `c54e3320`, `28c1d21f`, all `open_library`
+  `metadata_lookup`, created 2026-11-06 01:58-02:08) belonged to jobs
+  already `dead_letter` with 0 provider calls and `reserved_cost_units` 0;
+  the table has no triggers. One guarded `UPDATE` (status `reserved`,
+  0 units, job `dead_letter`, no provider calls) set them `released`,
+  `actual_cost_units` 0, returning exactly 6 rows (same treatment as the
+  three August holds on 2026-11-05). Reservations now consumed 216 /
+  released 16 / reserved 0.
+- Pre-check (read-only): gate open epoch 6; 0 active metadata jobs, 0
+  reserved holds, 0 registered/outcome-unknown calls, 0 queued/running
+  runs, 0 open admissions, 0 open lookups, 0 unsettled old-grant jobs at
+  the next epoch, 0 pending wakes. Registry already matches the switch
+  manifest checked by script 05 (`google_books` off; `open_library` 2.0.0
+  primary for explicit and automatic, policy set).
+- Script 01 (pause) as committed: gate `paused`, epoch 7.
+- Script 02 (drain check) as committed with only the quiescence token
+  filled (`CONFIRMED_SINGLE_WORKER_QUIESCENT`; verified above): passed, no
+  `P9_8C_DRAIN_BLOCKED`, sweep committed.
+- Script 05 (resume) as committed with only the smoke token filled: manifest
+  check passed, drain passed, gate `open`, epoch 8.
+
+Not run: scripts 03/04/06 (the dev registry is already switched; the pilot
+switch stays an Owner-timed step). No schema, Storage or Render change.
+
+### 2026-11-09: fix-round review (Muse) and slice 8 closeout
+
+Owner: "use deepseek or muse if luna is not available". DeepSeek built
+Units 2 and 3, so a fresh Muse 1.3 session reviewed them read-only (brief
+checked by a Sonnet stand-in for Sol; report `.claude/8c-fixround-muse-review.md`,
+untracked). Verdict `REVIEW=CLEAN`, no findings, with file:line coverage
+for: D1 admission before any lineage or egress in both executors,
+release before every lease-clearing transition, single replay on transport
+errors only with the frozen fence, RPC argument shapes vs M93; D6 single
+`createClient`, every claim-path RPC through the logging proxy, allowlisted
+log fields only; app counts via the store-scoped RPC with an error card and
+Retry, picker copy, `P9_STATE_CONFLICT` message.
+
+Slice 8 is complete on dev: 8a (M89-M93), 8b (worker, M94) and 8c (M95-M99,
+worker `dep-dbob845g1s2s73en12fg`) are applied, deployed, re-tested and
+drained. Outside the slice: the Owner-timed pilot switch.

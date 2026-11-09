@@ -1,6 +1,10 @@
 # Marketplace current state
 
-Recorded state: 2026-11-09. Slice 8 package 8c fix round (defects D1-D6
+Recorded state: 2026-11-09. **Slice 8 is complete on dev** (8a, 8b, 8c):
+post-deploy re-test passed, the 6 stuck holds were released, drain checks
+01/02/05 passed (gate open, epoch 8) and a fresh Muse review of the fix
+round is CLEAN; only the Owner-timed pilot switch remains outside the
+slice. Slice 8 package 8c fix round (defects D1-D6
 from the post-M97/M98 live dev re-test) is built and committed locally on
 branch `phase9/slice8-providers` (HEAD `0b00441`): Unit 1 M99
 `20261106000099_marketplace_phase9_8c_fix_round.sql` (commit `56b676b`,
@@ -18,8 +22,7 @@ deployed (`dep-dbob845g1s2s73en12fg`, live 17:41:31 UTC). Evidence in
 [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-07-8c-fix-round-m99-worker-admission--rpc-logging-app).
 M95-M98 stay applied (live `20261104213313`, `20261104213343`,
 `20261105161532`, `20261105161642`); external admission gate open
-(epoch 6); stuck reserved usage holds from the earlier failures await a
-reviewed one-time cleanup after the M99 apply. This file is rewritten at
+(epoch 8); no reserved usage holds remain. This file is rewritten at
 session close; dated evidence belongs in trackers.
 Slice 8 package 8b is built (`db5434f..02a0f34`,
 branch `phase9/slice8-providers`), pushed to `main` (`6e0df90`) and deployed to
@@ -40,8 +43,9 @@ dated evidence belongs in trackers.
 - Active slice/work unit: **slice 8, package 8c fix round (D1-D6): Unit 1 M99
   (commits `56b676b`, amended `0b00441`), Unit 2 worker (`c64c2fb`),
   Unit 3 app (`0b00441`) — all committed locally on
-  `phase9/slice8-providers` (HEAD `0b00441`), not pushed; M99 applied to dev 2026-11-08 (live `20261107192440`);
-  worker not redeployed**.
+  `phase9/slice8-providers`, pushed (`main` `2584f98`); M99 applied to dev 2026-11-08 (live `20261107192440`);
+  worker deployed `dep-dbob845g1s2s73en12fg`; slice 8 closed on dev
+  2026-11-09**.
   M95-M98 stay applied 2026-11-05; the 8c operator scripts and the Open
   Library switch still run at the pilot.
   Protection values decided (Owner delegation, 15-store pilot) and recorded
@@ -57,7 +61,10 @@ dated evidence belongs in trackers.
   every automatic claim with no fallback, so M94 had to be applied before the
   8b worker is deployed (release order now satisfied); without it the worker
   fails closed (`stale_claim`, no provider egress).
-- Completed milestone: **8b built, pushed, deployed and live-smoked**
+- Completed milestone: **slice 8 complete on dev (2026-11-09)**: 8c fix
+  round deployed, re-tested, holds cleaned, drain checks passed, review
+  clean (tracker 41).
+- Earlier milestone: **8b built, pushed, deployed and live-smoked**
   (2026-11-04). Final whole-8b review done:
   Luna (two passes), plus DeepSeek and Muse targeted units; fix round 2 committed
   locally; final DeepSeek sweep clean apart from two fail-safe Lows (tracker 40). Record: [tracker 40](phase-9-image-inventory/trackers/40-package8b-worker-evidence.md);
@@ -164,15 +171,18 @@ dated evidence belongs in trackers.
   `edition_options_available`, 6 finalized `open_library` calls, 2 holds
   reserved then consumed, no `P9_PROVIDER_RUN_NOT_ADMITTED`; cards clear.
   [Evidence](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-0809-post-deploy-dev-re-test-explicit-search-books).
-- Exact next authorized action: **Owner approval for the reviewed one-time
-  cleanup of the 6 stuck reserved holds, then drain checks 02/05 (needs
-  pause)**. Not authorized by this file. No `db push` (frozen).
+- 2026-11-09 slice 8 closeout on dev: 6 stuck holds released (guarded
+  update), scripts 01/02/05 passed (gate open epoch 8), Muse fix-round
+  review CLEAN.
+  [Evidence](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-09-stuck-hold-cleanup-and-drain-checks-0205-on-dev).
+- Exact next authorized action: **Owner decision on the next work unit
+  after slice 8 (the 02d parking question)**. Not authorized by this file.
+  No `db push` (frozen).
 - Other gated actions, each needing its own Owner approval (none authorized
-  here): setting `PHASE9_PROVIDER_CONTACTS` on Render
-  (`{"bookconnect-dev":"<contact>"}`; real address confirmed with the Owner
-  at switch time, never in a repo file); running the 8c operator scripts at
-  the pilot (placeholders: contact email, reviewed manifest hash, smoke
-  cohort); 02d prefill.
+  here): the pilot Open Library switch (8c operator scripts 01-05 with
+  placeholders: reviewed manifest hash, smoke cohort; dev is already
+  switched; `PHASE9_PROVIDER_CONTACTS` was set on Render 2026-11-05); 02d
+  prefill.
 
 ## Mutation authority now
 
@@ -264,12 +274,12 @@ operational readback.
 
 ## Open items, blockers and residual risks
 
-- Blockers: stuck-hold cleanup approval (the one exact next action); Render
-  free instances failed to start for ~2 h on 2026-11-08 with no stated
-  cause (watch); undocumented Render deploy `dep-dbmbe461egvs73btn1dg`
-  (2026-11-05) to confirm with the Owner; Codex/Luna
-  out of usage until 2026-11-09 22:06 IST (Qwen3.8 Flash covered the fix
-  round); Gemini billing (prepay, restore the key; a free-tier key exposed
+- Blockers: Owner decision on the next work unit (the one exact next
+  action); Render free instances failed to start for ~2 h on 2026-11-08
+  with no stated cause (watch); undocumented Render deploy
+  `dep-dbmbe461egvs73btn1dg` (2026-11-05) to confirm with the Owner; fix
+  round reviewed by Qwen3.8 Flash and Muse (Owner: Muse/DeepSeek instead
+  of Luna); Gemini billing (prepay, restore the key; a free-tier key exposed
   in chat must be rotated, never recorded). Owner decisions pending: the
   02d parking question and `wip/state-machines-audit` (`bc5a829`,
   unreviewed, not Phase 9). 8c residual
@@ -278,7 +288,7 @@ operational readback.
   every claim to manual, fair queue unused):
   [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#residual-risks).
   Fix-round residuals (admission-fake hardening in ~20 older suites,
-  picker/lookup copy, stuck reserved holds):
+  picker/lookup copy; stuck holds released 2026-11-09):
   [tracker 41 fix round](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-07-8c-fix-round-m99-worker-admission--rpc-logging-app).
 - FIXED in M95 (applied 2026-11-05): pre-8b read-model bug (found in the smoke, not 8b): candidate `ac712fe6`
   (Bleak House) shows "Finding edition…" forever. Its newest lookup is
