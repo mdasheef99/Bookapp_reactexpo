@@ -1,9 +1,9 @@
 # Phase 7/8 Business Decision Register
 
-**Version:** 4 (2026-11-08) — owner decisions D-01 to D-57 recorded; consistency and review passes applied
+**Version:** 4 (2026-11-08) — owner decisions D-01 to D-69 recorded; consistency and review passes applied
 **Base:** owner's "Decision Register" of 05 November 2026 (v1, sources S1–S4 and chat)
-**Status:** `DECIDED` rows are current owner direction. `PROPOSED` rows still need owner
-approval. This register is not a source specification and grants no implementation,
+**Status:** `DECIDED` rows are current owner direction. `PROPOSED` rows would need owner
+approval (none at present). This register is not a source specification and grants no implementation,
 migration, deployment, or live-payment authority.
 **Related:** [handoff and session start](./PHASE-7-8-HANDOFF.md) (read first),
 [question bank](./PHASE-7-8-question-bank.md) (research history),
@@ -137,7 +137,7 @@ delivery. Rows below that apply only to a later courier option say so.
 | BC-34 | Customers never bear delivery or return costs caused by the store or provider; cost follows responsibility. | DECIDED |
 | Q61 | Used books are returnable for genuine misdescription, defects, wrong edition, missing pages, or similar; not for change of mind, subject to legal rights. New books follow the same rule (D-12). | DECIDED |
 | Q60 | 48-hour reporting target for visible condition problems; not a cutoff for legal rights or later-discovered defects. | DECIDED |
-| Q57 | BookConnect controls refund approval and administration; stores do not refund on their own. Approval rules per D-22. | DECIDED |
+| Q57 | BookConnect controls refund approval and administration; stores do not refund on their own. Approval rules per D-22, D-29, D-38, D-40, D-45 and D-61. | DECIDED |
 | Q62 | When the store caused the problem, it bears return delivery and the customer gets a full refund. | DECIDED |
 | BC-35 | Delivery loss/damage: BookConnect handles the customer remedy and pursues the provider; a store that handed over correctly is not penalized. BookConnect absorbs any unrecovered shortfall (N06, D-09), counted toward D-08. | DECIDED |
 | BC-36 | Stores respond to return/dispute cases in the seller dashboard within 24 business hours (D-37). | DECIDED |
@@ -215,7 +215,7 @@ delivery. Rows below that apply only to a later courier option say so.
 | D-26 | **Delivery charge in refunds (owner decision, 2026-11-08; OQ-1):** when a paid order is refunded for a reason that is not the customer's fault and nothing was delivered, the refund includes the delivery charge. When only one of several books is removed (Q65) and the rest are still delivered, only that book's price is refunded; the delivery charge stands. | DECIDED |
 | D-27 | **Cashfree fee on refunded payments (owner decision, 2026-11-08; OQ-2):** by cause. The store bears the non-returned fee when the store caused the refund (unavailable book, wrong item, missed D-04 deadline); otherwise BookConnect bears it, counted toward D-08. Amends DOC-15's platform-borne `gateway_fee_non_refundable_loss`. | DECIDED |
 | D-28 | **Payout timing (owner decision, 2026-11-08; OQ-3):** a store's earned money (Q50a/Q50b) waits 3 days after handover, then joins the next Monday payout (Q51). Changes cash timing only, not entitlement. Subject to Cashfree hold capabilities (register §9). | DECIDED |
-| D-29 | **Automatic refunds and the ₹1,000 rule (owner decision, 2026-11-08; OQ-4):** automatic refund categories (D-22) run at any amount; the admin is alerted afterwards for those above ₹1,000. Duplicate successful payments are refunded automatically (the first verified payment counts). A payment whose amount differs from the order total is not treated as paid: it is refunded in full automatically, the reservation follows Q36/BC-10, and the admin is alerted. The ₹1,000 manual-approval rule applies per refund to returns, disputes, and goodwill refunds only. | DECIDED |
+| D-29 | **Automatic refunds and the ₹1,000 rule (owner decision, 2026-11-08; OQ-4):** automatic refund categories (D-22) run at any amount; the admin is alerted afterwards for those above ₹1,000. Duplicate successful payments are refunded automatically (the first verified payment counts). A payment whose amount differs from the order total is not treated as paid: it is refunded in full automatically, the reservation follows Q36/BC-10, and the admin is alerted. The ₹1,000 manual-approval rule applies per refund to returns, disputes, and goodwill refunds only (returns and disputes: amended by D-38, which requires approval at any amount). | DECIDED |
 | D-30 | **Loss-cap accounting (owner decision, 2026-11-08; OQ-5):** the D-08 month is the India-time calendar month. A loss counts when final (store debt still unpaid 7 days after the D-14 repayment request, provider claim rejected, chargeback lost), net of recoveries. | DECIDED |
 | D-31 | **Bike cancellation fee and bills above the quote (owner decision, 2026-11-08; OQ-6):** the customer never pays more after paying, and a cancellation before collection stays a full refund (Q45). BookConnect absorbs a provider cancellation fee or a bill above the quote up to ₹50 per order; above ₹50, by cause (store if its fault, otherwise BookConnect). Counted toward D-08. Applies D-16's logic to the pilot bike provider. Customer-fault deductions follow D-09 and D-39; D-31 applies only to the part of a forward bill above the quote. Split of the first ₹50: D-41. | DECIDED |
 | D-32 | **Return travel (owner decision, 2026-11-08; OQ-7):** for delivered orders, BookConnect books a reverse bike pickup from the customer through the delivery provider, cost by cause (Q62, BC-34, D-09); the D-10 inspection clock starts when the book reaches the store. For pickup orders, the customer brings the book back to the store. | DECIDED |
@@ -235,7 +235,7 @@ delivery. Rows below that apply only to a later courier option say so.
 | D-46 | **Planning order and schedule rules (owner decision, 2026-11-09):** (1) D-03 reading: the SDD set (handoff §11) is written and reviewed before the fresh folder is created, in the docs worktree on branch `docs/phase7-8-planning`, outside the Phase 9 working folder; the fresh folder starts from approved SDDs. Writing SDDs is documentation only: no DOC-13, ACTIVE.md, or AGENTS.md status changes, no product code, no database or provider writes. (2) The lane's working week is Monday to Saturday (4 weeks = 24 working days). (3) If the week-4 milestone is at risk, the owner and Claude decide at that time what to cut or move; there is no pre-agreed cut list. | DECIDED |
 | D-47 | **Other Cashfree fees (owner decision, 2026-11-10; Q17, Q18):** the store also pays the Easy Split fee, vendor payout fees, and the bank-account verification fee, deducted from its share and shown on its settlement lines, as for the payment fee (D-13). Rates are unverified until Cashfree confirms. | DECIDED |
 | D-48 | **Refund speed (owner decision, 2026-11-10; Q66):** all refunds use Cashfree's standard speed; customers are told 2–3 working days. No instant refunds in the pilot. | DECIDED |
-| D-49 | **Pilot catalogue (owner decision, 2026-11-10; Q27, refines Q30):** only new and used printed books (HSN 4901) may be listed; no stationery or other items. Keeps the pilot to GST-exempt supplies, so stores without GST registration can sell (CA question 4 confirms). | DECIDED |
+| D-49 | **Pilot catalogue (owner decision, 2026-11-10; Q27, refines Q30):** only new and used printed books (HSN 4901) may be listed; no stationery or other items. Keeps the pilot to GST-exempt supplies, so stores without GST registration can sell (CA questions 1 and 4 confirm). | DECIDED |
 | D-50 | **Customer contact and receipts (owner decision, 2026-11-10; Q40, Q41, Q43, Q44):** phone number required (Cashfree requires it); email optional. The receipt is always shown in the app and is also emailed when the customer gave an email; no SMS. Who issues the receipt follows CA question 7. | DECIDED |
 | D-51 | **Customer support channels (owner decision, 2026-11-10; Q102, Q103):** an in-app complaint form that creates a ticket number, plus a support email; no WhatsApp or phone in the pilot. First-reply target: one business day within D-19 hours; the E-Commerce Rules limits (48-hour acknowledgement, resolution within one month) remain the outer limits. | DECIDED |
 | D-52 | **Grievance officer (owner decision, 2026-11-10; Q97):** the owner is the named grievance officer, subject to the lawyer's confirmation (lawyer question 6). | DECIDED |
@@ -244,6 +244,18 @@ delivery. Rows below that apply only to a later courier option say so.
 | D-55 | **Emergency pause (owner decision, 2026-11-10; Phase 6 impact check open item):** a pause of payments, including the D-08 loss-cap pause, blocks only new reservations and payments. Orders already paid continue: stores accept and fulfil, the D-04 24-hour automatic refund still runs, and refunds still go out. | DECIDED |
 | D-56 | **Order limits (owner decision, 2026-11-10; Q31, Q32):** maximum order value ₹5,000 per order in the pilot, stored as a setting. No per-customer order limit (a setting exists but is off). Store limits remain per D-20. | DECIDED |
 | D-57 | **Pickup reminder (owner decision, 2026-11-10; E14):** one reminder 24 hours before the Q71 three-day pickup deadline, in the app and by email when given. | DECIDED |
+| D-58 | **Packaging (owner decision, 2026-11-10; QB §0.2 #17):** stores pay for ordinary packing materials as part of their own cost; nothing is deducted or reimbursed. | DECIDED |
+| D-59 | **Store without Cashfree verification (owner decision, 2026-11-10; Q48):** a store that never completes vendor verification never receives the "accept online payment" permission (BC-41), so its books cannot be bought in the app. | DECIDED |
+| D-60 | **Store statements (owner decision, 2026-11-10; Q53):** the store console offers a CSV download of the store's settlement lines (sales, fees, refunds, payouts) for any date range. | DECIDED |
+| D-61 | **Readiness and missing books (owner decision, 2026-11-10; E13, refines Q65):** an order is ready only when all of its available books are ready; no part-ready orders and no split pickups or deliveries. When some books are missing, the store phones the customer, then selects the missing books in the app and records the outcome: "customer keeps the rest" (the missing books are refunded automatically) or "customer cancelled all" (full refund). If the customer cannot be reached within the D-04 24-hour window, the store records "keeps the rest" and the customer is told in the app. The refund is issued by BookConnect's system (D-45), counts as a store fault (D-21), and the store bears the fee (D-27). | DECIDED |
+| D-62 | **Store pickup instructions (owner decision, 2026-11-10; E12):** each store may add one short text instruction, shown with the ready-for-pickup notice beside its address and hours. | DECIDED |
+| D-63 | **Payout pause (owner decision, 2026-11-10; E5):** a store's payouts pause during a fraud review, or while it owes BookConnect money past the D-14 7-day repayment; only the owner (admin) releases them. Depends on Cashfree question 5a for a per-store hold. | DECIDED |
+| D-64 | **Store-risk alerts (owner decision, 2026-11-10; E6):** dispute-rate, cancellation-rate and failed-payout alerts appear in the admin console only; thresholds are settings; nothing pauses automatically beyond D-21. | DECIDED |
+| D-65 | **Order cap base (owner decision, 2026-11-10; refines D-56):** the ₹5,000 maximum applies to the book total; the delivery charge is added on top. | DECIDED |
+| D-66 | **Held money and the store cap (owner decision, 2026-11-10; handoff §11 #23):** money paid but not yet paid out to the store, including money held under D-28, counts toward the D-20 ₹25,000 unsettled cap. | DECIDED |
+| D-67 | **Pickup cancellation (owner decision, 2026-11-10; Q45):** a pickup customer may cancel for a full refund until the store marks the order ready. After that, an uncollected order is refunded in full at the Q71 deadline (Q72). | DECIDED |
+| D-68 | **Restart after a pause (owner decision, 2026-11-10; QB §0.2 #35, D-55):** only the owner (admin) restarts payments, after reconciliation shows no stuck or mismatched payments; the restart and its reason are logged. | DECIDED |
+| D-69 | **Platform-error and unclear-fault chargebacks (owner decision, 2026-11-10; extends Q68):** BookConnect bears them, counted toward the D-08 monthly loss cap. | DECIDED |
 
 Clarifications for the specifications (no owner decision needed):
 
@@ -286,10 +298,13 @@ Owner decisions still open:
   whether the customer pays the quote plus GST or BookConnect absorbs it (BC-22).
 - Refund balance amount (D-54), after Cashfree question 8.
 
-The 2026-11-10 sweep of all 162 question-bank items found no other open owner decision:
-each is decided in this register, assigned to an SDD (handoff §11), assigned to Cashfree,
-the CA or the lawyer (the three question documents), or deferred until after the pilot
-(Q8–Q12, Q14, Q21–Q25).
+The 2026-11-10 coverage review ([decision coverage](./PHASE-7-8-decision-coverage.md)) lists
+every question-bank item with its status. Its owner items were decided as D-58 to D-69, except
+these, which wait on outside answers: the fallback if Cashfree cannot hold store money
+(Cashfree Q1–Q2), web checkout or the native SDK (Cashfree Q17), delivery GST and the refund
+balance amount (above). Before live: production Supabase timing (Q119), the real-money test
+(Q131) and the rollback plan (Q132). Process: owner review of money-critical PRs (Q125) and
+the shared process document (Q126). Post-pilot items: Q8–Q12, Q14, Q21–Q25.
 
 Needs CA or lawyer (see handoff §6): delivery money ownership, invoicing, and GST; TDS on
 store payments; seller of record (Q2); enforceability of D-09, D-12, D-14 and the store

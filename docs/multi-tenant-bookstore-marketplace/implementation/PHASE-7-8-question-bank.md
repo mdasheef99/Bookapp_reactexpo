@@ -1,6 +1,10 @@
 # Phase 7/8 Pre-Build Question Bank
 
 **Status:** research input — not a source specification, not legal/tax advice
+**Historical (2026-11-10):** older rows here (courier aggregator, ₹80 charge, 45-day and
+120-day limits, Q99–Q100 to the CA, the "Still open" list) are kept as written. The
+[decision register](./PHASE-7-8-decision-register.md), the three outside question documents
+and the [decision coverage](./PHASE-7-8-decision-coverage.md) review win.
 **Created:** 2026-11-04
 **Scope:** Phase 7 (payment, ledger, refund, settlement) and Phase 8 (pickup)
 **Related:** [Phase 7 tracker](./PHASE-7-payment-ledger-settlement.md),

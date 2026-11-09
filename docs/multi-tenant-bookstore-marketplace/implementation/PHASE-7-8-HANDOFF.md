@@ -48,7 +48,7 @@ memory are not available there.
 - **Owner approvals:** all seven §3 items approved on 2026-11-07.
 
 - **Business decisions:** recorded in the register; D-01 to D-25 were taken on
-  2026-11-07, D-26 to D-41 on 2026-11-08, D-42 to D-46 on 2026-11-09, and D-47 to D-57 on 2026-11-10. Remaining open items are in register §10: pilot stores and dates, bike-provider
+  2026-11-07, D-26 to D-41 on 2026-11-08, D-42 to D-46 on 2026-11-09, and D-47 to D-69 on 2026-11-10. Remaining open items are in register §10: pilot stores and dates, bike-provider
   choice, support staffing, P-4, offline stock sync, and the CA and lawyer items. The 12 review owner questions were answered on 2026-11-08 (D-26 to D-37), and four final-read questions the same day (D-38 to D-41).
 - **Provider facts:** several Cashfree and delivery facts are unconfirmed (register §9).
   SDDs must treat them as settings or as both-branch designs, never as fixed rules.
@@ -153,7 +153,7 @@ opencode-go/<model>`, with models muse-spark-1.3-contributor, deepseek-v4.1-flas
 qwen3.8-flash, and glm-5.3-flash; files were hashed before and after. Haiku checked quotes
 mechanically; Sonnet judged findings; Claude verified and fixed. The `plan` agent blocks
 edits but allows shell commands, so the snapshot and hashes are the real protection. For
-money-critical SDDs, `opencode-go/deepseek-v4-pro` is recommended over the flash model.
+money-critical SDDs, the owner's rule is `opencode-go/deepseek-v4.1-flash` (not pro; owner, 2026-11-10).
 Codex Sol is run through the Codex CLI. Confirm current model names with the owner on day 1.
 
 **Five process additions (approved 2026-11-07, §3 item 7):**
@@ -311,7 +311,7 @@ billing; test or sandbox access.
 **Refunds**
 
 - Only to the original payment method (RBI rule).
-- Approval rules per D-22 as clarified by D-29.
+- Approval rules per D-22 as clarified by D-29, D-38, D-40, D-45 and D-61.
 
 **Pickup code**
 
@@ -604,3 +604,8 @@ and test plan.
     (D-48), printed-books-only listing check (D-49), receipt email (D-50), ticket numbers and
     support email (D-51), pause scope (D-55), ₹5,000 order cap as a setting (D-56), pickup
     reminder (D-57), and `ONHOLD` refunds with the refund balance (D-54).
+30. D-58 to D-69 (2026-11-10): missing-book flow with the store's call and in-app outcome
+    (D-61), statement CSV (D-60), store pickup text (D-62), per-store payout pause and
+    release (D-63), risk alerts as settings (D-64), cap on book total (D-65), held money in
+    the unsettled cap (D-66, settles item 23), pickup cancel until ready (D-67), logged
+    restart after reconciliation (D-68), unclear-fault chargebacks (D-69).

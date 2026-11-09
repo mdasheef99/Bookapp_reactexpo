@@ -36,7 +36,7 @@ independent Bengaluru bookstores sell new and used printed books to customers.
 ### GST
 
 1. Are new and used printed books (HSN 4901) sold by independent bookstores still
-   exempt after Notification 9/2025-Central Tax (Rate), effective 22 September 2025? Are
+   exempt after Notification 10/2025-Central Tax (Rate), effective 22 September 2025? Are
    there common exceptions, such as antique books or bundles with stationery? [Most
    commentary says printed books stayed exempt. One news report said 18%. We found no
    ruling on used books.]

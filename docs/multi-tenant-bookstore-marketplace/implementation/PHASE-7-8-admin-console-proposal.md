@@ -91,8 +91,8 @@ tables, ever.
 
 - Who may use it (role).
 - What customer data it shows (minimum necessary).
-- Allowed actions and amount limits (for example, return, dispute, and goodwill refunds
-  above ₹1,000 require admin approval with a typed reason; automatic refunds run at any
+- Allowed actions and amount limits (for example, every return and dispute needs admin
+  approval at any amount (D-38); goodwill refunds above ₹1,000 need a typed reason; automatic refunds run at any
   amount with an alert above ₹1,000; D-22, D-29).
 - Settings it owns, each with a change log: loss cap (D-08), refund approval threshold
   (D-22), starter store limits (D-20), suspension rule (D-21), delivery pincodes (D-18).
