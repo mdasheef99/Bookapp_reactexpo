@@ -85,7 +85,7 @@ One line each; detail lives at the link. Remove a line when it closes.
 | 16 | 02c interface clarifications pending review (`phase9_provider_configuration_v1()`, resolver Google veto ownership, `P9_EXTERNAL_ADMISSION_PAUSED`) | Not approved |
 | 17 | Deferred package 1 TODOs (v2 cover mode, restart recovery, retention/profile proofs, prefill negatives for 02d, OQ8-11); provisional P1/P2 hash fixture | [tracker 02](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-10-31---slice-8-package-8a-4-automatic-transaction-file-only) |
 | 18 | No-retention fan-out proof: design question, not a confirmed requirement | Keep the no-list guard |
-| 19 | Local tooling: `core.autocrlf=true` breaks raw-byte migration checks (an LF `.gitattributes` rule is authorized as one small separate commit); 3 stale failures in `phase9MetadataFoundation.integration.test.mjs`; `.phase9-dist` must be built before some suites | Pre-existing, not slice 8 |
+| 19 | Local tooling: 3 stale failures in `phase9MetadataFoundation.integration.test.mjs`; `.phase9-dist` must be built before some suites. (The CRLF raw-byte failures are fixed 2026-11-10: migration working copies re-checked out as LF under the existing `.gitattributes` rule, and the M83 expected hash in `marketplacePhase9CacheReuse.test.ts` now equals the committed file. `node scripts/verify-phase9.js` passes.) | Pre-existing, not slice 8 |
 | 20 | One scaffolding Jest test failed once under full-suite load (20 ms timing race), passed since | Watch |
 | 21 | `.claude/psr-slice6/db-evidence.md` and `.claude/psr-slice7a/preflight-1.md` are absent from this checkout | Tracked summaries only |
 | 22 | Slice 7b-2 limits carried (AC7-21(b), provider-facts-only privacy case, rollback and live Google/expiry cases unproven) | [tracker 38 §47](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#47-slice-7b-2-closeout-whole-slice-review-m88-created-locally-test-hardening-2026-10-29) |
@@ -103,6 +103,7 @@ rounds, the M95 read-model fix, reviewer assignments) are in
 4. Use [TRACKER.md](phase-9-image-inventory/TRACKER.md) to locate evidence relevant to the authorized task.
 5. Read the [master SDD](phase-9-image-inventory/00-phase-9-master-sdd.md) and only the domain/supporting material routed by SESSION-START.
 6. Read the [implementation/verification tracker](phase-9-image-inventory/trackers/02-implementation-and-verification.md) when implementation is authorized.
+7. When briefing or building with agents, follow the [agent workflow](AGENT-WORKFLOW.md) (process only, no status).
 
 ## Historical records
 
