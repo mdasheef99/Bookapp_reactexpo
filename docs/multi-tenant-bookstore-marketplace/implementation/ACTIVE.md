@@ -30,8 +30,10 @@ only: it is rewritten (not appended to) at session close, and rotated into
 - Dev project data may be freely changed in live tests (Owner). Local
   commits are allowed after the diff is read. Do not run `db push`
   (frozen).
-- This session (2026-11-10): Markdown and validator-script edits only
-  (Owner: "ACTIVE.md rotation"). No database, Storage, deployment or push.
+- This session (2026-11-10): Markdown, validator-script and local tooling
+  edits only (ACTIVE.md rotation, `scripts/verify-phase9.js`,
+  `scripts/phase9-sql-facts.js`), plus an Owner-approved push of the branch.
+  No database, Storage or deployment.
 - Past dated approvals (2026-11-04 to 2026-11-09) are preserved in
   [the archive](history/ACTIVE-history-to-2026-11-09.md) and trackers 40/41;
   they grant nothing now.
@@ -58,7 +60,9 @@ Recorded development-project results, not a fresh operational readback.
   `dep-dbob845g1s2s73en12fg` (commit `2584f98`, live 2026-11-08 17:41:31
   UTC). Rollback target: `dep-dblielugekts738gov3g` (`6e0df90`, 8b).
 - Latest relevant recorded commit on `main`: `2584f98` (pushed; branch
-  `56e6eb5`). Later docs-only commits on the branch are local, not pushed.
+  `56e6eb5`). Later docs, tooling and test-hash commits on the branch were
+  pushed to the branch only on 2026-11-10 (branch head `0ddbfcf`); `main` is
+  unchanged.
   [Push and deploy evidence](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-07-8c-fix-round-m99-worker-admission--rpc-logging-app).
 
 ## Open items, blockers and residual risks

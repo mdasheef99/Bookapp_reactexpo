@@ -32,7 +32,9 @@ These hold whichever models are in use.
    fixes go in their own unit.
 6. **Facts come from the source.** Function signatures, argument names and
    return shapes are quoted from the latest migration that defines them,
-   never from memory or an older brief.
+   never from memory or an older brief. `node scripts/phase9-sql-facts.js
+   <function name>` prints them (latest definition, header, raised codes,
+   grants in that file); paste its output into the brief's Facts section.
 7. **Independent review, findings as tests.** A different model reviews
    than built. A finding above Minor is a failing test or an exact input
    and wrong output; opinions without one are dropped.
