@@ -16,6 +16,20 @@ Archives are historical evidence; their approvals and next actions are not curre
 | Phase 9 tracker 38 | [Two replaced status/next-action paragraphs](phase9-tracker38-status-history-to-2026-10-29.md) |
 | AGENTS.md | [Prior session/status ownership instructions](AGENTS-session-protocol-history-to-2026-10-29.md) |
 
+## Slice-close rotations
+
+After the 2026-10-30 consolidation, ACTIVE.md is rotated at each slice close.
+Each rotation preserves the whole committed file in one literal block.
+
+| Rotated on | Source commit | Covers | Archive |
+| --- | --- | --- | --- |
+| 2026-11-10 | `e9f431c` | Slice 8 (8a, 8b, 8c), 2026-10-30 to 2026-11-09; 429 lines | [ACTIVE, slice 8](ACTIVE-history-to-2026-11-09.md) |
+
+The 2026-11-10 rotation was Owner-requested ("ACTIVE.md rotation"),
+documentation and validator script only. No-loss check: the literal block is
+byte-equal to `git show e9f431c:docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md`
+(LF-normalized). The sections below describe the 2026-10-30 consolidation.
+
 ## Preservation and links
 
 Each original paragraph affected by removal or replacement is preserved verbatim

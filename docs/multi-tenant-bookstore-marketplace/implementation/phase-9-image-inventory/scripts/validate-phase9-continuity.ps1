@@ -109,6 +109,7 @@ $requiredGlobal = @(
     (Join-Path $implementationRoot 'ACTIVE.md'),
     (Join-Path $implementationRoot 'history/README.md'),
     (Join-Path $implementationRoot 'history/ACTIVE-history-to-2026-10-29.md'),
+    (Join-Path $implementationRoot 'history/ACTIVE-history-to-2026-11-09.md'),
     (Join-Path $implementationRoot 'history/DOC-13-phase9-history-to-2026-10-29.md'),
     (Join-Path $implementationRoot 'history/phase9-SESSION-START-history-to-2026-10-29.md'),
     (Join-Path $implementationRoot 'history/phase9-TRACKER-history-to-2026-10-29.md'),
@@ -149,6 +150,14 @@ foreach ($marker in @('## Current work', 'Active phase:', 'Active slice/work uni
     'Latest relevant recorded commit on', '## Open items, blockers and residual risks',
     '## Ordered reading list', '## Historical records', 'history/README.md')) {
     if (-not $activeCurrent.Contains($marker)) { Write-Error "ACTIVE.md is missing current-state field: $marker" }
+}
+# Advisory only (never fails): ACTIVE.md holds current state and is rotated
+# into history/ at each slice close.
+$activeLineCount = [IO.File]::ReadAllLines((Join-Path $implementationRoot 'ACTIVE.md')).Count
+if ($activeLineCount -gt 150) {
+    Write-Output "ACTIVE_SIZE_ADVISORY lines=$activeLineCount consider_rotation_at_slice_close=true"
+} else {
+    Write-Output "ACTIVE_SIZE=OK lines=$activeLineCount"
 }
 $active = [IO.File]::ReadAllText((Join-Path $implementationRoot 'history/ACTIVE-history-to-2026-10-29.md'))
 $legacyM32Handoff = $active.Contains('Structural vision-candidate to metadata-worker to Owner-readback integration has completed the final bounded correction pass') -and
