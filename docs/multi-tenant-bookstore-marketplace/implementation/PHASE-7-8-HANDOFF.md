@@ -191,7 +191,7 @@ question. Where they differ from §6.1–6.3, the ready-to-send files win.
 **Cashfree account:** the owner creates the test account and requests Easy Split in test
 mode before week 1. Secret keys go only into server secrets, never into chat or the repo.
 
-### 6.1 Cashfree questions (draft, not sent)
+### 6.1 Cashfree questions (sent 2026-11-10, no reply yet)
 
 1. Can a vendor's split share be held until BookConnect releases it (for example 3 days after handover, then the
    next weekly Monday run, D-28)? What is the maximum hold?

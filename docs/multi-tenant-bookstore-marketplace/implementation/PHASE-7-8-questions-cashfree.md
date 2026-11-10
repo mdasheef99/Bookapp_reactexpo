@@ -1,6 +1,7 @@
 # Phase 7/8: Questions for Cashfree
 
-**Status:** draft, not sent. The owner sends it from the owner's own account (handoff §6).
+**Status:** sent by the owner on 2026-11-10 as [the Cashfree mail](./PHASE-7-8-mail-cashfree.md),
+with the Easy Split activation request. No reply yet.
 **Date:** 2026-11-09
 **Needed by:** design questions by the end of week 1; fees by week 4; live items before live
 (handoff §6 table).
