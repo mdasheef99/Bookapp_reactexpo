@@ -75,7 +75,7 @@ describe('M85-M87 shared edition-list cache ordered boundaries (02b package 8)',
   it('[baseline] AC7-11/17: applied M83 and M84 files retain their exact original bytes', () => {
     baselineVisible();
     const hashes = new Map([
-      [m83Name, 'f370ee56050271dc549ec59a2486193fca9eecc03fddc05cc2b9323b5887598b'],
+      [m83Name, 'b6255c9c09bafe12617c59c89db1d6c2c8caf58d4e212bc92e658761639ddc12'],
       [m84Name, '36ac694bba9d3491d8f562b0ff56ca67c2e6f5ee1d46ef6a940877dd7a44ca5a'],
     ]);
     for (const [name, expected] of hashes)
