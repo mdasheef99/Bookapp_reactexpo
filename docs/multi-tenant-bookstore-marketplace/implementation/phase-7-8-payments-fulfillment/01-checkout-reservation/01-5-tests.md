@@ -35,6 +35,7 @@ test-only stores and users, and clean up after themselves.
   does not refuse orders (D-56); when set, it refuses at that cap.
 - R-14 a direct call to the old `submit_order_request` for a new cart is refused,
   with or without a live reservation; its different lock order is unreachable (§15).
+- R-21 a checkout total of 99 paise is refused with `ORDER_TOTAL_BELOW_MINIMUM`; 100 paise is accepted (D-107).
 - R-15 a D-81 pause and a reservation together, both orders; no live checkout survives.
 - R-16 support cancellation of a pay-first checkout is refused.
 - R-17 until §5.7 exists, each of the three cancelling pause kinds raises

@@ -1,5 +1,9 @@
 # SDD 02: Cashfree Payments, Webhooks and Verification (skeleton)
 
+> **Reference copy only (2026-11-11).** The full draft is in the four files in
+> [02-cashfree-payments/](./02-cashfree-payments/02-0-overview.md). This skeleton is kept
+> unchanged for reference.
+
 **Status:** skeleton for owner review, 2026-11-10. Not approved.
 **Authority:** none yet. Rules come from the [decision register](../PHASE-7-8-decision-register.md).
 **Owns:** the single Cashfree adapter, creating the Cashfree order, the webhook endpoint,

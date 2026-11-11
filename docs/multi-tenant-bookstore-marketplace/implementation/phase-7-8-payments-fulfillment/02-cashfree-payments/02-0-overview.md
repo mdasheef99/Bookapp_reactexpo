@@ -1,0 +1,247 @@
+# SDD 02: Cashfree Payments, Webhooks and Verification
+
+**Status:** full draft, 2026-11-11, written from the approved skeleton, the decision
+register, the Cashfree fact record (CF-01 to CF-66) and approved SDD 01. **Review round 1
+done** (Muse, DeepSeek, Codex Sol, Codex Luna; [findings](../../PHASE-7-8-sdd02-review-r1.md))
+and its 31 confirmed items fixed by me on 2026-11-11, with the owner's decisions D-104 to
+D-108. Round 2 is to be run by Codex Sol, which confirms the fixes and fixes what remains.
+Not approved. No code or migration may be written from it until the owner approves it.
+**Authority:** none yet. Business rules come from the
+[decision register](../../PHASE-7-8-decision-register.md); this document must not add any.
+Where it had to choose something the register does not decide, the choice is listed in
+§17 for the owner.
+**Owns:** the single Cashfree adapter; creating the Cashfree order and payment session;
+the webhook endpoint; verification; the payment poll; terminating Cashfree orders; wrong-
+amount and duplicate payments; the provider side of late payments.
+**Related:** [master](../00-master-state-model-sdd.md) ·
+[checkout (SDD 01)](../01-checkout-reservation/01-0-overview.md) ·
+[ledger (SDD 03)](../03-ledger-reconciliation-sdd.md) ·
+[refunds (SDD 04)](../04-refunds-returns-recovery-sdd.md) ·
+[Cashfree facts](../../PHASE-7-8-cashfree-replies.md) ·
+[Cashfree questions waiting](../../PHASE-7-8-cashfree-questions-pending.md)
+
+**Split by topic from the start.** Section numbers run across the four files, so
+"SDD 02 §9" means §9 in whichever file holds it. The earlier one-file skeleton
+[02-cashfree-payments-sdd.md](../02-cashfree-payments-sdd.md) is kept for reference.
+
+| Sections | File | Contents |
+|---|---|---|
+| §1–§3, §16–§20 | [02-0-overview.md](./02-0-overview.md) | Rules, facts, what exists, open points, choices, build order, handovers, traceability |
+| §4–§7 | [02-1-data-and-adapter.md](./02-1-data-and-adapter.md) | Tables, settings, access, the Cashfree adapter |
+| §8–§13 | [02-2-payment-flows.md](./02-2-payment-flows.md) | Starting a payment, verification, webhooks, poll, termination, wrong-amount and duplicate payments |
+| §14–§15 | [02-3-races-and-tests.md](./02-3-races-and-tests.md) | Races, worked examples, tests |
+
+---
+
+## 1. Rules this SDD implements
+
+| Rule | Source |
+|---|---|
+| Customers pay through Cashfree's hosted web checkout, offered for UPI and cards only; a success by another method is still counted and the admin alerted | Q1, Q4, Q34, D-05, D-90, D-105 |
+| The server decides a payment's result by asking Cashfree; the app and the webhook body are never trusted on their own | BC-11 |
+| Retries and delayed answers never cause a double charge or a double order | Q37, BC-15 |
+| A payment still processing when the reservation ends is not failed; the books stay held for 15 more minutes | BC-10, D-102 |
+| The first verified payment for the exact amount counts; any later success on the same Cashfree order is a duplicate | D-29, D-78, SDD 01 §5.6 |
+| A wrong-amount first payment is not paid: refunded in full, admin alerted; the reservation runs out on its timer | D-29 |
+| A duplicate success is reversed by Cashfree; BookConnect does not refund it unless Cashfree confirms it will not reverse, or does not answer in time | D-78, CF-30 |
+| A success after the checkout expired follows D-06; after a cancel, D-85; checks are SDD 01 §5.6 | D-06, D-85, D-97, D-98 |
+| Books stay held while Cashfree cannot be reached | D-101 |
+| A verified payment that cannot be converted opens an admin case | D-95 |
+| A pause stops new reservations; a checkout already reserved may finish paying; restart only by the owner after reconciliation is clean | D-55, D-68, D-81, D-104 |
+| At most 5 "Pay" presses per checkout | D-106 |
+| A checkout total is at least ₹1 | D-107 |
+| Customer wording reuses SDD 01's; a duplicate payment has its own notice | D-48, D-108 |
+| Keys live only in server secrets; test keys only on the dev project | handoff §7 |
+
+## 2. Cashfree facts this SDD relies on
+
+From the [fact record](../../PHASE-7-8-cashfree-replies.md). None is tested by us on sandbox
+yet except where the record says so.
+
+| Fact | ID |
+|---|---|
+| Base URL `https://sandbox.cashfree.com/pg`, API version `2026-01-01` | CF-41 |
+| Order expiry must be over 15 minutes and under 30 days | CF-31 |
+| An order is ended with `PATCH /orders/{order_id}` and `order_status: TERMINATED`; the answer may be `TERMINATION_REQUESTED`; a succeeded payment may stop termination | CF-32 |
+| Terminating does not cancel an attempt already started; a UPI attempt started before expiry can still succeed, with no maximum given | CF-33, CF-65 |
+| A second success on one order is reversed by Cashfree, within up to 5 calendar days, seen in transaction details, reports and webhooks | CF-30, CF-64 |
+| Web checkout opens as redirect, popup or inline; card data stays on Cashfree's page; no PCI certificate needed | CF-34, CF-35 |
+| Webhooks are signed with the client secret; one key pair at a time | CF-36 |
+| Webhook delivery is at least once, retried at 2, 10 and 30 minutes; reject a timestamp over five minutes old | CF-37 |
+| Terminate, split and adjustment calls accept `x-idempotency-key` (the API reference adds: UUID format, and create order accepts it too) | CF-38 |
+| `PAYMENT_CHARGES_WEBHOOK` reports each payment's charge | CF-29 |
+| Sandbox simulates `SUCCESS`, `FAILED`, `PENDING`, `USER_DROPPED`; no disputes | CF-40, CF-66 |
+
+**From Cashfree's API reference, not yet CF facts (§16 item 1).** On 2026-11-11 the API
+names were read from Cashfree's reference for version `2026-01-01` and cross-checked by a
+second independent read. They are recorded with sources in the
+[names list](../../PHASE-7-8-cashfree-names-needed.md) and used in §7 and §10:
+
+- the order calls `POST /orders`, `GET /orders/{order_id}`, `GET /orders/{order_id}/payments`,
+  `GET /orders/{order_id}/refunds` and `PATCH /orders/{order_id}`;
+- the payment statuses and method groups;
+- the webhook events, headers and signing formula;
+- `x-idempotency-key` (UUID) on create and terminate;
+- the rate limits.
+
+Cashfree's docs say that one order allows "multiple payment attempts until one succeeds",
+each with its own `cf_payment_id` (the basis of Q37). What the docs leave open is queued for
+Cashfree in [the questions file](../../PHASE-7-8-cashfree-questions-pending.md) (CF-A16 to
+CF-A26) and listed in §16. Docs answers become CF facts once the owner agrees; sandbox items
+once tested. The adapter (§7) is still the only place that uses these names.
+
+## 3. What exists today (read-only check, 2026-11-11)
+
+- No Cashfree code, table or secret exists in the repository. Nothing in `supabase/` or
+  `src/` mentions Cashfree.
+- Edge functions exist for `commerce-scheduler` and `commerce-task-worker` (Phase 6). The
+  scheduler claims tasks once per invocation; its contract's cadence default is one minute.
+  The worker dispatches a fixed list of task types and refuses any other with
+  `unsupported_task_type`. SDD 01 migration 5 registers the `terminate_provider_order` task
+  with a recording stub that this SDD replaces (§12).
+- Task retries are capped at 5 attempts by the framework (`max_attempts` CHECK 1 to 5).
+- `marketplace_sec` functions are not exposed to PostgREST; Phase 6 calls them through
+  public service-role wrappers (§6). No `marketplace_private` schema exists yet (§4.3).
+- The app has a web build and no `expo-dev-client` (checked 2026-11-10), which is why
+  D-90 chose web checkout.
+- Cashfree sandbox keys exist only in the owner's local `.env.local`. They are never
+  printed, never given an `EXPO_PUBLIC_` prefix and never committed.
+
+## 16. Open points and checks at slice start
+
+1. **Fact record additions (before slice 2):** the docs answers in the
+   [names list](../../PHASE-7-8-cashfree-names-needed.md) become CF facts once the owner
+   agrees. The adapter's tests (AD-01 to AD-08) are written against them and against
+   recorded sandbox answers.
+2. **Questions queued for Cashfree** ([file](../../PHASE-7-8-cashfree-questions-pending.md)):
+   which of two successes is reversed and how a reversal shows (CF-A16; §9.3, §13.2);
+   whether a terminated order's failed attempt can still succeed (CF-A17; §11.2); session
+   reuse (CF-A18; PA-09); termination answers (CF-A19; §12.1); the signature formula and
+   timestamp unit (CF-A20; §7.2); webhook retries (CF-A21; §10.2, §10.5); delivery to the
+   dashboard endpoint (CF-A22); the 409 code (CF-A23); key overlap (CF-A24; §13.4); sandbox
+   test data (CF-A25); completion time and list order (CF-A26; §9.3). Every rule here is
+   safe whichever way they are answered; answers may only simplify.
+3. **Sandbox checks, slice by slice:** one real webhook confirms §7.2's formula before the
+   endpoint accepts anything (slice 4); termination answers (slice 5); same session after a
+   failed attempt (slice 2); the UPI-and-card limit on the checkout page (slice 2).
+4. **Order-level split timing:** SDD 05 adds the split call after verification; nothing in
+   this SDD waits for it.
+5. **Live keys:** never on the dev project. Production setup waits for account activation
+   (CF-63) and is out of this SDD's test-mode scope.
+6. **Sandbox test data:** UPI `testsuccess@gocash`, `testfailure@gocash`,
+   `testuserdropped@gocash`; cards with OTP `111000`; Cashfree's `POST /simulate` sets a
+   payment `SUCCESS`, `FAILED`, `PENDING` or `USER_DROPPED`. Two successes on one order and
+   a wrong amount have no documented way to be produced; those tests use recorded answers
+   unless Cashfree says otherwise (CF-A25).
+7. **SDD 01 changes made with this revision** (approved SDD 01, owner decisions): the
+   minimum-total guard and setting (D-107) and the `checkout.duplicate_payment` notice
+   (D-108). Both are recorded in SDD 01 and its reference copy.
+
+## 17. Choices made in this document, for the owner
+
+The register does not decide these. Each is my proposal and is not policy until approved.
+Former items 4 and 8 are now decisions D-105 and D-104.
+
+1. **The Cashfree order expires 16 minutes after creation** (`commerce.provider_order_expiry_seconds = 960`).
+   Cashfree's minimum is just over 15 minutes (CF-31). Our own 10-minute reservation and
+   15-minute grace are the real limits; we terminate the Cashfree order ourselves (§12).
+2. **Poll speed:** every 20 seconds while the reservation or grace is running, then every
+   5 minutes for 2 hours, then hourly (`commerce.payment_poll_*` settings). This sees a
+   payment made near the end of the 10 minutes well inside the 15-minute grace.
+3. **A closed payment Cashfree has not confirmed as ended after 24 hours** opens one admin
+   case. Cashfree gave no maximum (CF-65).
+4. *(Now D-105.)*
+5. **The customer's "I've paid" check** (on return from Cashfree's page) is limited to 10
+   calls a minute per customer, and only ever triggers verification.
+6. **Webhook messages are de-duplicated on Cashfree's `x-idempotency-key` header**, with
+   our own key (event type, Cashfree payment or refund ID, signed timestamp) only when the
+   header is missing (§10.2).
+7. **A duplicate success is first checked 3 business days later** (D-78's starting wait,
+   `commerce.duplicate_reversal_wait_business_days = 3`), then follows D-78 (§13.2).
+8. *(Now D-104.)*
+9. **Stored webhook bodies are deleted after 180 days**; the derived records stay.
+10. **How Cashfree's payment statuses are read** (§7.3): `CANCELLED` and `VOID` count as
+    failed; `NOT_ATTEMPTED` (checkout opened, nothing paid) counts as dropped, so it neither
+    blocks a new "Pay" nor holds the books; anything unknown counts as pending. If one of
+    them later turns into a success, it is still counted (as a late payment if the checkout
+    has closed).
+11. **Our Cashfree reads stay under its rate limit** (§11.5): at most 25 reads of payments a
+    minute in all, with the customer's check, webhooks and expiry workers first.
+12. **How long we keep checking an order (B1):** after the checkout closes or converts,
+    every 5 minutes for 2 hours, hourly for 7 days, then daily until 60 days; after that,
+    SDD 03's daily reconciliation is the safety net. Cashfree gave no time limit for a late
+    payment (CF-65), so some limit is a choice; this one costs about one read per order per
+    hour in the first week.
+13. **India working days for D-78's waits:** Monday to Friday, minus a holiday list the
+    admin keeps (`commerce.india_bank_holidays`).
+14. **UPI paid from a credit card or a wallet** (`upi_credit_card`, `upi_ppi`) counts as
+    UPI, because it is what the `upi` setting allows; prepaid cards, EMI and every other
+    group count as `other` (§7.3, D-105).
+
+## 18. Build order (slices)
+
+Each slice ends with its tests passing and its migrations applied to the dev project only
+after the owner authorises it (AGENTS.md). Later behaviour a slice needs is a stub with a
+fixed contract until its own slice lands (M14).
+
+1. **Schema and wrappers:** §4 tables (with the private schema and the `store_orders`
+   foreign key), §5 settings, §6 grants and public wrappers, `customer_payment_status`.
+   Tests ST2-01 to ST2-05, SE-01, SE-02.
+2. **Adapter, payment start and recovery:** §7 adapter with sandbox keys; §8 and §8.1;
+   §11.6 recovery. Needs SDD 01 slice 2 (reservations). Tests AD-01 to AD-08, PA-01 to
+   PA-03 and PA-05 to PA-08. PA-04 and PA-09 move to slice 3 (they need §9).
+3. **Verification:** §9 `apply_payment_check`, wired to SDD 01's `convert_paid_checkout`
+   and `resolve_late_payment`, to SDD 03's posting stub and to the §13 entry points as stubs
+   (a duplicate or wrong amount is classified and recorded; its watch and refund come in
+   slice 6). The customer's "I've paid" check. Needs SDD 01 slice 3. Tests PA-04, PA-09,
+   VE-01 to VE-04, VE-06 to VE-10, VE-12 to VE-16. VE-05 and VE-11 run in slice 6.
+4. **Webhooks:** §10 endpoint, atomic intake, worker branch, body deletion. Tests WH-01 to
+   WH-05, WH-07 to WH-09, WH-11, WH-12. WH-06 and WH-10 run in slice 7.
+5. **Poll and termination:** §11 `commerce-payment-poll`, rate budget; §12 provider steps
+   for SDD 01's expiry workers and the real `terminate_provider_order` handler. Tests
+   PO-01 to PO-08, TE-01 to TE-07.
+6. **Wrong amount and duplicates:** §13.1 and §13.2, with SDD 04's refund request (or its
+   stub) and SDD 01's duplicate notice. Needs SDD 01 slice 6 for D-81 cases. Tests VE-05,
+   VE-11, DU-01 to DU-10.
+7. **Races and rotation:** §14 races and the §13.4 rotation procedure rehearsed on sandbox.
+   Tests WH-06, WH-10, RX2-01 to RX2-14, SE-03 to SE-06.
+
+## 19. Handovers to other SDDs
+
+| SDD | Direction | What |
+|---|---|---|
+| SDD 01 | 02 calls 01 | Inside verification, in SDD 01 §7's lock order: `marketplace_sec.convert_paid_checkout(p_request_id, p_payment_id, p_paid_at, p_command_id)` for a live checkout, with `p_paid_at` the verification time and `p_command_id` the check ID; `marketplace_sec.resolve_late_payment(...)` per SDD 01 §5.0 for a closed one. On `conversion_failed`, commit the verified payment, the admin case with its 7-day deadline and the hold extension together (SDD 01 §5.10, D-95) |
+| SDD 01 | 01 needs from 02 | Provider steps for `expire_reservation` and `expire_payment_grace` (§12.1); the real `terminate_provider_order` handler (§12.2); `p_provider_checked_at` and `p_provider_terminated_at` from `provider_checks` (§4.4); the `store_orders.payment_id` foreign key (§4). The grace setting `commerce.payment_grace_seconds = 900` is confirmed (D-102) |
+| SDD 01 | 02 needs from 01 | The minimum-total guard (D-107) and the `checkout.duplicate_payment` event and notice (D-108), emitted when §13.2 records a duplicate |
+| SDD 01 | 02 reads | The checkout's `status`, `final_total_minor`, `reservation_expires_at` and owner before a payment may start (§8) |
+| SDD 03 | 02 calls 03 | Post the counted payment once, keyed by `cf_payment_id`, in the verification transaction (§9.3 step 3); record `PAYMENT_CHARGES_WEBHOOK` charges (CF-29) as reported, never computed; a reconciliation case for a `reversed` success and an `unknown_order` webhook |
+| SDD 03 | 03 calls 02 | Daily reconciliation (D-78) that finds a Cashfree payment not recorded or not classified calls §9.2 and §9.3 for its payment; this is the safety net after §11.2's window |
+| SDD 04 | 02 calls 04 | Category 6 (wrong amount, D-29) with refund key `wrong_amount:<cf_payment_id>`; category 6a (duplicate) with key `duplicate:<cf_payment_id>` only under D-78's conditions. Each is capped at that attempt's amount, so refunds for one attempt never exceed what that attempt paid. Category 5 for late and cancelled cases comes through SDD 01 §5.6 |
+| SDD 05 | 05 uses | The verified payment and order for the split call after verification |
+| SDD 08 | 02 needs | Admin cases: wrong amount (alert), duplicate "ask Cashfree", unconfirmed closed payment after 24 hours, dead webhook messages, `auth_failed`, failed conversion (SDD 01 §5.10), key-rotation restart (D-68). A checked command to record Cashfree's answer on a duplicate (`cashfree_answer`, §13.2), and the holiday list (§17 item 13) |
+| SDD 09 | Later | Carry §15's tests and the security list into the full test plan |
+
+## 20. Traceability
+
+| Decision or fact | Where |
+|---|---|
+| D-05, D-90, D-105 | §1, §7.2, §7.3, §8.1, §9.3 step 5, VE-13 |
+| D-50 | §7.2 (`customer_phone`), AD-07 |
+| BC-11 | §9, §10.3, VE-01, WH-04 |
+| Q37, BC-15 | §4.1 constraints, §8, §9, PA-04, PA-09, VE-05, RX2-01 to RX2-04 |
+| BC-10, D-102 | §11, §12.1, PO-02 |
+| D-29 | §9.3, §13.1, DU-01 to DU-03 |
+| D-78, CF-30, CF-64 | §9.3, §13.2, DU-04 to DU-10, VE-15 |
+| D-06, D-85, D-97, D-98 | §9.3 (through SDD 01 §5.6), VE-09 to VE-11 |
+| D-21, D-81 | §8 (no pause guard), §12.2, RX2-07, VE-11 |
+| D-95 | §8 guard 2, §9.3 step 4, VE-12 |
+| D-101 | §11.3, §12.1, PO-04 |
+| D-55, D-68, D-104 | §8, §13.4, PA-03, SE-06 |
+| D-106 | §8 guard 6, PA-10 |
+| D-107 | §4.1, SDD 01 guard, ST2-05 |
+| D-48, D-108 | §9.4, §13.2, DU-09 |
+| CF-31, CF-32, CF-33, CF-65 | §5, §11, §12, §17 item 12 |
+| CF-36, CF-37, CF-38 | §7, §10, §13.4 |
+| Cashfree API reference names ([names list](../../PHASE-7-8-cashfree-names-needed.md)) | §2, §7.2, §7.3, §10.2, §10.3, §11.5, §12.1, §13.2, AD-05 to AD-08, PA-09, WH-11, PO-07, TE-06 |
+| Handoff §7 (keys, logs) | §6, §7.1, SE-03 to SE-06 |
+| Review round 1 items | B1–B5, M1–M18, m1–m8 as noted in §4 to §13 |

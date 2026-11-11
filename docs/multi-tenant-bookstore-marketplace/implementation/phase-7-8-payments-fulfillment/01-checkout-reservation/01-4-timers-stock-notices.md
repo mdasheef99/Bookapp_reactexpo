@@ -216,6 +216,7 @@ group 5). The `commerce.` prefix is required by 0025's inbox and mark-read funct
 | `order.cancelled` | Wording by reason, always with the refund amount and "2–3 working days" (D-48) | Wording by reason | `commerce.order.cancelled.customer`; `commerce.order.cancelled.store` |
 | `order.late_payment_converted` | "Your payment arrived late, and your order is placed." | as `order.placed` | `commerce.order.late_payment_converted.customer`; `commerce.order.late_payment_converted.store` |
 | `checkout.late_payment_refunded` | By reason, always with ₹X and "will be refunded in 2–3 working days". Book gone: "Your payment arrived after the reservation ended and the book was no longer available." Cancelled: "You cancelled, but the payment still went through." Store ineligible: "This store can no longer take your order." Same cart: "You already have an order for these books, so this extra payment is being returned." | none | `commerce.checkout.late_payment_refunded.customer` |
+| `checkout.duplicate_payment` | "You paid twice. The extra ₹X will be returned to you within 2–3 working days after Cashfree reverses it." Emitted once per duplicate when SDD 02 §13.2 records it (D-108) | none | `commerce.checkout.duplicate_payment.customer` |
 | `order.preparation_alert` | none | "This order should be ready by now." | `commerce.order.preparation_alert.store` |
 
 Notices never contain the customer's phone or address (master §14). The confirm-first

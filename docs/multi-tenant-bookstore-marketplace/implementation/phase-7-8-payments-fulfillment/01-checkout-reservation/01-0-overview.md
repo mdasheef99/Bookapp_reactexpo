@@ -261,7 +261,7 @@ Every slice uses §5.0's command contracts and runs its relevant O-03 and O-04 c
 2. Reservation: migration 6 hold and stock helpers, `evaluate_reservation_eligibility`,
    `snapshot_reservation_policies`, `create_reservation`, `cancel_reservation`, customer
    advisory, payment, cart, store, checkout, stock-in-ID-order and listing locks,
-   skipping rows not needed (§7); guards on the old commands; tests R-01 to R-14, R-16, R-18, R-19,
+   skipping rows not needed (§7); guards on the old commands; tests R-01 to R-14, R-16, R-18, R-19, R-21,
    ST-01, ST-02, RX-01 and RX-28's three publication races, with whole-transaction
    `40P01` retry checks. The termination stub records customer-cancel requests.
 3. Expiry and conversion, against a payment-state test double until SDD 02's slices:

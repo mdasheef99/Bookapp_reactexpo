@@ -348,6 +348,7 @@ VALUES
   ('commerce.order.late_payment_converted.customer', 'customer'),
   ('commerce.order.late_payment_converted.store', 'store'),
   ('commerce.checkout.late_payment_refunded.customer', 'customer'),
+  ('commerce.checkout.duplicate_payment.customer', 'customer'),
   ('commerce.order.preparation_alert.store', 'store');
 ```
 
@@ -430,6 +431,7 @@ nothing; it never moves the quantity again (§9).
 | `commerce.reservation_window_seconds` | 600 | Q36 |
 | `commerce.payment_grace_seconds` | 900 | 15 minutes (D-102) |
 | `commerce.max_order_book_total_minor` | 500000 | D-56, D-65 |
+| `commerce.min_checkout_total_minor` | 100 | D-107; also enforced by SDD 02 `payments.amount_minor` CHECK |
 | `commerce.reservation_attempts_per_hour` | 6 | Handoff §7; number approved (§17 item 3) |
 | `commerce.customer_max_live_checkouts` | 2 | Handoff §7; number approved (§17 item 3) |
 | `commerce.customer_daily_paid_order_limit` | `null` (off) | D-56; checked only when set |
@@ -548,6 +550,7 @@ carts as §15 says.
 | 11 | Delivery only, once SDD 07 is live: pincode served and a quote valid under SDD 07's rules (D-18, BC-22). Until then guard 10 refuses delivery first | `DELIVERY_NOT_SERVICEABLE` / `DELIVERY_QUOTE_UNAVAILABLE` | We cannot deliver to this address. / We could not get a delivery price. You can choose pickup. |
 | 12 | Every listing is `active`, moderation `approved`, and from the cart's store | `ITEM_NOT_AVAILABLE` | One of your books is no longer available. |
 | 13 | Book total is at most the cap (D-56) | `ORDER_TOTAL_ABOVE_LIMIT` | Orders are limited to ₹5,000 of books for now. |
+| 13a | Order total (`final_total_minor`) is at least `commerce.min_checkout_total_minor` (D-107; Cashfree takes no order under ₹1) | `ORDER_TOTAL_BELOW_MINIMUM` | Orders must be at least ₹1. |
 | 14 | Stock: every item has `quantity_available >= requested_quantity` (checked by taking the hold) | `INSUFFICIENT_INVENTORY` | Someone else just reserved this book. |
 
 A closed store may still take orders, including during a planned closure (D-07), so
@@ -1335,6 +1338,7 @@ group 5). The `commerce.` prefix is required by 0025's inbox and mark-read funct
 | `order.cancelled` | Wording by reason, always with the refund amount and "2–3 working days" (D-48) | Wording by reason | `commerce.order.cancelled.customer`; `commerce.order.cancelled.store` |
 | `order.late_payment_converted` | "Your payment arrived late, and your order is placed." | as `order.placed` | `commerce.order.late_payment_converted.customer`; `commerce.order.late_payment_converted.store` |
 | `checkout.late_payment_refunded` | By reason, always with ₹X and "will be refunded in 2–3 working days". Book gone: "Your payment arrived after the reservation ended and the book was no longer available." Cancelled: "You cancelled, but the payment still went through." Store ineligible: "This store can no longer take your order." Same cart: "You already have an order for these books, so this extra payment is being returned." | none | `commerce.checkout.late_payment_refunded.customer` |
+| `checkout.duplicate_payment` | "You paid twice. The extra ₹X will be returned to you within 2–3 working days after Cashfree reverses it." Emitted once per duplicate when SDD 02 §13.2 records it (D-108) | none | `commerce.checkout.duplicate_payment.customer` |
 | `order.preparation_alert` | none | "This order should be ready by now." | `commerce.order.preparation_alert.store` |
 
 Notices never contain the customer's phone or address (master §14). The confirm-first
@@ -1450,6 +1454,7 @@ test-only stores and users, and clean up after themselves.
   does not refuse orders (D-56); when set, it refuses at that cap.
 - R-14 a direct call to the old `submit_order_request` for a new cart is refused,
   with or without a live reservation; its different lock order is unreachable (§15).
+- R-21 a checkout total of 99 paise is refused with `ORDER_TOTAL_BELOW_MINIMUM`; 100 paise is accepted (D-107).
 - R-15 a D-81 pause and a reservation together, both orders; no live checkout survives.
 - R-16 support cancellation of a pay-first checkout is refused.
 - R-17 until §5.7 exists, each of the three cancelling pause kinds raises
@@ -1930,7 +1935,7 @@ Every slice uses §5.0's command contracts and runs its relevant O-03 and O-04 c
 2. Reservation: migration 6 hold and stock helpers, `evaluate_reservation_eligibility`,
    `snapshot_reservation_policies`, `create_reservation`, `cancel_reservation`, customer
    advisory, payment, cart, store, checkout, stock-in-ID-order and listing locks,
-   skipping rows not needed (§7); guards on the old commands; tests R-01 to R-14, R-16, R-18, R-19,
+   skipping rows not needed (§7); guards on the old commands; tests R-01 to R-14, R-16, R-18, R-19, R-21,
    ST-01, ST-02, RX-01 and RX-28's three publication races, with whole-transaction
    `40P01` retry checks. The termination stub records customer-cancel requests.
 3. Expiry and conversion, against a payment-state test double until SDD 02's slices:

@@ -264,6 +264,7 @@ VALUES
   ('commerce.order.late_payment_converted.customer', 'customer'),
   ('commerce.order.late_payment_converted.store', 'store'),
   ('commerce.checkout.late_payment_refunded.customer', 'customer'),
+  ('commerce.checkout.duplicate_payment.customer', 'customer'),
   ('commerce.order.preparation_alert.store', 'store');
 ```
 
@@ -346,6 +347,7 @@ nothing; it never moves the quantity again (§9).
 | `commerce.reservation_window_seconds` | 600 | Q36 |
 | `commerce.payment_grace_seconds` | 900 | 15 minutes (D-102) |
 | `commerce.max_order_book_total_minor` | 500000 | D-56, D-65 |
+| `commerce.min_checkout_total_minor` | 100 | D-107; also enforced by SDD 02 `payments.amount_minor` CHECK |
 | `commerce.reservation_attempts_per_hour` | 6 | Handoff §7; number approved (§17 item 3) |
 | `commerce.customer_max_live_checkouts` | 2 | Handoff §7; number approved (§17 item 3) |
 | `commerce.customer_daily_paid_order_limit` | `null` (off) | D-56; checked only when set |
