@@ -1,9 +1,10 @@
 # Phase 7/8: Cashfree Replies and Fact Record
 
-**Status:** record of what Cashfree has told us, updated 2026-11-11 with the fourth reply.
+**Status:** record of what Cashfree has told us, updated 2026-11-11 with the fourth reply. On 2026-11-12 every fact was re-checked against the original text of all four replies; none was wrong, and seven points the record had left out were added as CF-67 to CF-73.
 Ticket ID 8774207.
 **Authority:** none. This is evidence for the SDDs. Business rules stay in the
 [decision register](./PHASE-7-8-decision-register.md).
+**Original replies:** [word for word](./PHASE-7-8-cashfree-replies-original.md) (stored 2026-11-12). Every R-tagged fact below must be traceable to that text; if they disagree, the original wins.
 **Related:** [first mail](./PHASE-7-8-mail-cashfree.md) ·
 [second mail](./PHASE-7-8-mail-cashfree-2.md) ·
 [question list](./PHASE-7-8-questions-cashfree.md)
@@ -73,6 +74,7 @@ Where a later reply contradicts an earlier one, the later fact says so and is us
 | CF-10 | Vendors can be created, updated and read by API, and their documents uploaded by API. | R1 |
 | CF-11 | KYC: an individual vendor needs PAN and address proof. A business vendor needs GSTIN where applicable. PAN and bank details alone may not be enough. | R1 |
 | CF-12 | Vendor activation takes about 10 minutes on sandbox; production time varies. Failure or review statuses: `BANK_VALIDATION_FAILED`, `BENE_CREATION_FAILED`, `ACTION_REQUIRED`, `ON_HOLD`. A vendor stuck in `IN_BENE_CREATION` for over 24 hours is raised with support. | R1 |
+| CF-67 | A vendor's bank account details can be changed later through Edit Vendor or Update Vendor Details, and the account can be re-verified as part of the update. | R1 |
 | CF-13 | A vendor can be marked Blocked to stop its settlements, and unblocked later. Cashfree may itself put a vendor `ON_HOLD`; its held amount stays in escrow. | R1 |
 | CF-14 | A `VENDOR_STATUS_UPDATE` webhook fires when a vendor's status changes. Vendor settlement webhooks exist. | DOC |
 | CF-49 | An individual vendor needs PAN and one address proof (Aadhaar, driving licence, passport or voter ID). GSTIN is not required. Which vendor type a sole proprietor without GST should use is still to be confirmed. | R3 |
@@ -96,6 +98,10 @@ Where a later reply contradicts an earlier one, the later fact says so and is us
 | CF-59 | Refund before the split: paid from our merchant payment balance and adjusted in the next settlement cycle. After the split: debited from our balance and the store's balance in proportion to the split. No recharge is needed if the balances are enough; if either is short, the refund goes `ON_HOLD` until it is funded. Answers CF-A10. | R4 |
 | CF-60 | After the store has been settled and its balance is short, it is the customer's refund itself that waits `ON_HOLD`; the customer is not credited meanwhile. We fund it with Adjust Vendor Balance. The store's share is **not** recovered automatically from its later settlements. This contradicts CF-15's last sentence, which is replaced. Whether the refund resumes by itself once funded, and how long it then takes, is not stated. | R4 |
 | CF-61 | `PENDING_APPROVAL` means Cashfree's team is reviewing the refund. No action is needed from us; the status updates after the review. Answers CF-A7. | R4 |
+| CF-68 | The refund rules apply to full and partial refunds; several partial refunds can be made, within the refundable amount and the available balances. | R1 |
+| CF-69 | Six months is the most the refund API allows. The 180-day and 120-day periods in Cashfree's terms and grievance policy belong to other policy contexts and are not interchangeable with it. A refund beyond the API window is reviewed case by case with Cashfree's team. Adds to CF-20. | R1 |
+| CF-70 | For any specific failed refund, Cashfree asks for the refund ID so it can review the resolution. Besides another UPI address (CF-21), we can pay the refund from our merchant ledger and then debit the store's balance. Cards are not mentioned. | R1 |
+| CF-71 | When a refund is on hold for a short store balance and we fund it by Adjust Vendor Balance, "the refund can proceed" once the balances are available. Cashfree does not say whether it restarts by itself or needs an action from us, or how long it then takes. Adds to CF-60. | R4 |
 
 ### Chargebacks
 
@@ -104,6 +110,7 @@ Where a later reply contradicts an earlier one, the later fact says so and is us
 | CF-24 | A disputed amount is withheld or debited from our merchant balance, not the vendor's. Vendor settlements continue. We recover from the vendor by a debit adjustment. | R1 |
 | CF-25 | There is no separate chargeback or dispute fee. If the dispute is won, the amount is released back. | R1 |
 | CF-26 | Dispute APIs (read, accept, submit evidence) and dispute webhooks exist. | DOC |
+| CF-72 | How Cashfree routes disputed money (from our balance, not the store's) does not by itself decide who is legally the merchant of record; that depends on the contracts and business arrangement. For the lawyer. | R1 |
 
 ### Fees
 
@@ -126,6 +133,7 @@ Where a later reply contradicts an earlier one, the later fact says so and is us
 | CF-33 | A UPI payment started before expiry and finished after it moves to `SUCCESS`. | R2 |
 | CF-34 | Web checkout can open as a redirect, a popup or inline; card details are entered on Cashfree's hosted page. For an Expo app Cashfree recommends `react-native-cashfree-pg-sdk`, which needs `expo-dev-client` and `expo prebuild` and does not run in Expo Go. | R2 |
 | CF-35 | A PCI DSS certificate is needed only for server-to-server card integration, not for hosted checkout or the SDK. | R2 |
+| CF-73 | Which PCI DSS self-assessment questionnaire (SAQ) applies to hosted checkout should be confirmed by our PCI assessor; Cashfree did not state it. Adds to CF-35. | R2 |
 | CF-64 | An automatic duplicate-payment reversal is tracked through the transaction details, payment reports and webhook notifications; no specific event was named. It takes up to 5 calendar days. Answers CF-A5 in part. | R4 |
 | CF-65 | Terminating an order does not cancel a payment attempt already started at the bank or network. A UPI attempt started before expiry may still succeed, within that attempt's validity period; no maximum was given. Cashfree advises checking the final payment status and webhooks before fulfilling or cancelling. Confirms CF-33; answers CF-A8 without a time limit. | R4 |
 | CF-66 | The full dispute lifecycle cannot be simulated on sandbox; some vendor settlement and reversal statuses can. Confirms CF-40; answers CF-A15. | R4 |

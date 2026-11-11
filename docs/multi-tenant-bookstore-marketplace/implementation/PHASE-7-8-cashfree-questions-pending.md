@@ -6,7 +6,7 @@ in one mail. Started 2026-11-11 at the owner's request.
 the mail from this list for the owner to send (I never send it). When Cashfree replies, each
 answer becomes a CF fact in the [fact record](./PHASE-7-8-cashfree-replies.md) and the question
 moves to "Answered" below.
-**Sources:** the [names list](./PHASE-7-8-cashfree-names-needed.md) (items Cashfree's docs do
+**Sources:** Cashfree's [original replies](./PHASE-7-8-cashfree-replies-original.md) (word for word), the [names list](./PHASE-7-8-cashfree-names-needed.md) (items Cashfree's docs do
 not answer), [SDD 02 review round 1](./PHASE-7-8-sdd02-review-r1.md), and questions from
 earlier mails that were only partly answered.
 
@@ -27,6 +27,9 @@ earlier mails that were only partly answered.
 | CF-A24 | When we generate new Payment Gateway keys, do the old keys stop working immediately, or is there an overlap? What happens to webhooks already in flight? | Our key-change procedure (names N8, A1) | No (we would lose our sandbox keys) | SDD 02 §13.4 |
 | CF-A25 | On sandbox, how can we make two successful payments on one order, or a payment for a different amount? Can `POST /simulate` move a payment to `PENDING` first and to `SUCCESS` later? | Testing duplicates, wrong amounts and late payments (names H3, H4) | Partly | SDD 02 tests |
 | CF-A26 | In `GET /orders/{order_id}/payments`, is `payment_completion_time` empty while a payment is pending, and is the list in any fixed order? | Choosing the counted payment by completion time (names D7, D11) | Yes | SDD 02 §9.3 |
+| CF-A27 | If our `POST /orders` call times out, can the order still have been created even though `GET /orders/{order_id}` then answers 404? Is a 404 final? How long is an `x-idempotency-key` remembered, and does a retry with the same key replay the first answer, or is `order_expiry_time` checked again (it may by then be less than 15 minutes away)? | Docs (checked 2026-11-12) only say a timed-out request can be retried safely with the same key; we must never release books while an order might exist (review S2-02, S2-22) | Partly (sandbox) | SDD 02 §7.2, §11.6 |
+| CF-A28 | On an INR order, can a payment's `payment_amount` ever differ from `order_amount`, have more than two decimals, or be in another currency? If so, can we refund exactly that amount through the refund API? | Docs (checked 2026-11-12) say order amounts have at most two decimals, at least ₹1, and a refund may not exceed the payment, but say nothing about the payment side (review S2-09) | No | SDD 02 §13.1 |
+| CF-A29 | What are the rate limits for `GET /orders/{order_id}/refunds` (Get All Refunds for an Order) and for terminating an order (`PATCH /orders/{order_id}`), in sandbox and production? Your rate-limit page shows Get Refund at 60 a minute in sandbox but 30 in production: is that right? | Our shared per-minute read budget must stay under every limit (review S2-13) | Partly (headers) | SDD 02 §11.5 |
 
 ## Carried over from earlier mails (partly answered)
 

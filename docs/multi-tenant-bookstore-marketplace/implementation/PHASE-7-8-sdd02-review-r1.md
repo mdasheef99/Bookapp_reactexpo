@@ -107,4 +107,5 @@ Owner answered Sol's remaining questions on 2026-11-12 as D-110 (refund clock st
 the case opens), D-111 (normal key change waits; leaked key changes at once), D-112
 (paid-but-no-order message) and D-113 (widened `PAID` refusal shortcut, SDD 01 §5.3/§5.4
 and test E-31). Applied to SDD 02 and SDD 01 (parts and reference copy). Sol's proposed
-Cashfree questions CF-A27..A29 are not yet added to the pending file.
+Cashfree questions were checked against Cashfree's docs on 2026-11-12 and the unanswered
+parts added to the pending file as CF-A27 to CF-A29.
