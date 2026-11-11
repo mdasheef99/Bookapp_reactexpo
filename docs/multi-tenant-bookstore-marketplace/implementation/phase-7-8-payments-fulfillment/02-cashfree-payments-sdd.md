@@ -4,7 +4,7 @@
 **Authority:** none yet. Rules come from the [decision register](../PHASE-7-8-decision-register.md).
 **Owns:** the single Cashfree adapter, creating the Cashfree order, the webhook endpoint,
 verification, failures, retries, duplicates and late payments.
-**Related:** [master](./00-master-state-model-sdd.md) · [checkout](./01-checkout-reservation-sdd.md) ·
+**Related:** [master](./00-master-state-model-sdd.md) · [checkout](./01-checkout-reservation/01-0-overview.md) ·
 [Cashfree mail](../PHASE-7-8-mail-cashfree.md)
 
 ---

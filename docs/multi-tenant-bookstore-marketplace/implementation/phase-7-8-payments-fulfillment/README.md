@@ -11,7 +11,7 @@ reviewed before the full SDD is written (handoff §5, process addition 1).
 | # | SDD | State | Reviewers when written in full |
 |---|---|---|---|
 | 00 | [Master and state model](./00-master-state-model-sdd.md) | Skeleton | Sol, DeepSeek, Muse, Sonnet |
-| 01 | [Reserve-first checkout and paid-order acceptance](./01-checkout-reservation-sdd.md) | Skeleton | Sol, DeepSeek, Muse, Sonnet |
+| 01 | [Reserve-first checkout and paid-order acceptance](./01-checkout-reservation/01-0-overview.md) (six parts; [single-file reference copy](./01-checkout-reservation-sdd.md)) | Full draft; owner decisions applied (D-95 to D-103) | Sol, DeepSeek, Muse, Sonnet |
 | 02 | [Cashfree payments and webhooks](./02-cashfree-payments-sdd.md) | Skeleton | Sol, DeepSeek, Muse, Sonnet |
 | 03 | [Ledger and reconciliation](./03-ledger-reconciliation-sdd.md) | Skeleton | Sol, DeepSeek, Muse, Sonnet |
 | 04 | [Refunds, returns, recovery, chargebacks](./04-refunds-returns-recovery-sdd.md) | Skeleton | Sol, DeepSeek, Muse, Sonnet |

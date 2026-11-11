@@ -91,7 +91,8 @@ The 12 Phase 6 states stop being used for new rows. New values:
 A payment can still succeed after any of the last three states (CF-33). After
 `reservation_expired` the late-payment rule applies (D-06, Q38). After `customer_cancelled`
 or `platform_cancelled` the payment is refunded in full automatically and no order is
-created (D-85). Only the three events in D-81 lead to `platform_cancelled`.
+created (D-85). Only the three events in D-81, and an admin refund of a paid checkout that
+could not be converted (D-95, reason `conversion_failed`), lead to `platform_cancelled`.
 
 ## 6. Order states (`store_orders.status`)
 

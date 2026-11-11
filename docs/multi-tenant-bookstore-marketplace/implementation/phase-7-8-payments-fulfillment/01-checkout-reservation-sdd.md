@@ -1,6 +1,11 @@
 # SDD 01: Reserve-First Checkout and Paid-Order Acceptance
 
-**Status:** full draft, 2026-11-11, corrected against the Phase 6 code and traced to the
+> **Reference copy only (2026-11-11).** This single file was split by topic into the six
+> parts in [01-checkout-reservation/](./01-checkout-reservation/01-0-overview.md), with the
+> same section numbers. Build from and edit the parts; this copy is kept in step with
+> them for reference and may be renamed later. Any edit must be made in both.
+
+**Status:** full draft, 2026-11-11, owner decisions on §17 applied (D-95 to D-103), plus the late-payment table, closure warning, printed price and RX-29 from the owner's outside review, corrected against the Phase 6 code and traced to the
 register. First paired review done; the third review's findings and the final check's four
 findings are applied. Not approved. No code
 or migration may be written from it until the owner approves it.
@@ -105,16 +110,22 @@ in `INTEGER` columns ending `_minor`, as in Phase 6.
 | New `cart_version_at_reservation INTEGER` | The cart's version when reserved; a late conversion uses it (§5.5) |
 | New `payment_grace_expires_at TIMESTAMPTZ` | Set when the row enters `awaiting_payment_result` |
 | New `delivery_quote_id UUID` | Nullable; no foreign key until SDD 07 creates `delivery_quotes` |
-| New `closed_reason_code TEXT` | Why a checkout closed: `timer`, `payment_failed`, `customer`, `store_fraud_suspended`, `store_payment_permission_lost`, `store_closed_by_admin`, `conversion_failed` only once §17 item 29 is approved and the register, master §5 and SDD 04 category 5 are updated (§5.10) |
+| New `closed_reason_code TEXT` | Why a checkout closed: `timer`, `payment_failed`, `customer`, `store_fraud_suspended`, `store_payment_permission_lost`, `store_closed_by_admin`, `conversion_failed` (admin refund of a failed conversion, D-95, §5.10) |
 | `final_subtotal_minor`, `final_delivery_tariff_minor`, `final_total_minor` | Reused. Written once at reservation and never changed; this is the amount SDD 02 asks Cashfree to collect |
-| New CHECK `store_order_requests_reserved_amounts` | When `money_calculator_version = 2`: `final_total_minor = final_subtotal_minor + final_delivery_tariff_minor`, `fee_minor = 0`, `discount_minor = 0`. The store sets prices and discounts in its inventory screens (BC-04; master §12); checkout reads the current `selling_price_minor`, already after discount, and stores no separate discount |
+| New CHECK `store_order_requests_reserved_amounts` | When `money_calculator_version = 2`: `final_total_minor = final_subtotal_minor + final_delivery_tariff_minor`, `fee_minor = 0`, `discount_minor = 0`. The store sets prices and discounts in its inventory screens (BC-04; master §12); checkout reads the current `selling_price_minor`, already after discount, and stores no checkout-level discount. The book's printed price is kept per item (§3.2, §3.5), so the price and its saving are both recorded (BC-05) |
 | New index | `(reservation_expires_at)` where status is `reserved` |
 
 A row is a pay-first row when `money_calculator_version = 2`.
 
-### 3.2 `store_order_request_items`: no column change
+### 3.2 `store_order_request_items`: one new column
 
-Pay-first writes `requested_quantity` and `server_bound_unit_price_minor` and leaves
+New nullable `printed_mrp_minor INTEGER`, CHECK `IS NULL OR >= 0`: the book's printed
+price (MRP) from `store_inventory.printed_mrp_minor`, read with the selling price at
+reservation. It is shown only; it never changes the amount charged. Null when the store
+recorded no printed price.
+
+Pay-first writes `requested_quantity`, `server_bound_unit_price_minor` and
+`printed_mrp_minor`, and leaves
 `confirmed_quantity`, `confirmed_unit_price_minor` empty. `confirmation_status` stays at
 its default `requested` and is not read.
 
@@ -182,6 +193,7 @@ through it. They are not copied into `store_orders`.
 | `photo_requested` | BOOLEAN NOT NULL DEFAULT false | A photo request was open for this item at payment (§5.5) |
 | `photo_request_id` | UUID, nullable | Phase 9's request ID, kept on conversion for each requested item. CHECK: present exactly when `photo_requested` is true (§18) |
 | `unit_price_minor` | INTEGER NOT NULL | CHECK `>= 0`. The price paid |
+| `printed_mrp_minor` | INTEGER, nullable | CHECK `IS NULL OR >= 0`. Copied from the checkout item (§3.2). Shown on the order and receipt with the saving when it is above `unit_price_minor`, for example "MRP ₹500, you paid ₹400"; never used in any amount (BC-05) |
 | `status` | TEXT NOT NULL DEFAULT `active` | `active`, or `removed_unavailable` once `removed_quantity = quantity` |
 | `removed_at`, `removed_reason_code` | TIMESTAMPTZ, TEXT | |
 | `stock_outcome` | TEXT | Set when the copies still on the item end without the customer keeping them: `returned_to_sale`, `written_off`, `awaiting_relist` (§9). Missing copies are recorded per report (§3.11) |
@@ -269,7 +281,7 @@ checks; raw media tables are not granted to clients.
 
 ### 3.9 Migrations and their owning slices
 
-1. Checkout schema: §3.1 changes, the new `snapshot_submission_schedule` and
+1. Checkout schema: §3.1 and §3.2 changes, the new `snapshot_submission_schedule` and
    `enforce_phase6_terminal_invariants`, and the checkout status-change trigger (§5.8).
 2. Paid-order schema: §3.4, §3.5, §3.10 to §3.13, the order-number sequence, and the
    order status-change trigger (§6.8).
@@ -295,8 +307,8 @@ checks; raw media tables are not granted to clients.
    `expire_reservation`, `expire_payment_grace`, `convert_paid_checkout`,
    `resolve_late_payment`, `requeue_checkout_timer`, `resolve_failed_conversion`,
    and the new `cancel_for_store_ineligibility`. Include the guards on old commands (§15).
-   Use the exact contracts in §5.0. Slice 3 builds only `retry_convert` for failed
-   conversion; the refund branch is gated as §5.10 says.
+   Use the exact contracts in §5.0. Slice 3 builds both failed-conversion actions,
+   `retry_convert` and `refund` (D-95, §5.10).
    Install these in slices 2, 3 and 6 as §19 assigns them; enable the three cancelling
    pause kinds only with §5.7 in slice 6.
 8. Paid-order commands and timers: `accept_order`, `report_missing_books`,
@@ -416,10 +428,10 @@ nothing; it never moves the quantity again (§9).
 | Key | Default | Decision |
 |---|---|---|
 | `commerce.reservation_window_seconds` | 600 | Q36 |
-| `commerce.payment_grace_seconds` | 900 | Master §8 proposes 15 minutes; SDD 02 must confirm the number (§17 item 30) |
+| `commerce.payment_grace_seconds` | 900 | 15 minutes (D-102) |
 | `commerce.max_order_book_total_minor` | 500000 | D-56, D-65 |
-| `commerce.reservation_attempts_per_hour` | 6 | Handoff §7; number proposed (§17) |
-| `commerce.customer_max_live_checkouts` | 2 | Handoff §7; number proposed (§17) |
+| `commerce.reservation_attempts_per_hour` | 6 | Handoff §7; number approved (§17 item 3) |
+| `commerce.customer_max_live_checkouts` | 2 | Handoff §7; number approved (§17 item 3) |
 | `commerce.customer_daily_paid_order_limit` | `null` (off) | D-56; checked only when set |
 | `commerce.paid_order_acceptance_seconds` | 86400 | D-04 |
 | `commerce.acceptance_reminder_open_seconds` | 1800 | BC-12 |
@@ -429,17 +441,17 @@ nothing; it never moves the quantity again (§9).
 | `commerce.photo_check_window_seconds` | 86400 | D-43, D-53 |
 | `commerce.missing_outcome_window_seconds` | 86400 | D-83 |
 | `commerce.preparation_grace_business_days` | 1 | D-79 |
-| `commerce.schedule_horizon_days` | 62 | Schedule engine default in migration 0020; reservation refusal is proposed (§17 item 20) |
+| `commerce.schedule_horizon_days` | 62 | Schedule engine default in migration 0020; reservation refusal approved (D-100) |
 | `commerce.store_daily_paid_order_limit` | 20 | D-20, D-66 |
 | `commerce.store_alert_channel_reliable` | false | D-02, handoff §11 item 5 |
 | `commerce.provider_check_max_age_seconds` | 60 | My number (§17) |
 
 The old `payment_ready_window_seconds` and `acceptance_window_seconds` keys are not used.
-The payment-result grace uses `commerce.payment_grace_seconds`; SDD 02 owns confirmation
-of its proposed default. Grace is anchored to `reservation_expires_at` (§5.3),
+The payment-result grace uses `commerce.payment_grace_seconds`; its 15 minutes are
+approved (D-102). Grace is anchored to `reservation_expires_at` (§5.3),
 including when the worker runs late. All deadline checks use `clock_timestamp()` read
 after the locks (§5.0, §6, §7). Receipt email adds no setting: D-50 requires it when an
-email was given; the 24-hour unsent scan is proposed in §17 item 31.
+email was given; the 24-hour unsent scan is §17 item 31 (approved).
 
 ## 5. Checkout commands
 
@@ -487,7 +499,7 @@ windows. A timer acts only at or after its due time, with the matching status an
 | `resolve_late_payment` | `marketplace_sec` | `(p_request_id UUID, p_payment_id UUID, p_paid_at TIMESTAMPTZ, p_command_id UUID)` | Verified payment ID, checkout ID and command ID; unique order/payment and refund key. | `{"outcome":"converted","order_id":UUID}` or `{"outcome":"refund_requested","payment_id":UUID}` | Existing order/refund answer; no second effect. |
 | `cancel_for_store_ineligibility` | `marketplace_sec` | `(p_store_id UUID, p_reason_code TEXT, p_command_id UUID)` | Pause command ID; server-read store checkouts; state guards. | `{"outcome":"applied","request_ids":UUID[]}` | `{"outcome":"noop"}` when no unpaid live checkout remains. |
 | `requeue_checkout_timer` | `marketplace_sec` | `(p_task_id UUID, p_reason TEXT, p_idempotency_key TEXT, p_command_id UUID)` | Checked admin, key, command ID; source task and reason hashed; source replacement pointer. | `{"outcome":"requeued","task_id":UUID,"replacement_task_id":UUID}` | Same answer with the recorded replacement ID; no new task. |
-| `resolve_failed_conversion` | `marketplace_sec` | `(p_request_id UUID, p_action TEXT, p_reason TEXT, p_idempotency_key TEXT, p_command_id UUID)` | Checked admin, key, command ID; checkout, action and reason hashed; payment read on server. | `{"outcome":"converted","order_id":UUID}`; `{"outcome":"conversion_failed","reason":TEXT}`; gated `{"outcome":"refund_requested","payment_id":UUID}` | Stored answer on replay; `{"outcome":"noop"}` if the case was already resolved. |
+| `resolve_failed_conversion` | `marketplace_sec` | `(p_request_id UUID, p_action TEXT, p_reason TEXT, p_idempotency_key TEXT, p_command_id UUID)` | Checked admin, key, command ID; checkout, action and reason hashed; payment read on server. | `{"outcome":"converted","order_id":UUID}`; `{"outcome":"conversion_failed","reason":TEXT}`; `{"outcome":"refund_requested","payment_id":UUID}` | Stored answer on replay; `{"outcome":"noop"}` if the case was already resolved. |
 | `accept_order` | `public` | `(p_order_id UUID, p_expected_version INTEGER, p_idempotency_key TEXT, p_command_id UUID)` | Caller, key, command ID; entity, version and action inputs hashed. | `{"outcome":"applied","order_id":UUID,"status":TEXT,"version":INTEGER}` | Stored answer on replay; other invalid actions raise their guard. |
 | `report_missing_books` | `public` | `(p_order_id UUID, p_expected_version INTEGER, p_items JSONB, p_idempotency_key TEXT, p_command_id UUID)` | Caller, key, command ID; entity, version and action inputs hashed. | `{"outcome":"applied","order_id":UUID,"status":TEXT,"version":INTEGER}` | Stored answer on replay; other invalid actions raise their guard. |
 | `record_missing_outcome` | `public` | `(p_order_id UUID, p_expected_version INTEGER, p_outcome TEXT, p_idempotency_key TEXT, p_command_id UUID)` | Caller, key, command ID; entity, version and action inputs hashed. | `{"outcome":"applied","order_id":UUID,"status":TEXT,"version":INTEGER}` | Stored answer on replay; other invalid actions raise their guard. |
@@ -679,9 +691,8 @@ exception would roll back SDD 02's whole transaction, including the record that 
 was verified. SDD 02 then commits the payment as verified and opens an admin case in that
 same transaction, extends the holds as §5.10 says, and leaves the checkout in its current
 live state. `resolve_failed_conversion` can retry within the D-04 window (§5.10).
-Its refund branch is available only once §17 item 29 is approved and the register,
-master §5 and SDD 04 category 5 are updated. Until then the case stays open if a retry
-cannot succeed, and the admin escalates to the owner; the §13 scan also finds it. Both expiry commands do nothing once a verified
+If a retry cannot succeed, the admin refunds the payment in full (D-95); a case still open
+after 7 days is escalated to the owner, and the §13 scan also finds it. Both expiry commands do nothing once a verified
 success exists. The customer has paid, so the books stay held while this is resolved.
 
 Locks, in the §7 order: customer advisory lock, payment, cart, store (`FOR UPDATE`,
@@ -718,11 +729,24 @@ For a verified success on a checkout that is already closed. A success on a Cash
 order that already has an `amount_mismatch` attempt never comes here: SDD 02 treats it as
 a duplicate that Cashfree reverses (CF-30, D-78).
 
+Every kind of payment that arrives late or twice, and where it is handled:
+
+| Case | What happens | Where |
+|---|---|---|
+| First success on a checkout still `reserved` or `awaiting_payment_result` | Converted as a normal payment | §5.5 |
+| First success after the checkout closed, including after a termination request (CF-65) | This section's table: an order if the books are free and nothing below applies, otherwise a full refund | §5.6 |
+| A second success on a Cashfree order that already has a verified payment | Duplicate; Cashfree reverses it; no order and no immediate refund from us | SDD 02 (D-78, CF-30) |
+| A success after a wrong-amount attempt on the same Cashfree order | Same as a duplicate | SDD 02 (D-78, CF-30), §5.3 |
+| A success for the wrong amount | Refunded in full; never an order; the reservation runs out | SDD 02 (D-29), §5.3 |
+| A success Cashfree has already reversed | Recorded by reconciliation; no order and no refund from us | SDD 02, SDD 03 |
+| A success on a checkout the customer or the platform cancelled | Full refund, no order | This section (D-85) |
+| A success that cannot be converted | Admin retry or refund | §5.10 (D-95) |
+
 | Checkout state | Result |
 |---|---|
 | `customer_cancelled` or `platform_cancelled` | Full automatic refund, no order (D-85). Refund category 5 in SDD 04 |
-| `reservation_expired`, and a D-81 pause is active for the store | Full automatic refund (§17) |
-| `reservation_expired`, and another checkout of the same cart at the same `cart_version_at_reservation` is live or converted | Full automatic refund: the customer is already buying exactly these books (§17). A checkout of the cart at a different version does not count; the cart changed, so these are different orders |
+| `reservation_expired`, and a D-81 pause is active for the store | Full automatic refund (D-98) |
+| `reservation_expired`, and another checkout of the same cart at the same `cart_version_at_reservation` is live or converted | Full automatic refund: the customer is already buying exactly these books (D-97). A checkout of the cart at a different version does not count; the cart changed, so these are different orders |
 | `reservation_expired`, every item still has enough stock | All items are taken again and sold in one step; then the same effects as §5.5. `converted` (D-06, D-84) |
 | `reservation_expired`, any item short | Full automatic refund (Q38, D-84); nothing is taken |
 
@@ -779,7 +803,7 @@ migration.
 | `reserved` | `awaiting_payment_result` | `expire_reservation` |
 | `reserved` | `reservation_expired` | `expire_reservation` |
 | `reserved`, `awaiting_payment_result` | `customer_cancelled` | `cancel_reservation` |
-| `reserved`, `awaiting_payment_result` | `platform_cancelled` | `cancel_for_store_ineligibility`. The `resolve_failed_conversion` refund transition (`conversion_failed`, §5.10) is added only once §17 item 29 is approved and the register, master §5 and SDD 04 category 5 are updated |
+| `reserved`, `awaiting_payment_result` | `platform_cancelled` | `cancel_for_store_ineligibility`; also `resolve_failed_conversion`'s `refund`, with `conversion_failed` (D-95, §5.10) |
 | `awaiting_payment_result` | `converted` | `convert_paid_checkout` |
 | `awaiting_payment_result` | `reservation_expired` | `expire_payment_grace` |
 | `reservation_expired` | `converted` | `resolve_late_payment` |
@@ -813,7 +837,7 @@ Two concurrent calls lock the same source: the second returns the first replacem
 instead of creating another. The replacement follows §5.3 or §5.4, including a fresh
 Cashfree read, so an admin can retry but cannot release books without one. Audited.
 
-### 5.10 `resolve_failed_conversion` (admin, through SDD 08; proposal §17 item 29)
+### 5.10 `resolve_failed_conversion` (admin, through SDD 08; D-95)
 
 `marketplace_sec.resolve_failed_conversion(p_request_id UUID, p_action TEXT, p_reason TEXT,
 p_idempotency_key TEXT, p_command_id UUID)` is service role only and admin-only through
@@ -825,22 +849,22 @@ rows in ID order, then listings. Read `clock_timestamp()` after those locks.
 | `p_action` | Result |
 |---|---|
 | `retry_convert` | Allowed only before the saved `paid_at + 24 hours` (D-04). Call `convert_paid_checkout` again with that payment and original `paid_at`. The order keeps `acceptance_due_at = paid_at + 24 hours`. Success closes the case and records the recovery action and order ID; another failure leaves the case open and holds active |
-| `refund` | Only once §17 item 29 is approved and the register, master §5 and SDD 04 category 5 are updated: release the holds; set `platform_cancelled`, `closed_reason_code = 'conversion_failed'`; resolve checkout tasks; request the whole payment from SDD 04 category 5, keyed by payment ID as in §5.6; close the case |
+| `refund` | Release the holds; set `platform_cancelled`, `closed_reason_code = 'conversion_failed'`; resolve checkout tasks; request the whole payment from SDD 04 category 5, keyed by payment ID as in §5.6; close the case |
 | Retry at or after `paid_at + 24 hours` | `INVALID_COMMAND`: "The 24-hour window to retry has passed. Escalate this case to the owner." Nothing changes |
-| Refund before that approval, or anything else | `INVALID_COMMAND`; nothing changes |
+| Anything else | `INVALID_COMMAND`; nothing changes |
 
-After the D-04 window only the proposed refund can resolve the case, because the store
-could no longer accept a new order. Until item 29 is approved, slice 3 builds only
-`retry_convert`. An admin who cannot retry must escalate to the owner. The case stays
-open with holds active; there is no automatic refund or other refund path.
+After the D-04 window only `refund` can resolve the case, because the store could no
+longer accept a new order. The admin may also refund inside the window when a retry
+cannot succeed. Nothing refunds automatically: until an admin acts, the case stays open
+with holds active (D-95).
 
 An order created by `retry_convert` that expires unaccepted is fault `platform`,
 regardless of alert delivery: failed conversion is a system failure under D-04. This
 applies D-04 and adds no rule; §6.6 reads the recorded recovery action.
 
-When SDD 02 records the failure, it also sets the proposed admin case deadline to
-7 days later and extends active holds' `expires_at` to at least that deadline, in the same
-transaction (§17 item 29). If the deadline passes with the case open, the admin queue
+When SDD 02 records the failure, it also sets the admin case deadline to 7 days later
+and extends active holds' `expires_at` to at least that deadline, in the same
+transaction (D-95). If the deadline passes with the case open, the admin queue
 escalates it to the owner. Nothing releases the holds by itself.
 `expire_reservation` and `expire_payment_grace` do nothing on a verified success.
 
@@ -848,7 +872,7 @@ The action and reason are audited. A replay after conversion or an approved refu
 does nothing. A retry racing SDD 02's verification of the same payment uses the same
 payment lock and one-order constraints; only one conversion commits (§7).
 The payment ID refund key also prevents a later §5.6 replay from refunding again.
-The gated source changes are recorded in §20.
+The matching source changes (register D-95, master §5, SDD 04 category 5) are recorded in §20.
 
 ## 6. Paid-order commands
 
@@ -889,6 +913,8 @@ act. A late worker never extends the customer's or store's action window.
 | `respond_to_photos` | Time is at or after `photo_check_due_at` | `PHOTO_DEADLINE_PASSED` | The time to check these photos has passed. |
 | `record_missing_outcome` | Time is at or after `missing_outcome_due_at` | `MISSING_OUTCOME_WINDOW_PASSED` | The 24 hours to record the outcome have passed. The system will keep the rest. |
 | `mark_order_ready` | Time is at or after `preparation_expires_at` | `PREPARATION_DEADLINE_PASSED` | The time to prepare this order has passed. |
+| `report_missing_books` | Time is at or after `preparation_expires_at` (D-96) | `PREPARATION_DEADLINE_PASSED` | The time to prepare this order has passed. |
+| `report_missing_books` | Photos are requested and unsent, and time is at or after `photo_send_due_at` (D-96) | `PHOTO_DEADLINE_PASSED` | The time to send these photos has passed. |
 
 Check access and cancelled state, then version, before the action's state, pending-outcome,
 input and deadline guards. Timers use their state and due-time guards and do nothing when
@@ -992,7 +1018,7 @@ customer cancel of what remains; the earlier partial refund and store fault stan
 |---|---|---|---|
 | `send_requested_photos` | Store | `accepted`; photos not yet sent; requirement not cleared; Phase 9 validates viewable photos for every remaining requested item, otherwise `PHOTOS_INCOMPLETE`; `clock_timestamp()` read after the locks is before `photo_send_due_at`, otherwise `PHOTO_DEADLINE_PASSED` | `awaiting_photo_check`; `photos_sent_at`; `photo_check_due_at = photos_sent_at + 24 hours`; resolves `photo_send_expiry`; opens `photo_check_expiry`; notice to the customer |
 | `respond_to_photos` approve (§5.0) | Customer | `awaiting_photo_check`; `clock_timestamp()` read after the locks is before `photo_check_due_at`, otherwise `PHOTO_DEADLINE_PASSED` | Back to `accepted`; `photos_approved_at` set; resolves `photo_check_expiry`; the promised day is worked out afresh and the D-79 times and tasks set (§8.3) |
-| `respond_to_photos` reject | Customer | `awaiting_photo_check`; `clock_timestamp()` read after the locks is before `photo_check_due_at`, otherwise `PHOTO_DEADLINE_PASSED`; `p_reject_reason` is `does_not_match_listing` or `other` (`INVALID_COMMAND` if absent) | `cancelled`, `photos_rejected`; full refund. For `does_not_match_listing`: fault `store`, one store fault, copy written off (D-43, D-21). For `other`: `no_fault` and the copy goes back on sale (D-43) |
+| `respond_to_photos` reject | Customer | `awaiting_photo_check`; `clock_timestamp()` read after the locks is before `photo_check_due_at`, otherwise `PHOTO_DEADLINE_PASSED`; `p_reject_reason` is `does_not_match_listing` (shown as "Doesn't match the condition label or description") or `other` (shown as "Changed my mind"); `INVALID_COMMAND` if absent | `cancelled`, `photos_rejected`; full refund either way. For `does_not_match_listing`: fault `store`, one store fault, copy written off (D-43, D-21, D-103); the store may dispute it through SDD 08, where an admin compares the photos with the listing and its condition label and may change the fault to `no_fault`. For `other`: `no_fault` and the copy goes back on sale (D-43) |
 | `expire_photo_send` | Timer at `photo_send_due_at` | Order `accepted`, photos not sent, requirement not cleared | `cancelled`, `photos_not_sent`, fault `store`; refund as unavailable; store fault |
 | `expire_photo_check` | Timer | `awaiting_photo_check`, requirement not cleared | `cancelled`, `photos_not_answered`, `no_fault` (D-53); full refund; copy back on sale |
 
@@ -1084,6 +1110,7 @@ refund or next timer. Each race has a test in both orders (§14).
 | RX-26 | `expire_photo_check` (A) and `report_missing_books` (B) | Cancelled; B gets `ORDER_ALREADY_CANCELLED` | If B clears the photo requirement, A does nothing; otherwise A cancels and closes the report as `cancelled_all` |
 | RX-27 | `retry_convert` (A) and late SDD 02 verification of the same payment (B), inside the D-04 window | One order; B returns the existing conversion | One order; A sees the converted checkout and does nothing |
 | RX-28 | Reservation (A) and each of Phase 9's three publication functions in 0040 (B) on the same book | B waits in the shared store, stock, listing order; re-checks after A | A waits and re-checks stock/listing after B. Any `40P01` before the forward fix retries the whole 01 transaction with the same identities |
+| RX-29 | One D-81 pause cancelling several live checkouts of a store (A) and payment verifications on two of them (B, C) at the same time | Each checkout is either cancelled with B or C then refunding in full by §5.6, or converted first and left for D-21; no deadlock lasts, and each checkout gets exactly one outcome | Same, in the other orders |
 
 Action-first tests against their timers commit the action before its deadline; timer-first
 tests run at or after it. At or after the deadline an action cannot win merely because its
@@ -1342,13 +1369,13 @@ The §13 scan reports receipts still unsent after 24 hours.
 
 | Screen | Shows | Actions |
 |---|---|---|
-| Cart | Items, prices, total, pickup or delivery | "Reserve and pay". Each guard's message from §5.1 |
+| Cart | Items, prices (with the printed price and saving when recorded, §3.5), total, pickup or delivery. When the store's next opening, from the schedule engine, is 24 hours or more away: "This store is closed until {day, time}. If it can't accept your order within 24 hours of payment, you'll get a full refund automatically." (D-04, D-07). The warning informs only; it never blocks payment | "Reserve and pay". Each guard's message from §5.1 |
 | Paying | The amount, a 10-minute countdown, the payment page (SDD 02) | "Cancel" |
 | Waiting for payment result | "We are confirming your payment. Please do not pay again." | "Cancel" (a payment that still succeeds is refunded in full) |
 | Reservation ended, no payment attempt | "Your reservation ended. You were not charged." | "Back to cart" |
 | Payment not received (`payment_failed` at grace end, or expiry after an attempt) | "We have not received your payment. If you were charged, it will be refunded automatically." | "Back to cart" |
 | Payment refunded | The reason (§10), the amount, "2–3 working days" | "Back to cart" |
-| Order detail | Order number, items, amounts, receipt, the Phase 9 photo references for each requested item (§18), status in plain words, "expected today / tomorrow / next opening day", refund notes | "Cancel order" until ready; "Approve" or "Reject" photos. "Reject" asks for the reason: "Doesn't match the listing" or "Other" |
+| Order detail | Order number, items, amounts, receipt, the Phase 9 photo references for each requested item (§18), status in plain words, "expected today / tomorrow / next opening day", refund notes | "Cancel order" until ready; "Approve" or "Reject" photos. "Reject" asks for the reason: "Doesn't match the condition label or description" or "Changed my mind" (§6.5, D-103) |
 
 **Store owner**
 
@@ -1386,8 +1413,8 @@ payment on a checkout neither converted nor refunded, including an unresolved
 pending; an open platform incident lasting more than 24 hours; a stock movement whose
 recorded quantity or outcome does not match the stock change (§3.13, §9); a receipt whose
 customer gave an email but whose `emailed_at` is null more than 24 hours after
-`issued_at` (§17 item 31); a failed-conversion case past its proposed 7-day deadline,
-which the admin queue escalates to the owner without releasing holds (§5.10, §17 item 29).
+`issued_at` (§17 item 31); a failed-conversion case past its 7-day deadline,
+which the admin queue escalates to the owner without releasing holds (§5.10, D-95).
 
 A matching open timer has the right type and current due time. An old
 `preparation_expiry` is resolved before its replacement is inserted (§6.2, §8.1);
@@ -1429,6 +1456,10 @@ test-only stores and users, and clean up after themselves.
   `PAUSE_KIND_NOT_AVAILABLE` and writes nothing.
 - R-18 two reservations for one customer run together at the live-checkout cap: the
   customer advisory lock makes one re-check after the other commits.
+- R-19 a reservation copies each book's `printed_mrp_minor` (or null) beside its selling
+  price, and conversion copies it to the order item; the charged amount ignores it.
+- R-20 the cart shows the closure warning when the store's next opening is 24 hours or
+  more away, and not otherwise; payment is never blocked by it (D-07).
 
 **Expiry and payment**
 - E-01 expiry with no payment releases the holds and restores the stock exactly.
@@ -1450,11 +1481,8 @@ test-only stores and users, and clean up after themselves.
   Termination reporting success verifies and converts; a failed termination keeps holds.
   A late reservation expiry or grace worker never moves the anchored grace end (E-02).
 - E-12 a failed conversion guard: no order; verified payment, admin case and hold extension
-  to its proposed 7-day deadline commit together. Both expiry commands do nothing and
-  holds stay. Slice 3 tests only `retry_convert`; a refund request is refused and an
-  admin who cannot retry escalates to the owner with the case open.
-  Only once §17 item 29 is approved and the register, master §5 and SDD 04 category 5
-  are updated: test that `refund` releases holds, closes as `platform_cancelled` with
+  to its 7-day deadline commit together. Both expiry commands do nothing and holds
+  stay until an admin acts. Test that `refund` releases holds, closes as `platform_cancelled` with
   `conversion_failed`, resolves tasks and requests category 5 once. Replay the admin
   action and then §5.6: the shared payment ID key prevents a second refund.
 - E-13 a dead-lettered reservation or grace expiry: the source is not open. Requeue keeps
@@ -1504,8 +1532,8 @@ test-only stores and users, and clean up after themselves.
   per audience (RX-27).
 - E-26 retry at and after `paid_at + 24 hours` is refused using post-lock
   `clock_timestamp()`, including a lock wait that crosses the deadline. Case and holds
-  stay open; until item 29 approval the admin escalates to the owner, with no refund.
-- E-27 a failed-conversion case still open after its proposed 7-day deadline escalates
+  stay open until the admin refunds (D-95); nothing refunds automatically.
+- E-27 a failed-conversion case still open after its 7-day deadline escalates
   to the owner through the admin queue. No timer, scan or escalation releases its holds.
 - E-28 a wrong-amount success found at reservation expiry, and again at grace expiry:
   verification records `amount_mismatch` and refunds it; the worker continues, terminates
@@ -1582,6 +1610,9 @@ test-only stores and users, and clean up after themselves.
 - M-21 a missing report on `awaiting_store` acknowledges a photo order but opens no D-79
   timers while photos remain required; approval sets them, or clearing the requirement
   starts them (§6.2, D-79).
+- M-23 `report_missing_books` at and after `preparation_expires_at`, and at and after
+  `photo_send_due_at` with photos unsent, is refused before its timer runs and writes
+  nothing; no deadline moves and the photo step is not cleared (D-96).
 - M-22 the §3.11 FKs, non-null report times, allowed outcome/actor values and all-null or
   all-set outcome CHECK reject invalid rows.
 
@@ -1591,6 +1622,9 @@ test-only stores and users, and clean up after themselves.
   raises `PHOTO_DEADLINE_PASSED` and writes nothing.
 - PH-07 approve and reject at and after `photo_check_due_at`, before its timer runs,
   raise `PHOTO_DEADLINE_PASSED` and write nothing.
+- PH-09 a store dispute of a `does_not_match_listing` rejection: the admin's change to
+  `no_fault` removes that store fault once and re-attributes the fee through SDD 04; the
+  customer's refund is unchanged; a replayed admin decision changes nothing (D-103).
 - PH-08 Phase 9 test double: conversion keeps the request ID for each requested item.
   `send_requested_photos` raises `PHOTOS_INCOMPLETE` with its message and writes nothing
   if any remaining requested item has missing, unvalidated or unviewable photos.
@@ -1661,7 +1695,7 @@ test-only stores and users, and clean up after themselves.
   incident open over 24 hours; photo scans skip cleared requirements. Check stock-movement
   consistency, post-close termination and both reconciliation exemptions in §15.
   Report receipts unsent after 24 hours and open failed-conversion cases past their
-  proposed 7-day deadline; neither scan releases holds or fabricates a sent receipt.
+  7-day deadline; neither scan releases holds or fabricates a sent receipt.
   No old preparation task stays open beside its replacement; duplicate scans stay on.
 
 **Races**
@@ -1704,6 +1738,8 @@ run every alternative in both orders. Deadline races follow §7's timing rule.
   `phase9_retry_publication_worker_v1`. After the forward lock-order migration there is
   no lasting deadlock. Before it lands, force SQLSTATE `40P01` and retry the whole 01
   transaction with the same key and command ID; no repeated hold, order or notice.
+- RX-29 one pause cancelling several checkouts while two of them are being verified:
+  every checkout gets exactly one outcome and no deadlock lasts.
 
 ## 15. Phase 6 rework
 
@@ -1711,7 +1747,7 @@ run every alternative in both orders. Deadline races follow §7's timing rule.
 |---|---|
 | `submit_order_request` | The old function uses a different lock order and is closed to new carts from slice 2. Its new version also refuses a cart with a live or converted pay-first checkout. When the new screens ship (slice 8), `EXECUTE` is revoked from `authenticated`. Removed when the old step is retired |
 | Cart commands: `marketplace_add_cart_item`, `marketplace_set_cart_item_quantity`, `marketplace_remove_cart_item`, `marketplace_get_or_create_cart`, `marketplace_confirm_cart_replacement` | New versions refuse changes, abandonment and replacement while a checkout is live. They no longer call `evaluate_phase6_eligibility`; they call `evaluate_reservation_eligibility` in its cart mode, which skips the open-day and online-payment checks, and they no longer read `pickup_available` |
-| `cart_safe_projection` | New version shows the current `selling_price_minor`, not the lower of the two prices |
+| `cart_safe_projection` | New version shows the current `selling_price_minor`, not the lower of the two prices, each book's `printed_mrp_minor`, and the store's next opening time from the schedule engine for the closure warning (§12) |
 | `execute_support_intervention` | New version refuses `support_cancel_request` on a pay-first row. Its closed-state list would otherwise let support cancel a live checkout outside D-81 |
 | `validate_phase6_event`, `validate_phase6_notification`, `validate_phase6_audit`, `marketplace_notifications_safe_route` | New versions also cover `checkout.*` and `order.*` events and the `store_order` entity: the customer and store are read from `store_orders`, safe-payload checks apply, and the routes gain `customer_order` and `owner_order`. Without this a notice on a paid order fails and rolls back the payment |
 | `reconcile_phase6_operations` (0033) | Exempt every §8.1 type from version-based cleanup (`t.source_request_version<>r.version`). Keep the `duplicate_active_task` scan: resolve old work before replacement (§6.2, §8.1), so two open tasks of one entity/type cannot coexist. The second exemption keeps post-close `terminate_provider_order` and unsent `receipt_email` work open |
@@ -1764,7 +1800,9 @@ lands (handoff §9). Until then both sets of functions exist; only the new one i
 
 ## 17. Choices made in this document, for the owner
 
-The register does not decide these. Each is my proposal and is not policy until approved.
+The owner approved every item below on 2026-11-11 ("Approve all"). The business rules
+among them are recorded in the register as D-95 to D-103, named against each item; the
+rest are technical choices approved as written.
 
 All wording of messages and notices is also mine.
 
@@ -1773,30 +1811,29 @@ All wording of messages and notices is also mine.
 2. **The cart looks normal but cannot be changed while a payment is in progress**, and is
    closed only when an order is created. This is what lets a customer reserve again after
    an expiry.
-3. **Customer attempt and open-checkout caps (handoff §7):** proposed 6 attempts an hour
-   and 2 open at once. The daily paid-order cap is off by D-56; that is an approved rule,
-   not a proposed limit.
-4. **A late payment is refunded, not converted, when the same cart with the same contents
+3. **Customer attempt and open-checkout caps (handoff §7):** 6 attempts an hour
+   and 2 open at once. The daily paid-order cap is off by D-56.
+4. **(D-97) A late payment is refunded, not converted, when the same cart with the same contents
    already has another live or completed checkout**, so a customer who paid twice for the
-   same books gets one order and one refund. This narrows D-06 and needs the owner's
-   explicit approval and a register entry.
-5. **A late payment is refunded when the store has since been suspended for fraud, lost
+   same books gets one order and one refund. This narrows D-06; approved as D-97.
+5. **(D-98) A late payment is refunded when the store has since been suspended for fraud, lost
    its payment permission or been closed by the admin** (the D-81 list), even if the book
    is free. This goes beyond handoff §11 item 4, which says a late payment proceeds despite
-   a later pause, and needs the owner's explicit approval and a register entry.
+   a later pause; approved as D-98.
 6. **Order numbers look like `BC-100042`.**
-7. **Photo rejection:** D-43 decides the fault once we know whether the photos match. Who
-   says they don't match is my choice: the customer's stated reason.
+7. **(D-103) Photo rejection:** the customer picks a reason: "Doesn't match the condition
+   label or description" (store fault) or "Changed my mind" (no fault). The store may
+   dispute a store fault; an admin compares the photos with the listing and its condition
+   label and may change it to no fault (§6.5). The refund is never affected.
 8. **"Alert delivered" means the notice was shown on an owner's device or an owner opened
    the order**, and it only counts once the alert channel is declared reliable.
 9. **A written-off copy is removed from stock for good; a returned or refused copy waits
    for the store to re-list it.**
 10. **The D-79 clock does not run during the customer's photo check**; on approval the
     promised day is worked out afresh.
-11. **A store that accepts after its promised day** gets the alert at the end of the next
+11. **(D-99) A store that accepts after its promised day** gets the alert at the end of the next
     fair day, not one that has already passed. D-79 read strictly would count from the
-    original promised day, which could leave the store minutes; this needs the owner's
-    explicit approval.
+    original promised day, which could leave the store minutes; approved as D-99.
 12. **The "not prepared" cancel waits while a missing-book outcome is pending.**
 13. **Selecting every book as missing is refused**; the store uses "I don't have any of
     these".
@@ -1809,46 +1846,36 @@ All wording of messages and notices is also mine.
 18. **`no_fault` is added to the causes in master §9**, for "counts against nobody" (D-43,
     D-53).
 19. **An order counts as at most one store fault**, however many things went wrong on it.
-20. **A store with no open day within `commerce.schedule_horizon_days` (default 62 days)
+20. **(D-100) A store with no open day within `commerce.schedule_horizon_days` (default 62 days)
     cannot take a reservation**, because nobody could accept the order and it would only be refunded. D-07 says customers may
-    order while a store is closed, so this is a narrow exception and needs the owner's
-    explicit approval. If its schedule empties after payment, the affected time falls back
+    order while a store is closed, so this is a narrow exception, approved as D-100. If its schedule empties after payment, the affected time falls back
     to 24 elapsed hours and an admin case is opened.
 21. **Reconciliation flags an expired reservation still open after 5 minutes.**
 22. **Times already worked out do not move if a store changes its hours later.**
 23. **An order never accepted counts as "not accepted", even if photos were also due.**
 24. **If every book the customer asked for photos of goes missing, the photo step is dropped.**
 25. **A customer who cancels while a missing-book outcome is pending** is treated as
-    "cancelled all": the store bears the fault, because the missing book caused it.
-26. **Books stay held if Cashfree cannot be reached**, until it can be or the customer
+    D-61's "cancelled all": the missing book caused the cancellation, so D-61's store
+    fault applies. This applies D-61 and is not a new rule.
+26. **(D-101) Books stay held if Cashfree cannot be reached**, until it can be or the customer
     cancels. An admin can retry the check but cannot release the books without it.
 27. **A "platform failure" that protects a store from a fault** is a recorded period when
     BookConnect's own alerts or app were failing (§3.12). In the pilot an admin records
     and ends incidents by hand through SDD 08; the worker does not create them.
-28. **Proposed restriction on late missing-book reports, for the owner's approval:**
-    refuse `report_missing_books` after `preparation_expires_at`, or after
-    `photo_send_due_at` while photos are unsent, so a late report cannot move a deadline
-    or clear the photo step. D-83 allows reports "any time before ready". This would
-    narrow it and is not a guard or a rule in this draft.
-29. **Proposed way out of a failed paid conversion:** an admin may retry conversion
-    only within the 24 hours from the original verified payment. Read
-    `clock_timestamp()` after the locks; the order keeps its original
-    `acceptance_due_at = paid_at + 24 hours`. A later retry is refused because the
-    store could no longer accept it. An order made by a retry that expires unaccepted
-    is fault `platform`: failed conversion is a system failure under D-04, not a new rule.
-    The proposed alternative is a full category 5 refund (§5.10). After the 24 hours,
-    only that proposed refund can resolve the case; there is no automatic refund.
-    The refund and its `platform_cancelled` / `conversion_failed` transition are built
-    only once this item is approved and the register, master §5 and SDD 04 category 5
-    are updated. Until then slice 3 builds only `retry_convert`. An admin who cannot
-    retry must escalate to the owner, leaving the case open and the paid books held.
-    Proposed case deadline: 7 days after recording the failure; extend holds to at least
-    that time. If it passes while the case is still open, the admin queue escalates to
-    the owner. Nothing releases the holds by itself. This refund adds a cancellation
-    reason beyond D-81 and extends category 5, so it needs the owner's explicit approval
-    and the corresponding source changes (§20).
-30. **Payment-result grace:** proposed 15 minutes (`commerce.payment_grace_seconds = 900`),
-    as in master §8. SDD 02 must confirm the number; it is not yet an approved rule.
+28. **(D-96) Restriction on late missing-book reports:** `report_missing_books` is
+    refused after `preparation_expires_at`, or after `photo_send_due_at` while photos are
+    unsent, so a late report cannot move a deadline or clear the photo step (§6, M-23).
+    This narrows D-83's "any time before ready".
+29. **(D-95) Way out of a failed paid conversion:** an admin may retry conversion only
+    within the 24 hours from the original verified payment, reading `clock_timestamp()`
+    after the locks; the order keeps `acceptance_due_at = paid_at + 24 hours`, and if it
+    then expires unaccepted the fault is `platform` (D-04). Otherwise the admin issues a
+    full category 5 refund, closing the checkout as `platform_cancelled` with
+    `conversion_failed` (§5.10). Nothing refunds automatically. The case deadline is 7 days
+    after the failure is recorded; holds are extended to at least that time, and an open
+    case past it is escalated to the owner. Nothing releases the holds by itself.
+30. **(D-102) Payment-result grace:** 15 minutes (`commerce.payment_grace_seconds = 900`),
+    as in master §8. SDD 02 uses the same setting.
 31. **Report a receipt still not emailed after 24 hours** when the customer gave an email.
     It goes to the admin queue; the email task keeps retrying. D-50 requires the email,
     but does not choose this scan's timing.
@@ -1903,18 +1930,16 @@ Every slice uses §5.0's command contracts and runs its relevant O-03 and O-04 c
 2. Reservation: migration 6 hold and stock helpers, `evaluate_reservation_eligibility`,
    `snapshot_reservation_policies`, `create_reservation`, `cancel_reservation`, customer
    advisory, payment, cart, store, checkout, stock-in-ID-order and listing locks,
-   skipping rows not needed (§7); guards on the old commands; tests R-01 to R-14, R-16, R-18,
+   skipping rows not needed (§7); guards on the old commands; tests R-01 to R-14, R-16, R-18, R-19,
    ST-01, ST-02, RX-01 and RX-28's three publication races, with whole-transaction
    `40P01` retry checks. The termination stub records customer-cancel requests.
 3. Expiry and conversion, against a payment-state test double until SDD 02's slices:
    `expire_reservation`, `expire_payment_grace`, `convert_paid_checkout` with the daily
-   limit, `resolve_late_payment`, idempotent `requeue_checkout_timer`, and only
-   `resolve_failed_conversion`'s `retry_convert` branch. Do not build its refund or
-   `conversion_failed` transition until §17 item 29 approval and the register, master §5
-   and SDD 04 category 5 updates. Keep an unrecoverable case open and escalate to the owner.
+   limit, `resolve_late_payment`, idempotent `requeue_checkout_timer`, and
+   `resolve_failed_conversion` with both `retry_convert` and `refund` (D-95).
    Include §8.2 and §8.3 calculations, receipt creation with transactional `receipt_email`
    enqueue, and the failed-conversion hold extension and overdue-case escalation.
-   Tests E and L except E-12's gated refund and E-23's sender checks (slice 10); run
+   Tests E and L, including all of E-12, except E-23's sender checks (slice 10); run
    E-23's missing-sender check now. RX-02, RX-03, RX-12, RX-13, RX-15, RX-17, RX-27; E-17 checks
    checkout timers and termination here. Defer E-21's paid-order timers to their slices,
    and L-04's platform-cancel and L-05's D-81 pause cases to slice 6. E-28 runs here with
@@ -1932,14 +1957,14 @@ Every slice uses §5.0's command contracts and runs its relevant O-03 and O-04 c
    scan kept, and a finishing old worker records nothing. Test the new timers' E-21 replays.
 6. Ineligibility: §5.7, enable the three cancelling pause kinds; R-15, the D-81 cases,
    E-14's ineligibility races, L-04's platform-cancel and L-05's D-81 pause cases,
-   E-29's per-checkout identities, RX-04, RX-14, RX-16.
+   E-29's per-checkout identities, RX-04, RX-14, RX-16, RX-29.
 7. Photos: §6.5; tests PH, M-08, M-15, M-20's photo cancellations, M-21, PR-04,
    all remaining C-01, E-21, O-01 and
    O-02 cases, and RX-08, RX-09, RX-11, RX-21, RX-23, RX-24, RX-26. Run the photo part of
    PR-09. PH-08 uses Phase 9's full-contract test double for request IDs, complete
    validated/viewable photos, `PHOTOS_INCOMPLETE` and customer photo references. The
    real Phase 9 contract is a slice-7 dependency; customer photo use waits for it. At this point every §7 race has its both-order test.
-8. Screens and projections: migration 9 and §12, including E-22's screen wording, with
+8. Screens and projections: migration 9 and §12, including E-22's screen wording and R-20's closure warning, with
    customer and store flows checked in the browser; `submit_order_request` closed to
    clients (§15). Run the complete security tests S-01 to S-08.
 9. Reconciliation scans and observability: migration 10 and §13; RC-01, E-27 and the full
@@ -1953,7 +1978,7 @@ Every slice uses §5.0's command contracts and runs its relevant O-03 and O-04 c
 Refund requests in slices 3 to 7 call SDD 04's request function. Until SDD 04 is built
 they call a stub that records the request, and the tests assert on that record. The stub
 deduplicates by the supplied refund key, including the payment ID in §5.6. The matching
-§5.10 refund is included only once §17 item 29 is approved and its source updates are done.
+§5.10 refund uses the same stub and the same payment ID key.
 Before SDD 02 is built, `terminate_provider_order` likewise uses its migration 5 recording
 stub. Each slice runs its relevant grants, events and timer-replay checks; tests that need
 a later command run in that command's slice, as listed above.
@@ -1972,20 +1997,20 @@ deployment was performed.
 
 | With | Direction | Contract |
 |---|---|---|
-| SDD 02 | 02 calls 01 | Use §5.0's exact `marketplace_sec.convert_paid_checkout` and `marketplace_sec.resolve_late_payment` contracts inside verification after amount checks and in §7 lock order. On `conversion_failed`, commit the verified payment, case with proposed 7-day deadline and hold extension together (§5.10). Recovery reads that payment and keeps its original `paid_at`; expiry does nothing on verified success. A retry is allowed only before the original D-04 deadline using post-lock `clock_timestamp()`; it races verification through the same payment lock and one-order constraints. Payment conversion also opens `receipt_email` when an email was given |
-| SDD 02 | 01 needs from 02 | Use §5.0 for all 01 calls. Worker provider steps: §5.3 for reservation expiry; §5.4 for grace end, terminating even a still-processing attempt, with `TERMINATION_REQUESTED` accepted and a success verified instead. Payment stays on the poll after grace closure. Own the `terminate_provider_order` handler registered in migration 5; until built, its stub records and resolves. Confirm `commerce.payment_grace_seconds`, proposed default 900 (master §8). Grace ends at `reservation_expires_at + commerce.payment_grace_seconds`, even if already past when expiry runs. Requeues keep original `p_task_due_at`, dedupe by admin command ID, record `replaced_by_task_id`, and run now through `next_attempt_at` |
+| SDD 02 | 02 calls 01 | Use §5.0's exact `marketplace_sec.convert_paid_checkout` and `marketplace_sec.resolve_late_payment` contracts inside verification after amount checks and in §7 lock order. On `conversion_failed`, commit the verified payment, case with 7-day deadline and hold extension together (§5.10). Recovery reads that payment and keeps its original `paid_at`; expiry does nothing on verified success. A retry is allowed only before the original D-04 deadline using post-lock `clock_timestamp()`; it races verification through the same payment lock and one-order constraints. Payment conversion also opens `receipt_email` when an email was given |
+| SDD 02 | 01 needs from 02 | Use §5.0 for all 01 calls. Worker provider steps: §5.3 for reservation expiry; §5.4 for grace end, terminating even a still-processing attempt, with `TERMINATION_REQUESTED` accepted and a success verified instead. Payment stays on the poll after grace closure. Own the `terminate_provider_order` handler registered in migration 5; until built, its stub records and resolves. Confirm `commerce.payment_grace_seconds`, 900 (D-102). Grace ends at `reservation_expires_at + commerce.payment_grace_seconds`, even if already past when expiry runs. Requeues keep original `p_task_due_at`, dedupe by admin command ID, record `replaced_by_task_id`, and run now through `next_attempt_at` |
 | SDD 02 | 02 needs from 01 | The checkout's `final_total_minor`, and whether it is `reserved` before a payment may start |
-| SDD 04 | 01 calls 04 | One request function: order or payment, category, item list for a partial refund, cause, stable key. The caller already holds the payment row lock (§6, §7). Categories: 1, 2, 3, 4, 5, 7, 8, 19. Only once §17 item 29 is approved and the register, master §5 and SDD 04 category 5 are updated, add the admin failed-conversion refund (§5.0, §5.10). Until then there is no such refund path: an admin who cannot retry escalates to the owner. If approved, both that refund and §5.6 use the payment ID key, so a later replay never refunds twice; missing reports use their own report ID. Every whole-order cancel closes an open report without changing its own category except §6.4's existing rule |
+| SDD 04 | 01 calls 04 | One request function: order or payment, category, item list for a partial refund, cause, stable key. The caller already holds the payment row lock (§6, §7). Categories: 1, 2, 3, 4, 5, 7, 8, 19. Category 5 also covers the admin failed-conversion refund (D-95, §5.0, §5.10). Both that refund and §5.6 use the payment ID key, so a later replay never refunds twice; missing reports use their own report ID. Every whole-order cancel closes an open report without changing its own category except §6.4's existing rule. When an admin changes a photo-mismatch fault to `no_fault` (D-103), 04 re-attributes that order's non-returned fee to BookConnect (D-27) |
 | SDD 04 | 01 calls 04 | Record a store fault: order, kind (`sold_out`, `missed_deadline`, `photos_not_sent`, `photos_mismatch`, `not_prepared`) |
 | SDD 03, 04, 05 | They call 01 | Use §5.0's exact `set_commerce_pause` and `clear_commerce_pause` contracts for their kinds (§3.6), with §7 lock order and command identity preserved |
 | SDD 05 | 05 sets | The entitlement `commerce_online_payment_enabled` |
 | SDD 05 | 05 reads | `store_orders`, for the split amount from `store_order_items`: `(quantity - removed_quantity) * unit_price_minor` |
 | SDD 06, 07 | They call 01 | Use §5.0's exact `mark_order_ready` and `restock_order_item` contracts. `mark_order_ready` (§6.7): photos approved if requested and still required; a set `photo_requirement_cleared_at` satisfies the photo guard. Deadline uses `clock_timestamp()` read after the locks. Everything after ready is theirs; each SDD extends §6.8's trigger in its own migration with its later transitions. Call `restock_order_item` with `pickup:<order id>:<item id>` for pickup and `return:<case id>:<item id>` for a return; §9's three outcomes and quantity/replay rules apply. The last four cancel reasons remain theirs. SDD 07 owns guard 11's valid-quote rules; until it is live guard 10 refuses delivery first |
-| SDD 08 | 01 needs | Admin queue for escalations, D-79 alerts, dead-lettered tasks, failed conversions and receipts unsent after 24 hours (§17 item 31). Checked wrappers use §5.0's exact service-only `requeue_checkout_timer`, `resolve_failed_conversion`, `record_platform_incident` and `end_platform_incident` contracts, preserving the checked admin actor, key and command ID. Show one requeue replacement through `replaced_by_task_id`. Until item 29 approval and source updates, build only failed-conversion `retry_convert`; when the admin cannot retry, escalate to the owner and keep the case open. Record the retry action and order ID so an unaccepted expiry is fault `platform` (D-04). An open case past its proposed 7-day deadline escalates to the owner and never releases holds itself. The pilot records incidents by hand; flag one left open over 24 hours. Until 08 exists, an owner notice in test mode (handoff §11 item 25) |
+| SDD 08 | 01 needs | Admin queue for escalations, D-79 alerts, dead-lettered tasks, failed conversions, receipts unsent after 24 hours (§17 item 31) and store disputes of photo-mismatch faults (D-103, §6.5, PH-09). Checked wrappers use §5.0's exact service-only `requeue_checkout_timer`, `resolve_failed_conversion`, `record_platform_incident` and `end_platform_incident` contracts, preserving the checked admin actor, key and command ID. Show one requeue replacement through `replaced_by_task_id`. Build both failed-conversion actions, `retry_convert` and `refund` (D-95); nothing refunds without an admin action. Record the retry action and order ID so an unaccepted expiry is fault `platform` (D-04). An open case past its 7-day deadline escalates to the owner and never releases holds itself. The pilot records incidents by hand; flag one left open over 24 hours. Until 08 exists, an owner notice in test mode (handoff §11 item 25) |
 | Phase 9 lane | 01 needs | **Before slice 2:** stock-only listing-trigger exemption (§9), and a forward migration changing 0040's `phase9_set_publication_state_v2`, `phase9_retry_publication_owner_v1` and `phase9_retry_publication_worker_v1` to lock store before inventory, then listings. Until then any 01 `40P01` retries the whole transaction with the same key and command ID (§7, RX-28). **Before slice 7:** per requested item, the open request's ID at conversion, kept as `photo_request_id`; a check that validated, viewable photos exist for every remaining requested item; and the photo references the customer screen shows (§18, PH-08). Provide the matching test double; `send_requested_photos` uses it to prove `PHOTOS_INCOMPLETE`. **Before live payments:** D-49 printed-book field and listing-side enforcement |
 | Receipt email sender | 01 needs | Needed before live payments (D-50). Supply §11's idempotent sender for `receipt_email`, key type plus order ID, then set `emailed_at` on success. The current worker returns `transport_not_configured`; keep tasks retrying until slice 10, and report unsent receipts after 24 hours (§13, §17 item 31). No new in-app event or notification type is needed |
-| SDD 00 and decision register | Needs later update | Only once §17 item 29 is approved: update the register, master §5's `platform_cancelled` reasons and SDD 04 category 5 for the admin `conversion_failed` refund before building it. Record the original-payment 24-hour retry window, no automatic refund and owner escalation at an open case's proposed 7-day deadline. Align master grace anchoring with §4/§5.3, unchanged event names and audience-specific notification types with §10, and cleared-photo readiness with §6.7. Item 31's proposed 24-hour unsent-receipt scan also needs owner approval. Master §12 now records D-49 as a listing rule with no checkout re-check (done 2026-11-11) |
-| SDD 09 | Needs later update | Carry §14 tests and §5.0 command/JSON contracts into its full test plan: E-02/E-11 anchored late grace; E-12 gated recovery; E-13/E-24 idempotent requeue and replacement pointer; E-17/PR-07 atomic task replacement and no-op completion; E-18 both inbox audiences and mark-read; E-19/E-23 receipt enqueue and sender replay; E-25 to E-27 recovery window and owner escalation; E-28 wrong-amount expiry; E-29 batch cancel identities; E-30 receipt survives cancellation; A-09 platform fault; PH-08 full Phase 9 photo contract; O-02 current §6.8 trigger; O-03 post-lock deadline clock; O-04 exact worker calls; ST-04 non-negative parts; RX-27 retry/verification and RX-28 all three publication races. Keep §3.8 grants, §6 refusals and §8.1 timer replay checks. E-12's refund tests wait for item 29 approval and all source updates |
+| SDD 00 and decision register | Needs later update | Done 2026-11-11: the register records D-95 to D-103, and master §5 and SDD 04 category 5 include the admin `conversion_failed` refund (D-95). Still to do: align master grace anchoring with §4/§5.3, unchanged event names and audience-specific notification types with §10, and cleared-photo readiness with §6.7. Item 31's 24-hour unsent-receipt scan was approved with §17. Master §12 now records D-49 as a listing rule with no checkout re-check (done 2026-11-11) |
+| SDD 09 | Needs later update | Carry §14 tests and §5.0 command/JSON contracts into its full test plan: E-02/E-11 anchored late grace; E-12 failed-conversion recovery; E-13/E-24 idempotent requeue and replacement pointer; E-17/PR-07 atomic task replacement and no-op completion; E-18 both inbox audiences and mark-read; E-19/E-23 receipt enqueue and sender replay; E-25 to E-27 recovery window and owner escalation; E-28 wrong-amount expiry; E-29 batch cancel identities; E-30 receipt survives cancellation; A-09 platform fault; PH-08 full Phase 9 photo contract; O-02 current §6.8 trigger; O-03 post-lock deadline clock; O-04 exact worker calls; ST-04 non-negative parts; RX-27 retry/verification and RX-28 all three publication races; RX-29 multi-checkout pause with verifications. Keep §3.8 grants, §6 refusals and §8.1 timer replay checks. E-12 includes the D-95 refund |
 
 ## 21. Traceability
 
@@ -1993,7 +2018,7 @@ Each decision this SDD owns (master §12), and where it is met.
 
 | Decision | Section | Decision | Section |
 |---|---|---|---|
-| BC-04, BC-05 | §3.1, §5.1 | D-34 | §8.3 |
+| BC-04, BC-05 | §3.1, §3.2, §3.5, §5.1, §12, R-19 | D-34 | §8.3 |
 | BC-06, BC-07 | §3.5, §5.5, §18, §20, PH-08: Phase 9 request ID and photo references | D-35, D-42 | §12 |
 | BC-08 | §1 | D-36 | §5.1, §15 |
 | BC-09 | §5.1, §9 | D-43 | §3.5, §6.5, §8.3, §18, PH-08 |
@@ -2003,15 +2028,15 @@ Each decision this SDD owns (master §12), and where it is met.
 | Q15, D-11 | §3.1 (zero-fee CHECK) | D-56, D-65 | §3.1, §4, §5.1 guards 5 and 13, R-13 |
 | Q33 | §5.1 guard 3 | D-61 | §6.2 |
 | Q36 | §4, §5.1 | D-79 | §4, §6, §6.6, §8.3, PR-11, PR-12, M-21 |
-| Q38, D-06 | §5.6 | D-81 | §3.6, §5.7, E-29 |
+| Q38, D-06 | §5.6 | D-81 | §3.6, §5.7, E-29, RX-29 |
 | Q49 | §6.1, §6.7, §6.8, M-15 | D-83 | §3.11, §6, §6.2, M-19 to M-22 |
 | Q55 | §6.3 | D-84 | §5.6 |
 | Q65 | §6.2 | D-85 | §5.6 |
 | P-6 | §5.1 guards 10 and 11, SDD 07 quote contract | D-94 | §6, §6.2, §7, M-18 |
 | D-04 | §3.12, §5.10, §6, §6.1, §6.6, §8.4, A-06, A-08, A-09, E-25, E-26, O-03 | D-20, D-66 | §3.6, §5.5 |
-| D-07 | §3.6, §5.1, §15 | D-21 | §3.6, §5.1 guards 7 and 8 |
+| D-07 | §3.6, §5.1, §12 closure warning, §15, R-20 | D-21 | §3.6, §5.1 guards 7 and 8 |
 | D-15 | §5.1, §6.3 | D-25 | §5.1 (no photo guard), §5.5 |
 | D-55 | §3.6, §8.3 | D-67, Q45 | §6.4 |
 | D-02 | §3.9 group 5, §10, E-18, S-08 | | |
 | Handoff §7 | §3.8, §5.1 guard 5, §7, R-18, S-01 to S-08 | | |
-| Engineering proof (no new business rule) | §3.8, §3.9, §5.0, §7, §8.1, §9, §10, §13, §15, §19, §20; E-13, E-17, E-18, E-21, E-24, O-02 to O-04, ST-03, ST-04, RX-01 to RX-28, RC-01 | Proposed recovery, restrictions and receipt scan, not register decisions | §5.10, §13, §17 items 28 to 31, §20; E-12, E-27 |
+| Engineering proof (no new business rule) | §3.8, §3.9, §5.0, §7, §8.1, §9, §10, §13, §15, §19, §20; E-13, E-17, E-18, E-21, E-24, O-02 to O-04, ST-03, ST-04, RX-01 to RX-29, RC-01 | D-95 to D-103 (owner, 2026-11-11) | §5.6, §5.10, §6.2, §6.5, §8.2, §13, §17, E-12, E-26, E-27 |

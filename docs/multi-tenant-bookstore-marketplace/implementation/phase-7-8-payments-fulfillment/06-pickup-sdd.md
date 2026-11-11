@@ -4,7 +4,7 @@
 **Authority:** none yet. Rules come from the [decision register](../PHASE-7-8-decision-register.md).
 **Owns:** a paid pickup order from "accepted" to "picked up": readiness, the pickup code,
 handover, the pickup window, missed and refused pickups.
-**Related:** [master](./00-master-state-model-sdd.md) · [checkout](./01-checkout-reservation-sdd.md) ·
+**Related:** [master](./00-master-state-model-sdd.md) · [checkout](./01-checkout-reservation/01-0-overview.md) ·
 [refunds](./04-refunds-returns-recovery-sdd.md)
 
 ---

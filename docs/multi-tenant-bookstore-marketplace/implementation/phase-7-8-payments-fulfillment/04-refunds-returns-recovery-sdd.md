@@ -39,7 +39,7 @@ store fault records, chargebacks, and the losses BookConnect absorbs.
 | 2 | Store has none of the books | Auto | Full, with delivery | Store | Q55, D-15, D-27 |
 | 3 | Missing books, customer keeps the rest | Auto | Those books' prices; delivery charge stands | Store | D-61, Q65, D-26 |
 | 4 | Missing books, customer cancels all | Auto | Full, with delivery (less anything already refunded under 3) | Store | D-61 |
-| 5 | Late payment and the book is gone, or the checkout was cancelled, or the store has since become ineligible | Auto | The whole payment | BookConnect | Q38, D-22, D-85 |
+| 5 | Late payment and the book is gone, or the checkout was cancelled, or the store has since become ineligible; or a verified payment that could not be turned into an order, refunded by an admin (D-95) | Auto; admin action for D-95 | The whole payment | BookConnect | Q38, D-22, D-85, D-95 |
 | 6 | Wrong-amount payment | Auto | That payment in full | BookConnect | D-29 |
 | 6a | Duplicate payment | None: not a refund of ours | Nothing from BookConnect. Cashfree reverses it (CF-30); we record and confirm the reversal (SDD 02 §5). If none shows after the set wait, the admin asks Cashfree and refunds on its confirmation, or after 5 more business days with no answer (D-78) | BookConnect, if any fee arises | D-29, D-78, CF-30 |
 | 7 | Customer cancels before ready (pickup) or before collection (delivery) | Auto (D-91) | Full, with delivery | BookConnect; provider fee per D-31 | Q45, D-67 |
