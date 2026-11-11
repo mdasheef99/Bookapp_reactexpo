@@ -1,7 +1,8 @@
 # Phase 7/8: Questions for Cashfree
 
 **Status:** sent by the owner on 2026-11-10 as [the Cashfree mail](./PHASE-7-8-mail-cashfree.md),
-with the Easy Split activation request. No reply yet.
+with the Easy Split activation request. Cashfree replied twice on 2026-11-10; the answers
+and what is still open are in the [replies and fact record](./PHASE-7-8-cashfree-replies.md).
 **Date:** 2026-11-09
 **Needed by:** design questions by the end of week 1; fees by week 4; live items before live
 (handoff §6 table).

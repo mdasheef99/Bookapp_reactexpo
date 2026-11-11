@@ -191,7 +191,9 @@ question. Where they differ from §6.1–6.3, the ready-to-send files win.
 **Cashfree account:** the owner creates the test account and requests Easy Split in test
 mode before week 1. Secret keys go only into server secrets, never into chat or the repo.
 
-### 6.1 Cashfree questions (sent 2026-11-10, no reply yet)
+### 6.1 Cashfree questions (sent 2026-11-10; two replies received, second mail sent)
+
+Answers and open points: [replies and fact record](./PHASE-7-8-cashfree-replies.md).
 
 1. Can a vendor's split share be held until BookConnect releases it (for example 3 days after handover, then the
    next weekly Monday run, D-28)? What is the maximum hold?
@@ -339,7 +341,8 @@ billing; test or sandbox access.
 
 - A refund with an unknown outcome is queried by its stored own ID, never re-issued with a
   new ID.
-- Webhook secrets rotate with an overlap period; failed events go to a retry queue and a
+- Webhook secrets rotate. (Updated 2026-11-10: Cashfree does not support an overlap period,
+  CF-36; the rotation steps are in SDD 02 §6.) Failed events go to a retry queue and a
   replay job; payment status is also polled independently.
 - Admin login uses two-factor authentication; sessions time out; money actions ask for
   re-authentication; audit rows cannot be edited or deleted and are exportable.
@@ -570,8 +573,9 @@ and test plan.
 13. Quote expiry vs the 10-minute reservation; unavailable-quote fallback (P-6).
 14. A returned book that fails inspection (D-10) goes to an admin dispute; return approval
     and automatic release after inspection per D-38; failed-delivery refunds per D-40.
-15. Pickup cannot be disabled by a store (D-24): remove the per-store pickup toggle; a paused
-    or closed store still shows pickup but takes no new orders (D-07).
+15. Pickup cannot be disabled by a store (D-24): remove the per-store pickup toggle; a store
+    that has paused online orders takes no new orders, while a closed store still takes
+    orders and acts when it opens (D-07).
 16. Payout-account change controls and provider KYC fields (BC-41).
 17. Store notification events (reminder, D-04 cancel, photo requests, pause, suspension,
     loss cap) delivered in-app under D-02.

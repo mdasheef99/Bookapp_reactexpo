@@ -1,6 +1,8 @@
 # Phase 7/8: Mail to Cashfree (ready to send)
 
-**Status:** sent by the owner on 2026-11-10. No reply yet.
+**Status:** sent by the owner on 2026-11-10. Cashfree replied twice the same day; see the
+[replies and fact record](./PHASE-7-8-cashfree-replies.md) and the
+[second mail](./PHASE-7-8-mail-cashfree-2.md).
 **Date:** 2026-11-10
 **Authority:** none. It is the [Cashfree questions](./PHASE-7-8-questions-cashfree.md) as one
 mail, with the Easy Split activation request first. Part 1 can be pasted alone into the

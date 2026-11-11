@@ -1,0 +1,28 @@
+# Phase 7/8 Payments and Fulfilment: SDD Folder
+
+**Status:** skeletons for owner review (2026-11-10). Nothing here is approved, and nothing
+here authorizes code, migrations, or provider calls.
+**Lane entry:** [handoff](../PHASE-7-8-HANDOFF.md). Business rules:
+[decision register](../PHASE-7-8-decision-register.md).
+
+A skeleton lists the sections, states, tables, timers and open points of an SDD. It is
+reviewed before the full SDD is written (handoff §5, process addition 1).
+
+| # | SDD | State | Reviewers when written in full |
+|---|---|---|---|
+| 00 | [Master and state model](./00-master-state-model-sdd.md) | Skeleton | Sol, DeepSeek, Muse, Sonnet |
+| 01 | [Reserve-first checkout and paid-order acceptance](./01-checkout-reservation-sdd.md) | Skeleton | Sol, DeepSeek, Muse, Sonnet |
+| 02 | [Cashfree payments and webhooks](./02-cashfree-payments-sdd.md) | Skeleton | Sol, DeepSeek, Muse, Sonnet |
+| 03 | [Ledger and reconciliation](./03-ledger-reconciliation-sdd.md) | Skeleton | Sol, DeepSeek, Muse, Sonnet |
+| 04 | [Refunds, returns, recovery, chargebacks](./04-refunds-returns-recovery-sdd.md) | Skeleton | Sol, DeepSeek, Muse, Sonnet |
+| 05 | [Store money: vendors, Easy Split, payouts](./05-store-money-easy-split-sdd.md) | Skeleton; not approved until its Cashfree facts are tested on sandbox | Sol, DeepSeek, Muse, Sonnet |
+| 06 | [Pickup](./06-pickup-sdd.md) | Skeleton | Sol, Muse |
+| 07 | Bike delivery | Not started: waits on the provider check | Sol, Muse |
+| 08 | Admin server functions and console; customer support intake (D-51) | Not started | Sol, Muse |
+| 09 | Security baseline and test plan | Not started | Sol, DeepSeek, Muse, Sonnet |
+
+Every Cashfree fact in these SDDs cites a CF ID from the
+[Cashfree fact record](../PHASE-7-8-cashfree-replies.md), which gives its source. A
+Cashfree statement without a CF ID is a defect.
+
+Not yet created: `TRACKER.md` with the migration ledger (handoff §10 step 1).
