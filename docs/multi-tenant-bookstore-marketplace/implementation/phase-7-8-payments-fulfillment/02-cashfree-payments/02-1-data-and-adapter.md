@@ -100,6 +100,7 @@ trigger would refuse.
 | `watch_stage` | TEXT | For `duplicate_success` only (§13.2): `waiting_reversal`, `asked_cashfree`, `refund_due`, `refund_requested`, `reversed`, `kept_by_cashfree` (§13.5) |
 | `watch_due_at` | TIMESTAMPTZ | When the duplicate watch next acts (§13.2) |
 | `cashfree_asked_at` | TIMESTAMPTZ | When the admin recorded asking Cashfree (§13.2) |
+| `ask_case_opened_at` | TIMESTAMPTZ | When the "Ask Cashfree" case opened; starts the no-answer period (D-110, §13.2) |
 | `cashfree_answer` | TEXT | `will_not_reverse`, or NULL |
 | `cashfree_answered_at` | TIMESTAMPTZ | When the checked admin command records the answer; anchors the 1-business-day deadline |
 | `refund_due_at` | TIMESTAMPTZ | Fixed D-78 deadline; a pending reversal never moves it later |

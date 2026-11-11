@@ -145,11 +145,9 @@ once tested. The adapter (§7) is still the only place that uses these names.
 7. **SDD 01 changes made with this revision** (approved SDD 01, owner decisions): the
    minimum-total guard and setting (D-107) and the `checkout.duplicate_payment` notice
    (D-108). Both are recorded in SDD 01 and its reference copy.
-8. **Owner decisions still needed:** the fallback clock when an admin enquiry is not sent;
-   the claimed 25-minute key-rotation maximum versus D-101/D-95 exceptions; and wording
-   when payment succeeded but conversion failed; and SDD 01's termination-refusal shortcut
-   when a wrong-amount receipt also has duplicate/reversed receipts. No new business rule
-   is implied here.
+8. **Owner decisions:** none open in this SDD. Round 2's questions were decided as D-109 to D-113 (2026-11-12).
+   SDD 01 changes from them: the paid-but-no-order screen row (D-112) and the widened `PAID`
+   refusal shortcut (D-113), in the parts and the reference copy.
 
 ## 17. Choices made in this document, for the owner
 
@@ -221,8 +219,7 @@ fixed contract until its own slice lands (M14).
    atomic rate admission are built before the expiry integration is enabled.
 6. **Wrong amount and duplicates:** §13.1 and §13.2, with SDD 04's refund request (or its
    stub) and SDD 01's duplicate notice. Needs SDD 01 slice 6 for D-81 cases. Tests VE-05,
-   VE-11a, VE-11b, VE-17, DU-01 to DU-15. The unattended-enquiry owner decision must
-   be applied before accepting the fallback integration.
+   VE-11a, VE-11b, VE-17, DU-01 to DU-15.
 7. **Races and rotation:** §14 races and the §13.4 rotation procedure rehearsed on sandbox.
    Tests WH-06, WH-10, RX2-01 to RX2-16, SE-03 to SE-06, ST2-06.
 
@@ -251,15 +248,15 @@ fixed contract until its own slice lands (M14).
 | Q37, BC-15 | §4.1 constraints, §8, §9, PA-04, PA-09, VE-05, RX2-01 to RX2-04 |
 | BC-10, D-102 | §11, §12.1, PO-02 |
 | D-29 | §9.3, §13.1, DU-01 to DU-03 |
-| D-29, D-78, D-109, CF-30, CF-64 | §9.3, §13.2, §13.5, DU-04 to DU-10, DU-14, DU-15, VE-05, VE-15, VE-21 |
+| D-29, D-78, D-109, D-110, D-113, CF-30, CF-64 | §9.3, §13.2, §13.5, DU-04 to DU-10, DU-14, DU-15, VE-05, VE-15, VE-21 |
 | D-06, D-85, D-97, D-98 | §9.3 (through SDD 01 §5.6), VE-09, VE-10, VE-11a, VE-11b, VE-17 |
 | D-21, D-81 | §8 (no pause guard), §12.2, RX2-07, VE-11a, VE-17 |
 | D-95 | §8 guard 2, §9.3 step 4, VE-12 |
 | D-101 | §11.3, §12.1, PO-04 |
-| D-55, D-68, D-104 | §8, §13.4, PA-03, SE-06 |
+| D-55, D-68, D-104, D-111 | §8, §13.4, PA-03, SE-06 |
 | D-106 | §8 guard 6, PA-10 (§18 slice 2) |
 | D-107 | §4.1, SDD 01 guard, ST2-05 |
-| D-48, D-108 | §9.4, §13.2, DU-09 |
+| D-48, D-108, D-112 | §8 guard 2, §9.4, §13.2, DU-09 |
 | CF-31, CF-32, CF-33, CF-65 | §5, §11, §12, §17 item 12 |
 | CF-36, CF-37, CF-38 | §7, §10, §13.4 |
 | Cashfree API reference names ([names list](../../PHASE-7-8-cashfree-names-needed.md)) | §2, §7.2, §7.3, §10.2, §10.3, §11.5, §12.1, §13.2, AD-05 to AD-08, PA-09, WH-11, PO-07, TE-06 |

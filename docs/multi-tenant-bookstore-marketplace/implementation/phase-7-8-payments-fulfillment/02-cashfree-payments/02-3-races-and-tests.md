@@ -229,8 +229,9 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
   close while the round is unknown.
 - TE-03 `TERMINATION_REQUESTED` counts as terminated.
 - TE-04 a termination answered `PAID` leads to verification and conversion.
-- TE-05 a termination answered `PAID` when every success is `amount_mismatch` counts as
-  terminated (SDD 01 E-28).
+- TE-05 a termination answered `PAID` counts as terminated when no payment was counted and
+  every success is `amount_mismatch`, `duplicate_success` or `reversed`, including a mix
+  (SDD 01 E-28, E-31, D-113); with a counted success it does not.
 - TE-06 a termination answer of `ACTIVE` or an error leads to a payments read and a retry;
   `EXPIRED` counts as terminated (§12.1).
 - TE-07 the `terminate_provider_order` task resolves on a terminated answer, retries on
@@ -295,7 +296,8 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
   deleted after the retention period (WH-12).
 - SE-06 the key-rotation procedure (§13.4), rehearsed on sandbox: new reservations pause,
   live checkouts finish, old-key webhooks are rejected, the poll recovers, the owner
-  restarts after a clean reconciliation (D-68, D-104).
+  restarts after a clean reconciliation (D-68, D-104). A leaked-key rehearsal skips the wait
+  and the poll recovers a payment caught in the gap (D-111).
 
 **Races**
 - RX2-01 to RX2-16 each run in both orders, as §14's table says.

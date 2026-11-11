@@ -170,8 +170,8 @@ The worker takes these steps, none of them inside a database lock (SDD 02 §7):
 3. If no attempt is pending, it terminates the Cashfree order (CF-32) and records the
    answer. `TERMINATION_REQUESTED` counts as terminated. If the answer is that a payment
    already succeeded, it runs verification and acts on its outcome as in step 2. When every
-   success on the order is a recorded `amount_mismatch`, that refusal also counts as
-   terminated, with the time of the answer passed as `p_provider_terminated_at`. Any
+   success on the order is a recorded `amount_mismatch`, `duplicate_success` or `reversed`
+   and none was counted (D-113), that refusal also counts as terminated, with the time of the answer passed as `p_provider_terminated_at`. Any
    success that still arrives later on that Cashfree order is a duplicate, which Cashfree
    reverses (CF-30): SDD 02 follows its duplicate rule (D-29, D-78), with no order and no
    immediate refund from us; it never reaches §5.6. The worker then
@@ -216,7 +216,8 @@ At grace end the worker takes these steps outside database locks:
 3. Otherwise terminate the Cashfree order (CF-32), whether an attempt is still processing
    or not. If the answer says a payment already succeeded, verify and act as in step 2.
    `TERMINATION_REQUESTED` counts as terminated, and so does the refusal described in §5.3
-   step 3 when every success is a recorded `amount_mismatch`. Then read the payments again.
+   step 3 when every success is a recorded `amount_mismatch`, `duplicate_success` or
+   `reversed` and none was counted (D-113). Then read the payments again.
 4. Call `public.expire_payment_grace(p_request_id, p_task_due_at, p_provider_checked_at,
    p_provider_terminated_at, p_idempotency_key, p_command_id)`.
 

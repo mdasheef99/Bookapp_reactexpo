@@ -103,3 +103,8 @@ One change was reversed on the owner's decision D-109: Sol's gate holding every 
 until Cashfree answers CF-A16. Replaced by "count first, correct later" (§9.3, §13.5,
 DU-14, DU-15, VE-21). Sol's owner questions 2–5 and Cashfree additions (CF-A27..A29) are
 still open.
+Owner answered Sol's remaining questions on 2026-11-12 as D-110 (refund clock starts when
+the case opens), D-111 (normal key change waits; leaked key changes at once), D-112
+(paid-but-no-order message) and D-113 (widened `PAID` refusal shortcut, SDD 01 §5.3/§5.4
+and test E-31). Applied to SDD 02 and SDD 01 (parts and reference copy). Sol's proposed
+Cashfree questions CF-A27..A29 are not yet added to the pending file.

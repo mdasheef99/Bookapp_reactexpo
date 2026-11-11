@@ -25,7 +25,7 @@ using `clock_timestamp()` read after the locks, in this order:
 | Guard | Refusal | Message |
 |---|---|---|
 | 1. Caller owns the checkout | `COMMERCE_ENTITY_UNAVAILABLE` | This checkout is not available. |
-| 2. The payment is not `paid` or `paid_late` | `ORDER_ALREADY_PAID` | For an existing order, SDD 01's wording: "Your payment went through. Your order is …" (§5.2). Without an order, the approved Waiting text (§9.4) pending the owner's failed-conversion wording decision (§16 item 8) |
+| 2. The payment is not `paid` or `paid_late` | `ORDER_ALREADY_PAID` | For an existing order, SDD 01's wording: "Your payment went through. Your order is …" (§5.2). Without an order (failed conversion, D-95): "Your payment went through. We're finishing your order and will let you know. If we can't, you'll get a full refund." (D-112) |
 | 3. Checkout is `reserved` and the time is before `reservation_expires_at` | `RESERVATION_ENDED` | SDD 01 §12's ended screen, selected by whether an attempt exists (§9.4) |
 | 4. The payment is neither `initiating` nor `pending`, and no attempt is `pending` or `success_unresolved` | `PAYMENT_IN_PROGRESS` | A payment is already in progress. Please wait for it to finish. |
 | 5. No attempt is `amount_mismatch` | `PAYMENT_NOT_ALLOWED` | This payment can't continue. Please reserve again. |
@@ -213,7 +213,8 @@ SDD 01's expiry workers branch on `classified`.
 
 The Paying and Waiting screens in SDD 01 §12 read `customer_payment_status`. While a check
 runs, the app shows "We are confirming your payment. Please do not pay again." The result
-screens and wording are SDD 01's §10 and §12 (D-108).
+screens and wording are SDD 01's §10 and §12 (D-108). A customer whose payment was verified but whose order could not yet be created (D-95)
+sees "Your payment went through. We're finishing your order and will let you know. If we can't, you'll get a full refund." (D-112).
 
 ## 10. Webhooks
 
@@ -397,14 +398,14 @@ SDD 01 §5.3 and §5.4 define the steps; this SDD supplies them:
   |---|---|
   | `TERMINATED`, `TERMINATION_REQUESTED` | Terminated, for SDD 01's command (SDD 01 §5.3). The poll still continues (§11.2) |
   | `EXPIRED` | Terminated: no payment can start on an expired order |
-  | `PAID` | `terminate_refused_for_success`; back to §9.2 and §9.3. When every success on the order is a recorded `amount_mismatch`, this counts as terminated (SDD 01 §5.3) |
+  | `PAID` | `terminate_refused_for_success`; back to §9.2 and §9.3. When no payment on the order was counted and every success on it is a recorded `amount_mismatch`, `duplicate_success` or `reversed` (D-113), this counts as terminated (SDD 01 §5.3) |
   | `ACTIVE`, or an error answer | Not terminated: read payments (§9.2, §9.3), then retry termination |
   | `unreachable`, `timeout`, `rate_limited` | Nothing changes; retry (D-101) |
 
-  The exact answers for a paid, expired or already terminated order are CF-A19. Approved
-  SDD 01's `PAID` refusal shortcut says every success must be `amount_mismatch`; it does
-  not cover mismatch plus duplicate/reversed successes. Do not broaden that guard here:
-  without a terminating answer, retain the holds and raise the owner question in §16.
+  The exact answers for a paid, expired or already terminated order are CF-A19. SDD 01's
+  `PAID` refusal shortcut covers any mix of `amount_mismatch`, `duplicate_success` and
+  `reversed` successes when none was counted (D-113); otherwise, without a terminating
+  answer, retain the holds and retry.
 - **Locked evidence boundary (M2; RX2-08).** The worker calls
   `commerce_expire_with_payment_evidence` (§6), not SDD 01's expiry RPC directly. In the
   full SDD 01 §7 order, this wrapper takes the customer advisory lock, re-resolves and locks
@@ -487,18 +488,18 @@ postpones a D-78 deadline:
 
 SDD 08's checked command records `cashfree_asked_at` on the actual enquiry, and
 `cashfree_answered_at` on `will_not_reverse`, once with an audit trail. Opening the case
-alone is not a claim that Cashfree was contacted. An uncontacted case remains due and
-visible to the owner; the fallback anchor if nobody contacts Cashfree needs the owner's
-decision (§16), rather than silently inventing a contact time.
+alone is not a claim that Cashfree was contacted. The no-answer period starts when the case
+opens (`ask_case_opened_at`), whether or not anyone has contacted Cashfree yet (D-110); an
+uncontacted case stays visible to the admin and owner until resolved.
 
 | What the refunds check shows, or what has happened | Result |
 |---|---|
 | Cashfree gave back the payment we counted instead (§13.5), this duplicate has no completed reversal, and no refund intent exists | This duplicate is the payment Cashfree kept: `watch_stage = kept_by_cashfree`; never refunded; done. If several duplicates qualify, only the first in §9.3's order is kept; the others keep being watched |
 | A confirmed completed full-amount, same-currency automatic reversal of this `cf_payment_id` appears after our refund intent (`refund_requested_at` set) | Set `reversal_seen_at` once; alert SDD 04 to stop an unsent intent if it can. If our refund succeeded or its result is unknown, open one reconciliation case and hand SDD 03 the confirmed extra loss when known (D-78); never send another refund |
 | A completed automatic reversal of this `cf_payment_id`, before our refund intent: confirmed representation, `refund_status` `SUCCESS`, same currency and full amount | Set `reversal_seen_at`; `watch_stage = reversed`; post the reversal to SDD 03 once; done |
-| No completed reversal and `watch_stage = waiting_reversal` at its due time, including a `PENDING`, `PENDING_APPROVAL`, `ONHOLD`, `CANCELLED` or `REJECTED` reversal | Open one admin case "Ask Cashfree about this payment"; `watch_stage = asked_cashfree`; keep the enquiry due until recorded |
+| No completed reversal and `watch_stage = waiting_reversal` at its due time, including a `PENDING`, `PENDING_APPROVAL`, `ONHOLD`, `CANCELLED` or `REJECTED` reversal | Open one admin case "Ask Cashfree about this payment"; set `ask_case_opened_at`; `watch_stage = asked_cashfree`; keep the enquiry due until recorded |
 | The admin records "Cashfree will not reverse", and no refund intent exists | Set `refund_due_at` no later than 1 business day after `cashfree_answered_at`; `watch_stage = refund_due` |
-| No answer `commerce.duplicate_refund_no_answer_business_days` business days after `cashfree_asked_at`, and no refund intent exists | Set `refund_due_at` to that deadline; `watch_stage = refund_due` |
+| No answer `commerce.duplicate_refund_no_answer_business_days` business days after `ask_case_opened_at` (D-110), and no refund intent exists | Set `refund_due_at` to that deadline; `watch_stage = refund_due` |
 | `refund_due` and no completed reversal in the fresh refunds check | Persist SDD 04 category 6a's intent with attempt identity, exact amount/currency and key `duplicate:<cf_payment_id>`; set `refund_requested_at` and `watch_stage = refund_requested`; one request only, outside-lock sender later |
 | Incomplete reversal and no refund deadline reached | Keep watching; next check no later than the earlier of next business day and the current policy deadline |
 | `refund_requested` and no completed reversal | Continue daily reconciliation with SDD 03 and SDD 04, including after the ordinary payment-poll window; never request again |
@@ -530,10 +531,13 @@ Cashfree allows one key pair at a time. Steps, by the owner with an admin:
 1. Set the global payment pause (D-55). New reservations stop; paid orders and refunds
    continue (D-104).
 2. Wait until no checkout is `reserved` or `awaiting_payment_result` and no payment is
-   `initiating` or `pending`: D-104 records at most the 10-minute reservation plus the
-   15-minute grace. D-101's unreachable check and D-95's failed conversion can keep these
-   conditions unresolved beyond that time. Do not override either safeguard or rotate
-   merely because 25 minutes elapsed; the owner must reconcile this bound (§16 item 8).
+   `initiating` or `pending`. This usually takes up to 25 minutes (the 10-minute
+   reservation plus the 15-minute grace), but that is not a deadline: a Cashfree outage
+   (D-101) or a failed conversion (D-95) can keep a checkout open longer, and the admin
+   clears those cases first (D-111).
+   **If a key has leaked, skip this wait** and go straight to step 3 (D-111). Payments in
+   progress during the swap are recovered by the poll (§11) once the new keys work; any
+   that cannot be recovered open admin cases.
 3. Generate new keys in Cashfree's dashboard (Developers → API Keys; sandbox and
    production keys are separate); replace both server secrets; redeploy the functions that
    read them. Whether the old keys stop working at once is CF-A24; the procedure assumes
@@ -570,4 +574,4 @@ A payment counted as `paid_late` and refunded under SDD 01 §5.6 follows SDD 04'
 rules; if Cashfree also gave it back, the same case and loss key apply. Where the first
 success was an `amount_mismatch` (refunded by us under §13.1) and Cashfree keeps a later
 correct payment, no order is created automatically: the reconciliation case goes to the
-admin (§16 item 8).
+admin to decide by hand.

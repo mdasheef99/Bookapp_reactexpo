@@ -617,8 +617,8 @@ The worker takes these steps, none of them inside a database lock (SDD 02 §7):
 3. If no attempt is pending, it terminates the Cashfree order (CF-32) and records the
    answer. `TERMINATION_REQUESTED` counts as terminated. If the answer is that a payment
    already succeeded, it runs verification and acts on its outcome as in step 2. When every
-   success on the order is a recorded `amount_mismatch`, that refusal also counts as
-   terminated, with the time of the answer passed as `p_provider_terminated_at`. Any
+   success on the order is a recorded `amount_mismatch`, `duplicate_success` or `reversed`
+   and none was counted (D-113), that refusal also counts as terminated, with the time of the answer passed as `p_provider_terminated_at`. Any
    success that still arrives later on that Cashfree order is a duplicate, which Cashfree
    reverses (CF-30): SDD 02 follows its duplicate rule (D-29, D-78), with no order and no
    immediate refund from us; it never reaches §5.6. The worker then
@@ -663,7 +663,8 @@ At grace end the worker takes these steps outside database locks:
 3. Otherwise terminate the Cashfree order (CF-32), whether an attempt is still processing
    or not. If the answer says a payment already succeeded, verify and act as in step 2.
    `TERMINATION_REQUESTED` counts as terminated, and so does the refusal described in §5.3
-   step 3 when every success is a recorded `amount_mismatch`. Then read the payments again.
+   step 3 when every success is a recorded `amount_mismatch`, `duplicate_success` or
+   `reversed` and none was counted (D-113). Then read the payments again.
 4. Call `public.expire_payment_grace(p_request_id, p_task_due_at, p_provider_checked_at,
    p_provider_terminated_at, p_idempotency_key, p_command_id)`.
 
@@ -1376,6 +1377,7 @@ The §13 scan reports receipts still unsent after 24 hours.
 | Cart | Items, prices (with the printed price and saving when recorded, §3.5), total, pickup or delivery. When the store's next opening, from the schedule engine, is 24 hours or more away: "This store is closed until {day, time}. If it can't accept your order within 24 hours of payment, you'll get a full refund automatically." (D-04, D-07). The warning informs only; it never blocks payment | "Reserve and pay". Each guard's message from §5.1 |
 | Paying | The amount, a 10-minute countdown, the payment page (SDD 02) | "Cancel" |
 | Waiting for payment result | "We are confirming your payment. Please do not pay again." | "Cancel" (a payment that still succeeds is refunded in full) |
+| Paid, order not yet created (D-95) | "Your payment went through. We're finishing your order and will let you know. If we can't, you'll get a full refund." (D-112) | none |
 | Reservation ended, no payment attempt | "Your reservation ended. You were not charged." | "Back to cart" |
 | Payment not received (`payment_failed` at grace end, or expiry after an attempt) | "We have not received your payment. If you were charged, it will be refunded automatically." | "Back to cart" |
 | Payment refunded | The reason (§10), the amount, "2–3 working days" | "Back to cart" |
@@ -1540,6 +1542,9 @@ test-only stores and users, and clean up after themselves.
   stay open until the admin refunds (D-95); nothing refunds automatically.
 - E-27 a failed-conversion case still open after its 7-day deadline escalates
   to the owner through the admin queue. No timer, scan or escalation releases its holds.
+- E-31 Cashfree refuses termination with `PAID` when the order holds a wrong-amount success
+  plus a duplicate or an already-returned success and nothing was counted: the refusal
+  counts as terminated and the holds are released (D-113).
 - E-28 a wrong-amount success found at reservation expiry, and again at grace expiry:
   verification records `amount_mismatch` and refunds it; the worker continues, terminates
   (or treats Cashfree's refusal as terminated), reads again and closes the checkout,
@@ -1947,7 +1952,7 @@ Every slice uses §5.0's command contracts and runs its relevant O-03 and O-04 c
    Tests E and L, including all of E-12, except E-23's sender checks (slice 10); run
    E-23's missing-sender check now. RX-02, RX-03, RX-12, RX-13, RX-15, RX-17, RX-27; E-17 checks
    checkout timers and termination here. Defer E-21's paid-order timers to their slices,
-   and L-04's platform-cancel and L-05's D-81 pause cases to slice 6. E-28 runs here with
+   and L-04's platform-cancel and L-05's D-81 pause cases to slice 6. E-28 and E-31 run here with
    SDD 02's verification test double. E-29 waits for slice 6 and E-30 for slices 4 and 10.
 4. Acceptance: `accept_order`, `report_order_unavailable`, `cancel_paid_order`,
    `acknowledge_store_alert`, and the three acceptance timers. E-30's cancellation part

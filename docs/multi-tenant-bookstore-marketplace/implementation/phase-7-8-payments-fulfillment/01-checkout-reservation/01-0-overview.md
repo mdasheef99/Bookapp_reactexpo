@@ -273,7 +273,7 @@ Every slice uses §5.0's command contracts and runs its relevant O-03 and O-04 c
    Tests E and L, including all of E-12, except E-23's sender checks (slice 10); run
    E-23's missing-sender check now. RX-02, RX-03, RX-12, RX-13, RX-15, RX-17, RX-27; E-17 checks
    checkout timers and termination here. Defer E-21's paid-order timers to their slices,
-   and L-04's platform-cancel and L-05's D-81 pause cases to slice 6. E-28 runs here with
+   and L-04's platform-cancel and L-05's D-81 pause cases to slice 6. E-28 and E-31 run here with
    SDD 02's verification test double. E-29 waits for slice 6 and E-30 for slices 4 and 10.
 4. Acceptance: `accept_order`, `report_order_unavailable`, `cancel_paid_order`,
    `acknowledge_store_alert`, and the three acceptance timers. E-30's cancellation part

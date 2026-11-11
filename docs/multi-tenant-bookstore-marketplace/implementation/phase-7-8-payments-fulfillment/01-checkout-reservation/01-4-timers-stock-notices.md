@@ -254,6 +254,7 @@ The §13 scan reports receipts still unsent after 24 hours.
 | Cart | Items, prices (with the printed price and saving when recorded, §3.5), total, pickup or delivery. When the store's next opening, from the schedule engine, is 24 hours or more away: "This store is closed until {day, time}. If it can't accept your order within 24 hours of payment, you'll get a full refund automatically." (D-04, D-07). The warning informs only; it never blocks payment | "Reserve and pay". Each guard's message from §5.1 |
 | Paying | The amount, a 10-minute countdown, the payment page (SDD 02) | "Cancel" |
 | Waiting for payment result | "We are confirming your payment. Please do not pay again." | "Cancel" (a payment that still succeeds is refunded in full) |
+| Paid, order not yet created (D-95) | "Your payment went through. We're finishing your order and will let you know. If we can't, you'll get a full refund." (D-112) | none |
 | Reservation ended, no payment attempt | "Your reservation ended. You were not charged." | "Back to cart" |
 | Payment not received (`payment_failed` at grace end, or expiry after an attempt) | "We have not received your payment. If you were charged, it will be refunded automatically." | "Back to cart" |
 | Payment refunded | The reason (§10), the amount, "2–3 working days" | "Back to cart" |
