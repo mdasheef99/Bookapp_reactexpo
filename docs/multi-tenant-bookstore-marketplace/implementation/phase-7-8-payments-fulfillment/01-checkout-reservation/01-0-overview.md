@@ -1,13 +1,13 @@
 # SDD 01: Reserve-First Checkout and Paid-Order Acceptance
 
-**Status:** full draft, 2026-11-11, owner decisions on §17 applied (D-95 to D-103), plus the late-payment table, closure warning, printed price and RX-29 from the owner's outside review, corrected against the Phase 6 code and traced to the
-register. First paired review done; the third review's findings and the final check's four
-findings are applied. Not approved. No code
-or migration may be written from it until the owner approves it.
-**Authority:** none yet. Business rules come from the
+**Status:** approved by the owner on 2026-11-11, after three review rounds, a final check,
+the owner's decisions on §17 (D-95 to D-103) and a short check of those changes (READY).
+Approval of this design does not authorise code or migrations (AGENTS.md); building starts
+only when the owner authorises it, planned after SDD 02.
+**Authority:** approved design for checkout and paid-order acceptance. Business rules come from the
 [decision register](../../PHASE-7-8-decision-register.md); this document must not add any.
 Where it had to choose something the register does not decide, the choice is listed in
-§17 for the owner.
+§17; the owner approved all of them on 2026-11-11.
 **Owns:** the change from "store confirms, then customer pays" to "reserve, pay, then store
 accepts" (BC-08, P-5 step 1); the paid order from payment until it is ready; the Phase 6
 rework; the record of pauses.
