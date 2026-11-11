@@ -2,325 +2,261 @@
 
 | | |
 |---|---|
-| **Status** | **Pass-2 design draft, 2026-10-30; NOT IMPLEMENTED.** Documentation authorized; build, migration creation/application and deployment remain separate. |
+| **Status** | **Pass-3 design refresh, 2026-11-12; NOT IMPLEMENTED.** Rewritten by the orchestrator after slice 8b/8c shipped. Build, migration creation/application and deployment each need separate Owner approval. |
 | **Parent** | [SDD-0 §4 PSR-D30](./00-overview-sdd.md#e-matching-and-lookup); [SDD-2 Slices 8–9](./02-catalogue-and-matching-sdd.md#slice-8--open-library-first-clues-google-off); [02c](./02c-slice8-open-library-first-sdd.md) §§4.3/5/7. |
-| **Authority** | [OD-2026-10-30-4](../../../../DECISIONS.md#log): ship after 8b, before slice 9; retain the existing explicit search button. D07/D10/D30/D35/D39/D40, R04/R06–R10; master §3 MAS-02/03/13–16; DOC-3 §5.2. |
-| **Baseline** | Local `phase9/slice8-providers` at `c93e628`, checked 2026-10-30; 02c §2 records inspected code/SQL. No live readback or operational test performed. |
-| **Migration** | One proposed forward migration for prefill/source-policy/read/request integration; filename/number unassigned. No SQL created or edited. Split before build if responsibility/size evidence requires it. |
-| **Size / risk** | Medium–large / high: automatic-versus-explicit races, request identity, expiry and receipt reuse. No relaxed matcher or tie-pick activation. |
-| **Review** | Complex SDD; Terra round-3 findings addressed as design corrections/questions. Required SDD-0 §15 review/build/native proof remains open; no approval is inferred. |
+| **Authority** | [OD-2026-10-30-4](../../../../DECISIONS.md#log) (ship after 8b, before slice 9; keep the search button); [OD-2026-10-31-5](../../../../DECISIONS.md#log) (language grouping); [OD-2026-11-12-1..3](../../../../DECISIONS.md#log) (this pass). D07/D10/D30/D35/D39/D40, R04/R06–R10; master §3 MAS-02/03/13–16; DOC-3 §5.2. |
+| **Baseline** | Branch `phase9/02d-prefill` at `c10832d`: 8b worker and 8c switch built, migrations through M99 in the tree; dev's automatic provider is Open Library, Google is off. Code read 2026-11-12 by the orchestrator, with a model-verified gap list and a Sonnet review of this pass. No live readback. |
+| **Migration** | One forward migration (Unit 1). Number unassigned. |
+| **Size / risk** | Medium–large / high: automatic-versus-Owner races, request identity, expiry, receipt replay. No relaxed matcher or tie pick (slice 9). |
+| **Review** | Pass 2 (2026-10-30) had Terra round-3 corrections. Pass 3 reviewed by Sonnet 2026-11-12 (FIX_NEEDED: fence-versus-skip contradiction, expired-list status, ISBN identity, three lost pass-2 rules, NOWAIT; all applied). |
 
-**Design** below means proposed, not implemented. Path/migration aliases are
-defined in [02c §2.1](./02c-slice8-open-library-first-sdd.md#21-sql-evidence-keys).
-All current-behavior citations use repository-relative `file:line` or those aliases.
+**Design** below means proposed, not implemented. Migration aliases: `Mnn` is the
+file `supabase/migrations/*0000nn_*.sql`; `I/` is `supabase/functions/_shared/imageInventory/`.
+SQL citations are the CURRENT definitions (`node scripts/phase9-sql-facts.js <name>`).
 
 ## 1. Goal and scope
 
-**Design:** reuse the automatic lookup's already fetched ≤10 edition rows when
-the Owner opens the sheet, with no new provider request merely for opening it.
-Keep **Search Books** and failure **Retry search** as explicit searches against
-the current saved identity/typed ISBN (D30, OD-4; 01 SDD §4; 01a §§5/8–10).
-Saving rows does not confirm/select an edition for the Owner or change Add rules.
+When the automatic lookup has already fetched a bounded edition list (≤10 rows)
+for a card, save that list to the card's edition state in the same transaction
+that completes the automatic lookup. Opening the edition sheet then shows it with
+no new provider request. **Search Books**, **Search with saved title** and
+**Retry search** stay as explicit searches against the current saved identity or
+typed ISBN (D30, OD-2026-10-30-4; 01 SDD §4; 01a §§5/8–10). Saving rows never
+confirms or selects an edition for the Owner and never changes Add rules.
 
-Recommended order: 8a → 8b → **this unit** → 8c → slice 9. OD-4 requires only
-verified 8b → this unit → slice 9; **8c does not require this unit** (02c §7).
-Prefill deployment depends on verified 8b/retention and may precede 8c; OL automatic
-activation depends on 8c. If 8c ships first, this unit later accepts valid OL v2
-rows through the same versioned source contract. This can ship while
-Google is still automatic-primary; prefill skips any automatic source without
-independently verified option-retention permission. OL automatic activation stays
-8c's decision. Slice 9 keeps relaxed automatic eligibility/full D28 tie selection;
-D30 sheet persistence and parent AC9-4/5 move here (OD-4).
+Order: 8a → 8b → 8c (all built) → **this unit** → slice 9. Slice 9 keeps relaxed
+automatic eligibility and full D28 tie selection; D30 sheet persistence and parent
+AC9-4/5 belong here (OD-2026-10-30-4).
 
-## 2. Verified baseline and two integration gaps
+## 2. Current code (verified 2026-11-12)
 
-| Evidence | Current behavior, inspected 2026-10-30 |
+| Evidence | Current behavior |
 |---|---|
-| M65:91–122 | `phase9_candidate_edition_state` holds private candidate/session/store, request ID/generation/query, options/version/source lookup/attempt/time/deadline and independent saved selection; ≤10 rows and ≤24h deadline; no API table privileges. |
-| M75:29–55; M85:180–200 | Read projects fresh rows only if query/deadline/source policy agree, selection independently retained; source policy has external Google/OL and privately proved cache branches. |
-| M86:251–405; `I/runtime/metadataEditionOptionsRpc.ts:73–94` | Explicit completion validates rows/companions/receipts, saves source/options and slim completion effect, accounts/resolves transactionally; uncertain completion recovers, not refetches. |
-| `I/runtime/metadataProductionComposition.ts:232–304`; `metadataProductionGateway.ts:268–309` | Automatic path returns candidates/one selected result, persists selection or manual result; it does not write edition-state alternatives. 02c §4.3 proposes the new automatic transaction. |
-| `I/contracts/ownerEditionPicker.ts:65–104,150–166` | Stored row keys are optionId/ordinal/googleBooksUrl/eligibility/metadata; DTO projects safe metadata, unique IDs, contiguous ordinals and expiry/version. |
-| `src/features/imageInventory/components/CandidateEditionPicker.tsx:37–54,78–91,101–135` | Fresh rows display without a search; draft identity changes hide rows; timer handles expiry. **Search Books is only rendered when not fresh**, Retry search has separate error flow. |
-| M75:116–125 | Request creates a new explicit job only when neither pending nor fresh. New request changes `request_id`, not generation; identity reset owns generation (01a §5.4). |
-| `src/features/imageInventory/queries/ownerEditionPickerCache.ts:31–43,65–77`; `ownerEditionPickerQueries.ts:33,202–215` | Same-generation/version pending reads/receipts can be rejected behind ready/failed choices; polling runs only for accepted pending choices. Button/server changes alone do not fix refresh authority. |
+| M65:91–122; M68:7; M90:474–478 | `phase9_candidate_edition_state`: private candidate/session/store, request ID/generation/query identity, options/version, source lookup/attempt/fetched time/deadline, independent saved selection; `failure_receipt` (M68:7); options CHECK replaced at M90:474–478; ≤10 rows, ≤24 h deadline; no API table privileges (REVOKE M65:122). FK `(request_id,candidate_id,store_id)` at M65:102. |
+| M85:180 `phase9_edition_source_policy` | Read shows fresh rows only if query/deadline/source policy agree. Branches only on `execution_mode` + `adapter_key`; no automatic purpose branch. |
+| M92:903 `phase9_complete_candidate_edition_options_v2`; session lock M92:925–926 | Explicit completion: validates rows/companions/receipts, saves source and options, advances `options_version` (M92:1111). |
+| `I/runtime/metadataProductionGateway.ts:71` → `metadataAutomaticExecution.ts:77` | Automatic routing (8b). |
+| M93:1028 `phase9_complete_automatic_metadata_v1` (wrapper M93:1072–1074); recovery M92:1422 | Automatic completion already exists. Lock order session `FOR KEY SHARE` → job `FOR UPDATE` → candidate (structural assert) → edition state `FOR UPDATE`. Fence compares `phase9_metadata_candidate_query_identity(c)` (M55:9). Its effect row already records `request_generation` and `captured_request_id`. At M93:1376 the comment reads "02d alone owns alternatives publication"; the receipt hard-codes `prefill:{status:'skipped',reason:'not_installed'}` (M93:1389; M92:1822). |
+| `I/runtime/metadataAutomaticCompletion.ts:14–25` | Worker already sends `result` v2 with `rows`, `catalogueCompanions`, `retention`. Receipt schema allows only `prefill:{skipped, not_installed}` (:22, :31–32); tests pin it (`phase9_metadata_automatic_boundary_u5.test.ts:81`, production composition test :448). |
+| M94:6 `phase9_automatic_edition_fence_v1` (locks M94:33–46) | Worker loads the fence before HTTP; it locks session/job/candidate inside its own short transaction. No row lock crosses HTTP. |
+| M75:80 `phase9_request_candidate_edition_options_v1` (body :116–126) | Explicit request creates a job only when neither pending nor fresh (fresh short-circuit). Clears rows/source/deadline; does **not** advance `options_version`. Raises `P9_REQUEST_INVALID`, `P9_VERSION_CONFLICT`. |
+| M99:135 `phase9_owner_candidate_edition_choices_v1` (guard :140–146) | Owner read raises `P9_STATE_CONFLICT` for a removed, committed or expired card or a non-mutable session. |
+| `I/contracts/ownerEditionPicker.ts:65–104` and client copy | Stored row keys: optionId/ordinal/googleBooksUrl/eligibility/metadata. Wire row adds optional `rejectionReason` (:69), computed at read (M78:427–435). |
+| `src/features/imageInventory/components/CandidateEditionPicker.tsx:99` | Search Books renders when `(identityChanged || !fresh) && !pending`: hidden while a fresh list shows. |
+| `ownerEditionPickerQueries.ts:75–77,202–210` | Lookup mutation and `pendingLookup` return `EditionLookupReceipt`. |
+| `EditionOptionList.tsx:40,60` | Shows first 5/10 rows; language is plain text; no groups. |
+| `review/editionSelectionRecovery.ts:4–27` | Conflict copy; Search Books uses `editionLookupRecovery` (:19–27). |
 
-Thus “no app changes” cannot satisfy fresh-prefill **and** a usable explicit
-refresh: both button visibility and the server's fresh short-circuit need the
-bounded proposed changes in §§4/6. Neither requires a new stored row/metadata DTO.
+## 3. Design — prefill inside the automatic completion (Unit 1)
 
-## 3. Design — atomic automatic prefill
+A new private helper `marketplace_sec.phase9_prefill_automatic_editions_v1` is
+called from M93's automatic completion at the M93:1376 hook, after the existing
+locks are held (session → job → candidate → edition state). Postgres-only: no
+client RPC, no separate transaction, no best-effort write after terminal.
 
-Extend 02c's automatic completion transaction; do not issue explicit completion
-against a fabricated edition-options job. Proposed private helper
-`phase9_prefill_automatic_editions_v1` is postgres-only, called inside the fenced
-automatic completion; no client RPC and no post-terminal best-effort write.
-
-| State field / proof | Proposed write and refusal rule |
+| Field | Rule |
 |---|---|
-| candidate/session/store | Resolve from the claimed job and locked candidate/session; compare all supplied IDs. RLS is backstop, never authority. |
-| `query_identity` | Preserve the registered automatic query, require equality to current `phase9_edition_query_identity(candidate)` after the automatic snapshot transition. Do not rewrite identity to the returned edition's title/authors or use an Owner's newer edits. |
-| `request_generation` | Bind the current generation (0 on a new untouched card); do not increment to simulate an Owner command. Identity/ISBN changes still increment/reset normally. |
-| `request_id` | Bind the real automatic job ID for this prefill; M65:102 FK already scopes it to candidate/store. Private completion receipt records automatic purpose and the captured request/generation. No fake explicit job. |
-| `options` | External prefill stores original <=10 positions, contiguous ordinals/unique UUIDs, explicit sheet eligibility/metadata; unavailable positions null metadata/URL. No dedupe/filter/re-sort. Existing explicit cache reuse independently retains M87:87-116 filtering/recomputed eligibility/compact receiving ordinals; automatic full-list reuse is deferred (OQ8-10). |
-| Eligibility | Current explicit predicate for **selectable sheet rows**, as 02b §14 OQ3; strict automatic winner remains 02c's separate decision. A sheet-eligible row is not automatically selected. |
-| `options_version` | Increment once for this successful new completion; replay/recovery returns original version/UUIDs without another increment. Include ordered rows/companions/identity/source/deadline in SQL completion digest. |
-| Source lineage | Original automatic lookup/attempt, exact adapter/version/normalizer, metadata correlationId=lookup, attemptId=attempt, microsecond-equal fetchedAt; companions bind original option UUID/provider record/digest. No source or other-store private IDs copied from a cache. |
-| `source_fetched_at`, `options_expires_at` | Source factual time and least(verified provider/header deadline, source time+24h, current registry/source deadline). Existing controlled worker verifies response headers; SQL re-proves scope/lineage/current permission/deadline bounds (02c section 5.1), not remote-header authenticity. No cached-author source proof or now+TTL renewal. |
-| Selection fields | Preserve confirmed choice bytes/IDs/actor/time. No worker sets selected_by, confirms a current suggestion or counts chosen. Automatic suggestion keeps existing confirmation behavior. |
-| Catalogue/counts/cache | Same completion/effect transaction, same 02b identity/receipt/count semantics. Prefill adds no second searched/selected/added/spend effect. Catalogue conflict preserves every valid option. |
+| candidate/session/store | From the locked rows; all supplied IDs compared. RLS is a backstop, not authority. |
+| `query_identity` | The fence already proves `phase9_metadata_candidate_query_identity(c)` equals the registered automatic query. Write `phase9_edition_query_identity(c)` of the same locked candidate, so the Owner read's own check (M75/M78) agrees. Never rewrite identity from the returned edition or from newer Owner edits. |
+| `request_generation` | Must equal the generation captured in the effect row; never incremented by prefill. |
+| `request_id` | Bind the real automatic job ID (FK M65:102 scopes it). No fake explicit job. |
+| `options` | Original ≤10 positions, contiguous ordinals, unique UUIDs, explicit sheet eligibility; unavailable positions keep UUID/ordinal with null metadata/URL. No dedupe, filter or re-sort. |
+| `options_version` | +1 for a new saved list; replay returns the original version and UUIDs. |
+| Source lineage | Original lookup/attempt, adapter/version/normalizer, microsecond-equal `fetchedAt`; companions bound to option UUID/record/digest. Nothing copied from another store. |
+| `source_fetched_at`, `options_expires_at` | Source time; deadline = least(verified provider deadline, source time + 24 h, current registry/source deadline). No renewal. |
+| Selection | Never set or changed by prefill. A sheet-eligible row is not selected. |
+| Counts/spend/catalogue | Same transaction and effects as today's completion; prefill adds no searched/selected/added/spend effect. |
 
-Lock order is specified in §3.2: M86:206–218 takes session KEY SHARE **before**
-M68:71's job lock; M15:238 supplies the claim assertion's job lock inside that prefix.
+**Owner race (existing fence, unchanged):** if the Owner searched, edited
+title/author/ISBN, the card expired or the session closed since capture, the
+existing fence returns `stale_rejected` with **zero writes**: no prefill and no
+automatic result (generation/captured request M93:1096–1098; identity/expiry
+M93:1089–1094). The Owner's work always wins. The helper is only reached after
+that fence passed.
 
-**Race design:** capture generation and preexisting request identity before
-egress; atomically compare at
-completion. Prefill is eligible only with no Owner explicit request/choice/ISBN
-or identity change since capture (or exact replay of this same automatic result).
-An existing explicit request, changed generation/query, selected/committed/removed
-card or expired/nonmutable session makes the **prefill sub-operation skip**, never
-overwrite explicit rows/selection or resurrect a card. Automatic terminal handling
-still follows its own valid claim fence; a stale automatic completion writes nothing.
+**Helper skip rules (the automatic result still commits):** a selection exists
+(`selected`); no verified retention (`no_retention`); empty or missing list
+without truthful source/deadline proof (`empty_unproven`); `owner_isbn13` is set
+or `phase9_edition_query_identity(c)` differs from the identity the list was
+fetched for (`identity_mismatch`: an ISBN set before the job was claimed is
+already inside the captured generation, so the fence does not catch it). A skip
+never overwrites explicit rows or a selection.
 
-No blind UPSERT replaces a request ID. Recheck under state lock after competing
-explicit request/Select. A newer explicit request wins independent of response
-arrival order. A lookup that cannot commit valid automatic completion does not
-leave prefill, catalogue, count or usage half-written. Recovery returns persisted
-slim receipt/digest first, without extending expired alternatives (02b §§7/10).
+**Helper duties kept from pass 2:** create the edition-state row when absent
+(M93:1095 only selects it) under the candidate lock already held; take no new
+private session/job/candidate/state lock after the shared phase (02b §6.2 order);
+the completion digest covers ordered rows, companions, identity, source and
+deadline (confirm in the plan run whether the existing command digest already does).
 
-### 3.1 Source variants and permission
+**Helper result:** `{status:'saved',requestId,requestGeneration,optionsVersion,optionsExpiresAt}`
+or `{status:'skipped',reason:'no_retention'|'selected'|'empty_unproven'|'identity_mismatch'}`.
+The AutoReceipt `prefill` field widens to these (SQL M92:1822/M93:1389 and zod
+`metadataAutomaticCompletion.ts:22,31–32`; update the two pinning tests).
+Receipts written before this unit keep `not_installed` and replay unchanged.
 
-| Automatic outcome | Proposed sheet behavior |
+**Errors:** malformed rows or binding mismatch → existing `P9_EDITION_ROWS_INVALID`
+/ `P9_AUTO_SOURCE_INVALID`, full rollback. No new error code (pass 2's
+`P9_EDITION_PREFILL_DTO_INVALID` is dropped). Contention → `P9_STATE_CONFLICT`.
+
+**Source policy:** `phase9_edition_source_policy` (M85:180–200) has no
+explicit-search capability check and may already accept an automatic OL list.
+The Unit 1 plan run decides from code: write a red test that a saved automatic
+list reads as fresh; change the policy only if that test fails, keeping
+enabled/matching/storage/version/current-policy/expiry checks. Google lists are
+never saved (Google off; a registry storage flag is not retention evidence), and
+02c §4.2's database Google veto still covers companion, catalogue and cache
+sub-operations. Shared-cache publication stays primary-source only.
+
+**Timeouts:** the new and changed wrappers set transaction-local
+`lock_timeout='2s'`; native transactions set `statement_timeout='10s'`. Neither
+exists today. Lock timeout maps to existing `P9_STATE_CONFLICT`. The worker retries
+the SQL once under the same claim, no HTTP.
+
+### 3.1 Source variants
+
+| Automatic outcome | Sheet |
 |---|---|
-| External bounded options + verified retention | Prefill original rows, even if automatic rank is ambiguous/no acceptable winner; all explicit eligibility checks still apply. |
-| Google without verified option-retention evidence | Skip prefill, keep normal automatic/manual outcome. Registry storage flag is insufficient; installing this unit never creates a Google verifier or shared permission (02c §2.2/§3.3). |
-| Full edition-list cache | Existing explicit search may reuse it unchanged; automatic full-list consumption/prefill is deferred (OQ8-10). No SQL automatic ranker or new cache command. |
-| Local canonical or legacy selected-snapshot cache/coalesced result without a full list | Keep the current suggestion; no alternatives are invented and no provider request occurs on sheet open. Do not copy another store's receipt/option IDs into a new list. |
-| Empty list | May record a valid completed empty options result only with truthful source/deadline proof; no chosen snapshot invented. Without permission/lineage leave alternatives absent and explicit/manual actions available. |
+| External list + verified retention (Open Library) | Saved, even if ambiguous/no winner; explicit eligibility rules apply. |
+| No retention evidence | Skipped `no_retention`; automatic/manual outcome unchanged. |
+| Local catalogue, selected-snapshot cache, coalesced result | Current suggestion only; no invented list. |
+| Full edition-list cache (automatic reuse) | Deferred (OQ8-10); explicit cache reuse unchanged (M87). |
+| Empty list | Saved empty only with truthful source/deadline proof; else skipped. |
 
-Forward source-policy/read functions must recognize the proved automatic external
-lineage by **purpose capability**, per 02c §4.2. Do not require
-explicit-search capability for an automatic source's legitimate retained list,
-and do not bypass enabled/matching/storage/version/current-policy/expiry checks.
-If a selected-only source cannot meet the list contract, leave its choice alone.
-This unit does not fabricate physical receipts for local results.
+## 4. Design — explicit search still searches (Unit 1 SQL, Unit 2 app)
 
-### 3.2 Helper, lock and completion contracts (design)
+- Forward-replace M75:80 so **Search Books** creates one explicit request even
+  while an automatic list is fresh. Same signature, `EP_LOOKUP_V1` fingerprint and
+  replay. An exact retry returns the original request; a pending same-identity
+  request stays pending (no duplicate job).
+- At request creation advance `options_version` once and clear rows/source/deadline
+  (today it clears but does not advance). Completion advances it again. Keep the
+  confirmed selection. A late automatic completion cannot overwrite this request
+  (the captured request ID differs → fence `stale_rejected`, zero writes).
+- Keep M75's lock order: the Owner path locks state before job, workers lock job
+  before state, so M75 peeks without a lock and locks the job only when it looks
+  exhausted (M75:99–101). The forward replacement keeps that and takes the
+  exhausted-job lock `FOR UPDATE NOWAIT`, mapping lock-not-available to
+  `P9_STATE_CONFLICT` (pass 2 rule, restored).
+- Draft edits, **Search with saved title** and the typed-ISBN state machine (01a)
+  are unchanged. Retry search uses its frozen command and idempotency key.
+- No pagination and no provider call from the choices read.
 
-| Private helper / exact signature | Result / refusal |
+| Refresh step | Behavior |
 |---|---|
-| `phase9_prefill_automatic_editions_v1(p_fence jsonb,p_lookup_id uuid,p_attempt_id uuid,p_rows jsonb,p_companions jsonb,p_retention jsonb,p_selected_option_id uuid)` | AutoFence/rows/retention from 02c §§4.3/5.1, called only inside valid automatic completion with all private locks below already held. Returns `{status:'saved',requestId:uuid,requestGeneration:int,optionsVersion:positiveInt,optionsExpiresAt:timestamp}` or `{status:'skipped',reason:'no_retention'\|'superseded'\|'expired'\|'selected'\|'not_mutable'}`. No separate terminal transaction. |
-| Failure/replay | Malformed/binding mismatch → `P9_EDITION_ROWS_INVALID`/`P9_AUTO_SOURCE_INVALID`, full rollback. Contention → `P9_STATE_CONFLICT`, retry same completion/recovery only. Valid skip commits the independent automatic result. Wholly stale AutoFence returns `{status:'stale_rejected'}` with zero writes. Receipt/digest replay returns original PrefillResult, never refreshes expired alternatives. |
-| Recovery | `phase9_recover_automatic_metadata_v1(AutoFence)` returns 02c AutoReceipt including saved/skipped prefill. Validate completed claim/digest and receipt before current lease; expired list remains absent in subsequent read. No rows in receipt and no provider retry on uncertain completion. |
+| Fresh automatic list at G/V → Search Books | Request R at G/V+1, rows empty, pending receipt. No increment on replay/dedupe. |
+| App accepts pending | Higher version clears rows and sets pending; 3 s polling resumes. The lookup mutation and `pendingLookup` return **EditionChoices**, not `EditionLookupReceipt` (`ownerEditionPickerQueries.ts:75–77,202–210`); wire DTO unchanged. |
+| Completion | G/V+2 ready (or failed/empty). A delayed V+1 receipt never replaces V+2 choices. |
+| Read failure / authority change | Valid cached choices meeting the version bound may show; else existing retryable error. A newer generation needs refresh. |
 
-| Step → path | Table / lock mode | Function and constraint (design unless evidence noted) |
+## 5. Owner read, privacy and stale handling
+
+**Sheet status (OD-2026-11-12-1):** the automatic job is never reported as the
+sheet's pending request. Before a saved prefill the sheet is `idle`: empty, with
+Search Books. This already holds today, because the automatic job is bound to the
+state only by prefill. Reason: a worker crash after a provider call can leave the
+automatic job in progress forever (ACTIVE.md row 11); the sheet must never wait on it.
+
+After prefill binds the automatic job as `request_id`, today's read (M75:24–60,
+wrapped by M78) would report `failed` once the list expires. Unit 1 changes the
+read: when `request_id` is an automatic job (not operation version
+`p9-owner-edition-options-v1`) and no fresh list remains, report `idle`.
+Resulting `lookupStatus`: explicit open/in_progress/retry_scheduled = pending;
+fresh list (explicit or saved prefill) = ready; explicit terminal without usable
+list = failed; otherwise idle.
+
+Privacy inherits 02b §§3/6–10/14 without widening: scan-only origin proof for
+public keys; Owner-typed/confirmed/provider-only queries stay private; no new
+public read of edition state or effects. Automatic prefill may feed the typed cache
+only after the same publication proofs as explicit lists; M88:34–50 requires
+`state.request_id = lookup.job_id`, which the real job binding keeps.
+
+| Event | Result |
+|---|---|
+| Title/author/ISBN change | Identity reset clears the list; Search Books uses the new identity. |
+| List older than its deadline (≤24 h) or provider disabled | No stale rows; chosen edition kept; search button shown. |
+| Card removed, committed or expired; session closed | Read raises `P9_STATE_CONFLICT` (M99:140–146); sheet cannot change. |
+| Cache invalidated after prefill | Saved list usable until its own deadline (02b §8.3). |
+| App loses the choices read | Retry the read only; no lookup. |
+| Completion response lost | Same claim recovers the saved receipt (M92:1422); no refetch, version, count or spend duplication. |
+
+## 6. App (Unit 2)
+
+- Show Search Books when a fresh list is shown (change the gate at
+  `CandidateEditionPicker.tsx:99`); keep pending, command-slot and ISBN guards and
+  Retry search. Opening the sheet only reads choices.
+- §4 version advance/clear/poll acceptance and the EditionChoices return.
+- **Language groups (OD-2026-11-12-2, OD-2026-10-31-5):** matching-language rows
+  first, then **Other languages**, original order inside each group. Option IDs,
+  eligibility and commands unchanged; unknown language follows the existing
+  eligibility rule; Show all and accessibility kept; no selectable row hidden in a
+  collapsed group.
+- Conflict wording "These choices may have changed. Review the latest choices and
+  try again." in client `editionSelectionRecovery.ts` (including
+  `editionLookupRecovery` :19–27), `api/ownerUxTransport.ts:54` and the sheet
+  override at `CandidateEditionPicker.tsx:71–74`. The server message at
+  `I/contracts/ownerUxErrors.ts:22` is shared by every `P9_STATE_CONFLICT`; change
+  it only if the plan run shows the neutral wording fits all its users. Same code,
+  refresh behavior; older clients keep the old wording. Test the path end to end:
+  SQL error → gateway → HTTP envelope → client parser → refresh.
+- Display the optional `rejectionReason` as today; no new row field.
+
+## 7. Acceptance checks (red first)
+
+| AC | Given / when / then | Proof |
 |---|---|---|
-| 0 worker scope hint | Job/candidate/session IDs read without locks | Hint only to find session; all identity/authority rechecked below. Earlier claim RPC committed before HTTP; no row lock crosses HTTP. |
-| 1 worker | `image_extraction_sessions FOR KEY SHARE` | NEW automatic completion outer wrapper matches existing explicit M86:206–207; no prior job lock in this transaction. |
-| 2 worker | `image_extraction_jobs FOR UPDATE` | `phase9_assert_metadata_claim` M15:238, then automatic-purpose fence (do not use explicit-only M68:74 fence). Claim/lease/version revalidated. |
-| 3 worker | `image_extraction_candidates FOR UPDATE` | Automatic candidate fence after job; same relative order as explicit M68:76 / M67:42. |
-| 4 worker | `phase9_candidate_edition_state FOR UPDATE` | Create absent state under already locked candidate, then lock; helper inherits **session + job + candidate + state**, not job alone. Existing explicit M68:80 matches. |
-| 5 worker | Lookup/attempt FOR UPDATE; physical calls in (created_at,id) order FOR UPDATE; reservation FOR UPDATE | M86:215-218/301-302/329-331; physical locks precede receipt SELECT. No author-proof/evidence-table locks in this build. |
-| 6 all writers | Private lookup/choice/completion effects, then sorted registry rows `FOR SHARE` | 02b §6.2; prepare effect locks before catalogue. Automatic effect table belongs to 02c. |
-| 7 all writers | Sorted identity advisory keys → work `FOR KEY SHARE` → edition `FOR SHARE` → source/ID uniqueness → stats work/edition UUID order → cache last | 02b §6.2; no new private session/job/candidate/state/effect lock after shared phase. |
-| Owner request/Select prefix | Session `FOR UPDATE` → candidate `FOR UPDATE` → edition state `FOR UPDATE` → private effects | Existing M54:19–22, M65:194–196, M75:87–98, M84:909–927. Active worker job is not locked by Owner path. |
-| Owner exhausted-job exception | Job `FOR UPDATE NOWAIT` after state, then exhausted predicate recheck | Forward-replace M75:106; catch lock_not_available and return `P9_STATE_CONFLICT` via rollback, no replay/job/options mutation. Never wait on the reverse state→job edge. Lease expiry alone is insufficient. |
+| ACP-1 | Retainable automatic list completes; opening the sheet shows the rows with zero new request. | New SQL/worker test + app read-only-open test; red: baseline never saves rows. |
+| ACP-2 | Saved rows keep original positions/UUIDs/eligibility; malformed, duplicate, over-10, bad URL or lineage refused. | Server/client zod and SQL tests; explicit-cache filtering stays a green control. |
+| ACP-3 | Fresh list → Search Books → V+1 pending → V+2 ready; delayed V+1 receipt never wins. | Real QueryClient test with receipt cache empty, older and newer; red: today's fresh short-circuit and receipt return. |
+| ACP-4 | Owner searches or edits identity while the automatic lookup runs; the late automatic completion is `stale_rejected` with zero writes; Owner's request and selection stay. | **Native two-connection race test, both arrival orders** (OD-2026-11-12-3); generation/request/selection assertions. |
+| ACP-5 | Lost response replays original version/UUIDs/effects; pre-install receipts replay `not_installed`; expired replay restores no rows. | Worker recovery test before/after install. |
+| ACP-6 | Automatic lists follow private/scan-only publication rules; automatic full-list reuse stays out. | Publication/privacy assertions plus existing two-store cache controls. |
+| ACP-7 | No retention → skipped, automatic suggestion still commits; disabled/expired/outage keep manual, selected and Add behavior. | Positive no-retention, ambiguous-list, stale zero-write, expiry tests. |
+| ACP-8 | Language groups keep row identity, eligibility and discovery. | Jest list/sheet tests: known/unknown/other languages, selected row beyond 5. |
+| ACP-9 | Rollback: OL automatic flags off → no new saved lists; old receipts replay unchanged; explicit search keeps working. | Readback matrix in the rollout script. |
+| ACP-10 | API roles cannot write edition state/effects or call the helper; wrong store/claim/session writes nothing. | Effective ACL checks after install; `undefined_function` never counts as red. |
+| ACP-11 | Prefill vs Search Books vs Select, both orders, 2 s/10 s limits. | Result is a fenced success or `P9_STATE_CONFLICT` with the §6 wording; no 40P01, no HTTP retry. |
+| ACP-12 | Automatic job stuck in progress (no saved list); saved automatic list expired. | Stuck: sheet idle with Search Books (green regression control today). Expired: idle, not failed (red until the §5 read change). |
+| ACP-13 | ISBN set before the automatic job was claimed. | Helper skips `identity_mismatch`; no title-search list shown under an ISBN identity. Red: no helper. |
 
-NEW completion/request wrappers set transaction-local `lock_timeout='2s'`;
-native transactions set `statement_timeout='10s'` **before** the RPC. Translate
-known lock-not-available/lock-timeout rollback to existing `P9_STATE_CONFLICT`,
-never a new busy code. Worker recovers then retries that SQL transaction at most
-once under the same current claim, no HTTP. Owner follows existing **refresh**
-recovery: reconcile choices, review latest state, then issue a new deliberate
-command; known rollback has no replay effect. Uncertain transport still retries
-the exact frozen command/key. No busy-specific enum/header/old-client rollout.
+## 8. Build units
 
-| End-to-end contention path (P2/P3 design) | Existing contract / required proof |
-|---|---|
-| Server/client | `I/runtime/ownerEditionPickerGateway.ts:31-40` already allows P9_STATE_CONFLICT; `I/contracts/ownerUxErrors.ts:22` maps HTTP 409/retryable. Client enum/operation sets permit it (`src/features/imageInventory/api/ownerUxTransport.ts:14-28,54,64-67`). Older clients get the same known code. |
-| Owner behavior | `review/editionSelectionRecovery.ts:8-15` returns refresh, not exact uncertain retry; `ownerEditionPickerQueries.ts:213` clears lastLookup. **P3 design wording:** "These choices may have changed. Review the latest choices and try again." Apply to server `I/contracts/ownerUxErrors.ts:22` and client recovery `review/editionSelectionRecovery.ts:4-5`; align client registry `api/ownerUxTransport.ts:54` and sheet refresh override `components/CandidateEditionPicker.tsx:73-75`. Older clients keep old wording with the same known code/refresh behavior. No same-command Owner retry promise for known contention rollback. |
-| Test | Through real SQL error -> gateway -> HTTP envelope -> client parser -> refresh/reconcile. No P9_INTERNAL_ERROR remapping, hidden provider retry or lost selection; test request and Select, old client fixtures and current client. |
-
-SKIP LOCKED is queue-only. Session-first plus the exhausted-job NOWAIT exception
-removes the new completion/request reverse wait; it does **not** prove all legacy
-paths globally cycle-free. Required additional ACP-11/partial-8a proof:
-
-- Native connections/barriers exercise direct legacy `phase9_register_metadata_attempt`
-  holding lookup FOR UPDATE (M73:706-708), then attempt INSERT's candidate FK
-  KEY SHARE (M02:164-168), versus Owner Select holding candidate and inserting
-  choice-effect lookup/attempt FKs (M83:71-87; M84:979-986).
-- Generate current/old choices and claims through valid commands; test both arrival
-  orders. Either complete the same-row interleaving without 40P01, or prove/assert
-  that a Select-able same lookup implies terminal job and rejects registration
-  before its FK wait (M15:749-756; M86:393-405). Include every callable legacy
-  snapshot/cache path; do not use invalid forced states as proof of reachability.
-- Record actual lookup/candidate/job IDs and wait edges. If a valid cycle occurs,
-  stop 8a rollout and review a forward lock-order correction; no global no-deadlock
-  claim or old-worker compatibility acceptance until this test passes.
-
-### 3.3 Existing cache boundaries; proposed deferral
-
-**OQ8-10 recommendation: defer automatic full-list reuse.** Existing M87:22-25
-uses the explicit fence and :110-124 computes explicit eligibility/ISBN summary,
-not the TypeScript automatic rank (`I/metadata/googleBooks/ranking.ts:10-30`).
-No new automatic cache RPC, CacheProof, SQL ranker or parity engine is built.
-Automatic local catalogue and existing selected-snapshot cache/coalescing stay
-on their existing paths. Existing explicit typed-cache reuse remains unchanged,
-including source slots, filtering/fresh IDs/compact receiving ordinals and expiry.
-Only a newly fetched, independently retainable automatic list feeds prefill;
-local/selected-only hits show their current suggestion with no invented list.
-A future reuse design requires separate Owner approval and cross-language/source
-proof; it is not needed for ACP-1/6 or an OL-only 8c.
-
-### 3.4 State to Owner DTO mapping (design)
-
-Actual row/choices schemas are `I/contracts/ownerEditionPicker.ts:65–104` and
-paired client `src/features/imageInventory/contracts/ownerEditionPicker.ts:64–103`.
-They require **rows>0 ⇒ version>0 and deadline**, not the converse; empty expired/
-pending lists may retain a positive version. Do not introduce an invented iff rule.
-
-| State/proof → DTO field and validator | Failure / projection |
-|---|---|
-| candidate/session IDs → `candidateId/sessionId`; generation/version → nonnegative safe integers | Wrong scope `P9_AUTO_SOURCE_INVALID`; invalid DTO `P9_EDITION_PREFILL_DTO_INVALID`. |
-| `options[i]` -> `projectStoredEditionRow` -> `editionRowSchema`; ordinal=i, unique UUIDs, <=10 | Reject duplicate/overbound/noncontiguous prefill with P9_EDITION_ROWS_INVALID. Existing explicit receiving-cache compaction remains its own regression control, not new automatic behavior. |
-| Non-null metadata → safe `ownerMetadataSnapshotSchema` + non-null validated `googleBooksUrl`; unavailable ⇔ metadata null | Unavailable positions retain UUID/ordinal, null URL/metadata; lineage/confidence/raw fields excluded. Invalid binding/URL refuses completion, not arbitrary client widening. |
-| Source lookup/attempt/fetchedAt + companion digest → private verification only | UUID correlation/attempt and microsecond fetched equality checked before write; no private proof fields exposed. Mismatch `P9_AUTO_SOURCE_INVALID`. |
-| `options_expires_at` → `optionsExpiresAt`, fresh rows only if query/source policy valid | Expired/disabled/stale source projects `rows:[]`, deadline null; chosen selection retained. `editionChoicesSchema` validates positive version/deadline only when rows exist. |
-| selected fields → selection discriminated union | Owner-confirmation bytes/IDs preserved; current suggestion optionId=null on wire even when private automatic receipt binds selectedOptionId. Invalid selection projection fails DTO validation. |
-| job status/source capability → `lookupStatus` | Current automatic request: open/in_progress/retry_scheduled=pending; resolved/resolved_noop + fresh retained list=ready; terminal no usable list=failed; no request=idle. Stale/disabled list never reported available; explicit fresh/pending follows its current request_id. Version fences below govern replacement. |
-| Outer candidate version/revisions/owner ISBN → existing DTO fields | Real state values, no invented increments for rendering. Zod rejection is `P9_EDITION_PREFILL_DTO_INVALID`, never a fallback GET. |
-
-## 4. Design — explicit search coexists and still searches
-
-- A **new explicit Search Books** command creates one explicit request even with
-  fresh automatic results. Forward-replace M75's fresh short-circuit; keep same
-  signature/`EP_LOOKUP_V1` fingerprint/replay (existing private idempotency namespace
-  for edition lookup, M75:90–93/128). Exact retry returns original request;
-  an already pending same-identity request remains pending, with no duplicate job.
-- Preserve identity generation; allocate request ID and **advance options_version
-  once at request creation**, atomically clear rows/source/deadline. Completion
-  advances it once again for its new list. This monotonic authority marker fits
-  the existing DTO (empty lists may have positive version, §3.4). Keep confirmed selection.
-  Late automatic prefill cannot overwrite this request, even after it fails.
-- Draft edits use existing save-identity-then-search command slot; incomplete
-  drafts retain **Search with saved title**. Typed ISBN retains the 01a state
-  machine: set/clear→read current generation→one explicit request; no hidden
-  title search while setting ISBN, no automatic lookup overwrites owner_isbn13.
-- Explicit failure retains current choice and any alternatives that the existing
-  failure contract still permits. Retry search uses its frozen command/idempotency
-  record; no new key merely because a response was lost (01a §§8–10).
-- No pagination, no next page and no provider call from the choices read.
-
-This request change also makes an intentional new press refresh a fresh explicit
-list; it does not replay old completed commands into new searches. Do not change
-selling fields, Add idempotency, selection confirmation or candidate state names.
-
-| Refresh authority transition (design; P2/P3) | Required client/server behavior |
-|---|---|
-| Ready automatic at generation G/version V → new explicit | SQL creates request R at G/V+1, options empty/expiry null, pending receipt `{operationId:R,status:'pending',requestGeneration:G,optionsVersion:V+1,available:false}`. No increment on exact replay or already-pending dedupe. |
-| QueryClient accepts pending | Higher-version receipt clears choices rows/expiry and sets pending. Reconciled G/V+1 read works even if receipt lost; existing 3s polling resumes. P3 internal lookup mutation and pendingLookup promise now return **EditionChoices**, not a possibly stale EditionLookupReceipt; wire command/receipt DTO stays unchanged. |
-| Completion | G/V+2 ready (or failure/current authority/empty rows). After accepting/rejecting delayed V+1 receipt, return reconciled or validated cached **EditionChoices** only: same scope/generation G, optionsVersion at least the highest incoming/accepted receipt and choices authority, existing non-regressing candidate/revision checks. Empty receipt cache or older/same-authority populated cache never prevents returning V+2 choices; no old receipt return. |
-| Read failure / actual authority change | If reconciliation fails, valid cached choices meeting that authority bound may return. Otherwise surface existing retryable read/transport failure and preserve frozen command; empty receipt cache alone is not authorityChanged. A genuinely newer generation/scope requires refresh; normal completion's advancing candidate/revision is allowed, regressing values are not. |
-| Concurrent identity/device change | Existing candidate/revision/generation fences still dominate. No local request UUID alone overrides server versions; delayed old selection/read cannot restore cleared rows. Test actual QueryClient cache and mutation reconciliation, not only hook stubs. |
-
-## 5. Design — privacy, cache and stale handling
-
-Inherit 02b §§3/6–10/14, **without** broadening scope: scan-only origin proof for
-public query keys; Owner-typed/confirmed/provider-only/unknown-origin queries stay
-private even when text equals public facts. Shared payload strips query/private
-IDs, confidence/rationale and raw responses; companions remain private outside
-their safe cache projection. No new public read of edition state or effects.
-
-Automatic prefill may feed the existing typed cache only after same-source,
-primary-only publication, permission, companion/digest/versions and scope proof.
-M88:34–50 currently requires state.request_id=lookup.job_id; the real automatic
-job binding above preserves that relation. Forward guard/source-policy changes
-must support the new purpose without weakening explicit automatic-payload denials.
-Keep original source time, primary restriction, post-lock deadline recheck,
-hidden/blocklist rules and receiving-store zero-egress receipts (02c §§4/8).
-02c §4.2's database Google veto also applies to companion/catalogue sub-operations,
-all public cache and edition-list cache in either scope, and new Add links even
-with every registry permission true; independently permitted private choices stay.
-
-| Event | Server / screen / next action |
-|---|---|
-| Query/generation/typed ISBN changes | Existing identity reset clears old list; unsaved draft hides it. Search Books or ISBN search uses new identity. |
-| List/source expires or provider disabled | Read returns no stale alternatives; chosen snapshot kept; show existing missing/expired message and explicit search/manual path (M75:29–43; picker:101–114). |
-| Cache invalidated after prefill | Keep accepted 02b §8.3 behavior: saved list usable until its own deadline; invalidation is not emergency recall. No silent freshness extension. |
-| App loses choices read | Retry choices only; no lookup; current sheet error path retained (picker:95–97). |
-| Completion response lost | Same claim recovers saved receipt; no refetch/version/count/spend duplication; expired recovery never restores list. |
-
-## 6. Design — app change kept small
-
-No stored row, selection or command DTO change for OL/Google prefill; §3.4 proves
-the mapping. Proposed app changes: show the existing explicit action when fresh,
-and implement §4's QueryClient version advance/clear/poll acceptance. Retain the
-command slot/pending/ISBN guards and Retry search; opening only reads choices.
-Button visibility alone is insufficient (§2). Third-host DTO adaptation is 02c §3.3.
-
-D30 language display: store original ordinals; propose a presentation-only
-matching-language section followed by **Other languages**, stable original order
-within each group, without changing option IDs/eligibility/selection commands.
-Unknown language follows the existing eligibility rule, never becomes known.
-Current `EditionOptionList.tsx:21–42` slices original positions and has no language
-groups, so this is an explicit small UI proposal, subject to OQ-P1; retain Show
-all/discovery accessibility and no selectable rows hidden by collapsed groups.
-The one-time third-provider presentation gap belongs to 02c, not this unit.
-
-## 7. Acceptance checks and red-first proof
-
-NEW tests are proposals; no product tests are written/run by this document.
-
-| AC / authority | Given / When / Then | Meaningful red-first proof |
+| Unit | Scope | Gate |
 |---|---|---|
-| ACP-1 D30/OD-4 | Retainable automatic list completes; opening sheet shows original bounded rows with zero new request/GET. | NEW `T/phase9_automatic_prefill.test.ts` + `P/phase9AutomaticPrefill.integration.test.mjs`; red baseline never writes alternatives. Jest read-only-open assertion. Owns moved AC9-4. |
-| ACP-2 R07/R09 | External prefill preserves original positions/UUIDs/eligibility and section 3.4 DTO binding; existing explicit-cache projection stays unchanged. | Real server/client Zod, SQL/worker ten-row/null/microsecond/digest tests; malformed/duplicate/overbound/schema/URL/lineage refused. Red new prefill, explicit-cache filtering remains green control. |
-| ACP-3 D30/OD-4 | Fresh prefill -> G/V+1 pending -> G/V+2 complete; new internal mutation returns canonical EditionChoices even when delayed V+1 receipt loses. | Actual QueryClient + mutation/reconcile test with receipt cache **empty, older populated, newer populated**; return reconciled V+2 or later valid authority (e.g. V+3), correct rows/status/polling, never an old receipt. Empty receipt cache alone cannot raise authorityChanged; genuinely changed generation requires refresh. Also read failure/frozen retry/pending dedupe. Red baseline cache-empty throw, stale return and fresh-search no-op. |
-| ACP-4 D07/R06 | Owner changes title/authors/ISBN or starts explicit request; late automatic response never replaces it; first unchanged save preserves valid choice. | Native two-connection race suite, generation/request/selection digest assertions; red missing prefill compare-and-set; retain M82/01a regressions. Owns moved AC9-5. |
-| ACP-5 R06/02b section 10 | Lost response replays original UUIDs/version/effects; precommit failure atomic; expired replay restores no rows. **8b-only absent hook always not_installed; installed hook no-retention always no_retention**. | Native/worker recovery test before/after hook installation, including old receipt replay after install; never rewrite its reason or duplicate spend. Red missing versioned automatic receipt/hook integration. |
-| ACP-6 D35/D40/R04 | Newly fetched automatic retained lists obey private/scan-only publication rules; existing explicit cache can reuse permitted payloads with fresh receiving lineage/zero GET/spend/original deadline. Automatic full-list reuse stays out. | New automatic publication/source-purpose privacy assertions plus existing real two-store explicit-cache/ACL/expiry controls. Red new automatic publication contract; provider-only case remains UNPROVEN under OQ8-11, no duplicate unknown fixture. |
-| ACP-7 MAS-02/10/16 | No retention skips prefill but valid automatic suggestion still commits; disabled/expired list/outage preserves manual/selected/Add behavior. | Positive Google automatic **no-retention** completion/recovery, retained ambiguous-list/no-winner, zero-egress manual, skipped prefill and wholly stale zero-write cases; expired/disabled/cleanup negatives. Registry storage flag never grants retention. |
-| ACP-8 D30 | Language display groups preserve row identity/eligibility and discovery; no frontend matching/auto-confirmation. | Jest list/sheet tests with known/unknown/different languages and selected result >5; red missing groups. Conditional OQ-P1 placement. |
-| ACP-9 R06/OD-3 | With 02d installed: DB before old/new worker, 8b rollback after prefill; pause/drain, recorded 8b artifact + rollback manifest disables OL automatic permission/role/order; SQL hook stays installed. Google stays off if 8c already switched. | Extend AC8-10 before/after-8c matrix: readback, zero new OL automatic lists, new no-list completion skipped/no_retention, original saved/skipped receipt replay unchanged; fresh/expired/v1-v2/selected/explicit/cache/ISBN remain policy-coherent. No old Google-primary rollback target. Red new source-policy/receipt behavior missing. |
-| ACP-10 R07/R04 | API roles cannot write edition state/effects or invoke private helper; wrong store/claim/session mutates nothing. | Feature red: valid retained automatic completion should persist bounded options/source binding, but baseline saves none. Existing denial cases are green regression controls. Once installed, verify helper's actual effective ACL/RLS, role operations and wrong-scope/claim/session zero writes. `undefined_function` or a missing table never counts as behavioral red. |
-| ACP-11 R06/02b section 6.2 | Prefill/request/Select both arrival orders, exhausted lease/job lock, **and direct legacy lookup-candidate/choice-FK interleaving** (section 3.2). | Native barriers/pg_locks/pg_stat_activity, 2s lock/10s statement limits; successful fenced result or P9_STATE_CONFLICT refresh/stale; no 40P01/no HTTP retry. Assert §3.2 neutral wording in server envelope/client registry/recovery/rendered sheet for both known contention rollback and changed authority; old clients retain code/refresh handling. Prove same-row invariant or stop partial 8a for reviewed correction; no global cycle-free claim from new-worker tests alone. |
+| 1. Database + worker | One migration: helper at the M93 hook, receipt widening (SQL + zod + two pinned tests), source policy only if Q-3 needs it, M75 request change (search while fresh, version advance, NOWAIT), read change (§5 expired → idle), timeouts; ACP-1/2/4/5/6/7/9/10/11/12/13. | Plan run READY; red first; `node scripts/verify-phase9.js`; different-model review; separate create/apply approvals. |
+| 2. App | Search Books gate, EditionChoices return and version acceptance, language groups, conflict wording; ACP-3/8/12. | Same flow; runs after Unit 1 is applied on dev. |
+| 3. Live check | Haiku in-app test on dev; worker redeploy only if Unit 1 changes worker code. | Each deploy/apply separately approved. |
 
-## 8. Build packages and documentation
+Docs on implementation: this SDD, data dictionary, current-vs-target, migration
+ledger, verification tracker, CODEBASE_MAP rows whose paths change.
 
-| Package | Scope / size-risk | Review stop |
-|---|---|---|
-| P0 | Verify 8b contract/receipt/versions, source state and language decision / S | Fresh read-only preflight under separate authority; no guessed migration number. |
-| P1 | Worker/SQL/app/native red tests / M-high | Observe feature failures before code/SQL; races use independent connections. |
-| P2 | Proposed one migration: prefill/helper/hook recovery, lock/source-policy/read mapping, monotonic refresh version / L-high | OQ8-5 amendment approved (OD-2026-10-31-1); known contention uses existing P9_STATE_CONFLICT. No automatic cache command/ranker/proof tables. 300-500 soft target, no line-count stop; separate creation/application gates. |
-| P3 | External automatic-list transport, canonical-choices mutation return/refresh authority, paired DTO and sheet/list UI, §3.2 neutral server/client conflict messages / M-L | Actual RPC-to-client conflict/wording/old-client and QueryClient race proofs; no new error code, author cache or automatic full-list reuse. No slice-9 matcher. |
-| P4 | Independent review, focused SQL/worker/Jest/native/ACL/build, rollback/expiry proof / M-high | Validator + diff check; separate deploy after DB; allowed read-only sheet smoke, explicit search writes require approved script. |
+## 9. Owner decisions, open questions, residual risks
 
-Implementation updates: this SDD and 02c/SDD-2 traceability; DOC-3 §5.2 and review
-SDD for automatic list/explicit-refresh contract; data dictionary/current-vs-target/
-migration ledger for actual SQL; verification tracker/38 for actual proof; map
-03/04/06 only when their described paths/tests change. Orchestrator owns ACTIVE,
-DOC-13 and tracker closeout under consolidated routing (02c §11.2). This task
-changes these SDDs, the 02c activation appendix and approved pointers/map row;
-no status files or DECISIONS links need edits in this correction.
-
-## 9. Owner questions and rollout gates
-
-| Owner decision | Recommendation and effect |
+| Decision | Effect |
 |---|---|
-| **Answered — include ([OD-2026-10-31-5](../../../../DECISIONS.md#log)).** OQ-P1: D30 language grouping now or with slice 9 display work? | Include presentation-only grouping here with the small search-button change, preserving stored order/eligibility. Deferring grouping requires Owner-recorded partial D30 acceptance; do not silently reorder data. |
-| 02c OQ8-4 benchmark/activation | Prefill deploys after verified 8b/retention, independently of 8c; only OL automatic activation waits for 8c operational gates. No duplicate threshold decision here. |
+| OD-2026-10-31-5 (OQ-P1) | Language grouping ships here. |
+| [OD-2026-11-12-1](../../../../DECISIONS.md#log) | Automatic job never shown as pending; sheet idle with Search Books until a list is saved (§5). |
+| [OD-2026-11-12-2](../../../../DECISIONS.md#log) | Keep language grouping in this unit (§6). |
+| [OD-2026-11-12-3](../../../../DECISIONS.md#log) | Keep the ACP-4 two-connection race test; drop the legacy lookup/choice-FK deadlock proof (pass 2 §3.2) to a residual risk. |
 
-No new decision is needed on write timing/counts/privacy: 02b §14 OQ3/OQ5/OQ6
-already binds them. No source resets, refresh engine, new provider licensing or
-invented permission. Before build collect read-only source/version/ACL/state/
-in-flight evidence routed by 02c §11.1. **Prefill rollback:** under separate authority,
-pause/drain, deploy recorded compatible 8b artifact and use the existing rollback
-manifest to set OL `automatic_lookup_allowed=false`, `automatic_role`/`automatic_order`
-null; read back before safe routes resume. Keep independently permitted explicit
-search; Google stays disabled after 8c (before 8c, retain the staged no-retention
-Google contract). The additive SQL hook remains installed; no separate disable control.
-Configuration change itself creates no AutoReceipt. New no-list/manual automatic
-completions use normal AutoReceipt with `prefill:{status:'skipped',reason:'no_retention'}`;
-original saved/skipped receipts replay unchanged. Retain confirmed choices and
-policy-aware reads: existing alternatives follow current permission/expiry, never
-relabelled as a fresh explicit fetch. No new retained OL automatic list is fetched.
+**Open (decide in the Unit 1 plan run, from code):**
+- Q-1: the fence checks `phase9_metadata_candidate_query_identity(c)` (M55:9);
+  the sheet read checks `phase9_edition_query_identity(c)` (M78:10, ISBN-aware
+  M78:16–19). Prefill writes the latter and skips `identity_mismatch` when they
+  describe different searches (§3). Confirm from code that a title-only card
+  gives a saved list the read accepts.
+- Q-3: whether the source policy needs the automatic purpose branch (§3).
+- Q-4: whether the existing completion digest already covers rows/companions.
+- Q-2: live registry `automatic_*` flags were not read; read back before rollout
+  (runbook 02c-1 §2 step 8).
+
+**Residual risks:**
+- Legacy path deadlock: direct `phase9_register_metadata_attempt` (M95:52, lookup
+  lock :63) against Owner Select inserting choice-effect FKs was not proved
+  cycle-free. A deadlock would surface as `P9_STATE_CONFLICT` ("try again"), not
+  lost data.
+- Stuck automatic jobs (ACTIVE.md row 11) are not fixed here; the sheet stays usable.
+- **Rollback:** under separate authority pause/drain, set OL
+  `automatic_lookup_allowed=false` and `automatic_role`/`automatic_order` null via
+  the existing manifest, read back. The SQL hook stays installed; new automatic
+  completions record `skipped/no_retention`; saved receipts replay unchanged;
+  explicit search keeps working; Google stays off.

@@ -8,17 +8,19 @@ only: it is rewritten (not appended to) at session close, and rotated into
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
-- Active slice/work unit: **none**. Slice 8 (Open Library first,
-  replaceable providers) closed on dev 2026-11-09 on branch
-  `phase9/slice8-providers`.
+- Active slice/work unit: **02d edition-sheet prefill** (Owner
+  2026-11-12; the existing search button stays, OD-2026-10-30-4), on branch
+  `phase9/02d-prefill`. Read-only preparation only: no build authorized.
+  Slice 8 closed on dev 2026-11-09 on branch `phase9/slice8-providers`.
 - Completed milestone: **slice 8 complete on dev (2026-11-09)**: 8c fix
   round (M99, worker `c64c2fb`, app `0b00441`) deployed, re-tested, stuck
   holds released, drain checks 01/02/05 passed, Muse review CLEAN.
   [Closeout evidence](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-09-fix-round-review-muse-and-slice-8-closeout);
   8b: [tracker 40](phase-9-image-inventory/trackers/40-package8b-worker-evidence.md);
   8a: [tracker 39](phase-9-image-inventory/trackers/39-package8a5-contract-review.md).
-- Exact next authorized action: **Owner decision on the next work unit
-  after slice 8 (the 02d parking question)**. Not authorized by this file.
+- Exact next authorized action: **Owner approval to brief and build 02d
+  Unit 1** (database + worker) from the pass-3 SDD (refreshed and reviewed
+  2026-11-12; decisions OD-2026-11-12-1..3). Not authorized by this file.
 - Other gated actions, each needing its own Owner approval: the pilot Open
   Library switch (8c operator scripts 01-05 with placeholders; dev is
   already switched); 02d prefill.
@@ -30,10 +32,11 @@ only: it is rewritten (not appended to) at session close, and rotated into
 - Dev project data may be freely changed in live tests (Owner). Local
   commits are allowed after the diff is read. Do not run `db push`
   (frozen).
-- This session (2026-11-10): Markdown, validator-script and local tooling
-  edits only (ACTIVE.md rotation, `scripts/verify-phase9.js`,
-  `scripts/phase9-sql-facts.js`), plus an Owner-approved push of the branch.
-  No database, Storage or deployment.
+- This session (2026-11-10 to 11-12): Markdown, validator-script and local
+  tooling edits (ACTIVE.md rotation, `scripts/verify-phase9.js`,
+  `scripts/phase9-sql-facts.js`, 02d SDD pass 3, DECISIONS OD-2026-11-12-1..3),
+  plus an Owner-approved push of the branch. Database: read-only SELECTs only
+  (row 11 check, `cron.job`). No writes, Storage or deployment.
 - Past dated approvals (2026-11-04 to 2026-11-09) are preserved in
   [the archive](history/ACTIVE-history-to-2026-11-09.md) and trackers 40/41;
   they grant nothing now.
@@ -71,7 +74,7 @@ One line each; detail lives at the link. Remove a line when it closes.
 
 | # | Item | Owner / detail |
 | --- | --- | --- |
-| 1 | Next work unit after slice 8 (02d parking) | Owner decision; the one next action |
+| 1 | 02d chosen (Owner 2026-11-12); SDD pass 3 written and reviewed; Unit 1 build not yet approved | [02d SDD](phase-9-image-inventory/work-units/post-scan-rework/02d-edition-sheet-prefill-sdd.md) |
 | 2 | Pilot Open Library switch | Owner-timed; [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md) |
 | 3 | Render free instances failed to start ~2 h on 2026-11-08, no cause found | Watch; [re-test record](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-0809-post-deploy-dev-re-test-explicit-search-books) |
 | 4 | Undocumented Render deploy `dep-dbmbe461egvs73btn1dg` (2026-11-05) | Confirm with the Owner |
@@ -81,7 +84,7 @@ One line each; detail lives at the link. Remove a line when it closes.
 | 8 | 8c residual risks (pause coverage for NULL-policy/explicit requests, defer-conflict attempt use, one Low M98 test gap, unmapped contactId goes to manual, fair queue unused) | [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#residual-risks) |
 | 9 | Fix-round residuals (admission-fake hardening in ~20 older suites, picker/lookup copy) | [tracker 41 fix round](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-07-8c-fix-round-m99-worker-admission--rpc-logging-app) |
 | 10 | 8b residual risks (legacy fail path can leave a run row open, breaker refusal terminal, uncertain states go manual, catch-all maps errors to `stale_claim`) | [tracker 40](phase-9-image-inventory/trackers/40-package8b-worker-evidence.md#residual-risks-and-follow-ups) |
-| 11 | Metadata job whose worker dies on its final attempt is not reclaimed (bounded sweep was planned for 8c); confirm whether M95-M99 closed it | Check before the pilot |
+| 11 | Final-attempt worker crash: partly closed. The M97 sweep (`phase9_sweep_exhausted_metadata_jobs_v1`) dead-letters the zero-call crash shapes; a crash after a registered/outcome-unknown provider call, a reserved usage or a running run leaves the job in progress forever (code read, 2026-11-12). The dev cron `phase9-worker-wake-dispatcher` that runs the sweep is active live, but M36 created it inactive and no migration enables it (drift). 0 such stuck jobs on dev. | 02d must show a usable sheet for a job stuck "in progress"; fix before the pilot |
 | 12 | Native fairness AC8-6 not natively proven (gated on OQ8-3); two Low test-evidence notes | [tracker 39](phase-9-image-inventory/trackers/39-package8a5-contract-review.md#2026-11-02--whole-8a-review-of-m89m93-fixes-preflight-and-final-regression) |
 | 13 | WHOLE-1: NULL `operation_version` historical automatic job can fail a non-legacy OL v2 route | Later slice: null-safe flag plus drain |
 | 14 | Runtime pacing, circuit state, cooldown recheck and one-instance enforcement are not proven by SQL tests | Rollout proof; [tracker 39](phase-9-image-inventory/trackers/39-package8a5-contract-review.md#read-only-operational-evidence) |
