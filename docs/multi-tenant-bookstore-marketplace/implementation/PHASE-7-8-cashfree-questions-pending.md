@@ -8,7 +8,10 @@ answer becomes a CF fact in the [fact record](./PHASE-7-8-cashfree-replies.md) a
 moves to "Answered" below.
 **Sources:** Cashfree's [original replies](./PHASE-7-8-cashfree-replies-original.md) (word for word), the [names list](./PHASE-7-8-cashfree-names-needed.md) (items Cashfree's docs do
 not answer), [SDD 02 review round 1](./PHASE-7-8-sdd02-review-r1.md), and questions from
-earlier mails that were only partly answered.
+earlier mails that were only partly answered. The whole mail thread as sent is in the
+[thread file](./PHASE-7-8-cashfree-thread-original.md).
+**State 2026-11-12:** 20 questions open. The [fourth mail](./PHASE-7-8-mail-cashfree-4.md)
+asking all of them is drafted and reviewed, not sent.
 
 "Sandbox" means we can also find the answer ourselves by testing; asking may save time.
 
@@ -23,22 +26,59 @@ earlier mails that were only partly answered.
 | CF-A20 | Webhook signature: is the signed text the `x-webhook-timestamp` value directly followed by the raw body, with no dot between them? Is the timestamp in milliseconds? (Your pseudocode shows `$timestamp.$payload`; your code samples join them with nothing.) | We must verify every webhook exactly (names F3a, F4) | Yes | SDD 02 §7.2 |
 | CF-A21 | When you retry a webhook, do the `x-idempotency-key`, `x-webhook-timestamp` and signature stay the same as the first delivery? Within how many seconds must our endpoint answer, and which HTTP codes count as delivered? | De-duplication, and our five-minute age check (names F6, F8, F9) | Partly | SDD 02 §10 |
 | CF-A22 | If an order has a `notify_url` and the account also has a dashboard webhook endpoint, are payment webhooks sent to both? Is the dashboard's test message signed? | Avoid missed or doubled deliveries (names B7, F10) | Yes | SDD 02 §10 |
-| CF-A23 | When an order ID is reused, which error code do you send: `order_already_exists` or `order_id_already_exists`? | Retry safety when creating an order (names B11) | Yes | SDD 02 §7.2 |
 | CF-A24 | When we generate new Payment Gateway keys, do the old keys stop working immediately, or is there an overlap? What happens to webhooks already in flight? | Our key-change procedure (names N8, A1) | No (we would lose our sandbox keys) | SDD 02 §13.4 |
 | CF-A25 | On sandbox, how can we make two successful payments on one order, or a payment for a different amount? Can `POST /simulate` move a payment to `PENDING` first and to `SUCCESS` later? | Testing duplicates, wrong amounts and late payments (names H3, H4) | Partly | SDD 02 tests |
 | CF-A26 | In `GET /orders/{order_id}/payments`, is `payment_completion_time` empty while a payment is pending, and is the list in any fixed order? | Choosing the counted payment by completion time (names D7, D11) | Yes | SDD 02 §9.3 |
 | CF-A27 | If our `POST /orders` call times out, can the order still have been created even though `GET /orders/{order_id}` then answers 404? Is a 404 final? How long is an `x-idempotency-key` remembered, and does a retry with the same key replay the first answer, or is `order_expiry_time` checked again (it may by then be less than 15 minutes away)? | Docs (checked 2026-11-12) only say a timed-out request can be retried safely with the same key; we must never release books while an order might exist (review S2-02, S2-22) | Partly (sandbox) | SDD 02 §7.2, §11.6 |
 | CF-A28 | On an INR order, can a payment's `payment_amount` ever differ from `order_amount`, have more than two decimals, or be in another currency? If so, can we refund exactly that amount through the refund API? | Docs (checked 2026-11-12) say order amounts have at most two decimals, at least ₹1, and a refund may not exceed the payment, but say nothing about the payment side (review S2-09) | No | SDD 02 §13.1 |
 | CF-A29 | What are the rate limits for `GET /orders/{order_id}/refunds` (Get All Refunds for an Order) and for terminating an order (`PATCH /orders/{order_id}`), in sandbox and production? Your rate-limit page shows Get Refund at 60 a minute in sandbox but 30 in production: is that right? | Our shared per-minute read budget must stay under every limit (review S2-13) | Partly (headers) | SDD 02 §11.5 |
+| CF-A30 | Is there an API or report for our own merchant ledger: its balance and a statement of every movement (payments, refunds, adjustments, charges)? Or only the dashboard? | Reconciling our own balance (docs: only the vendor recon report/API `POST /pg/recon/vendor`) | No | SDD 05 |
+| CF-A31 | If a refund to a card fails (card closed or blocked), where does the money go, how are we told, and what should we do? | Customer refund promise (R1 covers only failed UPI refunds, CF-21, CF-70) | No | SDD 04 |
+| CF-A32 | After we fund a vendor balance (Adjust Vendor Balance) or recharge our ledger, does an `ON_HOLD` refund restart by itself, and how soon? | Refund follow-up work (CF-71; docs say auto-processed only for the Refund Wallet) | Yes (sandbox) | SDD 04 |
+| CF-A33 | Where is the vendor bank-account verification charge reported (API, report or webhook)? | Charging it to the right place (R1 gives only "as per pricing") | No | SDD 03 |
+| CF-A34 | Can a live account start with UPI and cards only? Is the Refund Wallet (recharged via a virtual bank account, credits within 30 minutes per the help page) the same as the "merchant ledger" in R1, and the same on live? | Going live and refund funding (asked in our second mail, not answered) | No | SDD 04, go-live |
 
 ## Carried over from earlier mails (partly answered)
 
 | ID | What is still open | Affects |
 |---|---|---|
-| CF-A3 | At the maximum window's end, what happens to a split that was made: is it settled to us or to the store? (R4 answered only the case with no split) | SDD 05 |
-| CF-A12 | On what amount is the Easy Split charge calculated? (CF-62 reopened the basis; to the accounts team) | SDD 03, 05 |
-| CF-A14 | When a settlement to a store's bank fails, where does the money wait until it is retried? | SDD 05 |
+| CF-A12 | On what amount is the Easy Split charge calculated? (R3: order amount; R4: per split, check commercials; docs FAQ: "0.2% per split", base not stated. To the Account Manager) | SDD 03, 05 |
+| CF-A14 | For a vendor settlement that failed and has been fixed, is it retried automatically, and where does the money wait meanwhile? (R4: depends on the failure reason; the settlements help page says a failed merchant settlement returns to the nodal account and is retried next cycle, but does not mention vendors) | SDD 05 |
+
+## Check of 2026-11-12 (mails and docs, before drafting the fourth mail)
+
+Every open question was checked one by one against Cashfree's four replies and against
+their docs (three Haiku searches; the key pages re-opened by me; mail draft reviewed by
+Sonnet). Result: 2 answered (moved below), 10 partly answered, 10 not answered. The
+partly answered ones are asked in the [fourth mail draft](./PHASE-7-8-mail-cashfree-4.md)
+with what the docs already say, so Cashfree only confirms or completes them.
+
+| ID | Status | What the mails and docs already give | Mail 4 question |
+|---|---|---|---|
+| CF-A16 | Partly | R1: "the additional payment amount is reversed"; R4: tracked via transaction details, reports, webhooks, up to 5 calendar days; docs list `PAYMENT_AUTO_REFUND`, `UNRECONCILED_AUTO_REFUND` without meaning | 1 |
+| CF-A17 | Partly | R2/R4: a UPI attempt started before expiry can still succeed; termination does not cancel it at the bank. Help page: a "Failed" transaction may rarely later move to "Success" | 2 |
+| CF-A19 | Partly | Terminate Order page: "order might not get terminated", check `order_status`; response codes listed, none for this case | 3 |
+| CF-A18 | Not answered | Elements FAQ only: sessions single-use, 30 minutes (that product) | 4 |
+| CF-A27 | Partly | Create Order page: a timed-out request can be retried with the same key | 5 |
+| CF-A28 | Not answered | R1 said the Technical team was checking; never answered | 6 |
+| CF-A26 | Not answered | Spec: completion time = "when the payment reaches its terminal state" | 7 |
+| CF-A20 | Not answered | Webhooks page shows `$timestamp.$payload`; Payloads and Signatures page and all code samples join with nothing | 8 |
+| CF-A21 | Partly | Reliability page: default retries at 2, 10, 30 minutes; non-2xx is a failure | 9 |
+| CF-A22 | Partly | Webhooks page: `NOTIFY_URL` default config vs custom URLs | 10 |
+| CF-A24 | Partly | R2: one key pair at a time, no overlap; only in-flight webhooks open | 11 |
+| CF-A29 | Not answered | Rate-limit page (Production and Sandbox tabs) confirms Get Refund 30 / 60; refunds list and terminate not listed | 12 |
+| CF-A25 | Not answered | Simulate Payment can set SUCCESS, FAILED, PENDING, USER_DROPPED | 13 |
+| CF-A14 | Partly | See carried-over table | 14 |
+| CF-A32 | Partly | See above | 15 |
+| CF-A31 | Not answered | R1 covers UPI only | 16 |
+| CF-A30 | Partly | Vendor recon report and API exist; nothing for our own ledger | 17 |
+| CF-A12 | Partly | See carried-over table | 18 |
+| CF-A33 | Not answered | R1 pricing line only | 19 |
+| CF-A34 | Partly | Refunds help page describes the Refund Wallet recharge | 20 |
 
 ## Answered
 
-None yet.
+| ID | Answer | Source |
+|---|---|---|
+| CF-A3 | Money we never split goes to us when the window ends: "If you take no action within that window, the held amount settles to the merchant." and "You must initiate the split within the applicable window for that amount to settle to the vendor." (matches R1 point 2 and R4 point 2). A share we did split is paid to the store on its eligibility date, which can never be later than the window's end (R3; CF-43, CF-45). Design rule: always send the split, and set the release date ourselves before day 45. A sandbox test of a split share left untouched to day 45 is still worth running. | Easy Split FAQ (payments/split/faq), checked 2026-11-12; CF-74 |
+| CF-A23 | The documented code for a reused order ID is `order_already_exists` (HTTP 409); `order_id_already_exists` appears nowhere in the API spec. Treat any 409 "already exists" the same. | OpenAPI spec v2026-01-01, checked 2026-11-12; CF-75 |

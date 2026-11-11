@@ -3,6 +3,9 @@
 **Status:** sent by the owner on 2026-11-11, in reply to Cashfree's third reply (R3).
 Answered by Cashfree's fourth reply (R4), recorded in the
 [fact record](./PHASE-7-8-cashfree-replies.md) on 2026-11-11.
+
+**As sent:** the text actually sent differs from this draft in places; the sent text is in the
+[thread file](./PHASE-7-8-cashfree-thread-original.md) (stored 2026-11-12) and wins.
 **Authority:** none. It confirms our understanding of R3 and lists the points still
 awaited.
 **Related:** [replies and fact record](./PHASE-7-8-cashfree-replies.md) ·

@@ -4,6 +4,9 @@
 [replies and fact record](./PHASE-7-8-cashfree-replies.md) and the
 [second mail](./PHASE-7-8-mail-cashfree-2.md).
 **Date:** 2026-11-10
+
+**As sent:** the text actually sent differs from this draft in places; the sent text is in the
+[thread file](./PHASE-7-8-cashfree-thread-original.md) (stored 2026-11-12) and wins.
 **Authority:** none. It is the [Cashfree questions](./PHASE-7-8-questions-cashfree.md) as one
 mail, with the Easy Split activation request first. Part 1 can be pasted alone into the
 Support Form. Question numbers match that document, except A to D, which are confirmations

@@ -11,12 +11,16 @@ text ever disagree, this text wins and the fact is corrected.
 **Our mails:** [first](./PHASE-7-8-mail-cashfree.md) ·
 [second](./PHASE-7-8-mail-cashfree-2.md) · [third](./PHASE-7-8-mail-cashfree-3.md)
 
-| Tag | Reply | Pasted |
-|---|---|---|
-| R1 | Support reply to questions 1 to 20 (points 16 to 19 forwarded to the Tech Team) | 2026-11-10 11:29 UTC |
-| R2 | Tech Team reply to points 16 to 19 | 2026-11-10 11:44 UTC |
-| R3 | Tech Team reply to our second mail | 2026-11-10 16:55 UTC |
-| R4 | Reply to our third mail | 2026-11-11 10:21 UTC |
+| Tag | Reply | Sent by Cashfree (IST) | Signed | Pasted |
+|---|---|---|---|---|
+| R1 | Support reply to questions 1 to 20 (points 16 to 19 forwarded to the Tech Team) | 2026-11-10 2:00 PM | Amit Paul, Cashfree Care | 2026-11-10 11:29 UTC |
+| R2 | Tech Team reply to points 16 to 19 | 2026-11-10 3:26 PM | Shreejoy Chatterjee, Integration Engineer | 2026-11-10 11:44 UTC |
+| R3 | Tech Team reply to our second mail | 2026-11-10 7:14 PM | Shreejoy Chatterjee, Integration Engineer | 2026-11-10 16:55 UTC |
+| R4 | Reply to our third mail | 2026-11-11 1:20 PM | Nikhil Scaria, Cashfree Care | 2026-11-11 10:21 UTC |
+
+The whole Gmail thread (our mails as sent, the ticket acknowledgement and our 11 Nov
+thank-you mail) is stored word for word in the [thread file](./PHASE-7-8-cashfree-thread-original.md).
+Send times and signers above come from it (added 2026-11-12).
 
 ---
 

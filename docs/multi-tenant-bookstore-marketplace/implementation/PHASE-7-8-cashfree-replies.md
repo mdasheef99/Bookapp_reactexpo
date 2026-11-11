@@ -58,6 +58,7 @@ Where a later reply contradicts an earlier one, the later fact says so and is us
 | CF-43 | If we never update an order, its settlement eligibility date is the transaction date and time plus the deferral period. With a 45-day window, an untouched share is therefore held for the full 45 days by default. | R3 |
 | CF-44 | The eligibility date can be updated to any date inside the deferral window, so it can be moved earlier as well as later. A date beyond the maximum is rejected. Format `YYYY-MM-DD HH:mm:ss`. Sandbox URL: `PUT https://test.cashfree.com/api/v2/easy-split/orders/{orderid}/settlement-eligibility/vendors/{vendorid}`. This API supports only one split per vendor for an order. | R3 |
 | CF-45 | Once the eligibility date is reached, the store's share is settled to the store according to the store's settlement schedule. What happens when the maximum window is reached is still to be confirmed by Cashfree (see CF-04 and CF-A3). | R3 |
+| CF-74 | Easy Split FAQ: "If you take no action within that window, the held amount settles to the merchant." "The 45-day period does not reverse the held vendor share to the vendor." "You must initiate the split within the applicable window for that amount to settle to the vendor." So unsplit money comes to us; a split share is paid to the store on its eligibility date (CF-43, CF-45). Answers CF-A3 for our design. | DOC (payments/split/faq, checked 2026-11-12) |
 | CF-46 | Calling the Split API a few minutes after the payment, inside the T+1 split delay, is correct. The store's share then stays on hold until its eligibility date. The split delay does not need changing. | R3 |
 | CF-47 | After the eligibility date the amount is credited according to the store's settlement schedule, on bank working days, for example T+1 at 11:00 AM. A weekly schedule, which settles on the first working day of the week, is also available. This refines CF-05: there is no weekly deferral release, but a store can be put on a weekly settlement schedule. | R3 |
 | CF-48 | Documentation for vendor-level settlement delay: `https://www.cashfree.com/docs/payments/split/settlements/delay/vendor-level`. Not yet read by us. | R3 |
@@ -148,6 +149,7 @@ Where a later reply contradicts an earlier one, the later fact says so and is us
 | CF-39 | Vendor reconciliation: `POST /pg/recon/vendor` returns vendor settlements with settlement ID, time and bank reference number. A settlement reconciliation API also exists. | DOC |
 | CF-40 | Sandbox can simulate a payment as `SUCCESS`, `FAILED`, `PENDING` or `USER_DROPPED`, and a vendor settlement as initiated, successful or failed. There is no dispute simulation. | DOC |
 | CF-41 | Base URL `https://sandbox.cashfree.com/pg`; API version `2026-01-01`. | SBX, DOC |
+| CF-75 | A reused order ID is rejected with HTTP 409, code `order_already_exists` (the spec's only example); `order_id_already_exists` appears nowhere. Answers CF-A23. | DOC (OpenAPI v2026-01-01, checked 2026-11-12) |
 
 ## 3. Questions from the second mail
 
@@ -157,7 +159,7 @@ The IDs are kept so the SDDs' references stay valid.
 |---|---|---|---|
 | CF-A1 | Which eligibility date applies if we never update an order? | Answered: CF-43 | SDD 05 |
 | CF-A2 | Can an eligibility date be moved earlier as well as later? | Answered: CF-44 | SDD 05 |
-| CF-A3 | At the eligibility date, is the share settled to the store; and at the maximum window, to us? | Answered for the store at the date (CF-45). For the window's end, R4 answered only the case where no split was made: all to us (CF-54). For a share we did split, CF-43 and CF-45 point to the store being paid at the end of the window. **Must be tested on sandbox** | SDD 05 |
+| CF-A3 | At the eligibility date, is the share settled to the store; and at the maximum window, to us? | Answered for the store at the date (CF-45). For the window's end, R4 answered only the case where no split was made: all to us (CF-54). For a share we did split, CF-43 and CF-45 point to the store being paid at the end of the window. **Answered by docs 2026-11-12 (CF-74)**; a sandbox test is still worth running | SDD 05 |
 | CF-A4 | With the split made minutes after payment at T+1, does the store's share stay held until its eligibility date? | Answered: CF-46, CF-55 | SDD 05 |
 | CF-A5 | How is the reversal of a duplicate payment reported to us? | Partly answered: transaction details, reports and webhooks, within 5 calendar days (CF-64). No event name | SDD 02, 04 |
 | CF-A6 | Can a payment succeed for a different amount, and is the amount locked? | Not asked again, by choice: the server compares the amount whatever Cashfree answers | SDD 02 |
@@ -173,7 +175,8 @@ The IDs are kept so the SDDs' references stay valid.
 
 Still open after R4:
 - What happens to a store's share we did split, if it reaches the end of the window
-  (CF-A3). This is to be tested on sandbox, which is now possible.
+  (CF-A3). Answered by the Easy Split FAQ on 2026-11-12 (CF-74); a sandbox test is still
+  worth running.
 - Whether a refund held `ON_HOLD` resumes by itself once funded, and how long it takes
   (CF-60).
 - Where a failed settlement's money waits, and who retries (CF-A14).
