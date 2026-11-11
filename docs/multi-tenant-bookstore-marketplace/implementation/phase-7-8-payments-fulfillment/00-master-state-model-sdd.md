@@ -113,13 +113,15 @@ created (D-85). Only the three events in D-81 lead to `platform_cancelled`.
 Final states: `picked_up`, `delivered`, `returned_to_store`, `cancelled`. Every other state
 has a timer or a named actor that moves it on. `accepted` has the D-79 deadline: an alert
 at the end of the promised day (BC-14, D-34), and an automatic refund as a store fault at
-the end of the following business day. The transitions for the four delivery states are SDD 07's. "After collection"
+the end of the following business day. That clock does not run while the customer is
+deciding on photos: on approval the promised day is worked out afresh from the approval
+time by the same rule (my proposal, for the owner; SDD 01 §17). The transitions for the four delivery states are SDD 07's. "After collection"
 in Q45b means from `out_for_delivery` onward (D-82).
 
 `cancelled` reason codes: store did not accept (D-04); store has none of the books (Q55);
 customer cancelled all after missing books (D-61); customer cancelled (Q45, D-67); photos
 not sent, rejected, or not approved (D-43, D-53); pickup missed (Q72); refused at pickup
-(D-44); no rider and customer cancelled (D-77); parcel lost (BC-35).
+(D-44); no rider and customer cancelled (D-77); parcel lost (BC-35); not prepared (D-79).
 
 Item level (`store_order_items.status`): `active` or `removed_unavailable` (D-61 "keeps
 the rest").
@@ -154,7 +156,7 @@ All run on the server through the existing task framework. Client timers are dis
 | Vendor status read | Daily | Repeats | Calendar | CF-14 | 05 |
 | Release date not sent after handover | Handover | Retry, then an admin case after 1 day (setting) | Elapsed | D-28 | 05 |
 | Accepted order not ready | Acceptance | Alert at the end of the promised day (BC-14, D-34); automatic refund at the end of the following business day (settings) | Store business days | D-79 | 01 |
-| Duplicate-payment reversal wait | Duplicate recorded | 3 business days (setting; reviewed when CF-A5 is answered), then an admin refund within 1 business day | Business days | D-78, CF-30 | 02 |
+| Duplicate-payment reversal wait | Duplicate recorded | 3 business days (setting; reviewed when CF-A5 is answered), then the admin asks Cashfree; refund within 1 business day of its confirmation, or after 5 more business days with no answer (setting) | Business days | D-78, CF-30 | 02 |
 | Refund stuck in `processing` | Refund submitted | Setting, to be set; then the admin queue | Elapsed | D-54 | 04 |
 | Admin queue deadline (refund held for a chargeback; category 13) | Item queued | 1 business day | Support hours (D-19) | D-80, D-82 | 04 |
 | Chargeback evidence | Chargeback reported | Cashfree's deadline, read from the dispute | Elapsed | Q68 | 04 |
@@ -184,7 +186,8 @@ All run on the server through the existing task framework. Client timers are dis
 ## 9. Fault model
 
 Every cancellation, refund, failed delivery and chargeback records one cause:
-`store`, `customer`, `delivery_provider`, `platform`, or `unclear`. The cause drives who
+`store`, `customer`, `delivery_provider`, `platform`, `unclear`, or `no_fault` (counts
+against nobody: D-43, D-53). The cause drives who
 bears costs (D-09, D-27, D-31, D-41, D-69, D-70), store fault counts (D-21) and the loss
 cap (D-08). A missed D-04 deadline counts as a store fault only when an "alert delivered"
 fact exists and no platform or notification failure is found for that order (D-04; handoff
@@ -211,13 +214,15 @@ fact exists and no platform or notification failure is found for that order (D-0
 
 ## 11. Dependencies
 
-- **Cashfree:** three replies recorded with sources in the
-  [fact record](../PHASE-7-8-cashfree-replies.md) (CF-01 to CF-51). Every Cashfree fact in
-  these SDDs cites a CF ID from it. Of the fifteen points asked (CF-A1 to CF-A15), the
-  third reply answered CF-A1, A2, A4, A11 and A13, most of A12, and half of A3 and A9. The
-  rest are promised; the parts that depend on them are marked as open points.
-- **Sandbox testing of Easy Split:** not started. SDD 05 is not approved until its
-  Cashfree facts are tested.
+- **Cashfree:** four replies recorded with sources in the
+  [fact record](../PHASE-7-8-cashfree-replies.md) (CF-01 to CF-66). Every Cashfree fact in
+  these SDDs cites a CF ID from it. The fourth reply (2026-11-11) answered most remaining
+  points. It replaces CF-15's "recovered from later settlements" with CF-60 and CF-51's
+  charge basis with CF-62. It also leaves open what happens to a split share at the end of
+  the window (CF-A3, CF-54). SDD 03, 04 and 05 must be updated to these facts before their
+  review.
+- **Sandbox testing of Easy Split:** possible now that the 45-day window is configured
+  (CF-52); not started. SDD 05 is not approved until its Cashfree facts are tested.
 - **Delivery provider check:** SDD 07 in full; the quote step in SDD 01.
 - **Phase 9 lane:** the photo-request rework (handoff §9). SDD 01 builds pay-first beside
   the old Phase 6 step and retires it only after that rework lands.
@@ -241,7 +246,11 @@ fact exists and no platform or notification failure is found for that order (D-0
 
 **Already built outside this lane; checkout only reads the result:** BC-03 and BC-04 (the
 store sets prices and discounts in its inventory screens; checkout reads the current price,
-BC-05), Q30 (new and used books; D-49 limits checkout to printed books).
+BC-05), Q30 (new and used books). D-49 is a listing rule: stopping a non-book being listed
+at all belongs to the listing screens and server checks in the Phase 9 lane, which this lane
+does not edit, so it is to be raised there, and it must be in place before live payments.
+Checkout does not re-check it, because no reliable field exists to check it with
+(SDD 01 §5.1, §18).
 
 **Phase 9 lane:** D-75 (photo request before payment).
 

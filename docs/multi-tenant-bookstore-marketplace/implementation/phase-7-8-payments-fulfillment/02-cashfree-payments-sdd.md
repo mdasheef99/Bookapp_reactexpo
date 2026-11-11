@@ -73,7 +73,9 @@ Cashfree payment or refund ID, the event type and the event time.
 4. Verification asks Cashfree for the order and its payments, then compares amount and
    currency with the checkout row.
 5. On a verified match, `convert_paid_checkout` (SDD 01) and the ledger posting (SDD 03)
-   run in one database transaction.
+   run in one database transaction. If `convert_paid_checkout` answers `conversion_failed`
+   (SDD 01 §5.5), the same transaction commits the payment as verified and opens an admin
+   case.
 
 ## 5. Payment states (`payments.status`, one row per Cashfree order)
 
@@ -94,8 +96,10 @@ and stays on the poll.
 
 A wrong-amount success is recorded on the attempt, not on the payment: the attempt becomes
 `amount_mismatch`, that money is refunded in full automatically with an admin alert (D-29),
-and the payment stays open so the customer can still pay the right amount inside the
-reservation (D-29: "the reservation follows Q36/BC-10"). Only one attempt may be in
+and no order is created. No further attempt is allowed on that Cashfree order, because
+Cashfree would treat a second success as a duplicate and reverse it (CF-30). The Cashfree
+order is terminated, and the reservation simply runs out on its timer (D-29: "the
+reservation follows Q36/BC-10"); the customer can then reserve again. Only one attempt may be in
 progress at a time; a new one is refused while another is `pending`.
 
 Attempt states (`payment_attempts.status`): `initiated`, `pending`, `success`, `failed`,
@@ -124,9 +128,11 @@ Webhook message states (`provider_webhook_events.processing_status`): `received`
 - An independent poll checks every `created`, `pending` and unconfirmed `closed_unpaid`
   payment, so a lost webhook cannot strand a payment.
 - Key rotation has no overlap period (CF-36). The procedure: pause new payments with the
-  global pause (D-55), generate the new keys, replace them in server secrets, resume. A
-  webhook signed with the old key during the swap fails verification and is recovered by
-  the poll.
+  global pause (D-55), generate the new keys and replace them in server secrets. Payments
+  restart only under D-68: reconciliation must show no stuck or mismatched payments, and
+  the owner restarts them with a logged reason. A payment still unresolved keeps the pause
+  on until it is resolved or has its own admin case. A webhook signed with the old key
+  during the swap fails verification and is recovered by the poll.
 - Raw payloads are stored privately and never logged.
 
 ## 7. Failures and races the full SDD specifies
@@ -134,7 +140,7 @@ Webhook message states (`provider_webhook_events.processing_status`): `received`
 | Case | Handling |
 |---|---|
 | Attempt fails inside the 10 minutes | Customer may retry on the same order (Q37) |
-| Reservation ends | The expiry does not trust our own records, because a payment started seconds earlier may not have reached us yet. Under the checkout lock it asks Cashfree for the order's payments, then acts on the answer in the three rows below. Stock is released only after Cashfree shows no pending and no successful attempt |
+| Reservation ends | The expiry does not trust our own records, because a payment started seconds earlier may not have reached us yet. Before taking the checkout lock, so that no lock is held during a network call, the worker asks Cashfree for the order's payments and records the answer; SDD 01 §5.3 then acts on it under the lock, as in the three rows below. Stock is released only after Cashfree shows no pending and no successful attempt |
 | Reservation ends, Cashfree shows a success | Verified and converted as a normal on-time payment, not a late one |
 | Reservation ends, Cashfree shows no attempt pending | Terminate the Cashfree order first (CF-32), then checkout `reservation_expired`, holds released, payment `closed_unpaid`. If the terminate call answers that a payment already succeeded, convert as normal |
 | Reservation ends, attempt pending | Checkout `awaiting_payment_result`; stock stays held for the grace period (BC-10) |
@@ -144,8 +150,8 @@ Webhook message states (`provider_webhook_events.processing_status`): `received`
 | Success arrives after stock was released | Late-payment rule (D-06, Q38) |
 | Webhook and expiry timer at the same moment | One lock order; whichever commits second sees the first's result |
 | Webhook and poll verify the same payment together | Both lock the payment row; the second finds it `paid` and does nothing. One `paid` payment per checkout is also a database constraint |
-| Two successes for one order | First counts; Cashfree reverses the second (CF-30, D-29). No automatic refund from us. If Cashfree's records show no reversal after the set wait, the admin checks the record for that payment and refunds it within 1 business day (D-78) |
-| Success for a different amount | Attempt `amount_mismatch`; that money refunded in full; payment stays open for a correct attempt (D-29) |
+| Two successes for one order | First counts; Cashfree reverses the second (CF-30, D-29). No automatic refund from us. If Cashfree's records show no reversal after the set wait, the admin asks Cashfree about that payment. Refund within 1 business day of Cashfree confirming it will not reverse, or after 5 more business days with no answer. A reversal that then also appears opens a reconciliation case; the extra amount is BookConnect's loss (D-78) |
+| Success for a different amount | Attempt `amount_mismatch`; that money refunded in full; no further attempt on that Cashfree order, which is terminated; the reservation runs out and the customer can reserve again (D-29, CF-30) |
 | Customer closes the app mid-payment | Poll and webhook still resolve it |
 | Paid at Cashfree but no order row | Reconciliation case and admin exception queue (SDD 03, SDD 08) |
 
@@ -181,8 +187,10 @@ or payload in logs.
 - Decided (D-78, amending D-29): Cashfree reverses a duplicate payment itself (CF-30) and
   BookConnect sends no refund of its own at first. If Cashfree's records show no reversal
   after a set wait (a setting, starting at 3 business days; reviewed when CF-A5 is answered), the
-  admin checks Cashfree's record for that payment and refunds it within 1 business day.
-  The customer does not wait on a written reply.
+  admin asks Cashfree about that payment. BookConnect refunds within 1 business day of
+  Cashfree confirming it will not reverse, or after 5 more business days with no answer
+  (a setting). A reversal that then also appears is BookConnect's loss. The customer never
+  waits indefinitely.
 - Key rotation: handoff §7 still asks for an overlap period, which Cashfree does not
   support (CF-36). The steps in §6 replace it; paid orders and refunds continue during the
   short pause (D-55).

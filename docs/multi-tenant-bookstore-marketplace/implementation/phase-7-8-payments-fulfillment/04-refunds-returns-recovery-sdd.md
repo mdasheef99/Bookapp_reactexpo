@@ -39,9 +39,9 @@ store fault records, chargebacks, and the losses BookConnect absorbs.
 | 2 | Store has none of the books | Auto | Full, with delivery | Store | Q55, D-15, D-27 |
 | 3 | Missing books, customer keeps the rest | Auto | Those books' prices; delivery charge stands | Store | D-61, Q65, D-26 |
 | 4 | Missing books, customer cancels all | Auto | Full, with delivery (less anything already refunded under 3) | Store | D-61 |
-| 5 | Late payment and the book is gone | Auto | The whole payment | BookConnect | Q38, D-22 |
+| 5 | Late payment and the book is gone, or the checkout was cancelled, or the store has since become ineligible | Auto | The whole payment | BookConnect | Q38, D-22, D-85 |
 | 6 | Wrong-amount payment | Auto | That payment in full | BookConnect | D-29 |
-| 6a | Duplicate payment | None: not a refund of ours | Nothing from BookConnect. Cashfree reverses it (CF-30); we record and confirm the reversal (SDD 02 §5). If Cashfree's records show none after the set wait, the admin refunds it within 1 business day (D-78) | BookConnect, if any fee arises | D-29, D-78, CF-30 |
+| 6a | Duplicate payment | None: not a refund of ours | Nothing from BookConnect. Cashfree reverses it (CF-30); we record and confirm the reversal (SDD 02 §5). If none shows after the set wait, the admin asks Cashfree and refunds on its confirmation, or after 5 more business days with no answer (D-78) | BookConnect, if any fee arises | D-29, D-78, CF-30 |
 | 7 | Customer cancels before ready (pickup) or before collection (delivery) | Auto (D-91) | Full, with delivery | BookConnect; provider fee per D-31 | Q45, D-67 |
 | 8 | Photos not sent, rejected, or not approved in time | Auto | Full, with delivery | Store if photos were not sent or do not match; else BookConnect | D-43, D-53 |
 | 9 | Pickup missed | Auto | Full | BookConnect | Q72, Q59, D-22 |
@@ -54,6 +54,7 @@ store fault records, chargebacks, and the losses BookConnect absorbs.
 | 16 | Dispute | Admin, any amount; typed reason above ₹1,000 | As decided | By cause | D-38 |
 | 17 | Goodwill | Admin starts it; typed reason above ₹1,000 | As decided | BookConnect | D-29, D-38 |
 | 18 | Store asks for a refund | Auto up to ₹1,000; admin with typed reason above | As requested, up to the amount paid | Store, with any delivery charge | D-45 |
+| 19 | Accepted but not prepared in time | Auto | Full, with delivery | Store | D-79 |
 
 ## 3. Refund states (`refunds.status`)
 
@@ -78,6 +79,8 @@ Races (master §14):
   the total.
 - A refund created before the split call: the split is cancelled or reduced first (SDD 05
   §4), and the refund is paid from BookConnect's balance (CF-15).
+- A refund while a split call's result is unknown: it waits for the lookup (SDD 05 §4,
+  step 6), and is then sent by the rule that matches what Cashfree did.
 - A refund while the store's share is being released: SDD 05 §4.
 - A refund and a chargeback: §5.
 
@@ -125,6 +128,14 @@ of mind. Reporting target 48 hours; for pickup it counts from handover (D-44).
     the admin queue with a one-business-day deadline, the customer is told it is being
     checked, and the admin either sends it and uses it as evidence, or accepts the
     chargeback and closes the refund.
+  - A chargeback opens while a refund is already `submitted` or `processing`. It cannot be
+    called back, so the admin may not accept the chargeback or close the refund until
+    Cashfree shows the refund's final result. If it succeeds, it is sent as evidence and
+    the chargeback is contested. If it fails, the case follows the rule above. If the
+    evidence deadline arrives first, the admin contests, stating the refund in progress.
+  - If both the refund and the chargeback are in the end debited, a reconciliation case
+    opens, the admin claims the duplicate back through Cashfree, and any amount not
+    recovered is BookConnect's loss, never the store's.
   - What is recovered from the store is worked out once per payment, on the net amount the
     customer finally received, and each part (book price, delivery charge, reverse pickup, fee) is recovered once only.
     The total may be more than the store's share of the sale: in handoff §11 item 19 the debt
@@ -135,28 +146,54 @@ of mind. Reporting target 48 hours; for pickup it counts from handover (D-44).
 
 - How Cashfree takes back the store's share depends on timing (CF-15). Before the split,
   the refund is paid from BookConnect's balance and the split is not made. After the split
-  and before the store is paid, its held balance is debited and no debt arises. After it is
+  and before the store is paid, its held balance is debited, up to what it holds for that
+  order. The store's share can be smaller than the amount refunded, because a fee may have
+  been taken out before the split, so `refund_splits` never names more than that; the rest
+  of the refund comes from BookConnect's balance. The refund itself then creates no debt,
+  and a fee already taken is not charged again. A cost the store bears that is more than
+  it holds for that order is a store debt, like any other. After it is
   paid, its balance may be too low and the refund would go `ONHOLD` (CF-17).
 - So after payout BookConnect refunds the customer at once from its own Cashfree balance,
-  by a credit adjustment where needed (CF-19), and records a store debt (D-14, Q67, D-54).
-  The customer does not wait for the store.
+  by a credit adjustment where needed (CF-19), and records a store debt for the part the
+  store bears (D-14, Q67, D-54). The customer does not wait for the store.
+- **Who funds a refund and who owes it are separate questions.** The cause decides who
+  bears it first (§2, D-09, BC-35). Only the store's part can become a store debt. A part
+  BookConnect bears, such as a parcel lost by the provider or an unclear cause, is named
+  as zero for the store in `refund_splits` (CF-16), is paid from BookConnect's balance, and
+  creates no debt.
 - **One recovery route per debt.** Cashfree has confirmed what it does when a paid
   store's balance is short: the refund waits until the balance is there, and we can fund
   it with an adjustment (CF-50). So the route is fixed. BookConnect credits the store's
-  balance by the missing amount (CF-19), Cashfree's refund then takes exactly that money,
-  and the amount credited is the store's debt. It is recovered later by BookConnect's own
+  balance by the missing part of the store's share (CF-19), Cashfree's refund then uses
+  it, but the credit only measures how the refund was funded; it is not the debt. **The debt
+  is worked out separately:** everything the store bears for that refund by cause, less
+  whatever was actually taken from its balance for it. Using handoff §11 item 19, the
+  store bears ₹530 (₹400 book, ₹70 delivery, ₹60 reverse pickup). If its balance held ₹100
+  and the refund used it, the debt is ₹430, whatever size the credit was, and the payout
+  lines that gave up the ₹100 are reduced and recorded. Cashfree has not confirmed that a credit
+  is kept for that one refund (CF-50 says only that it funds it), so three rules protect
+  it: the debt opens, and recovery starts, only after the refund has succeeded; no recovery
+  debit runs on that store while a refund funded this way is unfinished; and the store's
+  release dates are moved later during that time (CF-44). Whether the refund resumes by
+  itself is asked in the third mail. It is recovered later by BookConnect's own
   debit adjustment or, once the 7-day request is made, by the store repaying directly to
   BookConnect's bank (D-14). It is never also netted by Cashfree from later settlements. A
   verified repayment reduces the same outstanding amount, and no debit is sent for money
   already repaid. BookConnect never leaves the refund waiting for
   the store's future sales, which would both delay the customer (D-14) and take the money
-  a second time. The sandbox test confirms the refund consumes the credit and nothing more.
+  a second time. The sandbox test must show the refund consumes the credit and nothing more before this
+  route is relied on.
 - **How "recovered from the next payout" works.** Release dates are already with Cashfree
   and fire by themselves, so waiting for the payout would let it leave first. When a debt
   opens, the server locks that store's unsettled lines and at once sends a debit against
   the store's held balance, before any of those lines can be released. If the balance is
   too low, the release dates of earned lines are moved later, which Cashfree allows inside
   the window (CF-44), until the debit succeeds. Each recovery records which line paid which debt.
+- **One recovery action at a time per debt.** A debit that has been sent, or whose result
+  is unknown, reserves its amount against the debt. A direct repayment verified meanwhile
+  is held until the debit's result is known. If the debit succeeded, the repayment reduces
+  what remains, and any excess is credited back to the store's balance (CF-19) or returned
+  to its bank, and recorded. If it failed, the repayment counts in full.
 - A debit fails when the balance is short (CF-19). The debt then stays open and is tried
   again when the store next has a balance. Each debit carries its own key (CF-38), so an unknown result is
   looked up and never sent twice. A debit and a settlement on the same day cannot overdraw
@@ -203,7 +240,7 @@ reporting target, not a cutoff; handoff §11 item 12).
 
 `store_fault_events` records each fault with its cause and evidence: missed 24-hour
 deadline (only with the "alert delivered" fact and no platform failure, D-04), sold-out
-paid book, wrong item, photos that do not match. Three in 30 days pause new paid orders
+paid book, wrong item, photos not sent or not matching, order not prepared (D-79). Three in 30 days pause new paid orders
 until admin review (D-21). Suspected fraud, or a debt unpaid past 7 days, pauses new paid
 orders at once, without waiting for three faults (D-21); payouts pause too (D-63).
 Existing orders and refunds continue. The check at checkout is SDD 01 §2.
@@ -246,7 +283,7 @@ Existing orders and refunds continue. The check at checkout is SDD 01 §2.
 
 ## 10. Worked examples and tests the full SDD will include
 
-A rupee example for each of the 18 categories and the duplicate-payment case (6a), plus
+A rupee example for each of the 19 categories and the duplicate-payment case (6a), plus
 the ₹530 post-payout debt case. Tests: double refund; refund above the amount paid; partial
 then full refund; refund against chargeback, each order; two triggers on one order; debt
 recovered once by one route; recovery after write-off; refund after the Cashfree window; `ONHOLD` then success; failure then queue;

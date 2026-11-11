@@ -1,7 +1,8 @@
 # Phase 7/8: Third Mail to Cashfree
 
-**Status:** sent by the owner on 2026-11-11, in reply to Cashfree's third reply (R3). No
-reply yet.
+**Status:** sent by the owner on 2026-11-11, in reply to Cashfree's third reply (R3).
+Answered by Cashfree's fourth reply (R4), recorded in the
+[fact record](./PHASE-7-8-cashfree-replies.md) on 2026-11-11.
 **Authority:** none. It confirms our understanding of R3 and lists the points still
 awaited.
 **Related:** [replies and fact record](./PHASE-7-8-cashfree-replies.md) ·

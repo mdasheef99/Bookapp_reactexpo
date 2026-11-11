@@ -90,6 +90,7 @@ The full SDD gives the exact debit and credit lines, with a rupee example, for e
 | Debt recovered from a payout; debt repaid; debt written off | 04, 05 |
 | Chargeback opened, lost, won (debited from BookConnect's balance, CF-24) | 04 |
 | Duplicate payment received and reversed by Cashfree (CF-30) | 02 |
+| Duplicate payment refunded by BookConnect after no answer, then also reversed: the extra amount posted to `platform_loss` (D-78) | 02 |
 | BookConnect's Cashfree balance recharged (CF-18) | 05 |
 | Store balance adjusted by BookConnect, credit or debit (CF-19) | 04, 05 |
 | Loss becomes final (once per debt or shortfall; a later recovery posts against it) | 04 |

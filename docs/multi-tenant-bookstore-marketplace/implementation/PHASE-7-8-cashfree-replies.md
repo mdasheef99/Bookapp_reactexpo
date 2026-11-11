@@ -1,6 +1,7 @@
 # Phase 7/8: Cashfree Replies and Fact Record
 
-**Status:** record of what Cashfree has told us, 2026-11-10. Ticket ID 8774207.
+**Status:** record of what Cashfree has told us, updated 2026-11-11 with the fourth reply.
+Ticket ID 8774207.
 **Authority:** none. This is evidence for the SDDs. Business rules stay in the
 [decision register](./PHASE-7-8-decision-register.md).
 **Related:** [first mail](./PHASE-7-8-mail-cashfree.md) ·
@@ -10,7 +11,9 @@
 Cashfree replied twice on 2026-11-10: a support reply to questions 1 to 15 and 20, and a
 Tech Team reply to questions 16 to 19. The owner sent a second mail the same day. The Tech
 Team's reply to that second mail (R3) was recorded here on 2026-11-10; it answers part of
-the list and promises the rest.
+the list and promises the rest. The owner sent a third mail on 2026-11-11. Cashfree's
+fourth reply (R4), recorded on 2026-11-11, answers the remaining points except the
+wrong-amount question, which we did not ask again.
 
 ---
 
@@ -24,12 +27,16 @@ tag. A fact without a tag must not be used.
 | R1 | Cashfree's first reply (support) |
 | R2 | Cashfree's second reply (Tech Team) |
 | R3 | Cashfree's third reply (Tech Team), answering our second mail |
+| R4 | Cashfree's fourth reply, answering our third mail (2026-11-11) |
 | DOC | Read on Cashfree's public documentation on 2026-11-10 |
 | SBX | Seen by us on sandbox on 2026-11-09 |
 | ASKED | Not known. Asked in the second mail; no answer yet |
 
-**None of the R1, R2, R3 or DOC facts has been tested by us on sandbox yet.** Sandbox testing
-of Easy Split waits for Cashfree to switch on deferred settlement.
+**None of the R1 to R4 or DOC facts has been tested by us on sandbox yet.** Cashfree says
+the 45-day window is now configured on sandbox (CF-52), so sandbox testing of Easy Split
+can start.
+
+Where a later reply contradicts an earlier one, the later fact says so and is used.
 
 ## 2. Facts
 
@@ -53,6 +60,11 @@ of Easy Split waits for Cashfree to switch on deferred settlement.
 | CF-46 | Calling the Split API a few minutes after the payment, inside the T+1 split delay, is correct. The store's share then stays on hold until its eligibility date. The split delay does not need changing. | R3 |
 | CF-47 | After the eligibility date the amount is credited according to the store's settlement schedule, on bank working days, for example T+1 at 11:00 AM. A weekly schedule, which settles on the first working day of the week, is also available. This refines CF-05: there is no weekly deferral release, but a store can be put on a weekly settlement schedule. | R3 |
 | CF-48 | Documentation for vendor-level settlement delay: `https://www.cashfree.com/docs/payments/split/settlements/delay/vendor-level`. Not yet read by us. | R3 |
+| CF-52 | The 45-day deferred settlement window is now configured on our sandbox account. This closes CF-42. | R4 |
+| CF-53 | On production, the 45-day window is not automatic. It needs Cashfree's internal review and approval, asked through the Account Manager after the account is signed up and activated. Approval is not promised. | R4 |
+| CF-54 | If split instructions are not given within the configured window, the whole payment settles to us (the merchant); the store's share is not released to the store after 45 days. Our plan splits minutes after payment (CF-46), so this covers only an order we never split. For a split share left at its default date, CF-43 and CF-45 say it settles to the store at that date. Cashfree has not said in so many words that a split share can return to us at the end of the window. Reference: `https://www.cashfree.com/docs/payments/split/settlements/delay/order-level`, not yet read by us. | R4 |
+| CF-55 | The settlement eligibility update works per order and per vendor; with several vendors on one order, each vendor's date is updated separately. Split After Payment must be switched on for the account. Confirms CF-43, CF-44 and CF-46. | R4 |
+| CF-56 | A weekly schedule is supported for Easy Split vendors: option 11, "Weekly every 1st working day". It is set per vendor at onboarding or changed later, subject to account configuration and approval. Confirms CF-47 and replaces CF-05's "no weekly schedule". | R4 |
 
 ### Stores as vendors
 
@@ -64,6 +76,8 @@ of Easy Split waits for Cashfree to switch on deferred settlement.
 | CF-13 | A vendor can be marked Blocked to stop its settlements, and unblocked later. Cashfree may itself put a vendor `ON_HOLD`; its held amount stays in escrow. | R1 |
 | CF-14 | A `VENDOR_STATUS_UPDATE` webhook fires when a vendor's status changes. Vendor settlement webhooks exist. | DOC |
 | CF-49 | An individual vendor needs PAN and one address proof (Aadhaar, driving licence, passport or voter ID). GSTIN is not required. Which vendor type a sole proprietor without GST should use is still to be confirmed. | R3 |
+| CF-57 | A sole proprietor onboarded in their own name can be an individual vendor: PAN, one address proof and bank account details, no GSTIN. A business vendor needs a business PAN and business documents, and a GSTIN once total vendor settlements against one PAN exceed ₹20 lakh in the preceding 12 months. Answers CF-A9. | R4 |
+| CF-58 | A failed settlement to a store's bank is reported by the vendor settlement webhooks with a reason. The fix depends on the reason: correct the bank account or IFSC, update KYC documents, or fund a short balance; then the settlement can be retried. Whether the amount waits in the store's balance and whether Cashfree retries by itself is not stated. | R4 |
 
 ### Refunds
 
@@ -79,6 +93,9 @@ of Easy Split waits for Cashfree to switch on deferred settlement.
 | CF-22 | Fees are not returned on a refund: the gateway fee, the Easy Split fee, GST on both, and settlement charges. | R1 |
 | CF-23 | Standard refunds carry no separate fee. Instant refunds are priced separately. | R1 |
 | CF-50 | After a store has been settled, if its balance is lower than its share of a refund, the refund is put on hold until the balance is available. We can fund it by creating an adjustment to the store's balance. | R3 |
+| CF-59 | Refund before the split: paid from our merchant payment balance and adjusted in the next settlement cycle. After the split: debited from our balance and the store's balance in proportion to the split. No recharge is needed if the balances are enough; if either is short, the refund goes `ON_HOLD` until it is funded. Answers CF-A10. | R4 |
+| CF-60 | After the store has been settled and its balance is short, it is the customer's refund itself that waits `ON_HOLD`; the customer is not credited meanwhile. We fund it with Adjust Vendor Balance. The store's share is **not** recovered automatically from its later settlements. This contradicts CF-15's last sentence, which is replaced. Whether the refund resumes by itself once funded, and how long it then takes, is not stated. | R4 |
+| CF-61 | `PENDING_APPROVAL` means Cashfree's team is reviewing the refund. No action is needed from us; the status updates after the review. Answers CF-A7. | R4 |
 
 ### Chargebacks
 
@@ -95,7 +112,9 @@ of Easy Split waits for Cashfree to switch on deferred settlement.
 | CF-27 | The Easy Split charge shows as 0.20% on sandbox. Production pricing comes from the Account Manager. The 0% gateway-fee offer does not cover Easy Split. | R1 |
 | CF-28 | Vendor payout charges follow our payout pricing and are debited from the merchant's balance. | R1, DOC |
 | CF-29 | The `PAYMENT_CHARGES_WEBHOOK` event ("Success Payment TDR") reports the charge for each payment. | R1 |
-| CF-51 | We can either bear the payment gateway and Easy Split charges ourselves or bill them to the store. The Easy Split charge is calculated on the order amount, not on the number of splits. How "bill to the store" is set up is not stated. | R3 |
+| CF-51 | We can either bear the payment gateway and Easy Split charges ourselves or bill them to the store. The Easy Split charge is calculated on the order amount, not on the number of splits. How "bill to the store" is set up is not stated. Its calculation basis is contradicted by CF-62. | R3 |
+| CF-62 | The gateway and Easy Split charges can be allocated to us or to the store, by billing configuration and commercial agreement. Easy Split carries a per-split charge on top of the standard gateway charge; the exact basis comes from our account's commercials, and we should not assume every Easy Split charge is on the full order amount. This contradicts CF-51's basis; the basis is open until the Account Manager states our commercials. | R4 |
+| CF-63 | Production: after signup and activation, standard pricing (`https://www.cashfree.com/payment-gateway-charges/`) applies. Custom pricing is discussed with the Account Manager. | R4 |
 
 ### Payments and checkout
 
@@ -107,6 +126,9 @@ of Easy Split waits for Cashfree to switch on deferred settlement.
 | CF-33 | A UPI payment started before expiry and finished after it moves to `SUCCESS`. | R2 |
 | CF-34 | Web checkout can open as a redirect, a popup or inline; card details are entered on Cashfree's hosted page. For an Expo app Cashfree recommends `react-native-cashfree-pg-sdk`, which needs `expo-dev-client` and `expo prebuild` and does not run in Expo Go. | R2 |
 | CF-35 | A PCI DSS certificate is needed only for server-to-server card integration, not for hosted checkout or the SDK. | R2 |
+| CF-64 | An automatic duplicate-payment reversal is tracked through the transaction details, payment reports and webhook notifications; no specific event was named. It takes up to 5 calendar days. Answers CF-A5 in part. | R4 |
+| CF-65 | Terminating an order does not cancel a payment attempt already started at the bank or network. A UPI attempt started before expiry may still succeed, within that attempt's validity period; no maximum was given. Cashfree advises checking the final payment status and webhooks before fulfilling or cancelling. Confirms CF-33; answers CF-A8 without a time limit. | R4 |
+| CF-66 | The full dispute lifecycle cannot be simulated on sandbox; some vendor settlement and reversal statuses can. Confirms CF-40; answers CF-A15. | R4 |
 
 ### Webhooks, keys and tooling
 
@@ -123,27 +145,33 @@ of Easy Split waits for Cashfree to switch on deferred settlement.
 
 The IDs are kept so the SDDs' references stay valid.
 
-| ID | Question | Status after R3 | Affects |
+| ID | Question | Status after R4 | Affects |
 |---|---|---|---|
 | CF-A1 | Which eligibility date applies if we never update an order? | Answered: CF-43 | SDD 05 |
 | CF-A2 | Can an eligibility date be moved earlier as well as later? | Answered: CF-44 | SDD 05 |
-| CF-A3 | At the eligibility date, is the share settled to the store; and at the maximum window, to us? | Half answered: to the store at the date (CF-45). The maximum-window part is promised. It matters more now: the default date is the end of the window (CF-43), so "the date arrived" and "the window ended" are the same moment for an order we never update | SDD 05 |
-| CF-A4 | With the split made minutes after payment at T+1, does the store's share stay held until its eligibility date? | Answered: CF-46 | SDD 05 |
-| CF-A5 | How is the reversal of a duplicate payment reported to us? | Promised | SDD 02, 04 |
-| CF-A6 | Can a payment succeed for a different amount, and is the amount locked? | Promised | SDD 02 |
-| CF-A7 | What puts a refund in `PENDING_APPROVAL`, and does it need action from us? | Promised | SDD 04 |
-| CF-A8 | Can a UPI payment pending at termination still succeed, and how long after? | Promised | SDD 02 |
-| CF-A9 | Is a sole proprietor without GST an individual or a business vendor, and what else is needed? | Half answered: an individual vendor needs no GSTIN (CF-49). The vendor type is promised | SDD 05 |
-| CF-A10 | On a live account, can a refund soon after payment be funded from that payment, or only from a recharged balance? | Promised | SDD 04 |
-| CF-A11 | After a store has been paid and its balance is short, does the refund wait `ONHOLD` or is it paid and recovered later? | Answered: it waits; we fund it by an adjustment (CF-50) | SDD 04 |
-| CF-A12 | Are the gateway and Easy Split charges taken from the store's share or ours, and on what amount is the Easy Split charge calculated? | Mostly answered: our choice, and on the order amount (CF-51). How billing to the store is switched on is to be found in the docs or asked of the Account Manager | SDD 03, 05 |
-| CF-A13 | After the eligibility date, how many working days until the store's bank is credited? | Answered: by the store's settlement schedule (CF-47) | SDD 05 |
-| CF-A14 | If a settlement to a store's bank fails, does the amount return to the store's balance and is it retried? | Promised | SDD 05 |
-| CF-A15 | Can a dispute be simulated on sandbox? | Promised | SDD 09 |
+| CF-A3 | At the eligibility date, is the share settled to the store; and at the maximum window, to us? | Answered for the store at the date (CF-45). For the window's end, R4 answered only the case where no split was made: all to us (CF-54). For a share we did split, CF-43 and CF-45 point to the store being paid at the end of the window. **Must be tested on sandbox** | SDD 05 |
+| CF-A4 | With the split made minutes after payment at T+1, does the store's share stay held until its eligibility date? | Answered: CF-46, CF-55 | SDD 05 |
+| CF-A5 | How is the reversal of a duplicate payment reported to us? | Partly answered: transaction details, reports and webhooks, within 5 calendar days (CF-64). No event name | SDD 02, 04 |
+| CF-A6 | Can a payment succeed for a different amount, and is the amount locked? | Not asked again, by choice: the server compares the amount whatever Cashfree answers | SDD 02 |
+| CF-A7 | What puts a refund in `PENDING_APPROVAL`, and does it need action from us? | Answered: CF-61 | SDD 04 |
+| CF-A8 | Can a UPI payment pending at termination still succeed, and how long after? | Answered yes, with no time limit given (CF-65) | SDD 02 |
+| CF-A9 | Is a sole proprietor without GST an individual or a business vendor, and what else is needed? | Answered: individual vendor (CF-57) | SDD 05 |
+| CF-A10 | On a live account, can a refund soon after payment be funded from that payment, or only from a recharged balance? | Answered: from the payment balance if it is enough (CF-59) | SDD 04 |
+| CF-A11 | After a store has been paid and its balance is short, does the refund wait `ONHOLD` or is it paid and recovered later? | Answered: the customer's refund waits; we fund it; no automatic recovery from the store (CF-50, CF-60) | SDD 04 |
+| CF-A12 | Are the gateway and Easy Split charges taken from the store's share or ours, and on what amount is the Easy Split charge calculated? | Who pays: our choice (CF-62). Basis: reopened by CF-62; ask the Account Manager | SDD 03, 05 |
+| CF-A13 | After the eligibility date, how many working days until the store's bank is credited? | Answered: by the store's settlement schedule; weekly option 11 exists (CF-47, CF-56) | SDD 05 |
+| CF-A14 | If a settlement to a store's bank fails, does the amount return to the store's balance and is it retried? | Partly answered: webhook with reason, fix the cause, then retry (CF-58). Where the money waits and who retries is not stated | SDD 05 |
+| CF-A15 | Can a dispute be simulated on sandbox? | Answered: no (CF-66) | SDD 09 |
 
-Still open after R3: the maximum-window half of CF-A3, CF-A5, CF-A6, CF-A7, CF-A8, the
-vendor type in CF-A9, CF-A10, CF-A14, CF-A15, and the confirmation that the 45-day window
-is configured (CF-42).
+Still open after R4:
+- What happens to a store's share we did split, if it reaches the end of the window
+  (CF-A3). This is to be tested on sandbox, which is now possible.
+- Whether a refund held `ON_HOLD` resumes by itself once funded, and how long it takes
+  (CF-60).
+- Where a failed settlement's money waits, and who retries (CF-A14).
+- The duplicate-reversal event name (CF-A5).
+- The Easy Split charge basis (CF-62).
+- Whether production gets the 45-day window (CF-53).
 
 Cashfree gave the documentation link (CF-48) and said it will coordinate with our Account
 Manager on production pricing and onboarding.
@@ -158,6 +186,23 @@ Manager on production pricing and onboarding.
   order with a payment pending, blocking a vendor.
 
 ## 5. What these answers change
+
+### After R4 (2026-11-11). These rows are not yet carried into the SDDs.
+
+| Topic | Before R4 | After R4 |
+|---|---|---|
+| End of the window (Q3, D-89; SDD 03, 05) | Money returns to BookConnect (CF-04) | Uncertain. R4 says the money returns to us only when no split was made (CF-54). Because we split minutes after payment, the default date points to the **store** being paid at the end of the window, even with no handover (CF-43, CF-45). SDD 03 and 05 assume the opposite. Test on sandbox; SDD 05 must cover both outcomes |
+| 45 days on production (D-28) | Assumed | Needs Cashfree's approval after activation (CF-53). The plan needs a fallback if production gets a shorter window |
+| Refund after payout, short balance (D-14; SDD 04, 05) | Recovered from later settlements (CF-15) | The customer's refund waits until we fund it; nothing is recovered from the store automatically (CF-60). BookConnect funds it, then recovers from the store itself |
+| Easy Split fee basis (D-47; SDD 03, 05) | Whole order amount (CF-51) | Per-split charge on top of the gateway charge; basis set by our commercials (CF-62) |
+| Refund balance (D-54) | Waited on CF-A10 | A quick refund is paid from the payment balance if enough (CF-59); the recharge is needed only for shortfalls |
+| Sole-proprietor stores | Vendor type open | Individual vendor; GSTIN only for a business vendor above ₹20 lakh (CF-57) |
+| Late UPI payments (D-06) | Confirmed real | Confirmed again, no time limit (CF-65). The design must never assume a cut-off |
+| Duplicate reversal (D-29) | Asked | Up to 5 days, seen through reports and webhooks (CF-64) |
+| Weekly payouts (Q51) | R3 said available | Confirmed for Easy Split vendors, per vendor (CF-56) |
+| Sandbox testing | Waiting | Can start (CF-52) |
+
+### After R3 (2026-11-10)
 
 | Topic | Before | Now |
 |---|---|---|

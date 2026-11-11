@@ -92,7 +92,8 @@ approved until the register marks them decided.
 | `blocked_by_platform` | BookConnect paused payouts (D-63) | Blocked |
 | `on_hold_by_cashfree` | Cashfree paused the store | `ON_HOLD` |
 
-- "Accept online payment" is granted only when the vendor is `active` and the store's
+- "Accept online payment" (the entitlement `commerce_online_payment_enabled`, which SDD 01
+  §5.1 reads and this SDD sets) is granted only when the vendor is `active` and the store's
   opening hours are set (BC-41, D-59).
 - BookConnect creates the vendor; the store does not register with Cashfree itself.
 - A bank-detail change re-verifies the account, blocks that store's payouts for a cooling
@@ -114,9 +115,12 @@ approved until the register marks them decided.
    itself take from the store (§7; CF-A12 decides which), by amount; BookConnect keeps the
    rest, which is the delivery charge (CF-08, CF-09). If the store's vendor account has
    been blocked or put on hold since the reservation, the split is not sent and an admin
-   case opens; how Cashfree treats a split to such a vendor is not known (CF-13). Just before calling, the server locks the order and checks it is
-   not cancelled or refunded; if it is, no split is made. An unknown answer is looked up,
-   not sent again. If the split still cannot be confirmed, an admin case opens well before
+   case opens; how Cashfree treats a split to such a vendor is not known (CF-13). Just before calling, the server locks the order and works out the
+   amount from what is still on the order: if the whole order is cancelled or refunded, no
+   split is made; if a book has already been refunded, the split covers only the books that
+   remain, and the refunded part stays out of the store's share (CF-15). The line records
+   that the call was sent before it is sent, so a call with an unknown result is never
+   mistaken for one not made. An unknown answer is looked up, not sent again. If the split still cannot be confirmed, an admin case opens well before
    Cashfree would settle the whole amount to BookConnect (CF-09).
 3. **Hold.** The store's share must not be released before handover, which can be days
    after the split. Cashfree holds it by default: an order we never update keeps its
@@ -139,14 +143,25 @@ approved until the register marks them decided.
    decides whether the guard in §6 protects the store or is only a late-payment alarm
    (CF-A3). The settlement webhook and the reconciliation run record the payout with
    its bank reference.
-6. **Cancelled before handover.** Before the split: the refund is paid from BookConnect's
-   balance and no split is made (CF-15). After the split: the refund takes the share back
+6. **Cancelled before handover.** If a split call has been sent and its result is unknown,
+   the refund waits until the lookup shows whether the split happened, and then follows
+   the matching rule below. If the lookup cannot answer within a set time (a setting), an
+   admin case opens, so the customer is not left waiting unnoticed. Before the split: the
+   refund is paid from BookConnect's balance and no split is made (CF-15). After the split: the refund takes the share back
    from the store's held balance (CF-15). Nothing is paid out either way.
 
 A refund, return, dispute or chargeback can still follow after step 5 (E10); SDD 04 owns it.
 
-**A partial refund.** When one book of several is refunded (SDD 04 category 3), the line
-is not reversed. Its share is reduced by that book's price: the store's held balance is
+**Handover before the split.** The store earns the money at handover whether or not the
+split has been confirmed (Q50a, Q50b). The ledger records it as earned at once, and the
+line keeps the handover time; no second handover event is needed.
+
+**A partial refund before the split.** The refund is paid from BookConnect's balance
+(CF-15), and the split, when made, covers only the books that remain. The line stays
+`split_pending` until then and goes on to `held` for the reduced amount.
+
+**A partial refund.** When one book of several is refunded (SDD 04 category 3) after the
+split, the line is not reversed. Its share is reduced by that book's price: the store's held balance is
 debited through the refund's own split (CF-16), the line's amount and the ledger are
 updated together, and the "unsettled" total falls by the same amount. The line keeps its
 state. A partial refund that crosses a release follows the rule below.
@@ -164,14 +179,14 @@ Per-order release line (`store_payout_lines.status`):
 
 | State | Meaning | Moved on by |
 |---|---|---|
-| `split_pending` | Payment verified; split not yet confirmed | The split job and its retry; a refund first (`not_split`); an admin case if it stays here |
+| `split_pending` | Payment verified; split not yet confirmed | The split job and its retry; a full refund first (`not_split`); a partial refund first leaves it here for a smaller split; an admin case if it stays here |
 | `not_split` | Order cancelled before the split; nothing went to the store | Final |
-| `held` | Split made; not yet earned | Handover; a refund (`reversed`); the settlement-window guard |
+| `held` | Split made; not yet earned | Handover; a refund (`reversed`); the settlement-window guard. If the handover was recorded while the line was still `split_pending`, the line does not wait here: on split confirmation it goes straight to `release_scheduled`, with the date worked out from the recorded handover time, or the earliest date Cashfree accepts if that has passed |
 | `release_scheduled` | Earned; release date sent to Cashfree | Cashfree's settlement webhook and the weekly reconciliation |
 | `settled` | Cashfree reports the settlement succeeded | Final for payout; a later refund is SDD 04 §6 |
 | `settlement_failed` | Cashfree reports it failed; admin case and alert (D-64) | Admin. What Cashfree does with the money, and whether it retries, is asked (CF-A14); nothing is re-sent by us until that is known |
 | `reversed` | Refunded before settlement; confirmed by Cashfree's records | Final |
-| `returned_to_platform` | The configured window ended first and the money went to BookConnect (CF-04); admin case | Admin: the store is still owed its earned share. The proposed route is a credit to the store's Cashfree balance (CF-19) and a fresh release, then `settled`. Needs the lawyer (Q3) and a sandbox test; until both, this state must not be reached, which is the guard's job (§6) |
+| `returned_to_platform` | The configured window ended first and the money went to BookConnect (CF-04); admin case | Admin: the store is still owed its earned share. The proposed route is a credit to the store's Cashfree balance (CF-19) and a fresh release, then `settled`. Needs the lawyer (Q3) and a sandbox test. The guard (§6) only warns, so this state can be reached, for example while a debt keeps payouts blocked. If it is, the ledger keeps showing the share as owed to the store, BookConnect does not count it as its own money, and the case stays open until the route is approved |
 
 Payouts (`store_payouts.status`, one row per Cashfree settlement to a store): `reported`,
 `succeeded`, `failed`. Set only from Cashfree's webhook and the reconciliation read.
@@ -200,6 +215,13 @@ shows in the admin queue.
   order's date later at Cashfree (CF-44) and reads it back; a ledger entry alone holds
   nothing. The wait ends when the case is decided, and no later than the guard below. A
   share already paid out is not held; recovery follows SDD 04 §6.
+- **One date update at a time, always from the current facts.** Every change to a release
+  date, including a retry, locks the line, works out the date afresh from the line's
+  current state and any open return, dispute or pause, and sends that. A retry never
+  re-sends a date worked out earlier. Only one call per line is in flight; the next waits
+  for its answer. After each call the server reads the date back, and if it differs from
+  what the current facts require, it sends the correct one. So a handover update cannot
+  undo a newer hold (D-93).
 - **Settlement-window guard:** a daily check (master §7). A share still unreleased a set
   number of days before its window ends raises an admin case, so money does not fall back
   to BookConnect unnoticed (CF-04). The number of days is a setting, starting at 7

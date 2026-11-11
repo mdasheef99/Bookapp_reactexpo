@@ -23,7 +23,7 @@ does not depend on a delivery quote (P-6).
 
 | From | To | Actor | Guard | Decision |
 |---|---|---|---|---|
-| `accepted` or `awaiting_photo_check` | `ready_for_pickup` | Store | Every remaining book is present and matches the listed edition and condition; photo check finished | D-61, D-44, D-43 |
+| `accepted` | `ready_for_pickup` | Store | Every remaining book is present and matches the listed edition and condition; photos approved if they were requested and still required (SDD 01 §6.7) | D-61, D-44, D-43 |
 | `ready_for_pickup` | `picked_up` | Store | Valid pickup code | BC-33, Q73 |
 | `ready_for_pickup` | `cancelled` (pickup missed) | Timer | Window ended | Q72 |
 | `ready_for_pickup` | `cancelled` (refused at pickup) | Store, on the customer's refusal | Reason recorded | D-44 |
@@ -47,14 +47,15 @@ Races, each settled by the rule in master §14 (lock the order, re-check, first 
 
 ## 3. Ready notice
 
-In the app, and by email if the customer gave one (D-50):
+In the app only (D-02):
 
 - the store's address and opening hours;
 - the store's one short pickup instruction, if set (D-62);
 - the pickup code;
 - the actual last pickup date (D-73).
 
-One reminder 24 hours before the deadline (D-57). The store may resend the notice; that
+One reminder 24 hours before the deadline, in the app and by email when given (D-57). The
+email does not carry the pickup code. The store may resend the notice; that
 does not reset the window or create a second order (D-44).
 
 ## 4. Pickup window
