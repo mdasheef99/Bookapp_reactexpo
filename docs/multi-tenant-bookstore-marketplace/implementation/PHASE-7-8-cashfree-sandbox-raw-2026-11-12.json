@@ -1,0 +1,3666 @@
+[
+ {
+  "label": "create paid",
+  "req": "POST /orders",
+  "body": {
+   "order_id": "sbx_paid_2ade6de73f",
+   "order_amount": 10,
+   "order_currency": "INR",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_phone": "9999999999"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "29999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "30000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171191321171968",
+   "created_at": "2026-11-12T04:00:01+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:00:01+05:30",
+   "order_id": "sbx_paid_2ade6de73f",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q3 pay A success",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "999",
+   "RateLimit-Reset": "58.61",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474171194505012224",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q3 A status before terminate",
+  "req": "GET /orders/sbx_paid_2ade6de73f",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171191321171968",
+   "created_at": "2026-11-12T04:00:01+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:00:01+05:30",
+   "order_id": "sbx_paid_2ade6de73f",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q3 terminate PAID order",
+  "req": "PATCH /orders/sbx_paid_2ade6de73f",
+  "body": {
+   "order_status": "TERMINATED"
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171191321171968",
+   "created_at": "2026-11-12T04:00:01+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:00:01+05:30",
+   "order_id": "sbx_paid_2ade6de73f",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "TERMINATION_REQUESTED",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q3 A status after terminate",
+  "req": "GET /orders/sbx_paid_2ade6de73f",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171191321171968",
+   "created_at": "2026-11-12T04:00:01+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:00:01+05:30",
+   "order_id": "sbx_paid_2ade6de73f",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "TERMINATION_REQUESTED",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q4/Q1 second payment on PAID order, same session",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 400,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "998",
+   "RateLimit-Reset": "49.516000032425",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "code": "order_inactive",
+   "help": "Check latest errors and resolution from Merchant Dashboard API logs: https://bit.ly/4glEd0W Help Document: https://bit.ly/4eeZYO9",
+   "message": "order is no longer active",
+   "type": "invalid_request_error"
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q1 A payments list",
+  "req": "GET /orders/sbx_paid_2ade6de73f/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171194505012224",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_paid_2ade6de73f",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171191321171968",
+     "gateway_payment_id": "1474171194505012224",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:00:02+05:30"
+   }
+  ],
+  "run": "run1"
+ },
+ {
+  "label": "create term",
+  "req": "POST /orders",
+  "body": {
+   "order_id": "sbx_term_2e0136f446",
+   "order_amount": 10,
+   "order_currency": "INR",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_phone": "9999999999"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "29998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "30000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171267837859840",
+   "created_at": "2026-11-12T04:00:19+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:00:19+05:30",
+   "order_id": "sbx_term_2e0136f446",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q3b terminate unpaid order",
+  "req": "PATCH /orders/sbx_term_2e0136f446",
+  "body": {
+   "order_status": "TERMINATED"
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171267837859840",
+   "created_at": "2026-11-12T04:00:19+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:00:19+05:30",
+   "order_id": "sbx_term_2e0136f446",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "TERMINATION_REQUESTED",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q3b status after terminate",
+  "req": "GET /orders/sbx_term_2e0136f446",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171267837859840",
+   "created_at": "2026-11-12T04:00:19+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:00:19+05:30",
+   "order_id": "sbx_term_2e0136f446",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "TERMINATED",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q3b terminate again",
+  "req": "PATCH /orders/sbx_term_2e0136f446",
+  "body": {
+   "order_status": "TERMINATED"
+  },
+  "code": 400,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19997",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": {
+   "code": "request_invalid",
+   "help": "Check latest errors and resolution from Merchant Dashboard API logs: https://bit.ly/4glEd0W Help Document: https://bit.ly/4eeZYO9",
+   "message": "order termination already requested",
+   "type": "invalid_request_error"
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q4 pay on TERMINATED order",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 400,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "998",
+   "RateLimit-Reset": "37.33",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "code": "order_inactive",
+   "help": "Check latest errors and resolution from Merchant Dashboard API logs: https://bit.ly/4glEd0W Help Document: https://bit.ly/4eeZYO9",
+   "message": "order is no longer active",
+   "type": "invalid_request_error"
+  },
+  "run": "run1"
+ },
+ {
+  "label": "create retry",
+  "req": "POST /orders",
+  "body": {
+   "order_id": "sbx_retry_7d16f46bf4",
+   "order_amount": 10,
+   "order_currency": "INR",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_phone": "9999999999"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "29997",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "30000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171284388583424",
+   "created_at": "2026-11-12T04:00:23+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:00:23+05:30",
+   "order_id": "sbx_retry_7d16f46bf4",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q4 pay C failure",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testfailure@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "997",
+   "RateLimit-Reset": "36.884000043869",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474171285491685376",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q4 C after failure",
+  "req": "GET /orders/sbx_retry_7d16f46bf4/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171285491685376",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_retry_7d16f46bf4",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171284388583424",
+     "gateway_payment_id": "1474171285491685376",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testfailure@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:00:23+05:30"
+   }
+  ],
+  "run": "run1"
+ },
+ {
+  "label": "Q4 retry C with same session",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "996",
+   "RateLimit-Reset": "28.357999830246",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474171321349153792",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q4 C after retry",
+  "req": "GET /orders/sbx_retry_7d16f46bf4/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Limit": "20000",
+   "X-Ratelimit-Remaining": "19998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171321349153792",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_retry_7d16f46bf4",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171284388583424",
+     "gateway_payment_id": "1474171321349153792",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:00:32+05:30"
+   },
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171285491685376",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_retry_7d16f46bf4",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171284388583424",
+     "gateway_payment_id": "1474171285491685376",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testfailure@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:00:23+05:30"
+   }
+  ],
+  "run": "run1"
+ },
+ {
+  "label": "Q4 C status",
+  "req": "GET /orders/sbx_retry_7d16f46bf4",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49996",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171284388583424",
+   "created_at": "2026-11-12T04:00:23+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:00:23+05:30",
+   "order_id": "sbx_retry_7d16f46bf4",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run1"
+ },
+ {
+  "label": "create pending",
+  "req": "POST /orders",
+  "body": {
+   "order_id": "sbx_pending_16e041a5c2",
+   "order_amount": 10,
+   "order_currency": "INR",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_phone": "9999999999"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "29996",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "30000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171357864764416",
+   "created_at": "2026-11-12T04:00:40+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:00:40+05:30",
+   "order_id": "sbx_pending_16e041a5c2",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q7 pay D",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "997",
+   "RateLimit-Reset": "19.348999977112",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474171359072723968",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q7 D payments (immediate)",
+  "req": "GET /orders/sbx_pending_16e041a5c2/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171359072723968",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_pending_16e041a5c2",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171357864764416",
+     "gateway_payment_id": "1474171359072723968",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:00:41+05:30"
+   }
+  ],
+  "run": "run1"
+ },
+ {
+  "label": "Q7 simulate PENDING",
+  "req": "POST /simulate",
+  "body": {
+   "entity": "PAYMENTS",
+   "entity_id": "1474171359072723968",
+   "entity_simulation": {
+    "payment_status": "PENDING"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "199",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "200"
+  },
+  "resp": {
+   "simulation_id": "sim_113521343Lypcn1P0munEqZOiS2vyIRJ7IH",
+   "entity": "PAYMENTS",
+   "entity_id": "1474171359072723968",
+   "entity_simulation": {
+    "payment_status": "PENDING",
+    "payment_error_code": ""
+   }
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q7 D payments after simulate PENDING",
+  "req": "GET /orders/sbx_pending_16e041a5c2/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19996",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": "1234567890",
+    "cf_payment_id": "1474171359072723968",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_pending_16e041a5c2",
+    "payment_amount": 10.0,
+    "payment_completion_time": "2026-11-12T04:00:43+05:30",
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171357864764416",
+     "gateway_payment_id": "1474171359072723968",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": "Simulated response message",
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "PENDING",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:00:41+05:30"
+   }
+  ],
+  "run": "run1"
+ },
+ {
+  "label": "Q7 simulate SUCCESS",
+  "req": "POST /simulate",
+  "body": {
+   "entity": "PAYMENTS",
+   "entity_id": "1474171359072723968",
+   "entity_simulation": {
+    "payment_status": "SUCCESS"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "198",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "200"
+  },
+  "resp": {
+   "simulation_id": "sim_113521343LypdA0hK2qsnAlS7KYL1F4Az7Z",
+   "entity": "PAYMENTS",
+   "entity_id": "1474171359072723968",
+   "entity_simulation": {
+    "payment_status": "SUCCESS",
+    "payment_error_code": ""
+   }
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q7 D payments after simulate SUCCESS",
+  "req": "GET /orders/sbx_pending_16e041a5c2/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19997",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": "1234567890",
+    "cf_payment_id": "1474171359072723968",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": true,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_pending_16e041a5c2",
+    "payment_amount": 10.0,
+    "payment_completion_time": "2026-11-12T04:00:46+05:30",
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171357864764416",
+     "gateway_payment_id": "1474171359072723968",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": "Simulated response message",
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "SUCCESS",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:00:41+05:30"
+   }
+  ],
+  "run": "run1"
+ },
+ {
+  "label": "Q15 refund A",
+  "req": "POST /orders/sbx_paid_2ade6de73f/refunds",
+  "body": {
+   "refund_amount": 1,
+   "refund_id": "sbx_rf_8bc4175a1d"
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "9999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "10000"
+  },
+  "resp": {
+   "cf_payment_id": "1474171194505012224",
+   "cf_refund_id": "1319972786",
+   "charges_currency": "INR",
+   "created_at": "2026-11-12T04:00:49+05:30",
+   "entity": "refund",
+   "forex_conversion_handling_charge": 0,
+   "forex_conversion_handling_tax": 0.0,
+   "forex_conversion_rate": 0,
+   "metadata": null,
+   "order_id": "sbx_paid_2ade6de73f",
+   "processed_at": null,
+   "refund_amount": 1.0,
+   "refund_arn": null,
+   "refund_charge": 0.0,
+   "refund_currency": "INR",
+   "refund_id": "sbx_rf_8bc4175a1d",
+   "refund_mode": "NORMAL",
+   "refund_note": null,
+   "refund_speed": {
+    "requested": "STANDARD",
+    "accepted": "STANDARD",
+    "processed": null,
+    "message": null
+   },
+   "refund_splits": [],
+   "refund_status": "PENDING",
+   "refund_type": "MERCHANT_INITIATED",
+   "status_description": "In Progress"
+  },
+  "run": "run1"
+ },
+ {
+  "label": "Q15 refunds list A",
+  "req": "GET /orders/sbx_paid_2ade6de73f/refunds",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "9999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "10000"
+  },
+  "resp": [
+   {
+    "cf_payment_id": "1474171194505012224",
+    "cf_refund_id": "1319972786",
+    "charges_currency": "INR",
+    "created_at": "2026-11-12T04:00:50+05:30",
+    "entity": "refund",
+    "forex_conversion_handling_charge": 0.0,
+    "forex_conversion_handling_tax": 0.0,
+    "forex_conversion_rate": 0,
+    "metadata": null,
+    "order_id": "sbx_paid_2ade6de73f",
+    "processed_at": "2026-11-12T04:00:50+05:30",
+    "refund_amount": 1.0,
+    "refund_arn": "Test_ARN",
+    "refund_charge": 0.0,
+    "refund_currency": "INR",
+    "refund_id": "sbx_rf_8bc4175a1d",
+    "refund_mode": "NORMAL",
+    "refund_note": null,
+    "refund_speed": {
+     "requested": "STANDARD",
+     "accepted": "STANDARD",
+     "processed": "STANDARD",
+     "message": null
+    },
+    "refund_splits": [],
+    "refund_status": "SUCCESS",
+    "refund_type": "MERCHANT_INITIATED",
+    "status_description": "Refund processed successfully"
+   }
+  ],
+  "run": "run1"
+ },
+ {
+  "label": "create paid2",
+  "req": "POST /orders",
+  "body": {
+   "order_id": "sbx_paid2_a44eae1bb7",
+   "order_amount": 10,
+   "order_currency": "INR",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_phone": "9999999999"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "29998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "30000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171550353594368",
+   "created_at": "2026-11-12T04:01:26+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:01:26+05:30",
+   "order_id": "sbx_paid2_a44eae1bb7",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run2"
+ },
+ {
+  "label": "E pay",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "997",
+   "RateLimit-Reset": "33.46",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474171551456696320",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run2"
+ },
+ {
+  "label": "E payments",
+  "req": "GET /orders/sbx_paid2_a44eae1bb7/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19996",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171551456696320",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_paid2_a44eae1bb7",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171550353594368",
+     "gateway_payment_id": "1474171551456696320",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:01:27+05:30"
+   }
+  ],
+  "run": "run2"
+ },
+ {
+  "label": "E simulate SUCCESS",
+  "req": "POST /simulate",
+  "body": {
+   "entity": "PAYMENTS",
+   "entity_id": "1474171551456696320",
+   "entity_simulation": {
+    "payment_status": "SUCCESS"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "197",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "200"
+  },
+  "resp": {
+   "simulation_id": "sim_113521343LypiYuhRfjrZI35qAVlZgaHTA3",
+   "entity": "PAYMENTS",
+   "entity_id": "1474171551456696320",
+   "entity_simulation": {
+    "payment_status": "SUCCESS",
+    "payment_error_code": ""
+   }
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q3 E status (expect PAID)",
+  "req": "GET /orders/sbx_paid2_a44eae1bb7",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49997",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171550353594368",
+   "created_at": "2026-11-12T04:01:26+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:01:26+05:30",
+   "order_id": "sbx_paid2_a44eae1bb7",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "PAID",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q3 terminate PAID order E",
+  "req": "PATCH /orders/sbx_paid2_a44eae1bb7",
+  "body": {
+   "order_status": "TERMINATED"
+  },
+  "code": 400,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": {
+   "code": "order_already_paid",
+   "help": "Check latest errors and resolution from Merchant Dashboard API logs: https://bit.ly/4glEd0W Help Document: https://bit.ly/4eeZYO9",
+   "message": "order has already been paid.",
+   "type": "invalid_request_error"
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q3 E status after terminate",
+  "req": "GET /orders/sbx_paid2_a44eae1bb7",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49996",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171550353594368",
+   "created_at": "2026-11-12T04:01:26+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:01:26+05:30",
+   "order_id": "sbx_paid2_a44eae1bb7",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "PAID",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q4 pay again on PAID order E (same session)",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 400,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "996",
+   "RateLimit-Reset": "23.124000177383",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "code": "order_inactive",
+   "help": "Check latest errors and resolution from Merchant Dashboard API logs: https://bit.ly/4glEd0W Help Document: https://bit.ly/4eeZYO9",
+   "message": "order is no longer active",
+   "type": "invalid_request_error"
+  },
+  "run": "run2"
+ },
+ {
+  "label": "create retry2",
+  "req": "POST /orders",
+  "body": {
+   "order_id": "sbx_retry2_1a2ef35160",
+   "order_amount": 10,
+   "order_currency": "INR",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_phone": "9999999999"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "29997",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "30000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171595539194880",
+   "created_at": "2026-11-12T04:01:37+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:01:37+05:30",
+   "order_id": "sbx_retry2_1a2ef35160",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run2"
+ },
+ {
+  "label": "F pay 1",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testfailure@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "996",
+   "RateLimit-Reset": "22.691000003815",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474171596931703808",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run2"
+ },
+ {
+  "label": "F payments",
+  "req": "GET /orders/sbx_retry2_1a2ef35160/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19995",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171596931703808",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_retry2_1a2ef35160",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171595539194880",
+     "gateway_payment_id": "1474171596931703808",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testfailure@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:01:37+05:30"
+   }
+  ],
+  "run": "run2"
+ },
+ {
+  "label": "F simulate FAILED",
+  "req": "POST /simulate",
+  "body": {
+   "entity": "PAYMENTS",
+   "entity_id": "1474171596931703808",
+   "entity_simulation": {
+    "payment_status": "FAILED"
+   }
+  },
+  "code": 400,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "197",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "200"
+  },
+  "resp": {
+   "code": "entity_simulation_payment_error_code_failed",
+   "help": "Check latest errors and resolution from Merchant Dashboard API logs: https://bit.ly/4glEd0W Help Document: https://bit.ly/4eeZYO9",
+   "message": "entity_simulation.payment_error_code : is missing in the request.Value received:",
+   "type": "invalid_request_error"
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q4 F status after failed attempt",
+  "req": "GET /orders/sbx_retry2_1a2ef35160",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49995",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171595539194880",
+   "created_at": "2026-11-12T04:01:37+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:01:37+05:30",
+   "order_id": "sbx_retry2_1a2ef35160",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q4 retry F same session",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "995",
+   "RateLimit-Reset": "15.836999979019",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474171625620743168",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run2"
+ },
+ {
+  "label": "F payments after retry",
+  "req": "GET /orders/sbx_retry2_1a2ef35160/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Limit": "20000",
+   "X-Ratelimit-Remaining": "19995",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171625620743168",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_retry2_1a2ef35160",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171595539194880",
+     "gateway_payment_id": "1474171625620743168",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:01:44+05:30"
+   },
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171596931703808",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_retry2_1a2ef35160",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171595539194880",
+     "gateway_payment_id": "1474171596931703808",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testfailure@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:01:37+05:30"
+   }
+  ],
+  "run": "run2"
+ },
+ {
+  "label": "F simulate SUCCESS on retry",
+  "req": "POST /simulate",
+  "body": {
+   "entity": "PAYMENTS",
+   "entity_id": "1474171625620743168",
+   "entity_simulation": {
+    "payment_status": "SUCCESS"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "198",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "200"
+  },
+  "resp": {
+   "simulation_id": "sim_113521343LypkhW4IvjYaOydZrmYJavIta8",
+   "entity": "PAYMENTS",
+   "entity_id": "1474171625620743168",
+   "entity_simulation": {
+    "payment_status": "SUCCESS",
+    "payment_error_code": ""
+   }
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q4 F status after retry",
+  "req": "GET /orders/sbx_retry2_1a2ef35160",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49997",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171595539194880",
+   "created_at": "2026-11-12T04:01:37+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:01:37+05:30",
+   "order_id": "sbx_retry2_1a2ef35160",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "PAID",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q4 F payments final",
+  "req": "GET /orders/sbx_retry2_1a2ef35160/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Limit": "20000",
+   "X-Ratelimit-Remaining": "19995",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": "1234567890",
+    "cf_payment_id": "1474171625620743168",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": true,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_retry2_1a2ef35160",
+    "payment_amount": 10.0,
+    "payment_completion_time": "2026-11-12T04:01:47+05:30",
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171595539194880",
+     "gateway_payment_id": "1474171625620743168",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": "Simulated response message",
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "SUCCESS",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:01:44+05:30"
+   },
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171596931703808",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_retry2_1a2ef35160",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171595539194880",
+     "gateway_payment_id": "1474171596931703808",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testfailure@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:01:37+05:30"
+   }
+  ],
+  "run": "run2"
+ },
+ {
+  "label": "create drop",
+  "req": "POST /orders",
+  "body": {
+   "order_id": "sbx_drop_adb819ba62",
+   "order_amount": 10,
+   "order_currency": "INR",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_phone": "9999999999"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "29996",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "30000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171654892790784",
+   "created_at": "2026-11-12T04:01:51+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:01:51+05:30",
+   "order_id": "sbx_drop_adb819ba62",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run2"
+ },
+ {
+  "label": "G pay 1",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "995",
+   "RateLimit-Reset": "8.5480000782013",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474171656255939584",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run2"
+ },
+ {
+  "label": "G payments",
+  "req": "GET /orders/sbx_drop_adb819ba62/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19994",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171656255939584",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_drop_adb819ba62",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171654892790784",
+     "gateway_payment_id": "1474171656255939584",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:01:52+05:30"
+   }
+  ],
+  "run": "run2"
+ },
+ {
+  "label": "G simulate USER_DROPPED",
+  "req": "POST /simulate",
+  "body": {
+   "entity": "PAYMENTS",
+   "entity_id": "1474171656255939584",
+   "entity_simulation": {
+    "payment_status": "USER_DROPPED"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "196",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "200"
+  },
+  "resp": {
+   "simulation_id": "sim_113521343LyplhjpyJmHUammRdqPDkZpAkM",
+   "entity": "PAYMENTS",
+   "entity_id": "1474171656255939584",
+   "entity_simulation": {
+    "payment_status": "USER_DROPPED",
+    "payment_error_code": ""
+   }
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q4 retry G after drop",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "996",
+   "RateLimit-Reset": "1.8289999485016",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474171684093171712",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q4 G payments",
+  "req": "GET /orders/sbx_drop_adb819ba62/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Limit": "20000",
+   "X-Ratelimit-Remaining": "19999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171684093171712",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_drop_adb819ba62",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171654892790784",
+     "gateway_payment_id": "1474171684093171712",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:01:58+05:30"
+   },
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": "1234567890",
+    "cf_payment_id": "1474171656255939584",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_drop_adb819ba62",
+    "payment_amount": 10.0,
+    "payment_completion_time": "2026-11-12T04:01:54+05:30",
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171654892790784",
+     "gateway_payment_id": "1474171656255939584",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": "Simulated response message",
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "USER_DROPPED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:01:52+05:30"
+   }
+  ],
+  "run": "run2"
+ },
+ {
+  "label": "Q7 list order F",
+  "req": "GET /orders/sbx_retry2_1a2ef35160/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Limit": "20000",
+   "X-Ratelimit-Remaining": "19998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": "1234567890",
+    "cf_payment_id": "1474171625620743168",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": true,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_retry2_1a2ef35160",
+    "payment_amount": 10.0,
+    "payment_completion_time": "2026-11-12T04:01:47+05:30",
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171595539194880",
+     "gateway_payment_id": "1474171625620743168",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": "Simulated response message",
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "SUCCESS",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:01:44+05:30"
+   },
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171596931703808",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_retry2_1a2ef35160",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171595539194880",
+     "gateway_payment_id": "1474171596931703808",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testfailure@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:01:37+05:30"
+   }
+  ],
+  "run": "run2"
+ },
+ {
+  "label": "create pendterm",
+  "req": "POST /orders",
+  "body": {
+   "order_id": "sbx_pendterm_db3a86234d",
+   "order_amount": 10,
+   "order_currency": "INR",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_phone": "9999999999"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "29998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "30000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171695095194624",
+   "created_at": "2026-11-12T04:02:01+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:02:01+05:30",
+   "order_id": "sbx_pendterm_db3a86234d",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run2"
+ },
+ {
+  "label": "H pay",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "995",
+   "RateLimit-Reset": "58.95",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474171696416400384",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run2"
+ },
+ {
+  "label": "H payments",
+  "req": "GET /orders/sbx_pendterm_db3a86234d/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19997",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474171696416400384",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_pendterm_db3a86234d",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171695095194624",
+     "gateway_payment_id": "1474171696416400384",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:02:01+05:30"
+   }
+  ],
+  "run": "run2"
+ },
+ {
+  "label": "H simulate PENDING",
+  "req": "POST /simulate",
+  "body": {
+   "entity": "PAYMENTS",
+   "entity_id": "1474171696416400384",
+   "entity_simulation": {
+    "payment_status": "PENDING"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "197",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "200"
+  },
+  "resp": {
+   "simulation_id": "sim_113521343LypmsjZBLUeAnN7xaf1xU92QSO",
+   "entity": "PAYMENTS",
+   "entity_id": "1474171696416400384",
+   "entity_simulation": {
+    "payment_status": "PENDING",
+    "payment_error_code": ""
+   }
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q3c terminate order with PENDING payment",
+  "req": "PATCH /orders/sbx_pendterm_db3a86234d",
+  "body": {
+   "order_status": "TERMINATED"
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171695095194624",
+   "created_at": "2026-11-12T04:02:01+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:02:01+05:30",
+   "order_id": "sbx_pendterm_db3a86234d",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "TERMINATION_REQUESTED",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q3c H status after terminate",
+  "req": "GET /orders/sbx_pendterm_db3a86234d",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171695095194624",
+   "created_at": "2026-11-12T04:02:01+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:02:01+05:30",
+   "order_id": "sbx_pendterm_db3a86234d",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "TERMINATION_REQUESTED",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q17-like: simulate SUCCESS after terminate",
+  "req": "POST /simulate",
+  "body": {
+   "entity": "PAYMENTS",
+   "entity_id": "1474171696416400384",
+   "entity_simulation": {
+    "payment_status": "SUCCESS"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "196",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "200"
+  },
+  "resp": {
+   "simulation_id": "sim_113521343LypnnfYib9oNrNFUkhoJAw7EjX",
+   "entity": "PAYMENTS",
+   "entity_id": "1474171696416400384",
+   "entity_simulation": {
+    "payment_status": "SUCCESS",
+    "payment_error_code": ""
+   }
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q3c H status after late success",
+  "req": "GET /orders/sbx_pendterm_db3a86234d",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474171695095194624",
+   "created_at": "2026-11-12T04:02:01+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:02:01+05:30",
+   "order_id": "sbx_pendterm_db3a86234d",
+   "order_meta": {
+    "notify_url": null,
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "PAID",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q3c H payments",
+  "req": "GET /orders/sbx_pendterm_db3a86234d/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19993",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": "1234567890",
+    "cf_payment_id": "1474171696416400384",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": true,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_pendterm_db3a86234d",
+    "payment_amount": 10.0,
+    "payment_completion_time": "2026-11-12T04:02:10+05:30",
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474171695095194624",
+     "gateway_payment_id": "1474171696416400384",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": "Simulated response message",
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "SUCCESS",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:02:01+05:30"
+   }
+  ],
+  "run": "run2"
+ },
+ {
+  "label": "Q15 refund E",
+  "req": "POST /orders/sbx_paid2_a44eae1bb7/refunds",
+  "body": {
+   "refund_amount": 1,
+   "refund_id": "sbx_rf_7a7371c742"
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "9999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "10000"
+  },
+  "resp": {
+   "cf_payment_id": "1474171551456696320",
+   "cf_refund_id": "1319972787",
+   "charges_currency": "INR",
+   "created_at": "2026-11-12T04:02:14+05:30",
+   "entity": "refund",
+   "forex_conversion_handling_charge": 0,
+   "forex_conversion_handling_tax": 0.0,
+   "forex_conversion_rate": 0,
+   "metadata": null,
+   "order_id": "sbx_paid2_a44eae1bb7",
+   "processed_at": null,
+   "refund_amount": 1.0,
+   "refund_arn": null,
+   "refund_charge": 0.0,
+   "refund_currency": "INR",
+   "refund_id": "sbx_rf_7a7371c742",
+   "refund_mode": "NORMAL",
+   "refund_note": null,
+   "refund_speed": {
+    "requested": "STANDARD",
+    "accepted": "STANDARD",
+    "processed": null,
+    "message": null
+   },
+   "refund_splits": [],
+   "refund_status": "PENDING",
+   "refund_type": "MERCHANT_INITIATED",
+   "status_description": "In Progress"
+  },
+  "run": "run2"
+ },
+ {
+  "label": "Q15 refunds list E",
+  "req": "GET /orders/sbx_paid2_a44eae1bb7/refunds",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "9998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "10000"
+  },
+  "resp": [
+   {
+    "cf_payment_id": "1474171551456696320",
+    "cf_refund_id": "1319972787",
+    "charges_currency": "INR",
+    "created_at": "2026-11-12T04:02:15+05:30",
+    "entity": "refund",
+    "forex_conversion_handling_charge": 0.0,
+    "forex_conversion_handling_tax": 0.0,
+    "forex_conversion_rate": 0,
+    "metadata": null,
+    "order_id": "sbx_paid2_a44eae1bb7",
+    "processed_at": "2026-11-12T04:02:15+05:30",
+    "refund_amount": 1.0,
+    "refund_arn": "Test_ARN",
+    "refund_charge": 0.0,
+    "refund_currency": "INR",
+    "refund_id": "sbx_rf_7a7371c742",
+    "refund_mode": "NORMAL",
+    "refund_note": null,
+    "refund_speed": {
+     "requested": "STANDARD",
+     "accepted": "STANDARD",
+     "processed": "STANDARD",
+     "message": null
+    },
+    "refund_splits": [],
+    "refund_status": "SUCCESS",
+    "refund_type": "MERCHANT_INITIATED",
+    "status_description": "Refund processed successfully"
+   }
+  ],
+  "run": "run2"
+ },
+ {
+  "label": "create whok",
+  "req": "POST /orders",
+  "body": {
+   "order_id": "sbx_whok_4bb6500e9e",
+   "order_amount": 10,
+   "order_currency": "INR",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_phone": "9999999999"
+   },
+   "order_meta": {
+    "notify_url": "https://ahntbtktjjmvfosgkmgn.supabase.co/functions/v1/sbx-cf-webhook-probe?src=notify&o=sbx_whok_4bb6500e9e"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "29999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "30000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474179511503660032",
+   "created_at": "2026-11-12T04:33:04+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:33:04+05:30",
+   "order_id": "sbx_whok_4bb6500e9e",
+   "order_meta": {
+    "notify_url": "https://ahntbtktjjmvfosgkmgn.supabase.co/functions/v1/sbx-cf-webhook-probe?src=notify&o=sbx_whok_4bb6500e9e",
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run3"
+ },
+ {
+  "label": "W1 pay",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "999",
+   "RateLimit-Reset": "55.37",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474179512996468736",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run3"
+ },
+ {
+  "label": "W1 payments",
+  "req": "GET /orders/sbx_whok_4bb6500e9e/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474179512996468736",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_whok_4bb6500e9e",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474179511503660032",
+     "gateway_payment_id": "1474179512996468736",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:33:05+05:30"
+   }
+  ],
+  "run": "run3"
+ },
+ {
+  "label": "W1 simulate SUCCESS",
+  "req": "POST /simulate",
+  "body": {
+   "entity": "PAYMENTS",
+   "entity_id": "1474179512996468736",
+   "entity_simulation": {
+    "payment_status": "SUCCESS"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "199",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "200"
+  },
+  "resp": {
+   "simulation_id": "sim_113521343LytZ3HIcSe60Yg0XhujoGAWpVo",
+   "entity": "PAYMENTS",
+   "entity_id": "1474179512996468736",
+   "entity_simulation": {
+    "payment_status": "SUCCESS",
+    "payment_error_code": ""
+   }
+  },
+  "run": "run3"
+ },
+ {
+  "label": "create whfail",
+  "req": "POST /orders",
+  "body": {
+   "order_id": "sbx_whfail_ec89ab5c40",
+   "order_amount": 10,
+   "order_currency": "INR",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_phone": "9999999999"
+   },
+   "order_meta": {
+    "notify_url": "https://ahntbtktjjmvfosgkmgn.supabase.co/functions/v1/sbx-cf-webhook-probe?src=notify&fail=1&o=sbx_whfail_ec89ab5c40"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "29998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "30000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474179524740883456",
+   "created_at": "2026-11-12T04:33:08+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:33:08+05:30",
+   "order_id": "sbx_whfail_ec89ab5c40",
+   "order_meta": {
+    "notify_url": "https://ahntbtktjjmvfosgkmgn.supabase.co/functions/v1/sbx-cf-webhook-probe?src=notify&fail=1&o=sbx_whfail_ec89ab5c40",
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "ACTIVE",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run3"
+ },
+ {
+  "label": "W2 pay",
+  "req": "POST /orders/sessions",
+  "body": {
+   "payment_session_id": "(removed)",
+   "payment_method": {
+    "upi": {
+     "channel": "collect",
+     "upi_id": "testsuccess@gocash"
+    }
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "998",
+   "RateLimit-Reset": "52.21000005722",
+   "X-Ratelimit-Type": "ip",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "1000"
+  },
+  "resp": {
+   "action": "custom",
+   "cf_payment_id": "1474179525923313664",
+   "channel": "collect",
+   "data": {
+    "url": null,
+    "payload": null,
+    "content_type": null,
+    "method": null
+   },
+   "payment_amount": 10.0,
+   "payment_method": "upi"
+  },
+  "run": "run3"
+ },
+ {
+  "label": "W2 payments",
+  "req": "GET /orders/sbx_whfail_ec89ab5c40/payments",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "19998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "20000"
+  },
+  "resp": [
+   {
+    "auth_id": null,
+    "authorization": null,
+    "bank_reference": null,
+    "cf_payment_id": "1474179525923313664",
+    "entity": "payment",
+    "error_details": null,
+    "international_payment": {
+     "international": false
+    },
+    "is_captured": false,
+    "order_amount": 10.0,
+    "order_currency": "INR",
+    "order_id": "sbx_whfail_ec89ab5c40",
+    "payment_amount": 10.0,
+    "payment_completion_time": null,
+    "payment_currency": "INR",
+    "payment_gateway_details": {
+     "gateway_name": "CASHFREE",
+     "gateway_order_id": "1474179524740883456",
+     "gateway_payment_id": "1474179525923313664",
+     "gateway_order_reference_id": null,
+     "gateway_status_code": null,
+     "gateway_settlement": "cashfree",
+     "gateway_reference_name": null
+    },
+    "payment_group": "upi",
+    "payment_message": null,
+    "payment_method": {
+     "upi": {
+      "channel": "collect",
+      "upi_id": "testsuccess@gocash",
+      "upi_instrument": "UPI",
+      "upi_instrument_number": "",
+      "upi_payer_account_number": "",
+      "upi_payer_ifsc": ""
+     }
+    },
+    "payment_offers": null,
+    "payment_status": "NOT_ATTEMPTED",
+    "payment_surcharge": {
+     "payment_surcharge_service_charge": 0,
+     "payment_surcharge_service_tax": 0
+    },
+    "payment_time": "2026-11-12T04:33:08+05:30"
+   }
+  ],
+  "run": "run3"
+ },
+ {
+  "label": "W2 simulate SUCCESS",
+  "req": "POST /simulate",
+  "body": {
+   "entity": "PAYMENTS",
+   "entity_id": "1474179525923313664",
+   "entity_simulation": {
+    "payment_status": "SUCCESS"
+   }
+  },
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "198",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "200"
+  },
+  "resp": {
+   "simulation_id": "sim_113521343LytZRNWEYgDPsrVEenM99mFR0v",
+   "entity": "PAYMENTS",
+   "entity_id": "1474179525923313664",
+   "entity_simulation": {
+    "payment_status": "SUCCESS",
+    "payment_error_code": ""
+   }
+  },
+  "run": "run3"
+ },
+ {
+  "label": "W1 status",
+  "req": "GET /orders/sbx_whok_4bb6500e9e",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49999",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474179511503660032",
+   "created_at": "2026-11-12T04:33:04+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:33:04+05:30",
+   "order_id": "sbx_whok_4bb6500e9e",
+   "order_meta": {
+    "notify_url": "https://ahntbtktjjmvfosgkmgn.supabase.co/functions/v1/sbx-cf-webhook-probe?src=notify&o=sbx_whok_4bb6500e9e",
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "PAID",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run3"
+ },
+ {
+  "label": "W2 status",
+  "req": "GET /orders/sbx_whfail_ec89ab5c40",
+  "body": null,
+  "code": 200,
+  "ratelimit_headers": {
+   "X-Ratelimit-Remaining": "49998",
+   "X-Ratelimit-Type": "app_id",
+   "X-Ratelimit-Retry": "0",
+   "X-Ratelimit-Limit": "50000"
+  },
+  "resp": {
+   "cart_details": null,
+   "cf_order_id": "1474179524740883456",
+   "created_at": "2026-11-12T04:33:08+05:30",
+   "customer_details": {
+    "customer_id": "sbx_test_cust",
+    "customer_name": null,
+    "customer_email": null,
+    "customer_phone": "9999999999",
+    "customer_uid": null
+   },
+   "entity": "order",
+   "order_amount": 10.0,
+   "order_currency": "INR",
+   "order_expiry_time": "2026-12-12T04:33:08+05:30",
+   "order_id": "sbx_whfail_ec89ab5c40",
+   "order_meta": {
+    "notify_url": "https://ahntbtktjjmvfosgkmgn.supabase.co/functions/v1/sbx-cf-webhook-probe?src=notify&fail=1&o=sbx_whfail_ec89ab5c40",
+    "payment_methods": null,
+    "payment_methods_filters": null,
+    "return_url": null
+   },
+   "order_note": null,
+   "order_splits": [],
+   "order_status": "PAID",
+   "order_tags": null,
+   "payment_session_id": "(removed)",
+   "products": {
+    "one_click_checkout": {
+     "enabled": false,
+     "conditions": []
+    },
+    "verify_pay": {
+     "enabled": false,
+     "conditions": []
+    }
+   },
+   "terminal_data": null
+  },
+  "run": "run3"
+ }
+]

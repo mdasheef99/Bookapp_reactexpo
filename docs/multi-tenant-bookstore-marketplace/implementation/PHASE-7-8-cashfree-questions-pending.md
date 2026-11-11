@@ -12,6 +12,10 @@ earlier mails that were only partly answered. The whole mail thread as sent is i
 [thread file](./PHASE-7-8-cashfree-thread-original.md).
 **State 2026-11-12:** 20 questions open. The [fourth mail](./PHASE-7-8-mail-cashfree-4.md)
 asking all of them is drafted and reviewed, not sent.
+**Update 2026-11-12 (sandbox):** the [sandbox tests](./PHASE-7-8-cashfree-sandbox-tests.md)
+answered CF-A19 and CF-A20 (moved to Answered) and narrowed CF-A17, CF-A18, CF-A21,
+CF-A22 and CF-A26. 18 questions open. The mail is to be cut down to the questions only
+Cashfree can answer.
 
 "Sandbox" means we can also find the answer ourselves by testing; asking may save time.
 
@@ -22,8 +26,6 @@ asking all of them is drafted and reviewed, not sent.
 | CF-A16 | When two payments succeed on the same order, which one do you reverse: the one that completed later? (Docs checked 2026-11-12: not stated; the refund API and `AUTO_REFUND_STATUS_WEBHOOK` show `PAYMENT_AUTO_REFUND` naming the refunded `cf_payment_id`. Also: what does `UNRECONCILED_AUTO_REFUND` mean? Per D-109 the answer no longer blocks orders.) How does the reversal show in `GET /orders/{order_id}/refunds` (for example `refund_type` `PAYMENT_AUTO_REFUND`), and is it final only when `refund_status` is `SUCCESS`? | We must keep the payment you keep, and know when the reversal is really done (review B3, B5; names D9; completes CF-A5) | No | SDD 02 §9.3, §13.2 |
 | CF-A17 | After you terminate an order (`TERMINATION_REQUESTED` or `TERMINATED`), can a payment shown as `FAILED`, `USER_DROPPED` or `NOT_ATTEMPTED` still become `SUCCESS` later? Does `GET /orders/{order_id}/payments` always list every attempt, including one started at the bank but not finished? Does `TERMINATION_REQUESTED` always end as `TERMINATED`, and how quickly? | Decides how long we keep checking a closed order (review B1) | Partly | SDD 02 §9.3, §11, §12 |
 | CF-A18 | If a payment attempt fails or the customer leaves, can the customer pay again with the **same** `payment_session_id`? How long is a session valid? What happens if a session is opened on an order that is paid, expired or terminated? | Our design keeps one Cashfree order per checkout and reuses its session (names B14) | Yes | SDD 02 §8 |
-| CF-A19 | When we terminate an order that already has a successful payment, what do you return: HTTP 200 with `order_status: PAID`, or an error (which code)? And for an order already expired or terminated? | Our expiry worker decides from your answer (names E2, E3) | Yes | SDD 02 §12.1 |
-| CF-A20 | Webhook signature: is the signed text the `x-webhook-timestamp` value directly followed by the raw body, with no dot between them? Is the timestamp in milliseconds? (Your pseudocode shows `$timestamp.$payload`; your code samples join them with nothing.) | We must verify every webhook exactly (names F3a, F4) | Yes | SDD 02 §7.2 |
 | CF-A21 | When you retry a webhook, do the `x-idempotency-key`, `x-webhook-timestamp` and signature stay the same as the first delivery? Within how many seconds must our endpoint answer, and which HTTP codes count as delivered? | De-duplication, and our five-minute age check (names F6, F8, F9) | Partly | SDD 02 §10 |
 | CF-A22 | If an order has a `notify_url` and the account also has a dashboard webhook endpoint, are payment webhooks sent to both? Is the dashboard's test message signed? | Avoid missed or doubled deliveries (names B7, F10) | Yes | SDD 02 §10 |
 | CF-A24 | When we generate new Payment Gateway keys, do the old keys stop working immediately, or is there an overlap? What happens to webhooks already in flight? | Our key-change procedure (names N8, A1) | No (we would lose our sandbox keys) | SDD 02 §13.4 |
@@ -57,12 +59,12 @@ with what the docs already say, so Cashfree only confirms or completes them.
 |---|---|---|---|
 | CF-A16 | Partly | R1: "the additional payment amount is reversed"; R4: tracked via transaction details, reports, webhooks, up to 5 calendar days; docs list `PAYMENT_AUTO_REFUND`, `UNRECONCILED_AUTO_REFUND` without meaning | 1 |
 | CF-A17 | Partly | R2/R4: a UPI attempt started before expiry can still succeed; termination does not cancel it at the bank. Help page: a "Failed" transaction may rarely later move to "Success" | 2 |
-| CF-A19 | Partly | Terminate Order page: "order might not get terminated", check `order_status`; response codes listed, none for this case | 3 |
+| CF-A19 | Answered by sandbox (SBX-01, SBX-02) | Terminate Order page: "order might not get terminated", check `order_status`; response codes listed, none for this case | 3 |
 | CF-A18 | Not answered | Elements FAQ only: sessions single-use, 30 minutes (that product) | 4 |
 | CF-A27 | Partly | Create Order page: a timed-out request can be retried with the same key | 5 |
 | CF-A28 | Not answered | R1 said the Technical team was checking; never answered | 6 |
 | CF-A26 | Not answered | Spec: completion time = "when the payment reaches its terminal state" | 7 |
-| CF-A20 | Not answered | Webhooks page shows `$timestamp.$payload`; Payloads and Signatures page and all code samples join with nothing | 8 |
+| CF-A20 | Answered by sandbox (SBX-08) | Webhooks page shows `$timestamp.$payload`; Payloads and Signatures page and all code samples join with nothing | 8 |
 | CF-A21 | Partly | Reliability page: default retries at 2, 10, 30 minutes; non-2xx is a failure | 9 |
 | CF-A22 | Partly | Webhooks page: `NOTIFY_URL` default config vs custom URLs | 10 |
 | CF-A24 | Partly | R2: one key pair at a time, no overlap; only in-flight webhooks open | 11 |
@@ -81,4 +83,6 @@ with what the docs already say, so Cashfree only confirms or completes them.
 | ID | Answer | Source |
 |---|---|---|
 | CF-A3 | Money we never split goes to us when the window ends: "If you take no action within that window, the held amount settles to the merchant." and "You must initiate the split within the applicable window for that amount to settle to the vendor." (matches R1 point 2 and R4 point 2). A share we did split is paid to the store on its eligibility date, which can never be later than the window's end (R3; CF-43, CF-45). Design rule: always send the split, and set the release date ourselves before day 45. A sandbox test of a split share left untouched to day 45 is still worth running. | Easy Split FAQ (payments/split/faq), checked 2026-11-12; CF-74 |
+| CF-A19 | Paid order: HTTP 400 `order_already_paid` ("order has already been paid."), order stays `PAID`. Unpaid order: 200 `TERMINATION_REQUESTED`, then `TERMINATED` within 3 seconds; a second terminate gives 400 `request_invalid` ("order termination already requested"). | Sandbox test SBX-01, SBX-02 (2026-11-12) |
+| CF-A20 | Signature = Base64(HMAC-SHA256(client secret, `x-webhook-timestamp` + raw body)), no dot; timestamp in milliseconds (13 digits). 3 of 3 deliveries matched. | Sandbox test SBX-08 (2026-11-12) |
 | CF-A23 | The documented code for a reused order ID is `order_already_exists` (HTTP 409); `order_id_already_exists` appears nowhere in the API spec. Treat any 409 "already exists" the same. | OpenAPI spec v2026-01-01, checked 2026-11-12; CF-75 |

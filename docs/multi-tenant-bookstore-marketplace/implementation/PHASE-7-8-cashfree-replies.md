@@ -8,6 +8,10 @@ Ticket ID 8774207.
 **Related:** [first mail](./PHASE-7-8-mail-cashfree.md) ·
 [second mail](./PHASE-7-8-mail-cashfree-2.md) ·
 [question list](./PHASE-7-8-questions-cashfree.md)
+**Sandbox evidence:** what we observed on the Cashfree sandbox on 2026-11-12 (SBX-01 to
+SBX-10: termination, session reuse, completion time, signature, duplicate webhook versions)
+is kept apart in the [sandbox tests](./PHASE-7-8-cashfree-sandbox-tests.md). It is our
+observation, not Cashfree's word.
 
 Cashfree replied twice on 2026-11-10: a support reply to questions 1 to 15 and 20, and a
 Tech Team reply to questions 16 to 19. The owner sent a second mail the same day. The Tech
