@@ -16,18 +16,20 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 |---|---|---|---|---|
 | RX2-01 | Webhook verification | Poll verification, same payment | A applies; B finds the attempt already classified and does nothing | Same, reversed |
 | RX2-02 | Webhook verification | The customer's return check | As RX2-01 | As RX2-01 |
-| RX2-03 | Two checks each showing two successes | — | Both classify in completion order (§9.3): the first completed counts, the second is `duplicate_success` | Same result |
+| RX2-03 | Two checks each showing two successes | — | The first verified success counts (D-29), taking several new ones in one check in §9.3's order; the other is `duplicate_success` (D-78) | Same result; if Cashfree later gives back the counted one, §13.5 corrects the records |
 | RX2-04 | Verification of a success | `expire_reservation` (SDD 01) | Converted on time; B does nothing on a verified success | B releases only after a fresh read with no success (SDD 01 §5.3); A then verifies late (`paid_late`, SDD 01 §5.6) |
 | RX2-05 | Verification of a success | `expire_payment_grace` | Converted on time | Closed `payment_failed`; A verifies late |
 | RX2-06 | Verification of a success | Customer cancels the checkout | Converted; the cancel gets SDD 01's `ORDER_ALREADY_PAID` | Cancelled; A verifies late and is refunded (D-85) |
 | RX2-07 | Verification of a success | D-81 pause cancelling the checkout | Converted; the order continues (D-21) | Cancelled; A refunded (D-85) |
 | RX2-08 | `begin_payment` | `expire_reservation` | Payment `initiating`; the expiry runs §11.6's recovery read for it first and closes only once the round is known (§12.1) | `RESERVATION_ENDED` (guard 3) |
 | RX2-09 | `record_provider_order` for the current round | Checkout closing | Payment `created`; the close later leads to `closed_unpaid` and termination | Per §8 step 3's "closed meanwhile" column: an existing order becomes `closed_unpaid` with `terminate_provider_order`; no order becomes `closed_unpaid` with nothing to terminate |
-| RX2-10 | Wrong-amount success completed first | Correct success completed later, same order | A is `amount_mismatch`; B is `duplicate_success` (§13.1) | Same: classification follows Cashfree's completion order, not which check arrives first (§9.3, B3) |
-| RX2-11 | Duplicate watch's refund request | A late reversal | Refund sent; the reversal opens a reconciliation case (D-78) | The fresh refunds check sees the reversal; no refund |
+| RX2-10 | A wrong-amount success and a correct success on the same order | Their checks arrive in the opposite order | Whichever is verified first is classified first: a wrong amount first makes the later correct one `duplicate_success` (§13.1); a correct one first makes the wrong amount a duplicate | Same rule; if both appear in one check, §9.3's order decides. If Cashfree keeps the other one, §13.5 applies |
+| RX2-11 | Duplicate watch's refund request | A late provider reversal | Refund sent; a later confirmed double return opens a reconciliation case (D-78) | If the fresh read already contains the completed reversal, no refund. If reversal completes after that outside-lock read but before our commit, the accepted D-78 race remains; reconcile once |
 | RX2-12 | Admin failed-conversion retry (SDD 01 §5.10) | Late verification of the same payment | One order (SDD 01 RX-27), one posting (keyed by `cf_payment_id`) | Same |
-| RX2-13 | `record_provider_order` for round 1 (slow) | §11.6 recovery for round 1, then a new "Pay" starting round 2 | A's round no longer matches: it changes nothing and returns the current state | Same |
+| RX2-13 | `record_provider_order` for current round 1 (slow) | §11.6 recovery for round 1 | A records the order; recovery is idempotent; a new Pay reuses round 1 | Recovery finding the order records it first; A cannot regress it. A negative lookup keeps the same round unknown. A genuinely old-round response after a definitive refusal/new round changes nothing |
 | RX2-14 | Webhook intake (`commerce_record_webhook`) | The same message delivered again | One event, one body, one task (§10.2) | Same |
+| RX2-15 | An older check first reveals a success | A newer empty/failed check already applied | Unresolved evidence is retained; a fresh read is required before classification; no orphan terminal success | The newer read never erases a classified success; any new unresolved receipt still requires a fresh check |
+| RX2-16 | Poll owner A expires or a webhook verifies during A's read | Poll owner B claims after the real lease expires | Webhook does not clear A's lease; A cannot release B's token | B owns the replacement token; A's stale finish does nothing |
 
 ## 15. Worked examples and tests
 
@@ -49,7 +51,7 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
    payment. If you were charged, it will be refunded automatically." The poll keeps
    watching; 3 hours later a success arrives: a late payment. Her book is still free, so
    the order is created (D-06).
-5. **Duplicate.** She pays twice in two tabs. The success Cashfree completed first converts;
+5. **Duplicate.** She pays twice in two tabs. The first verified success converts at once;
    the other is a duplicate, and she sees "You paid twice. The extra ₹400 will be returned
    to you within 2–3 working days after Cashfree reverses it." (D-108). Three business days
    later the watch's fresh refunds read shows Cashfree's completed reversal. Nothing for us
@@ -58,7 +60,7 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 6. **Wrong amount.** The first success on a ₹400 order is for ₹350. It is refunded in full
    (category 6, key `wrong_amount:<cf_payment_id>`), the Cashfree order is terminated, and
    the admin is alerted. "Pay" is refused from then on (guard 5); her reservation runs out
-   and she can reserve again. If a ₹400 success had completed after it on the same order,
+   and she can reserve again. If a ₹400 extra success followed it on the same order,
    that one would be a duplicate, not an order.
 7. **Lost webhook.** Cashfree's webhook never arrives. The poll, 20 seconds later, finds
    the success and converts the checkout.
@@ -75,7 +77,8 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - AD-02 rupees to paise and back, exactly; a fractional paisa leaves `amount_minor` NULL
   and keeps `amount_text`.
 - AD-03 `createOrder` answered 409 (either code) reads the existing order instead of making
-  a second; 400/422 is `refused`; timeout, 5xx and 429 lead to a read.
+  a second; only definitive validation refusal is `refused`; `idempotency_error`, timeout,
+  5xx and 429 lead to a read, with a negative read still unknown.
 - AD-04 the adapter refuses to start on the dev project unless `CASHFREE_ENV` is `sandbox`.
 - AD-05 every `x-idempotency-key` sent is a UUID; the same payment and round give the same
   create key; a new round gets a new key; a terminate key is its check ID.
@@ -96,8 +99,10 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
   `PAYMENT_IN_PROGRESS`; after a failed attempt it returns the same session (Q37). Runs in
   slice 3.
 - PA-05 a start after an `amount_mismatch` gets `PAYMENT_NOT_ALLOWED`.
-- PA-06 replaying a start returns the stored answer; Cashfree is called once; the same key
-  and command ID with a different checkout raise `INVALID_COMMAND`.
+- PA-06 replaying a start returns the stored answer and current safe projection; concurrent
+  replays before recording may repeat HTTP calls with one frozen provider key/body but
+  create one Cashfree order. A changed checkout raises `INVALID_COMMAND`; a stale session
+  cannot bypass a closed checkout, pending attempt, mismatch or exhausted Pay limit.
 - PA-07 Cashfree refuses to create the order: `start_failed`, nothing charged; a new "Pay"
   starts round 2 on the same row with a new create key.
 - PA-08 the checkout closes while the order is being created: both columns of §8 step 3's
@@ -109,10 +114,18 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
   do not count as presses.
 - PA-11 "Pay" on a payment already `paid` or `paid_late` gets `ORDER_ALREADY_PAID`,
   including one kept `paid` after a failed conversion (D-95).
-- PA-12 a stale `record_provider_order` (old round, or payment no longer `initiating`)
-  changes nothing (RX2-13).
+- PA-12 a stale `record_provider_order` from an old round changes nothing; a current-round
+  answer may fill missing identity after verification but cannot regress money state
+  (RX2-13).
 - PA-13 §11.6 recovery: an `initiating` round older than the setting is read; an existing
-  order becomes `created`, `not_found` becomes `start_failed`, an error stays `initiating`.
+  order follows §8 step 3; `not_found` after uncertainty and errors stay `initiating`.
+
+- PA-14 a timed-out create followed by `not_found` remains unknown, including when the
+  original create later succeeds; recovery uses the same body/key, closure never returns
+  a session, and no new round or no-charge promise is inferred. A bare 422 idempotency
+  error does not authorize expiry as no-order. A definitively refused round retried more
+  than a minute later gets a fresh over-15-minute expiry; retries within one uncertain
+  round keep exactly the same body/key.
 
 **Verification**
 - VE-01 a success read for the exact amount on a live checkout: one order, one posting,
@@ -121,28 +134,50 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - VE-03 a wrong amount, a wrong currency and a fractional amount on the first success are
   each `amount_mismatch`.
 - VE-04 a failed then a successful attempt: one order; the failed attempt stays `failed`.
-- VE-05 two successes: the one completed first counts whichever is listed or read first;
-  the other is `duplicate_success` with `watch_stage = waiting_reversal` and no refund
-  request. Runs in slice 6.
+- VE-05 two successes: the first verified counts at once (D-29) and the other is
+  `duplicate_success` with `watch_stage = waiting_reversal`, no refund request. Include
+  two new successes in one check (§9.3's order, with reversed, tied and missing times) and
+  a first read showing only one success with the other found later. Runs in slice 6.
+- VE-21 a single success is counted on its first fresh read with a refunds read; a missing
+  or failed refunds read leaves it `success_unresolved` until the next read, and the
+  books stay held meanwhile.
 - VE-06 a pending attempt keeps the payment `pending`; nothing is released.
-- VE-07 a check whose `(answered_at, id)` is at or before `last_check_id`'s may add new
-  attempts and move attempts forward but changes no payment field; nothing moves back.
+- VE-07 a check whose `(requested_at, id)` is at or before `last_check_id`'s may add
+  unresolved evidence but never leave a terminal success without a paid payment. It
+  requests a fresh read before classifying; no status/schedule watermark moves back.
+  Exercise earlier-request/later-answer and both commit orders.
 - VE-08 an unknown raw status is treated as pending.
 - VE-09 a success after the checkout expired: `paid_late` and SDD 01 §5.6 runs (D-06).
 - VE-10 a success after a customer cancel: `paid_late`, full refund (D-85).
-- VE-11a a success after a D-81 cancellation: refunded (D-98). VE-11b a success while
-  another live checkout of the same cart exists: handled per D-97 through SDD 01 §5.6.
+- VE-11a a success after a D-81 cancellation: refunded (D-85). VE-11b a late success while
+  another live or converted checkout of the same cart and same version exists: refunded
+  per D-97 through SDD 01 §5.6; a different cart version is the control.
   Runs in slice 6.
 - VE-12 `convert_paid_checkout` answers `conversion_failed`: the payment stays `paid`, the
-  posting is made once, and the admin case and hold extension commit in the same
-  transaction; nothing is rolled back (D-95).
+  receipt posts once, no sale posts, and the admin case and hold extension commit in the
+  same transaction (D-95). A successful admin retry posts one sale without reposting the
+  receipt; a refund outcome posts no sale.
 - VE-13 a success by a method other than UPI or card is counted as normal and alerts the
   admin (D-105).
 - VE-14 the customer's return check is limited per §5 and never changes state without §9.
 - VE-15 a success whose refunds read shows a completed automatic reversal is `reversed`:
-  no order, no refund, a reconciliation case; a reversal still pending does not count.
+  no order, no refund, a reconciliation case; a reversal still pending does not count. Include a single first success already reversed,
+  plus unavailable and unconfirmed refund evidence: neither may create an order.
 - VE-16 a `TERMINATED` or `EXPIRED` order with nothing pending sets
   `provider_closed_confirmed_at` and the payment stays on the poll.
+
+- VE-17 a success on `reservation_expired` while a D-81 ineligibility pause is active
+  is refunded under D-98; ordinary pauses are controls. Runs in slice 6.
+- VE-18 wrong-payment/wrong-kind/failed/missing/stale payment, refund or order checks are
+  rejected before money effects; changed replay inputs raise `INVALID_COMMAND`; two
+  distinct checks of the same payment both apply. Lock waits cross the freshness limit.
+- VE-19 a customer return with another customer's, missing or malformed provider order
+  ID makes no provider call and reveals no payment state; an authorized return returns
+  only the customer projection.
+- VE-20 representable receipts for counted, wrong-amount, duplicate and unresolved successes post once;
+  conversion alone posts the sale, reversal alone posts its reversal, and a later admin
+  retry cannot repost the receipt. Fractional or unsupported-currency evidence is kept
+  exactly and never rounded into a refund or ledger money amount.
 
 **Webhooks**
 - WH-01 a forged signature is `rejected`, stores no body and answers 401.
@@ -164,6 +199,10 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - WH-12 bodies older than the retention setting are deleted and `body_purged_at` set; the
   event and attempts stay.
 
+- WH-13 crash after domain handover/before finish replays safely; task/event/admin-case
+  completion is atomic. The fifth attempt crashing before completion is terminalized
+  before a sixth dispatch. Stale lease owners cannot mark the event processed or dead.
+
 **Poll and termination**
 - PO-01 the poll follows §11.2's schedule, including for `paid` payments, through the
   hourly and daily windows, then clears `next_poll_at`; a duplicate arriving on day 3 is
@@ -174,11 +213,16 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - PO-05 a closed payment unconfirmed for 24 hours opens one admin case and stays on the
   poll.
 - PO-06 the poll and a webhook on the same payment produce one result (RX2-01).
-- PO-07 all Cashfree reads together (customer checks, webhooks, workers, poll, watch) stay
-  within `commerce.cashfree_reads_per_minute`; the poll takes what is left; a 429 changes
+- PO-07 all triggers (customer checks, webhooks, workers, poll, watch) share the
+  per-endpoint `commerce.cashfree_reads_per_minute` cap; the poll takes what is left; a 429 changes
   nothing and waits Cashfree's retry time (§11.5).
-- PO-08 two overlapping poll runs never read the same payment at once (leases); a crashed
-  run's leases expire and the payments are picked up again.
+- PO-08 two overlapping poll runs never read the same payment at once under a live lease;
+  a webhook does not release the poll lease; expired owners cannot finish a replacement
+  token. Crashes recover through lease expiry, including creation-recovery claims.
+- PO-09 concurrent mixed-trigger calls consume atomic permits before HTTP dispatch,
+  including calls across minute boundaries; denied permits retry/defer without changing
+  a payment outcome. Test nine live payments against the 25/minute budget: 20 seconds is a target,
+  not an unconditional timing guarantee. All instances share provider 429 backoff.
 - TE-01 expiry with no payment row, or a `start_failed` payment, closes the checkout
   without calling Cashfree.
 - TE-02 expiry while the payment is `initiating` runs the recovery read first and does not
@@ -192,11 +236,16 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - TE-07 the `terminate_provider_order` task resolves on a terminated answer, retries on
   `ACTIVE` or unreachable, and is dead-lettered to an admin case after its last attempt.
 
+- TE-08 the locked expiry wrapper re-checks no-order after a concurrent first Pay;
+  initiating/unknown creation and unresolved successes never release stock. Both expiry
+  phases use the correct bound check IDs. A paid termination task resolves after verified
+  handling; no-payment/definitive-no-order termination resolves without a provider call.
+
 **Wrong amount and duplicates**
 - DU-01 a wrong amount requests category 6 once, keyed `wrong_amount:<cf_payment_id>`;
   replay requests nothing more.
 - DU-02 a wrong amount opens termination and alerts the admin; no order.
-- DU-03 a correct success completed after a wrong amount on the same order is a duplicate
+- DU-03 a confirmed extra correct success after a wrong amount on the same order is a duplicate
   and is not refunded twice (RX2-10).
 - DU-04 a duplicate whose fresh refunds read shows a `SUCCESS` automatic reversal before the
   due time is closed `reversed` with no refund; a `PENDING` reversal keeps watching.
@@ -209,6 +258,24 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
   wording and the right amount.
 - DU-10 business days skip weekends and the admin's holiday list.
 
+- DU-11 an automatic reversal left `PENDING`, `PENDING_APPROVAL` or `ONHOLD` through
+  the initial wait still triggers the enquiry and, after recorded contact and the
+  no-answer deadline, one fallback refund; pending status never resets a deadline.
+- DU-12 one check with two new duplicate receipts emits two notices with distinct child
+  command IDs and per-attempt keys; replays or another check emit no further notices.
+- DU-13 a completed reversal after a pending, unknown or succeeded BookConnect refund
+  intent takes the post-refund branch once; an unsent intent is stopped where possible,
+  and a confirmed double return posts one loss to BookConnect, never the store. Include
+  provider reversal between the outside-lock read and refund-intent commit (RX2-11). Daily
+  reconciliation continues beyond the ordinary payment poll window.
+- DU-14 Cashfree gives back the counted payment (auto refund naming it) and keeps the
+  duplicate: the order and payment status are unchanged, the reversal posts once, the
+  duplicate becomes `kept_by_cashfree` and is never refunded, one reconciliation case
+  opens, no customer notice (§13.5). Arrive by refunds read and by
+  `AUTO_REFUND_STATUS_WEBHOOK`, in both orders with the duplicate watch.
+- DU-15 Cashfree gives back the counted payment after we already refunded the duplicate:
+  one reconciliation case and one `duplicate_loss` posting; nothing is refunded again.
+
 **Schema and security**
 - ST2-01 every money column refuses a negative value; `amount_minor` cannot change.
 - ST2-02 one payment per checkout; `cf_payment_id` and `message_key` are unique;
@@ -216,6 +283,10 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - ST2-03 only the §4.1.1 payment moves are allowed, enforced by trigger.
 - ST2-04 attempts never move backwards (§4.2).
 - ST2-05 a payment below 100 paise is refused (D-107).
+- ST2-06 verification before creation recording can reach pending/paid/paid_late;
+  a closed unpaid payment stays closed with later pending evidence; unresolved success
+  can reach each final class only with confirmed evidence. Missing provider completion
+  time never prevents recording an otherwise verified receipt.
 - SE-01 no client role can write any §4 table or call any §6 wrapper.
 - SE-02 a customer cannot read another customer's payment or session.
 - SE-03 no log line contains a key, a webhook body, a session ID or a phone number.
@@ -227,4 +298,4 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
   restarts after a clean reconciliation (D-68, D-104).
 
 **Races**
-- RX2-01 to RX2-14 each run in both orders, as §14's table says.
+- RX2-01 to RX2-16 each run in both orders, as §14's table says.

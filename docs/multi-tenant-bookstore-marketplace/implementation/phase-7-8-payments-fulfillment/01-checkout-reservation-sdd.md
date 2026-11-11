@@ -431,7 +431,7 @@ nothing; it never moves the quantity again (§9).
 | `commerce.reservation_window_seconds` | 600 | Q36 |
 | `commerce.payment_grace_seconds` | 900 | 15 minutes (D-102) |
 | `commerce.max_order_book_total_minor` | 500000 | D-56, D-65 |
-| `commerce.min_checkout_total_minor` | 100 | D-107; also enforced by SDD 02 `payments.amount_minor` CHECK |
+| `commerce.min_checkout_total_minor` | 100 | D-107; validate an integer at least 100; also enforced by SDD 02 `payments.amount_minor` CHECK |
 | `commerce.reservation_attempts_per_hour` | 6 | Handoff §7; number approved (§17 item 3) |
 | `commerce.customer_max_live_checkouts` | 2 | Handoff §7; number approved (§17 item 3) |
 | `commerce.customer_daily_paid_order_limit` | `null` (off) | D-56; checked only when set |
@@ -550,7 +550,7 @@ carts as §15 says.
 | 11 | Delivery only, once SDD 07 is live: pincode served and a quote valid under SDD 07's rules (D-18, BC-22). Until then guard 10 refuses delivery first | `DELIVERY_NOT_SERVICEABLE` / `DELIVERY_QUOTE_UNAVAILABLE` | We cannot deliver to this address. / We could not get a delivery price. You can choose pickup. |
 | 12 | Every listing is `active`, moderation `approved`, and from the cart's store | `ITEM_NOT_AVAILABLE` | One of your books is no longer available. |
 | 13 | Book total is at most the cap (D-56) | `ORDER_TOTAL_ABOVE_LIMIT` | Orders are limited to ₹5,000 of books for now. |
-| 13a | Order total (`final_total_minor`) is at least `commerce.min_checkout_total_minor` (D-107; Cashfree takes no order under ₹1) | `ORDER_TOTAL_BELOW_MINIMUM` | Orders must be at least ₹1. |
+| 13a | Order total (`final_total_minor`) is at least `commerce.min_checkout_total_minor` (D-107; Cashfree takes no order under ₹1) | `ORDER_TOTAL_BELOW_MINIMUM` | Orders must be at least ₹{minimum}, using the configured minimum (₹1 by default). |
 | 14 | Stock: every item has `quantity_available >= requested_quantity` (checked by taking the hold) | `INSUFFICIENT_INVENTORY` | Someone else just reserved this book. |
 
 A closed store may still take orders, including during a planned closure (D-07), so
@@ -1454,7 +1454,7 @@ test-only stores and users, and clean up after themselves.
   does not refuse orders (D-56); when set, it refuses at that cap.
 - R-14 a direct call to the old `submit_order_request` for a new cart is refused,
   with or without a live reservation; its different lock order is unreachable (§15).
-- R-21 a checkout total of 99 paise is refused with `ORDER_TOTAL_BELOW_MINIMUM`; 100 paise is accepted (D-107).
+- R-21 a checkout total of 99 paise is refused with `ORDER_TOTAL_BELOW_MINIMUM`; 100 paise is accepted (D-107). The setting rejects values below 100; with a 200-paise setting, 199 is refused with ₹2 in the message and 200 is accepted.
 - R-15 a D-81 pause and a reservation together, both orders; no live checkout survives.
 - R-16 support cancellation of a pay-first checkout is refused.
 - R-17 until §5.7 exists, each of the three cancelling pause kinds raises

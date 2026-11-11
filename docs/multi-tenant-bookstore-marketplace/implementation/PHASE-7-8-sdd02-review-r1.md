@@ -92,3 +92,14 @@ reference copy) gained guard 13a and `commerce.min_checkout_total_minor` (D-107)
 `checkout.duplicate_payment` event and notification type (D-108) and test R-21.
 Nothing has been checked by a reviewer yet. **Round 2 goes to Codex Sol**, which confirms
 each fix against this list and corrects what is still wrong (owner, 2026-11-11).
+
+## Round 2 (2026-11-12, Codex Sol confirm-and-fix)
+
+Sol's report: `p78sdd02r2/SOL-R2-REPORT.md` (local, not committed); verdict READY WITH
+FIXES, 24 new findings (S2-01..S2-24), edits to the four SDD 02 parts and the D-107/D-108
+lines of SDD 01. Claude spot-checked its schema evidence (unique `(command_id, event_type)`
+index, claim attempt increment, `pay_presses` default) and the SDD 01 scope: correct.
+One change was reversed on the owner's decision D-109: Sol's gate holding every order
+until Cashfree answers CF-A16. Replaced by "count first, correct later" (§9.3, §13.5,
+DU-14, DU-15, VE-21). Sol's owner questions 2–5 and Cashfree additions (CF-A27..A29) are
+still open.

@@ -3,8 +3,9 @@
 **Status:** full draft, 2026-11-11, written from the approved skeleton, the decision
 register, the Cashfree fact record (CF-01 to CF-66) and approved SDD 01. **Review round 1
 done** (Muse, DeepSeek, Codex Sol, Codex Luna; [findings](../../PHASE-7-8-sdd02-review-r1.md))
-and its 31 confirmed items fixed by me on 2026-11-11, with the owner's decisions D-104 to
-D-108. Round 2 is to be run by Codex Sol, which confirms the fixes and fixes what remains.
+and revised on 2026-11-11 with the owner's decisions D-104 to D-108. Round 2 reviewed and
+corrected the remaining design defects on 2026-11-12; evidence and exact edits are in
+`p78sdd02r2/SOL-R2-REPORT.md`. Owner/Cashfree gates remain in §16; no approval is implied.
 Not approved. No code or migration may be written from it until the owner approves it.
 **Authority:** none yet. Business rules come from the
 [decision register](../../PHASE-7-8-decision-register.md); this document must not add any.
@@ -41,7 +42,7 @@ amount and duplicate payments; the provider side of late payments.
 | The server decides a payment's result by asking Cashfree; the app and the webhook body are never trusted on their own | BC-11 |
 | Retries and delayed answers never cause a double charge or a double order | Q37, BC-15 |
 | A payment still processing when the reservation ends is not failed; the books stay held for 15 more minutes | BC-10, D-102 |
-| The first verified payment for the exact amount counts; any later success on the same Cashfree order is a duplicate | D-29, D-78, SDD 01 §5.6 |
+| The first verified payment for the exact amount counts; any later success on the same Cashfree order is a duplicate | D-29, D-78, SDD 01 §5.6, D-109 |
 | A wrong-amount first payment is not paid: refunded in full, admin alerted; the reservation runs out on its timer | D-29 |
 | A duplicate success is reversed by Cashfree; BookConnect does not refund it unless Cashfree confirms it will not reverse, or does not answer in time | D-78, CF-30 |
 | A success after the checkout expired follows D-06; after a cancel, D-85; checks are SDD 01 §5.6 | D-06, D-85, D-97, D-98 |
@@ -99,7 +100,9 @@ once tested. The adapter (§7) is still the only place that uses these names.
   The worker dispatches a fixed list of task types and refuses any other with
   `unsupported_task_type`. SDD 01 migration 5 registers the `terminate_provider_order` task
   with a recording stub that this SDD replaces (§12).
-- Task retries are capped at 5 attempts by the framework (`max_attempts` CHECK 1 to 5).
+- The task framework configures `max_attempts` with CHECK 1 to 5 and stops completed
+  failures at that limit. Its existing expired-lease claim can increment beyond it after
+  crashes; §10.4 adds bounded reclaim handling for this SDD's task types.
 - `marketplace_sec` functions are not exposed to PostgREST; Phase 6 calls them through
   public service-role wrappers (§6). No `marketplace_private` schema exists yet (§4.3).
 - The app has a web build and no `expo-dev-client` (checked 2026-11-10), which is why
@@ -119,11 +122,17 @@ once tested. The adapter (§7) is still the only place that uses these names.
    reuse (CF-A18; PA-09); termination answers (CF-A19; §12.1); the signature formula and
    timestamp unit (CF-A20; §7.2); webhook retries (CF-A21; §10.2, §10.5); delivery to the
    dashboard endpoint (CF-A22); the 409 code (CF-A23); key overlap (CF-A24; §13.4); sandbox
-   test data (CF-A25); completion time and list order (CF-A26; §9.3). Every rule here is
-   safe whichever way they are answered; answers may only simplify.
+   test data (CF-A25); completion time and list order (CF-A26; §9.3). No order waits for
+   CF-A16: the first verified success counts and §13.5 corrects our records if Cashfree
+   keeps the other payment (D-109). A negative
+   order lookup after uncertain creation is not a final no-order answer (§7.2, §11.6).
+   Additional questions: can a create finish after a timed-out call and negative lookup,
+   and when is refusal/absence final; and what exact amount/currency can be refunded for
+   a fractional-paisa or unexpected-currency receipt? (§13.1).
 3. **Sandbox checks, slice by slice:** one real webhook confirms §7.2's formula before the
    endpoint accepts anything (slice 4); termination answers (slice 5); same session after a
-   failed attempt (slice 2); the UPI-and-card limit on the checkout page (slice 2).
+   failed attempt (slice 3); the UPI-and-card limit on the checkout page (slice 2).
+   The completed real-phone payment and verified return are slice 3's gate.
 4. **Order-level split timing:** SDD 05 adds the split call after verification; nothing in
    this SDD waits for it.
 5. **Live keys:** never on the dev project. Production setup waits for account activation
@@ -136,6 +145,11 @@ once tested. The adapter (§7) is still the only place that uses these names.
 7. **SDD 01 changes made with this revision** (approved SDD 01, owner decisions): the
    minimum-total guard and setting (D-107) and the `checkout.duplicate_payment` notice
    (D-108). Both are recorded in SDD 01 and its reference copy.
+8. **Owner decisions still needed:** the fallback clock when an admin enquiry is not sent;
+   the claimed 25-minute key-rotation maximum versus D-101/D-95 exceptions; and wording
+   when payment succeeded but conversion failed; and SDD 01's termination-refusal shortcut
+   when a wrong-amount receipt also has duplicate/reversed receipts. No new business rule
+   is implied here.
 
 ## 17. Choices made in this document, for the owner
 
@@ -189,22 +203,28 @@ fixed contract until its own slice lands (M14).
    Tests ST2-01 to ST2-05, SE-01, SE-02.
 2. **Adapter, payment start and recovery:** §7 adapter with sandbox keys; §8 and §8.1;
    §11.6 recovery. Needs SDD 01 slice 2 (reservations). Tests AD-01 to AD-08, PA-01 to
-   PA-03 and PA-05 to PA-08. PA-04 and PA-09 move to slice 3 (they need §9).
+   PA-03, PA-05 to PA-08, PA-10, PA-12 to PA-14. Recovery claims and provider-check
+   persistence are built here; scheduled three-pass dispatch lands in slice 5. PA-04 and PA-09 move to slice 3 (they need §9).
 3. **Verification:** §9 `apply_payment_check`, wired to SDD 01's `convert_paid_checkout`
    and `resolve_late_payment`, to SDD 03's posting stub and to the §13 entry points as stubs
    (a duplicate or wrong amount is classified and recorded; its watch and refund come in
    slice 6). The customer's "I've paid" check. Needs SDD 01 slice 3. Tests PA-04, PA-09,
-   VE-01 to VE-04, VE-06 to VE-10, VE-12 to VE-16. VE-05 and VE-11 run in slice 6.
+   VE-01 to VE-04, VE-06 to VE-10, VE-12 to VE-16, VE-18 to VE-20, PA-11.
+   VE-05, VE-11a, VE-11b and VE-17 run in slice 6. The real-phone verified return and
+   PA-09 gate this slice. VE-21 also runs here.
 4. **Webhooks:** §10 endpoint, atomic intake, worker branch, body deletion. Tests WH-01 to
-   WH-05, WH-07 to WH-09, WH-11, WH-12. WH-06 and WH-10 run in slice 7.
+   WH-05, WH-07 to WH-09, WH-11 to WH-13. Service-only work retrieval, atomic finish
+   and crash-reclaim exhaustion are included. WH-06 and WH-10 run in slice 7.
 5. **Poll and termination:** §11 `commerce-payment-poll`, rate budget; §12 provider steps
    for SDD 01's expiry workers and the real `terminate_provider_order` handler. Tests
-   PO-01 to PO-08, TE-01 to TE-07.
+   PO-01 to PO-09, TE-01 to TE-08. The locked evidence wrapper, poll fencing and
+   atomic rate admission are built before the expiry integration is enabled.
 6. **Wrong amount and duplicates:** §13.1 and §13.2, with SDD 04's refund request (or its
    stub) and SDD 01's duplicate notice. Needs SDD 01 slice 6 for D-81 cases. Tests VE-05,
-   VE-11, DU-01 to DU-10.
+   VE-11a, VE-11b, VE-17, DU-01 to DU-15. The unattended-enquiry owner decision must
+   be applied before accepting the fallback integration.
 7. **Races and rotation:** §14 races and the §13.4 rotation procedure rehearsed on sandbox.
-   Tests WH-06, WH-10, RX2-01 to RX2-14, SE-03 to SE-06.
+   Tests WH-06, WH-10, RX2-01 to RX2-16, SE-03 to SE-06, ST2-06.
 
 ## 19. Handovers to other SDDs
 
@@ -214,11 +234,11 @@ fixed contract until its own slice lands (M14).
 | SDD 01 | 01 needs from 02 | Provider steps for `expire_reservation` and `expire_payment_grace` (§12.1); the real `terminate_provider_order` handler (§12.2); `p_provider_checked_at` and `p_provider_terminated_at` from `provider_checks` (§4.4); the `store_orders.payment_id` foreign key (§4). The grace setting `commerce.payment_grace_seconds = 900` is confirmed (D-102) |
 | SDD 01 | 02 needs from 01 | The minimum-total guard (D-107) and the `checkout.duplicate_payment` event and notice (D-108), emitted when §13.2 records a duplicate |
 | SDD 01 | 02 reads | The checkout's `status`, `final_total_minor`, `reservation_expires_at` and owner before a payment may start (§8) |
-| SDD 03 | 02 calls 03 | Post the counted payment once, keyed by `cf_payment_id`, in the verification transaction (§9.3 step 3); record `PAYMENT_CHARGES_WEBHOOK` charges (CF-29) as reported, never computed; a reconciliation case for a `reversed` success and an `unknown_order` webhook |
+| SDD 03 | 02 calls 03 | Post every observed receipt once by `receipt:<cf_payment_id>`, a sale only on conversion by `order:<order_id>`, and each provider reversal by `reversal:<cf_refund_id>` (§9.3 step 3); record `PAYMENT_CHARGES_WEBHOOK` charges (CF-29) as reported, never computed; a reconciliation case for a `reversed` success and an `unknown_order` webhook |
 | SDD 03 | 03 calls 02 | Daily reconciliation (D-78) that finds a Cashfree payment not recorded or not classified calls §9.2 and §9.3 for its payment; this is the safety net after §11.2's window |
-| SDD 04 | 02 calls 04 | Category 6 (wrong amount, D-29) with refund key `wrong_amount:<cf_payment_id>`; category 6a (duplicate) with key `duplicate:<cf_payment_id>` only under D-78's conditions. Each is capped at that attempt's amount, so refunds for one attempt never exceed what that attempt paid. Category 5 for late and cancelled cases comes through SDD 01 §5.6 |
+| SDD 04 | 02 calls 04 | Category 6 (wrong amount, D-29) with refund key `wrong_amount:<cf_payment_id>`; category 6a (duplicate) with key `duplicate:<cf_payment_id>` only under D-78's conditions. Each is capped at that attempt's amount, including pending/unknown refund intents. Fractional-paisa or unsupported-currency receipts need Cashfree's exact refundable amount (§13.1); nothing is rounded. Category 5 for late and cancelled cases comes through SDD 01 §5.6 |
 | SDD 05 | 05 uses | The verified payment and order for the split call after verification |
-| SDD 08 | 02 needs | Admin cases: wrong amount (alert), duplicate "ask Cashfree", unconfirmed closed payment after 24 hours, dead webhook messages, `auth_failed`, failed conversion (SDD 01 §5.10), key-rotation restart (D-68). A checked command to record Cashfree's answer on a duplicate (`cashfree_answer`, §13.2), and the holiday list (§17 item 13) |
+| SDD 08 | 02 needs | Admin cases: wrong amount (alert), duplicate "ask Cashfree", unconfirmed closed payment after 24 hours, dead webhook messages, `auth_failed`, failed conversion (SDD 01 §5.10), key-rotation restart (D-68). Checked commands to record the actual enquiry and Cashfree's answer (`cashfree_asked_at`, `cashfree_answered_at`, §13.2), and the holiday list (§17 item 13) |
 | SDD 09 | Later | Carry §15's tests and the security list into the full test plan |
 
 ## 20. Traceability
@@ -231,17 +251,18 @@ fixed contract until its own slice lands (M14).
 | Q37, BC-15 | §4.1 constraints, §8, §9, PA-04, PA-09, VE-05, RX2-01 to RX2-04 |
 | BC-10, D-102 | §11, §12.1, PO-02 |
 | D-29 | §9.3, §13.1, DU-01 to DU-03 |
-| D-78, CF-30, CF-64 | §9.3, §13.2, DU-04 to DU-10, VE-15 |
-| D-06, D-85, D-97, D-98 | §9.3 (through SDD 01 §5.6), VE-09 to VE-11 |
-| D-21, D-81 | §8 (no pause guard), §12.2, RX2-07, VE-11 |
+| D-29, D-78, D-109, CF-30, CF-64 | §9.3, §13.2, §13.5, DU-04 to DU-10, DU-14, DU-15, VE-05, VE-15, VE-21 |
+| D-06, D-85, D-97, D-98 | §9.3 (through SDD 01 §5.6), VE-09, VE-10, VE-11a, VE-11b, VE-17 |
+| D-21, D-81 | §8 (no pause guard), §12.2, RX2-07, VE-11a, VE-17 |
 | D-95 | §8 guard 2, §9.3 step 4, VE-12 |
 | D-101 | §11.3, §12.1, PO-04 |
 | D-55, D-68, D-104 | §8, §13.4, PA-03, SE-06 |
-| D-106 | §8 guard 6, PA-10 |
+| D-106 | §8 guard 6, PA-10 (§18 slice 2) |
 | D-107 | §4.1, SDD 01 guard, ST2-05 |
 | D-48, D-108 | §9.4, §13.2, DU-09 |
 | CF-31, CF-32, CF-33, CF-65 | §5, §11, §12, §17 item 12 |
 | CF-36, CF-37, CF-38 | §7, §10, §13.4 |
 | Cashfree API reference names ([names list](../../PHASE-7-8-cashfree-names-needed.md)) | §2, §7.2, §7.3, §10.2, §10.3, §11.5, §12.1, §13.2, AD-05 to AD-08, PA-09, WH-11, PO-07, TE-06 |
+| Review round 2 safeguards | §6 callable contracts; §9.3 bound/fresh checks, short evidence wait and receipt/sale separation; §13.5 records correction when Cashfree keeps the other payment; §10.4 atomic finish and crash exhaustion; §11.1 lease fencing; §11.5 atomic permits; §12.1 locked expiry; VE-18 to VE-20, WH-13, PO-09, TE-08, DU-11 to DU-15, VE-21, ST2-06, RX2-15, RX2-16 |
 | Handoff §7 (keys, logs) | §6, §7.1, SE-03 to SE-06 |
 | Review round 1 items | B1–B5, M1–M18, m1–m8 as noted in §4 to §13 |

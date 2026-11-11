@@ -103,7 +103,7 @@ carts as §15 says.
 | 11 | Delivery only, once SDD 07 is live: pincode served and a quote valid under SDD 07's rules (D-18, BC-22). Until then guard 10 refuses delivery first | `DELIVERY_NOT_SERVICEABLE` / `DELIVERY_QUOTE_UNAVAILABLE` | We cannot deliver to this address. / We could not get a delivery price. You can choose pickup. |
 | 12 | Every listing is `active`, moderation `approved`, and from the cart's store | `ITEM_NOT_AVAILABLE` | One of your books is no longer available. |
 | 13 | Book total is at most the cap (D-56) | `ORDER_TOTAL_ABOVE_LIMIT` | Orders are limited to ₹5,000 of books for now. |
-| 13a | Order total (`final_total_minor`) is at least `commerce.min_checkout_total_minor` (D-107; Cashfree takes no order under ₹1) | `ORDER_TOTAL_BELOW_MINIMUM` | Orders must be at least ₹1. |
+| 13a | Order total (`final_total_minor`) is at least `commerce.min_checkout_total_minor` (D-107; Cashfree takes no order under ₹1) | `ORDER_TOTAL_BELOW_MINIMUM` | Orders must be at least ₹{minimum}, using the configured minimum (₹1 by default). |
 | 14 | Stock: every item has `quantity_available >= requested_quantity` (checked by taking the hold) | `INSUFFICIENT_INVENTORY` | Someone else just reserved this book. |
 
 A closed store may still take orders, including during a planned closure (D-07), so
