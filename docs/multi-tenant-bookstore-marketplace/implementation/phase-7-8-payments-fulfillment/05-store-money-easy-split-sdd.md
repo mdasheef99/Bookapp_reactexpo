@@ -153,8 +153,9 @@ state. A partial refund that crosses a release follows the rule below.
 
 **A refund that crosses a release.** If a refund is sent while Cashfree is releasing the
 same share, we do not guess which happened first. The line stays as it is until Cashfree's
-records show whether the store's balance was debited (line becomes `reversed`) or the share
-had already been settled (line becomes `settled`, and SDD 04 §6 opens a debt). A settlement
+records show whether the store's balance was debited (a full refund: the line becomes `reversed`; a partial refund: the line's amount falls by the
+refunded part and it keeps its state and release date) or the share
+had already been settled (line becomes `settled`, and SDD 04 §6 opens a debt for the refunded part only). A settlement
 webhook that arrives for a line already marked `reversed` opens a reconciliation case.
 
 ## 5. States
@@ -203,8 +204,10 @@ shows in the admin queue.
   number of days before its window ends raises an admin case, so money does not fall back
   to BookConnect unnoticed (CF-04). The number of days is a setting, starting at 7
   (D-89). An earned share only waits for its date, so the case is nearly always an order
-  not yet handed over. The case has a deadline of 1 business day and two exits: the order
-  is handed over and released, or it is cancelled and refunded. What the admin does with
+  not yet handed over. The admin must look at the case within 1 business day. That is a
+  deadline to respond, not to finish the order (D-89). The case may stay open while the
+  order continues, while a return or dispute is decided (D-93), or until the order is
+  cancelled under its own rules. What the admin does with
   an earned share that still cannot be released is an owner and lawyer question (§13), and
   depends on what Cashfree confirms about the end of the window (CF-A3).
 
@@ -291,7 +294,8 @@ unknown then looked up; bank-detail change blocks payouts.
 - **Design choice (recommended):** Monday payouts through Cashfree's weekly settlement
   schedule, with each order's date set to handover plus 3 days. The other way is to work
   out the Monday ourselves and keep stores on a daily schedule, but a daily schedule
-  credits the next working day (CF-47), so the store would be paid on Tuesday. To test on
+  may credit a working day later (CF-47 gives T+1 only as an example), so the store could
+  be paid on Tuesday; this is checked on sandbox before the choice is final. To test on
   sandbox: that the weekly schedule can be set per store, which day it pays when Monday is
   a bank holiday, and that a share whose date arrives on a Monday is included that day.
 - What happens at the end of the window (CF-A3, second half; CF-45).

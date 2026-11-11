@@ -144,7 +144,7 @@ Webhook message states (`provider_webhook_events.processing_status`): `received`
 | Success arrives after stock was released | Late-payment rule (D-06, Q38) |
 | Webhook and expiry timer at the same moment | One lock order; whichever commits second sees the first's result |
 | Webhook and poll verify the same payment together | Both lock the payment row; the second finds it `paid` and does nothing. One `paid` payment per checkout is also a database constraint |
-| Two successes for one order | First counts; Cashfree reverses the second (CF-30, D-29). No automatic refund from us. If the reversal has not appeared by a set time, an admin case; any payment from us needs Cashfree's written answer that it will not reverse |
+| Two successes for one order | First counts; Cashfree reverses the second (CF-30, D-29). No automatic refund from us. If Cashfree's records show no reversal after the set wait, the admin checks the record for that payment and refunds it within 1 business day (D-78) |
 | Success for a different amount | Attempt `amount_mismatch`; that money refunded in full; payment stays open for a correct attempt (D-29) |
 | Customer closes the app mid-payment | Poll and webhook still resolve it |
 | Paid at Cashfree but no order row | Reconciliation case and admin exception queue (SDD 03, SDD 08) |

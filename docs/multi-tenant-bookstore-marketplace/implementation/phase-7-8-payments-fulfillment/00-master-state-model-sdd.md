@@ -112,8 +112,8 @@ created (D-85). Only the three events in D-81 lead to `platform_cancelled`.
 
 Final states: `picked_up`, `delivered`, `returned_to_store`, `cancelled`. Every other state
 has a timer or a named actor that moves it on. `accepted` has the D-79 deadline: an alert
-at the end of the next business day, and an automatic refund as a store fault a business
-day later. The transitions for the four delivery states are SDD 07's. "After collection"
+at the end of the promised day (BC-14, D-34), and an automatic refund as a store fault at
+the end of the following business day. The transitions for the four delivery states are SDD 07's. "After collection"
 in Q45b means from `out_for_delivery` onward (D-82).
 
 `cancelled` reason codes: store did not accept (D-04); store has none of the books (Q55);
@@ -228,7 +228,7 @@ fact exists and no platform or notification failure is found for that order (D-0
 | SDD | Register IDs |
 |---|---|
 | 00 Master | D-02 (in-app notices only; the event list in §13) |
-| Decisions D-78 to D-92 (2026-11-10, from this review) | 01: D-79, D-81, D-83, D-84, D-85. 02: D-78, D-90. 03: D-86, D-87, D-88. 04: D-80, D-82, D-91. 05: D-89, D-93. 06: D-92. All approved by the owner on 2026-11-10 (register) |
+| Decisions D-78 to D-92 (2026-11-10, from this review) | 01: D-79, D-81, D-83, D-84, D-85. 02: D-78, D-90. 03: D-86, D-87, D-88. 04: D-80, D-82, D-91. 05: D-89, D-93. 06: D-92. 01 also owns D-94. All approved by the owner on 2026-11-10 (register) |
 | 01 Checkout and acceptance | BC-05, BC-08, BC-09, Q33, Q36, Q38, D-06, D-15, D-07, D-11, Q15, D-36, D-49, D-50, D-56, D-65, P-6, Q49, BC-12, BC-13, BC-14, D-04, D-34, Q55, Q65, D-35, D-42, D-61, BC-06, BC-07, D-25, D-43, D-53 |
 | 02 Payments | Q1, Q4, Q34, D-05, BC-11, BC-15, Q37, BC-10, D-29 |
 | 03 Ledger | Q86, Q84, BC-37, E10, Q63, D-08, D-30, D-68, D-55 |

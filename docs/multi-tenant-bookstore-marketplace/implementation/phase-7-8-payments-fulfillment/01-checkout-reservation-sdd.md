@@ -112,11 +112,18 @@ Races, each settled by the rule in master §14 (lock the order, re-check, first 
   refund stands and a later cancel refunds the rest (SDD 04 §1).
 
 - `report_missing_books` against `expire_unaccepted_order`: a report on an order still
-  `awaiting_store` counts as the store's acknowledgement (my reading of D-04, for the owner
-  to confirm). "Keeps the rest" moves the order to `accepted` and stops the 24-hour timer;
+  `awaiting_store` counts as the store's acknowledgement (D-94, which refines D-04). Recording the report moves the order to `accepted` and stops the 24-hour timer; "keeps
+  the rest" then continues it;
   "cancelled all" ends it as `cancelled`. If the report commits first, the timer finds the
   order no longer `awaiting_store` and does nothing; if the timer commits first, the whole
   order is refunded and the report is refused with "this order was cancelled".
+
+**Report, then outcome.** The command has two steps. Step one records which books are
+missing. On an `awaiting_store` order that is the acknowledgement (D-94): the order moves
+to `accepted` with a "missing-book outcome pending" mark, the D-04 timer stops and the
+D-83 24-hour timer starts. Step two records the outcome, "keeps the rest" or "cancelled
+all", and clears the mark; if the timer ends first the system records "keeps the rest"
+(D-83). While the mark is set the order cannot be marked ready.
 
 `report_missing_books` is allowed while the order is `awaiting_store` or `accepted`, up to
 "ready". If the customer cannot be reached, the store records "keeps the rest" within 24

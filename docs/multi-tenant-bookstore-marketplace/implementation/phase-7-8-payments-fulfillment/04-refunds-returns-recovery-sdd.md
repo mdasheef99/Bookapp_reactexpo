@@ -41,7 +41,7 @@ store fault records, chargebacks, and the losses BookConnect absorbs.
 | 4 | Missing books, customer cancels all | Auto | Full, with delivery (less anything already refunded under 3) | Store | D-61 |
 | 5 | Late payment and the book is gone | Auto | The whole payment | BookConnect | Q38, D-22 |
 | 6 | Wrong-amount payment | Auto | That payment in full | BookConnect | D-29 |
-| 6a | Duplicate payment | None: not a refund of ours | Nothing from BookConnect. Cashfree reverses it (CF-30); we record and confirm the reversal (SDD 02 §5) | BookConnect, if any fee arises | D-29, CF-30 |
+| 6a | Duplicate payment | None: not a refund of ours | Nothing from BookConnect. Cashfree reverses it (CF-30); we record and confirm the reversal (SDD 02 §5). If Cashfree's records show none after the set wait, the admin refunds it within 1 business day (D-78) | BookConnect, if any fee arises | D-29, D-78, CF-30 |
 | 7 | Customer cancels before ready (pickup) or before collection (delivery) | Auto (D-91) | Full, with delivery | BookConnect; provider fee per D-31 | Q45, D-67 |
 | 8 | Photos not sent, rejected, or not approved in time | Auto | Full, with delivery | Store if photos were not sent or do not match; else BookConnect | D-43, D-53 |
 | 9 | Pickup missed | Auto | Full | BookConnect | Q72, Q59, D-22 |
@@ -93,7 +93,8 @@ of mind. Reporting target 48 hours; for pickup it counts from handover (D-44).
 | `approved` / `rejected` | Admin decision, at any amount | D-38 |
 | `awaiting_handover` | Delivered order: reverse pickup booked. Pickup order: customer brings it back. 5 days from approval, reminder on day 4 | D-32, D-72 |
 | `handover_retry` | Customer missed the reverse pickup: one free rebook, then drop-off at the store. The cost of the failed trip the customer caused is deducted from the refund | D-71, D-09 |
-| `awaiting_inspection` | Book is at the store; 48 hours; overdue goes to the admin queue | D-10 |
+| `in_return_transit` | Delivered order only: the customer handed the book to the rider. The 5-day lapse timer stops here | D-72, D-32 |
+| `awaiting_inspection` | Book is at the store; the 48 hours start on arrival; overdue goes to the admin queue | D-10 |
 | `inspection_passed` | Refund releases automatically | D-38 |
 | `inspection_failed` | Becomes a dispute | D-38 |
 | `lapsed` | Not handed over in 5 days; closed without refund | D-72 |
@@ -125,7 +126,9 @@ of mind. Reporting target 48 hours; for pickup it counts from handover (D-44).
     checked, and the admin either sends it and uses it as evidence, or accepts the
     chargeback and closes the refund.
   - What is recovered from the store is worked out once per payment, on the net amount the
-    customer finally received, and never more than the store's share. Every debit Cashfree
+    customer finally received, and each part (book price, delivery charge, reverse pickup, fee) is recovered once only.
+    The total may be more than the store's share of the sale: in handoff §11 item 19 the debt
+    is ₹530 on a ₹400 book. Every debit Cashfree
     actually makes is still recorded.
 
 ## 6. Refund after the store was paid, and store debt
@@ -142,7 +145,10 @@ of mind. Reporting target 48 hours; for pickup it counts from handover (D-44).
   it with an adjustment (CF-50). So the route is fixed. BookConnect credits the store's
   balance by the missing amount (CF-19), Cashfree's refund then takes exactly that money,
   and the amount credited is the store's debt. It is recovered later by BookConnect's own
-  debit adjustment and by nothing else. BookConnect never leaves the refund waiting for
+  debit adjustment or, once the 7-day request is made, by the store repaying directly to
+  BookConnect's bank (D-14). It is never also netted by Cashfree from later settlements. A
+  verified repayment reduces the same outstanding amount, and no debit is sent for money
+  already repaid. BookConnect never leaves the refund waiting for
   the store's future sales, which would both delay the customer (D-14) and take the money
   a second time. The sandbox test confirms the refund consumes the credit and nothing more.
 - **How "recovered from the next payout" works.** Release dates are already with Cashfree

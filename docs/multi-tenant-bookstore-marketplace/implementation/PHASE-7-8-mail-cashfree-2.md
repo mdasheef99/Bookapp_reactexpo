@@ -1,6 +1,6 @@
 # Phase 7/8: Second Mail to Cashfree
 
-**Status:** sent by the owner on 2026-11-10, in reply to ticket 8774207. No reply yet.
+**Status:** sent by the owner on 2026-11-10, in reply to ticket 8774207. Answered by Cashfree's third reply (R3).
 **Authority:** none. It answers Cashfree's request to confirm the deferred settlement
 number and asks the points still open after its two replies.
 **Related:** [replies and fact record](./PHASE-7-8-cashfree-replies.md) ·

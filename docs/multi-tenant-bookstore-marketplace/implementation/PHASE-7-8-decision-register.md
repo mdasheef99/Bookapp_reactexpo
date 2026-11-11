@@ -280,6 +280,7 @@ delivery. Rows below that apply only to a later courier option say so.
 | D-91 | **Three more automatic refunds (2026-11-10; extends D-22):** a customer cancel before ready or before collection (Q45, D-67), a refusal at pickup (D-44), and a customer cancel when no rider is available (D-77) are refunded automatically, like the D-22 categories. Amount, who bears it, the one-refund-per-event rule and the chargeback check (D-80) are in SDD 04 §2, categories 7, 10 and 11. | DECIDED (owner approved 2026-11-10) |
 | D-92 | **Who verifies the pickup code in the pilot (2026-11-10; refines D-44):** only the store owner's login. Staff accounts are deferred. | DECIDED (owner approved 2026-11-10) |
 | D-93 | **Payout while a return or dispute is open (2026-11-10):** if a return or dispute is open on an order whose share has not yet been released, only that order's share waits; the store's other money is paid as usual. The wait is made at Cashfree by moving that order's date later (CF-44), never by a ledger entry alone. It ends when the case is decided, and no later than the settlement-window guard (D-89). A share already paid out is not held; D-14 recovery applies. | DECIDED (owner approved 2026-11-10) |
+| D-94 | **Missing-book report on an order not yet accepted (owner decision, 2026-11-11; refines D-04):** if a store reports missing books on an order it has not yet accepted, the report counts as the store's acknowledgement. "Keeps the rest" accepts the order and stops the 24-hour auto-cancel; the customer is refunded for the missing books only. "Cancelled all" cancels the order with a full refund. If the 24-hour timer has already cancelled the order, the report is refused. | DECIDED (owner approved 2026-11-11) |
 
 Status words in this table: DECIDED means the owner approved the rule. PROPOSED means it is
 Claude's wording or number and is not yet policy. The owner approved D-88 to D-93 and the
@@ -308,8 +309,9 @@ Clarifications for the specifications (no owner decision needed):
 record, with sources, is [PHASE-7-8-cashfree-replies.md](./PHASE-7-8-cashfree-replies.md)
 (CF-01 to CF-41; open questions CF-A1 to CF-A15), and it replaces the Cashfree rows of
 this table where they differ. In particular, at the end of the settlement window the held
-money goes to BookConnect, not to the store (CF-04), and there is no Monday schedule
-(CF-05). The refund-window row stands: the exact limit is still to be confirmed.
+money goes to BookConnect, not to the store (CF-04), and the first reply said there is no Monday schedule
+(CF-05). The third reply says a weekly settlement schedule, paying on the first working
+day of the week, is available (CF-47); Cashfree is asked to confirm which holds. The refund-window row stands: the exact limit is still to be confirmed.
 
 | Topic | What public documents say | Treatment |
 |---|---|---|
