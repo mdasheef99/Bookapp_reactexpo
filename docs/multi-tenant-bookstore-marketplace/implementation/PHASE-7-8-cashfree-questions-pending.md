@@ -16,6 +16,35 @@ asking all of them is drafted and reviewed, not sent.
 answered CF-A19 and CF-A20 (moved to Answered) and narrowed CF-A17, CF-A18, CF-A21,
 CF-A22 and CF-A26. 18 questions open. The mail is to be cut down to the questions only
 Cashfree can answer.
+**Update 2026-11-12 (mails):** the owner sent the [fourth mail](./PHASE-7-8-mail-cashfree-4.md)
+with 9 questions (text as sent stored there). The questions were then reviewed by Codex
+Sol and searched in the docs again by Haiku; the result is the table below. The
+[fifth mail](./PHASE-7-8-mail-cashfree-5.md) (7 questions, reviewed by Sol) is drafted,
+not sent. The tables further down keep the original wording and checks.
+
+## Where each open question stands (2026-11-12)
+
+| ID | Where | Note |
+|---|---|---|
+| CF-A17 | Asked: mail 4, Q1 | Docs (payment lifecycle): a pending payment that succeeds while termination is processing moves the order to success; SBX-03 saw the same. Sol: the design does not need a time limit (it keeps reconciling) |
+| CF-A27 | Asked: mail 4, Q2 | Docs: a timed-out create can be retried with the same key; `x-idempotency-replayed` header exists. Key retention not documented |
+| CF-A21 | Asked: mail 4, Q3 (response time) and mail 5, Q3 (retries keep the first timestamp, five-minute check) | SBX-10 |
+| CF-A29 | Asked: mail 4, Q4 | Docs give the headers' meaning ("per minute"), not these two limits |
+| CF-A25 | Withdrawn in mail 5 | We test it ourselves: start two attempts while the order is unpaid, then simulate both as successful (not yet tried) |
+| CF-A14 | Asked: mail 4, Q6 | |
+| CF-A31 | Asked: mail 4, Q7 | |
+| CF-A12 | Asked: mail 4, Q8 | |
+| CF-A34 | Asked: mail 4, Q9 (UPI and cards only) and mail 5, Q6 (how the merchant ledger is recharged) | R1 already says chargebacks and vendor credits use the merchant ledger |
+| CF-A35 (new) | Mail 5, Q1 | How to refund one particular payment by API: the Create Refund request has no `cf_payment_id` (checked on the live spec 2026-11-12) |
+| CF-A16 | Mail 5, Q2 (narrowed to `UNRECONCILED_AUTO_REFUND`) | Docs show `PAYMENT_AUTO_REFUND` with reason "Multiple payments were performed against same order." |
+| CF-A32 | Mail 5, Q4 | R4: "Once the required balances are available, the refund can be processed" does not say it resumes by itself |
+| CF-A28 | Mail 5, Q5 | Docs: amounts may differ when a service fee is collected from the customer |
+| CF-A33 | Mail 5, Q7 (verification charge only) | Easy Split charge and tax are in the split-details API (`split_service_charge`, `split_service_tax`) |
+| CF-A18 | Test ourselves | SBX-04 used the API; still to test through the real hosted checkout, and a session after expiry |
+| CF-A30 | Test ourselves (owner) | Docs list a PG Reconciliation API and a Ledger Report; check they cover every movement |
+| CF-A22 | Dropped | SDD 02 uses only the dashboard endpoint, no `notify_url`. Webhook version is chosen per endpoint in the dashboard; `x-idempotency-key` comes only from version 2025-01-01 |
+| CF-A26 | Dropped | SBX-05: status decides, not the completion time; our own sort decides the order |
+| CF-A24 | Answered by docs | "Cashfree signs webhooks using the client secret that was active at the time the event was sent" (Payloads and Signatures page): keep the old secret for checking until in-flight webhooks are done |
 
 "Sandbox" means we can also find the answer ourselves by testing; asking may save time.
 

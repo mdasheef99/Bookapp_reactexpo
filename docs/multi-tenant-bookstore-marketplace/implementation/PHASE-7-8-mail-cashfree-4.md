@@ -1,7 +1,9 @@
 # Phase 7/8: Fourth Mail to Cashfree (draft)
 
-**Status:** DRAFT, written 2026-11-12, not sent. The owner reviews it and sends it from
-their own mailbox as a reply on ticket 8774207. Edit freely before sending.
+**Status:** SENT 2026-11-12 by the owner, in a shorter form: 9 questions, not the 20 in the
+draft below. The text as sent is stored word for word in the section "As sent" at the end
+of this file, and wins over the draft. The draft is kept as the record of how the questions
+were prepared.
 **Authority:** none. It asks the 20 open questions in the
 [pending list](./PHASE-7-8-cashfree-questions-pending.md) (CF-A12, A14, A16 to A22, A24 to
 A34). CF-A3 and CF-A23 are left out because Cashfree's docs answer them. Every "your
@@ -173,3 +175,46 @@ Warm regards,
 Md Asheef
 Conceptsphere Technologies LLP
 Merchant ID 11352134
+
+## As sent (2026-11-12, word for word as pasted by the owner)
+
+The owner shared the text without the subject line or send time. Mapping: 1 = CF-A17,
+2 = CF-A27, 3 = CF-A21 (response time), 4 = CF-A29, 5 = CF-A25, 6 = CF-A14, 7 = CF-A31,
+8 = CF-A12, 9 = CF-A34 (UPI and cards only).
+
+```text
+Dear Cashfree Team,
+Greetings, and thank you once again for configuring the 45-day deferred settlement window on our sandbox account. We have now started building and testing our integration.
+ As we have moved into detailed design and testing, a few further questions have come up.
+Part 1: Orders and payments
+
+1. Payments after we terminate an order. Your earlier reply explained that a UPI payment started before termination may still succeed, and your help pages note that a “Failed” transaction may, in rare cases, later move to “Success”. Could you please confirm whether a payment shown as `USER_DROPPED` or `NOT_ATTEMPTED` can also become `SUCCESS` after the order is terminated? Also, does `TERMINATION_REQUESTED` always end as `TERMINATED`, and roughly how quickly?
+2. Create Order timeouts. Your Create Order page says a request that times out can be safely retried with the same `x-idempotency-key`. Could you please confirm:
+   * After a timeout, can the order exist even if Get Order returns 404 at first? Is a 404 final?
+   * How long is an idempotency key remembered?
+
+Part 2: Webhooks and rate limits
+
+3. Webhook response time. Within how many seconds must our endpoint respond to a webhook before it is treated as a failure and retried?
+4. Rate limits on a live account. Your rate-limit page does not list Get All Refunds for an Order (`GET /orders/{order_id}/refunds`) or Terminate Order (`PATCH /orders/{order_id}`). What are their limits on a production account?
+
+Part 3: Sandbox testing
+
+5. Your Simulate Payment API lets us set a payment to `SUCCESS`, `FAILED`, `PENDING` or `USER_DROPPED`. Is there a way on sandbox to create two successful payments on one order, so that we can test how the automatic reversal of the extra payment is reported?
+
+Part 4: Easy Split and refunds
+
+6. Failed vendor settlement. Thank you for explaining that a failed vendor settlement is reported through the Vendor Settlement Webhooks with its reason, and that the next step depends on that reason. Your settlements help page says that a failed merchant settlement returns to Cashfree’s nodal account and is retried automatically in the next cycle. For a vendor settlement that failed for a reason we have since fixed (for example corrected bank details), is it retried automatically in the vendor’s next settlement cycle, and where does the money wait meanwhile (for example in the vendor’s balance)?
+7. Failed card refunds. Your earlier reply explained what can be done when a UPI refund fails (another UPI ID with the customer’s consent, or a refund from our merchant ledger). What happens when a refund to a card fails, for example because the card is closed or blocked: where does the money go, how are we told, and what should we do?
+
+Part 5: Charges and going live
+
+8. Easy Split charge basis. We had understood from your Tech Team’s reply that the Easy Split charge is calculated on the order amount; your later reply asked us to refer to our account-specific commercials, and your FAQ mentions 0.2% per split. To be sure we calculate it correctly: is the charge calculated on the full order amount or on the vendor’s split amount? If this depends on our account’s commercials, we are happy to take it up with our Account Manager; please just let us know whom to contact.
+9. Going live. Can our live account start with UPI and cards only?
+
+Thank you very much for your time and patience. Your answers so far have shaped our design, and these last points will help us complete it correctly. As before, a written reply is most useful to us, and we are happy to discuss any of these on a call if that is easier.
+Warm regards,
+Md Asheef
+Conceptsphere Technologies LLP
+Merchant ID 11352134
+```

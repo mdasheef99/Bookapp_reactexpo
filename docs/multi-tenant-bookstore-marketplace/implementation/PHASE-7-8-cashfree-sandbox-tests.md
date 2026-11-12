@@ -40,21 +40,42 @@ that is noted there.
 | SBX-09 | With `notify_url` on the order, **each event was delivered twice**: once with `x-webhook-version` `2021-09-21` and once with `2023-08-01`, each with its own body and signature. The bodies differ: `cf_payment_id` is a **number** in 2021-09-21 and a **string** in 2023-08-01, and only 2023-08-01 has `payment_gateway_details`. Headers seen: `x-webhook-attempt` (`1`), `x-webhook-signature`, `x-webhook-timestamp`, `x-webhook-version`; there was **no `x-idempotency-key`**. Deliveries came about 2 seconds after the payment succeeded. | Part of CF-A21 and CF-A22 |
 | SBX-10 | Our probe answered HTTP 500 on purpose for one order. Only the `2023-08-01` delivery was retried; the `2021-09-21` one was not. Retries came about 1, 3 and 8 minutes after the first try (attempts 2, 3, 4 seen up to 23:14 UTC; the docs' default of 2, 10, 30 minutes did not match). Each retry carried the **same** `x-webhook-timestamp` and the **same** signature as the first try, with `x-webhook-attempt` counting up. So the timestamp is the original send time: a check that rejects messages older than 5 minutes would have rejected attempt 4. | Part of CF-A21 (retries: same timestamp and signature) |
 
+## Limits of this evidence (added 2026-11-12 after Sol's review)
+
+- The calls used API version `2025-01-01`; the planned adapter uses `2026-01-01`. Re-check
+  SBX-01 to SBX-07 on that version when the adapter is built.
+- The raw JSON log holds the API calls only. The incoming webhooks (SBX-08 to SBX-10) were
+  read from the dev function log on 2026-11-12 and are recorded here, not stored raw.
+- SBX-03 shows success after termination was **requested**, not after `TERMINATED`. The
+  3 seconds in SBX-02 is one observation, not a deadline.
+- SBX-10 shows what one account did with webhook version `2023-08-01`: it does not prove the
+  retry schedule for every account (the docs say retry policies can be configured), nor
+  that the older version is never retried.
+
 ## Not tested
 
 - **CF-A22 dashboard half:** whether payments are also sent to an endpoint set in the
   Cashfree dashboard. Needs the owner to add the probe URL in the sandbox dashboard
   (Developers → Webhooks); changing dashboard settings is the owner's action.
-- **CF-A25:** two successful payments on one order. Once an order is `PAID`, the session
-  is refused (SBX-04), so this cannot be done through the API.
+- **CF-A25:** two successful payments on one order. A new attempt after the order is `PAID`
+  is refused (SBX-04). Not yet tried: starting two attempts while the order is unpaid and
+  then simulating both as `SUCCESS` (corrected 2026-11-12 after Sol's review; the earlier
+  wording "cannot be done through the API" over-claimed).
+- **A real `FAILED` attempt:** Simulate Payment needs a `payment_error_code` for `FAILED`
+  (the docs' example uses `ISSUER_NOT_AVAILABLE`); not yet re-run.
 - **CF-A27, CF-A28:** a timed-out Create Order and odd payment amounts cannot be produced.
 
 ## What this changes for the design (to be taken into SDD 02 when it is next revised)
 
 1. Webhook check: use timestamp + raw body with no dot (SBX-08).
-2. De-duplication cannot rely on `x-idempotency-key` (SBX-09). Either accept only one
-   `x-webhook-version`, or de-duplicate on the event type plus `cf_payment_id` plus status.
-   Read `cf_payment_id` as text, since its type differs by version.
+2. De-duplication must work without `x-idempotency-key` (SBX-09): always de-duplicate on
+   the event type plus `cf_payment_id` plus status, even if only one webhook version is
+   selected, because delivery is at least once. Cashfree's docs say `x-idempotency-key` is
+   sent only on webhook version `2025-01-01` and later, and the version is chosen per
+   endpoint in the dashboard (reliability page, checked 2026-11-12). Never accept the
+   `2021-09-21` body: its `cf_payment_id` is a 19-digit **number**, which ordinary
+   JavaScript JSON parsing rounds (it is above 2^53), so converting it to text afterwards
+   cannot restore it. Use a version where it is a string.
 3. The expiry worker must treat `order_already_paid` as "paid" (SBX-01), and treat
    `request_invalid` "already requested" as "termination in progress" (SBX-02).
 4. A filled `payment_completion_time` does not mean finished (SBX-05).

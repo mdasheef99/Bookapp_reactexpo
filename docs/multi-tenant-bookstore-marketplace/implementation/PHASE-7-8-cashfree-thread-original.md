@@ -28,6 +28,7 @@ Times are as Gmail shows them (IST, UTC+5:30).
 | 7 | Wed 11 Nov 2026, 9:35 AM | Us | Third mail: our understanding, points awaited | — |
 | 8 | Wed 11 Nov 2026, 1:20 PM | Cashfree Care, signed Nikhil Scaria | Answers to the third mail; 45-day window configured on sandbox | R4 |
 | 9 | Wed 11 Nov 2026, 3:57 PM | Us | Thank-you mail: "Your team has answered every point we raised" | — |
+| 10 | Thu 12 Nov 2026 (time not recorded) | Us | Fourth mail: 9 questions. Not in the pasted thread below; its text as sent is stored word for word in the [fourth mail file](./PHASE-7-8-mail-cashfree-4.md) ("As sent") | — |
 
 Note on message 9: it told Cashfree every point was answered. That was based on my wrong
 reading; three points were still open (CF-A3, CF-A12, CF-A14) and seven facts had been
