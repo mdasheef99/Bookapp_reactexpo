@@ -16,6 +16,17 @@ they do not override ACTIVE.md. Repeated status copies moved to the
 **Implementation authority:** See ACTIVE.md and the Owner's explicit scope.
 **Migration creation/application authority:** See ACTIVE.md; prior approvals are historical.
 
+## 2026-11-12 02d Unit 1a built locally (M100 local file, not applied)
+
+02d Unit 1a (edition-sheet prefill save, SDD rev c) is built and committed locally as
+`7600805` on branch `phase9/02d-prefill` (not pushed); M100
+(`20261112000100_marketplace_phase9_02d_prefill_save.sql`, 557 lines) is a local
+file, NOT APPLIED to any database. Scope, reported verification, reviews and the new
+pre-existing-failures open item:
+[implementation log](./trackers/02-implementation-and-verification.md#2026-11-12---02d-unit-1a-built-locally-m100-local-file-not-applied);
+[ledger M100 row](./supporting/database-current-vs-target.md#2026-11-12-02d-unit-1a-m100-local-file-not-applied).
+Current work unit and the next authorized action are in ACTIVE.md.
+
 ## 2026-11-07 slice 8 package 8c fix round (M99 local file, not applied)
 
 Fix round for re-test defects D1-D6: Unit 1 M99 (lock-free choices read,

@@ -1,16 +1,19 @@
 # Marketplace current state
 
-Recorded state: 2026-11-10. **Slice 8 is complete on dev** (8a, 8b, 8c;
-closed 2026-11-09). No work unit is active. This file holds current state
-only: it is rewritten (not appended to) at session close, and rotated into
-`history/` at each slice close. Dated evidence belongs in trackers.
+Recorded state: 2026-11-12. **Slice 8 is complete on dev** (8a, 8b, 8c;
+closed 2026-11-09). **02d Unit 1a is built and committed locally**
+(`7600805`, not pushed); M100 is a local file, NOT APPLIED to any database.
+This file holds current state only: it is rewritten (not appended to) at
+session close, and rotated into `history/` at each slice close. Dated
+evidence belongs in trackers.
 
 ## Current work
 
 - Active phase: **Phase 9: Image-to-LLM Inventory**.
-- Active slice/work unit: **02d edition-sheet prefill** (Owner
-  2026-11-12; the existing search button stays, OD-2026-10-30-4), on branch
-  `phase9/02d-prefill`. Read-only preparation only: no build authorized.
+- Active slice/work unit: **02d edition-sheet prefill, Unit 1a BUILT**
+  (SDD rev c; Owner 2026-11-12; the existing search button stays,
+  OD-2026-10-30-4), on branch `phase9/02d-prefill`. Units 1b, 2 and 3 are
+  not built.
   Slice 8 closed on dev 2026-11-09 on branch `phase9/slice8-providers`.
 - Completed milestone: **slice 8 complete on dev (2026-11-09)**: 8c fix
   round (M99, worker `c64c2fb`, app `0b00441`) deployed, re-tested, stuck
@@ -18,9 +21,16 @@ only: it is rewritten (not appended to) at session close, and rotated into
   [Closeout evidence](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-09-fix-round-review-muse-and-slice-8-closeout);
   8b: [tracker 40](phase-9-image-inventory/trackers/40-package8b-worker-evidence.md);
   8a: [tracker 39](phase-9-image-inventory/trackers/39-package8a5-contract-review.md).
-- Exact next authorized action: **Owner approval to brief and build 02d
-  Unit 1** (database + worker) from the pass-3 SDD (refreshed and reviewed
-  2026-11-12; decisions OD-2026-11-12-1..3). Not authorized by this file.
+  **02d Unit 1a built locally 2026-11-12** (`7600805`, not pushed): M100
+  local file (557 lines) + worker decoder, choices schemas and Windows
+  verify support; reported verification in the [implementation
+  log](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-11-12---02d-unit-1a-built-locally-m100-local-file-not-applied);
+  M100 NOT APPLIED, dev unchanged.
+- Exact next authorized action: **none standing — each pending item needs its
+  own Owner approval**: Unit 1b brief/build (M101, Search Books while fresh);
+  applying M100/M101 to dev (rollout order in SDD §8 Unit 3); Unit 2 app;
+  Unit 3 live check; the pre-existing-failures fix unit; the stuck-card unit
+  (row 11); pushing local commits. **1a must not be released without 1b.**
 - Other gated actions, each needing its own Owner approval: the pilot Open
   Library switch (8c operator scripts 01-05 with placeholders; dev is
   already switched); 02d prefill.
@@ -32,11 +42,15 @@ only: it is rewritten (not appended to) at session close, and rotated into
 - Dev project data may be freely changed in live tests (Owner). Local
   commits are allowed after the diff is read. Do not run `db push`
   (frozen).
-- This session (2026-11-10 to 11-12): Markdown, validator-script and local
-  tooling edits (ACTIVE.md rotation, `scripts/verify-phase9.js`,
-  `scripts/phase9-sql-facts.js`, 02d SDD pass 3, DECISIONS OD-2026-11-12-1..3),
-  plus an Owner-approved push of the branch. Database: read-only SELECTs only
-  (row 11 check, `cron.job`). No writes, Storage or deployment.
+- This session (2026-11-12): recorded the Unit 1a build (`7600805`, local,
+  not pushed) in ACTIVE.md, the phase-9 TRACKER, the implementation log and
+  the migration ledger; ran the continuity and migration-set validators.
+  Markdown docs only. No database reads or writes, no migration applied, no
+  Storage, deployment or push.
+- Earlier (2026-11-10 to 11-12): SDD pass 3, `verify-phase9.js` /
+  `phase9-sql-facts.js` tooling, DECISIONS OD-2026-11-12-1..3, one
+  Owner-approved branch push; database read-only SELECTs only
+  (row 11 check, `cron.job`).
 - Past dated approvals (2026-11-04 to 2026-11-09) are preserved in
   [the archive](history/ACTIVE-history-to-2026-11-09.md) and trackers 40/41;
   they grant nothing now.
@@ -62,10 +76,9 @@ Recorded development-project results, not a fresh operational readback.
 - Deployed worker: `phase9-metadata-worker` deploy
   `dep-dbob845g1s2s73en12fg` (commit `2584f98`, live 2026-11-08 17:41:31
   UTC). Rollback target: `dep-dblielugekts738gov3g` (`6e0df90`, 8b).
-- Latest relevant recorded commit on `main`: `2584f98` (pushed; branch
-  `56e6eb5`). Later docs, tooling and test-hash commits on the branch were
-  pushed to the branch only on 2026-11-10 (branch head `0ddbfcf`); `main` is
-  unchanged.
+- Latest relevant recorded commit on `main`: `2584f98` (pushed); `main` is
+  unchanged. Branch `phase9/02d-prefill` local HEAD `7600805` (Unit 1a,
+  not pushed).
   [Push and deploy evidence](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-07-8c-fix-round-m99-worker-admission--rpc-logging-app).
 
 ## Open items, blockers and residual risks
@@ -74,7 +87,7 @@ One line each; detail lives at the link. Remove a line when it closes.
 
 | # | Item | Owner / detail |
 | --- | --- | --- |
-| 1 | 02d chosen (Owner 2026-11-12); SDD pass 3 written and reviewed; Unit 1 build not yet approved | [02d SDD](phase-9-image-inventory/work-units/post-scan-rework/02d-edition-sheet-prefill-sdd.md) |
+| 1 | 02d Unit 1a built locally (`7600805`, not pushed; M100 NOT APPLIED, dev unchanged); SDD rev c; Unit 1b/2/3, M100/M101 apply and pushes each need separate Owner approval; 1a not releasable without 1b | [02d SDD](phase-9-image-inventory/work-units/post-scan-rework/02d-edition-sheet-prefill-sdd.md) |
 | 2 | Pilot Open Library switch | Owner-timed; [tracker 41](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md) |
 | 3 | Render free instances failed to start ~2 h on 2026-11-08, no cause found | Watch; [re-test record](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-0809-post-deploy-dev-re-test-explicit-search-books) |
 | 4 | Undocumented Render deploy `dep-dbmbe461egvs73btn1dg` (2026-11-05) | Confirm with the Owner |
@@ -97,6 +110,7 @@ One line each; detail lives at the link. Remove a line when it closes.
 | 21 | `.claude/psr-slice6/db-evidence.md` and `.claude/psr-slice7a/preflight-1.md` are absent from this checkout | Tracked summaries only |
 | 22 | Slice 7b-2 limits carried (AC7-21(b), provider-facts-only privacy case, rollback and live Google/expiry cases unproven) | [tracker 38 §47](phase-9-image-inventory/trackers/38-post-scan-rework-evidence.md#47-slice-7b-2-closeout-whole-slice-review-m88-created-locally-test-hardening-2026-10-29) |
 | 23 | Low-end Android Unit 6F validation deferred, not PASS | [tracker 24](phase-9-image-inventory/trackers/24-unit6f-readiness-quality-gates-evidence.md) |
+| 24 | NEW OPEN ITEM (pre-existing, not caused by 1a; identical at `1a4ef20`): 46 database-suite + 17 native provider-replacement failures, hidden because the verify database step never ran on Windows; needs its own small fix unit | [implementation log](phase-9-image-inventory/trackers/02-implementation-and-verification.md#2026-11-12---02d-unit-1a-built-locally-m100-local-file-not-applied) |
 
 Closed or purely historical notes from slice 8 (apply records, review
 rounds, the M95 read-model fix, reviewer assignments) are in

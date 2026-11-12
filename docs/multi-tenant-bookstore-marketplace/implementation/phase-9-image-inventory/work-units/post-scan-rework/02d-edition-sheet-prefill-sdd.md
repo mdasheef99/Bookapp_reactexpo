@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| **Status** | **Pass-3 design refresh, 2026-11-12 (revision c); NOT IMPLEMENTED.** Written by the orchestrator after slice 8b/8c shipped. Build, migration creation/application and deployment each need separate Owner approval. |
+| **Status** | **Pass-3 design refresh, 2026-11-12 (revision c). Unit 1a BUILT and committed locally (`7600805`, M100 not applied); Units 1b, 2, 3 not built.** Written by the orchestrator after slice 8b/8c shipped. Migration application and deployment each need separate Owner approval. |
 | **Parent** | [SDD-0 §4 PSR-D30](./00-overview-sdd.md#e-matching-and-lookup); [SDD-2 Slices 8–9](./02-catalogue-and-matching-sdd.md#slice-8--open-library-first-clues-google-off); [02c](./02c-slice8-open-library-first-sdd.md) §§4.3/5/7. |
 | **Authority** | [OD-2026-10-30-4](../../../../DECISIONS.md#log) (ship after 8b, before slice 9; keep the search button); [OD-2026-10-31-5](../../../../DECISIONS.md#log) (language grouping); [OD-2026-11-12-1..3](../../../../DECISIONS.md#log) (this pass). D07/D10/D30/D35/D39/D40, R04/R06–R10; master §3 MAS-02/03/13–16; DOC-3 §5.2. |
 | **Baseline** | Branch `phase9/02d-prefill` (after `c10832d`): 8b worker and 8c switch built, migrations through M99 in the tree; dev's automatic provider is Open Library, Google is off. Code read 2026-11-12 by the orchestrator. No live readback. |
-| **Migration** | One forward migration (Unit 1). Number unassigned. |
+| **Migration** | Unit 1a: M100 `20261112000100_marketplace_phase9_02d_prefill_save.sql` (local, not applied). Unit 1b: M101 (not created). |
 | **Size / risk** | Medium / high: receipt replay, expiry, client cache authority. No relaxed matcher or tie pick (slice 9). |
 | **Review** | Pass 2 (2026-10-30): Terra round 3. Pass 3: Sonnet (FIX_NEEDED, applied in revision a); MiniMax M3.1 Flash and paid DeepSeek (both FIX_NEEDED, confirmed findings applied in revision b); Sol (FIX_NEEDED, 5 findings confirmed in code and applied in revision c: state-row insert, skip precedence, idle on invalidation, `queryLanguage` rollout, ACP-4 reachable cases). |
 
@@ -92,6 +92,8 @@ order; the first match is the receipt reason:
 | 7 | `empty_unproven` | Empty list without truthful source/deadline proof. |
 
 A skip never overwrites rows or a selection.
+
+**As built (1a):** rule 5 means *absent* evidence (no external list, missing fetched/deadline, or registry storage off); rule 7 means evidence present but untruthful (Owner ruling during the 1a plan). The helper uses the registry row the completion already validated (no second registry read), so a registry change committed during the completion cannot roll back the automatic result (review finding F1, fix round 1). The eight-argument helper signature stays as a private defensive wrapper.
 
 **Helper result** (inside the AutoReceipt `prefill` field):
 `{status:'saved',requestId,requestGeneration,optionsVersion,optionsExpiresAt}`
