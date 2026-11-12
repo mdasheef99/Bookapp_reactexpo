@@ -225,8 +225,11 @@ with the payment, refund and settlement events; orders carry no `notify_url` (m2
 Function `commerce-payment-webhook`, with JWT verification off:
 
 1. Read the raw body before parsing it.
-2. Verify the signature and the timestamp age (§7.2). On failure record a `rejected` row
-   with no body, answer HTTP 401 and stop.
+2. Verify the signature, the timestamp age and the webhook version (§7.2). The version must
+   be the registered `2026-01-01`: it carries `x-idempotency-key` (Cashfree sends that header
+   only from version `2025-01-01`) and sends `cf_payment_id` as a string. The old
+   `2021-09-21` body sends it as a 19-digit number, which JavaScript's JSON parsing rounds
+   (SBX-09). On failure record a `rejected` row with no body, answer HTTP 401 and stop.
 3. Call `public.commerce_record_webhook` (M10). In **one transaction** it inserts the
    event by `message_key` (§10.2), its body, and a `process_provider_webhook` task (dedupe
    key: the event ID). A repeated key changes nothing.
@@ -281,9 +284,13 @@ their own reconciliation.
 
 ### 10.5 Staleness and Cashfree's retries
 
-Cashfree retries at 2, 10 and 30 minutes (CF-37). If a retry carries its original
-timestamp, the five-minute rule rejects it and only the poll recovers that payment. The
-design is safe either way (CF-A21).
+Cashfree's docs give retries at 2, 10 and 30 minutes (CF-37). On sandbox, retries came
+about 1, 3 and 8 minutes after the first try and kept the first attempt's timestamp and
+signature (SBX-10). The docs' five-minute rule would therefore reject genuine retries, so
+the age limit is 24 hours (D-114, `commerce.webhook_max_age_seconds`). This is safe: a
+message never changes money by itself (BC-11), every message is re-checked with Cashfree,
+and a repeat is dropped by its message key (§10.2). Cashfree has been asked whether the
+five-minute advice applies to retries (fifth mail, question 3; CF-A21).
 
 ### 10.6 Deleting old bodies (M13)
 
@@ -398,11 +405,17 @@ SDD 01 §5.3 and §5.4 define the steps; this SDD supplies them:
   |---|---|
   | `TERMINATED`, `TERMINATION_REQUESTED` | Terminated, for SDD 01's command (SDD 01 §5.3). The poll still continues (§11.2) |
   | `EXPIRED` | Terminated: no payment can start on an expired order |
+  | HTTP 400 `order_already_paid` ("order has already been paid.") | Same as `PAID` below (SBX-01) |
+  | HTTP 400 `request_invalid` with "order termination already requested" | Same as `TERMINATION_REQUESTED` (SBX-02) |
   | `PAID` | `terminate_refused_for_success`; back to §9.2 and §9.3. When no payment on the order was counted and every success on it is a recorded `amount_mismatch`, `duplicate_success` or `reversed` (D-113), this counts as terminated (SDD 01 §5.3) |
-  | `ACTIVE`, or an error answer | Not terminated: read payments (§9.2, §9.3), then retry termination |
+  | `ACTIVE`, or any other error answer | Not terminated: read payments (§9.2, §9.3), then retry termination |
   | `unreachable`, `timeout`, `rate_limited` | Nothing changes; retry (D-101) |
 
-  The exact answers for a paid, expired or already terminated order are CF-A19. SDD 01's
+  The answers for a paid and an already terminated order come from sandbox (SBX-01,
+  SBX-02, 2026-11-12, API version `2025-01-01`; recheck on `2026-01-01` in slice 5). A paid
+  order is refused with an error, not answered with `PAID`, so without the first two rows
+  the expiry worker would retry termination for ever. An expired order's answer is still
+  untested. SDD 01's
   `PAID` refusal shortcut covers any mix of `amount_mismatch`, `duplicate_success` and
   `reversed` successes when none was counted (D-113); otherwise, without a terminating
   answer, retain the holds and retry.
@@ -454,7 +467,16 @@ amount with refund key `wrong_amount:<cf_payment_id>` (m3); set `refund_requeste
 allowed on this payment (§8 guard 5). The checkout runs out on its own timer (SDD 01 §5.3,
 D-29). A later success on the same Cashfree order is a duplicate (§13.2).
 The request carries the attempt ID, `cf_payment_id`, exact amount text and currency as
-well as whole paise when representable. SDD 04 locks this payment and deduplicates by
+well as whole paise when representable.
+
+**Live-money block (CF-A35).** Cashfree's Create Refund request takes the order ID, the
+amount and our refund ID, but no `cf_payment_id` (live API spec, checked 2026-11-12), so a
+refund cannot be pointed at one payment. While the order has only this one success, an
+order-level refund of its exact amount can only reach it. When the order has two
+successes, which payment is refunded is unknown. Until Cashfree answers (fifth mail,
+question 1), this refund and §13.2's `refund_due` refund run only in sandbox; before live
+keys are used, an order with two successes opens an admin case instead of calling Create
+Refund. SDD 04 locks this payment and deduplicates by
 that attempt/key; all sent, pending and unknown refunds count toward the attempt's cap.
 A fractional-paisa or unsupported-currency receipt is never rounded into an INR refund:
 record the mismatch and an admin case, and obtain Cashfree's exact refundable amount and
@@ -541,9 +563,15 @@ Cashfree allows one key pair at a time. Steps, by the owner with an admin:
 3. Generate new keys in Cashfree's dashboard (Developers → API Keys; sandbox and
    production keys are separate); replace both server secrets; redeploy the functions that
    read them. Whether the old keys stop working at once is CF-A24; the procedure assumes
-   they do, so calls and webhooks in this gap fail and are retried.
+   they do, so calls in this gap fail and are retried. Keep the old client secret as a
+   separate server secret used only to check webhook signatures, for 24 hours (the age
+   limit, D-114), then delete it. Cashfree "signs webhooks using the client secret that was
+   active at the time the event was sent" (Payloads and Signatures page, checked
+   2026-11-12), and a retry keeps its first signature (SBX-10), so without this window a
+   message sent before the swap could never pass the check.
 4. Run one sandbox read to prove the new keys work.
-5. Webhooks signed with the old key during the swap are rejected and recovered by the poll.
+5. Webhooks signed with the old secret are accepted during the 24-hour window; anything
+   rejected after it is recovered by the poll.
 6. Restart under D-68: reconciliation shows no stuck or mismatched payment, and the owner
    restarts with a logged reason.
 

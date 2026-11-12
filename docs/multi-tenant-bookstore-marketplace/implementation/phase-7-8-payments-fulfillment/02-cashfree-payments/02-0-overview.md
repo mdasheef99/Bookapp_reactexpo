@@ -5,7 +5,11 @@ register, the Cashfree fact record (CF-01 to CF-66) and approved SDD 01. **Revie
 done** (Muse, DeepSeek, Codex Sol, Codex Luna; [findings](../../PHASE-7-8-sdd02-review-r1.md))
 and revised on 2026-11-11 with the owner's decisions D-104 to D-108. Round 2 reviewed and
 corrected the remaining design defects on 2026-11-12; evidence and exact edits are in
-`p78sdd02r2/SOL-R2-REPORT.md`. Owner/Cashfree gates remain in §16; no approval is implied.
+`p78sdd02r2/SOL-R2-REPORT.md`. Revised again on 2026-11-12 from the
+[sandbox tests](../../PHASE-7-8-cashfree-sandbox-tests.md) (SBX-01 to SBX-10) and owner
+decision D-114: termination answers (§12.1), webhook age limit and version guard (§7.2,
+§10.1, §10.5), previous-secret window on key change (§13.4), live-money block on refunding
+one of two successes (§13.1, CF-A35), tests TE-03/03a, WH-02/02a, WH-10. Owner/Cashfree gates remain in §16; no approval is implied.
 Not approved. No code or migration may be written from it until the owner approves it.
 **Authority:** none yet. Business rules come from the
 [decision register](../../PHASE-7-8-decision-register.md); this document must not add any.
@@ -68,7 +72,7 @@ yet except where the record says so.
 | A second success on one order is reversed by Cashfree, within up to 5 calendar days, seen in transaction details, reports and webhooks | CF-30, CF-64 |
 | Web checkout opens as redirect, popup or inline; card data stays on Cashfree's page; no PCI certificate needed | CF-34, CF-35 |
 | Webhooks are signed with the client secret; one key pair at a time | CF-36 |
-| Webhook delivery is at least once, retried at 2, 10 and 30 minutes; reject a timestamp over five minutes old | CF-37 |
+| Webhook delivery is at least once, retried at 2, 10 and 30 minutes; reject a timestamp over five minutes old | CF-37 (the age limit is replaced by D-114: retries keep their first timestamp, SBX-10) |
 | Terminate, split and adjustment calls accept `x-idempotency-key` (the API reference adds: UUID format, and create order accepts it too) | CF-38 |
 | `PAYMENT_CHARGES_WEBHOOK` reports each payment's charge | CF-29 |
 | Sandbox simulates `SUCCESS`, `FAILED`, `PENDING`, `USER_DROPPED`; no disputes | CF-40, CF-66 |
@@ -116,19 +120,22 @@ once tested. The adapter (§7) is still the only place that uses these names.
    [names list](../../PHASE-7-8-cashfree-names-needed.md) become CF facts once the owner
    agrees. The adapter's tests (AD-01 to AD-08) are written against them and against
    recorded sandbox answers.
-2. **Questions queued for Cashfree** ([file](../../PHASE-7-8-cashfree-questions-pending.md)):
-   which of two successes is reversed and how a reversal shows (CF-A16; §9.3, §13.2);
-   whether a terminated order's failed attempt can still succeed (CF-A17; §11.2); session
-   reuse (CF-A18; PA-09); termination answers (CF-A19; §12.1); the signature formula and
-   timestamp unit (CF-A20; §7.2); webhook retries (CF-A21; §10.2, §10.5); delivery to the
-   dashboard endpoint (CF-A22); the 409 code (CF-A23); key overlap (CF-A24; §13.4); sandbox
-   test data (CF-A25); completion time and list order (CF-A26; §9.3). No order waits for
-   CF-A16: the first verified success counts and §13.5 corrects our records if Cashfree
-   keeps the other payment (D-109). A negative
-   order lookup after uncertain creation is not a final no-order answer (§7.2, §11.6).
-   Additional questions: can a create finish after a timed-out call and negative lookup,
-   and when is refusal/absence final; and what exact amount/currency can be refunded for
-   a fractional-paisa or unexpected-currency receipt? (§13.1).
+2. **Questions with Cashfree** ([status table](../../PHASE-7-8-cashfree-questions-pending.md),
+   updated 2026-11-12). Answered: termination answers (CF-A19, sandbox SBX-01/02; §12.1);
+   the signature formula and millisecond timestamp (CF-A20, SBX-08; §7.2); key overlap
+   (CF-A24, docs: webhooks are signed with the secret active when sent; §13.4); the 409
+   code (CF-A23). Dropped: dashboard plus `notify_url` delivery (CF-A22; we use no
+   `notify_url`) and list order (CF-A26; status decides, §9.3). Asked in the fourth mail:
+   late success after termination (CF-A17; §11.2 keeps polling regardless, as SBX-03
+   showed a terminated-requested order becoming `PAID`); create-order timeout and key
+   retention (CF-A27; §7.2, §11.6); webhook response time (CF-A21); limits for the refunds
+   list and terminate (CF-A29). Asked in the fifth mail: refunding one of two successes by
+   API (CF-A35; §13.1 live-money block); `UNRECONCILED_AUTO_REFUND` (CF-A16; §9.3, §13.2);
+   whether the five-minute advice applies to retries (CF-A21; §10.5, D-114); payment and
+   order amounts differing (CF-A28; §13.1). No order waits for CF-A16: the first verified
+   success counts and §13.5 corrects our records if Cashfree keeps the other payment
+   (D-109). A negative order lookup after uncertain creation is not a final no-order
+   answer (§7.2, §11.6).
 3. **Sandbox checks, slice by slice:** one real webhook confirms §7.2's formula before the
    endpoint accepts anything (slice 4); termination answers (slice 5); same session after a
    failed attempt (slice 3); the UPI-and-card limit on the checkout page (slice 2).
@@ -139,9 +146,13 @@ once tested. The adapter (§7) is still the only place that uses these names.
    (CF-63) and is out of this SDD's test-mode scope.
 6. **Sandbox test data:** UPI `testsuccess@gocash`, `testfailure@gocash`,
    `testuserdropped@gocash`; cards with OTP `111000`; Cashfree's `POST /simulate` sets a
-   payment `SUCCESS`, `FAILED`, `PENDING` or `USER_DROPPED`. Two successes on one order and
-   a wrong amount have no documented way to be produced; those tests use recorded answers
-   unless Cashfree says otherwise (CF-A25).
+   payment `SUCCESS`, `FAILED`, `PENDING` or `USER_DROPPED`. `FAILED` needs a
+   `payment_error_code` (for example `ISSUER_NOT_AVAILABLE`). Same-session retry after a
+   dropped attempt works through Pay Order (SBX-04); slice 3 still checks it through the
+   hosted checkout. Two successes on one order may be producible by starting two attempts
+   while the order is unpaid and simulating both (not yet tried; CF-A25 withdrawn from the
+   mail). A wrong amount has no documented way to be produced; those tests use recorded
+   answers. The sandbox tests used API version `2025-01-01`; slices recheck on `2026-01-01`.
 7. **SDD 01 changes made with this revision** (approved SDD 01, owner decisions): the
    minimum-total guard and setting (D-107) and the `checkout.duplicate_payment` notice
    (D-108). Both are recorded in SDD 01 and its reference copy.

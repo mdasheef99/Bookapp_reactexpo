@@ -184,7 +184,7 @@ that ended the order (§12.1).
 | `commerce.payment_poll_daily_days` | 60 | §17 item 12 |
 | `commerce.payment_start_recovery_seconds` | 30 | §11.6 |
 | `commerce.closed_payment_alert_hours` | 24 | §17 item 3, CF-65 |
-| `commerce.webhook_max_age_seconds` | 300 | CF-37 |
+| `commerce.webhook_max_age_seconds` | 86400 | D-114 (was 300 from CF-37; retries keep their first timestamp, SBX-10) |
 | `commerce.customer_payment_check_per_minute` | 10 | §17 item 5 |
 | `commerce.payment_pay_presses_per_checkout` | 5 | D-106 |
 | `commerce.duplicate_reversal_wait_business_days` | 3 | D-78 |
@@ -274,8 +274,8 @@ call sends `x-client-id`, `x-client-secret` and `x-api-version: 2026-01-01` to
 | `getOrder(id)` | `GET /orders/{order_id}`; returns `cf_order_id`, `order_status`, `payment_session_id` and `order_expiry_time`. HTTP 404 is outcome `not_found` | Read only |
 | `getPayments(id)` | `GET /orders/{order_id}/payments`; a plain list with no paging and no promised order (§9.3 sorts it) | Read only |
 | `getRefunds(id)` | `GET /orders/{order_id}/refunds` | Read only |
-| `terminateOrder(id)` | `PATCH /orders/{order_id}` with `order_status: TERMINATED` (CF-32). The answer is the order: its `order_status` decides the result (§12.1), not an error code | `x-idempotency-key` = the `terminate` check's ID, so a timeout retry of one call repeats safely and each new attempt is a fresh request (CF-38; Cashfree requires a UUID) |
-| `verifyWebhook(raw, headers)` | Base64 of HMAC-SHA256, keyed with the client secret (CF-36), over the `x-webhook-timestamp` value directly followed by the raw body, with no separator; compared in constant time with `x-webhook-signature`. Then the age rule (CF-37) on the timestamp, read as epoch milliseconds (§16 item 2, CF-A20) | Pure function |
+| `terminateOrder(id)` | `PATCH /orders/{order_id}` with `order_status: TERMINATED` (CF-32). The answer is the order: its `order_status` decides the result (§12.1). Two HTTP 400 codes are also results, not errors: `order_already_paid`, and `request_invalid` with "order termination already requested" (SBX-01, SBX-02; §12.1) | `x-idempotency-key` = the `terminate` check's ID, so a timeout retry of one call repeats safely and each new attempt is a fresh request (CF-38; Cashfree requires a UUID) |
+| `verifyWebhook(raw, headers)` | Base64 of HMAC-SHA256, keyed with the client secret (CF-36), over the `x-webhook-timestamp` value directly followed by the raw body, with no separator; compared in constant time with `x-webhook-signature`. Then the age rule (CF-37) on the timestamp, read as epoch milliseconds (§16 item 2, CF-A20). The signature is accepted with the current client secret or, only during a key change's 24-hour window, with the previous one (§13.4; Cashfree signs with the secret active when the event was sent). Then the version guard: `x-webhook-version` must equal the registered version (§10.1), otherwise the message is rejected. Formula confirmed on sandbox webhooks (SBX-08) | Pure function |
 
 **Create outcomes (M2).**
 

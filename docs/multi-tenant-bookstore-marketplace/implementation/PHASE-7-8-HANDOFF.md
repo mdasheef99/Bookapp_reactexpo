@@ -195,6 +195,12 @@ mode before week 1. Secret keys go only into server secrets, never into chat or 
 
 Answers and open points: [replies and fact record](./PHASE-7-8-cashfree-replies.md).
 
+**Status 2026-11-12:** four Cashfree replies received; a fourth mail (9 questions) and a fifth
+(7 questions) sent by the owner. Sandbox tests run the same day
+([results](./PHASE-7-8-cashfree-sandbox-tests.md)); SDD 02 revised from them with owner
+decision D-114 (24-hour webhook age limit), not yet re-reviewed or approved. Where each
+question stands: [status table](./PHASE-7-8-cashfree-questions-pending.md).
+
 1. Can a vendor's split share be held until BookConnect releases it (for example 3 days after handover, then the
    next weekly Monday run, D-28)? What is the maximum hold?
 2. How does a refund take back the vendor's share: full, partial, and repeated partial

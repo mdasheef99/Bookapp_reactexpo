@@ -181,7 +181,10 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 
 **Webhooks**
 - WH-01 a forged signature is `rejected`, stores no body and answers 401.
-- WH-02 a timestamp over five minutes old is rejected.
+- WH-02 a correctly signed message with a timestamp up to 24 hours old is accepted (a
+  retry keeping its first timestamp, SBX-10); one over 24 hours old is rejected (D-114).
+- WH-02a a message whose `x-webhook-version` is not the registered version is rejected and
+  stores no body; a `cf_payment_id` is always read as a string.
 - WH-03 a replayed message (same key) answers 200 and changes nothing.
 - WH-04 a webhook claiming success while Cashfree's read shows pending changes nothing.
 - WH-05 a tampered amount in the body is ignored; the read decides.
@@ -192,8 +195,9 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - WH-08 charges, refund and settlement events are handed to SDD 03, 04 and 05.
 - WH-09 the endpoint answers 200 only after the event, body and task commit together, and
   500 if that transaction fails (nothing half-stored).
-- WH-10 a webhook signed with an old key after rotation is rejected, and the poll recovers
-  the payment. Runs in slice 7.
+- WH-10 after rotation, a webhook signed with the previous secret is accepted inside the
+  24-hour window and rejected after the previous secret is removed; the poll recovers the
+  payment. Runs in slice 7.
 - WH-11 two deliveries with the same `x-idempotency-key` store one message; a delivery
   without the header uses the fallback key (§10.2).
 - WH-12 bodies older than the retention setting are deleted and `body_purged_at` set; the
@@ -227,12 +231,15 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
   without calling Cashfree.
 - TE-02 expiry while the payment is `initiating` runs the recovery read first and does not
   close while the round is unknown.
-- TE-03 `TERMINATION_REQUESTED` counts as terminated.
+- TE-03 `TERMINATION_REQUESTED`, and HTTP 400 `request_invalid` "order termination already
+  requested", count as terminated (SBX-02).
+- TE-03a HTTP 400 `order_already_paid` is handled exactly like a `PAID` answer (TE-04,
+  TE-05) and never leads to another termination attempt (SBX-01).
 - TE-04 a termination answered `PAID` leads to verification and conversion.
 - TE-05 a termination answered `PAID` counts as terminated when no payment was counted and
   every success is `amount_mismatch`, `duplicate_success` or `reversed`, including a mix
   (SDD 01 E-28, E-31, D-113); with a counted success it does not.
-- TE-06 a termination answer of `ACTIVE` or an error leads to a payments read and a retry;
+- TE-06 a termination answer of `ACTIVE` or any other error leads to a payments read and a retry;
   `EXPIRED` counts as terminated (§12.1).
 - TE-07 the `terminate_provider_order` task resolves on a terminated answer, retries on
   `ACTIVE` or unreachable, and is dead-lettered to an admin case after its last attempt.
