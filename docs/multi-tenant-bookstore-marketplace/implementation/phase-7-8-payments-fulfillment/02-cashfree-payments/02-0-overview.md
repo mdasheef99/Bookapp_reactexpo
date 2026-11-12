@@ -1,6 +1,12 @@
 # SDD 02: Cashfree Payments, Webhooks and Verification
 
-**Status:** full draft, 2026-11-11. R5 carried in on 2026-11-12. Written from the approved skeleton, the decision
+**Status:** approved by the owner on 2026-11-12, after three review rounds, the sandbox tests,
+R5, an outside review and Sol's three-angle review, including the remaining technical choices
+in §17 as written. Approval of this design does not authorise code or migrations (AGENTS.md);
+building starts only when the owner authorises it. Cashfree gates in §16 still apply before
+live payments.
+
+History: full draft, 2026-11-11. R5 carried in on 2026-11-12. Written from the approved skeleton, the decision
 register, the Cashfree fact record (CF-01 to CF-66) and approved SDD 01. **Review round 1
 done** (Muse, DeepSeek, Codex Sol, Codex Luna; [findings](../../PHASE-7-8-sdd02-review-r1.md))
 and revised on 2026-11-11 with the owner's decisions D-104 to D-108. Round 2 reviewed and
@@ -195,15 +201,15 @@ once tested. The adapter (§7) is still the only place that uses these names.
 8. **What is still open here.** No business decision is open: round 2's questions were
    decided as D-109 to D-113 (2026-11-12); SDD 01 changes from them: the paid-but-no-order
    screen row (D-112) and the widened `PAID` refusal shortcut (D-113), in the parts and the
-   reference copy. Not yet approved: the remaining proposed
-   settings and choices in §17 (items 4 and 8 are already decisions), which are proposals
-   until the owner approves them. Cashfree questions and provider checks in items 1
+   reference copy. The remaining settings and choices in §17
+   were approved with this SDD on 2026-11-12 (items 4 and 8 were already decisions). Cashfree questions and provider checks in items 1
    to 3 remain open (CF-A35 blocks live refunds of one of two successes).
-   SDD 02 as a whole is not approved.
+   SDD 02 was approved by the owner on 2026-11-12.
 
 ## 17. Choices made in this document, for the owner
 
-The register does not decide these. Each is my proposal and is not policy until approved.
+The register does not decide these. They were my proposals; the owner approved them as
+written with SDD 02 on 2026-11-12.
 Former items 4 and 8 are now decisions D-105 and D-104.
 
 1. **The Cashfree order expires 16 minutes after creation** (`commerce.provider_order_expiry_seconds = 960`).

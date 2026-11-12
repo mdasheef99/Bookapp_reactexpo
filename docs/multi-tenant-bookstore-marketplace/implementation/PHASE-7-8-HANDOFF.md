@@ -201,7 +201,9 @@ Answers and open points: [replies and fact record](./PHASE-7-8-cashfree-replies.
 decision D-114 (24-hour webhook age limit). Review round 3 (Codex Sol, 2026-11-12) findings
 applied the same day: refund submission guard, rotation and replay safeguards, webhook
 contracts, recovery scope, termination evidence, SDD 01 refund wording, age checks,
-question status and completion-time handling. SDD 02 remains unapproved. Where each
+question status and completion-time handling. After an outside review and Sol's three-angle
+review (commit 34a1fdc9), the owner approved SDD 02 and its §17 choices on 2026-11-12. No
+code or migration is authorised; the Cashfree gates in SDD 02 §16 apply before live payments. Where each
 question stands: [status table](./PHASE-7-8-cashfree-questions-pending.md).
 
 **Review round 3 verification (local only):** replacement and consistency checks,

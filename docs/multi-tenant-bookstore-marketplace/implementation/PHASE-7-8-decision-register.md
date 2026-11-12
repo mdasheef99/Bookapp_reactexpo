@@ -306,7 +306,7 @@ delivery. Rows below that apply only to a later courier option say so.
 Status words in this table: DECIDED means the owner approved the rule. PROPOSED means it is
 Claude's wording or number and is not yet policy. The owner approved D-88 to D-93 and the
 numbers in D-78, D-79 and D-83 on 2026-11-10 ("Approve all"). Neither word says anything
-about Git; none of this file's 2026-11-10 changes are committed. On 2026-11-11 the owner approved D-95 to D-103 and the remaining technical choices in SDD 01 §17 as written ("Approve all"); SDD 01 §17 item 25 applies D-61 and needs no entry. Also on 2026-11-11 the owner approved D-104 to D-108, the five questions from the SDD 02 review round 1, as recommended ("rest go with your recommendation").
+about Git; none of this file's 2026-11-10 changes are committed. On 2026-11-11 the owner approved D-95 to D-103 and the remaining technical choices in SDD 01 §17 as written ("Approve all"); SDD 01 §17 item 25 applies D-61 and needs no entry. Also on 2026-11-11 the owner approved D-104 to D-108, the five questions from the SDD 02 review round 1, as recommended ("rest go with your recommendation"). On 2026-11-12 the owner approved SDD 02 and the remaining technical choices in its §17 as written ("ok then it is approved"), after being told the Cashfree gates in its §16 still apply before live payments.
 
 Clarifications for the specifications (no owner decision needed):
 
