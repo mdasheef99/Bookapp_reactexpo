@@ -39,7 +39,7 @@ and full D28 tie selection; D30 sheet persistence and AC9-4/5 belong here.
 | M85:180–200 `phase9_edition_source_policy` | Read shows fresh rows only if query/deadline/source policy agree. Branches on `execution_mode` + `adapter_key`; accepts `google_books` and `open_library` lookups; no explicit-search capability check. |
 | M92:903 `phase9_complete_candidate_edition_options_v2`; session lock M92:925–926 | Explicit completion: saves source and options, advances `options_version` (M92:1111). |
 | `I/runtime/metadataProductionGateway.ts:71` → `metadataAutomaticExecution.ts:77` | Automatic routing (8b). |
-| M93:1028 private `phase9_complete_automatic_metadata_v1` (public INVOKER wrapper M92:1879); recovery M92:1422 | Lock order session `FOR KEY SHARE` → job `FOR UPDATE` → candidate (structural assert) → edition state `FOR UPDATE` (M93:1072–1095). Fence: stale lease/session/candidate/identity (M93:1080–1094) or changed generation/captured request (M93:1096–1098) → `stale_rejected`, zero writes. The digest hashes the whole command (M93:1062–1064), so it covers rows, companions and retention. Hook comment M93:1376; receipt hard-codes `prefill:{skipped,not_installed}` (M93:1389; M92:1822). Effect row records `request_generation`, `captured_request_id`. |
+| M93:1028 private `phase9_complete_automatic_metadata_v1` (public INVOKER wrapper M92:1879); recovery M92:1422 | Lock order session `FOR KEY SHARE` → job `FOR UPDATE` → candidate (structural assert) → edition state `FOR UPDATE` (M93:1072–1095). Fence: stale lease/session/candidate/identity (M93:1080–1094) or changed generation/captured request (M93:1096–1098) → `stale_rejected`, zero writes. The digest hashes the whole command (M93:1062–1064), so it covers rows, companions and retention. Hook comment M93:1376; receipt hard-codes `prefill:{skipped,not_installed}` (M93:1389; M92:1822 is the superseded M92 completion body, not recovery; recovery M92:1422–1463 returns the stored receipt). Effect row records `request_generation`, `captured_request_id`. |
 | M78:170–172 trigger, body M82:5–60 | `BEFORE UPDATE OF … state, review_disposition, owner_isbn13` on candidates: resets the edition state (generation+1, rows cleared, selection cleared) when the edition identity, ISBN or removal disposition changes. A `state`-only change keeps the identity. |
 | `I/runtime/metadataAutomaticCompletion.ts:14–32,96–107` | Worker sends `result` v2 with `rows`, `catalogueCompanions`, `retention`. Receipt schema allows only `prefill:{skipped,not_installed}`; `decodeAutomaticReceipt` binds only lookupId/selectedOptionId/outcome. |
 | M75:80 `phase9_request_candidate_edition_options_v1` (fresh short-circuit :116–126; exhausted-job peek and lock :102–107); read M75:24–60 wrapped by M78 | Explicit request creates a job only when neither pending nor fresh; clears rows but does **not** advance `options_version`. Read: exhausted explicit job → `failed` (`phase9_edition_job_exhausted`, M75:14); resolved + fresh → `ready`; else `failed`; no request → `idle`. |
@@ -71,7 +71,7 @@ defensive checks; it must never be the only guard.
 | `query_identity` | Write the **fetched** identity (the locked lookup's `query_identity`). Require it to equal `phase9_edition_query_identity(c)` at write time (M78:10; equal for an untouched processing card); otherwise skip `identity_mismatch`. |
 | `request_generation` | Equal to the captured generation; never incremented by prefill. |
 | `request_id` | The real automatic job ID (FK M65:102). Only when the locked state has `request_id` NULL; any other non-null value → skip `superseded`. |
-| `options` | Original ≤10 positions, ordinals = index, unique UUIDs, explicit sheet eligibility; unavailable rows keep UUID/ordinal with null metadata/URL. Pre-validate with `phase9_edition_valid_rows` (M90:390) and the CHECK contract (§2), so a bad list raises `P9_EDITION_ROWS_INVALID`, never a raw constraint error. No dedupe, filter or re-sort. |
+| `options` | Original ≤10 positions, ordinals = index, unique UUIDs, explicit sheet eligibility; unavailable rows keep UUID/ordinal with null metadata/URL. Pre-validate with `phase9_edition_valid_rows` (M90:390) and the CHECK contract (§2), so a bad list never reaches a raw constraint error. Malformed rows are already rejected at the completion entry (`phase9_auto_result_valid_v1`, M92:1299 via M93:1048) as `P9_AUTO_COMMAND_INVALID`; keep that, do not weaken it. No dedupe, filter or re-sort. |
 | `options_version` | +1 for a newly saved list. |
 | Source lineage | Original lookup/attempt, adapter/version/normalizer, microsecond-equal `fetchedAt`; companions bound to option UUID/record/digest. Nothing from another store. |
 | `source_fetched_at`, `options_expires_at` | Source time; deadline = least(verified provider deadline, source time + 24 h, current registry/source deadline). No renewal. |
@@ -99,7 +99,7 @@ or `{status:'skipped',reason:<one of the table above>}`. The receipt carries no
 rows; the rows and UUIDs live in the edition state and a read returns them.
 Receipts written before install keep `not_installed` and replay unchanged.
 
-**Receipt widening sites (all in Unit 1):** SQL M92:1822, M93:1389; zod
+**Receipt widening sites (all in Unit 1a):** SQL M93:1389 (recovery replays the stored receipt unchanged); zod
 `metadataAutomaticCompletion.ts:22,31–32`; `decodeAutomaticReceipt` (:96–107)
 binds a `saved` prefill's `requestId` to `fence.jobId` and its generation to
 `fence.requestGeneration`; tests and fixtures
@@ -109,8 +109,7 @@ binds a `saved` prefill's `requestId` to `fence.jobId` and its generation to
 `__tests__/support/automaticWorker.ts:81`,
 `supabase/tests/phase9/phase9ProviderRollout.integration.test.mjs:185`.
 
-**Errors:** malformed rows or binding mismatch → existing `P9_EDITION_ROWS_INVALID`
-/ `P9_AUTO_SOURCE_INVALID`, full rollback. No new error code. **No new
+**Errors:** malformed rows → existing entry rejection `P9_AUTO_COMMAND_INVALID`; binding or lineage mismatch → `P9_AUTO_SOURCE_INVALID`; full rollback. No new error code. **No new
 `lock_timeout` on the automatic completion:** a timeout would abort the whole
 automatic result, and the worker does not retry it (it maps a known conflict to
 `stale_claim`). The completion keeps today's lock behavior.
@@ -214,8 +213,8 @@ after the same publication proofs as explicit lists; M88:34–50 requires
   `I/contracts/ownerEditionPicker.ts:92–98`, client `:90–96`) and the gateway turns a
   response mismatch into `P9_INTERNAL_ERROR` (`ownerEditionPickerGateway.ts:84–100`),
   so Unit 1 adds `queryLanguage` as **optional nullable** to both schemas, and the
-  rollout order is: Owner API Edge Function deploy and app build first, migration
-  apply after (§8). Rows whose language matches come first, then **Other languages**,
+  rollout order is: Owner API, worker and an app build with the widened client
+  parser first, migration apply after (§8). Rows whose language matches come first, then **Other languages**,
   original order inside each group. With `queryLanguage` null, no grouping. Option
   IDs, eligibility and commands unchanged; Show all and accessibility kept; no
   selectable row hidden in a collapsed group.
@@ -236,7 +235,7 @@ state never proves reachability.
 | AC | Given / when / then | Proof |
 |---|---|---|
 | ACP-1 | Retainable Open Library list completes, with and without an automatic winner, on a card with **no** prior edition-state row and on one with a row; opening the sheet shows the rows with zero new request. | SQL/worker test + app read-only-open test; red: baseline never saves rows. |
-| ACP-2 | Saved rows keep original positions/UUIDs/eligibility and satisfy the CHECK; malformed, duplicate, over-10, bad URL or lineage → `P9_EDITION_ROWS_INVALID`/`P9_AUTO_SOURCE_INVALID`, full rollback. | Server/client zod and SQL tests; explicit-cache filtering stays a green control. |
+| ACP-2 | Saved rows keep original positions/UUIDs/eligibility and satisfy the CHECK; malformed, duplicate, over-10 or bad URL → `P9_AUTO_COMMAND_INVALID` (existing entry check); bad lineage → `P9_AUTO_SOURCE_INVALID`; full rollback. | Server/client zod and SQL tests; explicit-cache filtering stays a green control. |
 | ACP-3 | Saved list → Search Books → V+1 pending (rows cleared in the client) → V+2 ready; delayed V+1 receipt never wins. | Real QueryClient test with receipt cache empty, older and newer; red: fresh short-circuit, kept rows, receipt return. |
 | ACP-4 | Reachable overlaps during a running lookup (OD-2026-11-12-3): session closed/expired, card removed (M54:306–313). Completion is `stale_rejected` or prefill skipped `not_reviewable`; nothing shown on a removed card. Commit is unreachable while `processing` and is covered in ACP-13. | **Native two-connection test**, both arrival orders, real commands. Plus a SQL assertion that Owner search/select/ISBN are refused while `processing`. |
 | ACP-5 | Before install every completion stores `not_installed`; after install a no-list/local completion stores `no_retention`; old receipts replay unchanged; replay keeps the stored receipt and the state keeps the UUIDs; expired replay restores no rows. | Worker recovery test before/after install. |
@@ -253,9 +252,10 @@ state never proves reachability.
 
 | Unit | Scope | Gate |
 |---|---|---|
-| 1. Database + worker | One migration: helper after M93:1384, receipt widening (all §3 sites, decode binding), source policy only if needed, M75 request change (search while fresh, version advance, NOWAIT rule), read change (§5) incl. `queryLanguage`; optional nullable `queryLanguage` in server and client choices schemas; ACP-1/2/4/5/6/7/9/10/11/12/13. | Plan run READY; red first; `node scripts/verify-phase9.js`; different-model review; separate create/apply approvals. |
-| 2. App | Search Books gate, pending acceptance clears rows, idle acceptance (expiry and invalidation), EditionChoices return, `queryLanguage` groups, conflict wording; ACP-3/7/8/12 (app). | Same flow; after Unit 1 is applied on dev. |
-| 3. Live check | Rollout order: Owner API Edge Function deploy (widened schema) and worker deploy (receipt decode) → migration apply → app; then Haiku in-app test on dev. | Each deploy/apply separately approved. |
+| 1a. Save and read (DB + worker) | Migration M100: helper after M93:1384, state-row insert, receipt widening (§3 sites, decode binding), source policy only if needed, read change (§5) incl. `queryLanguage`; optional nullable `queryLanguage` in server and client choices schemas. ACP-1 (SQL/worker), 2, 4, 5, 6, 7 (SQL), 10, 12 (SQL expiry and exhausted control), 13. | Plan run READY; red first; `node scripts/verify-phase9.js`; different-model review; separate create/apply approvals. |
+| 1b. Search Books while fresh (DB) | Migration M101: M75 request change (search while fresh, version advance, NOWAIT rule). ACP-3 (SQL), 11; explicit-search control for ACP-9. | Same gates; built after 1a is committed. 1a is not released alone. |
+| 2. App | Search Books gate, pending acceptance clears rows, idle acceptance (expiry and invalidation), EditionChoices return, `queryLanguage` groups, conflict wording; ACP-1 (app open), 3, 7, 8, 12 (app). | Same flow; after Units 1a and 1b are applied on dev. |
+| 3. Live check | Rollout order: Owner API (widened schema), worker (receipt decode) and an app build with the widened client parser → apply M100 and M101 → Unit 2 app; ACP-9 rollback readback; then Haiku in-app test on dev. | Each deploy/apply separately approved. |
 
 Docs on implementation: this SDD, data dictionary, current-vs-target, migration
 ledger, verification tracker, CODEBASE_MAP rows whose paths change.
