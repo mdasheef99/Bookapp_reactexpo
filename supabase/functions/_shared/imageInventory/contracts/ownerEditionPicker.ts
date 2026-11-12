@@ -95,6 +95,7 @@ export const editionChoicesSchema = z.object({
   selection: editionSelection.nullable(), lookupStatus: z.enum(['idle', 'pending', 'ready', 'failed']),
   candidateVersion: version, metadataRevision: version, reviewVersion: version.nullable(),
   ownerIsbn13: z.string().regex(/^97[89][0-9]{10}$/u).nullable().optional(),
+  queryLanguage: z.string().min(1).max(35).nullable().optional(),
 }).strict().superRefine((value, context) => {
   if (value.rows.some((row, index) => row.ordinal !== index)
     || new Set(value.rows.map((row) => row.optionId)).size !== value.rows.length

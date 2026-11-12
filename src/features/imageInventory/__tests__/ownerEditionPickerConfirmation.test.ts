@@ -29,6 +29,15 @@ describe.each([['client', parseClient, requestClient], ['server', parseServer, r
     it('rejects client-authored confirmation on the selection command', () => {
       expect(() => request({ ...editionConfirmRequest, confirmedByOwner: true })).toThrow();
     });
+    // J1 (02d §6): both strict choices parsers accept the optional reference language.
+    it('accepts optional nullable queryLanguage on the widened choices read', () => {
+      for (const queryLanguage of ['en', 'eng', 'und-x-test', null]) {
+        const response = { ...editionChoices, queryLanguage };
+        expect(parse('read_candidate_edition_choices', response)).toEqual(response);
+      }
+      expect(parse('read_candidate_edition_choices', editionChoices)).toEqual(editionChoices);
+      expect(() => parse('read_candidate_edition_choices', { ...editionChoices, queryLanguage: 7 })).toThrow();
+    });
   },
 );
 

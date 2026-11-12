@@ -16,6 +16,10 @@ export const TEST_ONLY_POLICY = { version: 'p9-protection-v1', minIntervalMs: 10
   storeMaxGets: 6, backoffBaseMs: 100, backoffMaxMs: 400, breakerFailures: 2,
   breakerWindowSeconds: 60, breakerCooldownMs: 30000, halfOpenMax: 1,
   mode: 'single_instance', contactId: 'fixture-contact' };
+// Same test-only contact map the explicit 8c fixture uses; a configured
+// protection policy fails closed when this map is absent (worker index.ts:344).
+export const TEST_ONLY_PROVIDER_CONTACTS = Object.freeze({
+  'fixture-contact': 'BookConnect fixture (fixture@example.invalid)' });
 export async function createAutomaticWorkerDatabase() {
   const prefix = selectedPrefix('8a-5');
   return createProviderDatabase({ migrations: [...prefix.migrations,
@@ -78,6 +82,7 @@ export async function automaticWorkerFixture(db, { provider = 'google_books', fe
     timeoutMs: 1000, maxResponseBytes: 64000, fetcher: recorded }) : null;
   const library = new OpenLibraryEditionOptionsAdapter({ timeoutMs: 1000, maxResponseBytes: 64000, fetcher: recorded });
   const dependencies = { workerId: 'metadata-worker-sql-u5', workerAuthToken: 'local-fixture-only',
+    providerContacts: TEST_ONLY_PROVIDER_CONTACTS,
     serviceClient: { rpc: databaseRpc(db, calls, errors, after),
       // Exact PostgREST read used by FIX2 L1, backed by the real SQL rows, never fabricated lineage.
       from(table) {

@@ -125,4 +125,61 @@ describe('U5 B1 automatic completion boundary (02c §4.3)', () => {
     const stale = createMetadataAutomaticCompletionBoundary({ rpc: async () => ({ data: { status: 'stale_rejected' }, error: null }) }, validation());
     await expect(stale.complete(command())).resolves.toEqual({ status: 'stale_rejected' });
   });
+  // J2 (02d §3): a saved prefill is accepted only under its own job and generation.
+  it('decodes a saved prefill only under its own job and request generation', () => {
+    const saved = { ...receipt(), prefill: { status: 'saved' as const, requestId: fence().jobId,
+      requestGeneration: fence().requestGeneration, optionsVersion: 1,
+      optionsExpiresAt: '2026-10-07T00:00:00.000Z' } };
+    const binding = { lookupId: GOLDEN_LOOKUP_ID, selectedOptionId: null,
+      outcome: 'accepted_metadata_match' as const, jobId: fence().jobId,
+      requestGeneration: fence().requestGeneration };
+    expect(decodeAutomaticReceipt(saved, binding)).toEqual(saved);
+    expect(() => decodeAutomaticReceipt(saved, { ...binding, requestGeneration: 1 }))
+      .toThrow('P9_AUTOMATIC_COMPLETION_INVALID');
+    expect(() => decodeAutomaticReceipt(saved, { ...binding, jobId: GOLDEN_LOOKUP_ID }))
+      .toThrow('P9_AUTOMATIC_COMPLETION_INVALID');
+    expect(() => decodeAutomaticReceipt(saved)).toThrow('P9_AUTOMATIC_COMPLETION_INVALID');
+    for (const reason of ['not_installed', 'not_reviewable', 'selected', 'superseded',
+      'identity_mismatch', 'no_retention', 'source_not_allowed', 'empty_unproven']) {
+      const skipped = { ...receipt(), prefill: { status: 'skipped' as const, reason } };
+      expect(decodeAutomaticReceipt(skipped, binding)).toEqual(skipped);
+    }
+    expect(() => decodeAutomaticReceipt({ ...receipt(), prefill: { status: 'skipped', reason: 'invented' } }, binding))
+      .toThrow('P9_AUTOMATIC_COMPLETION_INVALID');
+  });
+  // J3 (02d §3): the boundary binds a saved receipt to the validated fence, not the caller.
+  it('binds a saved completion receipt to the fence job and generation', async () => {
+    const saved = { ...receipt(), prefill: { status: 'saved' as const, requestId: fence().jobId,
+      requestGeneration: fence().requestGeneration, optionsVersion: 1,
+      optionsExpiresAt: '2026-10-07T00:00:00.000Z' } };
+    const accepted = createMetadataAutomaticCompletionBoundary({
+      rpc: async () => ({ data: saved, error: null }),
+    }, validation());
+    await expect(accepted.complete(command())).resolves.toEqual(saved);
+    const forged = createMetadataAutomaticCompletionBoundary({
+      rpc: async () => ({ data: { ...saved, prefill: { ...saved.prefill, requestId: GOLDEN_LOOKUP_ID } }, error: null }),
+    }, validation());
+    await expect(forged.complete(command())).rejects.toBeInstanceOf(AutomaticCompletionUncertainError);
+    // J3 recovery: the validated fence job/generation always win over caller overrides.
+    const replayed = { ...saved, status: 'replayed' as const };
+    const recovering = createMetadataAutomaticCompletionBoundary({
+      rpc: async () => ({ data: replayed, error: null }),
+    }, validation());
+    const callerBinding = { lookupId: GOLDEN_LOOKUP_ID, selectedOptionId: null,
+      outcome: 'accepted_metadata_match' as const, jobId: GOLDEN_LOOKUP_ID, requestGeneration: 9 };
+    await expect(recovering.recover(fence(), callerBinding)).resolves.toEqual(replayed);
+    const wrongLookup = createMetadataAutomaticCompletionBoundary({
+      rpc: async () => ({ data: replayed, error: null }),
+    }, validation());
+    await expect(wrongLookup.recover(fence(), { ...callerBinding, lookupId: fence().candidateId }))
+      .rejects.toBeInstanceOf(AutomaticCompletionUncertainError);
+    for (const prefill of [{ ...saved.prefill, requestId: GOLDEN_LOOKUP_ID },
+      { ...saved.prefill, requestGeneration: fence().requestGeneration + 1 }]) {
+      const forgedRecovery = createMetadataAutomaticCompletionBoundary({
+        rpc: async () => ({ data: { ...replayed, prefill }, error: null }),
+      }, validation());
+      await expect(forgedRecovery.recover(fence())).rejects
+        .toBeInstanceOf(AutomaticCompletionUncertainError);
+    }
+  });
 });

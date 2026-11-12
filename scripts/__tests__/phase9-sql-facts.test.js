@@ -453,10 +453,10 @@ describe('real folder known answers', () => {
   });
 
   it('exact statement, drop, rename, tag and comment counts', () => {
-    expect(real.counts.seen).toBe(970);
-    expect(real.counts.parsed).toBe(970);
-    expect(real.counts.orReplace).toBe(344);
-    expect(real.counts.plain).toBe(626);
+    expect(real.counts.seen).toBe(974);
+    expect(real.counts.parsed).toBe(974);
+    expect(real.counts.orReplace).toBe(346);
+    expect(real.counts.plain).toBe(628);
     expect(real.counts.orReplace + real.counts.plain).toBe(real.counts.seen);
     expect(real.counts.unparsed).toBe(0);
     expect(real.counts.ignoredComments).toBe(1);
@@ -474,7 +474,7 @@ describe('real folder known answers', () => {
       const matches = entry.text.match(independentRegex);
       independent += matches ? matches.length : 0;
     }
-    expect(independent).toBe(971);
+    expect(independent).toBe(975);
     expect(real.counts.seen + real.counts.ignoredComments).toBe(independent);
     expect(real.counts.parsed + real.counts.unparsed).toBe(real.counts.seen);
   });
@@ -517,7 +517,7 @@ describe('real folder known answers', () => {
     expect(real.counts.tagCount).toBe(21);
     const tag = (name) => real.tags.find((entry) => entry.tag === name);
     expect(tag('$$')).toMatchObject({
-      count: 786,
+      count: 790,
       firstFile: '20251228114030_002_p2p_exchange_system.sql',
       firstLine: 113,
     });

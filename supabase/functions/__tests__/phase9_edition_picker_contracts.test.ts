@@ -121,3 +121,21 @@ describe('optional authoritative rejection reasons (picker §3.1/§9)', () => {
     expect(() => readReason(value)).toThrow();
   });
 });
+
+// J1 (02d §6): the choices read may carry the state's reference language.
+describe('optional nullable queryLanguage on the choices read (02d §6)', () => {
+  it.each(['en', 'eng', 'und-x-test', null])('accepts optional nullable %p', queryLanguage => {
+    const data = { ...editionChoices, queryLanguage };
+    expect(parseOwnerUxResponse('read_candidate_edition_choices' as any, {
+      contractVersion: editionContractVersion, data,
+    }).data).toEqual(data);
+  });
+  it('keeps the field optional and rejects non-string values', () => {
+    expect(parseOwnerUxResponse('read_candidate_edition_choices' as any, {
+      contractVersion: editionContractVersion, data: editionChoices,
+    }).data).toEqual(editionChoices);
+    expect(() => parseOwnerUxResponse('read_candidate_edition_choices' as any, {
+      contractVersion: editionContractVersion, data: { ...editionChoices, queryLanguage: 7 },
+    })).toThrow();
+  });
+});

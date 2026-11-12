@@ -426,6 +426,8 @@ try {
             $env:PHASE9_PROVIDER_PREFIX = $ProviderPrefix
             $providerTests = @(Get-ChildItem -LiteralPath $PSScriptRoot -Filter 'phase9Provider*.integration.test.mjs' |
               Sort-Object Name | ForEach-Object { $_.FullName })
+            # 02d Unit 1a: ACP-4 native removal/session overlaps on a clone of this DB.
+            $providerTests += @(Join-Path $PSScriptRoot 'phase9AutomaticPrefill.integration.test.mjs')
             & node --experimental-vm-modules --test --test-concurrency=1 @providerTests
             if ($LASTEXITCODE -ne 0) { throw 'Slice 8 provider-replacement M88 baseline tests failed (inspect behavioral RED versus setup)' }
             # 8b U5 (M94): automatic preparation election/lease-expiry on real connections.

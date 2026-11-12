@@ -47,10 +47,12 @@ function run(name, command, args, options = {}) {
   process.stdout.write(`\n=== ${name} ===\n`);
   const child = spawnSync(command, args, {
     cwd: root,
+    shell: options.shell === true,
     stdio: options.quiet ? ['ignore', 'pipe', 'pipe'] : 'inherit',
     encoding: 'utf8',
     maxBuffer: 256 * 1024 * 1024,
   });
+  if (child.error) process.stdout.write(`SPAWN_ERROR ${name}: ${child.error.message}\n`);
   const seconds = Math.round((Date.now() - started) / 1000);
   const ok = child.status === 0;
   if (options.quiet && !ok) {
@@ -102,7 +104,7 @@ const powershell = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File'];
 run('migration set', 'powershell.exe', [...powershell, path.join(phase9Scripts, 'test-phase9-migration-set.ps1')]);
 
 if (full) {
-  run('phase9 database suites', 'npm', ['run', 'test:phase9:db'], {});
+  run('phase9 database suites', 'npm', ['run', 'test:phase9:db'], { shell: process.platform === 'win32' });
   // The continuity validator needs a clean tree (it diffs the repository).
   run('continuity validator', 'powershell.exe', [...powershell, path.join(phase9Scripts, 'validate-phase9-continuity.ps1')]);
 }
