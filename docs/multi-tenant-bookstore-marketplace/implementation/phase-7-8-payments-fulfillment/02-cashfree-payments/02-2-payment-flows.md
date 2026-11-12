@@ -3,7 +3,8 @@
 **Part of SDD 02.** Section numbers run across the four files; the map is in the
 [overview](./02-0-overview.md). Revised 2026-11-11 after review round 1
 ([findings](../../PHASE-7-8-sdd02-review-r1.md)).
-**Status:** full draft; R5 carried in on 2026-11-12. Not approved.
+**Status:** part of SDD 02, approved by the owner on 2026-11-12 (see the overview). Approval
+does not authorise code or migrations.
 
 ---
 

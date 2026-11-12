@@ -25,11 +25,11 @@ Review round 3 (Codex Sol, 2026-11-12) findings applied the same day.
 R5 references added (CF-76 to CF-83, CF-90; §§2, 4.2, 7.2–7.3, 10.5,
 11.2, 11.5–11.6, 12, 13.1–13.2, 15.2–17). The polling schedule and CF-A35 live-money
 block are unchanged.
-Not approved. No code or migration may be written from it until the owner approves it.
-**Authority:** none yet. Business rules come from the
+**Authority:** approved design for Cashfree payments, webhooks and verification (owner,
+2026-11-12). Business rules come from the
 [decision register](../../PHASE-7-8-decision-register.md); this document must not add any.
 Where it had to choose something the register does not decide, the choice is listed in
-§17 for the owner.
+§17; the owner approved all of them with this SDD on 2026-11-12.
 **Owns:** the single Cashfree adapter; creating the Cashfree order and payment session;
 the webhook endpoint; verification; the payment poll; terminating Cashfree orders; wrong-
 amount and duplicate payments; the provider side of late payments.
@@ -373,4 +373,4 @@ build order and all live-activation gates still apply.
 | Review round 2 safeguards | §6 callable contracts; §9.3 bound/fresh checks, short evidence wait and receipt/sale separation; §13.5 records correction when Cashfree keeps the other payment; §10.4 atomic finish and crash exhaustion; §11.1 lease fencing; §11.5 atomic permits; §12.1 locked expiry; VE-18 to VE-20, WH-13, PO-09, TE-08, DU-11 to DU-15, VE-21, ST2-06, RX2-15, RX2-16 |
 | Handoff §7 (keys, logs) | §6, §7.1, SE-03 to SE-06 |
 | Review round 1 items | B1–B5, M1–M18, m1–m8 as noted in §4 to §13 |
-| Outside-review corrections (no new business decisions) | §17 item 15 remains proposed; §4.3a, §6, §10.1/§10.6, §11.2, §13.2/§13.4, §19; WH-12/14/15/16, PO-10/11, HC-01 to HC-03, SE-07 |
+| Outside-review corrections (no new business decisions) | §17 item 15 (approved with SDD 02, 2026-11-12); §4.3a, §6, §10.1/§10.6, §11.2, §13.2/§13.4, §19; WH-12/14/15/16, PO-10/11, HC-01 to HC-03, SE-07 |
