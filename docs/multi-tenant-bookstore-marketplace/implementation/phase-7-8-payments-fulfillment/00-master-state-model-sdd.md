@@ -1,5 +1,9 @@
 # SDD 00: Master and State Model (skeleton)
 
+> **Out of date (2026-11-13).** This skeleton predates SDD 01 and SDD 02 and differs from
+> them in many places. For the pilot, use
+> [pilot-cut/03-pilot-state-model.md](./pilot-cut/03-pilot-state-model.md) instead.
+
 **Status:** skeleton for owner review, 2026-11-10. Not approved.
 **Authority:** none yet. Business rules come from the
 [decision register](../PHASE-7-8-decision-register.md) (REG); this document must not add any.

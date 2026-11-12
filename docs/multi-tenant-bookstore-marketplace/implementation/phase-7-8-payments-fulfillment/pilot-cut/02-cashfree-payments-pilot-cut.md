@@ -1,7 +1,7 @@
 # Pilot Cut of SDD 02: Cashfree Payments, Webhooks and Verification
 
 **Created:** 2026-11-12. **Revised:** 2026-11-13 after review rounds 1 to 4 (overview §8).
-**Status:** draft for owner review. Not approved; grants no authority.
+**Status:** approved by the owner on 2026-11-13 (D-119); grants no authority by itself.
 **Cuts:** [SDD 02](../02-cashfree-payments/02-0-overview.md) (approved 2026-11-12), which
 is not changed. Rules for reading this file, the never-cut list (N-01 to N-13), admin
 cases (§5), stand-in keys (§6) and the decisions it would revisit are in the
@@ -52,7 +52,7 @@ failed-conversion refund and timer requeue (SDD 01 cut), case close and digest
 | §5 Settings | Simplify | `payment_poll_live_seconds` = 60 (one pass a minute). New `payment_poll_batch_max` = 25 (payments claimed per pass, equal to the per-minute read cap in §11.5). Leave out `webhook_rejections_alert_per_minute` until §4.3a. `payment_poll_daily_days` is not used: daily polling has no end (§11.2). All other settings kept, including the duplicate business days, `cashfree_reads_per_minute` and `india_bank_holidays` |
 | §6 Access | Simplify | Every rule kept (N-10). Not built: `commerce_count_webhook_rejection`, `commerce_check_webhook_rejections` (§4.3a) and `commerce_purge_webhook_bodies` (§10.6). Admin-script functions follow the rule at the top of this file |
 | §7.1 One adapter module | Keep | N-09 |
-| §7.2 Operations | Simplify | `verifyWebhook` accepts only the current client secret; the previous-secret window is Later (§13.4). Everything else kept, including HTTP 429 returning Cashfree's wait time |
+| §7.2 Operations | Keep | Including `verifyWebhook`'s previous-secret window (§13.4) and HTTP 429 returning Cashfree's wait time |
 | §7.3 Mapping | Keep | |
 | §8 Starting a payment | Keep | |
 | §8.1 Web checkout | Keep | The real-phone payment and verified return gate pilot slice P4b |
@@ -67,7 +67,7 @@ failed-conversion refund and timer requeue (SDD 01 cut), case close and digest
 | §10.5 Staleness and retries | Keep | |
 | §10.6 Deleting old bodies | Later | Gate: before live payments, and in any case before the first body is 180 days old |
 | §11.1 Poll runner | Simplify | One pass a minute, not three. Each pass claims at most `payment_poll_batch_max` payments, oldest `next_poll_at` first, and still needs a permit for every read. Claims, leases and lease tokens kept. The daily reconciliation opens one case when the oldest overdue `next_poll_at` is more than one hour late; the digest reports its age |
-| §11.2 Schedule | Simplify | Live checkout: every minute. After close or conversion: every 5 minutes for 2 hours, hourly for 7 days, then daily with no end (overview §3 item 3). `next_poll_at` is never cleared, so the discovery, cursor and health machinery SDD 02 §19 hands to SDD 03 is not needed for the pilot |
+| §11.2 Schedule | Simplify | Live checkout: every minute. After close or conversion: every 5 minutes for 2 hours, hourly for 7 days, then daily with no end (overview §3 item 3). `next_poll_at` is never cleared, so the discovery, cursor and health machinery SDD 02 §19 hands to SDD 03 is not needed for the pilot. Cashfree has not said how long an order stays readable or whether a 404 is final (CF-A27, CF-A36), so a poll read of an order we created that answers `not_found` changes no payment state, keeps the order on the daily poll and opens one admin case |
 | §11.3 Cashfree unreachable | Keep | N-06 |
 | §11.4 Long-unconfirmed closed payments | Keep | Already detect-and-alert |
 | §11.5 Rate limits | Simplify | Kept in full: shared permit counter for every read, persisted `retry_not_before`, priority for customer checks, webhooks and expiry work over poll claims. Added: when a read records its third `provider_checks` row with outcome `rate_limited` within one hour, that same transaction opens one admin case |
@@ -77,7 +77,7 @@ failed-conversion refund and timer requeue (SDD 01 cut), case close and digest
 | §13.1 Wrong amount | Keep | Category 6 obligation recorded automatically with key `wrong_amount:<cf_payment_id>`, to SDD 04's function or stand-in. The CF-A35 block and the attempt-level cap apply (N-08) |
 | §13.2 Duplicate success | Simplify | Kept in full, including the automatic category 6a obligation keyed `duplicate:<cf_payment_id>`. Only change: SDD 08's checked enquiry and answer commands are built as admin scripts |
 | §13.3 What never happens | Keep | |
-| §13.4 Key rotation | Simplify | Manual runbook kept as written, without the previous-secret window: during the swap, webhooks signed with the old secret are rejected; payments are recovered by the poll, and other events by Cashfree's dashboard Batch Resend or by SDD 04/05 reads. Emergency rotation skips the wait. Restart only by the owner after clean reconciliation (D-68) |
+| §13.4 Key rotation | Keep | Manual runbook as written, including the 24-hour previous-secret window: Cashfree signs each webhook with the secret active when the event was sent (CF-A24) and retries at 2, 10 and 30 minutes (CF-80), so retries after a swap still carry the old signature. On known or suspected compromise the previous secret is disabled at once, as the SDD says. Restart only by the owner after clean reconciliation (D-68) |
 | §13.5 Cashfree gives back the counted payment | Keep | Including the server-enforced `kept_by_cashfree` mark that every refund path refuses (N-08) |
 | §14 Races | Simplify | §2 below |
 | §15.1 Worked examples | Simplify | All stand; example 7's poll runs once a minute, not 20 seconds later |
@@ -96,7 +96,7 @@ failed-conversion refund and timer requeue (SDD 01 cut), case close and digest
 - Verification: VE-01 to VE-10, VE-11b, VE-13 to VE-21. VE-12 without its admin-retry
   part.
 - Webhooks: WH-01 without its counter assertions, WH-02, WH-02a, WH-03 to WH-07, WH-09,
-  WH-11, WH-13, WH-14 without its counter-failure case. WH-08 for charges only; refund,
+  WH-10, WH-11, WH-13, WH-14 without its counter-failure case. WH-08 for charges only; refund,
   vendor and settlement events are PC2-04.
 - Poll and termination: PO-02 to PO-09, TE-01 to TE-03, TE-03a, TE-04 to TE-08. PO-01 with
   "never clears `next_poll_at`" in place of "then clears".
@@ -110,7 +110,6 @@ failed-conversion refund and timer requeue (SDD 01 cut), case close and digest
 
 **Later, with the section they test:**
 - Rejection counters and flood (§4.3a): WH-15, and the counter parts of WH-01 and WH-14.
-- Previous-secret window (§13.4): WH-10.
 - Body deletion (§10.6): WH-12 and SE-05's deletion part.
 - SDD 03 coverage handover (not needed while polling never ends): PO-10, PO-11.
 - D-81 cancellation and failed-conversion retry (SDD 01 cut): VE-11a, RX2-07, RX2-12.
@@ -119,7 +118,9 @@ failed-conversion refund and timer requeue (SDD 01 cut), case close and digest
 **Added by this cut:**
 - PC2-01 with the test clock, a success first seen on day 61 and on day 400 after close is
   found by the daily poll and resolved once through SDD 01 §5.6; `next_poll_at` is never
-  cleared. A backlog of more than 25 payments drains over several passes, and the daily
+  cleared. The test asserts only the recorded refund obligation: day 400 is past Cashfree's
+  refund window (CF-20, CF-69), so SDD 04 pays it by another route, and no pilot code
+  assumes Cashfree's refund API will accept it. A backlog of more than 25 payments drains over several passes, and the daily
   reconciliation opens one case when the oldest overdue `next_poll_at` is more than one
   hour late.
 - PC2-02 a 429 changes no payment state; every caller waits at least the given time; the
@@ -133,3 +134,6 @@ failed-conversion refund and timer requeue (SDD 01 cut), case close and digest
   timer requeue, case close, digest) is refused for `anon`, `authenticated`, a customer, a
   store owner and a forged or unlisted actor; refuses a changed replay; cannot set or
   reset a deadline; and writes one audit row per accepted call.
+- PC2-06 a daily poll read that answers `not_found` for an order we created changes no
+  payment state, keeps the order on the daily poll, and opens one admin case; a second
+  `not_found` while that case is open opens no second case.

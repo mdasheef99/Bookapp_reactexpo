@@ -90,6 +90,7 @@ supersedes the one below where they differ.
 | CF-A32 | After we fund a vendor balance (Adjust Vendor Balance) or recharge our ledger, does an `ON_HOLD` refund restart by itself, and how soon? | Refund follow-up work (CF-71; docs say auto-processed only for the Refund Wallet) | Yes (sandbox) | SDD 04 |
 | CF-A33 | Where is the vendor bank-account verification charge reported (API, report or webhook)? | Charging it to the right place (R1 gives only "as per pricing") | No | SDD 03 |
 | CF-A34 | Can a live account start with UPI and cards only? Is the Refund Wallet (recharged via a virtual bank account, credits within 30 minutes per the help page) the same as the "merchant ledger" in R1, and the same on live? | Going live and refund funding (asked in our second mail, not answered) | No | SDD 04, go-live |
+| CF-A36 | How long can we read an order and its payments with `GET /orders/{order_id}` and `GET /orders/{order_id}/payments` after the order was created: is there a limit (for example 6 months, a year)? After that, does the API answer 404, an error, or still the full order? | Our pilot keeps checking every order once a day with no end date (D-118), and must not mistake a 404 for "not paid" | No (needs old orders) | SDD 02 §11.2, pilot cut |
 
 ## Carried over from earlier mails (partly answered)
 

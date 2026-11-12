@@ -1,8 +1,8 @@
 # Pilot Cut: Overview
 
 **Created:** 2026-11-12. **Revised:** 2026-11-13 after review rounds 1 to 4 (§8).
-**Status:** draft for owner review. Not approved. Grants no code, migration, deployment or
-provider authority (AGENTS.md).
+**Status:** approved by the owner on 2026-11-13 (decision D-119). Grants no code, migration,
+deployment or provider authority by itself; that comes from D-33 once day 1 is recorded.
 **What this is:** a lighter build scope for the five-store pilot, cut from the approved
 SDDs. Some rare cases that the SDDs automate become "detect and alert": a named check opens
 an admin case, the owner sees it, and a person resolves it with an audited script. The
@@ -103,8 +103,8 @@ Every Detect item and every SDD "admin case" in the pilot goes through this path
 
   | Case type | Entity |
   |---|---|
-  | Payment cases: wrong amount, duplicate enquiry, kept by Cashfree, reversal after refund, CF-A35 block, long-unconfirmed | `cf_payment_id` |
-  | Failed conversion, late-payment problems | payment ID |
+  | Payment cases: wrong amount, duplicate enquiry, kept by Cashfree, reversal after refund, CF-A35 block | `cf_payment_id` |
+  | Failed conversion, late-payment problems, order not found at Cashfree (SDD 02 cut §11.2), long-unconfirmed closed payment (SDD 02 §11.4; it may have no recorded Cashfree attempt) | payment ID |
   | Checkout scans (expired with no task, hold on a closed checkout, grace overdue) | checkout ID |
   | Order scans and timers (acceptance, preparation, missing outcome, no timer task) | order ID |
   | Dead-lettered task | task ID |
@@ -172,7 +172,7 @@ in that slice (§3 item 2).
 
 | Slice | Contents | Needs | Size |
 |---|---|---|---|
-| P0 | Disposable Postgres runner, test time function, SQL suites and `deno check` in CI; the one-command gate `scripts/verify-phase78.js` (with `--full`) and the facts script `scripts/phase78-sql-facts.js` ([build process](../BUILD-PROCESS.md) §1) | Cut approved; day 1 recorded | M |
+| P0 | The test harness of [build process](../BUILD-PROCESS.md) §1.1: native disposable Postgres, faithful baseline, template copies, race barriers, shared test clock, offline Deno and Cashfree fixtures, never-cut coverage list; the one-command gate `scripts/verify-phase78.js` (with `--full`) and the facts script `scripts/phase78-sql-facts.js`; measured time budgets | Cut approved; day 1 recorded | L |
 | P1a | Schema for checkout, order, pause, payment, attempt, check and webhook tables; settings; constraints; transition triggers; grants and service-role wrappers | P0 | L |
 | P1b | Task framework: task types, task-scoped claim and completion, atomic replacement, resolved-task guards, reconciliation exemptions (SDD 01 §8.1, §15); notification types, validators and routes; ledger and refund recording stand-ins (§6); `commerce_admin_cases`, owner notice, digest, digest-delivery check and case-close script, with the shared admin-script security (§5) | P1a; SDD 03 and SDD 04 interfaces agreed (§6) | L |
 | P2 | Reservation, cancel, stock helpers, cart guards (Phase 6 rework) and checkout reads; cart UI merged but switched off | P1b; Phase 9's lock-order migration and listing-trigger change (SDD 01 §18) | M |
@@ -255,6 +255,16 @@ Phase 6 order path keeps working; the case path moved to P1b; the duplicate-watc
 commands moved to P4b; owners named for the task framework and every screen; test start
 and finish slices named; receiver interfaces and a deploy yes added as needs.
 [Report](./review-r4-sol-slices.md).
+
+**Cashfree-fact check, 2026-11-13 (after approval):** the owner asked whether the cut
+still agrees with what Cashfree told us. A row-by-row check of every non-Keep row against
+CF-01 to CF-90 found that the cut had dropped SDD 02's previous-secret window and
+overclaimed Batch Resend (CF-A24, CF-80), and that the daily poll with no end assumed old
+orders stay readable (CF-A27). Fixed: §7.2, §13.4 and WH-10 back to Keep; a `not_found`
+rule and test PC2-06; PC2-01 notes Cashfree's six-month refund window (CF-20); question
+CF-A36 added for Cashfree. Then checked independently by Codex Sol: today's fixes
+confirmed; two more fixed: the long-unconfirmed case is keyed by payment ID (§5), and
+an invented ten-attempt ceiling was removed from the state model (§6).
 
 No further review round is planned. Next: the owner approves the never-cut list (§2), the
 decisions in §4 and this cut.

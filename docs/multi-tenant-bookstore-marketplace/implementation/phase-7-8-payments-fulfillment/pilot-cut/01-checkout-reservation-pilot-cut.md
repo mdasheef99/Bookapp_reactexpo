@@ -1,7 +1,7 @@
 # Pilot Cut of SDD 01: Checkout and Paid-Order Acceptance
 
 **Created:** 2026-11-12. **Revised:** 2026-11-13 after review rounds 1 to 4 (overview §8).
-**Status:** draft for owner review. Not approved; grants no authority.
+**Status:** approved by the owner on 2026-11-13 (D-119); grants no authority by itself.
 **Cuts:** [SDD 01](../01-checkout-reservation/01-0-overview.md) (approved 2026-11-11),
 which is not changed. Rules for reading this file, the never-cut list (N-01 to N-13),
 admin cases (§5), stand-in keys (§6) and the decisions it would revisit are in the
