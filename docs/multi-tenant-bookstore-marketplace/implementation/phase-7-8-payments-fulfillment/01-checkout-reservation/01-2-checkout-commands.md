@@ -164,9 +164,11 @@ The worker takes these steps, none of them inside a database lock (SDD 02 §7):
 2. If that shows a success not yet verified, it runs SDD 02's verification and acts on its
    outcome:
    - `paid` (converted, or a failed conversion under §5.10): it stops; the holds stay.
-   - `amount_mismatch` (D-29): SDD 02 has refunded that money and terminates the order. It
-     is not a payment for this checkout, so the worker continues with step 3, counting that
-     attempt as finished.
+   - `amount_mismatch` (D-29): SDD 02 has recorded the wrong-amount receipt and its
+     full-refund obligation, subject to its §13.1 submission guard, and terminates the
+     order. It is not a payment for this checkout, so the worker continues with step 3,
+     counting that attempt as finished. Checkout expiry does not assert that the refund
+     has completed.
 3. If no attempt is pending, it terminates the Cashfree order (CF-32) and records the
    answer. `TERMINATION_REQUESTED` counts as terminated. If the answer is that a payment
    already succeeded, it runs verification and acts on its outcome as in step 2. When every
@@ -294,7 +296,7 @@ Every kind of payment that arrives late or twice, and where it is handled:
 | First success after the checkout closed, including after a termination request (CF-65) | This section's table: an order if the books are free and nothing below applies, otherwise a full refund | §5.6 |
 | A second success on a Cashfree order that already has a verified payment | Duplicate; Cashfree reverses it; no order and no immediate refund from us | SDD 02 (D-78, CF-30) |
 | A success after a wrong-amount attempt on the same Cashfree order | Same as a duplicate | SDD 02 (D-78, CF-30), §5.3 |
-| A success for the wrong amount | Refunded in full; never an order; the reservation runs out | SDD 02 (D-29), §5.3 |
+| A success for the wrong amount | Recorded as a full-refund obligation, subject to SDD 02 §13.1; never an order; the reservation runs out | SDD 02 (D-29), §5.3 |
 | A success Cashfree has already reversed | Recorded by reconciliation; no order and no refund from us | SDD 02, SDD 03 |
 | A success on a checkout the customer or the platform cancelled | Full refund, no order | This section (D-85) |
 | A success that cannot be converted | Admin retry or refund | §5.10 (D-95) |

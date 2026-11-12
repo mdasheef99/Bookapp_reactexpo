@@ -198,8 +198,16 @@ Answers and open points: [replies and fact record](./PHASE-7-8-cashfree-replies.
 **Status 2026-11-12:** four Cashfree replies received; a fourth mail (9 questions) and a fifth
 (7 questions) sent by the owner. Sandbox tests run the same day
 ([results](./PHASE-7-8-cashfree-sandbox-tests.md)); SDD 02 revised from them with owner
-decision D-114 (24-hour webhook age limit), not yet re-reviewed or approved. Where each
+decision D-114 (24-hour webhook age limit). Review round 3 (Codex Sol, 2026-11-12) findings
+applied the same day: refund submission guard, rotation and replay safeguards, webhook
+contracts, recovery scope, termination evidence, SDD 01 refund wording, age checks,
+question status and completion-time handling. SDD 02 remains unapproved. Where each
 question stands: [status table](./PHASE-7-8-cashfree-questions-pending.md).
+
+**Review round 3 verification (local only):** replacement and consistency checks,
+`git diff --check`, and the Phase 9 continuity validator passed. No application tests
+were run. No database, Storage or other external state was changed; nothing was staged,
+committed, pushed or deployed.
 
 1. Can a vendor's split share be held until BookConnect releases it (for example 3 days after handover, then the
    next weekly Monday run, D-28)? What is the maximum hold?

@@ -94,7 +94,7 @@ trigger would refuse.
 | `provider_status` | TEXT NOT NULL | Cashfree's raw status, unchanged |
 | `status` | TEXT NOT NULL | `pending`, `success_unresolved`, `success`, `failed`, `dropped`, `amount_mismatch`, `duplicate_success`, `reversed` |
 | `provider_started_at` | TIMESTAMPTZ | Cashfree's `payment_time` (when the attempt started) |
-| `provider_completed_at` | TIMESTAMPTZ | Cashfree's `payment_completion_time` (when it reached a final state) |
+| `provider_completed_at` | TIMESTAMPTZ | Cashfree's reported `payment_completion_time`; may already be populated while pending (SBX-05). It is never evidence of a terminal result; `payment_status` decides. |
 | `classified_by_check_id` | UUID, FK `provider_checks(id)` | The check that classified a success |
 | `refund_requested_at` | TIMESTAMPTZ | Set when §13 asks SDD 04 for a refund of this attempt |
 | `watch_stage` | TEXT | For `duplicate_success` only (§13.2): `waiting_reversal`, `asked_cashfree`, `refund_due`, `refund_requested`, `reversed`, `kept_by_cashfree` (§13.5) |
@@ -275,7 +275,15 @@ call sends `x-client-id`, `x-client-secret` and `x-api-version: 2026-01-01` to
 | `getPayments(id)` | `GET /orders/{order_id}/payments`; a plain list with no paging and no promised order (§9.3 sorts it) | Read only |
 | `getRefunds(id)` | `GET /orders/{order_id}/refunds` | Read only |
 | `terminateOrder(id)` | `PATCH /orders/{order_id}` with `order_status: TERMINATED` (CF-32). The answer is the order: its `order_status` decides the result (§12.1). Two HTTP 400 codes are also results, not errors: `order_already_paid`, and `request_invalid` with "order termination already requested" (SBX-01, SBX-02; §12.1) | `x-idempotency-key` = the `terminate` check's ID, so a timeout retry of one call repeats safely and each new attempt is a fresh request (CF-38; Cashfree requires a UUID) |
-| `verifyWebhook(raw, headers)` | Base64 of HMAC-SHA256, keyed with the client secret (CF-36), over the `x-webhook-timestamp` value directly followed by the raw body, with no separator; compared in constant time with `x-webhook-signature`. Then the age rule (CF-37) on the timestamp, read as epoch milliseconds (§16 item 2, CF-A20). The signature is accepted with the current client secret or, only during a key change's 24-hour window, with the previous one (§13.4; Cashfree signs with the secret active when the event was sent). Then the version guard: `x-webhook-version` must equal the registered version (§10.1), otherwise the message is rejected. Formula confirmed on sandbox webhooks (SBX-08) | Pure function |
+| `verifyWebhook(raw, headers)` | Base64 of HMAC-SHA256, keyed with the client secret (CF-36), over the `x-webhook-timestamp` value directly followed by the raw body, with no separator; compared in constant time with `x-webhook-signature`. Then enforce the D-114 age limit, `commerce.webhook_max_age_seconds = 86400`, on the signed timestamp interpreted as epoch milliseconds, confirmed by SBX-08. The signature is accepted with the current client secret or, only during a normal rotation's recorded 24-hour window, with the previous one; known or suspected compromise disables previous-secret verification immediately (§13.4). Then require the registered version and the event-specific body contract (§10.1); the version header alone is not proof of the body's format. Formula confirmed on sandbox webhooks (SBX-08) | Pure function |
+
+Normalize HTTP 400 `order_already_paid` to `outcome = ok`, `order_status = PAID`, and
+`terminate_refused_for_success = true`. Normalize HTTP 400 `request_invalid` only with
+message “order termination already requested” to `outcome = ok`,
+`order_status = TERMINATION_REQUESTED`, and `terminate_refused_for_success = false`.
+Preserve the provider error code and store the normalized order status in the terminate
+snapshot. Both results follow the corresponding status branch in §12.1 and §12.2; other
+errors retain their existing handling.
 
 **Create outcomes (M2).**
 

@@ -125,7 +125,8 @@ test-only stores and users, and clean up after themselves.
   plus a duplicate or an already-returned success and nothing was counted: the refusal
   counts as terminated and the holds are released (D-113).
 - E-28 a wrong-amount success found at reservation expiry, and again at grace expiry:
-  verification records `amount_mismatch` and refunds it; the worker continues, terminates
+  verification records `amount_mismatch` and records its full-refund obligation subject
+  to SDD 02 §13.1; the worker continues, terminates
   (or treats Cashfree's refusal as terminated), reads again and closes the checkout,
   releasing the holds, with `checkout.payment_not_received`. No order is created and the
   task does not retry forever. A later correct success on that Cashfree order is

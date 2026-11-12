@@ -19,8 +19,30 @@ Cashfree can answer.
 **Update 2026-11-12 (mails):** the owner sent the [fourth mail](./PHASE-7-8-mail-cashfree-4.md)
 with 9 questions (text as sent stored there). The questions were then reviewed by Codex
 Sol and searched in the docs again by Haiku; the result is the table below. The
-[fifth mail](./PHASE-7-8-mail-cashfree-5.md) (7 questions, reviewed by Sol) is drafted,
-not sent. The tables further down keep the original wording and checks.
+[fifth mail](./PHASE-7-8-mail-cashfree-5.md) (7 questions, reviewed by Sol) was sent by the
+owner the same day. The tables further down keep the original wording and checks.
+
+## After Cashfree's fifth reply (R5, 2026-11-12)
+
+Facts CF-76 to CF-90 in the [fact record](./PHASE-7-8-cashfree-replies.md). This table
+supersedes the one below where they differ.
+
+| ID | Status after R5 | Fact |
+|---|---|---|
+| CF-A14 | Answered: retried automatically; money stays with Cashfree | CF-86 |
+| CF-A32 | Answered: resumes by itself about hourly; webhook only for the final status | CF-87 |
+| CF-A33 | Answered: fixed fee plus GST, in the merchant ledger and invoices; no API | CF-89 |
+| CF-A25 | Closed: two successes cannot be simulated on sandbox | CF-82 |
+| CF-A17 | Mostly answered: stays `TERMINATION_REQUESTED` while an attempt is pending, no time limit; `USER_DROPPED` is final. Open: can `NOT_ATTEMPTED` become `SUCCESS` on live | CF-76, CF-77 |
+| CF-A34 | Balance part answered: settlement balance, not the Refund Wallet. Open: is that the merchant ledger, and how is it topped up. Go-live part: Account Manager | CF-88, CF-90 |
+| CF-A31 | Partly: an unpayable refund stays `PENDING` and Cashfree handles it. Open: how long, and how we are told | CF-84 |
+| CF-A28 | Partly: only the service-fee case named | CF-79 |
+| CF-A12 | Account Manager | CF-90 |
+| CF-A29 | Owner reads Developers > Rate Limits in the dashboard | CF-81 |
+| CF-A35 | **Not answered**: how to refund one chosen payment by API. The live-money block stays | CF-83 |
+| CF-A16 | Not answered: `UNRECONCILED_AUTO_REFUND` | CF-83 |
+| CF-A21 | Not answered: response timeout, and whether the five-minute advice applies to retries (D-114 stays) | CF-80 |
+| CF-A27 | Not answered: key retention, and whether a 404 is final | CF-78 |
 
 ## Where each open question stands (2026-11-12)
 

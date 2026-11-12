@@ -141,7 +141,9 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - VE-21 a single success is counted on its first fresh read with a refunds read; a missing
   or failed refunds read leaves it `success_unresolved` until the next read, and the
   books stay held meanwhile.
-- VE-06 a pending attempt keeps the payment `pending`; nothing is released.
+- VE-06 a pending attempt keeps the payment `pending`; nothing is released. A pending
+  payment with a populated completion time remains pending and cannot authorize
+  conversion, refund or stock release.
 - VE-07 a check whose `(requested_at, id)` is at or before `last_check_id`'s may add
   unresolved evidence but never leave a terminal success without a paid payment. It
   requests a fresh read before classifying; no status/schedule watermark moves back.
@@ -183,8 +185,13 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - WH-01 a forged signature is `rejected`, stores no body and answers 401.
 - WH-02 a correctly signed message with a timestamp up to 24 hours old is accepted (a
   retry keeping its first timestamp, SBX-10); one over 24 hours old is rejected (D-114).
-- WH-02a a message whose `x-webhook-version` is not the registered version is rejected and
-  stores no body; a `cf_payment_id` is always read as a string.
+  Exercise the exact 86400-second boundary and rejection immediately beyond it, using a
+  controlled clock; malformed timestamps are rejected.
+- WH-02a reject missing or unregistered versions and unsupported body contracts.
+  Relabelling a signed legacy payment body with the registered version must not bypass
+  schema validation. Exercise identifiers above 2^53 in payment, charge and refund
+  fixtures: each is either preserved exactly under its approved contract or rejected
+  before lossy conversion.
 - WH-03 a replayed message (same key) answers 200 and changes nothing.
 - WH-04 a webhook claiming success while Cashfree's read shows pending changes nothing.
 - WH-05 a tampered amount in the body is ignored; the read decides.
@@ -195,11 +202,13 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - WH-08 charges, refund and settlement events are handed to SDD 03, 04 and 05.
 - WH-09 the endpoint answers 200 only after the event, body and task commit together, and
   500 if that transaction fails (nothing half-stored).
-- WH-10 after rotation, a webhook signed with the previous secret is accepted inside the
-  24-hour window and rejected after the previous secret is removed; the poll recovers the
-  payment. Runs in slice 7.
-- WH-11 two deliveries with the same `x-idempotency-key` store one message; a delivery
-  without the header uses the fallback key (§10.2).
+- WH-10 normal rotation accepts previous-secret signatures before the recorded 24-hour
+  expiry and rejects them at and after expiry, even when cleanup is delayed. Emergency
+  rotation rejects the compromised secret immediately, including freshly forged messages.
+  New-secret messages still pass; recovery catches the affected payment. Runs in slice 7.
+- WH-11 replay the same signed timestamp/body with the original, changed and missing
+  `x-idempotency-key`; every delivery resolves to one event, body and task. A newly signed
+  delivery of the same business fact produces no repeated domain effect.
 - WH-12 bodies older than the retention setting are deleted and `body_purged_at` set; the
   event and attempts stay.
 
@@ -232,9 +241,13 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - TE-02 expiry while the payment is `initiating` runs the recovery read first and does not
   close while the round is unknown.
 - TE-03 `TERMINATION_REQUESTED`, and HTTP 400 `request_invalid` "order termination already
-  requested", count as terminated (SBX-02).
-- TE-03a HTTP 400 `order_already_paid` is handled exactly like a `PAID` answer (TE-04,
-  TE-05) and never leads to another termination attempt (SBX-01).
+  requested", count as terminated (SBX-02). Exercise normalized evidence through both
+  expiry phases and the termination-task handler; a different `request_invalid` message
+  remains an error.
+- TE-03a HTTP 400 `order_already_paid` follows the `PAID` branch through provider-check
+  persistence, the locked expiry wrapper and the termination-task handler. It never
+  enters the generic-error retry branch merely because its HTTP status is 400. Failed or
+  unresolved verification retains the existing recovery behavior.
 - TE-04 a termination answered `PAID` leads to verification and conversion.
 - TE-05 a termination answered `PAID` counts as terminated when no payment was counted and
   every success is `amount_mismatch`, `duplicate_success` or `reversed`, including a mix
@@ -283,6 +296,11 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
   `AUTO_REFUND_STATUS_WEBHOOK`, in both orders with the duplicate watch.
 - DU-15 Cashfree gives back the counted payment after we already refunded the duplicate:
   one reconciliation case and one `duplicate_loss` posting; nothing is refunded again.
+- DU-16 with CF-A35 unanswered, live refund intents on an order with multiple successful
+  payments make no Create Refund call and open one admin case. Cover categories 6, 6a, 5
+  and an ordinary order refund; include another success discovered between intent
+  creation and submission. Replays create no additional intent or case. Sandbox controls
+  retain the existing refund behavior.
 
 **Schema and security**
 - ST2-01 every money column refuses a negative value; `amount_minor` cannot change.
@@ -301,10 +319,10 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - SE-04 no Cashfree key appears in the app bundle or in any `EXPO_PUBLIC_` variable.
 - SE-05 webhook bodies live only in `marketplace_private`, are service-role only and are
   deleted after the retention period (WH-12).
-- SE-06 the key-rotation procedure (§13.4), rehearsed on sandbox: new reservations pause,
-  live checkouts finish, old-key webhooks are rejected, the poll recovers, the owner
-  restarts after a clean reconciliation (D-68, D-104). A leaked-key rehearsal skips the wait
-  and the poll recovers a payment caught in the gap (D-111).
+- SE-06 rehearse normal and emergency rotation under §13.4 and WH-10. Normal rotation
+  pauses new reservations and drains live checkouts; emergency rotation skips the wait
+  and immediately disables the compromised secret. The owner restarts after clean
+  reconciliation.
 
 **Races**
 - RX2-01 to RX2-16 each run in both orders, as §14's table says.

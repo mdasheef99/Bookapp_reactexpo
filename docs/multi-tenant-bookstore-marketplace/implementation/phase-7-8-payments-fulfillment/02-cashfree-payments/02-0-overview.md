@@ -10,6 +10,7 @@ corrected the remaining design defects on 2026-11-12; evidence and exact edits a
 decision D-114: termination answers (§12.1), webhook age limit and version guard (§7.2,
 §10.1, §10.5), previous-secret window on key change (§13.4), live-money block on refunding
 one of two successes (§13.1, CF-A35), tests TE-03/03a, WH-02/02a, WH-10. Owner/Cashfree gates remain in §16; no approval is implied.
+Review round 3 (Codex Sol, 2026-11-12) findings applied the same day.
 Not approved. No code or migration may be written from it until the owner approves it.
 **Authority:** none yet. Business rules come from the
 [decision register](../../PHASE-7-8-decision-register.md); this document must not add any.
@@ -121,15 +122,17 @@ once tested. The adapter (§7) is still the only place that uses these names.
    agrees. The adapter's tests (AD-01 to AD-08) are written against them and against
    recorded sandbox answers.
 2. **Questions with Cashfree** ([status table](../../PHASE-7-8-cashfree-questions-pending.md),
-   updated 2026-11-12). Answered: termination answers (CF-A19, sandbox SBX-01/02; §12.1);
-   the signature formula and millisecond timestamp (CF-A20, SBX-08; §7.2); key overlap
-   (CF-A24, docs: webhooks are signed with the secret active when sent; §13.4); the 409
-   code (CF-A23). Dropped: dashboard plus `notify_url` delivery (CF-A22; we use no
+   updated 2026-11-12). Sandbox answered CF-A19's paid and repeated-termination cases on
+   API version `2025-01-01`; the expired-order case remains untested and slice 5 rechecks
+   the planned API version. CF-A20's signing formula and millisecond timestamp were
+   confirmed by SBX-08. Cashfree's docs answer which secret signs an already-sent webhook
+   (CF-A24; §13.4); they do not themselves measure API-key invalidation timing. The 409
+   code is answered (CF-A23). Dropped: dashboard plus `notify_url` delivery (CF-A22; we use no
    `notify_url`) and list order (CF-A26; status decides, §9.3). Asked in the fourth mail:
    late success after termination (CF-A17; §11.2 keeps polling regardless, as SBX-03
    showed a terminated-requested order becoming `PAID`); create-order timeout and key
    retention (CF-A27; §7.2, §11.6); webhook response time (CF-A21); limits for the refunds
-   list and terminate (CF-A29). Asked in the fifth mail: refunding one of two successes by
+   list and terminate (CF-A29). Asked in the fifth mail (sent 2026-11-12): refunding one of two successes by
    API (CF-A35; §13.1 live-money block); `UNRECONCILED_AUTO_REFUND` (CF-A16; §9.3, §13.2);
    whether the five-minute advice applies to retries (CF-A21; §10.5, D-114); payment and
    order amounts differing (CF-A28; §13.1). No order waits for CF-A16: the first verified
@@ -140,12 +143,18 @@ once tested. The adapter (§7) is still the only place that uses these names.
    endpoint accepts anything (slice 4); termination answers (slice 5); same session after a
    failed attempt (slice 3); the UPI-and-card limit on the checkout page (slice 2).
    The completed real-phone payment and verified return are slice 3's gate.
+   Before slice 4 acceptance, verify the version actually available and selected in the
+   merchant dashboard and receive its subscribed event types through the registered
+   endpoint, without `notify_url`. REST API version does not establish webhook
+   configuration. If `2026-01-01` is unavailable, stop this gate and review an explicit
+   alternative contract; do not silently broaden the allowlist.
 4. **Order-level split timing:** SDD 05 adds the split call after verification; nothing in
    this SDD waits for it.
 5. **Live keys:** never on the dev project. Production setup waits for account activation
    (CF-63) and is out of this SDD's test-mode scope.
 6. **Sandbox test data:** UPI `testsuccess@gocash`, `testfailure@gocash`,
-   `testuserdropped@gocash`; cards with OTP `111000`; Cashfree's `POST /simulate` sets a
+   `testinvalid@gocash` (Cashfree's sandbox page; a dropped payment is made with
+   `POST /simulate`, SBX-04); cards with OTP `111000`; Cashfree's `POST /simulate` sets a
    payment `SUCCESS`, `FAILED`, `PENDING` or `USER_DROPPED`. `FAILED` needs a
    `payment_error_code` (for example `ISSUER_NOT_AVAILABLE`). Same-session retry after a
    dropped attempt works through Pay Order (SBX-04); slice 3 still checks it through the
@@ -176,9 +185,8 @@ Former items 4 and 8 are now decisions D-105 and D-104.
 4. *(Now D-105.)*
 5. **The customer's "I've paid" check** (on return from Cashfree's page) is limited to 10
    calls a minute per customer, and only ever triggers verification.
-6. **Webhook messages are de-duplicated on Cashfree's `x-idempotency-key` header**, with
-   our own key (event type, Cashfree payment or refund ID, signed timestamp) only when the
-   header is missing (§10.2).
+6. Webhook intake always deduplicates by the verified timestamp/body digest (§10.2); the
+   provider's idempotency header is never the sole identity.
 7. **A duplicate success is first checked 3 business days later** (D-78's starting wait,
    `commerce.duplicate_reversal_wait_business_days = 3`), then follows D-78 (§13.2).
 8. *(Now D-104.)*
@@ -230,7 +238,7 @@ fixed contract until its own slice lands (M14).
    atomic rate admission are built before the expiry integration is enabled.
 6. **Wrong amount and duplicates:** §13.1 and §13.2, with SDD 04's refund request (or its
    stub) and SDD 01's duplicate notice. Needs SDD 01 slice 6 for D-81 cases. Tests VE-05,
-   VE-11a, VE-11b, VE-17, DU-01 to DU-15.
+   VE-11a, VE-11b, VE-17, DU-01 to DU-16.
 7. **Races and rotation:** §14 races and the §13.4 rotation procedure rehearsed on sandbox.
    Tests WH-06, WH-10, RX2-01 to RX2-16, SE-03 to SE-06, ST2-06.
 
@@ -244,7 +252,7 @@ fixed contract until its own slice lands (M14).
 | SDD 01 | 02 reads | The checkout's `status`, `final_total_minor`, `reservation_expires_at` and owner before a payment may start (§8) |
 | SDD 03 | 02 calls 03 | Post every observed receipt once by `receipt:<cf_payment_id>`, a sale only on conversion by `order:<order_id>`, and each provider reversal by `reversal:<cf_refund_id>` (§9.3 step 3); record `PAYMENT_CHARGES_WEBHOOK` charges (CF-29) as reported, never computed; a reconciliation case for a `reversed` success and an `unknown_order` webhook |
 | SDD 03 | 03 calls 02 | Daily reconciliation (D-78) that finds a Cashfree payment not recorded or not classified calls §9.2 and §9.3 for its payment; this is the safety net after §11.2's window |
-| SDD 04 | 02 calls 04 | Category 6 (wrong amount, D-29) with refund key `wrong_amount:<cf_payment_id>`; category 6a (duplicate) with key `duplicate:<cf_payment_id>` only under D-78's conditions. Each is capped at that attempt's amount, including pending/unknown refund intents. Fractional-paisa or unsupported-currency receipts need Cashfree's exact refundable amount (§13.1); nothing is rounded. Category 5 for late and cancelled cases comes through SDD 01 §5.6 |
+| SDD 04 | 02 calls 04 | Category 6 (wrong amount, D-29) with refund key `wrong_amount:<cf_payment_id>`; category 6a (duplicate) with key `duplicate:<cf_payment_id>` only under D-78's conditions. Each is capped at that attempt's amount, including pending/unknown refund intents. Fractional-paisa or unsupported-currency receipts need Cashfree's exact refundable amount (§13.1); nothing is rounded. Category 5 for late and cancelled cases comes through SDD 01 §5.6. All provider submissions, including category 5, are subject to §13.1's CF-A35 guard, enforced by SDD 04's sender. |
 | SDD 05 | 05 uses | The verified payment and order for the split call after verification |
 | SDD 08 | 02 needs | Admin cases: wrong amount (alert), duplicate "ask Cashfree", unconfirmed closed payment after 24 hours, dead webhook messages, `auth_failed`, failed conversion (SDD 01 §5.10), key-rotation restart (D-68). Checked commands to record the actual enquiry and Cashfree's answer (`cashfree_asked_at`, `cashfree_answered_at`, §13.2), and the holiday list (§17 item 13) |
 | SDD 09 | Later | Carry §15's tests and the security list into the full test plan |

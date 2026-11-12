@@ -33,6 +33,7 @@ tag. A fact without a tag must not be used.
 | R2 | Cashfree's second reply (Tech Team) |
 | R3 | Cashfree's third reply (Tech Team), answering our second mail |
 | R4 | Cashfree's fourth reply, answering our third mail (2026-11-11) |
+| R5 | Cashfree's fifth reply (Tech Team, Shreejoy Chatterjee), answering our fourth and fifth mails (2026-11-12) |
 | DOC | Read on Cashfree's public documentation on 2026-11-10 |
 | SBX | Seen by us on sandbox on 2026-11-09 |
 | ASKED | Not known. Asked in the second mail; no answer yet |
@@ -155,6 +156,28 @@ Where a later reply contradicts an earlier one, the later fact says so and is us
 | CF-41 | Base URL `https://sandbox.cashfree.com/pg`; API version `2026-01-01`. | SBX, DOC |
 | CF-75 | A reused order ID is rejected with HTTP 409, code `order_already_exists` (the spec's only example); `order_id_already_exists` appears nowhere. Answers CF-A23. | DOC (OpenAPI v2026-01-01, checked 2026-11-12) |
 
+### From R5 (2026-11-12)
+
+Quotes are from the [original text](./PHASE-7-8-cashfree-replies-original.md) (R5).
+
+| ID | Fact | Source |
+|---|---|---|
+| CF-76 | Termination: a transaction the customer started before termination "can still be successful"; no new transaction can start. "If any payment attempt is still pending, the order remains in TERMINATION_REQUESTED until that attempt reaches a final status"; "There is no fixed time limit"; confirm with Get Order. Matches SBX-03. Answers most of CF-A17 | R5 |
+| CF-77 | "USER_DROPPED is a terminal status, and such a payment cannot move to SUCCESS." "A payment in NOT_ATTEMPTED status can move to SUCCESS in the Sandbox environment." Live behaviour of `NOT_ATTEMPTED` not stated | R5 |
+| CF-78 | Create Order timeout: "you can safely retry it with the same x-idempotency-key". Repeats the docs; key retention and whether a 404 is final are not answered (CF-A27 stays open) | R5 |
+| CF-79 | "The payment amount can differ from the order amount when a service fee is collected from the customer." No other case named (CF-A28 partly answered) | R5 |
+| CF-80 | Webhooks without a 200 are retried "by default at 2, 10 and 30 minutes"; a custom retry policy can be set in the Merchant Dashboard; a missed payment webhook can be resent with "Batch Resend" in the dashboard. No response timeout given; the retry timestamp question is not answered (CF-A21 stays open) | R5 |
+| CF-81 | "Rate limits are applied per minute based on your IP and account ID", shown in response headers and under Developers > Rate Limits in the Merchant Dashboard. No numbers given (CF-A29: owner to read the dashboard) | R5 |
+| CF-82 | "two successful payments cannot be simulated on a single order in the Sandbox environment" (CF-A25 closed; tests use recorded answers) | R5 |
+| CF-83 | A second success on one order "is reversed automatically by Cashfree"; automatic refunds are listed in the dashboard under Payment Gateway > Transactions > Refunds > Auto Refunds. Does not say how to refund one chosen payment by API (CF-A35 open) or what `UNRECONCILED_AUTO_REFUND` means (CF-A16 open) | R5 |
+| CF-84 | A refund that "cannot be processed even after the retries ... continues to show as PENDING to you, and our team handles it further from our end." (Partly answers CF-A31; R1's alternatives for a failed UPI refund, CF-21 and CF-70, are not mentioned again) | R5 |
+| CF-85 | `CANCELLED`: when we cancel a refund that is on hold or pending approval (Cancel Refund API or dashboard), or when Cashfree or the bank cancels it. The amount returns to our and the vendor's balances and a refund webhook is sent. It is final; to refund again, create a new refund with a new `refund_id` once the balance is enough | R5 |
+| CF-86 | "A failed vendor settlement is retried automatically, and the amount remains with Cashfree until it is settled." Answers CF-A14 | R5 |
+| CF-87 | A refund on hold "resumes automatically once the vendor balance is sufficient"; on-hold refunds are re-checked about every hour; status moves `ONHOLD` → `PENDING` → `SUCCESS`; track with Get Refund. "the refund webhook is sent only for the final status (SUCCESS or CANCELLED), and not for ONHOLD or PENDING"; check the status before creating another refund. Answers CF-A32 | R5 |
+| CF-88 | "Vendor credit adjustments and chargebacks are funded from your settlement balance and not from the Refund Wallet." Confirm a credit by the adjustment ID, the vendor's ledger and balance, and the merchant ledger report. Answers CF-A34's balance part. Whether "settlement balance" is the "merchant ledger" of R1/R4 (CF-72) and how it is topped up is not stated | R5 |
+| CF-89 | Each vendor bank-account verification debits "A fixed fee plus GST" from our balance; it shows in the merchant ledger as a vendor onboarding entry and in invoices. No API named. Answers CF-A33 | R5 |
+| CF-90 | Easy Split charges and the payment methods on the live account "depend on your account's commercials and onboarding"; the Account Manager assists. CF-A12 and CF-A34's go-live part move to the Account Manager | R5 |
+
 ## 3. Questions from the second mail
 
 The IDs are kept so the SDDs' references stay valid.
@@ -201,6 +224,20 @@ Manager on production pricing and onboarding.
   order with a payment pending, blocking a vendor.
 
 ## 5. What these answers change
+
+### After R5 (2026-11-12). Not yet carried into the SDDs.
+
+| Topic | Before R5 | After R5 |
+|---|---|---|
+| Refund webhooks (SDD 04) | A refund webhook for each change was assumed | Sent only for `SUCCESS` and `CANCELLED` (CF-87); `ONHOLD` and `PENDING` must be seen by polling Get Refund |
+| Refund on hold (SDD 04, CF-A32) | Unknown whether it resumes | Resumes by itself about hourly once the balance is enough (CF-87); never create a second refund while one is on hold or pending |
+| Refund that cannot be paid out (SDD 04, CF-A31) | Unknown for cards | Stays `PENDING`; Cashfree handles it (CF-84). SDD 04 needs an admin alert for a refund pending too long |
+| Cancelled refund (SDD 04) | Not covered | Money returns to the balances; a new refund needs a new `refund_id` (CF-85) |
+| Funding vendor credits and chargebacks (SDD 04, 05; D-14, D-54) | Merchant ledger, possibly recharged through the Refund Wallet | Settlement balance, not the Refund Wallet (CF-88). How to top up the settlement balance is still unknown |
+| Failed vendor settlement (SDD 05) | Unknown | Retried automatically; money stays with Cashfree (CF-86) |
+| Terminated order (SDD 02 §11.2, §12) | Poll continues | Confirmed: stays `TERMINATION_REQUESTED` while an attempt is pending, no time limit (CF-76); `USER_DROPPED` is final (CF-77) |
+| Missed payment webhook | Poll only | Also Batch Resend in the dashboard (CF-80), a manual tool |
+| Bank verification fee (SDD 03) | Unknown where shown | Merchant ledger "vendor onboarding" entry and invoices, no API (CF-89) |
 
 ### After R4 (2026-11-11). These rows are not yet carried into the SDDs.
 

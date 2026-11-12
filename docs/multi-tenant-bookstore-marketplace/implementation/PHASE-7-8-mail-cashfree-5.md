@@ -1,6 +1,8 @@
 # Phase 7/8: Fifth Mail to Cashfree (draft)
 
-**Status:** DRAFT, written 2026-11-12, not sent. The owner sends it from their own mailbox
+**Status:** SENT by the owner on 2026-11-12. The owner has not yet pasted the text as sent;
+until then the final version below is assumed to be what was sent. Earlier status: draft,
+written 2026-11-12. The owner sends it from their own mailbox
 as a reply on ticket 8774207, after the [fourth mail](./PHASE-7-8-mail-cashfree-4.md) (9
 questions, sent 2026-11-12).
 **Authority:** none. It asks what the [sandbox tests](./PHASE-7-8-cashfree-sandbox-tests.md)

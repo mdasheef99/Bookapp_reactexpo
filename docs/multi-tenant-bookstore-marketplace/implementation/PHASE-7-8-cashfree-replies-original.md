@@ -17,6 +17,7 @@ text ever disagree, this text wins and the fact is corrected.
 | R2 | Tech Team reply to points 16 to 19 | 2026-11-10 3:26 PM | Shreejoy Chatterjee, Integration Engineer | 2026-11-10 11:44 UTC |
 | R3 | Tech Team reply to our second mail | 2026-11-10 7:14 PM | Shreejoy Chatterjee, Integration Engineer | 2026-11-10 16:55 UTC |
 | R4 | Reply to our third mail | 2026-11-11 1:20 PM | Nikhil Scaria, Cashfree Care | 2026-11-11 10:21 UTC |
+| R5 | Tech Team reply to our fourth and fifth mails | not given in the paste | Shreejoy Chatterjee, Integration Engineer | 2026-11-12 |
 
 The whole Gmail thread (our mails as sent, the ticket acknowledgement and our 11 Nov
 thank-you mail) is stored word for word in the [thread file](./PHASE-7-8-cashfree-thread-original.md).
@@ -384,4 +385,70 @@ Your feedback is valuable to us, so we kindly ask you to take a moment to rate t
 
 Please note that your ticket ID is 8774207
 Satisfaction survey: Response Satisfaction Survey
+```
+
+---
+
+## R5: Tech Team reply to our fourth and fifth mails
+
+Pasted by the owner on 2026-11-12, without the send time. Kept exactly as pasted,
+including the line break before "Get Order API.".
+
+```text
+Hi Team,
+
+Greetings from Cashfree Tech Team.
+
+Thank you for the update and for sharing your sandbox test results in detail.
+
+Please find our responses to your queries below.
+
+1. Orders and payments
+Order termination: If the customer has already selected a payment mode and initiated a transaction before the order is terminated, that transaction can still be successful. However, no new transaction can be initiated on the order, and the order will be terminated.
+Termination timing: If any payment attempt is still pending, the order remains in TERMINATION_REQUESTED until that attempt reaches a final status (success or failure). There is no fixed time limit for this, and the time taken depends on the pending payment attempt. Hence, we request you to kindly confirm the final order status using the
+
+Get Order API.
+Payment status after termination: USER_DROPPED is a terminal status, and such a payment cannot move to SUCCESS. A payment in NOT_ATTEMPTED status can move to SUCCESS in the Sandbox environment.
+Create Order timeouts: If a Create Order request times out, you can safely retry it with the same x-idempotency-key to avoid creating a duplicate order.
+Payment amount: The payment amount can differ from the order amount when a service fee is collected from the customer.
+
+2. Webhooks and rate limits
+Webhook retries: A webhook that does not receive a 200 response is retried by default at 2, 10 and 30 minutes, and you can configure a custom retry policy from the Merchant Dashboard. In case a payment webhook is missed, you can also use the Batch Resend option on the Merchant Dashboard to resend it.
+
+Rate limits: Rate limits are applied per minute based on your IP and account ID. You can view the rate limits applicable to your account in the API response headers and under Developers > Rate Limits in the Merchant Dashboard.
+
+3. Sandbox testing
+We have noted that you would like to disregard this query. For your reference, two successful payments cannot be simulated on a single order in the Sandbox environment.
+
+4. Refunds
+
+- Duplicate payments: When two payments are successful on the same order, the extra payment is reversed automatically by Cashfree. All automatic refunds can be viewed on the Merchant Dashboard under Payment Gateway > Transactions > Refunds > Auto Refunds.
+
+- Failed refunds: If a refund cannot be processed even after the retries, it continues to show as PENDING to you, and our team handles it further from our end.
+
+- Cancelled refunds: A refund is marked as CANCELLED when you cancel a refund that is on hold or pending approval (through the Cancel Refund API or the Merchant Dashboard), or when it is cancelled by Cashfree or the bank. When a refund is cancelled, the amount is credited back to your and the vendor's balances and a refund webhook is sent to you. CANCELLED is a final status, so to refund the customer again, you can create a new refund with a new refund_id using the Create Refund API, after making sure that the balance is sufficient.
+
+5. Easy Split
+- Failed vendor settlement: A failed vendor settlement is retried automatically, and the amount remains with Cashfree until it is settled.
+
+- Resuming a refund after funding the vendor: A refund on hold resumes automatically once the vendor balance is sufficient, and no action is required from your end. Refunds on hold are re-checked approximately every hour, and the refund status moves from ONHOLD to PENDING and then to SUCCESS. You can track the status using the Get Refund API (refund_status). Please note that the refund webhook is sent only for the final status (SUCCESS or CANCELLED), and not for ONHOLD or PENDING. Hence, we request you to kindly check the refund status before creating another refund for the same order.
+
+- Funding vendor credits and chargebacks: Vendor credit adjustments and chargebacks are funded from your settlement balance and not from the Refund Wallet. You can confirm the credit using the adjustment ID, the vendor's ledger and balance, and the merchant ledger report.
+Bank-account verification charges: A fixed fee plus GST is debited from your balance for each vendor bank account verification. It is shown in the merchant ledger as a vendor onboarding entry, and in your invoices.
+
+6. Charges and going live: The Easy Split charges and the payment methods to be enabled on your live account depend on your account's commercials and onboarding. Your Account Manager shall assist you with both points.
+
+Documentation:
+Order states: https://www.cashfree.com/docs/payments/online/resources/payment-lifecycle#order-states
+Rate limits: https://www.cashfree.com/docs/api-reference/payments/rate-limits#rate-limiting
+Easy Split refund scenarios: https://www.cashfree.com/docs/payments/split/refund/scenarios
+In case there are still any open points, please let us know so that we can check further.
+
+Thank you for your patience and understanding.
+
+
+
+Your ticket ID is 8774207
+Thanks and Regards,
+Shreejoy Chatterjee | Integration Engineer | Cashfree Payments
 ```

@@ -154,7 +154,12 @@ bank-verification fees), the run is listed and its source is an open point in §
 - Each run has a named owner and a recorded sign-off (handoff §7).
 - Sources: order and payment reads for payments; refund reads for refunds; the vendor
   reconciliation API, which gives each settlement's ID, time and bank reference (CF-39);
-  and the per-payment charges webhook for fees (CF-29).
+  and the per-payment charges webhook for fees (CF-29), which is not yet backed by an
+  independent source (see the note below).
+
+The payment poll does not recover a missing charges webhook. Before live activation,
+name and verify an independent provider API or report that repairs missing fee facts;
+another reference to the same webhook is not an independent reconciliation source.
 
 ## 7. Database enforcement
 

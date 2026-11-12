@@ -29,6 +29,16 @@ store fault records, chargebacks, and the losses BookConnect absorbs.
   (E10, BC-40).
 - Customers never bear costs the store or the provider caused (BC-34).
 
+**Live-money block (CF-A35, SDD 02 §13.1).** The documented Create Refund request selects
+an order, not a `cf_payment_id`. BookConnect's attempt identity and refund cap do not
+establish which payment Cashfree will refund. Until Cashfree confirms a safe procedure,
+every refund category on an order with multiple successful payments is blocked from
+live submission. Preserve the refund obligation and intent, open one admin case, and
+continue reconciliation. Enforce this in the refund sender, including for intents queued
+before another success was discovered. Sandbox submission remains permitted. Resolving
+this gate is required before live activation; an admin case does not discharge the
+refund obligation or waive D-78's deadline.
+
 ## 2. Refund categories
 
 "Auto" means no person approves it; above ₹1,000 the admin is alerted afterwards (D-29).
@@ -40,8 +50,8 @@ store fault records, chargebacks, and the losses BookConnect absorbs.
 | 3 | Missing books, customer keeps the rest | Auto | Those books' prices; delivery charge stands | Store | D-61, Q65, D-26 |
 | 4 | Missing books, customer cancels all | Auto | Full, with delivery (less anything already refunded under 3) | Store | D-61 |
 | 5 | Late payment and the book is gone, or the checkout was cancelled, or the store has since become ineligible; or a verified payment that could not be turned into an order, refunded by an admin (D-95) | Auto; admin action for D-95 | The whole payment | BookConnect | Q38, D-22, D-85, D-95 |
-| 6 | Wrong-amount payment | Auto | That payment in full | BookConnect | D-29 |
-| 6a | Duplicate payment | None: not a refund of ours | Nothing from BookConnect. Cashfree reverses it (CF-30); we record and confirm the reversal (SDD 02 §5). If none shows after the set wait, the admin asks Cashfree and refunds on its confirmation, or after 5 more business days with no answer (D-78) | BookConnect, if any fee arises | D-29, D-78, CF-30 |
+| 6 | Wrong-amount payment | Auto | That payment in full. Provider submission is subject to §1's CF-A35 guard. | BookConnect | D-29 |
+| 6a | Duplicate payment | None: not a refund of ours | Nothing from BookConnect. Cashfree reverses it (CF-30); we record and confirm the reversal (SDD 02 §13.2). If none shows after the set wait, the admin asks Cashfree and refunds on its confirmation, or after 5 more business days with no answer (D-78). Provider submission is subject to §1's CF-A35 guard. | BookConnect, if any fee arises | D-29, D-78, CF-30 |
 | 7 | Customer cancels before ready (pickup) or before collection (delivery) | Auto (D-91) | Full, with delivery | BookConnect; provider fee per D-31 | Q45, D-67 |
 | 8 | Photos not sent, rejected, or not approved in time | Auto | Full, with delivery | Store if photos were not sent or do not match; else BookConnect | D-43, D-53 |
 | 9 | Pickup missed | Auto | Full | BookConnect | Q72, Q59, D-22 |
@@ -63,7 +73,7 @@ store fault records, chargebacks, and the losses BookConnect absorbs.
 | `requested` | Created by a rule or a person | The system at once: to `approved` (automatic categories) or `awaiting_approval` |
 | `awaiting_approval` | Categories 13 and 16 to 18 where approval is needed. A return (15) is approved on the return case, so its refund is created already `approved` when inspection passes | Admin; overdue items show in the admin queue |
 | `rejected` | Admin said no; reason recorded | Final |
-| `approved` | Cleared to send | The refund sender, a server job that retries until Cashfree answers |
+| `approved` | Approved by refund policy; provider submission may remain blocked | The sender checks §1's CF-A35 guard before calling Cashfree; a blocked intent remains unsent with an admin case. |
 | `submitted` | Sent to Cashfree with our refund ID; the answer may be unknown | The refund webhook, and the refund status poll by our refund ID |
 | `processing` | Our name for a refund Cashfree has accepted but not finished, including `ONHOLD`. `ONHOLD` is a normal state (D-54): BookConnect's balance or the store's balance is too low, and it is released by recharging or by a credit adjustment (CF-17). It raises an admin alert | The same webhook and poll; an item still here after a set time goes to the admin queue |
 | `succeeded` | Cashfree confirms; ledger posted | Final |

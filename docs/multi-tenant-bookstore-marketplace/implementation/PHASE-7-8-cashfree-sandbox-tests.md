@@ -68,7 +68,10 @@ that is noted there.
 ## What this changes for the design (to be taken into SDD 02 when it is next revised)
 
 1. Webhook check: use timestamp + raw body with no dot (SBX-08).
-2. De-duplication must work without `x-idempotency-key` (SBX-09): always de-duplicate on
+2. De-duplication must work without `x-idempotency-key` (SBX-09). *SDD 02 as revised on
+   2026-11-12 uses a hash of the signed timestamp and body as the message key (§10.2), and
+   each domain step stays idempotent by its business identity; the wording below is the
+   earlier proposal.* Always de-duplicate on
    the event type plus `cf_payment_id` plus status, even if only one webhook version is
    selected, because delivery is at least once. Cashfree's docs say `x-idempotency-key` is
    sent only on webhook version `2025-01-01` and later, and the version is chosen per

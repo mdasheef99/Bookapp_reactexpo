@@ -225,11 +225,14 @@ with the payment, refund and settlement events; orders carry no `notify_url` (m2
 Function `commerce-payment-webhook`, with JWT verification off:
 
 1. Read the raw body before parsing it.
-2. Verify the signature, the timestamp age and the webhook version (§7.2). The version must
-   be the registered `2026-01-01`: it carries `x-idempotency-key` (Cashfree sends that header
-   only from version `2025-01-01`) and sends `cf_payment_id` as a string. The old
-   `2021-09-21` body sends it as a 19-digit number, which JavaScript's JSON parsing rounds
-   (SBX-09). On failure record a `rejected` row with no body, answer HTTP 401 and stop.
+2. Verify the signature and timestamp age (§7.2), then require the registered webhook
+   version and validate the event-specific body contract. The version header is not
+   covered by the signature and is not proof of the body's format. Payment success,
+   failure and dropped events must satisfy their approved string-ID contract. Charge and
+   refund contracts must preserve documented numeric identifiers losslessly from the raw
+   JSON before any JavaScript Number conversion. Never recover an identifier by converting
+   an already-rounded Number to text. Reject unsupported versions, schemas or identifier
+   representations with a `rejected` row, no stored body and HTTP 401.
 3. Call `public.commerce_record_webhook` (M10). In **one transaction** it inserts the
    event by `message_key` (§10.2), its body, and a `process_provider_webhook` task (dedupe
    key: the event ID). A repeated key changes nothing.
@@ -238,13 +241,12 @@ Function `commerce-payment-webhook`, with JWT verification off:
 
 ### 10.2 Message key
 
-Messages of webhook version `2026-01-01` carry an `x-idempotency-key` header ("a unique
-hashed value for each webhook payload"). The message key is `cashfree:` + that header's
-value. If the header is missing, the key is our own: `cashfree:` + event type + `:` + the
-Cashfree payment ID (or the refund or vendor ID for other events) + `:` + the signed
-timestamp. Whether Cashfree's retries repeat the same header value is CF-A21. Either way a
-repeat is harmless: payments are also de-duplicated by `cf_payment_id` (§4.2), as Cashfree
-recommends.
+After successful signature verification, derive `message_key` as `cashfree:` followed by
+SHA-256 of the exact verified timestamp, a newline, and the raw body bytes. Use this
+identity regardless of whether `x-idempotency-key` is present. That header is not
+authenticated by Cashfree's signature and must not determine intake identity by itself.
+Every domain handover must also be idempotent by its provider business identity, so a
+newly signed delivery of the same fact cannot repeat a money effect.
 
 ### 10.3 Processing
 
@@ -287,9 +289,11 @@ their own reconciliation.
 Cashfree's docs give retries at 2, 10 and 30 minutes (CF-37). On sandbox, retries came
 about 1, 3 and 8 minutes after the first try and kept the first attempt's timestamp and
 signature (SBX-10). The docs' five-minute rule would therefore reject genuine retries, so
-the age limit is 24 hours (D-114, `commerce.webhook_max_age_seconds`). This is safe: a
-message never changes money by itself (BC-11), every message is re-checked with Cashfree,
-and a repeat is dropped by its message key (§10.2). Cashfree has been asked whether the
+the age limit is 24 hours (D-114, `commerce.webhook_max_age_seconds`). Payment-state changes
+still require fresh provider reads under §9, and repeated deliveries must not repeat
+domain effects. Fee, refund, vendor and settlement handovers retain their own
+verification, idempotency and reconciliation requirements; the 24-hour intake limit does
+not establish those safeguards by itself. Cashfree has been asked whether the
 five-minute advice applies to retries (fifth mail, question 3; CF-A21).
 
 ### 10.6 Deleting old bodies (M13)
@@ -469,14 +473,17 @@ D-29). A later success on the same Cashfree order is a duplicate (§13.2).
 The request carries the attempt ID, `cf_payment_id`, exact amount text and currency as
 well as whole paise when representable.
 
-**Live-money block (CF-A35).** Cashfree's Create Refund request takes the order ID, the
-amount and our refund ID, but no `cf_payment_id` (live API spec, checked 2026-11-12), so a
-refund cannot be pointed at one payment. While the order has only this one success, an
-order-level refund of its exact amount can only reach it. When the order has two
-successes, which payment is refunded is unknown. Until Cashfree answers (fifth mail,
-question 1), this refund and §13.2's `refund_due` refund run only in sandbox; before live
-keys are used, an order with two successes opens an admin case instead of calling Create
-Refund. SDD 04 locks this payment and deduplicates by
+**Live-money block (CF-A35).** The documented Create Refund request selects an order, not
+a `cf_payment_id`. BookConnect's attempt identity and refund cap do not establish which
+payment Cashfree will refund. Until Cashfree confirms a safe procedure, every refund
+category on an order with multiple successful payments is blocked from live submission.
+Preserve the refund obligation and intent, open one admin case, and continue
+reconciliation. Enforce this in SDD 04's sender, including for intents queued before
+another success was discovered. Sandbox submission remains permitted. Resolving this
+gate is required before live activation; an admin case does not discharge the refund
+obligation or waive D-78's deadline.
+
+SDD 04 locks this payment and deduplicates by
 that attempt/key; all sent, pending and unknown refunds count toward the attempt's cap.
 A fractional-paisa or unsupported-currency receipt is never rounded into an INR refund:
 record the mismatch and an admin case, and obtain Cashfree's exact refundable amount and
@@ -522,7 +529,7 @@ uncontacted case stays visible to the admin and owner until resolved.
 | No completed reversal and `watch_stage = waiting_reversal` at its due time, including a `PENDING`, `PENDING_APPROVAL`, `ONHOLD`, `CANCELLED` or `REJECTED` reversal | Open one admin case "Ask Cashfree about this payment"; set `ask_case_opened_at`; `watch_stage = asked_cashfree`; keep the enquiry due until recorded |
 | The admin records "Cashfree will not reverse", and no refund intent exists | Set `refund_due_at` no later than 1 business day after `cashfree_answered_at`; `watch_stage = refund_due` |
 | No answer `commerce.duplicate_refund_no_answer_business_days` business days after `ask_case_opened_at` (D-110), and no refund intent exists | Set `refund_due_at` to that deadline; `watch_stage = refund_due` |
-| `refund_due` and no completed reversal in the fresh refunds check | Persist SDD 04 category 6a's intent with attempt identity, exact amount/currency and key `duplicate:<cf_payment_id>`; set `refund_requested_at` and `watch_stage = refund_requested`; one request only, outside-lock sender later |
+| `refund_due` and no completed reversal in the fresh refunds check | Persist SDD 04 category 6a's intent with attempt identity, exact amount/currency and key `duplicate:<cf_payment_id>`; set `refund_requested_at` and `watch_stage = refund_requested`. Submission is subject to §13.1's CF-A35 guard; a blocked live intent remains unsent with an admin case. |
 | Incomplete reversal and no refund deadline reached | Keep watching; next check no later than the earlier of next business day and the current policy deadline |
 | `refund_requested` and no completed reversal | Continue daily reconciliation with SDD 03 and SDD 04, including after the ordinary payment-poll window; never request again |
 
@@ -562,16 +569,18 @@ Cashfree allows one key pair at a time. Steps, by the owner with an admin:
    that cannot be recovered open admin cases.
 3. Generate new keys in Cashfree's dashboard (Developers → API Keys; sandbox and
    production keys are separate); replace both server secrets; redeploy the functions that
-   read them. Whether the old keys stop working at once is CF-A24; the procedure assumes
-   they do, so calls in this gap fail and are retried. Keep the old client secret as a
-   separate server secret used only to check webhook signatures, for 24 hours (the age
-   limit, D-114), then delete it. Cashfree "signs webhooks using the client secret that was
-   active at the time the event was sent" (Payloads and Signatures page, checked
-   2026-11-12), and a retry keeps its first signature (SBX-10), so without this window a
-   message sent before the swap could never pass the check.
+   read them. Whether the old API keys stop working at once is the still-open half of CF-A24 (the docs
+   answer only which secret signs an already-sent webhook); the procedure assumes
+   they do, so calls in this gap fail and are retried. For a normal rotation, retain the
+   previous client secret solely for webhook verification until 24 hours after the
+   recorded rotation time. The verifier enforces that expiry even if secret deletion is
+   delayed; outbound API calls use only the new credentials. If compromise is known or
+   suspected, disable previous-secret verification immediately and retain no acceptance
+   window. Recover affected events through provider reads and reconciliation.
 4. Run one sandbox read to prove the new keys work.
-5. Webhooks signed with the old secret are accepted during the 24-hour window; anything
-   rejected after it is recovered by the poll.
+5. Previous-secret acceptance follows step 3. Rejected payment deliveries are recovered
+   by §11; refund, fee, vendor and settlement deliveries require the recovery paths owned
+   by SDD 04, SDD 03 and SDD 05 respectively.
 6. Restart under D-68: reconciliation shows no stuck or mismatched payment, and the owner
    restarts with a logged reason.
 
