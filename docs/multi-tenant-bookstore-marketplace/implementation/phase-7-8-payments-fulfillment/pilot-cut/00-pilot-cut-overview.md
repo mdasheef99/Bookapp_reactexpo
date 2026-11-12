@@ -160,6 +160,9 @@ receivers are built and must pass before live payments.
 
 ## 7. Pilot slices
 
+How each slice is built (two flows by risk, model roles, gates) is in the
+[Phase 7/8 build process](../BUILD-PROCESS.md).
+
 Replaces SDD 01 §19 and SDD 02 §18 for the pilot. Each slice is one branch with its own
 tests on the disposable database, reviewed and merged on its own, and leaves the app
 working. Revised on 2026-11-13 after Sol's slice review (§8, round 4).
@@ -169,7 +172,7 @@ in that slice (§3 item 2).
 
 | Slice | Contents | Needs | Size |
 |---|---|---|---|
-| P0 | Disposable Postgres runner, test time function, SQL suites and `deno check` in CI | Cut approved; day 1 recorded | M |
+| P0 | Disposable Postgres runner, test time function, SQL suites and `deno check` in CI; the one-command gate `scripts/verify-phase78.js` (with `--full`) and the facts script `scripts/phase78-sql-facts.js` ([build process](../BUILD-PROCESS.md) §1) | Cut approved; day 1 recorded | M |
 | P1a | Schema for checkout, order, pause, payment, attempt, check and webhook tables; settings; constraints; transition triggers; grants and service-role wrappers | P0 | L |
 | P1b | Task framework: task types, task-scoped claim and completion, atomic replacement, resolved-task guards, reconciliation exemptions (SDD 01 §8.1, §15); notification types, validators and routes; ledger and refund recording stand-ins (§6); `commerce_admin_cases`, owner notice, digest, digest-delivery check and case-close script, with the shared admin-script security (§5) | P1a; SDD 03 and SDD 04 interfaces agreed (§6) | L |
 | P2 | Reservation, cancel, stock helpers, cart guards (Phase 6 rework) and checkout reads; cart UI merged but switched off | P1b; Phase 9's lock-order migration and listing-trigger change (SDD 01 §18) | M |
