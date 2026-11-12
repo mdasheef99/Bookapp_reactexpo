@@ -11,7 +11,7 @@ register, the Cashfree fact record (CF-01 to CF-66) and approved SDD 01. **Revie
 done** (Muse, DeepSeek, Codex Sol, Codex Luna; [findings](../../PHASE-7-8-sdd02-review-r1.md))
 and revised on 2026-11-11 with the owner's decisions D-104 to D-108. Round 2 reviewed and
 corrected the remaining design defects on 2026-11-12; evidence and exact edits are in
-`p78sdd02r2/SOL-R2-REPORT.md`. Revised again on 2026-11-12 from the
+[round 2 report](../../PHASE-7-8-sdd02-review-r2-sol.md). Revised again on 2026-11-12 from the
 [sandbox tests](../../PHASE-7-8-cashfree-sandbox-tests.md) (SBX-01 to SBX-10) and owner
 decision D-114: termination answers (§12.1), webhook age limit and version guard (§7.2,
 §10.1, §10.5), previous-secret window on key change (§13.4), live-money block on refunding
@@ -19,8 +19,8 @@ one of two successes (§13.1, CF-A35), tests TE-03/03a, WH-02/02a, WH-10. Revise
 2026-11-12 after an outside review: open-items wording (§16 item 8), webhook size cap
 and rejection counter (§4.3a, §10.1, WH-14, WH-15), and the late-payment handover to
 SDD 03 (§19, PO-10). This round's checked findings and fixes are recorded in
-`p78outside/SOL-REPORT.md` (local review evidence, excluded from git). Owner/Cashfree
-gates remain in §16; no approval of the SDD or its proposals is implied.
+[outside-review report](../../PHASE-7-8-sdd02-review-outside.md). Owner/Cashfree
+gates remain in §16.
 Review round 3 (Codex Sol, 2026-11-12) findings applied the same day.
 R5 references added (CF-76 to CF-83, CF-90; §§2, 4.2, 7.2–7.3, 10.5,
 11.2, 11.5–11.6, 12, 13.1–13.2, 15.2–17). The polling schedule and CF-A35 live-money

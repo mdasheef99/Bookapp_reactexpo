@@ -22,6 +22,64 @@ memory are not available there.
 
 ---
 
+## 0. Where Phase 7/8 stands now (updated 2026-11-12; read this first)
+
+This section overrides older status text further down where they differ.
+
+- **SDD 01** (checkout and reservation): approved 2026-11-11.
+- **SDD 02** (Cashfree payments and webhooks): approved 2026-11-12 with its §17 choices,
+  after three review rounds, sandbox tests, Cashfree's fifth reply, an outside review and
+  Sol's three-angle review. Evidence: [round 1](./PHASE-7-8-sdd02-review-r1.md),
+  [round 2](./PHASE-7-8-sdd02-review-r2-sol.md), [outside review](./PHASE-7-8-sdd02-review-outside.md).
+- **No code, migration or deployment is authorised** for either SDD. Building waits for
+  the owner's explicit go-ahead (AGENTS.md; D-33 for test-mode migrations on the dev project).
+- **Cashfree:** five replies (R1 to R5) stored word for word in the
+  [replies file](./PHASE-7-8-cashfree-replies-original.md); facts CF-01 to CF-90 in the
+  [fact record](./PHASE-7-8-cashfree-replies.md); open questions in the
+  [status table](./PHASE-7-8-cashfree-questions-pending.md). The
+  [sixth mail](./PHASE-7-8-mail-cashfree-6.md) is drafted, not sent. CF-A35 (refunding one
+  of two successes) blocks only that live case; everything else can be built on sandbox.
+- **Decisions:** D-01 to D-115 in the [register](./PHASE-7-8-decision-register.md). D-114
+  (24-hour webhook age) and D-115 (24-hour stuck-refund alert) are the latest.
+- **Owner's dashboard checks still to do:** Developers > Rate Limits; the merchant ledger
+  report; the webhook version offered and selected.
+
+### 0.1 Next work unit: write SDD 03 (ledger and reconciliation)
+
+SDD 03 exists only as an outline:
+[03-ledger-reconciliation-sdd.md](./phase-7-8-payments-fulfillment/03-ledger-reconciliation-sdd.md).
+Write it in full the same way as SDD 02: split by topic into parts of about 400 to 600
+lines, Claude writes, then review rounds, then owner approval. Required inputs:
+
+1. The SDD 03 outline, the register, and the root documents it cites (DOC-15 especially).
+2. SDD 02's handovers to SDD 03: SDD 02 §19 (receipt, sale, reversal and charge postings
+   with their keys; the daily reconciliation that calls SDD 02 §9.2/§9.3 with
+   `triggered_by = reconciliation`) and its owner/proof matrix; tests PO-10, PO-11,
+   HC-01 and WH-16, which SDD 03 must pass.
+3. The list "Changes needed in other SDDs" at the end of the
+   [outside-review report](./PHASE-7-8-sdd02-review-outside.md): what SDDs 03, 04, 05, 08
+   and 09 must provide. For SDD 03: receipt/sale/reversal/charge/loss interfaces and
+   posting lines; an independent discovery source with proven pagination, retention and
+   change-time coverage; a durable cursor with overlap and retries; coverage of old orders
+   that change; a checked health reader; and the rule for when SDD 02's poll may retire or
+   must resume. Its look-back must start no later than where SDD 02's 60-day poll ends.
+4. The R5 facts already carried into the SDD 03 outline: the charges webhook, settlement
+   balance versus Refund Wallet (CF-88), bank-verification fee as a merchant-ledger
+   "vendor onboarding" entry with no API (CF-89).
+
+**Review rule (owner, 2026-11-12):** every SDD review brief asks three fixed angles in
+addition to correctness: (A) attacker view: how could public endpoints, service-role
+functions or admin powers be abused; (B) what is missing: limits, tests, failure paths;
+(C) handovers: does every handover between SDDs have an owner and a test. After each
+revision, re-read the status/open-items section against the proposals list. Earlier
+rounds that only asked "is this correct" missed real gaps in SDD 02.
+
+**Routing (owner's standing preferences):** Claude writes every SDD; Codex Sol
+(gpt-6.1-sol, xhigh) reviews and fixes rounds and writes code; Haiku runs tests and
+searches; free OpenCode models (deepseek-v4.1-flash, never pro; never MiniMax, Argon or
+OpenRouter) do consistency checks. Ask the owner before each commit and push. Never send
+outside mail; draft it for the owner. Store outside replies word for word.
+
 ## 1. Reading order for a new session
 
 1. [AGENTS.md](../../../AGENTS.md): repository rules and authorization boundaries.

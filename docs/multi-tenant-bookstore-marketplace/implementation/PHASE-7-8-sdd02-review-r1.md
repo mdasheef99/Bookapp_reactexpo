@@ -95,7 +95,7 @@ each fix against this list and corrects what is still wrong (owner, 2026-11-11).
 
 ## Round 2 (2026-11-12, Codex Sol confirm-and-fix)
 
-Sol's report: `p78sdd02r2/SOL-R2-REPORT.md` (local, not committed); verdict READY WITH
+Sol's report: [PHASE-7-8-sdd02-review-r2-sol.md](./PHASE-7-8-sdd02-review-r2-sol.md); verdict READY WITH
 FIXES, 24 new findings (S2-01..S2-24), edits to the four SDD 02 parts and the D-107/D-108
 lines of SDD 01. Claude spot-checked its schema evidence (unique `(command_id, event_type)`
 index, claim attempt increment, `pay_presses` default) and the SDD 01 scope: correct.
