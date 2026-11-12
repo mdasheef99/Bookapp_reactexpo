@@ -16,6 +16,10 @@ ledger is recharged); the Easy Split charge and tax are in the split-details API
 bank-verification charge; the API spells the hold status `ONHOLD`, so question 4 uses plain
 words. The question 9 line was removed once the owner shared the mail as sent (it has no
 ledger part).
+**Outside review (2026-11-12):** a review shared by the owner suggested four additions (safe
+procedure in Q1, intended retry behaviour in Q3, resumed-status signal in Q4, funding
+method and confirmation in Q6); all four were added. Its suggested new subject line was
+not taken, so the mail stays on ticket 8774207.
 
 ---
 
@@ -29,17 +33,17 @@ About my earlier mail: please disregard question 5, about creating two successfu
 
 New questions:
 
-1. Refunding a specific payment by API. You have confirmed that when two payments succeed on one order, the extra payment is reversed automatically. If we ever need to refund one of those payments ourselves, how do we target a particular `cf_payment_id` through the API? The documented Create Refund request has no `cf_payment_id`. How is the payment selected, and how is its remaining refundable amount enforced?
+1. Refunding a specific payment by API. You have confirmed that when two payments succeed on one order, the extra payment is reversed automatically. If we ever need to refund one of those payments ourselves, how do we target a particular `cf_payment_id` through the API? The documented Create Refund request has no `cf_payment_id`. How is the payment selected, and how is its remaining refundable amount enforced? If the API does not support choosing a specific payment, what is the recommended safe procedure when two payments have succeeded on the same order?
 
 2. Automatic-reversal records. Your refund-webhook example shows a duplicate-payment reversal as `PAYMENT_AUTO_REFUND`, identifying the payment through `cf_payment_id`. When is `UNRECONCILED_AUTO_REFUND` used? Can it apply to a payment previously reported as `SUCCESS`? If so, how do we retrieve that reversal through the API when its webhook is missed?
 
-3. Webhook retries and the five-minute check. Your documentation recommends rejecting webhooks whose `x-webhook-timestamp` is more than five minutes old. In one sandbox test, our endpoint deliberately returned HTTP 500. On webhook version `2023-08-01`, the retries we observed kept the first attempt's timestamp and signature, including one received about eight minutes later. What freshness check do you recommend, so that we accept genuine retries while still protecting against replay?
+3. Webhook retries and the five-minute check. Your documentation recommends rejecting webhooks whose `x-webhook-timestamp` is more than five minutes old. In one sandbox test, our endpoint deliberately returned HTTP 500. On webhook version `2023-08-01`, the retries we observed kept the first attempt's timestamp and signature, including one received about eight minutes later. Is keeping the original timestamp and signature on retries the intended behaviour, and does your five-minute recommendation apply to retries as well as first deliveries? What freshness check do you recommend, so that we accept genuine retries while still protecting against replay?
 
-4. Resuming a refund after funding the vendor. Suppose an Easy Split refund is on hold because the vendor's balance is insufficient. After a successful credit adjustment makes both the merchant and vendor balances sufficient, does the existing refund resume automatically? If so, within what time? If not, which action or API call is required?
+4. Resuming a refund after funding the vendor. Suppose an Easy Split refund is on hold because the vendor's balance is insufficient. After a successful credit adjustment makes both the merchant and vendor balances sufficient, does the existing refund resume automatically? If so, within what time? If not, which action or API call is required? In either case, which refund status or webhook tells us that it has resumed, so that we do not request the same refund twice?
 
 5. Payment amount different from the order amount. Your Get Payments documentation mentions customer service fees as a reason the amounts can differ. For our INR UPI and card setup, which does not use those fees, are there any other cases where `payment_amount` differs from `order_amount`? If so, what amount and decimal precision should `refund_amount` use to return the full payment, and how is the refund currency determined?
 
-6. Funding vendor credits and chargebacks. Your earlier replies say vendor credit adjustments and chargebacks use our merchant ledger. Does recharging the Refund Wallet through its virtual bank account fund both of these for our Easy Split account? If not, how do we top up the merchant ledger?
+6. Funding vendor credits and chargebacks. Your earlier replies say vendor credit adjustments and chargebacks use our merchant ledger. Does recharging the Refund Wallet through its virtual bank account fund both of these for our Easy Split account? If not, which balance must be funded for each of these, through what funding method, and how can we confirm through an API or report that the credit has become available?
 
 7. Bank-account verification charges. Where can we retrieve each actual vendor bank-account verification charge and its GST, with a reference that identifies the vendor? An API, a report or a webhook would all work for us.
 
