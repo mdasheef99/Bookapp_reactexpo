@@ -1,13 +1,14 @@
 // 02d Unit 1a: disposable prefill databases (M89-M99 + M100 when present).
 // New-behavior tests run the post-install chain when M100 exists; the pre-install
 // chain is reserved for before/after receipt controls. No provider HTTP.
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { createProviderDatabase, resetActor, setActor, value } from './providerReplacementFixture.mjs';
 import { selectedPrefix } from './providerDatabaseHarness.mjs';
 import { migrationPath } from './databaseHarness.mjs';
-import { claimJob, lookupSql } from './editionPickerFixture.mjs';
-import { complete as completeExplicit, finalize, prepareCall } from './editionOptionsCompletionFixture.mjs';
+import { claimJob, lookupSql, row } from './editionPickerFixture.mjs';
+import { complete as completeExplicit, finalize, prepareCall, rpc } from './editionOptionsCompletionFixture.mjs';
 
 export const M94 = '20261104000094_marketplace_phase9_automatic_worker_prerequisites.sql';
 export const M95 = '20261104000095_marketplace_phase9_8c_null_safe_and_pending_state.sql';
@@ -16,6 +17,7 @@ export const M97 = '20261105000097_marketplace_phase9_8c_sweep_recovery.sql';
 export const M98 = '20261105000098_marketplace_phase9_8c_pause_defer_and_retry_bound.sql';
 export const M99 = '20261106000099_marketplace_phase9_8c_fix_round.sql';
 export const M100 = '20261112000100_marketplace_phase9_02d_prefill_save.sql';
+export const M101 = '20261112000101_marketplace_phase9_02d_search_while_fresh.sql';
 export const PRE_INSTALL = [M94];
 export const POST_INSTALL = [M94, M95, M96, M97, M98, M99];
 // The upgrade path always applies M95-M99 before M100; the pre-install baseline is M89-M94 only.
@@ -34,17 +36,23 @@ export function m100Present() {
   return fs.existsSync(migrationPath(M100));
 }
 
-// Missing M100 is deliberate in the red run: the post-install chain then stops at
-// M99 and the new-behavior assertions fail semantically instead of at import time.
-export function prefillMigrations({ preInstall = false } = {}) {
+export function m101Present() {
+  return fs.existsSync(migrationPath(M101));
+}
+
+// Missing M100/M101 is deliberate in the red run: the chain then stops before
+// the missing file and the new-behavior assertions fail semantically instead of
+// at import time. searchWhileFresh is opt-in so the 1a suite's chain stays M94-M100.
+export function prefillMigrations({ preInstall = false, searchWhileFresh = false } = {}) {
   const prefix = selectedPrefix('8a-5');
   const migrations = [...prefix.migrations, ...(preInstall ? PRE_INSTALL : POST_INSTALL)];
   if (!preInstall && m100Present()) migrations.push(M100);
+  if (!preInstall && searchWhileFresh && m101Present()) migrations.push(M101);
   return { migrations, installed: prefix.installed };
 }
 
-export async function createPrefillDatabase({ preInstall = false } = {}) {
-  const db = await createProviderDatabase(prefillMigrations({ preInstall }));
+export async function createPrefillDatabase({ preInstall = false, searchWhileFresh = false } = {}) {
+  const db = await createProviderDatabase(prefillMigrations({ preInstall, searchWhileFresh }));
   // Same test-only event-column bootstrap the PGlite picker fixture applies
   // (editionPickerFixture.mjs:31-39); native clones otherwise lack actor_role
   // and the M54 removal command cannot run there.
@@ -67,6 +75,93 @@ export async function helperExists(db) {
   await resetActor(db);
   const signature = 'marketplace_sec.phase9_prefill_automatic_editions_v1(public.image_extraction_candidates,public.image_extraction_jobs,public.phase9_metadata_lookups,public.metadata_enrichment_attempts,jsonb,timestamptz,timestamptz,integer)';
   return value(db, 'SELECT to_regprocedure($1) IS NOT NULL', [signature]);
+}
+
+// 02d Unit 1b: real worker-boundary claim/fail/completion. The 1a claimJob
+// shortcut is deliberately not used for the states under test; only the retry
+// clock and lease expiry are moved by the suites to simulate elapsed time.
+export async function claimViaCommand(db, f, jobId, worker = 'search-while-fresh-worker-0001') {
+  await setActor(db, f.ownerId, 'service_role');
+  const rows = (await db.query('SELECT * FROM public.claim_phase9_metadata_jobs($1,$2)', [10, worker])).rows;
+  const claimed = rows.find(candidate => candidate.id === jobId);
+  assert.ok(claimed, 'real claim must return the tested job ' + jobId);
+  const context = await value(db, 'SELECT public.phase9_metadata_job_context($1,$2,$3,$4)',
+    [jobId, worker, claimed.lease_token, claimed.attempt_count]);
+  return { jobId, worker, token: claimed.lease_token, attempt: claimed.attempt_count, context };
+}
+
+export async function failViaCommand(db, f, claim, outcome = 'provider_unavailable', retryable = true) {
+  await setActor(db, f.ownerId, 'service_role');
+  return rpc(db, 'phase9_fail_candidate_edition_options_v1', [claim.jobId, claim.worker, claim.token,
+    claim.attempt, f.candidateId, f.storeId, f.sessionId, claim.jobId,
+    claim.context.requestGeneration, claim.context.queryIdentity, outcome, retryable]);
+}
+
+export async function completeRequest(db, f, claim, { adapter = 'google_books', rows = null } = {}) {
+  await setActor(db, f.ownerId, 'service_role');
+  const { jobId, worker, token, attempt, context } = claim;
+  const fetched = new Date().toISOString();
+  const deadline = new Date(Date.parse(fetched) + 3600000).toISOString();
+  const version = '1.0.0';
+  if (adapter === 'open_library') {
+    const lookup = await rpc(db, 'phase9_register_structural_metadata_lookup', [
+      jobId, worker, token, attempt, f.candidateId, context.candidateVersion, context.queryIdentity,
+      'edition-options:' + jobId, 'open_library', version, 'open-library-capability-v1',
+      'p9-metadata-foundation-v1', 'bibliographic', 'p9-metadata-lookup-v1',
+      'p9-bibliographic-normalizer-v1', 'p9-metadata-routing-v1', 'store_private', '1',
+      'p9-metadata-cache-v1', 'metadata-v1', null]);
+    const usage = await rpc(db, 'phase9_reserve_metadata_usage', [jobId, worker, token, attempt,
+      lookup.lookup_id, 'open_library', version, 1]);
+    const attemptRow = await rpc(db, 'phase9_register_structural_metadata_attempt', [
+      lookup.lookup_id, jobId, worker, token, attempt, f.candidateId, context.candidateVersion,
+      randomUUID(), 'edition-options:' + jobId, 'primary', 1, 'open_library', version,
+      'open-library-capability-v1', 'p9-metadata-foundation-v1', 'p9-bibliographic-normalizer-v1',
+      'p9-metadata-routing-v1', 'local_insufficient', usage.reservation_id]);
+    for (const [sequence, stage] of [[0, 'search'], [1, 'editions'], [2, 'author:OL1A']]) {
+      const call = await rpc(db, 'phase9_register_edition_options_provider_call_v1', [
+        attemptRow.attempt_id, jobId, worker, token, attempt, randomUUID(), sequence, stage]);
+      await rpc(db, 'phase9_finalize_edition_options_provider_call_v1', [
+        call.provider_call_id, jobId, worker, token, attempt, 'finalized',
+        'no_acceptable_match', false, true]);
+    }
+    const options = (rows ?? [row()]).map((option, index) => ({ ...option, ordinal: index,
+      googleBooksUrl: 'https://openlibrary.org/books/OL' + (100 + index) + 'M',
+      metadata: option.metadata && { ...option.metadata, adapterKey: 'open_library',
+        adapterVersion: version, providerRecordId: 'OL' + (100 + index) + 'M', coverReference: null,
+        correlationId: lookup.lookup_id, attemptId: attemptRow.attempt_id, fetchedAt: fetched,
+        matchRationale: 'exact_validated_isbn' } }));
+    const response = await rpc(db, 'phase9_complete_candidate_edition_options_v1', [
+      jobId, worker, token, attempt, f.candidateId, f.storeId, f.sessionId, jobId,
+      context.requestGeneration, context.queryIdentity, lookup.lookup_id, attemptRow.attempt_id,
+      fetched, deadline, true, options]);
+    return { response, rows: options, lookupId: lookup.lookup_id, attemptId: attemptRow.attempt_id };
+  }
+  if (adapter !== 'google_books') throw new Error('unsupported completion adapter ' + adapter);
+  const lookup = await rpc(db, 'phase9_register_structural_metadata_lookup', [
+    jobId, worker, token, attempt, f.candidateId, context.candidateVersion, context.queryIdentity,
+    'edition-options:' + jobId, 'google_books', version, 'cap-v1', 'p9-metadata-foundation-v1',
+    'bibliographic', 'p9-metadata-lookup-v1', 'p9-bibliographic-normalizer-v1',
+    'p9-metadata-routing-v1', 'store_private', '1', 'p9-metadata-cache-v1', 'metadata-v1', null]);
+  const usage = await rpc(db, 'phase9_reserve_metadata_usage', [jobId, worker, token, attempt,
+    lookup.lookup_id, 'google_books', version, 1]);
+  const attemptRow = await rpc(db, 'phase9_register_structural_metadata_attempt', [
+    lookup.lookup_id, jobId, worker, token, attempt, f.candidateId, context.candidateVersion,
+    randomUUID(), 'edition-options:' + jobId, 'primary', 1, 'google_books', version, 'cap-v1',
+    'p9-metadata-foundation-v1', 'p9-bibliographic-normalizer-v1', 'p9-metadata-routing-v1',
+    'local_insufficient', usage.reservation_id]);
+  const call = await rpc(db, 'phase9_register_metadata_provider_call', [
+    attemptRow.attempt_id, jobId, worker, token, attempt, randomUUID()]);
+  await rpc(db, 'phase9_finalize_metadata_provider_call', [
+    call.provider_call_id, jobId, worker, token, attempt, 'finalized', 'coherent_match',
+    'coherent_match', 'fixture-request-' + attempt, false, null, []]);
+  const options = (rows ?? [row()]).map(option => ({ ...option, metadata: option.metadata && {
+    ...option.metadata, correlationId: lookup.lookup_id, attemptId: attemptRow.attempt_id,
+    fetchedAt: fetched } }));
+  const response = await rpc(db, 'phase9_complete_candidate_edition_options_v1', [
+    jobId, worker, token, attempt, f.candidateId, f.storeId, f.sessionId, jobId,
+    context.requestGeneration, context.queryIdentity, lookup.lookup_id, attemptRow.attempt_id,
+    fetched, deadline, true, options]);
+  return { response, rows: options, lookupId: lookup.lookup_id, attemptId: attemptRow.attempt_id };
 }
 
 export async function completeCommand(db, f, command) {
@@ -154,10 +249,10 @@ export async function prefillHelper(db, {
     lookupPatch === null ? null : JSON.stringify(lookupPatch)]);
 }
 
-export async function savedFixture(db, helpers) {
+export async function savedFixture(db, helpers, count = 1) {
   const { olAutomaticRoute, beginAutomatic, retainedOlResult } = helpers;
   await olAutomaticRoute(db);
   const fixture = await beginAutomatic(db, { key: 'open_library', version: '2.0.0' });
-  await retainedOlResult(db, fixture, 1);
+  await retainedOlResult(db, fixture, count);
   return fixture;
 }
