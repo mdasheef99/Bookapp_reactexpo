@@ -189,11 +189,17 @@ uses recorded provider answers; none requires producing two sandbox successes.
   exactly and never rounded into a refund or ledger money amount.
 
 **Webhooks**
-- WH-01 a forged signature is `rejected`, stores no body and answers 401.
+- WH-01 a forged signature answers 401, adds 1 to `bad_signature` for the minute and
+  creates no event row, body, task or Cashfree read. Same for a stale timestamp
+  (`too_old`), an unregistered version (`bad_version`) and a bad body (`bad_body`).
+  Count only one reason per delivery, in §10.1's check order. Counter timeout/failure
+  or an uncertain count commit preserves the original HTTP answer, never retries the
+  count and creates no fallback event; only payload-free counter-failure metrics remain.
 - WH-02 a correctly signed message with a timestamp up to 24 hours old is accepted (a
   retry keeping its first timestamp, SBX-10); one over 24 hours old is rejected (D-114).
   Exercise the exact 86400-second boundary and rejection immediately beyond it, using a
-  controlled clock; malformed timestamps are rejected.
+  controlled clock; missing and malformed timestamps are rejected, and so is one more than 5 minutes
+  in the future (§17 item 15), while one 4 minutes ahead is accepted.
 - WH-02a reject missing or unregistered versions and unsupported body contracts.
   Relabelling a signed legacy payment body with the registered version must not bypass
   schema validation. Exercise identifiers above 2^53 in payment, charge and refund
@@ -213,16 +219,45 @@ uses recorded provider answers; none requires producing two sandbox successes.
 - WH-10 normal rotation accepts previous-secret signatures before the recorded 24-hour
   expiry and rejects them at and after expiry, even when cleanup is delayed. Emergency
   rotation rejects the compromised secret immediately, including freshly forged messages.
-  New-secret messages still pass; recovery catches the affected payment. Runs in slice 7.
+  New-secret messages still pass; provider reads recover the affected payment, including
+  an order with `next_poll_at` already cleared. Prove recovery and the audited rotation
+  interval without any rejected event ID/body. Neither zero/failed counters nor case
+  closure permits restart without clean reconciliation. Runs in slice 7; non-payment
+  recovery is also WH-16's receiver gate.
 - WH-11 replay the same signed timestamp/body with the original, changed and missing
   `x-idempotency-key`; every delivery resolves to one event, body and task. A newly signed
   delivery of the same business fact produces no repeated domain effect.
 - WH-12 bodies older than the retention setting are deleted and `body_purged_at` set; the
   event and attempts stay.
+  Exercise the 30-day counter boundary, capped repeated cleanup batches, interruption
+  and retry. Keep the alert state and cases.
 
 - WH-13 crash after domain handover/before finish replays safely; task/event/admin-case
   completion is atomic. The fifth attempt crashing before completion is terminalized
   before a sixth dispatch. Stale lease owners cannot mark the event processed or dead.
+- WH-14 test 65535, 65536 and 65537 **bytes**, including multibyte UTF-8 and one large
+  chunk as well as chunks crossing the limit. Over-limit declared lengths reject
+  without reading; missing/understated lengths reject on streamed bytes before HMAC
+  or JSON parsing. Malformed/ambiguous lengths, compressed content, invalid UTF-8,
+  disconnects, non-POST and a slow stream exceeding the absolute receipt deadline
+  take §10.1's fixed responses/reasons; no event, body, task or provider read. Include
+  counter failure. Verify no decompression/full buffering precedes the cap through
+  the real ingress, and all subscribed genuine fixtures pass the proposed limits.
+- WH-15 flood: 10,000 forged requests in one minute at a stated concurrency. With
+  working counters the minute's rows sum to 10,000 (one row per reason) and intake opens
+  no case; the scheduled check then opens exactly one case. A second breach within 60
+  minutes opens none, also after the first case is closed; test 60 versus 61. A forced
+  counter failure keeps the 401 answers and stores nothing else. A genuine signed
+  delivery sent during the flood is still accepted; record its latency and the measured
+  capacity. If it fails, record that and add network-edge protection before slice 4
+  acceptance.
+- WH-16 lose/reject each subscribed payment, fee, refund, vendor and settlement
+  delivery during normal and emergency rotation and a missed-run interval. Recover
+  it once from independent provider evidence under §19's receiving owner, with no
+  rejected row or body. Include poll-retired orders, fees with no payment-state
+  change, and replay after repair. Missing independent fee evidence keeps the live
+  gate blocked. SDD 02 tests recording handovers; SDD 03/04/05 own the real recovery
+  proofs and SDD 08 owns the checked restart proof.
 
 **Poll and termination**
 - PO-01 the poll follows §11.2's schedule, including for `paid` payments, through the
@@ -235,8 +270,9 @@ uses recorded provider answers; none requires producing two sandbox successes.
 - PO-05 a closed payment unconfirmed for 24 hours opens one admin case and stays on the
   poll.
 - PO-06 the poll and a webhook on the same payment produce one result (RX2-01).
-- PO-07 all triggers (customer checks, webhooks, workers, poll, watch) share the
-  per-endpoint `commerce.cashfree_reads_per_minute` cap; the poll takes what is left; a 429 changes
+- PO-07 all triggers (customer checks, webhooks, workers, poll, watch, reconciliation)
+  share the per-endpoint `commerce.cashfree_reads_per_minute` cap; the poll takes what
+  is left; a 429 changes
   nothing and waits Cashfree's retry time (§11.5).
 - PO-08 two overlapping poll runs never read the same payment at once under a live lease;
   a webhook does not release the poll lease; expired owners cannot finish a replacement
@@ -245,6 +281,31 @@ uses recorded provider answers; none requires producing two sandbox successes.
   including calls across minute boundaries; denied permits retry/defer without changing
   a payment outcome. Test nine live payments against the 25/minute budget: 20 seconds is a target,
   not an unconditional timing guarantee. All instances share provider 429 backoff.
+- PO-10 late discovery after the poll window: SDD 03 discovers a success on day 61,
+  and on a much older order, with `next_poll_at` cleared. It calls §9.2/§9.3 with
+  `triggered_by = reconciliation`, permits for every read and fresh bound check IDs.
+  Check SDD 01 §5.0's exact late-resolution inputs/JSON answers in these separate cases:
+  an expired reservation with all stock free converts once (D-06/D-84); a shortage,
+  same-cart/same-version live or converted checkout (D-97), active D-81 pause (D-98),
+  customer cancellation or platform cancellation (D-85) requests one category 5 refund,
+  keyed by payment ID. Ordinary pauses are controls. A distinct extra success after
+  a counted attempt, or after an `amount_mismatch` with no order, is a duplicate under
+  §13.2: one notice/watch, no new order and no immediate refund. Rediscovery of the
+  same counted `cf_payment_id` is a replay, not a duplicate. A first wrong amount or
+  already reversed success retains §9.3's classification precedence. Each receipt,
+  actual sale and reversal posts once; refunds/watches retain their own keys. A second
+  reconciliation run changes nothing beyond legitimate watch progress. SDD 03 owns
+  this real integration gate (§19); SDD 02 first proves its calling contract with fixtures.
+- PO-11 no-gap coverage and outage: test the final poll/daily-reconciliation boundary,
+  successes on very old orders, late reversals of previously classified successes,
+  a missed run, provider pagination, a read-permit denial, outage, stale check and
+  failure/crash before repair commit. Discovery/retry ownership and its durable cursor
+  retain every gap; repeat application has no second money effect, and §13.2/§13.5
+  repair counted-payment reversals without a webhook. Absent/unhealthy reconciliation
+  keeps daily polling; after prior retirement, a later health failure resumes affected
+  cleared rows without resetting `poll_window_started_at`. No creation-time look-back
+  loses an old order and no recording stub authorizes retirement. SDD 03 owns the real
+  source/cursor/health proof; SDD 02 slice 5 proves fallback with contract doubles.
 - TE-01 expiry with no payment row, or a `start_failed` payment, closes the checkout
   without calling Cashfree.
 - TE-02 expiry while the payment is `initiating` runs the recovery read first and does not
@@ -324,6 +385,10 @@ uses recorded provider answers; none requires producing two sandbox successes.
   can reach each final class only with confirmed evidence. Missing provider completion
   time never prevents recording an otherwise verified receipt.
 - SE-01 no client role can write any §4 table or call any §6 wrapper.
+  Also deny direct service-role table writes and direct underlying-function calls;
+  named wrappers retain their intended checked service access. Reject arbitrary
+  rejection reasons, buckets and counts and an over-cap or inconsistent intake
+  envelope at the wrapper, with no stored event or money effect.
 - SE-02 a customer cannot read another customer's payment or session.
 - SE-03 no log line contains a key, a webhook body, a session ID or a phone number.
 - SE-04 no Cashfree key appears in the app bundle or in any `EXPO_PUBLIC_` variable.
@@ -333,6 +398,30 @@ uses recorded provider answers; none requires producing two sandbox successes.
   pauses new reservations and drains live checkouts; emergency rotation skips the wait
   and immediately disables the compromised secret. The owner restarts after clean
   reconciliation.
+- SE-07 SDD 08 recovery rejects customer/store callers, forged admin actors and
+  unlisted actions before any service call. Checked enquiry/answer commands bind the
+  attempt/case and fixed replay inputs, stamp the server time and cannot reset the
+  D-78 deadlines; changed replays fail. Timer requeue and failed-conversion recovery
+  preserve SDD 01 §5.0/§5.9/§5.10, fresh evidence and the original retry window. No
+  recovery command injects checks, bypasses CF-A35, changes the counter/cooldown or
+  lets a non-owner restart; restart requires audited clean reconciliation. SDD 02
+  verifies the service boundary; the actual admin wiring is SDD 08's acceptance gate.
+
+**Receiving contracts (SDD 02 fixtures first; owning SDD integration before acceptance)**
+- HC-01 SDD 03 consumes receipts, sale-on-conversion, reversals, `duplicate_loss`,
+  exact reported charges and unknown/unrepresentable cases with stable business keys
+  and check/event lineage. Re-signed deliveries, repeated checks and crash/retry after
+  a posting commit have one effect. A receiver failure keeps durable retry ownership;
+  never finish a webhook as processed while its handover is lost. Independent fee
+  recovery is WH-16's live gate, not satisfied by this recording contract.
+- HC-02 SDD 04 receives category 6/6a obligations with exact attempt ID, amount and
+  currency; SDD 01 supplies category 5's payment key. Concurrent repeated handovers
+  create one obligation, including pending/unknown refunds in the cap. Failure rolls
+  back or retains durable retry; every real sender rechecks CF-A35 (DU-16).
+- HC-03 SDD 05 consumes only the verified converted order for its split and the
+  verified vendor/settlement dispatch contract. Duplicate receipt or event delivery
+  cannot create a second split/payout. Failure before finish retries safely; lost
+  vendor/settlement messages recover from SDD 05's independent evidence (WH-16).
 
 **Races**
 - RX2-01 to RX2-16 each run in both orders, as §14's table says.

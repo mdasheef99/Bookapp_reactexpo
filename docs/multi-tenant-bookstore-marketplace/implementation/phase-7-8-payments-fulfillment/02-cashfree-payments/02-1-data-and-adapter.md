@@ -11,8 +11,9 @@ where a rule changed.
 ## 4. Tables
 
 All money is whole paise (`_minor`, INTEGER, CHECK `>= 0`). All times are `TIMESTAMPTZ`.
-Every table has `created_at` and `updated_at`. One new migration creates the four tables
-below, the new schema `marketplace_private` with its one table (§4.3), the foreign key
+Every table has `created_at` and `updated_at`. One new migration creates the four public tables
+below, the new schema `marketplace_private` with its body table (§4.3), rejection counters
+and alert state (§4.3a), the foreign key
 `store_orders.payment_id → payments(id)` that SDD 01 §3 assigns to this migration (M8),
 the task types of §10 to §13 and the settings of §5. No applied Phase 6 table changes,
 except the task-type registration and crash-reclaim guard in §10.4. The migration also
@@ -130,8 +131,7 @@ attempting it, so the trigger never aborts a check.
 | `event_type` | TEXT NOT NULL | Cashfree's event name |
 | `event_time` | TIMESTAMPTZ | From the signed timestamp |
 | `received_at` | TIMESTAMPTZ NOT NULL | |
-| `signature_ok` | BOOLEAN NOT NULL | |
-| `processing_status` | TEXT NOT NULL | `rejected` (final), `queued`, `processed` (final), `dead` (final) |
+| `processing_status` | TEXT NOT NULL | `queued`, `processed` (final), `dead` (final). Only verified messages are stored |
 | `last_error_code` | TEXT | Short code only; never the body |
 | `payment_id` | UUID FK | When the message names a known payment |
 | `body_purged_at` | TIMESTAMPTZ | Set when §10.6 deletes the body |
@@ -140,9 +140,30 @@ attempting it, so the trigger never aborts a check.
 provider_webhook_events(id) ON DELETE CASCADE, body TEXT NOT NULL, received_at TIMESTAMPTZ
 NOT NULL)`. The body is the raw text exactly as received. The schema is new, owned by the
 migration, with no grants to `anon` or `authenticated` and no PostgREST exposure; only the
-service-role functions of §10 read or write it. A rejected message stores no body. Because
-a rejected message has no trustworthy key, rejected rows use a random key and are counted,
-not de-duplicated. Retries of processing are the task framework's (§10.4), not columns here.
+service-role functions of §10 read or write it. Rejected messages are never stored in these tables (§4.3a). Retries of processing are the task framework's (§10.4), not columns here.
+
+### 4.3a `provider_webhook_rejections` (counts only)
+
+`marketplace_private.provider_webhook_rejections(minute_bucket TIMESTAMPTZ NOT NULL,
+reason TEXT NOT NULL, rejected_count INTEGER NOT NULL CHECK (rejected_count >= 0),
+PRIMARY KEY (minute_bucket, reason))`, with a CHECK limiting `reason` to `too_large`,
+`bad_method`, `bad_signature`, `too_old`, `bad_version`, `bad_body`, `read_timeout`.
+The wrapper takes the minute from the database clock and adds 1 in one upsert; the
+caller chooses only the reason from that list. There is no rejection event, body, task
+or Cashfree read, so storage grows with minutes and reasons, not with requests.
+
+The count is telemetry, not evidence. It runs with a 100 ms lock timeout and no retry;
+if it fails, the HTTP answer is unchanged, nothing else is stored, and the count is low.
+
+**Alert.** `marketplace_private.provider_webhook_rejection_alert_state` is one row
+holding `last_case_opened_at`. The once-a-minute scheduler sums the last completed
+minute. If the total exceeds `commerce.webhook_rejections_alert_per_minute`, it locks
+that row and opens the admin case "Webhook endpoint receiving rejected messages" only
+if none was opened in the last 60 minutes, recording the time in the same transaction;
+closing the case does not reset this. A missed scheduler minute is not caught up; its
+counts stay 30 days for inspection. This alert never replaces `auth_failed`, rotation
+or reconciliation cases, and a quiet counter never proves that no webhook was missed.
+Same grants as the body table (§6). Rows older than 30 days are deleted by §10.6.
 
 ### 4.4 `provider_checks` (every call we make to Cashfree about a payment)
 
@@ -160,7 +181,7 @@ not de-duplicated. Retries of processing are the task framework's (§10.4), not 
 | `order_status` | TEXT | Mapped: `ACTIVE`, `PAID`, `EXPIRED`, `TERMINATED`, `TERMINATION_REQUESTED`, `UNKNOWN` |
 | `terminate_refused_for_success` | BOOLEAN | For `terminate`: Cashfree's answer shows the order `PAID` (§12.1) |
 | `snapshot` | JSONB | The cleaned answer, by kind (below). Never card, bank or UPI-handle details |
-| `triggered_by` | TEXT NOT NULL | `start`, `start_recovery`, `return`, `webhook`, `poll`, `expiry_worker`, `grace_worker`, `terminate_task`, `duplicate_watch`, `admin` |
+| `triggered_by` | TEXT NOT NULL | `start`, `start_recovery`, `return`, `webhook`, `poll`, `expiry_worker`, `grace_worker`, `terminate_task`, `duplicate_watch`, `reconciliation`, `admin` |
 
 Snapshot by kind (M6):
 
@@ -195,6 +216,7 @@ that ended the order (§12.1).
 | `commerce.duplicate_reversal_wait_business_days` | 3 | D-78 |
 | `commerce.duplicate_refund_no_answer_business_days` | 5 | D-78 |
 | `commerce.webhook_body_retention_days` | 180 | §17 item 9 |
+| `commerce.webhook_rejections_alert_per_minute` | 60 | §17 item 15; positive integer, read once per scheduled alert pass, never per rejected request |
 | `commerce.cashfree_reads_per_minute` | 25 | §11.5; every trigger shares the per-endpoint cap, under Cashfree's sandbox payment-read limit of 30 |
 
 Existing keys used and not redefined: `commerce.payment_grace_seconds` (900, D-102),
@@ -210,6 +232,11 @@ admin), added by this migration.
   `anon` and `authenticated`; do not add direct client read policies. No client role can
   read or write attempts, checks, events or sessions by table access. Customer payment
   reads use only the checked projection below. Service writes use the §6 wrappers.
+- Revoke direct table privileges from `service_role` too, on the new public and private
+  tables, including counters and alert state. The function owner alone accesses them.
+  Revoke direct EXECUTE on the underlying `marketplace_sec` functions from `PUBLIC`,
+  `anon`, `authenticated` and `service_role`; only the named public wrappers expose
+  each operation. RLS alone does not constrain a service role that bypasses it.
 - **Callable entry points (M9).** The database functions live in `marketplace_sec`, which
   is not exposed to PostgREST. Each Edge Function calls a public wrapper that follows the
   Phase 6 pattern: `SECURITY DEFINER SET search_path = ''`, `REVOKE ALL` from `PUBLIC`,
@@ -227,15 +254,28 @@ admin), added by this migration.
   | `commerce_finish_webhook_work` | `(p_event_id UUID, p_task_id UUID, p_lease_owner UUID, p_attempt_number INTEGER, p_outcome TEXT, p_retryable BOOLEAN, p_code TEXT, p_correlation_id UUID)` | Atomically complete the task, event and final-failure case under the current lease (§10.4) |
   | `commerce_expire_with_payment_evidence` | `(p_request_id UUID, p_task_due_at TIMESTAMPTZ, p_phase TEXT, p_payments_check_id UUID, p_termination_check_id UUID, p_idempotency_key TEXT, p_command_id UUID)` | SDD 01 expiry answer; §12.1. `p_phase` is `reservation` or `grace`; nullable check IDs are explicit |
   | `commerce_finish_payment_poll` | `(p_payment_id UUID, p_lease_token UUID, p_next_poll_at TIMESTAMPTZ)` | Release/reschedule only the matching lease; stale owners do nothing |
-  | `commerce_purge_webhook_bodies` | `(p_batch_size INTEGER)` | Delete the next retention-expired batch and stamp its events in one transaction (§10.6) |
+  | `commerce_purge_webhook_bodies` | `(p_batch_size INTEGER)` | Delete the next retention-expired body/counter batches and stamp purged-body events in one transaction (§10.6); server-capped positive batch size |
+  | `commerce_check_webhook_rejections` | `()` | Checked scheduler only; sum the last completed minute and open the rate-limited case (§4.3a) |
   | `commerce_take_cashfree_read_permit` | `(p_endpoint TEXT)` | Derive account/environment on the server; atomically return `allowed` and `retry_at` under §11.5 |
 
   The existing wrappers have these contracts: `commerce_begin_payment` and
   `commerce_record_provider_order` use §8's signatures; `commerce_apply_payment_check`
   uses §9.3's; `commerce_record_webhook(p_event_id UUID, p_message_key TEXT,
-  p_event_type TEXT, p_event_time TIMESTAMPTZ, p_received_at TIMESTAMPTZ,
-  p_signature_ok BOOLEAN, p_body TEXT)` returns the existing or inserted event ID (§10.1).
-  A rejected intake has NULL body, a random key and no task.
+  p_event_type TEXT, p_signed_timestamp TEXT, p_event_time TIMESTAMPTZ, p_received_at TIMESTAMPTZ,
+  p_body TEXT)` returns the existing or inserted event ID (§10.1); it is called only by
+  the trusted verifier for a verified message. It checks the UTF-8 byte size again and
+  validates the event type against the body, the event time against the exact signed
+  timestamp text, and the key against §10.2's digest of that text and body bytes.
+  A repeated key must match those immutable signed-envelope fields or raise
+  `INVALID_COMMAND`; a retry's new candidate event ID or arrival time is not a conflict.
+  Keep the original event ID and first `received_at`, without another task/body.
+  This structural check does not replace the Edge Function's HMAC verification.
+  `public.commerce_count_webhook_rejection(p_reason TEXT)` performs only §4.3a's bounded
+  counter increment; it reads no setting and scans no cases. The scheduled check
+  (`commerce_check_webhook_rejections`) opens "Webhook endpoint receiving rejected messages" when a completed minute's
+  total exceeds the setting. Both have the same grants and service-role check as the
+  other wrappers. The public HTTP endpoint never exposes either RPC or caller-chosen
+  RPC names/arguments.
   `commerce_claim_payment_polls(p_batch_size INTEGER)` returns payment IDs, round numbers,
   lease tokens and lease deadlines, including §11.6 recovery work.
   `commerce_apply_duplicate_watch(p_attempt_id UUID, p_refunds_check_id UUID)` returns
@@ -251,6 +291,14 @@ admin), added by this migration.
   webhook data.
 - Store owners see payment state only through the order fields SDD 01 already exposes.
 - Admins read through SDD 08's checked wrappers.
+- SDD 08 verifies the platform-admin actor and each allowed action before using the
+  service role; a caller-supplied role or actor grants nothing (SDD 01 §5.0). Recovery
+  may invoke the existing checked commands, never inject provider checks, assert a
+  valid signature, edit counter/alert state or clear a payment outcome. Keep the
+  original D-78 clocks, SDD 01 §5.10 retry window and §13.1 live-money block. A logged
+  restart requires the owner and clean reconciliation (D-68); an empty rejection
+  counter is not reconciliation evidence. Possession of the service credential is
+  a trusted-server boundary, not protection against a compromised server.
 - `marketplace_private.provider_webhook_bodies` and the Cashfree keys are service-role only.
   No function returns a webhook body, a key or a full Cashfree answer.
 - Logs record IDs, states and short error codes only, never a body, a key, a session ID

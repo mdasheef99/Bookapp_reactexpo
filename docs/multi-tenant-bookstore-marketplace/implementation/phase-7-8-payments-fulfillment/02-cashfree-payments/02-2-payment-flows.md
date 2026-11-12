@@ -106,7 +106,7 @@ projection, never §9.3's internal attempts or check IDs.
 - The poll (§11).
 - SDD 01's expiry workers (§12.1) and the duplicate watch (§13.2).
 - SDD 03's daily reconciliation, when it finds a Cashfree payment we have not classified
-  (§19).
+  or a new reversal/correction for an already classified one (§19).
 
 ### 9.2 Reading Cashfree (outside locks)
 
@@ -190,6 +190,10 @@ For each payment in the snapshot:
    retry (SDD 01 §5.10). No sale posts for `conversion_failed` or `refund_requested`.
    Reversals use `reversal:<cf_refund_id>`; SDD 04 posts our refunds by its own refund ID.
    Repeated checks and conversion retries cannot post the same fact twice (M5; SDD 03 §3).
+    For a current fresh check, also apply its fresh refunds evidence to §13.2's watches
+    and §13.5, including for a counted success already classified on an earlier run.
+    This happens under the same locks and idempotency rules for every trigger,
+    including reconciliation; it does not depend on receiving an auto-refund webhook.
 4. **If `convert_paid_checkout` answers `conversion_failed`,** keep the payment `paid`,
    and in this transaction open the admin case with its 7-day deadline and extend the
    holds (SDD 01 §5.10, D-95). Never raise: that would roll back the record that the
@@ -225,7 +229,24 @@ One endpoint, registered once in Cashfree's dashboard for webhook version `2026-
 with the payment, refund and settlement events; orders carry no `notify_url` (m2). Edge
 Function `commerce-payment-webhook`, with JWT verification off:
 
-1. Read the raw body before parsing it.
+1. Accept only `POST`; otherwise HTTP 405 (`bad_method`), without reading the body.
+   Accept only absent or `identity` Content-Encoding; refuse compressed content with
+   HTTP 415 (`bad_body`) before decompression. At slice 4 verify that no gateway or
+   middleware decompresses or buffers the whole request before this check. Parse a
+   present `Content-Length` as one non-negative integer byte length; malformed or
+   ambiguous framing is HTTP 400 (`bad_body`). Refuse a declared length above
+   `WEBHOOK_MAX_BODY_BYTES` (65536, §17 item 15) with HTTP 413 before reading.
+   Otherwise read byte chunks, checking the running byte total before retaining each
+   chunk; cancel the reader and answer 413 (`too_large`) as soon as it exceeds the
+   cap. A missing or understated length cannot bypass the byte count. Never use
+   `text()`, `json()`, character counts or an unbounded decompressor to enforce it.
+   At most the capped body is retained; incoming runtime chunks also have to be
+   bounded by the verified ingress configuration. Cancel an incomplete stream at the
+   absolute 10-second receipt deadline (not a resettable per-chunk timeout): HTTP 408,
+   `read_timeout`. An interrupted stream or invalid UTF-8 is HTTP 400 (`bad_body`).
+   Apply the cap to the exact bytes used for HMAC, then decode UTF-8 strictly for
+   validation/storage without altering those bytes. Each refusal attempts only
+   §4.3a's bounded counter call, whose failure never changes the HTTP answer.
 2. Verify the signature and timestamp age (§7.2), then require the registered webhook
    version and validate the event-specific body contract. The version header is not
    covered by the signature and is not proof of the body's format. Payment success,
@@ -233,7 +254,12 @@ Function `commerce-payment-webhook`, with JWT verification off:
    refund contracts must preserve documented numeric identifiers losslessly from the raw
    JSON before any JavaScript Number conversion. Never recover an identifier by converting
    an already-rounded Number to text. Reject unsupported versions, schemas or identifier
-   representations with a `rejected` row, no stored body and HTTP 401.
+   representations. Any failure in this step (signature, age, version or body contract)
+   only attempts `commerce_count_webhook_rejection` (§4.3a) and answers HTTP 401: no event
+   row, no body, no task and no Cashfree read. Platform-level throttling of the public
+   address is outside this design (residual risk in §10.6). Missing/malformed signature
+   or timestamp headers, and a timestamp more than 5 minutes in the future (§17 item 15),
+   fail this same check.
 3. Call `public.commerce_record_webhook` (M10). In **one transaction** it inserts the
    event by `message_key` (§10.2), its body, and a `process_provider_webhook` task (dedupe
    key: the event ID). A repeated key changes nothing.
@@ -308,7 +334,17 @@ A daily scheduler step deletes `provider_webhook_bodies` rows older than
 `commerce.webhook_body_retention_days` (by `received_at`) and sets `body_purged_at` on their
 events, through `commerce_purge_webhook_bodies`. The daily runner uses the scheduler's
 checked service boundary; it repeats bounded batches until no expired body remains.
-Events, attempts and checks stay.
+Events, attempts and checks stay. The same service-only wrapper deletes
+`provider_webhook_rejections` rows older than 30 days in separately capped batches,
+using the minute primary key; it does not delete the alert state or cases. A failed
+batch is retried. WH-12 proves both cleanup paths.
+
+**Residual risk.** A flood within the size and time limits still costs Edge capacity,
+a signature check and one counter update per request; Supabase Edge Functions give
+this design no per-IP throttle. The counter bounds storage and raises the alert. WH-15
+measures one large flood; if genuine deliveries fail under it, blocking at the network
+edge becomes an operations step before slice 4 is accepted. This SDD does not claim
+that protection exists.
 
 ## 11. The poll
 
@@ -344,6 +380,14 @@ poll or by the required daily reconciliation after its window (B1):
   (D-78: every attempt is reconciled daily) and hands anything new to §9 (§19). Do not
   clear the poll until that repair handover is implemented and healthy; otherwise keep
   daily polling. Unresolved successes and duplicate watches also retain their recovery.
+
+SDD 03 owns the durable coverage/health evidence required by §19, not a manual assertion
+that its job exists. When that evidence is absent, stale or failed, the checked scheduler
+keeps or resumes daily polling for all affected known provider orders, including rows
+whose `next_poll_at` was cleared earlier. Catch up in bounded batches under §11.5;
+preserve `poll_window_started_at`. A missed reconciliation run is not a reason to
+discard its backlog. Until the real SDD 03 contract and PO-10/PO-11 pass, no recording
+stub authorizes clearing the poll.
 
 CF-76 confirms why termination does not end polling: an attempt started before
 termination can still succeed, and the order remains `TERMINATION_REQUESTED` while an
@@ -555,6 +599,11 @@ SDD 08's checked command records `cashfree_asked_at` on the actual enquiry, and
 alone is not a claim that Cashfree was contacted. The no-answer period starts when the case
 opens (`ask_case_opened_at`), whether or not anyone has contacted Cashfree yet (D-110); an
 uncontacted case stays visible to the admin and owner until resolved.
+These are named commands, not an editable attempt record. They check the platform-admin
+actor, attempt/case binding and allowed answer, record the first action and audit it,
+and reject changed replay inputs (SDD 01 §5.0, §6 here). The recorded-answer timestamp
+uses the post-lock server clock. Replays cannot reset the enquiry, answer or refund
+deadline; no admin override bypasses the fresh refunds read or CF-A35 submission guard.
 
 | What the refunds check shows, or what has happened | Result |
 |---|---|
@@ -616,6 +665,15 @@ Cashfree allows one key pair at a time. Steps, by the owner with an admin:
 5. Previous-secret acceptance follows step 3. Rejected payment deliveries are recovered
    by §11; refund, fee, vendor and settlement deliveries require the recovery paths owned
    by SDD 04, SDD 03 and SDD 05 respectively.
+    There are no rejected event IDs or bodies to replay or attribute to a key. The
+    minute/reason counters cannot identify a genuine lost delivery. Record the trusted
+    rotation time, mode, previous-secret cutoff and recovery coverage in the audited
+    rotation record, never the secret. Recover all affected known orders, including
+    poll-retired ones, using provider reads; the other owners must recover their facts
+    from independent provider evidence (§19). An outage uses the last proven coverage
+    point, not just the rotation time. No affected interval is called clean because
+    counters are zero or an admin closed an alert. The independent fee source remains
+    an SDD 03 live-activation gate; the payment poll cannot recover a lost fee message.
 6. Restart under D-68: reconciliation shows no stuck or mismatched payment, and the owner
    restarts with a logged reason.
 
