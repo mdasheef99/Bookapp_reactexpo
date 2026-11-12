@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| **Status** | **Pass-3 design refresh, 2026-11-12 (revision c). Unit 1a BUILT and committed locally (`7600805`, M100 not applied); Units 1b, 2, 3 not built.** Written by the orchestrator after slice 8b/8c shipped. Migration application and deployment each need separate Owner approval. |
+| **Status** | **Pass-3 design refresh, 2026-11-12 (revision c). Units 1a and 1b BUILT and committed locally (`7600805`, `f10e431`; M100+M101 not applied); Units 2, 3 not built.** Written by the orchestrator after slice 8b/8c shipped. Migration application and deployment each need separate Owner approval. |
 | **Parent** | [SDD-0 §4 PSR-D30](./00-overview-sdd.md#e-matching-and-lookup); [SDD-2 Slices 8–9](./02-catalogue-and-matching-sdd.md#slice-8--open-library-first-clues-google-off); [02c](./02c-slice8-open-library-first-sdd.md) §§4.3/5/7. |
 | **Authority** | [OD-2026-10-30-4](../../../../DECISIONS.md#log) (ship after 8b, before slice 9; keep the search button); [OD-2026-10-31-5](../../../../DECISIONS.md#log) (language grouping); [OD-2026-11-12-1..3](../../../../DECISIONS.md#log) (this pass). D07/D10/D30/D35/D39/D40, R04/R06–R10; master §3 MAS-02/03/13–16; DOC-3 §5.2. |
 | **Baseline** | Branch `phase9/02d-prefill` (after `c10832d`): 8b worker and 8c switch built, migrations through M99 in the tree; dev's automatic provider is Open Library, Google is off. Code read 2026-11-12 by the orchestrator. No live readback. |
-| **Migration** | Unit 1a: M100 `20261112000100_marketplace_phase9_02d_prefill_save.sql` (local, not applied). Unit 1b: M101 (not created). |
+| **Migration** | Unit 1a: M100 `20261112000100_marketplace_phase9_02d_prefill_save.sql` (local, not applied). Unit 1b: M101 `20261112000101_marketplace_phase9_02d_search_while_fresh.sql` (local, not applied). |
 | **Size / risk** | Medium / high: receipt replay, expiry, client cache authority. No relaxed matcher or tie pick (slice 9). |
 | **Review** | Pass 2 (2026-10-30): Terra round 3. Pass 3: Sonnet (FIX_NEEDED, applied in revision a); MiniMax M3.1 Flash and paid DeepSeek (both FIX_NEEDED, confirmed findings applied in revision b); Sol (FIX_NEEDED, 5 findings confirmed in code and applied in revision c: state-row insert, skip precedence, idle on invalidation, `queryLanguage` rollout, ACP-4 reachable cases). |
 
@@ -151,6 +151,8 @@ shared-cache publication stays primary-source only.
 - Draft edits, **Search with saved title** and the typed-ISBN state machine (01a)
   are unchanged. Retry search uses its frozen command and key.
 - No pagination and no provider call from the choices read.
+
+**As built (1b):** M101 forward-replaces `public.phase9_request_candidate_edition_options_v1` (latest definition from M75 `20261017000075`) with three changes: a fresh saved list no longer suppresses Search Books (the gate is `IF NOT pending`); starting a request advances `options_version` once and keeps every selection column; the exhausted-job lock is `FOR UPDATE NOWAIT`, and a held lock raises `P9_STATE_CONFLICT`, rolling back the replay reservation. Same signature, owner, grants, `SECURITY DEFINER` and `search_path`; no new error code. Carried to Unit 2: `P9_STATE_CONFLICT` now also means "an exhausted search is locked by the cleanup sweep; retry" alongside the existing in-flight idempotency-key meaning, so §6's single shared Owner message may need wording.
 
 | Refresh step | Behavior |
 |---|---|

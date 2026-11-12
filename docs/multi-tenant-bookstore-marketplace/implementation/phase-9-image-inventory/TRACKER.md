@@ -16,6 +16,17 @@ they do not override ACTIVE.md. Repeated status copies moved to the
 **Implementation authority:** See ACTIVE.md and the Owner's explicit scope.
 **Migration creation/application authority:** See ACTIVE.md; prior approvals are historical.
 
+## 2026-11-13 02d Unit 1b built locally (M101 local file, not applied)
+
+02d Unit 1b (Search Books while a saved list is fresh, SDD rev c) is built and
+committed locally as `f10e431` on branch `phase9/02d-prefill` (not pushed);
+M101 (`20261112000101_marketplace_phase9_02d_search_while_fresh.sql`, 57
+lines) is a local file, NOT APPLIED to any database. Scope, reported
+verification and reviews:
+[implementation log](./trackers/02-implementation-and-verification.md#2026-11-13---02d-unit-1b-built-locally-m101-local-file-not-applied);
+[ledger M101 row](./supporting/database-current-vs-target.md#2026-11-13-02d-unit-1b-m101-local-file-not-applied).
+Current work unit and the next authorized action are in ACTIVE.md.
+
 ## 2026-11-12 02d Unit 1a built locally (M100 local file, not applied)
 
 02d Unit 1a (edition-sheet prefill save, SDD rev c) is built and committed locally as
