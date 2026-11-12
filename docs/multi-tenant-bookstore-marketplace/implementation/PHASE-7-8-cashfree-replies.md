@@ -225,7 +225,28 @@ Manager on production pricing and onboarding.
 
 ## 5. What these answers change
 
-### After R5 (2026-11-12). Not yet carried into the SDDs.
+### After R5 (2026-11-12). Carried into the SDDs on 2026-11-12.
+
+Sections updated from CF-76 to CF-90 and the original R5 text:
+
+- SDD 02 §§2, 4.2, 7.2–7.3, 10.5, 11.2, 11.5–11.6, 12.1, 13.1–13.2, 15.2,
+  16–17: termination, status finality, unchanged polling, same-key retry, service-fee
+  mismatch, Batch Resend, IP/account limits, recorded multiple-success tests and open
+  questions. CF-A35's live-money block and D-114 are unchanged.
+- SDD 03 §§2–3, 6, 11: settlement-balance distinction, vendor-credit evidence and
+  bank-verification fixed fee plus GST, merchant-ledger onboarding entries and invoices;
+  Easy Split commercials remain with the Account Manager.
+- SDD 04 §§1, 3, 5–6, 6a, 8–9, 9a, 10: final-only refund webhooks, intermediate-status
+  polling, automatic resumption, long-pending admin case, new submission ID after
+  confirmed cancellation, and settlement-funded vendor credits/chargebacks. The one new
+  owner choice is `commerce.refund_pending_alert_hours = 24` elapsed hours (proposed,
+  not approved); no decision ID was created.
+- SDD 05 §§2, 4–5, 7–8, 11–13: automatic failed-settlement retry, money held by Cashfree,
+  settlement-funded credits/chargebacks, credit evidence, fee sources and Account Manager
+  follow-up. Settlement-balance top-up remains unknown in SDDs 03–05.
+
+This is a local documentation carry-in only. No implementation, migration, database,
+Storage or provider action is authorized; SDD approval status is unchanged.
 
 | Topic | Before R5 | After R5 |
 |---|---|---|
@@ -238,6 +259,15 @@ Manager on production pricing and onboarding.
 | Terminated order (SDD 02 §11.2, §12) | Poll continues | Confirmed: stays `TERMINATION_REQUESTED` while an attempt is pending, no time limit (CF-76); `USER_DROPPED` is final (CF-77) |
 | Missed payment webhook | Poll only | Also Batch Resend in the dashboard (CF-80), a manual tool |
 | Bank verification fee (SDD 03) | Unknown where shown | Merchant ledger "vendor onboarding" entry and invoices, no API (CF-89) |
+
+Local verification on 2026-11-12: direct document checks passed 12/12 (including both
+unchanged CF-A35 blocks, unchanged payment-poll schedule/settings, CF-76 to CF-90 citations,
+decision references and local links). The SDD 03/04/05 wording scan and `git diff --check`
+passed. The Phase 9 continuity validator passed (123 Markdown files checked), but does
+not cover this Phase 7/8 lane; it is not proof of the R5 carry-in. No application tests
+were run for this documentation-only change; remaining `.pyc` count was 0. Eight requested
+documents changed; the existing untracked `p78sdd02review.sha256` was left alone. Nothing
+was staged, committed, pushed, deployed or applied, and no external service was called.
 
 ### After R4 (2026-11-11). These rows are not yet carried into the SDDs.
 

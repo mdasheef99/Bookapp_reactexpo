@@ -3,6 +3,7 @@
 **Part of SDD 02.** Section numbers run across the four files; the map is in the
 [overview](./02-0-overview.md). Revised 2026-11-11 after review round 1
 ([findings](../../PHASE-7-8-sdd02-review-r1.md)).
+**Status:** full draft; R5 carried in on 2026-11-12. Not approved.
 
 ---
 
@@ -286,7 +287,12 @@ their own reconciliation.
 
 ### 10.5 Staleness and Cashfree's retries
 
-Cashfree's docs give retries at 2, 10 and 30 minutes (CF-37). On sandbox, retries came
+Cashfree confirms retries when our endpoint does not answer HTTP 200, by default at
+2, 10 and 30 minutes; the dashboard allows a custom retry policy (CF-37, CF-80).
+For a missed payment webhook, the admin can use **Batch Resend** in the Merchant
+Dashboard as manual recovery (CF-80). Resends pass the same signature/age, idempotency
+and fresh-read checks; the poll remains required. R5 does not state the response timeout
+or resolve CF-A21's retry-age question. On sandbox, retries came
 about 1, 3 and 8 minutes after the first try and kept the first attempt's timestamp and
 signature (SBX-10). The docs' five-minute rule would therefore reject genuine retries, so
 the age limit is 24 hours (D-114, `commerce.webhook_max_age_seconds`). Payment-state changes
@@ -339,6 +345,13 @@ poll or by the required daily reconciliation after its window (B1):
   clear the poll until that repair handover is implemented and healthy; otherwise keep
   daily polling. Unresolved successes and duplicate watches also retain their recovery.
 
+CF-76 confirms why termination does not end polling: an attempt started before
+termination can still succeed, and the order remains `TERMINATION_REQUESTED` while an
+attempt is pending, with no fixed time limit. Read Get Order to confirm its final state.
+CF-77 confirms `USER_DROPPED` is final, but `NOT_ATTEMPTED` → `SUCCESS` is confirmed only
+on sandbox; its live behaviour is unknown. Keep every interval and reconciliation
+handover above; R5 supplies no shorter late-payment cutoff.
+
 ### 11.3 When Cashfree cannot be reached
 
 Nothing changes and the books stay held (D-101). The next poll retries. SDD 01's expiry
@@ -352,8 +365,11 @@ A `closed_unpaid` payment without `provider_closed_confirmed_at` after
 
 ### 11.5 Cashfree's rate limits
 
-Cashfree limits calls per minute per account: on sandbox 30 payment reads, 60 order reads
-and 30 order creations; production allows more. A shared counter in the database (one row
+Cashfree applies limits per minute based on IP and account ID (CF-81). The applicable
+limits are visible in API response headers and Developers > Rate Limits in the Merchant
+Dashboard; the owner reads those for CF-A29. R5 gives no numbers. The existing documented
+sandbox figures are 30 payment reads, 60 order reads and 30 order creations; the applicable
+account/environment limits still need checking. A shared counter in the database (one row
 per account, environment and endpoint, §4) admits **every** provider read by any trigger
 before the HTTP call. `commerce_take_cashfree_read_permit` locks the current budget row,
 checks its rolling prior-minute usage and `retry_not_before`, and atomically consumes one
@@ -390,12 +406,19 @@ create-finality question in §16 must be answered before relying on a negative l
 release stock. Uncertain retries preserve that round's original expiry; they never silently extend it.
 Only a new round after definitive no-order refreshes it, so a retry more than a minute
 later can still meet Cashfree's over-15-minute minimum (CF-31).
+CF-78 confirms same-key timeout retry only; CF-A27's key retention and 404 finality remain
+open. It does not authorize a new round or stock release after a negative lookup.
 
 ## 12. Termination and SDD 01's expiry workers
 
 ### 12.1 Provider steps for SDD 01's expiry workers
 
 SDD 01 §5.3 and §5.4 define the steps; this SDD supplies them:
+
+CF-76 confirms that no new transaction can start after termination, but an already-started
+one can still succeed. A pending attempt keeps the order `TERMINATION_REQUESTED` until
+its final result, with no fixed time limit; confirm using Get Order. The local expiry
+command's treatment of that answer below does not assert provider finality or stop §11.2.
 
 - "Ask Cashfree for the payments and record the answer" is §9.2, recorded as a
   `read_payments` check with `triggered_by = expiry_worker` or `grace_worker`.
@@ -464,6 +487,10 @@ Either way the payment stays on the poll, so a late success is still caught.
 
 ### 13.1 Wrong amount (D-29)
 
+R5 names a customer service fee as one reason payment and order amounts can differ
+(CF-79); it does not establish that this is the only case. The exact comparison and full
+refund rule below remain; the pilot's customer platform fee remains ₹0 (D-11).
+
 Only the first success on a Cashfree order can be a wrong amount (§9.3 order). In the §9.3
 transaction: attempt `amount_mismatch`; request SDD 04 category 6 for that attempt's full
 amount with refund key `wrong_amount:<cf_payment_id>` (m3); set `refund_requested_at`; open
@@ -484,7 +511,10 @@ gate is required before live activation; an admin case does not discharge the re
 obligation or waive D-78's deadline.
 
 SDD 04 locks this payment and deduplicates by
-that attempt/key; all sent, pending and unknown refunds count toward the attempt's cap.
+that attempt's stable obligation key; live, pending and unknown submissions count toward
+the attempt's cap along with completed refunds. A confirmed `CANCELLED` releases only
+that submission's unused reservation; SDD 04 §3 permits a new submission ID for the same
+obligation after balances are sufficient, with no two live refunds (CF-85).
 A fractional-paisa or unsupported-currency receipt is never rounded into an INR refund:
 record the mismatch and an admin case, and obtain Cashfree's exact refundable amount and
 currency before the money call (additional question in §16). D-29 still requires its full
@@ -492,6 +522,11 @@ refund. Persist the refund intent with SDD 04 in this transaction; external refu
 happen later, outside locks.
 
 ### 13.2 Duplicate success (D-78)
+
+CF-83 confirms automatic reversal of an extra success; the dashboard lists automatic
+refunds under Payment Gateway > Transactions > Refunds > Auto Refunds. This manual view
+does not answer CF-A35's chosen-payment API question or CF-A16's
+`UNRECONCILED_AUTO_REFUND` question; the live-money block in §13.1 stays unchanged.
 
 In the §9.3 transaction: attempt `duplicate_success`, `watch_stage = waiting_reversal`,
 `watch_due_at` = `commerce.duplicate_reversal_wait_business_days` business days later. No

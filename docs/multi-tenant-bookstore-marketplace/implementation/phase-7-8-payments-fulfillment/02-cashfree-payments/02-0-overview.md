@@ -1,6 +1,6 @@
 # SDD 02: Cashfree Payments, Webhooks and Verification
 
-**Status:** full draft, 2026-11-11, written from the approved skeleton, the decision
+**Status:** full draft, 2026-11-11. R5 carried in on 2026-11-12. Written from the approved skeleton, the decision
 register, the Cashfree fact record (CF-01 to CF-66) and approved SDD 01. **Review round 1
 done** (Muse, DeepSeek, Codex Sol, Codex Luna; [findings](../../PHASE-7-8-sdd02-review-r1.md))
 and revised on 2026-11-11 with the owner's decisions D-104 to D-108. Round 2 reviewed and
@@ -11,6 +11,9 @@ decision D-114: termination answers (§12.1), webhook age limit and version guar
 §10.1, §10.5), previous-secret window on key change (§13.4), live-money block on refunding
 one of two successes (§13.1, CF-A35), tests TE-03/03a, WH-02/02a, WH-10. Owner/Cashfree gates remain in §16; no approval is implied.
 Review round 3 (Codex Sol, 2026-11-12) findings applied the same day.
+R5 references added (CF-76 to CF-83, CF-90; §§2, 4.2, 7.2–7.3, 10.5,
+11.2, 11.5–11.6, 12, 13.1–13.2, 15.2–17). The polling schedule and CF-A35 live-money
+block are unchanged.
 Not approved. No code or migration may be written from it until the owner approves it.
 **Authority:** none yet. Business rules come from the
 [decision register](../../PHASE-7-8-decision-register.md); this document must not add any.
@@ -69,14 +72,18 @@ yet except where the record says so.
 | Base URL `https://sandbox.cashfree.com/pg`, API version `2026-01-01` | CF-41 |
 | Order expiry must be over 15 minutes and under 30 days | CF-31 |
 | An order is ended with `PATCH /orders/{order_id}` and `order_status: TERMINATED`; the answer may be `TERMINATION_REQUESTED`; a succeeded payment may stop termination | CF-32 |
-| Terminating does not cancel an attempt already started; a UPI attempt started before expiry can still succeed, with no maximum given | CF-33, CF-65 |
-| A second success on one order is reversed by Cashfree, within up to 5 calendar days, seen in transaction details, reports and webhooks | CF-30, CF-64 |
+| Terminating does not cancel an attempt already started; no new attempt can start. While an attempt is pending, the order stays `TERMINATION_REQUESTED` without a fixed time limit; confirm the result with Get Order | CF-33, CF-65, CF-76 |
+| `USER_DROPPED` is final. `NOT_ATTEMPTED` can become `SUCCESS` on sandbox; live behaviour is unknown, so polling is not shortened | CF-77 |
+| A second success on one order is reversed by Cashfree, within up to 5 calendar days, seen in transaction details, reports and webhooks; Auto Refunds in the dashboard also lists it | CF-30, CF-64, CF-83 |
 | Web checkout opens as redirect, popup or inline; card data stays on Cashfree's page; no PCI certificate needed | CF-34, CF-35 |
 | Webhooks are signed with the client secret; one key pair at a time | CF-36 |
 | Webhook delivery is at least once, retried at 2, 10 and 30 minutes; reject a timestamp over five minutes old | CF-37 (the age limit is replaced by D-114: retries keep their first timestamp, SBX-10) |
+| Without HTTP 200, webhook retries default to 2, 10 and 30 minutes; custom retry policy and manual Batch Resend for missed payment webhooks are in the dashboard. Response timeout and retry-age advice remain open | CF-80 |
+| Limits are per minute based on IP and account ID, visible in response headers and Developers > Rate Limits in the dashboard; R5 supplies no numbers | CF-81 |
 | Terminate, split and adjustment calls accept `x-idempotency-key` (the API reference adds: UUID format, and create order accepts it too) | CF-38 |
 | `PAYMENT_CHARGES_WEBHOOK` reports each payment's charge | CF-29 |
-| Sandbox simulates `SUCCESS`, `FAILED`, `PENDING`, `USER_DROPPED`; no disputes | CF-40, CF-66 |
+| Sandbox simulates `SUCCESS`, `FAILED`, `PENDING`, `USER_DROPPED`; no disputes, and two successes on one order cannot be simulated. Multiple-success tests use recorded answers | CF-40, CF-66, CF-82 |
+| Create Order timeouts can be retried with the same key; retention and a 404's finality are still unknown. A service fee can make the payment amount differ from the order amount | CF-78, CF-79 |
 
 **From Cashfree's API reference, not yet CF facts (§16 item 1).** On 2026-11-11 the API
 names were read from Cashfree's reference for version `2026-01-01` and cross-checked by a
@@ -128,14 +135,23 @@ once tested. The adapter (§7) is still the only place that uses these names.
    confirmed by SBX-08. Cashfree's docs answer which secret signs an already-sent webhook
    (CF-A24; §13.4); they do not themselves measure API-key invalidation timing. The 409
    code is answered (CF-A23). Dropped: dashboard plus `notify_url` delivery (CF-A22; we use no
-   `notify_url`) and list order (CF-A26; status decides, §9.3). Asked in the fourth mail:
-   late success after termination (CF-A17; §11.2 keeps polling regardless, as SBX-03
-   showed a terminated-requested order becoming `PAID`); create-order timeout and key
-   retention (CF-A27; §7.2, §11.6); webhook response time (CF-A21); limits for the refunds
-   list and terminate (CF-A29). Asked in the fifth mail (sent 2026-11-12): refunding one of two successes by
-   API (CF-A35; §13.1 live-money block); `UNRECONCILED_AUTO_REFUND` (CF-A16; §9.3, §13.2);
-   whether the five-minute advice applies to retries (CF-A21; §10.5, D-114); payment and
-   order amounts differing (CF-A28; §13.1). No order waits for CF-A16: the first verified
+   `notify_url`) and list order (CF-A26; status decides, §9.3). **After R5:** CF-A17 is mostly
+   answered: `TERMINATION_REQUESTED` lasts while an attempt is pending, without a fixed
+   time limit (CF-76); `USER_DROPPED` is final, but `NOT_ATTEMPTED` → `SUCCESS` is confirmed
+   only on sandbox (CF-77). Live behaviour of `NOT_ATTEMPTED` is still open; §11.2 keeps
+   its full schedule. CF-A27 remains open: R5 repeats safe same-key retry (CF-78), not
+   key retention or whether a 404 is final (§7.2, §11.6). CF-A21 remains open for response
+   timeout and whether the five-minute advice applies to retries (CF-80; §10.5, D-114
+   stays). CF-A29 goes to the owner to read Developers > Rate Limits and response headers:
+   per minute, IP and account ID confirmed, no numbers supplied (CF-81). CF-A25 is closed:
+   sandbox cannot simulate two successes; tests use recorded answers (CF-82).
+   CF-A35 is **not answered**: how to refund one chosen payment by API; §13.1's live-money
+   block stays exactly as written. Automatic reversal and its dashboard listing (CF-83)
+   do not answer it. CF-A16 also remains open for `UNRECONCILED_AUTO_REFUND` (CF-83;
+   §9.3, §13.2). CF-A28 is partly answered: R5 names the service-fee case only (CF-79;
+   §13.1). Live payment methods depend on commercials and onboarding, with the Account
+   Manager assisting (CF-90); D-05 still specifies UPI and cards only.
+   No order waits for CF-A16: the first verified
    success counts and §13.5 corrects our records if Cashfree keeps the other payment
    (D-109). A negative order lookup after uncertain creation is not a final no-order
    answer (§7.2, §11.6).
@@ -158,10 +174,10 @@ once tested. The adapter (§7) is still the only place that uses these names.
    payment `SUCCESS`, `FAILED`, `PENDING` or `USER_DROPPED`. `FAILED` needs a
    `payment_error_code` (for example `ISSUER_NOT_AVAILABLE`). Same-session retry after a
    dropped attempt works through Pay Order (SBX-04); slice 3 still checks it through the
-   hosted checkout. Two successes on one order may be producible by starting two attempts
-   while the order is unpaid and simulating both (not yet tried; CF-A25 withdrawn from the
-   mail). A wrong amount has no documented way to be produced; those tests use recorded
-   answers. The sandbox tests used API version `2025-01-01`; slices recheck on `2026-01-01`.
+   hosted checkout. Two successes on one order cannot be simulated on sandbox (CF-82;
+   CF-A25 closed); those cases use recorded answers. A wrong amount has no documented
+   way to be produced; those tests also use recorded answers. The sandbox tests used
+   API version `2025-01-01`; slices recheck on `2026-01-01`.
 7. **SDD 01 changes made with this revision** (approved SDD 01, owner decisions): the
    minimum-total guard and setting (D-107) and the `checkout.duplicate_payment` notice
    (D-108). Both are recorded in SDD 01 and its reference copy.
@@ -193,9 +209,10 @@ Former items 4 and 8 are now decisions D-105 and D-104.
 9. **Stored webhook bodies are deleted after 180 days**; the derived records stay.
 10. **How Cashfree's payment statuses are read** (§7.3): `CANCELLED` and `VOID` count as
     failed; `NOT_ATTEMPTED` (checkout opened, nothing paid) counts as dropped, so it neither
-    blocks a new "Pay" nor holds the books; anything unknown counts as pending. If one of
-    them later turns into a success, it is still counted (as a late payment if the checkout
-    has closed).
+    blocks a new "Pay" nor holds the books; anything unknown counts as pending. CF-77
+    confirms `USER_DROPPED` is final and `NOT_ATTEMPTED` can become success on sandbox;
+    live behaviour of the latter is unknown. A later verified success on the remaining
+    paths is still counted (late if the checkout has closed); polling is not shortened.
 11. **Our Cashfree reads stay under its rate limit** (§11.5): at most 25 reads of payments a
     minute in all, with the customer's check, webhooks and expiry workers first.
 12. **How long we keep checking an order (B1):** after the checkout closes or converts,

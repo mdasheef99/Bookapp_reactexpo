@@ -4,6 +4,7 @@
 [overview](./02-0-overview.md). Revised 2026-11-11 after review round 1
 ([findings](../../PHASE-7-8-sdd02-review-r1.md)); review item IDs (B1, M2, …) are noted
 where a rule changed.
+**Status:** full draft; R5 carried in on 2026-11-12. Not approved.
 
 ---
 
@@ -107,9 +108,13 @@ trigger would refuse.
 | `last_watch_check_id` | UUID, FK `provider_checks(id)` | Last refunds check consumed by §13.2; replay changes nothing |
 | `reversal_seen_at` | TIMESTAMPTZ | Set when a completed reversal of this attempt is seen (§13.2), including of the counted attempt (§13.5) |
 
-An attempt only moves forward: `pending` to any other state; `failed` or `dropped` to a
-success class only if Cashfree later reports a success for the same payment ID, which is
-then classified like any success (§9.3). `success_unresolved` means a reported success
+An attempt only moves forward: `pending` to any other state; `failed` or a non-terminal
+`dropped` to a success class only if Cashfree later reports a success for the same payment
+ID, which is then classified like any success (§9.3). Raw `USER_DROPPED` is terminal and
+cannot become `SUCCESS` (CF-77). The mapped `dropped` state also includes `NOT_ATTEMPTED`,
+which can become `SUCCESS` on sandbox; live behaviour is unknown (CF-77). Keep
+`provider_status` to distinguish them, and keep §11.2's full polling schedule.
+`success_unresolved` means a reported success
 waiting for a fresh payments and refunds read (§9.3); it may move to
 `success`, `amount_mismatch`, `duplicate_success` or `reversed`. `success`, `amount_mismatch`,
 `duplicate_success` and `reversed` to nothing. §9.3 skips a backward move instead of
@@ -295,6 +300,10 @@ errors retain their existing handling.
 | Timeout, unreachable, 5xx or 429 | Unknown: read the order. `ok` → created; `not_found` or any other result → still unknown, and the round stays `initiating` for recovery (§11.6). A negative lookup does not prove an in-flight create cannot finish later |
 | 401 | `provider_error`, `auth_failed`, one admin case; the round stays `initiating` |
 
+CF-78 confirms retrying a timed-out Create Order with the same `x-idempotency-key`.
+It does not answer how long the key is retained or whether a 404 is final (CF-A27);
+the unknown-outcome recovery above remains unchanged.
+
 "Derived" UUIDs are name-based (version 5) with a fixed BookConnect namespace, so the same
 inputs always give the same key.
 
@@ -321,8 +330,10 @@ Payment statuses (`payment_status`; Cashfree lists exactly these seven, §17 ite
 | Anything else | `pending` |
 
 A status it does not know maps to `pending`, so an unknown status never releases stock or
-refunds anything. A `failed` or `dropped` attempt can still become a success later (§4.2),
-which is then a normal or late payment. Amounts are converted between rupees and paise only
+refunds anything. `USER_DROPPED` is final (CF-77). Other failed/dropped paths retain §4.2's
+late-success handling: `NOT_ATTEMPTED` → `SUCCESS` is confirmed only on sandbox, and its
+live behaviour is unknown (CF-77). None of this shortens §11.2's polling.
+Amounts are converted between rupees and paise only
 here: `amount_minor` is set only when the amount is an exact whole number of paise, and
 `amount_text` always keeps Cashfree's value, so §9.3 can treat a fractional amount as a
 mismatch (M6). Times are read as ISO 8601 with offset.

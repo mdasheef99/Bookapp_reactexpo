@@ -1,6 +1,6 @@
 # SDD 03: Ledger and Reconciliation (skeleton)
 
-**Status:** skeleton for owner review, 2026-11-10. Not approved.
+**Status:** skeleton for owner review, 2026-11-10. R5 carried in on 2026-11-12. Not approved.
 **Authority:** none yet. Rules come from the [decision register](../PHASE-7-8-decision-register.md)
 and DOC-15 §5.
 **Owns:** the ledger's accounts and posting rules, store balances, the loss-cap total, and
@@ -44,7 +44,7 @@ reconciliation against Cashfree.
 | `provider_fees` | Cashfree fees, tagged by kind (gateway, Easy Split, GST, payout, bank verification) and by who bears them (D-13, D-47, D-27). Never returned on a refund (CF-22) |
 | `refunds_payable` | A refund approved and owed to the customer but not yet confirmed by Cashfree, including one waiting `ONHOLD` (D-54) |
 | `refunds_to_customer` | Refunds Cashfree has confirmed as sent |
-| `platform_cashfree_balance` | BookConnect's own recharged balance at Cashfree, which funds refunds and chargebacks (CF-18, D-54) |
+| `platform_cashfree_balance` | BookConnect's own money at Cashfree, kept separate by provider balance: settlement balance funds vendor credits and chargebacks, not the Refund Wallet (CF-88, D-54). The settlement balance's top-up route is open (§11) |
 | `platform_bank` | BookConnect's own bank account, outside Cashfree: the other side of a recharge, of a debt a store repays directly, and of money Cashfree settles to BookConnect |
 | `platform_refund_advance` | BookConnect's own money used for a refund the store must repay (D-14, D-54) |
 | `platform_loss` | Losses BookConnect absorbs; feeds the loss cap (D-08, D-30) |
@@ -75,7 +75,8 @@ The full SDD gives the exact debit and credit lines, with a rupee example, for e
 |---|---|
 | Payment verified | 02 |
 | Cashfree payment fee reported for a payment (CF-29) | 02, 05 |
-| Easy Split, payout and bank-verification fees charged (evidence for each is open, §11) | 05 |
+| Easy Split and payout fees charged (evidence is open, §11) | 05 |
+| Vendor bank-account verification: fixed fee plus GST debited from BookConnect's balance, evidenced by a merchant-ledger vendor onboarding entry and invoices; no API identified (CF-89) | 05 |
 | Share returned to BookConnect at the end of the settlement window (CF-04) | 05 |
 | Handover (pickup code verified; rider collected) | 06, 07 |
 | Payout sent; payout failed | 05 |
@@ -88,11 +89,11 @@ The full SDD gives the exact debit and credit lines, with a rupee example, for e
 | Delivery bill above the quote; cancellation fee (D-31, D-41) | 07 |
 | Refund approved (owed); refund confirmed by Cashfree | 04 |
 | Debt recovered from a payout; debt repaid; debt written off | 04, 05 |
-| Chargeback opened, lost, won (debited from BookConnect's balance, CF-24) | 04 |
+| Chargeback opened, lost, won (debited from BookConnect's settlement balance, not the Refund Wallet, CF-24, CF-88) | 04 |
 | Duplicate payment received and reversed by Cashfree (CF-30) | 02 |
 | Duplicate payment refunded by BookConnect after no answer, then also reversed: the extra amount posted to `platform_loss` (D-78) | 02 |
-| BookConnect's Cashfree balance recharged (CF-18) | 05 |
-| Store balance adjusted by BookConnect, credit or debit (CF-19) | 04, 05 |
+| BookConnect's Cashfree balance funded (CF-18); settlement-balance top-up mechanism remains unknown (CF-88) | 05 |
+| Store balance adjusted by BookConnect, credit or debit (CF-19); vendor credits draw on the settlement balance and are confirmed by adjustment ID, vendor ledger/balance and merchant ledger report (CF-88) | 04, 05 |
 | Loss becomes final (once per debt or shortfall; a later recovery posts against it) | 04 |
 | Correction by reversal (admin, with a reason) | 08 |
 
@@ -132,18 +133,19 @@ The store sees a restricted view of its own lines; statement CSV is in SDD 05 (D
 | Run | Compares | When |
 |---|---|---|
 | Payments | Cashfree's payments against `payments` and the ledger | Daily |
-| Refunds | Cashfree's refunds against `refunds` and the ledger | Daily |
+| Refunds | Cashfree's refunds against `refunds` and the ledger; SDD 04's status poll also covers intermediate states because refund webhooks report only `SUCCESS` and `CANCELLED` (CF-87) | Daily |
 | Settlements | Cashfree's vendor settlements against payouts and the ledger | Weekly (SDD 05) |
-| Store balance adjustments | Each credit or debit we sent (CF-19) against Cashfree's record and the ledger | Daily |
+| Store balance adjustments | Each credit or debit we sent (CF-19) against Cashfree's record and the ledger; confirm credits by adjustment ID, vendor ledger/balance and merchant ledger report (CF-88) | Daily |
 | Chargebacks | Cashfree's disputes (CF-26) against `chargebacks` and the ledger | Daily |
-| BookConnect's Cashfree balance | Opening balance, plus recharges, less refunds, chargebacks and fees, equals Cashfree's closing balance | Daily |
+| BookConnect's Cashfree balance | Opening balance plus confirmed funding and movements equals the closing balance, separately for each provider balance; settlement-funded vendor credits and chargebacks must not be matched to the Refund Wallet (CF-88) | Daily |
 | Duplicate payments | Each `duplicate_success` attempt against a reversal at Cashfree | Daily, until matched |
-| Fees | Each fee posting against Cashfree's report for that fee kind | Daily for payment fees; others once their evidence is known |
+| Fees | Each fee posting against Cashfree's evidence for that kind; bank-verification fixed fee and GST against merchant-ledger vendor onboarding entries and invoices (CF-89), without an API | Daily for payment fees and available bank-verification ledger entries; match invoices when available; other kinds once their evidence is known |
 | Internal | Every posting group sums to zero; balances match their entries | Daily |
 
 Every event in §3 appears in one of these runs. Where Cashfree's evidence is not yet known
-(duplicate reversals, CF-A5; BookConnect's balance statement; Easy Split, payout and
-bank-verification fees), the run is listed and its source is an open point in §11.
+(duplicate reversals, CF-A5; complete BookConnect balance statement coverage; Easy Split
+and payout fees), the run is listed and its source is an open point in §11. Bank-verification
+evidence is now identified by CF-89; it is not another payment-charges webhook.
 
 - Tolerance is zero paise.
 - Each mismatch opens a case in `finance_reconciliation_cases` with a type: paid at
@@ -154,8 +156,11 @@ bank-verification fees), the run is listed and its source is an open point in §
 - Each run has a named owner and a recorded sign-off (handoff §7).
 - Sources: order and payment reads for payments; refund reads for refunds; the vendor
   reconciliation API, which gives each settlement's ID, time and bank reference (CF-39);
-  and the per-payment charges webhook for fees (CF-29), which is not yet backed by an
-  independent source (see the note below).
+  the adjustment ID, vendor ledger/balance and merchant ledger report for vendor credits
+  (CF-88); merchant-ledger vendor onboarding entries and invoices for bank-verification
+  fees (fixed fee plus GST from our balance, CF-89; no API identified); and the per-payment
+  charges webhook for payment fees (CF-29), which is not yet backed by an independent
+  source (see the note below).
 
 The payment poll does not recover a missing charges webhook. Before live activation,
 name and verify an independent provider API or report that repairs missing fee facts;
@@ -200,19 +205,26 @@ loss-cap month boundary in India time; reconciliation finds each seeded mismatch
 
 - Settled: the ledger records the payment fee Cashfree reports for each payment (CF-29,
   D-13). CF-29 covers only that fee.
-- How Cashfree reports the Easy Split fee, the payout fee and the bank-verification fee,
+- Bank-verification fee source settled (CF-89, CF-A33): fixed fee plus GST from our balance,
+  shown as a vendor onboarding entry in the merchant ledger and in invoices. No API is
+  identified; the full SDD must specify report/invoice matching, not assume an API.
+- How Cashfree reports the Easy Split fee and the payout fee,
   so each can be posted and reconciled. Payout charges are debited from BookConnect's
   balance (CF-28), so they are passed on to the store through the split amount or a debit
   adjustment (D-47). To be found in the docs or on sandbox, then added to the fact record.
 - Where BookConnect's Cashfree balance statement comes from, for the daily balance run.
+- Vendor credits and chargebacks use the settlement balance, not the Refund Wallet
+  (CF-88). Whether that balance is the earlier replies' merchant ledger, and how it is
+  topped up, remain open (CF-A34); no top-up mechanism is assumed.
 - The two paired accounts in §2: confirmed or dropped when the posting lines are written.
 - Settled: a refunded payment's fee is never returned (CF-22). D-27 says who bears it and
   D-86 says how much on a partial refund.
 - Settled: rounding (D-88) and the month of a late recovery (D-87).
-- Cashfree's charges can be borne by us or billed to the store, and the Easy Split charge
-  is on the whole order amount (CF-51). D-13 and D-47 say the store bears them, so billing
-  to the store is to be switched on; how is still to be found. Until then the split amount
-  is reduced to pass them on.
+- Cashfree's charges can be borne by us or billed to the store (CF-51). The Easy Split
+  charge basis remains for the Account Manager under our commercials and onboarding
+  (CF-90, CF-A12); no live basis is assumed. D-13 and D-47 say the store bears them, so
+  billing to the store is to be switched on; how is still to be found. Until then the
+  split amount is reduced to pass them on.
 - How large BookConnect's Cashfree balance must be (CF-A10, D-54).
 - The account list above is my proposal and is the main thing for the money reviewer to
   check.

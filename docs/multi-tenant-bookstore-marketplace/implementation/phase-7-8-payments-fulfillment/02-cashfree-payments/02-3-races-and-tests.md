@@ -2,6 +2,7 @@
 
 **Part of SDD 02.** Section numbers run across the four files; the map is in the
 [overview](./02-0-overview.md). Revised 2026-11-11 after review round 1.
+**Status:** full draft; R5 carried in on 2026-11-12. Not approved.
 
 ---
 
@@ -71,9 +72,15 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 
 ### 15.2 Tests
 
+Two successful payments on one order cannot be simulated on sandbox (CF-82; CF-A25
+closed). Every multiple-success case below, including races and duplicate reversals,
+uses recorded provider answers; none requires producing two sandbox successes.
+
 **Adapter (sandbox and recorded answers)**
 - AD-01 each of Cashfree's seven payment statuses and 16 method groups maps as §7.3 says;
-  an unknown status maps to `pending` and an unknown group to `other`.
+  an unknown status maps to `pending` and an unknown group to `other`. Preserve the raw
+  distinction between final `USER_DROPPED` and `NOT_ATTEMPTED`, whose sandbox late-success
+  path is confirmed but live behaviour is unknown (CF-77).
 - AD-02 rupees to paise and back, exactly; a fractional paisa leaves `amount_minor` NULL
   and keeps `amount_text`.
 - AD-03 `createOrder` answered 409 (either code) reads the existing order instead of making
@@ -193,6 +200,7 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
   fixtures: each is either preserved exactly under its approved contract or rejected
   before lossy conversion.
 - WH-03 a replayed message (same key) answers 200 and changes nothing.
+  Include manual dashboard Batch Resend recovery under the same checks (CF-80).
 - WH-04 a webhook claiming success while Cashfree's read shows pending changes nothing.
 - WH-05 a tampered amount in the body is ignored; the read decides.
 - WH-06 a processing failure retries through the task framework and, after 5 attempts, the
@@ -219,7 +227,8 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 **Poll and termination**
 - PO-01 the poll follows §11.2's schedule, including for `paid` payments, through the
   hourly and daily windows, then clears `next_poll_at`; a duplicate arriving on day 3 is
-  found.
+  found. A `NOT_ATTEMPTED` observation never shortens it: live behaviour is unknown
+  (CF-77).
 - PO-02 a success seen during grace converts on time (BC-10, D-102).
 - PO-03 a success seen hours after close is a late payment.
 - PO-04 Cashfree unreachable: nothing changes and the books stay held (D-101).
@@ -243,7 +252,8 @@ transaction with the same idempotency key and command ID (SDD 01 §7).
 - TE-03 `TERMINATION_REQUESTED`, and HTTP 400 `request_invalid` "order termination already
   requested", count as terminated (SBX-02). Exercise normalized evidence through both
   expiry phases and the termination-task handler; a different `request_invalid` message
-  remains an error.
+  remains an error. Keep polling while an attempt is pending and confirm final order
+  status with Get Order, without assuming a termination time limit (CF-76).
 - TE-03a HTTP 400 `order_already_paid` follows the `PAID` branch through provider-check
   persistence, the locked expiry wrapper and the termination-task handler. It never
   enters the generic-error retry branch merely because its HTTP status is 400. Failed or

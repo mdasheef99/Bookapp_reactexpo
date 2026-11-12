@@ -1,6 +1,6 @@
 # SDD 04: Refunds, Returns, Recovery and Chargebacks (skeleton)
 
-**Status:** skeleton for owner review, 2026-11-10. Not approved.
+**Status:** skeleton for owner review, 2026-11-10. R5 carried in on 2026-11-12. Not approved.
 **Authority:** none yet. Rules come from the [decision register](../PHASE-7-8-decision-register.md).
 **Owns:** every way money goes back to a customer, return and dispute cases, store debts,
 store fault records, chargebacks, and the losses BookConnect absorbs.
@@ -17,14 +17,20 @@ store fault records, chargebacks, and the losses BookConnect absorbs.
 - The total refunded can never exceed the amount paid; concurrent refunds are locked. A
   "full refund" means bringing the total refunded up to the amount paid: if ₹250 was
   already refunded for a missing book on a ₹720 order and the customer then cancels all,
-  the second refund is ₹470, not ₹720. Refunds already sent, pending or of unknown result
-  all count toward the total.
+  the second refund is ₹470, not ₹720. Completed refunds and live or unknown submissions
+  all count toward the total; a confirmed `CANCELLED` releases only that submission's
+  unused reservation (§3, CF-85).
 - A refund and a chargeback on the same payment are counted together (§5).
 - Each automatic refund is tied to the one cancellation event that caused it. If two
   triggers fire for the same order, such as the 24-hour deadline and a store's
   "unavailable" report, the second finds the order already cancelled and creates nothing.
-- Each refund carries our own unique ID. An unknown outcome is queried by that ID, never
-  re-sent with a new one (handoff §7).
+- Each refund obligation has a stable key (the cancellation event or SDD 02's
+  `wrong_amount:<cf_payment_id>` / `duplicate:<cf_payment_id>` key). Each provider
+  submission has its own unique `refund_id`. An unknown outcome is queried by that ID,
+  never re-sent with a new one (handoff §7). Only a confirmed final `CANCELLED` permits
+  a replacement submission with a new `refund_id` for the same obligation, after checking
+  the balance is sufficient (CF-85; §3). Replaying the obligation key finds its existing
+  submissions; it neither creates a second live refund nor prevents that replacement.
 - Pickup, delivery or payout never closes a valid refund, return, dispute or chargeback
   (E10, BC-40).
 - Customers never bear costs the store or the provider caused (BC-34).
@@ -74,19 +80,42 @@ refund obligation or waive D-78's deadline.
 | `awaiting_approval` | Categories 13 and 16 to 18 where approval is needed. A return (15) is approved on the return case, so its refund is created already `approved` when inspection passes | Admin; overdue items show in the admin queue |
 | `rejected` | Admin said no; reason recorded | Final |
 | `approved` | Approved by refund policy; provider submission may remain blocked | The sender checks §1's CF-A35 guard before calling Cashfree; a blocked intent remains unsent with an admin case. |
-| `submitted` | Sent to Cashfree with our refund ID; the answer may be unknown | The refund webhook, and the refund status poll by our refund ID |
-| `processing` | Our name for a refund Cashfree has accepted but not finished, including `ONHOLD`. `ONHOLD` is a normal state (D-54): BookConnect's balance or the store's balance is too low, and it is released by recharging or by a credit adjustment (CF-17). It raises an admin alert | The same webhook and poll; an item still here after a set time goes to the admin queue |
+| `submitted` | Sent to Cashfree with our refund ID; the answer may be unknown | Get Refund by that ID; a final-status refund webhook also triggers verification (CF-87) |
+| `processing` | Cashfree has accepted but not finished: `ONHOLD`, `PENDING` or `PENDING_APPROVAL`. `ONHOLD` indicates insufficient balances (CF-17). Funding a vendor uses the settlement balance (§6, CF-88); the held refund resumes automatically, with checks about hourly (CF-87). An unpayable refund stays `PENDING` while Cashfree handles it (CF-84) | Poll Get Refund for every intermediate state; no intermediate refund webhook is expected (CF-87). On hold raises the funding alert; long `PENDING` opens the alert/case below |
 | `succeeded` | Cashfree confirms; ledger posted | Final |
-| `failed` | Cashfree reports failure | The `refund_failed` admin queue (handoff §11 item 7), then §6a |
+| `cancelled` | Cashfree confirms `CANCELLED`: cancelled by us while on hold or pending approval (API/dashboard), or by Cashfree or the bank. Money returns to BookConnect's and the vendor's balances (CF-85) | Final for this submission; the obligation remains owed and can have a new submission under the guard below |
+| `failed` | A definitive failure or impossibility is confirmed at Cashfree; never inferred from age or exhausted provider retries, which can still show `PENDING` (CF-84) | The `refund_failed` admin queue (handoff §11 item 7), then §6a |
 
-Cashfree's own refund status names other than `ONHOLD` (CF-17) and `PENDING_APPROVAL`
-(CF-A7) are not yet in the fact record; they are added from the API reference before the
-full SDD maps them.
+Cashfree sends refund webhooks only for `SUCCESS` and `CANCELLED` (CF-85, CF-87).
+The status poll must cover `ONHOLD`, `PENDING` and `PENDING_APPROVAL` by `refund_id`,
+including after funding and when a webhook is missing. A funded on-hold refund resumes
+by itself about hourly: `ONHOLD` → `PENDING` → `SUCCESS` (CF-87); keep polling, do not
+resubmit. The provider's hourly check is not a completion deadline or our poll cadence.
+
+**One live submission per obligation.** Under the payment and obligation lock, include
+every on-hold, pending, pending-approval or unknown submission in the reserved refundable
+amount. Never create another while any is live or unknown. A fresh confirmed `CANCELLED`
+is final (CF-85): keep that submission and its ID in history, reconcile the balance return,
+and release only its reservation against the refund cap, not the customer's obligation.
+After confirming sufficient balances, a replacement for the still-owed amount gets the
+next submission number and a new `refund_id`, derived from the obligation key and that
+number. Retries within that submission reuse its ID and idempotency key. Recheck these
+guards under the lock before recording the replacement; concurrent workers can create
+only one. A cancelled submission is never counted as money paid to the customer.
+
+**Long-pending alert (CF-84).** Record when the current submission first enters `PENDING`.
+If it remains there beyond `commerce.refund_pending_alert_hours` (24 elapsed
+hours, D-115), alert the admin and open one case against that submission for
+Cashfree follow-up. Polling does not reset the clock or create repeated cases. Keep
+polling while Cashfree handles it; the threshold is neither a provider deadline nor
+permission to send another refund, including by an alternative route (§6a).
 
 Races (master §14):
 
 - Two refunds on one payment: both lock the payment; the second sees the first's amount in
   the total.
+- Two replacements after `CANCELLED`: both find the same obligation; one records the next
+  submission, and the other finds it live and sends nothing (CF-85).
 - A refund created before the split call: the split is cancelled or reduced first (SDD 05
   §4), and the refund is paid from BookConnect's balance (CF-15).
 - A refund while a split call's result is unknown: it waits for the lookup (SDD 05 §4,
@@ -120,8 +149,9 @@ of mind. Reporting target 48 hours; for pickup it counts from handover (D-44).
   (`dispute_cases.status`): `opened`, `awaiting_store_reply` (24 business hours, D-37;
   overdue goes to the admin queue), `awaiting_decision` (admin), `decided`, `closed`.
 - **Chargebacks** (Q68, D-69): recorded when Cashfree reports one. Cashfree debits the
-  amount from BookConnect's balance, not the store's, and charges no chargeback fee
-  (CF-24, CF-25). Store-caused: recovered from the store like a post-payout refund. Fraud
+  amount from BookConnect's settlement balance, not the Refund Wallet or the store's
+  balance (CF-88), and charges no chargeback fee (CF-24, CF-25). Store-caused: recovered
+  from the store like a post-payout refund. Fraud
   where the store complied, platform error, or unclear fault: BookConnect bears it, counted
   toward the loss cap. The full SDD defines the evidence standard for "the store complied"
   and reversal if fault is reassigned (handoff §11 item 6). States (`chargebacks.status`):
@@ -138,10 +168,11 @@ of mind. Reporting target 48 hours; for pickup it counts from handover (D-44).
     the admin queue with a one-business-day deadline, the customer is told it is being
     checked, and the admin either sends it and uses it as evidence, or accepts the
     chargeback and closes the refund.
-  - A chargeback opens while a refund is already `submitted` or `processing`. It cannot be
-    called back, so the admin may not accept the chargeback or close the refund until
-    Cashfree shows the refund's final result. If it succeeds, it is sent as evidence and
-    the chargeback is contested. If it fails, the case follows the rule above. If the
+  - A chargeback opens while a refund is already `submitted` or `processing`. Do not assume
+    it can be stopped: an on-hold or pending-approval refund can be cancelled (CF-85),
+    but the admin may not accept the chargeback or close the refund until Cashfree shows
+    a final result. If it succeeds, it is sent as evidence and the chargeback is contested.
+    If it is confirmed cancelled or failed, the case follows the rule above. If the
     evidence deadline arrives first, the admin contests, stating the refund in progress.
   - If both the refund and the chargeback are in the end debited, a reconciliation case
     opens, the admin claims the duplicate back through Cashfree, and any amount not
@@ -163,9 +194,14 @@ of mind. Reporting target 48 hours; for pickup it counts from handover (D-44).
   and a fee already taken is not charged again. A cost the store bears that is more than
   it holds for that order is a store debt, like any other. After it is
   paid, its balance may be too low and the refund would go `ONHOLD` (CF-17).
-- So after payout BookConnect refunds the customer at once from its own Cashfree balance,
-  by a credit adjustment where needed (CF-19), and records a store debt for the part the
-  store bears (D-14, Q67, D-54). The customer does not wait for the store.
+- So after payout BookConnect funds the shortfall at once, with a vendor credit adjustment
+  where needed (CF-19), and records a store debt for the part the store bears once the refund
+  succeeds (D-14, Q67, D-54). Vendor credits draw from BookConnect's settlement balance,
+  not the Refund Wallet (CF-88). How that settlement balance is topped up, and whether it
+  is the earlier replies' merchant ledger, remain unknown (CF-A34); do not assume the
+  Refund Wallet recharge funds it. Confirm a credit by its adjustment ID, the vendor's
+  ledger and balance, and the merchant ledger report (CF-88). The customer does not wait
+  for the store's future sales; Cashfree completes the existing refund after funding (CF-87).
 - **Who funds a refund and who owes it are separate questions.** The cause decides who
   bears it first (§2, D-09, BC-35). Only the store's part can become a store debt. A part
   BookConnect bears, such as a parcel lost by the provider or an unclear cause, is named
@@ -174,7 +210,8 @@ of mind. Reporting target 48 hours; for pickup it counts from handover (D-44).
 - **One recovery route per debt.** Cashfree has confirmed what it does when a paid
   store's balance is short: the refund waits until the balance is there, and we can fund
   it with an adjustment (CF-50). So the route is fixed. BookConnect credits the store's
-  balance by the missing part of the store's share (CF-19), Cashfree's refund then uses
+  balance by the missing part of the store's share from the settlement balance (CF-19,
+  CF-88), Cashfree's refund then uses
   it, but the credit only measures how the refund was funded; it is not the debt. **The debt
   is worked out separately:** everything the store bears for that refund by cause, less
   whatever was actually taken from its balance for it. Using handoff §11 item 19, the
@@ -184,8 +221,9 @@ of mind. Reporting target 48 hours; for pickup it counts from handover (D-44).
   is kept for that one refund (CF-50 says only that it funds it), so three rules protect
   it: the debt opens, and recovery starts, only after the refund has succeeded; no recovery
   debit runs on that store while a refund funded this way is unfinished; and the store's
-  release dates are moved later during that time (CF-44). Whether the refund resumes by
-  itself is asked in the third mail. It is recovered later by BookConnect's own
+  release dates are moved later during that time (CF-44). The held refund resumes by
+  itself about hourly once funded (CF-87); keep polling its existing ID, never resubmit
+  after funding. The debt is recovered later by BookConnect's own
   debit adjustment or, once the 7-day request is made, by the store repaying directly to
   BookConnect's bank (D-14). It is never also netted by Cashfree from later settlements. A
   verified repayment reduces the same outstanding amount, and no debit is sent for money
@@ -236,7 +274,10 @@ reporting target, not a cutoff; handoff §11 item 12).
   admin queue and is paid by another route.
 - **A refund that fails to the original UPI address** can go to another UPI address of the
   customer with consent, or be paid from BookConnect's balance (CF-21). CF-21 covers UPI
-  only; a failed card refund has no confirmed alternative yet.
+  only; a failed card refund has no confirmed alternative yet. R5 says a refund still
+  unpayable after retries remains `PENDING` while Cashfree handles it (CF-84). That is
+  not final failure: keep polling and raise the long-pending case (§3); never pay by
+  another route while that refund remains live or unknown.
 - Rules for any alternative route: the owner approves each one; the original refund is
   first confirmed as failed or impossible at Cashfree and closed, so it can never also go
   through; the payment is recorded in the ledger and audit log against the same refund; the
@@ -258,8 +299,11 @@ Existing orders and refunds continue. The check at checkout is SDD 01 §2.
 ## 8. Tables
 
 - **New** `refunds`: order, payment, category, cause, amounts in paise (books, delivery,
-  deductions), who bears the fee, status, our refund ID (unique), Cashfree's ID, approver
-  and reason where needed.
+  deductions), who bears the fee, stable obligation key, submission number (unique with
+  obligation key), status, provider status, our refund ID (unique), submission idempotency
+  key, Cashfree's ID, first `PENDING` time and alert/case reference, approver and reason
+  where needed. Keep cancelled submissions for the same obligation; enforce §3's single
+  live submission under the payment/obligation lock (CF-85, CF-87).
 - **New** `return_cases`, `dispute_cases`, `chargebacks`, `store_debts`,
   `store_fault_events`.
 - **Existing, empty** `refund_cases`: reused as the admin queue item that points at a
@@ -285,17 +329,39 @@ Existing orders and refunds continue. The check at checkout is SDD 01 §2.
 - Settled by Cashfree's third reply: after payout with a short store balance the refund
   waits, and we fund it by an adjustment (CF-50). BookConnect tops up at once so the
   customer does not wait (D-14).
+- R5 funding clarification: vendor credits and chargebacks use the settlement balance,
+  not the Refund Wallet (CF-88). How to top it up and whether it is the earlier merchant
+  ledger remain open (CF-A34); no funding mechanism is specified until answered.
+- CF-A32 answered: on-hold refunds resume automatically about hourly once funded; webhook
+  only for `SUCCESS` or `CANCELLED` (CF-87). CF-A31 partly answered: an unpayable refund
+  stays `PENDING` and Cashfree handles it, but its timing and notification remain open
+  (CF-84). Our proposed alert threshold is in §9a, not a Cashfree guarantee.
 - What puts a refund in `PENDING_APPROVAL` and whether it needs action from us (CF-A7).
 - §6a: the exact refund window, the alternative route after it, the route for a failed
   card refund, and the consent wording (Cashfree and lawyer).
 - Q45b and BC-38 are IN PRINCIPLE (categories 12 and 13).
 - Whether deducting delivery costs from a customer-fault refund is allowed (lawyer).
 
+## 9a. Choices for the owner
+
+- **Long-pending refund alert:** `commerce.refund_pending_alert_hours`, **24 elapsed
+  hours** from the submission's first `PENDING` time (§3, CF-84), approved by the owner on
+  2026-11-12 (D-115). It is for early admin/Cashfree follow-up; it does not change the customer refund promise or allow a
+  second refund. The refund status poll's cadence is still to be specified in the full SDD.
+
 ## 10. Worked examples and tests the full SDD will include
 
 A rupee example for each of the 19 categories and the duplicate-payment case (6a), plus
 the ₹530 post-payout debt case. Tests: double refund; refund above the amount paid; partial
 then full refund; refund against chargeback, each order; two triggers on one order; debt
-recovered once by one route; recovery after write-off; refund after the Cashfree window; `ONHOLD` then success; failure then queue;
+recovered once by one route; recovery after write-off; refund after the Cashfree window;
+`ONHOLD` → `PENDING` → `SUCCESS` after funding with no resubmission (CF-87); polling
+`ONHOLD`, `PENDING` and `PENDING_APPROVAL` without intermediate refund webhooks; final
+`SUCCESS`/`CANCELLED` webhook missing then recovered by poll; long `PENDING` raises one
+case beyond the proposed threshold without a new refund (CF-84); `CANCELLED` returns
+balances and permits one new ID for the same obligation after funding, including two
+concurrent replacements and a repeated old callback (CF-85); vendor credit confirmed
+by adjustment ID, vendor ledger/balance and merchant ledger report, never funded from
+the Refund Wallet (CF-88); definitive failure then queue;
 approval thresholds at ₹1,000 and ₹1,001; return lapse on day 5; debt clock; fault count
 window.

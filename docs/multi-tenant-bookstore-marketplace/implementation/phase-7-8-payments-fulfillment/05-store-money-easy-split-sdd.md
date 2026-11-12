@@ -1,6 +1,6 @@
 # SDD 05: Store Money: Vendors, Easy Split and Payouts (skeleton)
 
-**Status:** skeleton for owner review, 2026-11-10. Not approved.
+**Status:** skeleton for owner review, 2026-11-10. R5 carried in on 2026-11-12. Not approved.
 **Authority:** none yet. Rules come from the [decision register](../PHASE-7-8-decision-register.md).
 Cashfree facts come from the [fact record](../PHASE-7-8-cashfree-replies.md) and are cited
 by CF ID.
@@ -79,6 +79,12 @@ approved until the register marks them decided.
 - A store can be blocked and unblocked; Cashfree can also put it on hold (CF-13). Status
   changes and settlements arrive by webhook (CF-14).
 - Settlements are reconciled through the vendor reconciliation API (CF-39).
+- A failed vendor settlement is retried automatically; the money stays with Cashfree
+  until it is settled (CF-86). BookConnect detects, alerts and reconciles; it does not
+  send a replacement settlement.
+- Vendor credit adjustments and chargebacks use the settlement balance, not the Refund
+  Wallet. A credit is confirmed by adjustment ID, vendor ledger/balance and merchant
+  ledger report; how the settlement balance is topped up is not stated (CF-88).
 - Sandbox can simulate a store settlement, successful or failed (CF-40).
 
 ## 3. The store as a Cashfree vendor
@@ -142,7 +148,9 @@ approved until the register marks them decided.
    and the default date is that same moment (CF-43), so this is the one open point that
    decides whether the guard in §6 protects the store or is only a late-payment alarm
    (CF-A3). The settlement webhook and the reconciliation run record the payout with
-   its bank reference.
+   its bank reference. A failed vendor settlement is retried by Cashfree automatically,
+   with the money remaining there (CF-86). Keep the admin alert and reconciliation open
+   until its result is confirmed; BookConnect sends no replacement settlement.
 6. **Cancelled before handover.** If a split call has been sent and its result is unknown,
    the refund waits until the lookup shows whether the split happened, and then follows
    the matching rule below. If the lookup cannot answer within a set time (a setting), an
@@ -184,7 +192,7 @@ Per-order release line (`store_payout_lines.status`):
 | `held` | Split made; not yet earned | Handover; a refund (`reversed`); the settlement-window guard. If the handover was recorded while the line was still `split_pending`, the line does not wait here: on split confirmation it goes straight to `release_scheduled`, with the date worked out from the recorded handover time, or the earliest date Cashfree accepts if that has passed |
 | `release_scheduled` | Earned; release date sent to Cashfree | Cashfree's settlement webhook and the weekly reconciliation |
 | `settled` | Cashfree reports the settlement succeeded | Final for payout; a later refund is SDD 04 §6 |
-| `settlement_failed` | Cashfree reports it failed; admin case and alert (D-64) | Admin. What Cashfree does with the money, and whether it retries, is asked (CF-A14); nothing is re-sent by us until that is known |
+| `settlement_failed` | Cashfree reports failure; admin case and alert (D-64). Money stays with Cashfree until settled (CF-86) | Cashfree retries automatically. The admin follows up and fixes the reported cause where needed (CF-58); webhook and reconciliation confirm the result. BookConnect never re-sends the settlement |
 | `reversed` | Refunded before settlement; confirmed by Cashfree's records | Final |
 | `returned_to_platform` | The configured window ended first and the money went to BookConnect (CF-04); admin case | Admin: the store is still owed its earned share. The proposed route is a credit to the store's Cashfree balance (CF-19) and a fresh release, then `settled`. Needs the lawyer (Q3) and a sandbox test. The guard (§6) only warns, so this state can be reached, for example while a debt keeps payouts blocked. If it is, the ledger keeps showing the share as owed to the store, BookConnect does not count it as its own money, and the case stays open until the route is approved |
 
@@ -236,10 +244,13 @@ shows in the admin queue.
 ## 7. Fees on the store's lines
 
 - The payment fee is recorded as Cashfree reports it for each payment (CF-29). CF-29
-  covers that fee only. How the Easy Split fee, the payout fee and the bank-verification
-  fee are reported is not yet known (SDD 03 §11); the bank-verification fee arises before
-  any sale, so it has no payment to attach to and is posted when the vendor is verified.
-  Rates: Easy Split 0.20% on sandbox, production unconfirmed (CF-27).
+  covers that fee only. How the Easy Split fee and the payout fee are reported is still
+  an open point in SDD 03 §11. Each vendor bank-account verification debits a fixed fee
+  plus GST from BookConnect's balance, shown as a vendor onboarding entry in the merchant
+  ledger and in invoices, without an API source (CF-89). It has no sale payment to attach
+  to: post each reported verification charge and match its invoice (SDD 03 §§3, 6).
+  Easy Split is 0.20% on sandbox (CF-27); live charges depend on our commercials and
+  onboarding, to be confirmed with the Account Manager (CF-90).
 - The store bears them (D-13, D-47). Cashfree lets us bill the gateway and Easy Split
   charges to the store (CF-51); if that is switched on, Cashfree deducts them and the split
   amount is the plain book total. Payout charges are debited from BookConnect's balance
@@ -251,11 +262,18 @@ shows in the admin queue.
   automatically (BC-02). The in-app acceptance of later pricing (D-23) is outside the pilot
   build.
 
-## 8. BookConnect's own Cashfree balance (D-54)
+## 8. BookConnect's own Cashfree balances (D-54)
 
-- Refunds and chargebacks are funded from BookConnect's recharged balance; Cashfree has no
-  reserve product (CF-18).
-- The full SDD defines a low-balance alert as a setting, and who recharges.
+- Vendor credit adjustments and chargebacks are funded from BookConnect's **settlement
+  balance, not the Refund Wallet** (CF-88). The earlier description of a recharged
+  merchant ledger (CF-18) does not establish that the two balances are the same. How to
+  top up the settlement balance is unknown (CF-A34); no mechanism is assumed.
+- Confirm each vendor credit with its adjustment ID, the vendor's ledger and balance,
+  and the merchant ledger report (CF-88); SDD 03 reconciles the same evidence.
+- After a vendor credit funds an on-hold refund, Cashfree resumes it automatically,
+  checking about hourly (CF-87). SDD 04 polls the existing refund, never resubmits it.
+- The full SDD defines a low-balance alert as a setting and names the funding operator
+  once the settlement-balance top-up route is confirmed.
 - The amount is set after CF-A10 and pilot volumes are known.
 
 ## 9. Tables
@@ -291,8 +309,9 @@ No client can write these tables. A store reads only its own lines through a saf
 2. Handover on a Friday: which Monday.
 3. Order cancelled before handover: share reversed, nothing settled.
 4. Store blocked for an unpaid debt: lines wait, then release after the owner unblocks.
-5. Settlement fails: admin case and record; what happens to the money next waits on
-   CF-A14.
+5. Settlement fails: admin case and alert; money stays with Cashfree, which retries
+   automatically; webhook/reconciliation confirm settlement without our re-sending it
+   (CF-86).
 6. Store at ₹24,800 unsettled takes a ₹400 order: the limit check.
 7. Order cancelled two minutes after payment, before the split: no split, refund from
    BookConnect's balance.
@@ -300,7 +319,11 @@ No client can write these tables. A store reads only its own lines through a saf
 ## 12. Test list headings
 
 Split sent once per payment; no release before handover; release date across a month end
-and in India time; settlement recorded once; failed settlement; blocked store; another
+and in India time; settlement recorded once; failed settlement followed by Cashfree's
+automatic retry, with alert/reconciliation and no settlement re-sent by us (CF-86);
+vendor credit funded from the settlement balance and confirmed by adjustment ID, vendor
+ledger/balance and merchant ledger report, without using the Refund Wallet (CF-88);
+blocked store; another
 store cannot read these lines; statement totals equal the ledger; settlement-window guard
 fires; refund before the split; refund crossing a release, both orders; split answer
 unknown then looked up; bank-detail change blocks payouts.
@@ -324,11 +347,16 @@ unknown then looked up; bank-detail change blocks payouts.
 - Which vendor type a sole proprietor without GST uses (CF-A9; CF-49 covers individuals).
 - How billing Cashfree's charges to the store is switched on (CF-51), and its effect on
   the split amount in §4 and §7.
-- The Easy Split charge is on the whole order amount, so it also covers the delivery
-  charge (CF-51). Under D-47 the store bears the Easy Split fee; on a ₹400 book with ₹70
-  delivery at 0.20% that is 94 paise, of which 14 paise is on BookConnect's delivery
-  charge. Flagged for the owner; the amount is tiny.
-- What happens to a failed settlement (CF-A14).
+- Easy Split charge basis/rate (CF-A12) and live payment methods (CF-A34's go-live part)
+  go to the Account Manager: R5 says they depend on commercials and onboarding (CF-90).
+  D-47 still decides who bears the fee; no live charge basis is assumed here.
+- CF-A14 answered: a failed vendor settlement is retried automatically, and money stays
+  with Cashfree until settled (CF-86). Detection, admin alerts and reconciliation remain;
+  no BookConnect settlement retry is designed.
+- CF-A34's balance distinction is answered (CF-88): vendor credits and chargebacks use
+  the settlement balance, not the Refund Wallet. Whether it is the earlier merchant
+  ledger and how it is topped up remain open. The Account Manager handles the separate
+  live-methods question (CF-90).
 - Whether holding a store's share until handover fits the RBI settlement rules (CF-07):
   lawyer.
 - If money returns to BookConnect at the end of the window (CF-04), BookConnect would be
