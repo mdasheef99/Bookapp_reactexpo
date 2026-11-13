@@ -33,23 +33,29 @@ export function acceptEditionChoices(
     || !!receipt && (incoming.requestGeneration < receipt.requestGeneration || incoming.optionsVersion < receipt.optionsVersion));
   const changedSelection = !!previous && incoming.metadataRevision === previous.metadataRevision
     && incoming.selection?.selectionId !== previous.selection?.selectionId;
-  const regressingLookup = origin === 'read' && (incoming.lookupStatus === 'pending' || incoming.lookupStatus === 'idle')
+  // 02d §§4–5 / D1: idle invalidates terminal rows and is final at unchanged counters.
+  const regressingLookup = origin === 'read'
     && [previous, receipt].some(value => value
       && value.requestGeneration === incoming.requestGeneration && value.optionsVersion === incoming.optionsVersion
-      && (incoming.lookupStatus === 'idle' || ('lookupStatus' in value ? value.lookupStatus : value.status) !== 'pending')
-      && ('lookupStatus' in value ? value.lookupStatus : value.status) !== 'idle');
+      && (incoming.lookupStatus === 'idle'
+        ? ('lookupStatus' in value ? value.lookupStatus : value.status) === 'pending'
+        : incoming.lookupStatus === 'pending'
+          ? ['ready', 'failed'].includes('lookupStatus' in value ? value.lookupStatus : value.status)
+          : value === previous && previous?.lookupStatus === 'idle'));
   if (staleCandidate || staleOptions || changedSelection || regressingLookup) {
     if (origin === 'read' && previous) return freshEditionChoices(previous);
     throw authorityChanged();
   }
-  let accepted = freshEditionChoices(incoming);
+  let accepted = incoming.lookupStatus === 'idle'
+    ? { ...incoming, rows: [], optionsExpiresAt: null } : freshEditionChoices(incoming);
   if (origin === 'selection' && previous) {
     const fresh = freshEditionChoices(previous);
-    // Selection receipts intentionally omit rows/expiry. Only a read may replace options.
-    accepted = { ...accepted, rows: fresh.rows, optionsExpiresAt: fresh.optionsExpiresAt,
+    // 02d §§4–5 / D2: a selection cannot carry old rows across an options advance.
+    const newer = incoming.requestGeneration > previous.requestGeneration || incoming.optionsVersion > previous.optionsVersion;
+    accepted = { ...accepted, rows: newer ? [] : fresh.rows, optionsExpiresAt: newer ? null : fresh.optionsExpiresAt,
       requestGeneration: Math.max(previous.requestGeneration, incoming.requestGeneration),
       optionsVersion: Math.max(previous.optionsVersion, incoming.optionsVersion),
-      lookupStatus: previous.lookupStatus };
+      lookupStatus: newer ? incoming.lookupStatus ?? 'pending' : previous.lookupStatus };
   }
   client.setQueryData(key, accepted);
   return accepted;
@@ -70,9 +76,11 @@ export function acceptEditionLookupReceipt(
   if (previous?.operationId === incoming.operationId && previous.requestGeneration === incoming.requestGeneration
     && previous.optionsVersion === incoming.optionsVersion && previous.status !== 'pending' && incoming.status === 'pending') return false;
   client.setQueryData(key, incoming);
-  if (incoming.status === 'pending' && choices) {
+  // 02d §4 / D4: pending and unavailable receipts revoke the old selectable list.
+  if ((incoming.status === 'pending' || !incoming.available) && choices) {
     client.setQueryData(ownerEditionPickerKeys.choices(identity, scope.sessionId, scope.candidateId), {
-      ...choices, lookupStatus: 'pending', requestGeneration: incoming.requestGeneration, optionsVersion: incoming.optionsVersion,
+      ...choices, rows: [], optionsExpiresAt: null, lookupStatus: incoming.status,
+      requestGeneration: incoming.requestGeneration, optionsVersion: incoming.optionsVersion,
     });
   }
   return true;

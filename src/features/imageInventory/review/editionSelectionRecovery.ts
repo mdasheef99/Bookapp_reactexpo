@@ -1,8 +1,10 @@
 import { OwnerUxClientError, registeredOwnerUxError } from '../api/ownerUxTransport';
 
 type SelectionRecovery = Readonly<{ kind: 'retry' | 'refresh' | 'stop'; message: string }>;
+// 02d §6: shared selection/search conflict copy.
+const choicesChanged = 'These choices may have changed. Review the latest choices and try again.';
 const changed = (): SelectionRecovery => ({ kind: 'refresh',
-  message: 'The book or its edition choices changed. Review the latest choices before selecting again.' });
+  message: choicesChanged });
 
 // Owner decision2026-10-13 / picker §3.1/§7: preserve exact retries only for uncertain responses.
 export function editionSelectionRecovery(error: unknown): SelectionRecovery {
@@ -14,11 +16,10 @@ export function editionSelectionRecovery(error: unknown): SelectionRecovery {
   return { kind: 'retry', message: 'The action could not be confirmed. Your current choice and selling details are preserved.' };
 }
 
-// Search Books uses its own refresh copy: P9_STATE_CONFLICT also covers stale/closed sessions,
-// in-flight replays and invalid review details, so it must not claim the book changed.
+// 02d §6: state conflicts share the selection refresh message.
 export function editionLookupRecovery(error: unknown): SelectionRecovery {
   if (error instanceof OwnerUxClientError && error.code === 'P9_STATE_CONFLICT') {
-    return { kind: 'refresh', message: registeredOwnerUxError('P9_STATE_CONFLICT').message };
+    return changed();
   }
   const recovery = editionSelectionRecovery(error);
   return recovery.kind === 'refresh'

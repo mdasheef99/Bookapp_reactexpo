@@ -45,13 +45,13 @@ it('older lookup receipt and pending receipt after ready cannot regress lookup c
   expect(acceptEditionLookupReceipt(client, pickerIdentity, request, { ...ready, requestGeneration: 1 })).toBe(false);
   expect(client.getQueryData(ownerEditionPickerKeys.lookup(pickerIdentity, request.sessionId, request.candidateId))).toEqual(ready);
 });
-it('lookup receipts never replace selection, review authority or rows', () => {
+it('lookup receipts clear rows for a pending receipt but never replace selection or review authority', () => {
   const choices = selectedChoices();
   acceptEditionChoices(client, pickerIdentity, request, choices, 'read');
   acceptEditionLookupReceipt(client, pickerIdentity, request, { operationId: testUuid(40),
     status: 'pending', requestGeneration: 2, optionsVersion: 1, available: false });
   expect(client.getQueryData(ownerEditionPickerKeys.choices(pickerIdentity, request.sessionId, request.candidateId)))
-    .toEqual({ ...choices, lookupStatus: 'pending', requestGeneration: 2 });
+    .toEqual({ ...choices, lookupStatus: 'pending', requestGeneration: 2, rows: [], optionsExpiresAt: null });
 });
 it('reflects a pending receipt immediately and keeps it through a later idle read for the same request', () => {
   const choices = pickerChoices({ lookupStatus: 'idle', optionsExpiresAt: null, rows: [] });
@@ -140,3 +140,139 @@ it.each(['ready', 'committed', 'older committed'])('fences a receipt-backed batc
   if (state === 'committed') expect(assertBatchAuthority(client, pickerIdentity, page)).toBe(page);
   else expect(() => assertBatchAuthority(client, pickerIdentity, page)).toThrow('AUTHORITY_CHANGED');
 });
+
+// 02d Unit 2 §3: pending acceptance, idle acceptance/finality, selection bounds, terminal usability.
+const choicesKey = () => ownerEditionPickerKeys.choices(pickerIdentity, request.sessionId, request.candidateId);
+const lookupKey = () => ownerEditionPickerKeys.lookup(pickerIdentity, request.sessionId, request.candidateId);
+const pendingReceipt = (overrides: Partial<{ operationId: string; requestGeneration: number; optionsVersion: number; available: boolean }> = {}) => ({
+  operationId: testUuid(40), status: 'pending' as const, requestGeneration: 1, optionsVersion: 2, available: false, ...overrides,
+});
+it('C1 accepts a pending receipt by clearing rows and expiry while keeping the selection', () => {
+  const before = selectedChoices();
+  acceptEditionChoices(client, pickerIdentity, request, before, 'read');
+  const receipt = pendingReceipt();
+  expect(acceptEditionLookupReceipt(client, pickerIdentity, request, receipt)).toBe(true);
+  expect(client.getQueryData(choicesKey())).toEqual({
+    ...before, lookupStatus: 'pending', requestGeneration: 1, optionsVersion: 2, rows: [], optionsExpiresAt: null,
+  });
+  expect(client.getQueryData(lookupKey())).toEqual(receipt);
+});
+it.each(['empty', 'older'] as const)('C2 ACP-3 pending acceptance with an %s receipt cache', mode => {
+  const before = pickerChoices();
+  acceptEditionChoices(client, pickerIdentity, request, before, 'read');
+  if (mode === 'older') client.setQueryData(lookupKey(), pendingReceipt({ optionsVersion: 1 }));
+  expect(acceptEditionLookupReceipt(client, pickerIdentity, request, pendingReceipt())).toBe(true);
+  expect(client.getQueryData<{ rows: unknown[]; optionsExpiresAt: string | null }>(choicesKey())).toMatchObject({
+    rows: [], optionsExpiresAt: null, lookupStatus: 'pending', optionsVersion: 2,
+  });
+});
+it('C2 ACP-3 rejects a pending receipt newer than the cached receipt and keeps rows', () => {
+  const before = pickerChoices();
+  acceptEditionChoices(client, pickerIdentity, request, before, 'read');
+  client.setQueryData(lookupKey(), {
+    operationId: testUuid(41), status: 'ready', requestGeneration: 1, optionsVersion: 3, available: true,
+  });
+  expect(acceptEditionLookupReceipt(client, pickerIdentity, request, pendingReceipt())).toBe(false);
+  expect(client.getQueryData<{ rows: unknown[]; optionsExpiresAt: string | null }>(choicesKey())).toMatchObject({
+    rows: before.rows, optionsExpiresAt: before.optionsExpiresAt,
+  });
+});
+it('C3 accepts an idle read over a saved ready list at the same counters', () => {
+  const before = pickerChoices();
+  acceptEditionChoices(client, pickerIdentity, request, before, 'read');
+  const idle = { ...before, lookupStatus: 'idle' as const, rows: [], optionsExpiresAt: null };
+  expect(acceptEditionChoices(client, pickerIdentity, request, idle, 'read')).toMatchObject({
+    lookupStatus: 'idle', rows: [], optionsExpiresAt: null, selection: before.selection,
+  });
+});
+it('C4 accepts an idle read even when a same-counter READY receipt is cached', () => {
+  const before = pickerChoices();
+  acceptEditionChoices(client, pickerIdentity, request, before, 'read');
+  expect(acceptEditionLookupReceipt(client, pickerIdentity, request, {
+    operationId: testUuid(40), status: 'ready', requestGeneration: 1, optionsVersion: 1, available: true,
+  })).toBe(true);
+  const idle = { ...before, lookupStatus: 'idle' as const, rows: [], optionsExpiresAt: null };
+  expect(acceptEditionChoices(client, pickerIdentity, request, idle, 'read')).toMatchObject({
+    lookupStatus: 'idle', rows: [], optionsExpiresAt: null,
+  });
+});
+it('C5 rejects an idle read over pending choices at the same counters', () => {
+  const pending = pickerChoices({ lookupStatus: 'pending', rows: [], optionsExpiresAt: null });
+  acceptEditionChoices(client, pickerIdentity, request, pending, 'read');
+  client.setQueryData(lookupKey(), pendingReceipt({ optionsVersion: 1 }));
+  expect(acceptEditionChoices(client, pickerIdentity, request,
+    { ...pending, lookupStatus: 'idle', rows: [], optionsExpiresAt: null }, 'read')).toMatchObject({
+    lookupStatus: 'pending', requestGeneration: 1, optionsVersion: 1,
+  });
+});
+it('C6 keeps the existing pending and terminal transitions', () => {
+  const ready = selectedChoices({ lookupStatus: 'ready' });
+  acceptEditionChoices(client, pickerIdentity, request, ready, 'read');
+  expect(acceptEditionChoices(client, pickerIdentity, request, { ...ready, lookupStatus: 'pending' }, 'read')).toEqual(ready);
+
+  const pending = selectedChoices({ lookupStatus: 'pending', rows: [], optionsExpiresAt: null, requestGeneration: 2 });
+  acceptEditionChoices(client, pickerIdentity, request, pending, 'read');
+  expect(acceptEditionChoices(client, pickerIdentity, request, { ...pending, lookupStatus: 'failed' }, 'read')).toMatchObject({
+    lookupStatus: 'failed', rows: [], selection: pending.selection,
+  });
+
+  const pendingReady = selectedChoices({ lookupStatus: 'pending', rows: [], optionsExpiresAt: null, requestGeneration: 3 });
+  acceptEditionChoices(client, pickerIdentity, request, pendingReady, 'read');
+  const readyAgain = selectedChoices({ lookupStatus: 'ready', requestGeneration: 3, optionsVersion: 2 });
+  expect(acceptEditionChoices(client, pickerIdentity, request, readyAgain, 'read')).toMatchObject({
+    lookupStatus: 'ready', rows: readyAgain.rows, optionsExpiresAt: readyAgain.optionsExpiresAt,
+  });
+
+  const failedAgain = selectedChoices({ lookupStatus: 'failed', rows: [], optionsExpiresAt: null,
+    requestGeneration: 4, optionsVersion: 3 });
+  acceptEditionChoices(client, pickerIdentity, request, failedAgain, 'read');
+  expect(acceptEditionChoices(client, pickerIdentity, request,
+    { ...failedAgain, lookupStatus: 'pending' }, 'read')).toMatchObject({
+    lookupStatus: 'failed', selection: failedAgain.selection,
+  });
+});
+it('C9 rejects ready and failed reads at the same counters after an idle read was accepted', () => {
+  const ready = pickerChoices();
+  const idle = { ...ready, lookupStatus: 'idle' as const, rows: [], optionsExpiresAt: null };
+  acceptEditionChoices(client, pickerIdentity, request, idle, 'read');
+  expect(acceptEditionChoices(client, pickerIdentity, request, ready, 'read')).toMatchObject({
+    lookupStatus: 'idle', rows: [], optionsExpiresAt: null,
+  });
+  expect(acceptEditionChoices(client, pickerIdentity, request, { ...ready, lookupStatus: 'failed' }, 'read')).toMatchObject({
+    lookupStatus: 'idle', rows: [], optionsExpiresAt: null,
+  });
+});
+it('C10 keeps fresh rows for a same-counter selection and drops them for a newer one', () => {
+  const ready = pickerChoices();
+  acceptEditionChoices(client, pickerIdentity, request, ready, 'read');
+  const same = selectedChoices({ rows: [], optionsExpiresAt: null });
+  expect(acceptEditionChoices(client, pickerIdentity, request, same, 'selection')).toMatchObject({
+    rows: ready.rows, optionsExpiresAt: ready.optionsExpiresAt, lookupStatus: 'ready',
+  });
+  const newer = selectedChoices({ rows: [], optionsExpiresAt: null, optionsVersion: 2, lookupStatus: 'pending' });
+  expect(acceptEditionChoices(client, pickerIdentity, request, newer, 'selection')).toMatchObject({
+    rows: [], optionsExpiresAt: null, lookupStatus: 'pending', requestGeneration: 1, optionsVersion: 2,
+  });
+});
+it('C10b drops rows when only the selection receipt generation advances', () => {
+  const ready = pickerChoices();
+  acceptEditionChoices(client, pickerIdentity, request, ready, 'read');
+  const newer = selectedChoices({ rows: [], optionsExpiresAt: null, requestGeneration: 2, lookupStatus: 'pending' });
+  expect(acceptEditionChoices(client, pickerIdentity, request, newer, 'selection')).toMatchObject({
+    rows: [], optionsExpiresAt: null, lookupStatus: 'pending', requestGeneration: 2, optionsVersion: 1,
+  });
+});
+it.each([
+  ['ready', 1, 1], ['failed', 1, 1], ['ready', 2, 1], ['failed', 2, 1], ['ready', 1, 2], ['failed', 1, 2],
+] as const)('C11 drops rows and expiry for an accepted terminal %s receipt at G%s/V%s that is unusable',
+  (status, requestGeneration, optionsVersion) => {
+    const before = pickerChoices();
+    acceptEditionChoices(client, pickerIdentity, request, before, 'read');
+    expect(acceptEditionLookupReceipt(client, pickerIdentity, request, {
+      operationId: testUuid(40), status, requestGeneration, optionsVersion, available: false,
+    })).toBe(true);
+    expect(client.getQueryData(choicesKey())).toMatchObject({
+      rows: [], optionsExpiresAt: null, lookupStatus: status, requestGeneration, optionsVersion,
+      selection: before.selection,
+    });
+  });

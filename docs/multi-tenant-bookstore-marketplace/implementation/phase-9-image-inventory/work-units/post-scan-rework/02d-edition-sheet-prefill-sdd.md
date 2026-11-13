@@ -258,7 +258,7 @@ state never proves reachability.
 |---|---|---|
 | 1a. Save and read (DB + worker) | Migration M100: helper after M93:1384, state-row insert, receipt widening (§3 sites, decode binding), source policy only if needed, read change (§5) incl. `queryLanguage`; optional nullable `queryLanguage` in server and client choices schemas. ACP-1 (SQL/worker), 2, 4, 5, 6, 7 (SQL), 10, 12 (SQL expiry and exhausted control), 13. | Plan run READY; red first; `node scripts/verify-phase9.js`; different-model review; separate create/apply approvals. |
 | 1b. Search Books while fresh (DB) | Migration M101: M75 request change (search while fresh, version advance, NOWAIT rule). ACP-3 (SQL), 11; explicit-search control for ACP-9. | Same gates; built after 1a is committed. 1a is not released alone. |
-| 2. App | Search Books gate, pending acceptance clears rows, idle acceptance (expiry and invalidation), EditionChoices return, `queryLanguage` groups, conflict wording; ACP-1 (app open), 3, 7, 8, 12 (app). | Same flow; after Units 1a and 1b are applied on dev. |
+| 2. App | Search Books gate, pending acceptance clears rows, idle acceptance (expiry and invalidation), EditionChoices return, `queryLanguage` groups, conflict wording; ACP-1 (app open), 3, 7, 8, 12 (app). | Same flow; built and tested locally after Units 1a and 1b are committed (Owner 2026-11-13); nothing deployed or applied in this unit. |
 | 3. Live check | Rollout order: Owner API (widened schema), worker (receipt decode) and an app build with the widened client parser → apply M100 and M101 → Unit 2 app; ACP-9 rollback readback; then Haiku in-app test on dev. | Each deploy/apply separately approved. |
 
 Docs on implementation: this SDD, data dictionary, current-vs-target, migration

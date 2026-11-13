@@ -96,10 +96,10 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
     </> : null}
     {pending ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Searching books…</Text> : null}
     {picker.selectionPending ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Saving edition…</Text> : null}
-    {choices && (identityChanged || !fresh) && !pending ? <>
+    {choices && !pending ? <>
       {identityChanged && !cardDraft?.request ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>
         Complete the card's details to search with the new title
-      </Text> : !identityChanged ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{choices.lookupStatus === 'failed'
+      </Text> : !identityChanged && !fresh ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>{choices.lookupStatus === 'failed'
         ? 'Edition search failed. Search again when ready.'
         : choices.selection != null
           ? 'Alternatives are missing or expired. Your current choice is kept.'
@@ -120,7 +120,7 @@ export function CandidateEditionPicker({ identity, sessionId, candidateId, comma
         : `Books found for ISBN ${choices.ownerIsbn13} can't be used. The reasons are shown below.`}</Text> : null}
     {!isbnMode && fresh && choices?.rows.length === 0 ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No book results were returned.</Text> : null}
     {choices && fresh ? <EditionOptionList rows={choices.rows} disabled={blocked}
-      selectedOptionId={choices.selection?.optionId ?? null} onSelect={select} /> : null}
+      queryLanguage={choices.queryLanguage ?? null} selectedOptionId={choices.selection?.optionId ?? null} onSelect={select} /> : null}
     {noMatch && !identityChanged && !isbnMode ? <>
       <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>No result matches this book's title and author. Fix them on the card, then search again.</Text>
     </> : null}

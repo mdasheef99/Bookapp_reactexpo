@@ -51,7 +51,7 @@ const errorRegistry: Record<OwnerUxErrorCode, { retryable: boolean; message: str
     P9_REQUEST_INVALID: { retryable: false, message: 'The request is invalid.' },
     P9_CURSOR_INVALID: { retryable: false, message: 'The page cursor is invalid.' },
     P9_NOT_FOUND: { retryable: false, message: 'The requested item was not found.' },
-    P9_STATE_CONFLICT: { retryable: true, message: 'The item state changed. Refresh and try again.' },
+    P9_STATE_CONFLICT: { retryable: true, message: 'These choices may have changed. Review the latest choices and try again.' },
     P9_VERSION_CONFLICT: { retryable: true, message: 'The session changed. Refresh and try again.' },
     P9_CANDIDATE_VERSION_CONFLICT: { retryable: true, message: 'The candidate changed. Refresh and try again.' },
     P9_INPUT_HAS_CANDIDATES: { retryable: false, message: 'This image already has detected books and cannot be removed.' },

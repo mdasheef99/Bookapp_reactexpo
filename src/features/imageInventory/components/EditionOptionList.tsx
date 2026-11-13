@@ -18,9 +18,10 @@ const rejectionMessages: Record<EditionRejectionReason, string> = {
 const selectable = (row: EditionRow) => row.eligibility === 'eligible' && row.metadata !== null;
 
 
-// Picker §§3/13.2 / EP-D03/04: slice original positions; never filter or reorder.
-export function EditionOptionList({ rows, selectedOptionId, disabled, onSelect }: {
+// 02d §6: group by query language, preserving original positions and row identity.
+export function EditionOptionList({ rows, queryLanguage, selectedOptionId, disabled, onSelect }: {
   rows: readonly EditionRow[]; selectedOptionId: string | null;
+  queryLanguage?: string | null;
   disabled: boolean; onSelect: (row: EditionRow) => void;
 }) {
   const { colors } = useTheme();
@@ -29,21 +30,28 @@ export function EditionOptionList({ rows, selectedOptionId, disabled, onSelect }
 
   const [linkError, setLinkError] = useState(false);
   const eligibleCount = rows.filter(selectable).length;
+  const language = queryLanguage?.split('-')[0].toLowerCase();
+  const matching = language ? rows.filter(row => row.metadata?.language?.split('-')[0].toLowerCase() === language) : [];
+  const other = language ? rows.filter(row => row.metadata?.language?.split('-')[0].toLowerCase() !== language) : [];
+  const ordered = language ? [...matching, ...other] : rows;
   // Picker §13.2 amendment 2026-10-17: never hide every selectable edition behind Show all.
-  const autoExpanded = rows.length > 5 && eligibleCount > 0 && !rows.slice(0, 5).some(selectable);
+  const autoExpanded = rows.length > 5 && eligibleCount > 0 && !ordered.slice(0, 5).some(selectable);
   const expanded = autoExpanded || expandedResponse === responseKey;
   return <View style={{ gap: 12 }}>
     {rows.length > 0 ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>
       {eligibleCount} selectable {eligibleCount === 1 ? 'edition' : 'editions'} in {rows.length} {rows.length === 1 ? 'result' : 'results'}.
     </Text> : null}
     {autoExpanded ? <Text accessibilityLiveRegion="polite" style={{ color: colors.textSecondary }}>Showing all results because the selectable editions are further down.</Text> : null}
-    {rows.slice(0, expanded ? 10 : 5).map(row => {
+    {ordered.slice(0, expanded ? 10 : 5).map((row, index) => {
       const metadata = row.metadata;
       const provider = row.googleBooksUrl?.startsWith('https://openlibrary.org/books/') ? 'Open Library' : 'Google Books';
       const unavailable = row.eligibility === 'unavailable' || !metadata;
       const blocked = disabled || row.eligibility !== 'eligible' || !metadata;
       const chosen = selectedOptionId === row.optionId;
-      return <View key={row.optionId} testID={`edition-row-${row.optionId}`}
+      return <View key={row.optionId}>
+        {matching.length > 0 && other.length > 0 && index === matching.length
+          ? <Text accessibilityRole="header" style={{ color: colors.textSecondary }}>Other languages</Text> : null}
+        <View testID={`edition-row-${row.optionId}`}
         style={{ borderWidth: chosen ? 2 : 1, borderRadius: 12, borderColor: chosen ? colors.accent : colors.border, padding: 12, gap: 8 }}>
         {unavailable ? <Text style={{ color: colors.textSecondary }}>Result {row.ordinal + 1} unavailable</Text> : <>
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
@@ -78,6 +86,7 @@ export function EditionOptionList({ rows, selectedOptionId, disabled, onSelect }
             </Text>
           </Pressable>
         </>}
+        </View>
       </View>;
     })}
     {linkError ? <Text accessibilityLiveRegion="polite" style={{ color: colors.error }}>The book link could not be opened.</Text> : null}

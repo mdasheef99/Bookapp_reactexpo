@@ -171,3 +171,81 @@ it.each([
   fireEvent.press(view.getByLabelText('Select result 1: Duplicate title'));
   expect(selected).not.toHaveBeenCalled();
 });
+
+// 02d Unit 2 §3 / OD-2026-11-12-2: presentation-only language grouping, original order and Show all.
+const languageRows = (languages: readonly string[]): EditionRow[] => rows.map((row, ordinal) => ({
+  ...row, metadata: { ...row.metadata!, language: languages[ordinal] },
+}));
+const shownIds = (view: ReturnType<typeof render>) =>
+  view.getAllByTestId(/^edition-row-/).map(node => node.props.testID.replace('edition-row-', ''));
+it('L1 groups matching-language rows first under Other languages and keeps original order', () => {
+  const values = languageRows(['fr', 'en', 'fr', 'en', 'fr', 'en', 'fr', 'en', 'fr', 'en']);
+  const view = render(<EditionOptionList rows={values} queryLanguage="en" selectedOptionId={null}
+    disabled={false} onSelect={jest.fn()} />);
+  expect(shownIds(view)).toEqual([1, 3, 5, 7, 9].map(ordinal => values[ordinal].optionId));
+  expect(view.queryByText('Other languages')).toBeNull();
+  fireEvent.press(view.getByText('Show all'));
+  expect(shownIds(view)).toEqual([1, 3, 5, 7, 9, 0, 2, 4, 6, 8].map(ordinal => values[ordinal].optionId));
+  expect(view.getByText('Other languages').props.accessibilityRole).toBe('header');
+});
+it('L2 never groups when queryLanguage is null', () => {
+  const values = languageRows(['fr', 'en', 'fr', 'en', 'fr', 'en', 'fr', 'en', 'fr', 'en']);
+  const view = render(<EditionOptionList rows={values} queryLanguage={null} selectedOptionId={null}
+    disabled={false} onSelect={jest.fn()} />);
+  expect(shownIds(view)).toEqual(values.slice(0, 5).map(row => row.optionId));
+  fireEvent.press(view.getByText('Show all'));
+  expect(shownIds(view)).toEqual(values.map(row => row.optionId));
+  expect(view.queryByText('Other languages')).toBeNull();
+});
+it('L3 auto-expands when grouping moves the only selectable row past the first five', () => {
+  const values = languageRows(['fr', 'fr', 'fr', 'fr', 'fr', 'en', 'en', 'en', 'en', 'en'])
+    .map((row, ordinal) => ({ ...row, eligibility: ordinal === 0 ? 'eligible' as const : 'ineligible' as const }));
+  const onSelect = jest.fn();
+  const view = render(<EditionOptionList rows={values} queryLanguage="en" selectedOptionId={null}
+    disabled={false} onSelect={onSelect} />);
+  expect(view.getAllByTestId(/^edition-row-/)).toHaveLength(10);
+  expect(view.queryByText('Show all')).toBeNull();
+  expect(view.getByText('Showing all results because the selectable editions are further down.')).toBeTruthy();
+  expect(view.getByText('Other languages')).toBeTruthy();
+  fireEvent.press(view.getByLabelText('Select result 1: Duplicate title'));
+  expect(onSelect).toHaveBeenCalledWith(values[0]);
+});
+it('L4 matches case-insensitively and by primary subtag', () => {
+  const values = languageRows(['EN', 'en-GB', 'en', 'fr', 'en-US', 'EN', 'en', 'fr', 'en', 'fr']);
+  const view = render(<EditionOptionList rows={values} queryLanguage="en" selectedOptionId={null}
+    disabled={false} onSelect={jest.fn()} />);
+  fireEvent.press(view.getByText('Show all'));
+  expect(shownIds(view)).toEqual([0, 1, 2, 4, 5, 6, 8, 3, 7, 9].map(ordinal => values[ordinal].optionId));
+  expect(view.getByText('Other languages')).toBeTruthy();
+});
+it('L5 keeps original selection callbacks and disabled states after grouping', () => {
+  const values = languageRows(['fr', 'fr', 'fr', 'fr', 'fr', 'en', 'en', 'en', 'en', 'en']);
+  const onSelect = jest.fn();
+  const view = render(<EditionOptionList rows={values} queryLanguage="en" selectedOptionId={null}
+    disabled={false} onSelect={onSelect} />);
+  fireEvent.press(view.getByText('Show all'));
+  expect(shownIds(view)[0]).toBe(values[5].optionId);
+  const first = within(view.getByTestId(`edition-row-${values[5].optionId}`));
+  fireEvent.press(first.getByLabelText('Select result 6: Duplicate title'));
+  expect(onSelect).toHaveBeenCalledWith(values[5]);
+  view.rerender(<EditionOptionList rows={values} queryLanguage="en" selectedOptionId={null}
+    disabled onSelect={onSelect} />);
+  const disabledFirst = within(view.getByTestId(`edition-row-${values[5].optionId}`));
+  const disabledButton = disabledFirst.getByLabelText('Select result 6: Duplicate title');
+  expect(disabledButton.props.accessibilityState).toMatchObject({ disabled: true });
+  fireEvent.press(disabledButton);
+  expect(onSelect).toHaveBeenCalledTimes(1);
+});
+it('L6 reaches a selected other-language row beyond five through Show all while an early row is selectable', () => {
+  const values = languageRows(['en', 'en', 'fr', 'en', 'en', 'en', 'en', 'en', 'en', 'en']);
+  const selected = values[2];
+  const view = render(<EditionOptionList rows={values} queryLanguage="en" selectedOptionId={selected.optionId}
+    disabled={false} onSelect={jest.fn()} />);
+  expect(view.queryByTestId(`edition-row-${selected.optionId}`)).toBeNull();
+  fireEvent.press(view.getByText('Show all'));
+  expect(view.getByText('Other languages')).toBeTruthy();
+  const chosen = within(view.getByTestId(`edition-row-${selected.optionId}`));
+  expect(chosen.getByText('Selected edition')).toBeTruthy();
+  expect(chosen.getByLabelText('Select result 3: Duplicate title').props.accessibilityState)
+    .toMatchObject({ selected: true });
+});

@@ -11,6 +11,7 @@ import { CandidateCommandRegistry } from '../commit/inventoryCommitTypes';
 import { pickerChoices, selectedChoices, pickerIdentity, pickerDetail, pickerReview, deferred } from '../testing/editionPickerClientFixtures';
 import { testUuid } from '../testing/ownerUxTestFixtures';
 import { OWNER_UX_CONTRACT_VERSION } from '../contracts/ownerUxContracts';
+import type { EditionChoices } from '../contracts/ownerEditionPicker';
 import { OwnerUxClientError, ownerUxService } from '../api/ownerUxService';
 import * as ownerUxReviewQueries from '../queries/ownerUxReviewQueries';
 
@@ -182,10 +183,11 @@ it('a delayed read cannot overwrite a selection accepted while that read was pen
   // TanStack's notifyManager batches observer updates on a timer; the slower CI runner can lag the render.
   await waitFor(() => expect(hook.result.current.choices.data).toMatchObject(accepted));
 });
-it('a replayed lookup returns the newer accepted receipt rather than regressing mutation state', async () => {
+it('a replayed lookup returns the newer accepted choices rather than regressing mutation state', async () => {
   const latest = { operationId: testUuid(42), status: 'ready' as const,
     requestGeneration: 3, optionsVersion: 3, available: true };
-  read.mockResolvedValue(selectedChoices({ requestGeneration: 3, optionsVersion: 3 }));
+  const choices = selectedChoices({ requestGeneration: 3, optionsVersion: 3 });
+  read.mockResolvedValue(choices);
   lookup.mockResolvedValue({ ...latest, operationId: testUuid(40), requestGeneration: 1, optionsVersion: 1, status: 'pending' });
   client.setQueryData(ownerEditionPickerKeys.lookup(pickerIdentity, request.sessionId, request.candidateId), latest);
   const hook = mount();
@@ -194,7 +196,7 @@ it('a replayed lookup returns the newer accepted receipt rather than regressing 
     action: 'request_candidate_edition_options', contractVersion: OWNER_UX_CONTRACT_VERSION,
     sessionId: request.sessionId, candidateId: request.candidateId, expectedRequestGeneration: 1,
     commandId: testUuid(10), idempotencyKey: 'lookup:stable-command-0001',
-  })).resolves.toEqual(latest));
+  })).resolves.toEqual(choices));
 });
 it('explicit current-suggestion confirmation adopts the server-held choice without manufacturing a review', async () => {
   const current = selectedChoices({ selection: { ...selectedChoices().selection!,
@@ -343,4 +345,197 @@ it.each(['P9_VERSION_CONFLICT', 'P9_OWNER_NOT_AUTHORIZED'] as const)('does not r
   await act(async () => expect(hook.result.current.requestOptions.mutateAsync(command)).rejects.toThrow('refused'));
   await act(async () => expect(hook.result.current.retryLookup()).rejects.toThrow('AUTHORITY_CHANGED'));
   expect(lookup).toHaveBeenCalledTimes(1);
+});
+
+// 02d Unit 2 §3: canonical lookup returns, both cache bounds, receipt usability, selection authority.
+const lookupCommand = (expectedRequestGeneration: number, idempotencyKey: string) => ({
+  action: 'request_candidate_edition_options' as const, contractVersion: OWNER_UX_CONTRACT_VERSION,
+  sessionId: request.sessionId, candidateId: request.candidateId, expectedRequestGeneration,
+  commandId: testUuid(10), idempotencyKey,
+});
+const choicesKey = () => ownerEditionPickerKeys.choices(pickerIdentity, request.sessionId, request.candidateId);
+it('Q1 a pending lookup returns canonical choices with rows cleared', async () => {
+  const before = selectedChoices();
+  read.mockResolvedValue(before);
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(before));
+  const pending = pickerChoices({ ...before, requestGeneration: 1, optionsVersion: 2,
+    lookupStatus: 'pending', rows: [], optionsExpiresAt: null });
+  lookup.mockResolvedValue({ operationId: testUuid(40), status: 'pending',
+    requestGeneration: 1, optionsVersion: 2, available: false });
+  read.mockResolvedValue(pending);
+  let result!: EditionChoices;
+  await act(async () => { result = await hook.result.current.requestOptions.mutateAsync(
+    lookupCommand(1, 'lookup:pending-return-0001')); });
+  expect(result).toMatchObject({ rows: [], optionsExpiresAt: null, lookupStatus: 'pending',
+    requestGeneration: 1, optionsVersion: 2, selection: before.selection });
+  expect(client.getQueryData(choicesKey())).toEqual(result);
+});
+it('Q2 a rejected older receipt plus a failed re-read returns the newer cached choices', async () => {
+  const latest = selectedChoices({ requestGeneration: 2, optionsVersion: 2 });
+  read.mockResolvedValue(latest);
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(latest));
+  lookup.mockResolvedValue({ operationId: testUuid(40), status: 'pending',
+    requestGeneration: 1, optionsVersion: 1, available: false });
+  read.mockRejectedValue(new Error('read failed'));
+  let result!: EditionChoices;
+  await act(async () => { result = await hook.result.current.requestOptions.mutateAsync(
+    lookupCommand(2, 'lookup:rejected-older-0001')); });
+  expect(result).toEqual(latest);
+});
+it('Q2b a cached receipt newer than choices and the incoming receipt rejects a failed re-read', async () => {
+  const latest = selectedChoices({ requestGeneration: 2, optionsVersion: 2 });
+  read.mockResolvedValue(latest);
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(latest));
+  client.setQueryData(ownerEditionPickerKeys.lookup(pickerIdentity, request.sessionId, request.candidateId), {
+    operationId: testUuid(41), status: 'ready', requestGeneration: 3, optionsVersion: 3, available: true,
+  });
+  lookup.mockResolvedValue({ operationId: testUuid(40), status: 'pending',
+    requestGeneration: 1, optionsVersion: 1, available: false });
+  read.mockRejectedValue(new Error('read failed'));
+  await act(async () => expect(hook.result.current.requestOptions.mutateAsync(
+    lookupCommand(2, 'lookup:cached-receipt-newer-0001'))).rejects.toThrow('AUTHORITY_CHANGED'));
+});
+it('Q3 a non-null reconcile older than an accepted receipt throws', async () => {
+  const ready = pickerChoices();
+  read.mockResolvedValue(ready);
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(ready));
+  lookup.mockResolvedValue({ operationId: testUuid(40), status: 'ready',
+    requestGeneration: 2, optionsVersion: 2, available: true });
+  read.mockResolvedValue(ready);
+  await act(async () => expect(hook.result.current.requestOptions.mutateAsync(
+    lookupCommand(1, 'lookup:reconcile-older-0001'))).rejects.toThrow('AUTHORITY_CHANGED'));
+});
+it('Q3c a same-generation higher-version terminal receipt rejects an older reconcile result', async () => {
+  const ready = pickerChoices();
+  read.mockResolvedValue(ready);
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(ready));
+  lookup.mockResolvedValue({ operationId: testUuid(40), status: 'ready',
+    requestGeneration: 1, optionsVersion: 2, available: true });
+  read.mockResolvedValue(ready);
+  await act(async () => expect(hook.result.current.requestOptions.mutateAsync(
+    lookupCommand(1, 'lookup:same-generation-newer-version-0001'))).rejects.toThrow('AUTHORITY_CHANGED'));
+});
+it('Q3b a pending receipt plus a failed re-read returns empty pending choices', async () => {
+  const ready = pickerChoices();
+  read.mockResolvedValue(ready);
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(ready));
+  lookup.mockImplementation(async () => {
+    read.mockRejectedValue(new Error('read failed'));
+    return { operationId: testUuid(40), status: 'pending' as const,
+      requestGeneration: 1, optionsVersion: 2, available: false };
+  });
+  let result!: EditionChoices;
+  await act(async () => { result = await hook.result.current.requestOptions.mutateAsync(
+    lookupCommand(1, 'lookup:pending-failed-read-0001')); });
+  expect(result).toMatchObject({ rows: [], optionsExpiresAt: null, lookupStatus: 'pending',
+    requestGeneration: 1, optionsVersion: 2, selection: ready.selection });
+});
+it.each([[1, 1], [2, 1], [1, 2]] as const)(
+  'Q4 a terminal unavailable receipt at G%s/V%s plus a failed re-read returns an empty result',
+  async (requestGeneration, optionsVersion) => {
+    const ready = pickerChoices();
+    read.mockResolvedValue(ready);
+    const hook = mount();
+    await waitFor(() => expect(hook.result.current.choices.data).toEqual(ready));
+    lookup.mockImplementation(async () => {
+      read.mockRejectedValue(new Error('read failed'));
+      return { operationId: testUuid(40), status: 'ready' as const,
+        requestGeneration, optionsVersion, available: false };
+    });
+    let result!: EditionChoices;
+    await act(async () => { result = await hook.result.current.requestOptions.mutateAsync(
+      lookupCommand(1, `lookup:terminal-unusable-${requestGeneration}-${optionsVersion}`)); });
+    expect(result).toMatchObject({ rows: [], optionsExpiresAt: null, lookupStatus: 'ready',
+      requestGeneration, optionsVersion, selection: ready.selection });
+  },
+);
+it('Q5 save-and-search clears old rows when its lookup receipt is pending', async () => {
+  let current = pickerChoices();
+  read.mockImplementation(async () => current);
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(current));
+  const saved = selectedChoices({ requestGeneration: 2, optionsVersion: 1 });
+  const detail = pickerDetail(saved, pickerReview);
+  jest.spyOn(ownerUxService, 'updateCandidateReview').mockImplementation(async () => { current = saved; return detail; });
+  lookup.mockImplementation(async () => {
+    read.mockRejectedValue(new Error('read failed'));
+    return { operationId: testUuid(41), status: 'pending' as const,
+      requestGeneration: 2, optionsVersion: 2, available: false };
+  });
+  await act(async () => hook.result.current.saveIdentityAndSearch.mutateAsync({
+    review: pickerReview, expectedCandidateVersion: detail.candidateVersion,
+    expectedMetadataRevision: detail.metadata.revision,
+  }));
+  expect(client.getQueryData(choicesKey())).toMatchObject({ rows: [], optionsExpiresAt: null,
+    lookupStatus: 'pending', requestGeneration: 2, optionsVersion: 2, selection: saved.selection });
+});
+it('Q6 an idle read at the same counters replaces a saved ready list', async () => {
+  const ready = selectedChoices();
+  const idle = { ...ready, lookupStatus: 'idle' as const, rows: [], optionsExpiresAt: null };
+  read.mockResolvedValueOnce(ready).mockResolvedValueOnce(idle);
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(ready));
+  await act(async () => { await hook.result.current.choices.refetch(); });
+  await waitFor(() => expect(hook.result.current.choices.data).toMatchObject({
+    lookupStatus: 'idle', rows: [], optionsExpiresAt: null, selection: ready.selection,
+  }));
+  expect(lookup).not.toHaveBeenCalled();
+});
+it('Q7 a newer selection receipt from another device drops cached rows and refetches', async () => {
+  const ready = pickerChoices();
+  read.mockResolvedValue(ready);
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(ready));
+  select.mockResolvedValue(selectedChoices({ rows: [], optionsExpiresAt: null,
+    optionsVersion: 2, lookupStatus: 'pending' }));
+  read.mockRejectedValue(new Error('read failed'));
+  await act(async () => hook.result.current.selectEdition.mutateAsync(request));
+  expect(client.getQueryData(choicesKey())).toMatchObject({ rows: [], optionsExpiresAt: null,
+    lookupStatus: 'pending', requestGeneration: 1, optionsVersion: 2 });
+  expect(read.mock.calls.length).toBeGreaterThan(1);
+});
+it('Q7b a selection receipt with only the generation advanced drops rows and refetches', async () => {
+  const ready = pickerChoices();
+  read.mockResolvedValue(ready);
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(ready));
+  select.mockResolvedValue(selectedChoices({ rows: [], optionsExpiresAt: null,
+    requestGeneration: 2, lookupStatus: 'pending' }));
+  read.mockRejectedValue(new Error('read failed'));
+  await act(async () => hook.result.current.selectEdition.mutateAsync(request));
+  expect(client.getQueryData(choicesKey())).toMatchObject({ rows: [], optionsExpiresAt: null,
+    lookupStatus: 'pending', requestGeneration: 2, optionsVersion: 1 });
+  expect(read.mock.calls.length).toBeGreaterThan(1);
+});
+
+// 02d §§4–5 / D2: a successful reconcile read must adopt another device's newer state.
+it('Q7c a reconcile read after selection elsewhere replaces cached ready rows at G/V with G/V+1', async () => {
+  const ready = pickerChoices();
+  read.mockResolvedValue(ready);
+  const hook = mount();
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(ready));
+  await waitFor(() => expect(hook.result.current.choices.isFetching).toBe(false));
+  const remote = selectedChoices({ requestGeneration: ready.requestGeneration,
+    optionsVersion: ready.optionsVersion + 1, lookupStatus: 'pending', rows: [], optionsExpiresAt: null,
+    selection: { ...selectedChoices().selection!, source: 'edition_option',
+      selectionId: testUuid(31), optionId: testUuid(21) } });
+  const conflict = new OwnerUxClientError('P9_CANDIDATE_VERSION_CONFLICT', true, 'Selected elsewhere');
+  select.mockRejectedValue(conflict);
+  read.mockResolvedValue(remote);
+
+  await act(async () => {
+    await expect(hook.result.current.selectEdition.mutateAsync(request)).rejects.toBe(conflict);
+  });
+  expect(read).toHaveBeenCalledTimes(2);
+  expect(client.getQueryData(choicesKey())).toEqual(remote);
+  await waitFor(() => expect(hook.result.current.choices.data).toEqual(remote));
+  expect(hook.result.current.choices.data?.rows).toEqual([]);
+  expect(hook.result.current.choices.data?.rows.some(row => row.optionId === ready.rows[0].optionId)).toBe(false);
+  expect(lookup).not.toHaveBeenCalled();
 });

@@ -78,7 +78,7 @@ it('reuses fresh empty results with no lookup loop', async () => {
   read.mockResolvedValue({ ...initial, rows: [] });
   const view = await mount(); await fireEventAsync.press(view.getByText('Find or change edition'));
   expect(await view.findByText('No book results were returned.')).toBeTruthy();
-  expect(view.queryByText('Search Books')).toBeNull();
+  expect(view.getByText('Search Books')).toBeTruthy();
   expect(lookup).not.toHaveBeenCalled();
 });
 it('only adopts accepted selection, retaining latest price/quantity/shelf edits and sharing the Add lock', async () => {
@@ -334,7 +334,7 @@ it('a refused lookup after saving offers Search Books with a fresh lookup and no
   await fireEventAsync.press(view.getByText('Find or change edition'));
   expect(await view.findByText('Search Books')).toBeTruthy();
   await fireEventAsync.press(view.getByText('Search Books'));
-  expect(await view.findByText('The item state changed. Refresh and try again.')).toBeTruthy();
+  expect(await view.findByText('These choices may have changed. Review the latest choices and try again.')).toBeTruthy();
   expect(view.queryByText("This book changed. Check the card's details, then search again.")).toBeNull();
   expect(view.queryByText('Retry search')).toBeNull();
   await view.rerenderAsync(cardScreen({ ...pickerCard(authority, request.review), metadataState: 'manual', metadataSummary: null }));

@@ -124,7 +124,7 @@ it('reports P9_STATE_CONFLICT as an item state change, not a book change', async
   const view = mount();
   await waitFor(() => expect(view.queryByText('Search Books')).toBeTruthy());
   fireEvent.press(view.getByText('Search Books'));
-  await waitFor(() => expect(view.getByText('The item state changed. Refresh and try again.')).toBeTruthy());
+  await waitFor(() => expect(view.getByText('These choices may have changed. Review the latest choices and try again.')).toBeTruthy());
   expect(view.queryByText("This book changed. Check the card's details, then search again.")).toBeNull();
 });
 it('failed lookup preserves prior fresh rows while announcing its failure', async () => {
@@ -213,7 +213,7 @@ describe('selection-error recovery', () => {
     const view = mount();
     await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
     fireEvent.press(view.getByLabelText('Select result 1: Chosen edition'));
-    await waitFor(() => expect(view.queryByText('The book or its edition choices changed. Review the latest choices before selecting again.')).toBeTruthy());
+    await waitFor(() => expect(view.queryByText('These choices may have changed. Review the latest choices and try again.')).toBeTruthy());
     expect(view.queryByText('Retry selection')).toBeNull();
     expect(view.queryByText('Edition saved.')).toBeNull();
     const before = read.mock.calls.length;
@@ -341,4 +341,105 @@ it('keeps the batch-card edition sheet controls at their natural touch-target he
     expect(closeStyle.flexGrow).toBeUndefined();
     fireEvent.press(view.getByRole('button', { name: 'Close metadata' }));
     expect(close).toHaveBeenCalledTimes(1);
+});
+
+// 02d Unit 2 §3: fresh-list Search Books, receipt-driven clearing/polling, idle invalidation, grouping.
+it('S1 shows a fresh saved list with Search Books and issues no request on open', async () => {
+  read.mockResolvedValue(selectedChoices());
+  const view = mount();
+  await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+  expect(read).toHaveBeenCalledTimes(1);
+  expect(view.getByRole('button', { name: 'Search Books' })).not.toBeDisabled();
+  expect(lookup).not.toHaveBeenCalled();
+});
+it('S2 Search Books while fresh clears rows on the pending receipt and resumes polling', async () => {
+  const fresh = selectedChoices();
+  read.mockResolvedValue(fresh);
+  const pending = selectedChoices({ lookupStatus: 'pending', rows: [], optionsExpiresAt: null,
+    optionsVersion: fresh.optionsVersion + 1 });
+  let readsAfterLookup = 0;
+  lookup.mockImplementation(async () => {
+    read.mockImplementation(async () => {
+      readsAfterLookup += 1;
+      if (readsAfterLookup === 1) throw new Error('read failed');
+      return pending;
+    });
+    return { operationId: testUuid(40), status: 'pending' as const,
+      requestGeneration: fresh.requestGeneration, optionsVersion: fresh.optionsVersion + 1, available: false };
+  });
+  const view = mount();
+  await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+  fireEvent.press(view.getByText('Search Books'));
+  await waitFor(() => expect(lookup).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(view.getByText('Searching books…')).toBeTruthy());
+  expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeNull();
+  const reads = read.mock.calls.length;
+  await act(async () => { jest.advanceTimersByTime(3100); });
+  await waitFor(() => expect(read.mock.calls.length).toBeGreaterThan(reads));
+  expect(lookup).toHaveBeenCalledTimes(1);
+});
+it('S3 an idle invalidation at the same counters drops rows and keeps the held choice', async () => {
+  const fresh = selectedChoices();
+  read.mockResolvedValue(fresh);
+  const view = mount();
+  await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+  // Settle the initial read before invalidating; waitFor advances the same fake clock throughout.
+  await waitFor(() => expect(client.isFetching({
+    queryKey: ownerEditionPickerKeys.choices(pickerIdentity, fresh.sessionId, fresh.candidateId) })).toBe(0));
+  read.mockResolvedValue(selectedChoices({ lookupStatus: 'idle', rows: [], optionsExpiresAt: null }));
+  await act(async () => {
+    await client.invalidateQueries({
+      queryKey: ownerEditionPickerKeys.choices(pickerIdentity, fresh.sessionId, fresh.candidateId) });
+    // The refetch resolves before TanStack's batched observer notification runs.
+    jest.advanceTimersByTime(0);
+  });
+  await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeNull());
+  expect(view.getByText('Search Books')).toBeTruthy();
+  expect(view.getByText('Current: Chosen edition')).toBeTruthy();
+  expect(lookup).not.toHaveBeenCalled();
+});
+it('S4 renders language groups in the sheet and reaches a selected other-language row only through Show all', async () => {
+  const base = selectedChoices();
+  const grouped = Array.from({ length: 10 }, (_, ordinal) => ({
+    optionId: testUuid(60 + ordinal), ordinal,
+    googleBooksUrl: 'https://books.google.com/books?id=grouping', eligibility: 'eligible' as const,
+    metadata: { ...pickerSnapshot, title: 'Grouped title', language: ordinal === 2 ? 'fr' : 'en' },
+  }));
+  read.mockResolvedValue({ ...base, queryLanguage: 'en', rows: grouped,
+    selection: { ...base.selection!, optionId: grouped[2].optionId } });
+  const view = mount();
+  await waitFor(() => expect(view.queryByLabelText('Select result 1: Grouped title')).toBeTruthy());
+  expect(view.queryByLabelText('Select result 3: Grouped title')).toBeNull();
+  expect(view.queryByText('Other languages')).toBeNull();
+  fireEvent.press(view.getByText('Show all'));
+  expect(view.getByText('Other languages')).toBeTruthy();
+  expect(view.getByText('Selected edition')).toBeTruthy();
+  expect(view.getByLabelText('Select result 3: Grouped title').props.accessibilityState)
+    .toMatchObject({ selected: true });
+  expect(lookup).not.toHaveBeenCalled();
+});
+
+// 02d §4: rapid presses share the in-flight lookup rather than create a second request.
+it('pressing Search Books twice quickly starts exactly one lookup request', async () => {
+  const fresh = selectedChoices();
+  read.mockResolvedValue(fresh);
+  const receipt = { operationId: testUuid(40), status: 'pending' as const,
+    requestGeneration: fresh.requestGeneration, optionsVersion: fresh.optionsVersion + 1, available: false };
+  const pending = deferred<typeof receipt>();
+  lookup.mockReturnValue(pending.promise);
+  const view = mount();
+  await waitFor(() => expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeTruthy());
+  const search = view.getByRole('button', { name: 'Search Books' });
+  expect(search).not.toBeDisabled();
+  act(() => {
+    fireEvent.press(search);
+    fireEvent.press(search);
+  });
+  await waitFor(() => expect(lookup).toHaveBeenCalledTimes(1));
+  read.mockResolvedValue({ ...fresh, lookupStatus: 'pending', rows: [], optionsExpiresAt: null,
+    optionsVersion: receipt.optionsVersion });
+  await act(async () => { pending.resolve(receipt); });
+  await waitFor(() => expect(view.getByText('Searching books…')).toBeTruthy());
+  expect(lookup).toHaveBeenCalledTimes(1);
+  expect(view.queryByLabelText('Select result 1: Chosen edition')).toBeNull();
 });

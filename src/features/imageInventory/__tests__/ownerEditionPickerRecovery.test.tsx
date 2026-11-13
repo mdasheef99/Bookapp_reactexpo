@@ -1,11 +1,15 @@
 jest.mock('@/lib/supabase', () => ({ supabase: { functions: { invoke: jest.fn() } } }));
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanupAsync, render, waitFor } from '@testing-library/react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { CandidateMetadataSheet } from '../components/CandidateMetadataSheet';
 import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
 import { ownerUxService } from '../api/ownerUxService';
 import { resetImageInventoryIdentityForTests } from '../queries/ownerUxQueries';
 import { pickerChoices, pickerIdentity, pickerCard, pickerDetail } from '../testing/editionPickerClientFixtures';
+
+// Load lazy native mocks before timed renders, as in ownerEditionPickerMounted.
+void [ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View];
 
 jest.mock('expo-image', () => ({ Image: (props: object) => {
   const React = require('react'); const { View } = require('react-native'); return React.createElement(View, props);

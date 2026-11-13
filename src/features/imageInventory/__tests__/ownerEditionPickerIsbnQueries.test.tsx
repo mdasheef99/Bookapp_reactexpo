@@ -7,6 +7,7 @@ import { ownerEditionPickerService } from '../api/ownerEditionPickerService';
 import { ownerUxService, OwnerUxClientError } from '../api/ownerUxService';
 import { useOwnerEditionPicker } from '../queries/ownerEditionPickerQueries';
 import { resetImageInventoryIdentityForTests, imageInventoryKeys } from '../queries/ownerUxQueries';
+import { ownerEditionPickerKeys } from '../queries/ownerEditionPickerKeys';
 import { ownerBatchReviewKeys } from '../queries/ownerBatchReviewKeys';
 import { CandidateCommandRegistry } from '../commit/inventoryCommitTypes';
 import { deferred, pickerChoices, selectedChoices, pickerDetail, pickerIdentity, pickerReview } from '../testing/editionPickerClientFixtures';
@@ -146,4 +147,26 @@ it('claims the card command slot and exposes ISBN pending until the workflow end
   await act(async () => { pending.resolve({ sessionId: initial.sessionId, candidateId: initial.candidateId, candidateVersion: 6,
     metadataRevision: 9, requestGeneration: 2, ownerIsbn13: '9780140449136' }); await work; });
   expect(registry.isClaimed(initial.candidateId)).toBe(false);
+});
+
+// 02d Unit 2 §3: the ISBN search's pending receipt must clear rows before the reconcile read.
+it('I1 ISBN search clears old rows when the lookup receipt is pending', async () => {
+  const withRows = pickerChoices({ ownerIsbn13: '9780140449136', candidateVersion: 6, metadataRevision: 9,
+    reviewVersion: 1, requestGeneration: 3, optionsVersion: 1, rows: initial.rows,
+    optionsExpiresAt: '2099-01-01T00:00:00.000Z', lookupStatus: 'ready' });
+  set.mockImplementation(async request => {
+    read.mockResolvedValue(withRows);
+    return { sessionId: initial.sessionId, candidateId: initial.candidateId, candidateVersion: 6,
+      metadataRevision: 9, requestGeneration: 2, ownerIsbn13: request.isbn13 };
+  });
+  lookup.mockImplementation(async () => {
+    read.mockRejectedValue(new Error('read failed'));
+    return { operationId: testUuid(41), status: 'pending' as const,
+      requestGeneration: 3, optionsVersion: 2, available: false };
+  });
+  const hook = mount(); await ready(hook);
+  await act(async () => hook.result.current.setIsbnAndSearch.mutateAsync({ isbn13: '9780140449136', reviewSave }));
+  expect(client.getQueryData(ownerEditionPickerKeys.choices(pickerIdentity, initial.sessionId, initial.candidateId)))
+    .toMatchObject({ rows: [], optionsExpiresAt: null, lookupStatus: 'pending',
+      requestGeneration: 3, optionsVersion: 2 });
 });

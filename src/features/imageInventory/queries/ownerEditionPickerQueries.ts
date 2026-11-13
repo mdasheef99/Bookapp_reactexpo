@@ -10,7 +10,7 @@ import { OWNER_UX_CONTRACT_VERSION } from '../contracts/ownerUxContracts';
 import type { EditionChoices, EditionLookupReceipt, RequestEditionOptionsRequest, SelectEditionRequest } from '../contracts/ownerEditionPicker';
 import { useOwnerCardCommand, type OwnerCandidateCommandSlot } from '../identity/useOwnerCardCommand';
 import { imageInventoryKeys, type ImageInventoryIdentity } from './ownerUxQueries';
-import { acceptEditionChoices, acceptEditionLookupReceipt } from './ownerEditionPickerCache';
+import { acceptEditionChoices, acceptEditionLookupReceipt, freshEditionChoices } from './ownerEditionPickerCache';
 import { ownerEditionPickerKeys } from './ownerEditionPickerKeys';
 import { assertOwnerCardCurrent, authorityChanged, candidateAuthorityIsCurrent } from './ownerCandidateAuthority';
 import { synchronizeCandidateReviewSuccess } from './ownerUxReviewQueries';
@@ -73,7 +73,7 @@ export function useOwnerEditionPicker(
     detail?: OwnerCandidateDetail; lookup?: RequestEditionOptionsRequest;
   } | null>(null);
   const pendingLookup = useRef<{
-    scope: string; generation: number; promise: Promise<EditionLookupReceipt>;
+    scope: string; generation: number; promise: Promise<EditionChoices>;
   } | null>(null);
   const assertRequest = (request: { sessionId: string; candidateId: string }) => {
     lifecycle.assertScope();
@@ -202,12 +202,21 @@ export function useOwnerEditionPicker(
           const receipt = await ownerEditionPickerService.requestEditionOptions(lastLookup.current, signal);
           assertCurrent();
           acceptEditionLookupReceipt(client, identity, scope, receipt);
-          await reconcile(signal, assertCurrent);
+          const reconciled = await reconcile(signal, assertCurrent);
           assertCurrent();
-          const accepted = client.getQueryData<EditionLookupReceipt>(
+          const cached = client.getQueryData<EditionChoices>(
+            ownerEditionPickerKeys.choices(identity, sessionId, candidateId));
+          const acceptedReceipt = client.getQueryData<EditionLookupReceipt>(
             ownerEditionPickerKeys.lookup(identity, sessionId, candidateId));
-          if (!accepted) throw authorityChanged();
-          return accepted;
+          // 02d §4 / D3: return choices only when both independent cache bounds are met.
+          let canonical = reconciled ?? cached;
+          if (cached && (!canonical || (cached.requestGeneration >= canonical.requestGeneration
+            && cached.optionsVersion >= canonical.optionsVersion))) canonical = cached;
+          if (!canonical || [cached, acceptedReceipt].some(value => value
+            && (canonical.requestGeneration < value.requestGeneration || canonical.optionsVersion < value.optionsVersion))) {
+            throw authorityChanged();
+          }
+          return freshEditionChoices(canonical);
         } catch (error) {
           assertCurrent();
           if (editionSelectionRecovery(error).kind !== 'retry') lastLookup.current = null;
