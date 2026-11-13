@@ -33,11 +33,14 @@ supersedes the R5 table below where they differ.
 |---|---|---|
 | CF-A35 | Answered: refunding one chosen payment by API is not possible. The live-money block stays | CF-91 |
 | CF-A21 | Closed: Cashfree says the response timeout and the retry age are not specified. D-114 and SBX-10 stand | CF-94 |
-| CF-A27 | Partly: the key is stored only for a 200 answer; resend with the same key, then Get Order. Open: key retention and 404 finality (forwarded by Cashfree, no answer yet) | CF-95 |
+| CF-A27 | Closed by procedure: resend with the same key and our unique order ID, then Get Order; the key is stored only for a 200 answer. Retention and 404 finality are no longer needed (a 409 covers a forgotten key) | CF-95 |
+| CF-A36 | Partly (docs): Get Order returns orders of the current and previous financial years only; what it returns for older orders is not stated. Still worth asking | CF-96 |
+| CF-A30 | Partly (docs): Get On Demand Balance gives merchant and vendor balances; no statement API | CF-98 |
+| CF-A12 | Docs say order amount (CF-97), but R4 and an FAQ disagree. Account Manager | CF-97 |
 | CF-A31 | Partly: pending is normal while the bank confirms, about 5–7 working days. Open: how long an unpayable refund stays `PENDING` and how we are told | CF-93 |
 | CF-A34 | No change: account-specific; Account Manager | CF-92 |
 | CF-A16 | Not answered (point 5 skipped in R6) | — |
-| CF-A36 | Not sent | — |
+| CF-A36 | Not sent (see the docs row above) | — |
 
 ## After Cashfree's fifth reply (R5, 2026-11-12)
 

@@ -192,7 +192,23 @@ R6 numbers its points 1, 2, 3, 4 and 6; point 5 of our sixth mail
 | CF-92 | The merchant ledger and settlement balance "should not automatically be considered the same balance as the Refund Wallet"; "The available balance and applicable funding mechanism depend on your account configuration." Does not say whether the settlement balance is the merchant ledger or how it is topped up (CF-A34 stays with the Account Manager) | R6 |
 | CF-93 | A refund "may remain Pending while processing or confirmation from the banking partner is awaited"; "The general refund reflection timeline is approximately 5–7 working days, depending on the payment method and banking partner." Track with Get Refund; refund webhooks give status updates (CF-87: final status only). Does not say how long CF-84's unpayable refund stays `PENDING` or how we are told (CF-A31 partly open) | R6 |
 | CF-94 | Verify webhook signatures with the original body and the `x-webhook-timestamp` and `x-webhook-signature` headers; acknowledge "promptly" and process idempotently. "The exact acknowledgement timeout and whether the five-minute timestamp validation window applies unchanged to retried notifications are not explicitly specified in the public documentation." Closes CF-A21 as not specified: D-114 and SBX-10 stand | R6 |
-| CF-95 | Create Order timeout: retry with the same `x-idempotency-key` as the original request, then confirm with Get Order. "the x-idempotency-key is captured by Cashfree only when a 200 OK response is returned for the request." R6 forwarded key retention and 404 finality to "the concerned team"; R7 answers neither (CF-A27 stays open for both). Matches SDD 02 §7.2 and §11.6 (same frozen body and round key; a negative read is not final) | R6, R7 |
+| CF-95 | Create Order timeout: retry with the same `x-idempotency-key` as the original request, then confirm with Get Order. "the x-idempotency-key is captured by Cashfree only when a 200 OK response is returned for the request." R6 forwarded key retention and 404 finality to "the concerned team"; R7 gives the procedure instead of those two values. With our unique order ID (CF-75: a reused ID gets 409), the resend always ends in a created, replayed or existing order, so neither value is needed: CF-A27 is closed by procedure. Matches SDD 02 §7.2 and §11.6 (same frozen body and round key; a negative read is not final) | R6, R7 |
+
+### From Cashfree's docs (read 2026-11-13)
+
+Found by a Haiku docs search and checked on the pages by Opus the same day. API version
+2026-01-01.
+
+| ID | Fact | Source |
+|---|---|---|
+| CF-96 | Get Order: "This API allows you to retrieve order data for the current and previous financial years." Older data is in the Merchant Dashboard. The page does not say what the API returns for an older order. Partly answers CF-A36: an order may stop being readable by API from the second 1 April after its creation (Indian financial year), so the pilot's daily poll (D-118) will eventually read `not_found` for old orders; pilot cut §11.2 already treats that as no state change plus one admin case | DOC (Get Order page) |
+| CF-97 | Easy Split charges: "These charges will be based on the order amount and not on the number of splits that are created for the order." (Billing Configuration page). Agrees with R3; R4 and the docs FAQ ("0.2% per split") point elsewhere. CF-A12 stays with the Account Manager for the live commercials | DOC (Easy Split Billing Configuration page) |
+| CF-98 | "Get On Demand Balance API fetches the available merchant and vendor balances." No general merchant-ledger statement API is listed; per-order split and settlement details and vendor reconciliation APIs exist. Partly answers CF-A30 (balance yes, statement no) | DOC (Easy Split overview) |
+
+The same search found nothing new for CF-A16 (the value is listed without a meaning),
+CF-A28, CF-A17, CF-A18 or CF-A34. For CF-A29 the rate-limit page still lists neither Get
+All Refunds for an Order nor Terminate Order. Refund timing pages give "7 to 10 business
+days" (overview) and "up to 7 working days" for cards (help FAQ), close to CF-93.
 
 ## 3. Questions from the second mail
 

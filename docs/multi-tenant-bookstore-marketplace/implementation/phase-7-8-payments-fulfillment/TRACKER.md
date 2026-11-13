@@ -41,6 +41,19 @@ originates product behaviour (AGENTS.md).
   days (CF-93); to be checked on sandbox before any change.
 - Database, storage, Edge Function and Cashfree changes: none.
 
+### 2026-11-13: Cashfree docs search for the open questions
+
+- Haiku searched the public docs for CF-A12, A16, A17, A18, A28, A29, A30, A31, A34 and
+  A36; Opus checked the three new findings on the pages. Recorded as CF-96 (Get Order reads
+  only the current and previous financial years), CF-97 (Easy Split charge on order amount,
+  per the billing page) and CF-98 (Get On Demand Balance). CF-A27 closed by procedure
+  (CF-95). Nothing new for A16, A17, A18, A28, A34; A29 still missing the two endpoints.
+- CF-96 needs no pilot change: a `not_found` from the daily poll already changes no state
+  and opens one admin case (pilot cut §11.2).
+- The owner obtained the schema-only dump with local `pg_dump` 17.12 (P0 brief §1); the
+  file is outside the repo.
+- Database, storage, Edge Function and Cashfree changes: none.
+
 ## Migration ledger
 
 Every migration of this lane, before it is applied to the dev project.
