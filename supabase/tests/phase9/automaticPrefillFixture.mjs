@@ -43,16 +43,16 @@ export function m101Present() {
 // Missing M100/M101 is deliberate in the red run: the chain then stops before
 // the missing file and the new-behavior assertions fail semantically instead of
 // at import time. searchWhileFresh is opt-in so the 1a suite's chain stays M94-M100.
-export function prefillMigrations({ preInstall = false, searchWhileFresh = false } = {}) {
+export function prefillMigrations({ preInstall = false, searchWhileFresh = false, stopBeforeM100 = false } = {}) {
   const prefix = selectedPrefix('8a-5');
   const migrations = [...prefix.migrations, ...(preInstall ? PRE_INSTALL : POST_INSTALL)];
-  if (!preInstall && m100Present()) migrations.push(M100);
-  if (!preInstall && searchWhileFresh && m101Present()) migrations.push(M101);
+  if (!preInstall && !stopBeforeM100 && m100Present()) migrations.push(M100);
+  if (!preInstall && !stopBeforeM100 && searchWhileFresh && m101Present()) migrations.push(M101);
   return { migrations, installed: prefix.installed };
 }
 
-export async function createPrefillDatabase({ preInstall = false, searchWhileFresh = false } = {}) {
-  const db = await createProviderDatabase(prefillMigrations({ preInstall, searchWhileFresh }));
+export async function createPrefillDatabase({ preInstall = false, searchWhileFresh = false, stopBeforeM100 = false } = {}) {
+  const db = await createProviderDatabase(prefillMigrations({ preInstall, searchWhileFresh, stopBeforeM100 }));
   // Same test-only event-column bootstrap the PGlite picker fixture applies
   // (editionPickerFixture.mjs:31-39); native clones otherwise lack actor_role
   // and the M54 removal command cannot run there.

@@ -259,7 +259,46 @@ state never proves reachability.
 | 1a. Save and read (DB + worker) | Migration M100: helper after M93:1384, state-row insert, receipt widening (§3 sites, decode binding), source policy only if needed, read change (§5) incl. `queryLanguage`; optional nullable `queryLanguage` in server and client choices schemas. ACP-1 (SQL/worker), 2, 4, 5, 6, 7 (SQL), 10, 12 (SQL expiry and exhausted control), 13. | Plan run READY; red first; `node scripts/verify-phase9.js`; different-model review; separate create/apply approvals. |
 | 1b. Search Books while fresh (DB) | Migration M101: M75 request change (search while fresh, version advance, NOWAIT rule). ACP-3 (SQL), 11; explicit-search control for ACP-9. | Same gates; built after 1a is committed. 1a is not released alone. |
 | 2. App | Search Books gate, pending acceptance clears rows, idle acceptance (expiry and invalidation), EditionChoices return, `queryLanguage` groups, conflict wording; ACP-1 (app open), 3, 7, 8, 12 (app). | Same flow; built and tested locally after Units 1a and 1b are committed (Owner 2026-11-13); nothing deployed or applied in this unit. |
-| 3. Live check | Rollout order: Owner API (widened schema), worker (receipt decode) and an app build with the widened client parser → apply M100 and M101 → Unit 2 app; ACP-9 rollback readback; then Haiku in-app test on dev. | Each deploy/apply separately approved. |
+| 3. Live check | Rollout order: Owner API (widened schema), worker (receipt decode) and an app build with the widened client parser → apply M100 and M101 → Unit 2 app; readback before/after apply; Haiku in-app test on dev; ACP-9 proven locally (runbook below). | Each deploy/apply separately approved. |
+
+**Unit 3 rollout runbook** (pre-deploy reviews 2026-11-13: Luna, GLM, MiniMax ×2). Every step needs its own Owner approval; stop on any failed check.
+
+1. Merge the branch into `main`. The media worker tsconfig carries the same
+   `__tests__`/`*.test.ts` exclude as metadata and vision; this fixes the known media
+   compile failure (8c class), not every possible build issue. Build and test the final
+   merge commit locally, record its commit and tree, then push.
+2. Run the readback (`scripts/02d/01-readback.sql`, SELECT-only) on dev as the
+   **baseline**.
+3. Deploy the Owner API (`phase9-owner-ingestion`, Supabase CLI) and the metadata
+   worker (Render) from the pushed merge commit. Confirm that the deployed commit is
+   the merge commit, that the worker logs `service_started`, and that automatic jobs
+   still complete on M99. Both are compatible with M99: `queryLanguage` is optional,
+   and the M99 `not_installed` receipt still decodes.
+4. Start the Unit 2 app build (local web export of the merge commit) and close or
+   reload every older app session. An app older than 1a rejects `queryLanguage`
+   (`P9_INTERNAL_ERROR`); an app older than Unit 2 keeps invalidated rows.
+5. With exact-project verification and a separate approval for each, apply M100, then
+   M101 straight after it. Between the two, Search Books on a fresh list starts
+   nothing (M75). If M101 fails, keep the compatible code and M100, block release,
+   and approve a forward repair. Run the readback **after apply**.
+6. Haiku live test on dev (ACP-1, 3, 8, 12).
+
+**ACP-9 (Owner 2026-11-14 scope: local proof).** The flag rollback is proven on a
+disposable local Postgres with the real 8c `06-rollback.sql` (full drain, gate paused,
+Open Library automatic off): no new saved lists after the cut-off, a new completion
+records `skipped`, and stored receipts replay unchanged. It is **not** run on dev in
+this unit. 06 pauses the admission gate; the existing 03/04/05 assume other baselines,
+so a live rollback-and-restore needs its own reviewed procedure. That procedure is
+recorded as a residual.
+
+**Rollback rule:** after M100, the only rollback is ACP-9's flag rollback, and that
+needs its own reviewed restoration procedure. Never roll the worker or the Owner API
+back alone, and never drop M100/M101. The pre-02d worker rejects `saved` and new
+`skipped` receipts and would report every automatic completion as manual. The pre-1a
+Owner API rejects `queryLanguage`. Keep the compatible worker and Owner API deployed
+throughout. Flags off plus zero in-flight jobs does not make a pre-02d worker
+compatible: stored receipts persist, and later local completions still emit new
+receipt kinds. Any code rollback needs a separately reviewed compatibility plan.
 
 Docs on implementation: this SDD, data dictionary, current-vs-target, migration
 ledger, verification tracker, CODEBASE_MAP rows whose paths change.
