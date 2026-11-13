@@ -190,7 +190,7 @@ test('runs intercepted Store View read, Save, stock, lifecycle, and retry flows'
   await expect(page.getByText('Owner only smoke note.')).toBeVisible();
 
   await page.getByTestId('store-view-edit').click();
-  await page.getByTestId('store-view-edit-price-minor').fill('42500');
+  await page.getByTestId('store-view-edit-price-minor').fill('425');
   await page.getByTestId('store-view-save-changes').click();
   await expect(page.getByText('₹425.00')).toBeVisible();
 

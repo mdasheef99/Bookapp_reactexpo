@@ -276,7 +276,12 @@ export async function completePublicCopyDerivative(db, fixture, source) {
   await setActor(db, fixture.ownerId, 'service_role');
   const claim = (await db.query(`SELECT id,attempt_count,lease_token FROM public.claim_phase9_media_validation_jobs(
     1,'media-worker-0000000001')`).catch(tag('public-copy claim'))).rows[0];
-  const context = await scalar(db, `SELECT public.phase9_media_validation_context_v2(
+  // From migration 57 the worker must persist its output intents first; the
+  // prepare call returns the same context fields plus the intent version.
+  const hasPrepare = await scalar(db, `SELECT to_regproc('public.phase9_prepare_media_validation_outputs') IS NOT NULL`);
+  const contextFunction = hasPrepare
+    ? 'phase9_prepare_media_validation_outputs' : 'phase9_media_validation_context_v2';
+  const context = await scalar(db, `SELECT public.${contextFunction}(
     '${claim.id}','media-worker-0000000001','${claim.lease_token}',${claim.attempt_count})`)
     .catch(tag('public-copy context'));
   await scalar(db, `SELECT public.phase9_bind_media_validation_snapshot_v2(

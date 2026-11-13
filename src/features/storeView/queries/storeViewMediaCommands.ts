@@ -2,9 +2,7 @@ import { onlineManager, useMutation, useQueryClient } from '@tanstack/react-quer
 import { createCaptureAttempt } from '@/features/imageInventory/capture/captureIds';
 import type { ImageInventoryIdentity } from '@/features/imageInventory/queries/ownerUxQueries';
 import { storeViewMediaService } from '../api/storeViewMediaService';
-import { storeViewKeys } from './storeViewQueries';
-import { storeViewHistoryKeys } from './storeViewHistoryQueries';
-import { storeViewMediaKeys } from './storeViewMediaQueries';
+import { invalidateStoreViewAfterMedia } from './storeViewInvalidation';
 
 type ReorderCommand = Readonly<{
     kind: 'reorder';
@@ -58,10 +56,8 @@ export function useStoreViewMediaCommands(identity: ImageInventoryIdentity) {
                 targetLinkId: command.targetLinkId,
             });
         },
-        onSuccess: async () => {
-            await client.invalidateQueries({ queryKey: storeViewKeys.all });
-            await client.invalidateQueries({ queryKey: storeViewMediaKeys.all });
-            await client.invalidateQueries({ queryKey: storeViewHistoryKeys.all });
+        onSuccess: () => {
+            void invalidateStoreViewAfterMedia(client, identity);
         },
         retry: false,
     });

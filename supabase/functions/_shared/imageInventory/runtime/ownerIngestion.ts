@@ -1,4 +1,5 @@
 import { assertSafeIngestionResponse, OwnerIngestionRequest } from '../contracts/ingestion.ts';
+import { parseStoreViewSummaryRpcResponse, STORE_VIEW_SUMMARY_CONTRACT_VERSION } from '../contracts/storeViewSummary.ts';
 import {
   OWNER_UX_CONTRACT_VERSION,
   OwnerUxAction,
@@ -80,6 +81,11 @@ export async function executeOwnerIngestion(
   userClient: Client,
   serviceClient: Client,
 ): Promise<Record<string, unknown>> {
+  if (request.contractVersion === STORE_VIEW_SUMMARY_CONTRACT_VERSION) {
+    return parseStoreViewSummaryRpcResponse(unwrap(
+      await userClient.rpc('phase9_store_view_summary_v1', {}),
+    ));
+  }
   if (request.contractVersion === OWNER_BATCH_REVIEW_CONTRACT_VERSION) {
     return executeOwnerBatchReview(request as any, userClient, unwrap);
   }

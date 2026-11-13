@@ -119,7 +119,7 @@ describe('Unit 7C WU3 Store View management UI', () => {
         fireEvent.press(screen.getByTestId('store-view-edit'));
         fireEvent.changeText(screen.getByTestId('store-view-edit-price-minor'), '-1');
         fireEvent.press(screen.getByTestId('store-view-save-changes'));
-        expect(screen.getByText(/whole non-negative price in paise/i)).toBeTruthy();
+        expect(screen.getByText(/whole rupees/i)).toBeTruthy();
         expect(screen.getByDisplayValue('-1')).toBeTruthy();
         expect(managementMutate).not.toHaveBeenCalled();
     });

@@ -46,7 +46,8 @@ user is not exposed until cleanup finishes.
 
 Cleanup (`cleanPreviousUserState` in `sessionCoordinator.ts`) runs:
 
-- `clearImageInventoryIdentityState()` — cancels and clears Phase 9 Owner queries;
+- `clearImageInventoryIdentityState()` — cancels and clears Phase 9 Owner queries,
+  including Store View, which is keyed under the same Image inventory root;
 - `clearCommerceSession()` — cancels queries, clears the mutation cache and the
   whole `appQueryClient`, and resets commerce local state.
 

@@ -214,7 +214,7 @@ Read the workflow file for exact triggers before relying on CI coverage.
 | Image inventory (client) | `src/features/imageInventory/__tests__/` |
 | Image inventory (server/workers) | `supabase/functions/__tests__/phase9_*.test.ts`; DB suites in `supabase/tests/phase9/` |
 | Other Edge Functions | `supabase/functions/__tests__/` (store application/profile/review, wishlist notify, Clubs membership limits and downgrade grace period, commerce task worker auth); OCR fallback in `supabase/functions/ocr-fallback/__tests__/` |
-| Store View | `src/features/storeView/__tests__/`, `e2e/store-view-*.spec.ts` |
+| Store View | `src/features/storeView/__tests__/`, `e2e/store-view-*.spec.ts`, server contracts `supabase/functions/__tests__/phase9_store_view_*`, database `supabase/tests/phase9/phase9_unit7c_store_view_*` |
 | Marketplace + commerce | `src/features/marketplace/*/__tests__/`, `supabase/functions/__tests__/commerce_task_worker_auth.test.ts` |
 | Clubs | `src/features/clubs/**/__tests__/`, `app/(tabs)/clubs/__tests__/`, `supabase/tests/clubs/` |
 | Library | `src/features/books/**/__tests__/` |

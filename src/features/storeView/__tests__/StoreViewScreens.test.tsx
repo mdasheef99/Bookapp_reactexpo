@@ -1,17 +1,26 @@
 import { fireEvent, render } from '@testing-library/react-native';
 import { Link } from 'expo-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StoreViewDetailContent } from '../screens/StoreViewDetailScreen';
 import { StoreViewListContent } from '../screens/StoreViewListScreen';
 import { useStoreViewDetail, useStoreViewPage } from '../queries/storeViewQueries';
+import { storeViewKeys } from '../queries/storeViewQueries';
+import { useStoreViewSummary } from '../queries/storeViewSummaryQueries';
+import { storeViewSummaryKeys } from '../queries/storeViewSummaryQueries';
 
 jest.mock('expo-router', () => ({
+    useFocusEffect: jest.fn(),
     Link: jest.fn(({ children }: { children: React.ReactNode }) => <>{children}</>),
 }));
+jest.mock('../queries/storeViewSummaryQueries', () => {
+    const actual = jest.requireActual('../queries/storeViewSummaryQueries');
+    return { ...actual, useStoreViewSummary: jest.fn() };
+});
 jest.mock('expo-image', () => ({ Image: 'Image' }));
-jest.mock('../queries/storeViewQueries', () => ({
-    useStoreViewPage: jest.fn(),
-    useStoreViewDetail: jest.fn(),
-}));
+jest.mock('../queries/storeViewQueries', () => {
+    const actual = jest.requireActual('../queries/storeViewQueries');
+    return { ...actual, useStoreViewPage: jest.fn(), useStoreViewDetail: jest.fn() };
+});
 jest.mock('../queries/storeViewManagementQueries', () => ({
     useStoreViewManagementCommands: () => ({ mutateAsync: jest.fn(), isPending: false }),
 }));
@@ -61,8 +70,10 @@ const baseItem = {
 
 const pageHook = useStoreViewPage as jest.Mock;
 const detailHook = useStoreViewDetail as jest.Mock;
+const summaryHook = useStoreViewSummary as jest.Mock;
 const fetchNextPage = jest.fn();
 const refetch = jest.fn();
+const refetchSummary = jest.fn();
 
 function pageState(overrides: Record<string, unknown> = {}) {
     return {
@@ -76,6 +87,7 @@ describe('Unit 7C WU2 Store View UI', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         pageHook.mockReturnValue(pageState());
+        summaryHook.mockReturnValue({ isPending: false, isError: false, error: null, refetch: refetchSummary });
     });
 
     it.each([
@@ -153,5 +165,63 @@ describe('Unit 7C WU2 Store View UI', () => {
         const screen = render(<StoreViewDetailContent identity={identity} inventoryId={inventoryId} />);
         expect(screen.getByText('Store View unavailable')).toBeTruthy();
         expect(screen.getByText(/may not exist or may not belong/u)).toBeTruthy();
+    });
+
+    it('routes a background page 403 with cached items to the access-lost path', () => {
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        client.setQueryData(storeViewKeys.page(identity, 'all'), { pages: [], pageParams: [] });
+        client.setQueryData(storeViewSummaryKeys.summary(identity), { counts: {} });
+        pageHook.mockReturnValue(pageState({
+            items: [baseItem], isError: true,
+            error: { code: 'P9_INTERNAL_ERROR', httpStatus: 403 },
+        }));
+        const screen = render(<StoreViewListContent identity={identity} />, {
+            wrapper: ({ children }: { children: React.ReactNode }) => (
+                <QueryClientProvider client={client}>{children}</QueryClientProvider>
+            ),
+        });
+        expect(screen.getByText('Store View unavailable')).toBeTruthy();
+        expect(client.getQueryState(storeViewKeys.page(identity, 'all'))).toBeUndefined();
+        expect(client.getQueryState(storeViewSummaryKeys.summary(identity))).toBeUndefined();
+        client.clear();
+    });
+
+    it('routes a background summary access error with cached items to the access-lost path', () => {
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        client.setQueryData(storeViewKeys.page(identity, 'all'), { pages: [], pageParams: [] });
+        client.setQueryData(storeViewSummaryKeys.summary(identity), { counts: {} });
+        pageHook.mockReturnValue(pageState({ items: [baseItem] }));
+        summaryHook.mockReturnValue({
+            isPending: false, isError: true,
+            error: { code: 'P9_AUTH_REQUIRED', httpStatus: null },
+            refetch: refetchSummary,
+        });
+        const screen = render(<StoreViewListContent identity={identity} />, {
+            wrapper: ({ children }: { children: React.ReactNode }) => (
+                <QueryClientProvider client={client}>{children}</QueryClientProvider>
+            ),
+        });
+        expect(screen.getByText('Store View unavailable')).toBeTruthy();
+        expect(client.getQueryState(storeViewKeys.page(identity, 'all'))).toBeUndefined();
+        expect(client.getQueryState(storeViewSummaryKeys.summary(identity))).toBeUndefined();
+        client.clear();
+    });
+
+    it('keeps stale list data visible for a temporary error with cached items', () => {
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        client.setQueryData(storeViewKeys.page(identity, 'all'), { pages: [], pageParams: [] });
+        pageHook.mockReturnValue(pageState({
+            items: [baseItem], isError: true,
+            error: { code: 'P9_INTERNAL_ERROR', httpStatus: 500 },
+        }));
+        const screen = render(<StoreViewListContent identity={identity} />, {
+            wrapper: ({ children }: { children: React.ReactNode }) => (
+                <QueryClientProvider client={client}>{children}</QueryClientProvider>
+            ),
+        });
+        expect(screen.queryByText('Store View unavailable')).toBeNull();
+        expect(screen.getByTestId(`store-view-state-${inventoryId}`)).toBeTruthy();
+        expect(client.getQueryState(storeViewKeys.page(identity, 'all'))).toBeDefined();
+        client.clear();
     });
 });

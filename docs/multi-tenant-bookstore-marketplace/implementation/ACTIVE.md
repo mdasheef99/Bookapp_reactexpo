@@ -50,6 +50,18 @@ close. Dated evidence belongs in trackers.
   Library switch (8c operator scripts 01-05 with placeholders; dev is
   already switched); 02d prefill.
 
+## Phase 7/8 lane
+
+Second active lane since 2026-11-13 (D-126). Its own branch, folder and tracker; Phase 9
+above is unchanged.
+
+- Plan and approvals: [handoff](./PHASE-7-8-HANDOFF.md), [decision register](./PHASE-7-8-decision-register.md) (D-116 to D-126 approved 2026-11-13).
+- Build scope: the sandbox [pilot cut](./phase-7-8-payments-fulfillment/pilot-cut/00-pilot-cut-overview.md) of SDD 01 and SDD 02 (D-119); [build process](./phase-7-8-payments-fulfillment/BUILD-PROCESS.md) (D-125).
+- Tracker and migration ledger: [phase-7-8-payments-fulfillment/TRACKER.md](./phase-7-8-payments-fulfillment/TRACKER.md).
+- Authority (D-33): documentation pass, read-only stage 0, product code per approved slice, and test-mode migrations on the dev project for approved slices (project verified first, ledger entry). Each Edge Function deployment needs the owner's yes (D-117). Production and live money stay gated by BC-43.
+- Shared-file rule (handoff §3 item 2): this lane does not edit Phase 9 files; DOC-13, ACTIVE.md and AGENTS.md are edited by one lane at a time; migration timestamps are checked against the live database and both trackers before each new migration.
+- Next action: slice P0 (test harness, verify and facts scripts). Slice P2 waits for Phase 9's lock-order migration and listing-trigger change (D-126).
+
 ## Mutation authority now
 
 - **None standing.** Every push, deployment, migration apply, Storage
@@ -93,10 +105,20 @@ Recorded development-project results, not a fresh operational readback.
 - Deployed worker: `phase9-metadata-worker` deploy
   `dep-dbob845g1s2s73en12fg` (commit `2584f98`, live 2026-11-08 17:41:31
   UTC). Rollback target: `dep-dblielugekts738gov3g` (`6e0df90`, 8b).
-- Latest relevant recorded commit on `main`: `2584f98` (pushed); `main` is
-  unchanged. Branch `phase9/02d-prefill` local HEAD `7c06d96` (Units 1a+1b+2,
-  not pushed). Nothing pushed on this branch.
+- Latest Phase 9 commit on `main`: `2584f98` (pushed); later `main` commits are
+  other lanes. Branch `phase9/02d-prefill` local HEAD `343199b` (Units 1a+1b+2 and
+  Unit 3 prep, not pushed), being merged with `main` `db51210`. Nothing pushed on this branch.
   [Push and deploy evidence](phase-9-image-inventory/trackers/41-package8c-switch-evidence.md#2026-11-07-8c-fix-round-m99-worker-admission--rpc-logging-app).
+- Store View v2 lane (separate lane, merged to `main` 2026-11-07): three
+  migrations applied live earlier with the Owner's approval —
+  `store_view_slice0b_media_fixes` (2026-11-02), `store_view_slice1b_summary`
+  (2026-11-03), `store_view_remove_after_replace`. They change
+  `phase9_reorder_store_view_media_v1`, `validate_inventory_media_link`,
+  `phase9_owner_media_records_v1`, `phase9_submit_public_copy_media_v2`, add
+  `phase9_store_view_summary_v1`, and drop FK
+  `phase9_upload_capabilities_target_media_link_id_fkey`. Edge
+  `phase9-owner-ingestion` v19 carries the Store View actions.
+  Details: [Store View tracker](../../store-view-v2/TRACKER.md).
 
 ## Open items, blockers and residual risks
 

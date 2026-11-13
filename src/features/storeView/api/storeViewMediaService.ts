@@ -6,6 +6,7 @@ import {
     type StoreViewMedia,
     type StoreViewMediaResult,
 } from '../contracts/storeViewMediaContracts';
+import { httpStatusOf, isAccessLostHttpStatus } from './storeViewHttpStatus';
 
 const uuid = z.string().uuid();
 const idempotencyKey = z.string().min(16).max(128).regex(/^[A-Za-z0-9._:-]+$/u);
@@ -39,13 +40,16 @@ const safeError = z.object({
 export type StoreViewMediaErrorCode = z.infer<typeof safeError>['error'] | 'P9_RESPONSE_INVALID';
 
 export class StoreViewMediaClientError extends Error {
+    readonly httpStatus: number | null;
     constructor(
         readonly code: StoreViewMediaErrorCode,
         readonly retryable: boolean,
         message: string,
+        httpStatus: number | null = null,
     ) {
         super(message);
         this.name = 'StoreViewMediaClientError';
+        this.httpStatus = httpStatus;
     }
 }
 
@@ -84,9 +88,16 @@ async function invoke<Action extends 'reorder_store_view_media' | 'remove_store_
             body: { action, contractVersion: STORE_VIEW_MEDIA_CONTRACT_VERSION, ...body },
         });
         if (result.error) {
+            const status = httpStatusOf(result.error);
+            if (isAccessLostHttpStatus(status)) {
+                throw new StoreViewMediaClientError(
+                    'P9_AUTH_REQUIRED', false, messages.P9_AUTH_REQUIRED, status,
+                );
+            }
             const parsed = safeError.safeParse(await errorBody(result.error));
             if (parsed.success) throw new StoreViewMediaClientError(
                 parsed.data.error, parsed.data.retryable, messages[parsed.data.error],
+                status,
             );
             throw clientError('P9_RESPONSE_INVALID');
         }
@@ -115,9 +126,16 @@ export const storeViewMediaService = {
                     ...(signal ? { signal } : {}),
                 });
                 if (result.error) {
+                    const status = httpStatusOf(result.error);
+                    if (isAccessLostHttpStatus(status)) {
+                        throw new StoreViewMediaClientError(
+                            'P9_AUTH_REQUIRED', false, messages.P9_AUTH_REQUIRED, status,
+                        );
+                    }
                     const parsedError = safeError.safeParse(await errorBody(result.error));
                     if (parsedError.success) throw new StoreViewMediaClientError(
                         parsedError.data.error, parsedError.data.retryable, messages[parsedError.data.error],
+                        status,
                     );
                     throw clientError('P9_RESPONSE_INVALID');
                 }
