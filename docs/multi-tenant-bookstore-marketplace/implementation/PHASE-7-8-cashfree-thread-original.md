@@ -31,6 +31,9 @@ Times are as Gmail shows them (IST, UTC+5:30).
 | 10 | Thu 12 Nov 2026 (time not recorded) | Us | Fourth mail: 9 questions. Not in the pasted thread below; its text as sent is stored word for word in the [fourth mail file](./PHASE-7-8-mail-cashfree-4.md) ("As sent") | — |
 | 11 | Thu 12 Nov 2026 (time not recorded) | Us | Fifth mail: 7 questions. Text in the [fifth mail file](./PHASE-7-8-mail-cashfree-5.md) | — |
 | 12 | 12 Nov 2026 (time not recorded) | Cashfree Tech Team, signed Shreejoy Chatterjee | Answers to the fourth and fifth mails; stored in the [replies file](./PHASE-7-8-cashfree-replies-original.md) | R5 |
+| 13 | Time not recorded (between 12 and 13 Nov 2026) | Us | Sixth mail: 6 questions. Sent (R6 answers its questions by number); the text as sent was not pasted, so the [sixth mail file](./PHASE-7-8-mail-cashfree-6.md) holds only the draft | — |
+| 14 | Time not recorded (pasted 13 Nov 2026) | Cashfree, not signed in the paste | Answers to points 1 to 4 and 6 of the sixth mail; point 5 not answered; point 6 partly forwarded | R6 |
+| 15 | Time not recorded (pasted 13 Nov 2026) | Cashfree, not signed in the paste | Follow-up on point 6 (Create Order timeouts) | R7 |
 
 Note on message 9: it told Cashfree every point was answered. That was based on my wrong
 reading; three points were still open (CF-A3, CF-A12, CF-A14) and seven facts had been

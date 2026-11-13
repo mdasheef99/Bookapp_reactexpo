@@ -1,5 +1,9 @@
 # Phase 7/8: Sixth Mail to Cashfree (draft, not sent)
 
+> **2026-11-13:** this mail was sent: Cashfree's replies R6 and R7 answer its questions by
+> number (stored in the [replies file](./PHASE-7-8-cashfree-replies-original.md)). The text
+> as sent was not pasted, so the draft below may differ from what was sent.
+
 **Status:** DRAFT, written 2026-11-12 after Cashfree's fifth reply (R5). Not sent as of
 2026-11-12. The owner sends it from their own mailbox as a reply on ticket 8774207, then
 pastes the text as sent so it can be stored here and in the

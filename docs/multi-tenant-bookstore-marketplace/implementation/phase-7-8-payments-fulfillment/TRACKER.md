@@ -27,6 +27,20 @@ originates product behaviour (AGENTS.md).
 - Database, storage, Edge Function and Cashfree changes: none.
 - Next: slice P0.
 
+### 2026-11-13: Cashfree replies R6 and R7
+
+- The owner pasted two Cashfree replies to the sixth mail. Stored word for word as R6 and
+  R7 in the [original replies](../PHASE-7-8-cashfree-replies-original.md); thread file rows
+  13 to 15 added; the sixth mail file notes it was sent (text as sent not pasted).
+- Facts CF-91 to CF-95 added to the [fact record](../PHASE-7-8-cashfree-replies.md) with a
+  "what these answers change" table; the [open questions](../PHASE-7-8-cashfree-questions-pending.md)
+  have a new R6/R7 table.
+- Checked against SDD 02 §7.2 and §11.6 and the pilot cut (N-06, N-08, §11.6): no change
+  needed. CF-A35 is now answered "not possible by API", so the live-money block is lasting.
+- Open for the owner: D-115's 24-hour pending-refund alert versus Cashfree's 5–7 working
+  days (CF-93); to be checked on sandbox before any change.
+- Database, storage, Edge Function and Cashfree changes: none.
+
 ## Migration ledger
 
 Every migration of this lane, before it is applied to the dev project.

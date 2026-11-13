@@ -21,6 +21,23 @@ with 9 questions (text as sent stored there). The questions were then reviewed b
 Sol and searched in the docs again by Haiku; the result is the table below. The
 [fifth mail](./PHASE-7-8-mail-cashfree-5.md) (7 questions, reviewed by Sol) was sent by the
 owner the same day. The tables further down keep the original wording and checks.
+**Update 2026-11-13:** the owner sent the [sixth mail](./PHASE-7-8-mail-cashfree-6.md)
+(6 questions); Cashfree answered it in R6 and R7. CF-A36 has not been sent.
+
+## After Cashfree's sixth and seventh replies (R6, R7, 2026-11-13)
+
+Facts CF-91 to CF-95 in the [fact record](./PHASE-7-8-cashfree-replies.md). This table
+supersedes the R5 table below where they differ.
+
+| ID | Status after R6/R7 | Fact |
+|---|---|---|
+| CF-A35 | Answered: refunding one chosen payment by API is not possible. The live-money block stays | CF-91 |
+| CF-A21 | Closed: Cashfree says the response timeout and the retry age are not specified. D-114 and SBX-10 stand | CF-94 |
+| CF-A27 | Partly: the key is stored only for a 200 answer; resend with the same key, then Get Order. Open: key retention and 404 finality (forwarded by Cashfree, no answer yet) | CF-95 |
+| CF-A31 | Partly: pending is normal while the bank confirms, about 5–7 working days. Open: how long an unpayable refund stays `PENDING` and how we are told | CF-93 |
+| CF-A34 | No change: account-specific; Account Manager | CF-92 |
+| CF-A16 | Not answered (point 5 skipped in R6) | — |
+| CF-A36 | Not sent | — |
 
 ## After Cashfree's fifth reply (R5, 2026-11-12)
 

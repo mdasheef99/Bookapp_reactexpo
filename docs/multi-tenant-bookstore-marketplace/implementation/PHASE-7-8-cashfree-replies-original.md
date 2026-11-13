@@ -1,7 +1,7 @@
 # Phase 7/8: Cashfree Replies, Original Text
 
-**Status:** the four replies from Cashfree (ticket 8774207), stored word for word on
-2026-11-12. Each is exactly the text the owner pasted into the working session; nothing is
+**Status:** the replies from Cashfree (ticket 8774207), stored word for word: R1 to R4 on
+2026-11-12, R5 on 2026-11-12, R6 and R7 on 2026-11-13. Each is exactly the text the owner pasted into the working session; nothing is
 edited, shortened or corrected (R1 and R4 begin "ear Merchant" because the first letter was
 lost when pasting).
 **Authority:** this is the primary evidence. The [fact record](./PHASE-7-8-cashfree-replies.md)
@@ -18,6 +18,8 @@ text ever disagree, this text wins and the fact is corrected.
 | R3 | Tech Team reply to our second mail | 2026-11-10 7:14 PM | Shreejoy Chatterjee, Integration Engineer | 2026-11-10 16:55 UTC |
 | R4 | Reply to our third mail | 2026-11-11 1:20 PM | Nikhil Scaria, Cashfree Care | 2026-11-11 10:21 UTC |
 | R5 | Tech Team reply to our fourth and fifth mails | not given in the paste | Shreejoy Chatterjee, Integration Engineer | 2026-11-12 |
+| R6 | Reply to our sixth mail (its points 1 to 4 and 6; point 5 not answered; point 6 partly forwarded) | not given in the paste | not signed in the paste | 2026-11-13 |
+| R7 | Follow-up on point 6 of our sixth mail (Create Order timeouts) | not given in the paste | not signed in the paste | 2026-11-13 |
 
 The whole Gmail thread (our mails as sent, the ticket acknowledgement and our 11 Nov
 thank-you mail) is stored word for word in the [thread file](./PHASE-7-8-cashfree-thread-original.md).
@@ -451,4 +453,104 @@ Thank you for your patience and understanding.
 Your ticket ID is 8774207
 Thanks and Regards,
 Shreejoy Chatterjee | Integration Engineer | Cashfree Payments
+```
+
+---
+
+## R6: Reply to our sixth mail
+
+Pasted by the owner on 2026-11-13, together with R7, without send times or a signature.
+Kept exactly as pasted. The reply numbers its points 1, 2, 3, 4 and 6; point 5 of our sixth
+mail (`UNRECONCILED_AUTO_REFUND`) is not answered.
+
+```text
+Dear Merchant,
+
+Greetings from Cashfree Payments!
+
+Thank you for sharing your queries. Please find our clarifications below.
+
+1. Refunding a specific payment
+
+The Create Refund API accepts the Order ID and refund details but does not accept cf_payment_id to select a particular payment attempt.
+
+You can retrieve all payment attempts associated with an Order ID using the Get Payments for an Order API and identify each successful payment using its respective cf_payment_id.
+
+However, since the Create Refund API does not provide an explicit payment-attempt selection parameter, we recommend verifying the intended payment before initiating a manual refund when multiple payments have succeeded against the same order post activation.
+
+Documentation:
+https://www.cashfree.com/docs/api-reference/payments/latest/orders/get-payments-for-an-order
+https://www.cashfree.com/docs/api-reference/payments/latest/orders/create-refund
+
+2. Settlement balance and merchant ledger
+
+The merchant ledger and settlement balance are used for accounting and settlement-related adjustments. However, they should not automatically be considered the same balance as the Refund Wallet.
+
+The available balance and applicable funding mechanism depend on your account configuration. 
+Documentation:
+https://www.cashfree.com/docs/api-reference/payments/latest/split/easy-split-overview
+https://www.cashfree.com/settlement-and-reconciliation-guide/
+
+3. Refunds that remain Pending
+
+A refund may remain Pending while processing or confirmation from the banking partner is awaited. The general refund reflection timeline is approximately 5–7 working days, depending on the payment method and banking partner.
+
+You can track the refund status through the Get Refund API. Configured refund webhooks can also be used to receive status updates.
+
+Documentation:
+https://www.cashfree.com/docs/api-reference/payments/latest/orders/get-refund
+https://www.cashfree.com/docs/api-reference/payments/latest/webhooks
+
+4. Webhook response and timestamp validation
+
+Cashfree recommends verifying webhook signatures using the original request body and the x-webhook-timestamp and x-webhook-signature headers.
+
+Your endpoint should acknowledge webhook notifications promptly and process events idempotently to handle duplicate deliveries safely.
+The exact acknowledgement timeout and whether the five-minute timestamp validation window applies unchanged to retried notifications are not explicitly specified in the public documentation.
+
+Documentation:
+https://www.cashfree.com/devstudio/preview/pg/tools/webhookVerification
+
+6. Create Order timeouts and idempotency
+
+Cashfree supports the x-idempotency-key header to prevent duplicate processing when an API request fails or times out. If retrying the same request, reuse the original idempotency key rather than generating a new one.
+
+Regarding the exact retention period for an idempotency key and whether a 404 response from the Get Order API after a timeout can be treated as a final confirmation that the order was not created, we have forwarded these queries to the concerned team for clarification.
+
+We will share an update as soon as we receive confirmation from the team.
+
+Documentation:
+https://www.cashfree.com/docs/api-reference/payments/latest/orders/create
+https://www.cashfree.com/docs/api-reference/payments/latest/orders/get
+
+Thank you for your patience and cooperation.
+
+Satisfaction survey: Response Satisfaction Survey
+Please note that your ticket ID is 8774207
+```
+
+---
+
+## R7: Follow-up on point 6 (Create Order timeouts)
+
+Pasted by the owner on 2026-11-13, together with R6, without a send time or a signature.
+Kept exactly as pasted. It does not state a retention period for the idempotency key and
+does not say whether a 404 from Get Order is final.
+
+```text
+Thank you for your patience.
+
+Regarding your query on Create Order timeouts, please find our response below:
+
+In case a Create Order request times out, you can create the order again without any issue, using the same x-idempotency-key.
+We suggest using the same x-idempotency-key value that you passed in the original request. Please note that the x-idempotency-key is captured by Cashfree only when a 200 OK response is returned for the request. After retrying, you can confirm the order details using the Get Order API.
+
+Documentation:
+
+API best practices (idempotency keys): https://www.cashfree.com/docs/api-reference/api-best-practices
+Create Order API: https://www.cashfree.com/docs/api-reference/payments/latest/orders/create
+Get Order API: https://www.cashfree.com/docs/api-reference/payments/latest/orders/get-order
+
+In case there are still any open points, please let us know so that we can check further. 
+Thank you for your patience and understanding.
 ```

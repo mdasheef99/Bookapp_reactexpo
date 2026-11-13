@@ -1,6 +1,6 @@
 # Phase 7/8: Cashfree Replies and Fact Record
 
-**Status:** record of what Cashfree has told us, updated 2026-11-11 with the fourth reply. On 2026-11-12 every fact was re-checked against the original text of all four replies; none was wrong, and seven points the record had left out were added as CF-67 to CF-73.
+**Status:** record of what Cashfree has told us, updated 2026-11-11 with the fourth reply. On 2026-11-12 every fact was re-checked against the original text of all four replies; none was wrong, and seven points the record had left out were added as CF-67 to CF-73. R5 added CF-76 to CF-90 (2026-11-12); R6 and R7 added CF-91 to CF-95 (2026-11-13).
 Ticket ID 8774207.
 **Authority:** none. This is evidence for the SDDs. Business rules stay in the
 [decision register](./PHASE-7-8-decision-register.md).
@@ -34,6 +34,8 @@ tag. A fact without a tag must not be used.
 | R3 | Cashfree's third reply (Tech Team), answering our second mail |
 | R4 | Cashfree's fourth reply, answering our third mail (2026-11-11) |
 | R5 | Cashfree's fifth reply (Tech Team, Shreejoy Chatterjee), answering our fourth and fifth mails (2026-11-12) |
+| R6 | Cashfree's sixth reply (not signed in the paste), answering points 1 to 4 and 6 of our sixth mail (pasted 2026-11-13) |
+| R7 | Cashfree's follow-up on point 6 of our sixth mail, Create Order timeouts (not signed in the paste; pasted 2026-11-13) |
 | DOC | Read on Cashfree's public documentation on 2026-11-10 |
 | SBX | Seen by us on sandbox on 2026-11-09 |
 | ASKED | Not known. Asked in the second mail; no answer yet |
@@ -178,6 +180,20 @@ Quotes are from the [original text](./PHASE-7-8-cashfree-replies-original.md) (R
 | CF-89 | Each vendor bank-account verification debits "A fixed fee plus GST" from our balance; it shows in the merchant ledger as a vendor onboarding entry and in invoices. No API named. Answers CF-A33 | R5 |
 | CF-90 | Easy Split charges and the payment methods on the live account "depend on your account's commercials and onboarding"; the Account Manager assists. CF-A12 and CF-A34's go-live part move to the Account Manager | R5 |
 
+### From R6 and R7 (2026-11-13)
+
+Quotes are from the [original text](./PHASE-7-8-cashfree-replies-original.md) (R6, R7).
+R6 numbers its points 1, 2, 3, 4 and 6; point 5 of our sixth mail
+(`UNRECONCILED_AUTO_REFUND`, CF-A16) is not answered.
+
+| ID | Fact | Source |
+|---|---|---|
+| CF-91 | Create Refund "accepts the Order ID and refund details but does not accept cf_payment_id to select a particular payment attempt." Payments are listed with Get Payments for an Order. Cashfree recommends "verifying the intended payment before initiating a manual refund when multiple payments have succeeded against the same order". Answers CF-A35: there is no API way to refund one chosen payment, so the CF-A35 live-money block (N-08) stays | R6 |
+| CF-92 | The merchant ledger and settlement balance "should not automatically be considered the same balance as the Refund Wallet"; "The available balance and applicable funding mechanism depend on your account configuration." Does not say whether the settlement balance is the merchant ledger or how it is topped up (CF-A34 stays with the Account Manager) | R6 |
+| CF-93 | A refund "may remain Pending while processing or confirmation from the banking partner is awaited"; "The general refund reflection timeline is approximately 5–7 working days, depending on the payment method and banking partner." Track with Get Refund; refund webhooks give status updates (CF-87: final status only). Does not say how long CF-84's unpayable refund stays `PENDING` or how we are told (CF-A31 partly open) | R6 |
+| CF-94 | Verify webhook signatures with the original body and the `x-webhook-timestamp` and `x-webhook-signature` headers; acknowledge "promptly" and process idempotently. "The exact acknowledgement timeout and whether the five-minute timestamp validation window applies unchanged to retried notifications are not explicitly specified in the public documentation." Closes CF-A21 as not specified: D-114 and SBX-10 stand | R6 |
+| CF-95 | Create Order timeout: retry with the same `x-idempotency-key` as the original request, then confirm with Get Order. "the x-idempotency-key is captured by Cashfree only when a 200 OK response is returned for the request." R6 forwarded key retention and 404 finality to "the concerned team"; R7 answers neither (CF-A27 stays open for both). Matches SDD 02 §7.2 and §11.6 (same frozen body and round key; a negative read is not final) | R6, R7 |
+
 ## 3. Questions from the second mail
 
 The IDs are kept so the SDDs' references stay valid.
@@ -224,6 +240,16 @@ Manager on production pricing and onboarding.
   order with a payment pending, blocking a vendor.
 
 ## 5. What these answers change
+
+### After R6 and R7 (2026-11-13). No SDD change needed.
+
+| Topic | Before R6/R7 | After R6/R7 |
+|---|---|---|
+| Refunding one chosen payment (CF-A35, N-08) | Open | Not possible by API (CF-91). The live-money block stays; a second successful payment stays an admin case and a manual refund. Removing the block needs a route Cashfree has not offered |
+| Create Order timeout (SDD 02 §7.2, §11.6) | Same-key retry (CF-78) | Same: the key is stored only for a 200 answer (CF-95), which fits resending the identical body with the same round key. Key retention and 404 finality still open; a negative read stays non-final |
+| Webhook timeout and retry age (CF-A21) | Open | Not specified by Cashfree (CF-94). D-114's 24-hour limit and SBX-10 stand |
+| Settlement balance (CF-A34) | Not the Refund Wallet (CF-88) | No more detail; account-specific (CF-92). Account Manager |
+| Pending refunds (SDD 04, D-115) | Unpayable refund stays `PENDING` (CF-84) | Pending is normal while the bank confirms; refunds reach the customer in about 5–7 working days (CF-93). **For the owner:** D-115 alerts after 24 hours in `PENDING`; if normal refunds stay `PENDING` that long, it will open cases for healthy refunds. Check on sandbox how long a refund stays `PENDING` before changing anything |
 
 ### After R5 (2026-11-12). Carried into the SDDs on 2026-11-12.
 
