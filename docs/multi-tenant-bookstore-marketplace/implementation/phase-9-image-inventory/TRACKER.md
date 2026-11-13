@@ -16,6 +16,15 @@ they do not override ACTIVE.md. Repeated status copies moved to the
 **Implementation authority:** See ACTIVE.md and the Owner's explicit scope.
 **Migration creation/application authority:** See ACTIVE.md; prior approvals are historical.
 
+## 2026-11-13 02d Unit 2 built locally (app-only, no migration)
+
+02d Unit 2 (edition-sheet prefill app, SDD rev c) is built and committed
+locally as `7c06d96` on branch `phase9/02d-prefill` (not pushed); no
+migration in this unit (M100+M101 remain local files, NOT APPLIED). Scope,
+reported verification, reviews and accepted residuals:
+[implementation log](./trackers/02-implementation-and-verification.md#2026-11-13---02d-unit-2-built-locally-app-only-no-migration).
+Current work unit and the next authorized action are in ACTIVE.md.
+
 ## 2026-11-13 02d Unit 1b built locally (M101 local file, not applied)
 
 02d Unit 1b (Search Books while a saved list is fresh, SDD rev c) is built and
