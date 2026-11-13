@@ -172,6 +172,18 @@ dated evidence belongs in trackers.
   the pilot (placeholders: contact email, reviewed manifest hash, smoke
   cohort); 02d prefill.
 
+## Phase 7/8 lane
+
+Second active lane since 2026-11-13 (D-126). Its own branch, folder and tracker; Phase 9
+above is unchanged.
+
+- Plan and approvals: [handoff](./PHASE-7-8-HANDOFF.md), [decision register](./PHASE-7-8-decision-register.md) (D-116 to D-126 approved 2026-11-13).
+- Build scope: the sandbox [pilot cut](./phase-7-8-payments-fulfillment/pilot-cut/00-pilot-cut-overview.md) of SDD 01 and SDD 02 (D-119); [build process](./phase-7-8-payments-fulfillment/BUILD-PROCESS.md) (D-125).
+- Tracker and migration ledger: [phase-7-8-payments-fulfillment/TRACKER.md](./phase-7-8-payments-fulfillment/TRACKER.md).
+- Authority (D-33): documentation pass, read-only stage 0, product code per approved slice, and test-mode migrations on the dev project for approved slices (project verified first, ledger entry). Each Edge Function deployment needs the owner's yes (D-117). Production and live money stay gated by BC-43.
+- Shared-file rule (handoff §3 item 2): this lane does not edit Phase 9 files; DOC-13, ACTIVE.md and AGENTS.md are edited by one lane at a time; migration timestamps are checked against the live database and both trackers before each new migration.
+- Next action: slice P0 (test harness, verify and facts scripts). Slice P2 waits for Phase 9's lock-order migration and listing-trigger change (D-126).
+
 ## Mutation authority now
 
 - 2026-11-04: the Owner authorized finishing 8b and committing it locally

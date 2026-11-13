@@ -1,6 +1,6 @@
 # PHASE-8: Pickup Fulfillment
 
-**Status:** `deferred`
+**Status:** `deferred` (resumed 2026-11-13 as a second lane: documentation pass, stage 0, then the sandbox pilot slices under D-33; see [PHASE-7-8-HANDOFF](./PHASE-7-8-HANDOFF.md))
 **Last updated:** 2026-07-18
 **Phase goal:** Complete paid order fulfillment through bookstore pickup before third-party delivery.
 
@@ -81,4 +81,8 @@ No Phase 8 implementation or verification has started. Deferred by product decis
 ## Handoff Notes
 
 Do not begin Phase 8 until Phase 7 is explicitly resumed and verified paid-order creation exists.
+
+> **2026-11-13:** the "do not begin" condition above is satisfied by the owner's approvals of
+> 2026-11-07 (handoff §3), as limited by handoff §10 and D-33. Goals and acceptance below are
+> not changed here; the documentation pass brings them in line with BC-08.
 Pickup fulfillment remains the proof point before delivery aggregator integration.

@@ -1,6 +1,6 @@
 # PHASE-10: Third-Party Delivery
 
-**Status:** `not_started`
+**Status:** `not_started` (pilot subset brought forward into the Phase 7/8 lane 2026-11-13: local same-day bike-delivery adapter, D-24; see [PHASE-7-8-HANDOFF](./PHASE-7-8-HANDOFF.md). No delivery work is in the current pilot slices)
 **Last updated:** 2026-05-22
 **Phase goal:** Integrate third-party delivery through a provider-agnostic adapter.
 

@@ -1,6 +1,6 @@
 # PHASE-7: Payment, Ledger, and Settlement
 
-**Status:** `deferred`
+**Status:** `deferred` (resumed 2026-11-13 as a second lane: documentation pass, stage 0, then the sandbox pilot slices under D-33; see [PHASE-7-8-HANDOFF](./PHASE-7-8-HANDOFF.md))
 **Last updated:** 2026-07-18
 **Phase goal:** Enable payment only after store confirmation, with ledger-first finance and reconciliation.
 
@@ -119,5 +119,9 @@ Phase 7/8 lane. It holds the approvals needed before day 1, timeline, review pro
 Cashfree/CA/lawyer questions, security baseline, stage-0 checks, and known documentation
 conflicts (including this tracker's pre-BC-08 goal and acceptance text). See the register header for its current version and decision range.
 
-Do not begin Phase 7 without separate authorization. Do not enable production payments without
+Do not begin Phase 7 without separate authorization.
+
+> **2026-11-13:** the "do not begin" condition above is satisfied by the owner's approvals of
+> 2026-11-07 (handoff §3), as limited by handoff §10 and D-33. Goals and acceptance below are
+> not changed here; the documentation pass brings them in line with BC-08. Do not enable production payments without
 platform ops refund/reconciliation readiness and the required provider/legal/accounting reviews.

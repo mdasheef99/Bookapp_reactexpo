@@ -78,6 +78,8 @@ Trackers may record status and evidence; they must not silently originate produc
 
 Use [Phase 9 SESSION-START](./docs/multi-tenant-bookstore-marketplace/implementation/phase-9-image-inventory/SESSION-START.md). If DOC-13 later names another active phase, update `implementation/ACTIVE.md` and this pointer in the same documentation change.
 
+Phase 7/8 lane (second active lane since 2026-11-13): start from the [Phase 7/8 handoff](./docs/multi-tenant-bookstore-marketplace/implementation/PHASE-7-8-HANDOFF.md) and the lane section of [ACTIVE.md](./docs/multi-tenant-bookstore-marketplace/implementation/ACTIVE.md#phase-78-lane).
+
 ## Authorization boundaries
 
 - Planning approval does not authorize product implementation.
@@ -85,6 +87,7 @@ Use [Phase 9 SESSION-START](./docs/multi-tenant-bookstore-marketplace/implementa
 - Migration-file creation does not authorize applying a migration to Supabase.
 - A read-only database audit does not authorize database/storage writes.
 - Never introduce behavior from deferred phases into the active phase.
+- For the Phase 7/8 lane, D-33 is the owner's explicit authorization for test-mode migrations on the dev project (slice approved, project verified, ledger entry); production and live money stay gated by BC-43.
 - Do not stage, commit, push, deploy, or mutate external services unless the user requested that action or it is an explicit approved step in the current task.
 
 ## Database and Supabase rule
